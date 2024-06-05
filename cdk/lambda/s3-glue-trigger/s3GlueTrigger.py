@@ -66,9 +66,9 @@ def lambda_handler(event, context):
             "--FILENAME_CLEAN": fileKey_clean,
         }
 
-        # sshrc is a special case because the cleaning process require two differen files
+        # sshrc is a special case because the cleaning process require two different files
         if "raw/sshrc/" in fileKey:
-            jobName = "expertiseDashboard-clean-sshrc"
+            jobName = "facultyCV-clean-sshrc"
 
             # s3 api call to list the objects with the specified path (folder)
             objectList = s3_client.list_objects_v2(
@@ -91,7 +91,6 @@ def lambda_handler(event, context):
             if objectCount == 2:
                 if not jobRuns["JobRuns"]:
                     try:
-
                         for file in objectList["Contents"]:
                             # using regex to match for the name of the program code csv file
                             if re.match(r"(?i).*(program).*(code).*", file["Key"]):
@@ -136,7 +135,7 @@ def lambda_handler(event, context):
         # and the Glue job for cleaning is called clean-mygrant
         else:
             try:
-                jobName = "expertiseDashboard-clean-" + file
+                jobName = "facultyCV-clean-" + file
                 response = glue_client.start_job_run(
                     JobName=jobName,
                     MaxCapacity=MAX_CAPACITY,
@@ -148,51 +147,19 @@ def lambda_handler(event, context):
                 if e.response['Error']['Code'] == 'ConcurrentRunsExceededException':
                     print(jobName + " is at max concurrency")
 
-    # when the raw data is clean and put into the approriate clean folder
-    # this part is triggered when the previous part is done, because s3 will send another
-    # trigger when a clean file appears in the clean folder
-    # need MaximumConcurrentRuns = at least 4
+      # When the raw data is clean and put into the appropriate clean folder
+    
+    # This part is triggered when the previous part is done because S3 will send another
+    # Trigger when a clean file appears in the clean folder
+    # Need MaximumConcurrentRuns = at least 4
     elif "clean/" in s3_event["object"]["key"]:
-        jobName = "expertiseDashboard-assignIds"
+        jobName = "facultyCV-storeData"
 
         fileKey = s3_event["object"]["key"]
-
-        split = fileKey.split(".csv", 1)
-        fileKey_clean = (split[0] + "-ids" + split[1] +
-                         ".csv").replace("clean/", "ids-assigned/", 1)
 
         arguments = {
             "--BUCKET_NAME": bucketName,
             "--FILENAME_CLEAN": fileKey,
-            "--FILENAME_ID": fileKey_clean
-        }
-
-        try:
-            response = glue_client.start_job_run(
-                JobName=jobName,
-                MaxCapacity=MAX_CAPACITY,
-                Timeout=TIMEOUT,
-                Arguments=arguments
-            )
-
-            print("Started Glue Job  " + jobName +
-                  " to process " + fileKey.split("/", 2)[1])
-
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'ConcurrentRunsExceededException':
-                print(jobName + " is at max concurrency")
-
-    # when the data is assigned ids and put into the approriate ids-assigned folder
-    # this will trigger a job to store the data in a table in the database
-    # need MaximumConcurrentRuns = at least 4
-    elif "ids-assigned/" in s3_event["object"]["key"]:
-        jobName = "expertiseDashboard-storeData"
-
-        fileKey = s3_event["object"]["key"]
-
-        arguments = {
-            "--BUCKET_NAME": bucketName,
-            "--FILENAME_ID": fileKey,
         }
 
         try:

@@ -133,11 +133,6 @@ def storeData():
 def main(argv):
 
     storeData()
-    
-    glue_client = boto3.client("glue")
-    response = glue_client.start_job_run(
-        JobName="expertiseDashboard-startDmsReplicationTask-grant"
-    )
 
 
 if __name__ == "__main__":
