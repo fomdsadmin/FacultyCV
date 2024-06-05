@@ -1,9 +1,25 @@
 import logo from './logo.svg';
+import { Amplify } from 'aws-amplify';
+import { Authenticator } from '@aws-amplify/ui-react';
 import './App.css';
+
+Amplify.configure({
+  Auth: {
+    Cognito: {
+      region: process.env.REACT_APP_AWS_REGION,
+      userPoolClientId: process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID,
+      userPoolId: process.env.REACT_APP_COGNITO_USER_POOL_ID,
+      allowGuestAccess: false
+    }
+  }
+});
+
+console.log(process.env.REACT_APP_AWS_REGION);
 
 function App() {
   return (
-    <div className="App">
+    <Authenticator>
+      <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
@@ -19,6 +35,7 @@ function App() {
         </a>
       </header>
     </div>
+    </Authenticator>
   );
 }
 
