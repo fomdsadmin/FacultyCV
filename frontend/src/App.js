@@ -2,6 +2,8 @@ import logo from './logo.svg';
 import { Amplify } from 'aws-amplify';
 import { Authenticator } from '@aws-amplify/ui-react';
 import './App.css';
+import '@aws-amplify/ui-react/styles.css';
+
 
 Amplify.configure({
   Auth: {
@@ -14,27 +16,19 @@ Amplify.configure({
   }
 });
 
-console.log(process.env.REACT_APP_AWS_REGION);
-
 function App() {
   return (
-    <Authenticator>
+    <Authenticator hideSignUp={true}>
       <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+        {
+          ({ signOut, user }) => {
+            <main>
+              <h1>Hello {user.username}</h1>
+              <button onClick={signOut}>Sign out</button>
+            </main>
+          }
+        }
+      </div>
     </Authenticator>
   );
 }
