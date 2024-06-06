@@ -19,16 +19,12 @@ Amplify.configure({
 function App() {
   return (
     <Authenticator hideSignUp={true}>
-      <div className="App">
-        {
-          ({ signOut, user }) => {
-            <main>
-              <h1>Hello {user.username}</h1>
-              <button onClick={signOut}>Sign out</button>
-            </main>
-          }
-        }
-      </div>
+      {({ signOut, user }) => (
+        <main>
+          <h1>Hello {user.username}</h1>
+          <button onClick={signOut}>Sign out</button>
+        </main>
+      )}
     </Authenticator>
   );
 }
