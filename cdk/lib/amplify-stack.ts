@@ -15,12 +15,6 @@ export class AmplifyStack extends cdk.Stack {
     const userPool = new cognito.UserPool(this, 'FacultyCVUserPool', {
       userPoolName: 'faculty-cv-user-pool',
       signInAliases: { email: true },
-      standardAttributes: {
-        preferredUsername: {
-          mutable: true,
-          required: true
-        }
-      },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY
     });
 
