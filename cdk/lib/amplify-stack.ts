@@ -10,10 +10,17 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 export class AmplifyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-    // Auth
 
+    // Auth
     const userPool = new cognito.UserPool(this, 'FacultyCVUserPool', {
       userPoolName: 'faculty-cv-user-pool',
+      signInAliases: { email: true },
+      standardAttributes: {
+        preferredUsername: {
+          mutable: true,
+          required: true
+        }
+      },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY
     });
 
@@ -66,7 +73,6 @@ export class AmplifyStack extends cdk.Stack {
         'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': userPoolClient.userPoolClientId
       },
       buildSpec: BuildSpec.fromObjectToYaml(amplifyYaml),
-      basicAuth: BasicAuth.fromGeneratedPassword(username)
     });
 
     amplifyApp.addBranch('amplify-cdk')

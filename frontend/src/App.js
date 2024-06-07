@@ -18,7 +18,7 @@ Amplify.configure({
 
 function App() {
   return (
-    <Authenticator hideSignUp={true}>
+    <Authenticator hideSignUp={true} loginMechanisms={['email']}>
       {({ signOut, user }) => (
         <main>
           <h1>Hello {user.username}</h1>
