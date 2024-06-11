@@ -4,11 +4,12 @@ import { BuildSpec } from 'aws-cdk-lib/aws-codebuild';
 import { Construct } from 'constructs';
 import * as yaml from 'yaml';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { ApiStack } from './api-stack';
 
 
 
 export class AmplifyStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, apiStack: ApiStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // Auth
@@ -64,7 +65,8 @@ export class AmplifyStack extends cdk.Stack {
       environmentVariables: {
         'REACT_APP_AWS_REGION': this.region,
         'REACT_APP_COGNITO_USER_POOL_ID': userPool.userPoolId,
-        'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': userPoolClient.userPoolClientId
+        'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': userPoolClient.userPoolClientId,
+        'REACT_APP_APPSYNC_ENDPOINT': apiStack.getEndpointUrl()
       },
       buildSpec: BuildSpec.fromObjectToYaml(amplifyYaml),
     });

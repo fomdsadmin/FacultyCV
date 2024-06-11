@@ -15,7 +15,7 @@ Amplify.configure({
     }
   }
 });
-
+console.log(process.env.REACT_APP_APPSYNC_ENDPOINT);
 function App() {
   return (
     <Authenticator hideSignUp={true} loginMechanisms={['email']}>
