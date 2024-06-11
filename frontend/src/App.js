@@ -1,11 +1,20 @@
 import logo from './logo.svg';
 import { Amplify } from 'aws-amplify';
+import { generateClient } from 'aws-amplify/api';
 import { Authenticator } from '@aws-amplify/ui-react';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
+import { getFacultyMembers } from './graphql/queries';
 
 
 Amplify.configure({
+  API: {
+    GraphQL: {
+      endpoint: process.env.REACT_APP_APPSYNC_ENDPOINT,
+      region: process.env.REACT_APP_AWS_REGION,
+      defaultAuthMode: 'iam',
+    }
+  },
   Auth: {
     Cognito: {
       region: process.env.REACT_APP_AWS_REGION,
@@ -13,9 +22,10 @@ Amplify.configure({
       userPoolId: process.env.REACT_APP_COGNITO_USER_POOL_ID,
       allowGuestAccess: false
     }
-  }
+  },
 });
-console.log(process.env.REACT_APP_APPSYNC_ENDPOINT);
+const client = generateClient();
+console.log(client.graphql(getFacultyMembers('', '')));
 function App() {
   return (
     <Authenticator hideSignUp={true} loginMechanisms={['email']}>
