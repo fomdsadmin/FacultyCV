@@ -25,7 +25,9 @@ Amplify.configure({
   },
 });
 const client = generateClient();
-console.log(client.graphql(getFacultyMembers('', '')));
+console.log(await client.graphql({
+  query: getFacultyMembers('', '')
+}));
 function App() {
   return (
     <Authenticator hideSignUp={true} loginMechanisms={['email']}>
