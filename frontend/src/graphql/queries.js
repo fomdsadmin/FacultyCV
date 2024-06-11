@@ -1,8 +1,11 @@
-export const getFacultyMembers = ({firstName, lastName}) => `
-    query getFacultyMember(
-    firstName: ${firstName},
-    lastName: ${lastName}
-    ) {
-        firstName, lastName
+export const getFacultyMember = ({firstName, lastName}) => `
+    query GetFacultyMember {
+        getFacultyMember(
+            firstName: ${firstName},
+            lastName: ${lastName}
+        ) {
+            firstName
+            lastName
+        }
     }
 `;

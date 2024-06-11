@@ -4,7 +4,7 @@ import { generateClient } from 'aws-amplify/api';
 import { Authenticator } from '@aws-amplify/ui-react';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
-import { getFacultyMembers } from './graphql/queries';
+import { getFacultyMember } from './graphql/queries';
 
 
 Amplify.configure({
@@ -26,7 +26,7 @@ Amplify.configure({
 });
 const client = generateClient();
 console.log(await client.graphql({
-  query: getFacultyMembers('', '')
+  query: getFacultyMember('', '')
 }));
 function App() {
   return (
