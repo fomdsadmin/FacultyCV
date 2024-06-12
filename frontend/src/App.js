@@ -12,7 +12,7 @@ Amplify.configure({
     GraphQL: {
       endpoint: process.env.REACT_APP_APPSYNC_ENDPOINT,
       region: process.env.REACT_APP_AWS_REGION,
-      defaultAuthMode: 'iam',
+      defaultAuthMode: 'userPool',
     }
   },
   Auth: {
@@ -24,16 +24,18 @@ Amplify.configure({
     }
   },
 });
-const client = generateClient();
-console.log(await client.graphql({
-  query: getFacultyMember('', '')
-}));
 function App() {
   return (
     <Authenticator hideSignUp={true} loginMechanisms={['email']}>
       {({ signOut, user }) => (
         <main>
           <h1>Hello {user.signInDetails.loginId}</h1>
+          <button onClick={async () => {
+            const client = generateClient();
+            console.log(await client.graphql({
+              query: getFacultyMember('', '')
+            }));
+          }}>Query</button>
           <button onClick={signOut}>Sign out</button>
         </main>
       )}

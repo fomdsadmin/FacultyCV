@@ -1,6 +1,6 @@
 def lambda_handler(event, context):
-    first_name = event['firstName']
-    last_name = event['lastName']
+    first_name = event['arguments']['firstName']
+    last_name = event['arguments']['lastName']
 
     return {
         "facultyMemberId": "testId",
