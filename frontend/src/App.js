@@ -24,6 +24,17 @@ Amplify.configure({
     }
   },
 });
+const client = generateClient();
+try {
+  console.log(await client.graphql({
+    query: getFacultyMember({
+      firstName: '',
+      lastName: ''
+    })
+  }));
+} catch (e) {
+  console.log(e);
+}
 function App() {
   return (
     <Authenticator hideSignUp={true} loginMechanisms={['email']}>
@@ -33,7 +44,10 @@ function App() {
           <button onClick={async () => {
             const client = generateClient();
             console.log(await client.graphql({
-              query: getFacultyMember('', '')
+              query: getFacultyMember({
+                firstName: '',
+                lastName: ''
+              })
             }));
           }}>Query</button>
           <button onClick={signOut}>Sign out</button>
