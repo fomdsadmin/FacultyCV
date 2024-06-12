@@ -2,12 +2,15 @@ import boto3
 import psycopg2
 import json
 
-sm_client = boto3.client('secretsmanager')
+# TESTING PURPOSES
+session = boto3.Session(profile_name='abhi')
+
+sm_client = session.client('secretsmanager')
 
 def getCredentials():
     credentials = {}
 
-    response = sm_client.get_secret_value(SecretId='expertiseDashboard/credentials/dbCredentials')
+    response = sm_client.get_secret_value(SecretId='facultyCV/credentials/dbCredentials')
     secrets = json.loads(response['SecretString'])
     credentials['username'] = secrets['username']
     credentials['password'] = secrets['password']

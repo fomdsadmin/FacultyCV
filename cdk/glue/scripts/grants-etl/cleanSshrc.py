@@ -65,14 +65,17 @@ def cleanSshrc(bucket, key_raw, key_clean, key_program_codes):
     # new Keywords column with nan
     df["Keywords"] = np.nan
 
-    # new column Year
-    df["Year"] = df["Fiscal Year"]
+    # new column Dates
+    df["Dates"] = df["Fiscal Year"]
 
-    # new column Start Date
-    df["Start Date"] = np.nan
+    # # new column Start Date
+    # df["Start Date"] = np.nan
 
-    # new column End Date
-    df["End Date"] = np.nan
+    # # new column End Date
+    # df["End Date"] = np.nan
+
+    # Create "Faculty Member ID" column
+    df["Faculty Member ID"] = np.nan
 
     # remove redundant columns
     redundant = ["Applicant", "Administrating Organization", "Title of project", "Amount ($)",

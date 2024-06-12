@@ -71,12 +71,15 @@ def cleanCihr(bucket, key_raw, key_clean):
     df["End Month"] = (df["Start Month"] + df["Term Months"]) % 12
     df["End Month"] = df["End Month"].replace(0, 12)  # Fix for December being represented as 0 month
 
-    # Create Year column in the format <start year>-<end year>
-    df["Year"] = df["Start Year"].astype(str) + '-' + df["End Year"].astype(str)
+    # Create Dates column in the format <start year>-<end year>
+    df["Dates"] = df["Start Year"].astype(str) + '-' + df["End Year"].astype(str)
 
-    # Add Start Date and End Date column
-    df["Start Date"] = np.nan
-    df["End Date"] = np.nan
+    # # Add Start Date and End Date column
+    # df["Start Date"] = np.nan
+    # df["End Date"] = np.nan
+
+    # Create "Faculty Member ID" column
+    df["Faculty Member ID"] = np.nan
 
     # Drop redundant columns
     df = df.drop(columns=["Start Year", "Start Month", "Term Years", "Term Months", "End Year", "End Month", "Program_Name", "Term_Years_Months", "CIHR_Contribution", "CIHR_Equipment", "Project_Title", "PRC_Name", "Institution_Paid", "Competition_CD", "Name"])

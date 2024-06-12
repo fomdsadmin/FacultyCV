@@ -21,7 +21,7 @@ FILENAME_RAW = args["FILENAME_RAW"]
 FILENAME_CLEAN = args["FILENAME_CLEAN"]
 
 """
-This function will clean the SSHRC data by splitting column Name into First Name and 
+This function will clean the CFI data by splitting column Name into First Name and 
 Last Name, modify the name of other columns, drop unused(duplicate) columns and 
 write the final csv file to a destination s3 bucket location.
 
@@ -49,7 +49,7 @@ def cleanCfi(bucket, key_raw, key_clean):
     # add Department column
     df["Department"] = np.nan
 
-    # add Agency column with string NSERC
+    # add Agency column with string CFI
     df["Agency"] = "CFI"
 
     # Grant Program column
@@ -66,12 +66,15 @@ def cleanCfi(bucket, key_raw, key_clean):
     # Extract year from "Funding decision year" column
     funding_decision_year = df["Funding decision year"].astype(str)
 
-    # Concatenate year with day and month from "Decision date" column to create "Start Date"
-    df["Start Date"] = df.apply(lambda row: row["Decision date"][:-2] + str(row["Funding decision year"]), axis=1)
-    df["End Date"] = np.nan
+    # # Concatenate year with day and month from "Decision date" column to create "Start Date"
+    # df["Start Date"] = df.apply(lambda row: row["Decision date"][:-2] + str(row["Funding decision year"]), axis=1)
+    # df["End Date"] = np.nan
 
-    # Create "Year" column
-    df["Year"] = funding_decision_year + "-"
+    # Create "Dates" column
+    df["Dates"] = funding_decision_year + "-"
+
+    # Create "Faculty Member ID" column
+    df["Faculty Member ID"] = np.nan
 
     # Drop redundant columns
     df = df.drop(columns=["Project Number", "Project title", "Fund Type", "Fund", "Team Leader(s)", "Team Member(s)", "Province", "Municipality", "Institution type", "Lead Institution", "Collaborating Institutions", "Field of research", "Funding decision year", "Decision date", "CFI Contribution"])

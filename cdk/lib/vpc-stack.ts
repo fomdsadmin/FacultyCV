@@ -15,7 +15,7 @@ export class VpcStack extends Stack {
       const natGatewayProvider = ec2.NatProvider.gateway()
 
       // VPC for application
-      this.vpc = new ec2.Vpc(this, 'expertiseDashboard-Vpc', {
+      this.vpc = new ec2.Vpc(this, 'facultyCV-Vpc', {
           //cidr: '10.0.0.0/16',
           ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
           natGatewayProvider: natGatewayProvider,

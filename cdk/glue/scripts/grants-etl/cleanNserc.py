@@ -54,12 +54,15 @@ def cleanNserc(bucket, key_raw, key_clean):
     # add Keywords column
     df["Keywords"] = np.nan
 
-    # rename Project Title and Fiscal Year columns
-    df["Year"] = df["Fiscal Year"]
+    # rename Fiscal Year columns
+    df["Dates"] = df["Fiscal Year"]
 
-    # add Start Date and End Date column
-    df["Start Date"] = np.nan
-    df["End Date"] = np.nan
+    # # add Start Date and End Date column
+    # df["Start Date"] = np.nan
+    # df["End Date"] = np.nan
+
+    # Create "Faculty Member ID" column
+    df["Faculty Member ID"] = np.nan
 
     # drop old columns
     df = df.drop(columns=["Program", "Fiscal Year", "Name", "Amount($)"])

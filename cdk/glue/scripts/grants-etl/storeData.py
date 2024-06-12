@@ -12,12 +12,10 @@ from custom_utils.utils import fetchFromS3, putToS3
 
 # get environment variable for this Glue job
 args = getResolvedOptions(
-    sys.argv, ["BUCKET_NAME", "FILENAME_ID", "SECRET_NAME", "DMS_TASK_ARN"])
+    sys.argv, ["BUCKET_NAME", "FILENAME_ID", "SECRET_NAME"])
 BUCKET_NAME = args["BUCKET_NAME"]
 FILENAME_ID = args["FILENAME_ID"]
 SECRET_NAME = args["SECRET_NAME"]
-DMS_TASK_ARN = args["DMS_TASK_ARN"]
-
 
 def storeData():
 
@@ -28,7 +26,7 @@ def storeData():
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
     
     data_types = {
-        'Assigned ID': str, 
+        'Faculty Member ID': str,
         'Name': str, 
         'Department': str, 
         'Agency': str,
@@ -36,22 +34,18 @@ def storeData():
         'Amount': int, 
         'Project Title': str,
         'Keywords': str, 
-        'Year': str, 
-        'Start Date': str, 
-        'End Date': str
+        'Dates': str, 
     }
     
     df_id = pd.read_csv(io.StringIO(response["Body"].read().decode(
         "utf-8")), header=0, keep_default_na=False, dtype=data_types)
 
-    # retain rows with assigned IDs
-    df_id = df_id[df_id["Assigned ID"] != ""]
     df_id = df_id.drop_duplicates()
 
     # rearrange columns order
-    columns_order = ['Assigned ID', 'Name', 'Department', 'Agency',
+    columns_order = ['Faculty Member ID', 'Name', 'Department', 'Agency',
                      'Grant Program', 'Amount', 'Project Title',
-                     'Keywords', 'Year', 'Start Date', 'End Date']
+                     'Keywords', 'Dates']
     df_id = df_id[columns_order]
 
     # convert the entire DataFrame into a list of tuples (rows)
@@ -71,26 +65,18 @@ def storeData():
     cursor = connection.cursor()
     print("Successfully connected to database")
 
-    # # clear data from table (for testing)
-    # query = "TRUNCATE grant_data"
-    # cursor.execute(query)
-
-    # connection.commit()
-
     # check for duplicate insertion
-    query = "SELECT assigned_id, name, department, agency, grant_program, amount, project_title, keywords, year, start_date, end_date FROM public.grant_data"
+    query = "SELECT faculty_member_id, name, department, agency, grant_program, amount, project_title, keywords, dates FROM public.grant_data"
     cursor.execute(query)
     tableData = list(map(lambda tup: tuple("" if x == None else x for x in tup), cursor.fetchall()))
     # the difference between the two sets is the data that are unique and can be inserted into the database
     listOfValuesToInsert = list(set(cleanData) - set(tableData))
-    #print(cleanData[0])
-    #print(tableData[0])
 
     # inserting to db
-    query = "INSERT INTO grant_data (assigned_id, name, department, agency, grant_program, amount, project_title, keywords, year, start_date, end_date) VALUES %s"
+    query = "INSERT INTO grant_data (faculty_member_id, name, department, agency, grant_program, amount, project_title, keywords, dates) VALUES %s"
     extras.execute_values(cursor, query, listOfValuesToInsert)
 
-    # connection.commit()
+    connection.commit()
     print(f"inserted {len(listOfValuesToInsert)} more rows!")
     # log the rows that are inserted
     # datetime object containing current date and time
@@ -128,12 +114,9 @@ def storeData():
 
     print("Job done!")
 
-
-
 def main(argv):
 
     storeData()
-
 
 if __name__ == "__main__":
     main(sys.argv)

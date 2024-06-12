@@ -7,7 +7,7 @@ import  { aws_s3 as s3 } from 'aws-cdk-lib';
 import { DatabaseStack } from './database-stack';
 import { GrantDataStack } from './grantdata-stack';
 
-export class DataFetchStack extends cdk.Stack {
+export class DbFetchStack extends cdk.Stack {
   public readonly psycopg2: lambda.LayerVersion;
   public readonly pyjarowinkler: lambda.LayerVersion;
 
