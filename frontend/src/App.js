@@ -26,6 +26,10 @@ Amplify.configure({
 });
 const client = generateClient();
 try {
+  console.log(getFacultyMember({
+    firstName: '',
+    lastName: ''
+  }))
   console.log(await client.graphql({
     query: getFacultyMember({
       firstName: '',
