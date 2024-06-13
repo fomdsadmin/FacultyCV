@@ -27,13 +27,13 @@ Amplify.configure({
 const client = generateClient();
 try {
   console.log(getFacultyMember({
-    firstName: 'Aayush',
-    lastName: 'Behl'
+    firstName: '',
+    lastName: ''
   }))
   console.log(await client.graphql({
     query: getFacultyMember({
-      firstName: 'Aayush',
-      lastName: 'Behl'
+      firstName: '',
+      lastName: ''
     })
   }));
 } catch (e) {
