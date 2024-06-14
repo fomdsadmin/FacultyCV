@@ -19,6 +19,6 @@ const grantDataStack = new GrantDataStack(app, 'GrantDataStack', vpcStack, datab
 grantDataStack.addDependency(vpcStack)
 grantDataStack.addDependency(databaseStack)
 
-const dbfetchStack = new DbFetchStack(app, 'DataFetchStack', databaseStack, grantDataStack,
+const dbfetchStack = new DbFetchStack(app, 'DbFetchStack', databaseStack, grantDataStack,
     {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }});
 dbfetchStack.addDependency(databaseStack)
