@@ -5,7 +5,8 @@ import { Authenticator } from '@aws-amplify/ui-react';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import { getFacultyMember } from './graphql/queries';
-
+import React from 'react';
+import { Container, Section, Bar } from '@column-resizer/react';
 
 Amplify.configure({
   API: {
@@ -27,10 +28,31 @@ Amplify.configure({
 
 function App() {
   return (
-    <div>
-      <p class="capitalize text-3xl font-bold underline">The quick brown fox ...</p>
-      <button className="btn btn-secondary">Secondary</button>
-    </div>
+    <Container className="flex h-screen bg-base-100">
+      <Section style={{ minWidth: '200px', flex: 1 }}>
+        <div className="prose lg:prose-xl p-4">
+          <h1>Your Article Title</h1>
+          <p>This is a paragraph.</p>
+          <h2>Subheading</h2>
+          <p>Another paragraph with more text content.</p>
+          <blockquote>This is a blockquote, styled by Tailwind CSS Typography.</blockquote>
+        </div>
+      </Section>
+      <Bar size={3} className="bg-neutral cursor-col-resize" />
+      <Section style={{ minWidth: '200px', flex: 1 }}>
+        <div className="p-4">
+          <button className="btn btn-secondary">Secondary</button>
+          <button className="btn btn-primary">Primary</button>
+          <button className="btn btn-accent">Accent</button>
+          <button className="btn btn-neutral">Neutral</button>
+          <button className="btn btn-base-100">Base-100</button>
+          <button className="btn btn-info">Info</button>
+          <button className="btn btn-success">Success</button>
+          <button className="btn btn-warning">Warning</button>
+          <button className="btn btn-error">Error</button>
+        </div>
+      </Section>
+    </Container>
     // <Authenticator hideSignUp={true} loginMechanisms={['email']}>
     //   {({ signOut, user }) => (
     //     <main>
