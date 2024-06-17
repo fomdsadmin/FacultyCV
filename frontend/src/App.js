@@ -27,24 +27,28 @@ Amplify.configure({
 
 function App() {
   return (
-    <Authenticator hideSignUp={true} loginMechanisms={['email']}>
-      {({ signOut, user }) => (
-        <main>
-          <h1>Hello {user.signInDetails.loginId}</h1>
-          <button onClick={async () => {
-            // Example query to graphql
-            const client = generateClient();
-            console.log(await client.graphql({
-              query: getFacultyMember({
-                firstName: '',
-                lastName: ''
-              })
-            }));
-          }}>Query</button>
-          <button onClick={signOut}>Sign out</button>
-        </main>
-      )}
-    </Authenticator>
+    <div>
+      <p class="capitalize text-3xl font-bold underline">The quick brown fox ...</p>
+      <button className="btn btn-secondary">Secondary</button>
+    </div>
+    // <Authenticator hideSignUp={true} loginMechanisms={['email']}>
+    //   {({ signOut, user }) => (
+    //     <main>
+    //       <h1>Hello {user.signInDetails.loginId}</h1>
+    //       <button onClick={async () => {
+    //         // Example query to graphql
+    //         const client = generateClient();
+    //         console.log(await client.graphql({
+    //           query: getFacultyMember({
+    //             firstName: '',
+    //             lastName: ''
+    //           })
+    //         }));
+    //       }}>Query</button>
+    //       <button onClick={signOut}>Sign out</button>
+    //     </main>
+    //   )}
+    // </Authenticator>
   );
 }
 
