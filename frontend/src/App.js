@@ -1,11 +1,12 @@
-import logo from './logo.svg';
 import { Amplify } from 'aws-amplify';
-import { generateClient } from 'aws-amplify/api';
-import { Authenticator } from '@aws-amplify/ui-react';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
-import { getFacultyMember } from './graphql/queries';
-
+import React, { useEffect, useState } from 'react';
+import { getCurrentUser } from 'aws-amplify/auth';
+import HomePage from './HomePage';
+import SignInPage from './auth/SignInPage';
+import SignUpPage from './auth/SignUpPage';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 Amplify.configure({
   API: {
@@ -26,25 +27,33 @@ Amplify.configure({
 });
 
 function App() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    async function getUser() {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+        console.log(currentUser.signInDetails.loginId, "is signed in");
+        <Navigate to="/" />
+      }
+      catch (error) {
+        setUser(null);
+        console.log('Error getting user:', error);
+        <Navigate to="/signin" />
+      }
+    }
+    getUser();
+  }, []);
+
   return (
-    <Authenticator hideSignUp={true} loginMechanisms={['email']}>
-      {({ signOut, user }) => (
-        <main>
-          <h1>Hello {user.signInDetails.loginId}</h1>
-          <button onClick={async () => {
-            // Example query to graphql
-            const client = generateClient();
-            console.log(await client.graphql({
-              query: getFacultyMember({
-                firstName: '',
-                lastName: ''
-              })
-            }));
-          }}>Query</button>
-          <button onClick={signOut}>Sign out</button>
-        </main>
-      )}
-    </Authenticator>
+    <Router>
+      <Routes>
+        <Route path="/" element={user ? <HomePage user = {user} /> : <Navigate to="/signin" />} />
+        <Route path="/signin" element={user ? <Navigate to="/" /> : <SignInPage />} />
+        <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUpPage />} />
+      </Routes>
+    </Router>
   );
 }
 
