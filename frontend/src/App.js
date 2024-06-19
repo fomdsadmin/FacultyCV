@@ -4,8 +4,7 @@ import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
 import HomePage from './HomePage';
-import SignInPage from './auth/SignInPage';
-import SignUpPage from './auth/SignUpPage';
+import AuthPage from './AuthPage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 Amplify.configure({
@@ -40,7 +39,7 @@ function App() {
       catch (error) {
         setUser(null);
         console.log('Error getting user:', error);
-        <Navigate to="/signin" />
+        <Navigate to="/auth" />
       }
     }
     getUser();
@@ -49,9 +48,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={user ? <HomePage user = {user} /> : <Navigate to="/signin" />} />
-        <Route path="/signin" element={user ? <Navigate to="/" /> : <SignInPage />} />
-        <Route path="/signup" element={user ? <Navigate to="/" /> : <SignUpPage />} />
+        <Route path="/" element={user ? <HomePage user = {user} /> : <Navigate to="/auth" />} />
+        <Route path="/auth" element={user ? <Navigate to="/" /> : <AuthPage />} />
       </Routes>
     </Router>
   );
