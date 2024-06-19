@@ -3,9 +3,10 @@ import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './HomePage';
 import AuthPage from './AuthPage';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import NotFound from './NotFound';
 
 Amplify.configure({
   API: {
@@ -34,7 +35,7 @@ function App() {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
         console.log(currentUser.signInDetails.loginId, "is signed in");
-        <Navigate to="/" />
+        <Navigate to="/home" />
       }
       catch (error) {
         setUser(null);
@@ -48,8 +49,9 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={user ? <HomePage user = {user} /> : <Navigate to="/auth" />} />
-        <Route path="/auth" element={user ? <Navigate to="/" /> : <AuthPage />} />
+        <Route path="/home" element={user ? <HomePage user = {user} /> : <Navigate to="/auth" />} />
+        <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
