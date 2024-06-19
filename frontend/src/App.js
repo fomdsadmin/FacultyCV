@@ -51,6 +51,7 @@ function App() {
       <Routes>
         <Route path="/home" element={user ? <HomePage user = {user} /> : <Navigate to="/auth" />} />
         <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage />} />
+        <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
