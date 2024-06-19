@@ -19,3 +19,7 @@ type FacultyMembers {
 type Query {
     getFacultyMember(firstName: String!, lastName: String!): FacultyMembers
 }
+
+type Mutation {
+    generatePDF(firstName: String!): String
+}

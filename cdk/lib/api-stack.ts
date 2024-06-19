@@ -1,7 +1,7 @@
 import * as appsync from 'aws-cdk-lib/aws-appsync';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { Architecture, Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Architecture, Code, Function, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Role, ServicePrincipal, ManagedPolicy } from 'aws-cdk-lib/aws-iam';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 
@@ -14,6 +14,12 @@ export class ApiStack extends cdk.Stack {
     public getUserPoolClientId = () => this.userPoolClient.userPoolClientId;  
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    const reportLabLayer = new LayerVersion(this, 'reportLabLambdaLayer', {
+        code: Code.fromAsset('./layers/reportlab.zip'),
+        compatibleRuntimes: [Runtime.PYTHON_3_11],
+        description: 'Lambda layer containing the reportlab Python library'
+    });
 
     // Auth
     this.userPool = new cognito.UserPool(this, 'FacultyCVUserPool', {
@@ -31,17 +37,17 @@ export class ApiStack extends cdk.Stack {
         } 
       });
       
-    const assignResolver = (api:appsync.GraphqlApi, query: string, ds: appsync.LambdaDataSource) => {
-        new appsync.Resolver(this, 'FacultyCVResolver-' + query, {
+    const assignResolver = (api:appsync.GraphqlApi, fieldName: string, ds: appsync.LambdaDataSource, typeName: string) => {
+        new appsync.Resolver(this, 'FacultyCVResolver-' + fieldName, {
             api: api,
             dataSource: ds,
-            typeName: 'Query',
-            fieldName: query
+            typeName: typeName,
+            fieldName: fieldName
         });
         return;
     }
 
-    const createResolver = (api:appsync.GraphqlApi, directory: string, queries: string[], env: { [key: string]: string }, role: Role) => {
+    const createResolver = (api:appsync.GraphqlApi, directory: string, fieldNames: string[], typeName: string, env: { [key: string]: string }, role: Role, layers: LayerVersion[]) => {
         const resolver = new Function(this, `facultycv-${directory}-resolver`, {
             functionName: `facultycv-${directory}-resolver`,
             runtime: Runtime.PYTHON_3_11,
@@ -51,7 +57,8 @@ export class ApiStack extends cdk.Stack {
             architecture: Architecture.X86_64,
             timeout: cdk.Duration.minutes(1),
             environment: env,
-            role: role
+            role: role,
+            layers: layers
         });
 
         const lambdaDataSource = new appsync.LambdaDataSource(this, `${directory}-data-source`, {
@@ -60,7 +67,7 @@ export class ApiStack extends cdk.Stack {
             name: `${directory}-data-source`
         });
 
-        queries.forEach(query => assignResolver(api, query, lambdaDataSource))
+        fieldNames.forEach(field => assignResolver(api, field, lambdaDataSource, typeName))
     }
 
     this.api = new appsync.GraphqlApi(this, 'FacultyCVApi', {
@@ -89,6 +96,7 @@ export class ApiStack extends cdk.Stack {
         description: 'IAM role for the lambda resolver function'
     });
 
-    createResolver(this.api, 'sampleResolver', ['getFacultyMember'], {}, resolverRole);
+    createResolver(this.api, 'sampleResolver', ['getFacultyMember'], 'Query', {}, resolverRole, []);
+    createResolver(this.api, 'pdfGenerator', ['generatePDF'], 'Mutation', {}, resolverRole, [reportLabLayer]);
     }
 }
