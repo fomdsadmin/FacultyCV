@@ -1,6 +1,7 @@
 import { Amplify } from 'aws-amplify';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
+import { Container, Section, Bar } from '@column-resizer/react';
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
