@@ -1,6 +1,6 @@
 export const getFacultyMember = ({firstName, lastName}) => `
-    query GetFacultyMember {
-        getFacultyMember(
+    query GetUser {
+        getUser(
             firstName: \"${firstName}\",
             lastName: \"${lastName}\"
         ) {
