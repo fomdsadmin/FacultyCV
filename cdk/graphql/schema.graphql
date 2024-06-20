@@ -1,0 +1,25 @@
+type FacultyMembers {
+  facultyMemberId: String!
+  firstName: String
+  preferredName: String
+  lastName: String
+  email: String
+  currentRank: String
+  primaryDepartment: String
+  secondaryDepartment: String
+  primaryFaculty: String
+  secondaryFaculty: String
+  campus: String
+  keywords: String
+  institutionUserId: String
+  scopusId: Int
+  orcidId: String
+}
+
+type Query {
+    getFacultyMember(firstName: String!, lastName: String!): FacultyMembers
+}
+
+type Mutation {
+    generatePDF(firstName: String!): String
+}
