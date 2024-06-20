@@ -74,7 +74,7 @@ export class GrantDataStack extends Stack {
 
     // Create folder structure for the user to upload grant CSV files
     const createFolders = new triggers.TriggerFunction(this, "facultyCV-createFolders", {
-      runtime: lambda.Runtime.PYTHON_3_9,
+      runtime: lambda.Runtime.PYTHON_3_11,
       functionName: "facultyCV-createFolders",
       handler: "createGrantFolders.lambda_handler",
       code: lambda.Code.fromAsset("lambda/create-grant-folders"),
@@ -97,7 +97,7 @@ export class GrantDataStack extends Stack {
 
     // Lambda function to trigger Glue jobs
     const glueTrigger = new lambda.Function(this, "facultyCV-s3-glue-trigger", {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         functionName: "facultyCV-s3-glue-trigger",
         handler: "s3GlueTrigger.lambda_handler",
         code: lambda.Code.fromAsset("lambda/s3-glue-trigger"),

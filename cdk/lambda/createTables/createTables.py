@@ -48,112 +48,43 @@ def lambda_handler(event, context):
     query = 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'
     cursor.execute(query)
 
-    # Create Researcher Data Table
+    # Create Users Table
     columns = []
-    #Added our controlled uuid to database table creation
-    columns.append(createColumn('researcher_id', 'uuid', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
-    columns.append(createColumn('institution_user_id', 'character varying', 'NOT NULL UNIQUE', False))
-    columns.append(createColumn('first_name', 'character varying', '', False))
-    columns.append(createColumn('last_name', 'character varying', '', False))
-    columns.append(createColumn('preferred_name', 'character varying', '', False))
-    columns.append(createColumn('email', 'character varying', '', False))
-    columns.append(createColumn('rank', 'character varying', '', False))
-    columns.append(createColumn('job_stream', 'character varying', '', False))
-    columns.append(createColumn('prime_department', 'character varying', '', False))
-    columns.append(createColumn('second_department', 'character varying', '', False))
-    columns.append(createColumn('prime_faculty', 'character varying', '', False))
-    columns.append(createColumn('second_faculty', 'character varying', '', False))
-    columns.append(createColumn('campus', 'character varying', '', False))
-    columns.append(createColumn('scopus_id', 'character varying', '', False))
-    columns.append(createColumn('extra_ids', 'character varying[]', '', False))
-    columns.append(createColumn('pub_ids', 'character varying[]', '', False))
-    columns.append(createColumn('keywords', 'character varying', '(10000000)', False))
-    columns.append(createColumn('merged_keywords', 'character varying', '(10000000)', False))
-    columns.append(createColumn('last_updated', 'character varying', '', True))
-    query = createQuery('researcher_data', columns)
-    cursor.execute(query)
-    
-    # Create Elsevier Data Table
-    columns = []
-    columns.append(createColumn('id', 'character varying', 'NOT NULL PRIMARY KEY', False))
-    columns.append(createColumn('num_citations', 'integer', '', False))
-    columns.append(createColumn('num_documents', 'integer', '', False))
-    columns.append(createColumn('h_index', 'double precision', '', False))
-    columns.append(createColumn('orcid_id', 'character varying', '', False))
-    columns.append(createColumn('last_updated', 'character varying', '', True))
-    query = createQuery('elsevier_data', columns)
-    cursor.execute(query)
-    
-    # Create Orcid Data Table
-    columns = []
-    columns.append(createColumn('id', 'character varying', 'NOT NULL PRIMARY KEY', False))
-    columns.append(createColumn('num_patents_filed', 'integer', '', False))
-    columns.append(createColumn('last_updated', 'character varying', '', True))
-    query = createQuery('orcid_data', columns)
-    cursor.execute(query)
-    
-    # Create Publication Data Table
-    columns = []
-    columns.append(createColumn('id', 'character varying', 'NOT NULL PRIMARY KEY', False))
-    columns.append(createColumn('title', 'character varying', '', False))
-    columns.append(createColumn('journal', 'character varying', '', False))
-    columns.append(createColumn('cited_by', 'integer', '', False))
-    columns.append(createColumn('year_published', 'character varying', '', False))
-    columns.append(createColumn('author_ids', 'character varying[]', '', False))
-    columns.append(createColumn('author_names', 'character varying', '', False))
-    columns.append(createColumn('keywords', 'character varying', '', False))
-    columns.append(createColumn('doi', 'character varying', '', False))
-    columns.append(createColumn('link', 'character varying', '', False))
-    columns.append(createColumn('last_updated', 'character varying', '', True))
-    query = createQuery('publication_data', columns)
-    cursor.execute(query)
-    
-    # Create Update Logs Table
-    columns = []
-    columns.append(createColumn('table_name', 'character varying', 'NOT NULL PRIMARY KEY', False))
-    columns.append(createColumn('last_updated', 'character varying', '', True))
-    query = createQuery('data_update_logs', columns)
-    cursor.execute(query)
-    
-    # Create Update Publications Logs Table
-    columns = []
-    columns.append(createColumn('date_updated', 'character varying', 'NOT NULL PRIMARY KEY', False))
-    columns.append(createColumn('number_of_publications_updated', 'character varying', '', True))
-    query = createQuery('update_publications_logs', columns)
+    columns.append(createColumn('user_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('first_name', 'varchar', '', False))
+    columns.append(createColumn('preferred_name', 'varchar', '', False))
+    columns.append(createColumn('last_name', 'varchar', '', False))
+    columns.append(createColumn('email', 'varchar', '', False))
+    columns.append(createColumn('role', 'varchar', '', False))
+    columns.append(createColumn('primary_department', 'varchar', '', False))
+    columns.append(createColumn('secondary_department', 'varchar', '', False))
+    columns.append(createColumn('primary_faculty', 'varchar', '', False))
+    columns.append(createColumn('secondary_faculty', 'varchar', '', False))
+    columns.append(createColumn('campus', 'varchar', '', False))
+    columns.append(createColumn('keywords', 'varchar', '', False))
+    columns.append(createColumn('institution_user_id', 'varchar', '', False))
+    columns.append(createColumn('scopus_id', 'int', '', False))
+    columns.append(createColumn('orcid_id', 'varchar', '', True))
+    query = createQuery('users', columns)
     cursor.execute(query)
 
-    # Create Grant Data Table
+    # Create Data Sections Table
     columns = []
-    columns.append(createColumn('grant_id', 'uuid', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
-    columns.append(createColumn('assigned_id', 'character varying', 'NOT NULL', False))
-    columns.append(createColumn('name', 'character varying', '', False))
-    columns.append(createColumn('department', 'character varying', '', False))
-    columns.append(createColumn('agency', 'character varying', '', False))
-    columns.append(createColumn('grant_program', 'character varying', '', False))
-    columns.append(createColumn('amount', 'int', '', False))
-    columns.append(createColumn('project_title', 'character varying', '', False))
-    columns.append(createColumn('keywords', 'character varying', '(1000000)', False))
-    columns.append(createColumn('year', 'character varying', '', False))
-    columns.append(createColumn('start_date', 'character varying', '', False))
-    columns.append(createColumn('end_date', 'character varying', '', True))
-    query = createQuery('grant_data', columns)
+    columns.append(createColumn('data_section_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('title', 'varchar', '', False))
+    columns.append(createColumn('description', 'varchar', '', False))
+    columns.append(createColumn('attributes', 'JSON', '', True))
+    query = createQuery('data_sections', columns)
     cursor.execute(query)
 
-    # Create Patent Data Table
+    # Create User CV Data Table
     columns = []
-    columns.append(createColumn('patent_id', 'uuid', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
-    columns.append(createColumn('patent_number', 'varchar', '',  False))
-    columns.append(createColumn('patent_country_code', 'varchar', '', False))
-    columns.append(createColumn('patent_kind_code', 'varchar', '', False))
-    columns.append(createColumn('patent_title', 'varchar', '', False))
-    columns.append(createColumn('patent_inventors', 'varchar', '', False))
-    columns.append(createColumn('patent_sponsors', 'varchar', '', False))
-    columns.append(createColumn('patent_family_number', 'varchar', '', False))
-    columns.append(createColumn('patent_classification', 'varchar', '', False))
-    columns.append(createColumn('patent_publication_date', 'varchar', '', False))
-    columns.append(createColumn('inventors_assigned_ids', 'varchar', '', False))
-    columns.append(createColumn('matched_inventors_names', 'varchar', '', True))
-    query = createQuery('patent_data', columns)
+    columns.append(createColumn('user_cv_data_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('user_id', 'varchar', '', False))
+    columns.append(createColumn('data_type', 'varchar', '', False))
+    columns.append(createColumn('data_section_id', 'varchar', '', False))
+    columns.append(createColumn('data_details', 'JSON', '', True))
+    query = createQuery('user_cv_data', columns)
     cursor.execute(query)
 
     cursor.close()
