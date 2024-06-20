@@ -21,6 +21,12 @@ export class ApiStack extends cdk.Stack {
         description: 'Lambda layer containing the reportlab Python library'
     });
 
+    const psycopgLayer = new LayerVersion(this, 'psycopgLambdaLayer', {
+        code: Code.fromAsset('./layers/psycopg2.zip'),
+        compatibleRuntimes: [Runtime.PYTHON_3_11],
+        description: 'Lambda layer containing the psycopg2 Python library'
+    });
+
     // Auth
     this.userPool = new cognito.UserPool(this, 'FacultyCVUserPool', {
         userPoolName: 'faculty-cv-user-pool',
@@ -96,7 +102,8 @@ export class ApiStack extends cdk.Stack {
         description: 'IAM role for the lambda resolver function'
     });
 
-    createResolver(this.api, 'sampleResolver', ['getFacultyMember'], 'Query', {}, resolverRole, []);
+    createResolver(this.api, 'sampleResolver', ['getUser'], 'Query', {}, resolverRole, []);
     createResolver(this.api, 'pdfGenerator', ['generatePDF'], 'Mutation', {}, resolverRole, [reportLabLayer]);
+    createResolver(this.api, 'addUser', ['addUser'], 'Mutation', {}, resolverRole, [psycopgLayer]);
     }
 }
