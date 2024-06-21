@@ -39,42 +39,42 @@ export class DataFetchStack extends cdk.Stack {
     // The layer containing the requests library
     const requests = new lambda.LayerVersion(this, 'requests', {
       code: lambda.Code.fromAsset('layers/requests.zip'),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_9],
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
       description: 'Contains the requests library',
     });
 
     // The layer containing the psycopg2 library
     this.psycopg2 = new lambda.LayerVersion(this, 'psycopg2', {
       code: lambda.Code.fromAsset('layers/psycopg2.zip'),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_9],
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
       description: 'Contains the psycopg2 library',
     });
 
     // The layer containing the pyjarowinler library
     this.pyjarowinkler = new lambda.LayerVersion(this, 'pyjarowinkler', {
       code: lambda.Code.fromAsset('layers/pyjarowinkler.zip'),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_9],
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
       description: 'Contains the pyjarowinkler library',
     });
 
     // The layer containing the pytz library
     const pytz = new lambda.LayerVersion(this, 'pytz', {
       code: lambda.Code.fromAsset('layers/pytz.zip'),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_9],
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
       description: 'Contains the pytz library, used to get the correct timezone when fetching the date',
     });
 
     // The layer containing the strsimpy library
     const strsimpy = new lambda.LayerVersion(this, 'strsimpy', {
       code: lambda.Code.fromAsset('layers/strsimpy.zip'),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_9],
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
       description: 'Contains the strsimpy library, used to perform various string comparison metrics',
     });
 
     // The layer containing the strsimpy library
     const unicode = new lambda.LayerVersion(this, 'unicode', {
       code: lambda.Code.fromAsset('layers/unicode.zip'),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_9],
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
       description: 'Contains the unicode library, used to decode unicode',
     });
 
@@ -88,7 +88,7 @@ export class DataFetchStack extends cdk.Stack {
     // Create the database tables (runs during deployment)
     const createTables = new triggers.TriggerFunction(this, 'facultyCV-createTables', {
       functionName: 'facultyCV-createTables',
-      runtime: lambda.Runtime.PYTHON_3_9,
+      runtime: lambda.Runtime.PYTHON_3_11,
       handler: 'createTables.lambda_handler',
       layers: [this.psycopg2],
       code: lambda.Code.fromAsset('lambda/createTables'),
@@ -194,7 +194,7 @@ export class DataFetchStack extends cdk.Stack {
     */
     const scopusClean = new lambda.Function(this, 'expertiseDashboard-scopusClean', {
         functionName: 'expertiseDashboard-scopusClean',
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         handler: 'scopusClean.lambda_handler',
         code: lambda.Code.fromAsset('lambda/scopusClean'),
         timeout: cdk.Duration.minutes(15),
@@ -211,7 +211,7 @@ export class DataFetchStack extends cdk.Stack {
   
     const institutionClean = new lambda.Function(this, 'expertiseDashboard-institutionClean', {
         functionName: 'expertiseDashboard-institutionClean',
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         handler: 'institutionClean.lambda_handler',
         code: lambda.Code.fromAsset('lambda/institutionClean'),
         timeout: cdk.Duration.minutes(15),
@@ -227,7 +227,7 @@ export class DataFetchStack extends cdk.Stack {
     });
   
     const compareNames = new lambda.Function(this, 'expertiseDashboard-compareNames', {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         functionName: 'expertiseDashboard-compareNames',
         handler: 'compareNames.lambda_handler',
         layers: [this.pyjarowinkler, numpy, unicode, strsimpy],
@@ -245,7 +245,7 @@ export class DataFetchStack extends cdk.Stack {
     });
   
     const cleanNoMatches = new lambda.Function(this, 'expertiseDashboard-cleanNoMatches', {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         functionName: 'expertiseDashboard-cleanNoMatches',
         handler: 'cleanNoMatches.lambda_handler',
         layers: [this.pyjarowinkler, requests],
@@ -263,7 +263,7 @@ export class DataFetchStack extends cdk.Stack {
     });
   
     const identifyDuplicates = new lambda.Function(this, 'expertiseDashboard-identifyDuplicates', {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         functionName: 'expertiseDashboard-identifyDuplicates',
         handler: 'identifyDuplicates.lambda_handler',
         layers: [this.pyjarowinkler, requests],
@@ -283,7 +283,7 @@ export class DataFetchStack extends cdk.Stack {
     });
     
     const researcherFetch = new lambda.Function(this, 'expertiseDashboard-researcherFetch', {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         functionName: 'expertiseDashboard-researcherFetch',
         handler: 'researcherFetch.lambda_handler',
         layers: [this.psycopg2, pytz],
@@ -301,7 +301,7 @@ export class DataFetchStack extends cdk.Stack {
     });
       
     const elsevierFetch = new lambda.Function(this, 'expertiseDashboard-elsevierFetch', {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         functionName: 'expertiseDashboard-elsevierFetch',
         handler: 'elsevierFetch.lambda_handler',
         layers: [requests, this.psycopg2, pytz],
@@ -322,7 +322,7 @@ export class DataFetchStack extends cdk.Stack {
     });
       
     const orcidFetch = new lambda.Function(this, 'expertiseDashboard-orcidFetch', {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         functionName: 'expertiseDashboard-orcidFetch',
         handler: 'orcidFetch.lambda_handler',
         layers: [requests, this.psycopg2, pytz],
@@ -340,7 +340,7 @@ export class DataFetchStack extends cdk.Stack {
     });
       
     const publicationFetch = new lambda.Function(this, 'expertiseDashboard-publicationFetch', {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         functionName: 'expertiseDashboard-publicationFetch',
         handler: 'publicationFetch.lambda_handler',
         layers: [requests, this.psycopg2, pytz],
