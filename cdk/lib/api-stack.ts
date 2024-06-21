@@ -9,23 +9,31 @@ export class ApiStack extends cdk.Stack {
     private readonly api: appsync.GraphqlApi;
     private readonly userPool: cognito.UserPool;
     private readonly userPoolClient: cognito.UserPoolClient;
+    private readonly layerList: {[key: string]: LayerVersion};
     public getEndpointUrl = () => this.api.graphqlUrl;
     public getUserPoolId = () => this.userPool.userPoolId;
-    public getUserPoolClientId = () => this.userPoolClient.userPoolClientId;  
+    public getUserPoolClientId = () => this.userPoolClient.userPoolClientId;
+    public addLayer = (name: string, layer: LayerVersion) => this.layerList[name] = layer;
+    public getLayers = () => this.layerList;  
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-
+    
+    this.layerList = {};
+    
     const reportLabLayer = new LayerVersion(this, 'reportLabLambdaLayer', {
         code: Code.fromAsset('./layers/reportlab.zip'),
-        compatibleRuntimes: [Runtime.PYTHON_3_11],
+        compatibleRuntimes: [Runtime.PYTHON_3_9],
         description: 'Lambda layer containing the reportlab Python library'
     });
 
     const psycopgLayer = new LayerVersion(this, 'psycopgLambdaLayer', {
         code: Code.fromAsset('./layers/psycopg2.zip'),
-        compatibleRuntimes: [Runtime.PYTHON_3_11],
+        compatibleRuntimes: [Runtime.PYTHON_3_9],
         description: 'Lambda layer containing the psycopg2 Python library'
     });
+
+    this.layerList['psycopg2'] = psycopgLayer;
+    this.layerList['reportlab'] = reportLabLayer;
 
     // Auth
     this.userPool = new cognito.UserPool(this, 'FacultyCVUserPool', {
@@ -56,7 +64,7 @@ export class ApiStack extends cdk.Stack {
     const createResolver = (api:appsync.GraphqlApi, directory: string, fieldNames: string[], typeName: string, env: { [key: string]: string }, role: Role, layers: LayerVersion[]) => {
         const resolver = new Function(this, `facultycv-${directory}-resolver`, {
             functionName: `facultycv-${directory}-resolver`,
-            runtime: Runtime.PYTHON_3_11,
+            runtime: Runtime.PYTHON_3_9,
             memorySize: 512,
             code: Code.fromAsset(`./lambda/${directory}`),
             handler: 'resolver.lambda_handler',
