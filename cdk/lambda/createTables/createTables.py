@@ -2,11 +2,11 @@ import boto3
 import psycopg2
 import json
 
-# TESTING PURPOSES
-session = boto3.Session(profile_name='abhi')
-sm_client = session.client('secretsmanager')
+# # TESTING PURPOSES
+# session = boto3.Session(profile_name='abhi')
+# sm_client = session.client('secretsmanager')
 
-# sm_client = boto3.client('secretsmanager')
+sm_client = boto3.client('secretsmanager')
 
 def getCredentials():
     credentials = {}
@@ -41,60 +41,56 @@ def createColumn(column_name, columnType, constraints, final_column):
         column = column + ', '
     return column
 
-# include: event, context
-def lambda_handler():
+def lambda_handler(event, context):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
-    # cursor = connection.cursor()
+    cursor = connection.cursor()
 
-    # #Add extension to create UUID Fields
-    # query = 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'
-    # cursor.execute(query)
+    #Add extension to create UUID Fields
+    query = 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'
+    cursor.execute(query)
 
-    # # Create Users Table
-    # columns = []
-    # columns.append(createColumn('user_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
-    # columns.append(createColumn('first_name', 'varchar', '', False))
-    # columns.append(createColumn('preferred_name', 'varchar', '', False))
-    # columns.append(createColumn('last_name', 'varchar', '', False))
-    # columns.append(createColumn('email', 'varchar', '', False))
-    # columns.append(createColumn('role', 'varchar', '', False))
-    # columns.append(createColumn('primary_department', 'varchar', '', False))
-    # columns.append(createColumn('secondary_department', 'varchar', '', False))
-    # columns.append(createColumn('primary_faculty', 'varchar', '', False))
-    # columns.append(createColumn('secondary_faculty', 'varchar', '', False))
-    # columns.append(createColumn('campus', 'varchar', '', False))
-    # columns.append(createColumn('keywords', 'varchar', '', False))
-    # columns.append(createColumn('institution_user_id', 'varchar', '', False))
-    # columns.append(createColumn('scopus_id', 'int', '', False))
-    # columns.append(createColumn('orcid_id', 'varchar', '', True))
-    # query = createQuery('users', columns)
-    # cursor.execute(query)
+    # Create Users Table
+    columns = []
+    columns.append(createColumn('user_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('first_name', 'varchar', '', False))
+    columns.append(createColumn('preferred_name', 'varchar', '', False))
+    columns.append(createColumn('last_name', 'varchar', '', False))
+    columns.append(createColumn('email', 'varchar', '', False))
+    columns.append(createColumn('role', 'varchar', '', False))
+    columns.append(createColumn('primary_department', 'varchar', '', False))
+    columns.append(createColumn('secondary_department', 'varchar', '', False))
+    columns.append(createColumn('primary_faculty', 'varchar', '', False))
+    columns.append(createColumn('secondary_faculty', 'varchar', '', False))
+    columns.append(createColumn('campus', 'varchar', '', False))
+    columns.append(createColumn('keywords', 'varchar', '', False))
+    columns.append(createColumn('institution_user_id', 'varchar', '', False))
+    columns.append(createColumn('scopus_id', 'int', '', False))
+    columns.append(createColumn('orcid_id', 'varchar', '', True))
+    query = createQuery('users', columns)
+    cursor.execute(query)
 
-    # # Create Data Sections Table
-    # columns = []
-    # columns.append(createColumn('data_section_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
-    # columns.append(createColumn('title', 'varchar', '', False))
-    # columns.append(createColumn('description', 'varchar', '', False))
-    # columns.append(createColumn('attributes', 'JSON', '', True))
-    # query = createQuery('data_sections', columns)
-    # cursor.execute(query)
+    # Create Data Sections Table
+    columns = []
+    columns.append(createColumn('data_section_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('title', 'varchar', '', False))
+    columns.append(createColumn('description', 'varchar', '', False))
+    columns.append(createColumn('attributes', 'JSON', '', True))
+    query = createQuery('data_sections', columns)
+    cursor.execute(query)
 
-    # # Create User CV Data Table
-    # columns = []
-    # columns.append(createColumn('user_cv_data_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
-    # columns.append(createColumn('user_id', 'varchar', '', False))
-    # columns.append(createColumn('data_type', 'varchar', '', False))
-    # columns.append(createColumn('data_section_id', 'varchar', '', False))
-    # columns.append(createColumn('data_details', 'JSON', '', True))
-    # query = createQuery('user_cv_data', columns)
-    # cursor.execute(query)
+    # Create User CV Data Table
+    columns = []
+    columns.append(createColumn('user_cv_data_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('user_id', 'varchar', '', False))
+    columns.append(createColumn('data_type', 'varchar', '', False))
+    columns.append(createColumn('data_section_id', 'varchar', '', False))
+    columns.append(createColumn('data_details', 'JSON', '', True))
+    query = createQuery('user_cv_data', columns)
+    cursor.execute(query)
 
-    # cursor.close()
-    # connection.commit()
+    cursor.close()
+    connection.commit()
     connection.close()
     print("Tables Created")
-
-if __name__ == '__main__':
-    lambda_handler()

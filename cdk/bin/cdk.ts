@@ -26,4 +26,5 @@ const databaseStack = new DatabaseStack(app, 'DatabaseStack', vpcStack,
 );
 
 const dbFetchStack = new DbFetchStack(app, 'DbFetchStack', databaseStack, apiStack,
-  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }});
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);

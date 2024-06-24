@@ -23,7 +23,7 @@ export class DbFetchStack extends cdk.Stack {
     const psycopgLambdaLayer = apiStack.getLayers()['psycopg2'];   
 
     // Create the database tables (runs during deployment)
-    /*const createTables = new triggers.TriggerFunction(this, 'facultyCV-createTables', {
+    const createTables = new triggers.TriggerFunction(this, 'facultyCV-createTables', {
       functionName: 'facultyCV-createTables',
       runtime: lambda.Runtime.PYTHON_3_9,
       handler: 'createTables.lambda_handler',
@@ -35,6 +35,6 @@ export class DbFetchStack extends cdk.Stack {
     });
     createTables.role?.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName('SecretsManagerReadWrite')
-    );*/
-    }
+    );
+  }
 }
