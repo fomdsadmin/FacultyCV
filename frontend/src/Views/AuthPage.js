@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
+import PageContainer from './PageContainer.js';
+
 
 const AuthPage = () => {
   const [username, setUsername] = useState('');
@@ -136,16 +138,16 @@ const AuthPage = () => {
   };
 
   return (
-    <div>
+    <PageContainer>
       {loading && <div>Loading...</div>}
       {!loading && !newUserPassword && !newSignUp && !signUpConfirmation && (
         <div>
           <form onSubmit={handleLogin}>
-            <input value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" required />
-            <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" type="password" required />
-            <button type="submit">Log in</button>
+            <input className="input input-bordered w-full max-w-xs" value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" required />
+            <input className="input input-bordered w-full max-w-xs" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" type="password" required />
+            <button className="btn btn-primary" type="submit">Log in</button>
           </form>
-          <button onClick={() => setNewSignUp(true)}>Sign Up</button>
+          <button className="btn btn-secondary" onClick={() => setNewSignUp(true)}>Sign Up</button>
         </div>
       )}
       {!loading && newSignUp && (
@@ -179,7 +181,7 @@ const AuthPage = () => {
           </form>
         </div>
       )}
-    </div>
+   </PageContainer>
   );
 };
 

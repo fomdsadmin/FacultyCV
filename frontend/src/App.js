@@ -5,9 +5,9 @@ import { Container, Section, Bar } from '@column-resizer/react';
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import HomePage from './HomePage';
-import AuthPage from './AuthPage';
-import NotFound from './NotFound';
+import HomePage from './Views/HomePage';
+import AuthPage from './Views/AuthPage';
+import NotFound from './Views/NotFound';
 
 Amplify.configure({
   API: {

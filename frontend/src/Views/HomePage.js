@@ -1,7 +1,11 @@
 import React from 'react';
 import { generateClient } from 'aws-amplify/api';
-import { getFacultyMember } from './graphql/queries';
+import { getFacultyMember } from '../graphql/queries';
 import { signOut } from 'aws-amplify/auth';
+import { Container } from '@column-resizer/react';
+import PageContainer from './PageContainer';
+import FacultyMenu from '../Components/FacultyMenu';
+
 
 const HomePage = ({ user }) => {
 
@@ -16,10 +20,11 @@ const HomePage = ({ user }) => {
     }
   }
   return (
-    <div>
+    <PageContainer>
+      <FacultyMenu userName={user.signInDetails.loginId} onSignOut={handleSignOut}></FacultyMenu>
       <main>
         <h1>Hello {user.signInDetails.loginId}</h1>
-        <button onClick={async () => {
+        <button className="btn btn-info" onClick={async () => {
           // Example query to graphql
           const client = generateClient();
           console.log(await client.graphql({
@@ -29,9 +34,8 @@ const HomePage = ({ user }) => {
             })
           }));
         }}>Query</button>
-        <button onClick={handleSignOut}>Sign out</button>
       </main>
-    </div>
+    </PageContainer>
   );
 };
 
