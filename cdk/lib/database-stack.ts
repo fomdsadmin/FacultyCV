@@ -18,6 +18,16 @@ export class DatabaseStack extends Stack {
       // Database secret with customized username retrieve at deployment time
       const dbUsername = sm.Secret.fromSecretNameV2(this, 'facultyCV-dbUsername', 'facultyCV-dbUsername')
 
+      const parameterGroup = new rds.ParameterGroup(this, "rdsParameterGroup", {
+        engine: rds.DatabaseInstanceEngine.postgres({
+          version: rds.PostgresEngineVersion.VER_16_3,
+        }),
+        description: "Empty parameter group", // Might need to change this later
+        parameters: {
+          'rds.force_ssl': '0'
+        }
+      });
+
       // Define the postgres database
       this.dbInstance = new rds.DatabaseInstance(this, 'facultyCV', {
         vpc: vpcStack.vpc,
@@ -45,6 +55,7 @@ export class DatabaseStack extends Stack {
         databaseName: 'facultyCV',
         publiclyAccessible: false,
         storageEncrypted: true, // storage encryption at rest
+        parameterGroup: parameterGroup
       });
 
       this.dbInstance.connections.securityGroups.forEach(function (securityGroup) {

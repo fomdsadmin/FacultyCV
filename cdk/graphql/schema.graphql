@@ -38,4 +38,20 @@ type Mutation {
       scopusId: Int,
       orcidId: String
     ): String
+    updateUser(
+      firstName: String,
+      lastName: String,
+      preferredName: String,
+      email: String,
+      currentRank: String,
+      primaryDepartment: String,
+      secondaryDepartment: String,
+      primaryFaculty: String,
+      secondaryFaculty: String,
+      campus: String,
+      keywords: String,
+      institutionUserId: String,
+      scopusId: Int,
+      orcidId: String
+    ): String
 }
