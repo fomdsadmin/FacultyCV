@@ -8,8 +8,9 @@ import {
   LayerVersion,
   Runtime,
 } from "aws-cdk-lib/aws-lambda";
-import { Role, ServicePrincipal, ManagedPolicy } from "aws-cdk-lib/aws-iam";
+import { Role, ServicePrincipal, ManagedPolicy, Policy, PolicyStatement, PolicyDocument, Effect } from "aws-cdk-lib/aws-iam";
 import * as cognito from "aws-cdk-lib/aws-cognito";
+import { DatabaseStack } from "./database-stack";
 
 export class ApiStack extends cdk.Stack {
   private readonly api: appsync.GraphqlApi;
@@ -22,7 +23,7 @@ export class ApiStack extends cdk.Stack {
   public addLayer = (name: string, layer: LayerVersion) =>
     (this.layerList[name] = layer);
   public getLayers = () => this.layerList;
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, databaseStack: DatabaseStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
     this.layerList = {};
@@ -99,6 +100,7 @@ export class ApiStack extends cdk.Stack {
         environment: env,
         role: role,
         layers: layers,
+        vpc: databaseStack.dbInstance.vpc // Same VPC as the database
       });
 
       const lambdaDataSource = new appsync.LambdaDataSource(
@@ -138,18 +140,31 @@ export class ApiStack extends cdk.Stack {
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName("AwsAppSyncInvokeFullAccess"),
         ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess"),
+        ManagedPolicy.fromAwsManagedPolicyName("SecretsManagerReadWrite")
       ],
       description: "IAM role for the lambda resolver function",
     });
 
+    resolverRole.addToPolicy(
+      new PolicyStatement({
+        actions: [
+          "ec2:CreateNetworkInterface", 
+          "ec2:DeleteNetworkInterface",
+          "ec2:DescribeNetworkInterfaces"
+        ],
+        effect: Effect.ALLOW,
+        resources: ['*']
+      })
+    );
+
     createResolver(
       this.api,
-      "sampleResolver",
+      "getUser",
       ["getUser"],
       "Query",
       {},
       resolverRole,
-      []
+      [psycopgLayer]
     );
     createResolver(
       this.api,

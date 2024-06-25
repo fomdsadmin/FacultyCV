@@ -1,4 +1,4 @@
-export const getFacultyMember = ({firstName, lastName}) => `
+export const getUser = ({firstName, lastName}) => `
     query GetUser {
         getUser(
             firstName: \"${firstName}\",

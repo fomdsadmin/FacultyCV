@@ -1,6 +1,6 @@
 import React from 'react';
 import { generateClient } from 'aws-amplify/api';
-import { getFacultyMember } from './graphql/queries';
+import { getUser } from './graphql/queries';
 import { signOut } from 'aws-amplify/auth';
 
 const HomePage = ({ user }) => {
@@ -23,7 +23,7 @@ const HomePage = ({ user }) => {
           // Example query to graphql
           const client = generateClient();
           console.log(await client.graphql({
-            query: getFacultyMember({
+            query: getUser({
               firstName: '',
               lastName: ''
             })
