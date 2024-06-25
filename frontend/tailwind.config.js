@@ -39,7 +39,7 @@ module.exports = {
           "primary": "#FACE5B",
           "secondary": "#EF8253",
           "accent": "#74C2E4",
-          "neutral": "#D9D9D9",
+          "neutral": "#4B5563",
           "base-100": "#ffffff",
           "info": "#545F71",
           "success": "#72CB76",
@@ -52,5 +52,28 @@ module.exports = {
   plugins: [
     require('@tailwindcss/typography'),
     require('daisyui'),
+    function ({ addUtilities}) {
+      const newUtilities = {
+        ".scrollbar-thin": {
+          scrollbarWidth: "thin",
+          scrollbarColor: "rgb(31 29 29) white"
+        },
+        "scrollbar-webkit": {
+          "&::-webkit-scrollbar": {
+            width: "8px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "white",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "rgb(31 41 55)",
+            borderRadius: "20px",
+            border: "1px solid white"
+          }
+        } 
+      }
+
+      addUtilities(newUtilities, ["responsive", "hover"])
+    }
   ],
 }

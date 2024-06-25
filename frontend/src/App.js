@@ -1,13 +1,14 @@
 import { Amplify } from 'aws-amplify';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
-import { Container, Section, Bar } from '@column-resizer/react';
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './Views/HomePage';
 import AuthPage from './Views/AuthPage';
 import NotFound from './Views/NotFound';
+import AcademicWork from './Views/AcademicWork';
+import Reports from './Views/Reports';
 
 Amplify.configure({
   API: {
@@ -44,6 +45,7 @@ function App() {
         <Navigate to="/auth" />
       }
     }
+    
     getUser();
   }, []);
 
@@ -52,6 +54,8 @@ function App() {
       <Routes>
         <Route path="/home" element={user ? <HomePage user = {user} /> : <Navigate to="/auth" />} />
         <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage />} />
+        <Route path="/academic-work" element={user ? <AcademicWork user = {user} /> : <Navigate to="/auth" />} />
+        <Route path="/reports" element={user ? <Reports user = {user} /> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
