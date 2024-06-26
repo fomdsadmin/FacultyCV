@@ -9,6 +9,7 @@ import AuthPage from './Views/AuthPage';
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Reports from './Views/Reports';
+import Assistants from './Views/Assistants';
 
 Amplify.configure({
   API: {
@@ -56,6 +57,7 @@ function App() {
         <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage />} />
         <Route path="/academic-work" element={user ? <AcademicWork user = {user} /> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports user = {user} /> : <Navigate to="/auth" />} />
+        <Route path="/assistants" element={user ? <Assistants user = {user} /> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

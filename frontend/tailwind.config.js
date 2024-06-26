@@ -3,6 +3,9 @@ module.exports = {
   content: ['./src/**/*.{html,js,jsx,ts,tsx}', './public/index.html'],
   theme: {
     extend: {
+      boxShadow: {
+        'glow': '0px 0px 16px rgba(17, 17, 26, 0.1)',
+      },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
@@ -39,7 +42,7 @@ module.exports = {
           "primary": "#FACE5B",
           "secondary": "#EF8253",
           "accent": "#74C2E4",
-          "neutral": "#4B5563",
+          "neutral": "#D9D9D9",
           "base-100": "#ffffff",
           "info": "#545F71",
           "success": "#72CB76",
