@@ -55,8 +55,8 @@ def lambda_handler(event, context):
     columns = []
     columns.append(createColumn('user_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
     columns.append(createColumn('first_name', 'varchar', '', False))
-    columns.append(createColumn('preferred_name', 'varchar', '', False))
     columns.append(createColumn('last_name', 'varchar', '', False))
+    columns.append(createColumn('preferred_name', 'varchar', '', False))
     columns.append(createColumn('email', 'varchar', '', False))
     columns.append(createColumn('role', 'varchar', '', False))
     columns.append(createColumn('primary_department', 'varchar', '', False))
