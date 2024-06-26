@@ -16,12 +16,30 @@ type User {
   orcidId: String
 }
 
+type DataSection {
+  dataSectionId: String!
+  title: String!
+  description: String!
+  attributes: String! # JSON
+}
+
+type UserCVData {
+  userCVDataId: String!
+  userId: String!
+  dataType: String
+  dataSectionId: String!
+  dataDetails: String!
+}
+
 type Query {
     getUser(firstName: String!, lastName: String!): User
+    getAllSections: [ DataSection ]
+    getUserCVData(userId: String!, dataSectionId: String!): UserCVData
 }
 
 type Mutation {
     generatePDF(firstName: String!): String
+
     addUser(
       firstName: String!,
       lastName: String!,
@@ -38,6 +56,7 @@ type Mutation {
       scopusId: Int,
       orcidId: String
     ): String
+
     updateUser(
       firstName: String,
       lastName: String,
@@ -53,5 +72,17 @@ type Mutation {
       institutionUserId: String,
       scopusId: Int,
       orcidId: String
+    ): String
+
+    addSection(
+      title: String!
+      description: String!
+      attributes: String! # JSON
+    ): String
+
+    addUserCVData(
+      userId: String!
+      dataSectionId: String!
+      dataDetails: String! # JSON
     ): String
 }

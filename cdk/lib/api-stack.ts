@@ -193,5 +193,41 @@ export class ApiStack extends cdk.Stack {
       resolverRole,
       [psycopgLayer]
     );
+    createResolver(
+      this.api,
+      "getAllSections",
+      ["getAllSections"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addSection",
+      ["addSection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addUserCVData",
+      ["addUserCVData"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getUserCVData",
+      ["getUserCVData"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    )
   }
 }
