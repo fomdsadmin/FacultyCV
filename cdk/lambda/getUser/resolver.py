@@ -18,26 +18,40 @@ def getCredentials():
 def getUser(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
-    print("Connected to Database")
+    print("Connected to database")
+    cursor = connection.cursor()
+    
+    # Prepare the SELECT query
+    query = "SELECT * FROM users WHERE email = %s"
+    cursor.execute(query, (arguments['email'],))
+
+    # Fetch the result
+    result = cursor.fetchone()
+    if result is not None:
+        user = {
+            'user_id': result[0],
+            'first_name': result[1],
+            'preferred_name': result[2],
+            'last_name': result[3],
+            'email': result[4],
+            'role': result[5],
+            'primary_department': result[6],
+            'secondary_department': result[7],
+            'primary_faculty': result[8],
+            'secondary_faculty': result[9],
+            'campus': result[10],
+            'keywords': result[11],
+            'institution_user_id': result[12],
+            'scopus_id': result[13],
+            'orcid_id': result[14]
+        }
+    else:
+        user = "User not found"
+
+    cursor.close()
+    connection.commit()
     connection.close()
-    # TODO
-    return {
-        "facultyMemberId": "testId",
-        "firstName": "Aayush",
-        "preferredName": "",
-        "lastName": "Behl",
-        "email": "aayush.behl@ubc.ca",
-        "currentRank": "Student",
-        "primaryDepartment": "Faculty of Applied Science",
-        "secondaryDepartment": "",
-        "primaryFaculty": "Computer Engineering",
-        "secondaryFaculty": "",
-        "campus": "Vancouver",
-        "keywords": "",
-        "institutionUserId": "123",
-        "scopusId": 1234,
-        "orcidId": "12345"
-    }
+    return user
 
 def lambda_handler(event, context):
     return getUser(event['arguments'])

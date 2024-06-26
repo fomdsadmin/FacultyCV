@@ -20,7 +20,7 @@ def getUserCVData(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT user_cv_data_id, user_id, data_type, data_section_id, data_details FROM user_cv_data WHERE user_id = %s AND data_section_id = %s', (arguments['userId'], arguments['dataSectionId']))
+    cursor.execute('SELECT user_cv_data_id, user_id, data_section_id, data_details FROM user_cv_data WHERE user_id = %s AND data_section_id = %s', (arguments['userId'], arguments['dataSectionId']))
     results = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -29,9 +29,8 @@ def getUserCVData(arguments):
     return {
         'userCVDataId': results[0][0],
         'userId': results[0][1],
-        'dataType': results[0][2],
-        'dataSectionId': results[0][3],
-        'dataDetails': results[0][4]
+        'dataSectionId': results[0][2],
+        'dataDetails': results[0][3]
     }
 
 def lambda_handler(event, context):

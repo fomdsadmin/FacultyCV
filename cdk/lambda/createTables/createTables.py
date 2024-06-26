@@ -76,6 +76,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('data_section_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
     columns.append(createColumn('title', 'varchar', '', False))
     columns.append(createColumn('description', 'varchar', '', False))
+    columns.append(createColumn('data_type', 'varchar', '', False))
     columns.append(createColumn('attributes', 'JSON', '', True))
     query = createQuery('data_sections', columns)
     cursor.execute(query)
@@ -84,7 +85,6 @@ def lambda_handler(event, context):
     columns = []
     columns.append(createColumn('user_cv_data_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
     columns.append(createColumn('user_id', 'varchar', '', False))
-    columns.append(createColumn('data_type', 'varchar', '', False))
     columns.append(createColumn('data_section_id', 'varchar', '', False))
     columns.append(createColumn('data_details', 'JSON', '', True))
     query = createQuery('user_cv_data', columns)

@@ -16,10 +16,54 @@ def getCredentials():
     return credentials
 
 def updateUser(arguments):
-    # TODO
-    return
+    credentials = getCredentials()
+    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
+    print("Connected to database")
+    cursor = connection.cursor()
+
+    # Prepare the UPDATE query
+    query = """
+    UPDATE users SET 
+        first_name = %s, 
+        last_name = %s, 
+        preferred_name = %s, 
+        email = %s, 
+        role = %s, 
+        primary_department = %s, 
+        secondary_department = %s, 
+        primary_faculty = %s, 
+        secondary_faculty = %s, 
+        campus = %s, 
+        keywords = %s, 
+        institution_user_id = %s, 
+        scopus_id = %s, 
+        orcid_id = %s
+    WHERE user_id = %s
+    """
+
+    # Execute the query with the provided arguments
+    cursor.execute(query, (
+        arguments.get('firstName'), 
+        arguments.get('lastName'), 
+        arguments.get('preferredName'), 
+        arguments.get('email'), 
+        arguments.get('role'), 
+        arguments.get('primaryDepartment'), 
+        arguments.get('secondaryDepartment'), 
+        arguments.get('primaryFaculty'), 
+        arguments.get('secondaryFaculty'), 
+        arguments.get('campus'), 
+        arguments.get('keywords'), 
+        arguments.get('institutionUserId'), 
+        arguments.get('scopusId'), 
+        arguments.get('orcidId'),
+        arguments.get('userId')
+    ))
+
+    cursor.close()
+    connection.commit()
+    connection.close()
+    return "User updated successfully"
 
 def lambda_handler(event, context):
-    arguments = event['arguments']
-    updateUser(arguments=arguments)
-    return "SUCCESS"
+    return updateUser(event['arguments'])
