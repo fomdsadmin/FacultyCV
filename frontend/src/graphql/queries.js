@@ -1,8 +1,8 @@
 export const getUserQuery = ({firstName, lastName}) => `
     query GetUser {
         getUser(
-            firstName: \"${firstName}\",
-            lastName: \"${lastName}\"
+            firstName: "${firstName}",
+            lastName: "${lastName}"
         ) {
             firstName
             lastName

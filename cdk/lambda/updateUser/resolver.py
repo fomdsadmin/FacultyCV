@@ -28,7 +28,8 @@ def updateUser(arguments):
         last_name = %s, 
         preferred_name = %s, 
         email = %s, 
-        role = %s, 
+        role = %s,
+        rank = %s,  
         primary_department = %s, 
         secondary_department = %s, 
         primary_faculty = %s, 
@@ -43,21 +44,21 @@ def updateUser(arguments):
 
     # Execute the query with the provided arguments
     cursor.execute(query, (
-        arguments.get('firstName'), 
-        arguments.get('lastName'), 
-        arguments.get('preferredName'), 
-        arguments.get('email'), 
-        arguments.get('role'), 
-        arguments.get('primaryDepartment'), 
-        arguments.get('secondaryDepartment'), 
-        arguments.get('primaryFaculty'), 
-        arguments.get('secondaryFaculty'), 
-        arguments.get('campus'), 
-        arguments.get('keywords'), 
-        arguments.get('institutionUserId'), 
-        arguments.get('scopusId'), 
-        arguments.get('orcidId'),
-        arguments.get('userId')
+        arguments['first_name'] if 'first_name' in arguments else None,
+        arguments['last_name'] if 'last_name' in arguments else None,
+        arguments['preferred_name'] if 'preferred_name' in arguments else None, 
+        arguments['email'] if 'email' in arguments else None,
+        arguments['role'] if 'role' in arguments else None,
+        arguments['rank'] if 'rank' in arguments else None,
+        arguments['primary_department'] if 'primary_department' in arguments else None,
+        arguments['secondary_department'] if 'secondary_department' in arguments else None,
+        arguments['primary_faculty'] if 'primary_faculty' in arguments else None,
+        arguments['secondary_faculty'] if 'secondary_faculty' in arguments else None,
+        arguments['campus'] if 'campus' in arguments else None,
+        arguments['keywords'] if 'keywords' in arguments else None,
+        arguments['institution_user_id'] if 'institution_user_id' in arguments else None,
+        int(arguments['scopus_id']) if 'scopus_id' in arguments else None,
+        arguments['orcid_id'] if 'orcid_id' in arguments else None
     ))
 
     cursor.close()

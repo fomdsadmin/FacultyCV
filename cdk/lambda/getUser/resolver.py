@@ -22,8 +22,14 @@ def getUser(arguments):
     cursor = connection.cursor()
     
     # Prepare the SELECT query
-    query = "SELECT * FROM users WHERE email = %s"
-    cursor.execute(query, (arguments['email'],))
+    email = arguments['email']  # get the email from arguments
+    query = f"""
+    SELECT * FROM users 
+    WHERE email = '{email}'
+    """
+    
+    # Execute the query
+    cursor.execute(query)
 
     # Fetch the result
     result = cursor.fetchone()
@@ -31,19 +37,20 @@ def getUser(arguments):
         user = {
             'user_id': result[0],
             'first_name': result[1],
-            'preferred_name': result[2],
-            'last_name': result[3],
+            'last_name': result[2],
+            'preferred_name': result[3],
             'email': result[4],
             'role': result[5],
-            'primary_department': result[6],
-            'secondary_department': result[7],
-            'primary_faculty': result[8],
-            'secondary_faculty': result[9],
-            'campus': result[10],
-            'keywords': result[11],
-            'institution_user_id': result[12],
-            'scopus_id': result[13],
-            'orcid_id': result[14]
+            'rank': result[6],
+            'primary_department': result[7],
+            'secondary_department': result[8],
+            'primary_faculty': result[9],
+            'secondary_faculty': result[10],
+            'campus': result[11],
+            'keywords': result[12],
+            'institution_user_id': result[13],
+            'scopus_id': result[14],
+            'orcid_id': result[15]
         }
     else:
         user = "User not found"
