@@ -89,4 +89,10 @@ type Mutation {
       data_section_id: String!
       data_details: String! # JSON
     ): String
+
+    updateUserCVData(
+      userId: String!
+      dataSectionId: String!
+      dataDetails: String!
+    ): String
 }

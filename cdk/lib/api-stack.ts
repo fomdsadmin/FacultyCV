@@ -229,5 +229,14 @@ export class ApiStack extends cdk.Stack {
       resolverRole,
       [psycopgLayer]
     )
+    createResolver(
+      this.api,
+      "updateUserCVData",
+      ["updateUserCVData"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    )
   }
 }

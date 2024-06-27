@@ -20,7 +20,7 @@ def getAllSections(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT data_section_id, title, description, attributes FROM data_sections')
+    cursor.execute('SELECT data_section_id, title, description, data_type, attributes FROM data_sections')
     results = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -30,7 +30,8 @@ def getAllSections(arguments):
             'dataSectionId': result[0],
             'title': result[1],
             'description': result[2],
-            'attributes': result[3]
+            'data_type': result[3],
+            'attributes': result[4]
         })
     return data_sections
 

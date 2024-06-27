@@ -15,16 +15,18 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def addSection(arguments):
+def updateUserCVData(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO data_sections (title, description, data_type, attributes) VALUES (%s, %s, %s, %s)", (arguments['title'], arguments['description'], arguments['dataType'], arguments['attributes']))
+    # Store data in the user_cv_data table
+    cursor.execute("UPDATE user_cv_data SET data_details = %s WHERE user_id = %s AND data_section_id = %s", (arguments['dataDetails'], arguments['userId'], arguments['dataSectionId']))
     cursor.close()
     connection.commit()
     connection.close()
     return "SUCCESS"
 
 def lambda_handler(event, context):
-    return addSection(event['arguments'])
+    arguments = event['arguments']
+    return updateUserCVData(arguments=arguments)
