@@ -2,7 +2,7 @@ import React from 'react';
 import PageContainer from './PageContainer';
 import FacultyMenu from '../Components/FacultyMenu';
 import { Container, Section, Bar } from '@column-resizer/react';
-import { VscSettings } from "react-icons/vsc";
+import { IoFilterOutline } from "react-icons/io5";
 import WorkSection from '../Components/WorkSection';
 import '../CustomStyles/scrollbar.css';
 
@@ -30,7 +30,7 @@ const AcademicWork = ({ user }) => {
                     clipRule="evenodd" />
                 </svg>
               </label>
-              <VscSettings className='min-h-8 min-w-8 p-1 bg-neutral rounded-md ml-2 my-auto'/>
+              <IoFilterOutline className='min-h-8 min-w-8 p-1 bg-neutral rounded-md ml-2 my-auto'/>
             </div>
 
             {/* populate from db */}
