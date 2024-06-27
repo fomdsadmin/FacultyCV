@@ -1,4 +1,4 @@
-export const getUser = ({firstName, lastName}) => `
+export const getUserQuery = ({firstName, lastName}) => `
     query GetUser {
         getUser(
             firstName: \"${firstName}\",
@@ -6,6 +6,18 @@ export const getUser = ({firstName, lastName}) => `
         ) {
             firstName
             lastName
+        }
+    }
+`;
+
+export const getAllSectionsQuery = () => `
+    query GetAllSections {
+        getAllSections {
+            attributes
+            dataSectionId
+            dataType
+            description
+            title
         }
     }
 `;

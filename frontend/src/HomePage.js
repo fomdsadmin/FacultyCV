@@ -1,7 +1,8 @@
 import React from 'react';
 import { generateClient } from 'aws-amplify/api';
-import { getUser } from './graphql/queries';
+import { getUserQuery } from './graphql/queries';
 import { signOut } from 'aws-amplify/auth';
+import { getAllSections } from './graphql/queryHelpers';
 
 const HomePage = ({ user }) => {
 
@@ -23,12 +24,13 @@ const HomePage = ({ user }) => {
           // Example query to graphql
           const client = generateClient();
           console.log(await client.graphql({
-            query: getUser({
+            query: getUserQuery({
               firstName: '',
               lastName: ''
             })
           }));
         }}>Query</button>
+        <button onClick={async () => console.log(await getAllSections())}>Sections</button>
         <button onClick={handleSignOut}>Sign out</button>
       </main>
     </div>
