@@ -1,0 +1,70 @@
+import boto3
+import json
+import psycopg2
+
+sm_client = boto3.client('secretsmanager')
+
+def getCredentials():
+    credentials = {}
+
+    response = sm_client.get_secret_value(SecretId='facultyCV/credentials/dbCredentials')
+    secrets = json.loads(response['SecretString'])
+    credentials['username'] = secrets['username']
+    credentials['password'] = secrets['password']
+    credentials['host'] = secrets['host']
+    credentials['db'] = secrets['dbname']
+    return credentials
+
+def updateUser(arguments):
+    credentials = getCredentials()
+    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
+    print("Connected to database")
+    cursor = connection.cursor()
+
+    # Prepare the UPDATE query
+    query = """
+    UPDATE users SET 
+        first_name = %s, 
+        last_name = %s, 
+        preferred_name = %s, 
+        email = %s, 
+        role = %s,
+        rank = %s,  
+        primary_department = %s, 
+        secondary_department = %s, 
+        primary_faculty = %s, 
+        secondary_faculty = %s, 
+        campus = %s, 
+        keywords = %s, 
+        institution_user_id = %s, 
+        scopus_id = %s, 
+        orcid_id = %s
+    WHERE user_id = %s
+    """
+
+    # Execute the query with the provided arguments
+    cursor.execute(query, (
+        arguments['first_name'] if 'first_name' in arguments else None,
+        arguments['last_name'] if 'last_name' in arguments else None,
+        arguments['preferred_name'] if 'preferred_name' in arguments else None, 
+        arguments['email'] if 'email' in arguments else None,
+        arguments['role'] if 'role' in arguments else None,
+        arguments['rank'] if 'rank' in arguments else None,
+        arguments['primary_department'] if 'primary_department' in arguments else None,
+        arguments['secondary_department'] if 'secondary_department' in arguments else None,
+        arguments['primary_faculty'] if 'primary_faculty' in arguments else None,
+        arguments['secondary_faculty'] if 'secondary_faculty' in arguments else None,
+        arguments['campus'] if 'campus' in arguments else None,
+        arguments['keywords'] if 'keywords' in arguments else None,
+        arguments['institution_user_id'] if 'institution_user_id' in arguments else None,
+        int(arguments['scopus_id']) if 'scopus_id' in arguments else None,
+        arguments['orcid_id'] if 'orcid_id' in arguments else None
+    ))
+
+    cursor.close()
+    connection.commit()
+    connection.close()
+    return "User updated successfully"
+
+def lambda_handler(event, context):
+    return updateUser(event['arguments'])

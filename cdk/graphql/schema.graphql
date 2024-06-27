@@ -1,25 +1,98 @@
-type FacultyMembers {
-  facultyMemberId: String!
-  firstName: String
-  preferredName: String
-  lastName: String
+type User {
+  user_id: String!
+  first_name: String
+  last_name: String
+  preferred_name: String
   email: String
-  currentRank: String
-  primaryDepartment: String
-  secondaryDepartment: String
-  primaryFaculty: String
-  secondaryFaculty: String
+  role: String
+  rank: String
+  primary_department: String
+  secondary_department: String
+  primary_faculty: String
+  secondary_faculty: String
   campus: String
   keywords: String
-  institutionUserId: String
-  scopusId: Int
-  orcidId: String
+  institution_user_id: String
+  scopus_id: Int
+  orcid_id: String
+}
+
+type DataSection {
+  data_section_id: String!
+  title: String!
+  description: String!
+  data_type: String
+  attributes: String! # JSON
+}
+
+type UserCVData {
+  user_cv_data_id: String!
+  user_id: String!
+  data_section_id: String!
+  data_details: String!
 }
 
 type Query {
-    getFacultyMember(firstName: String!, lastName: String!): FacultyMembers
+    getUser(email: String!): User
+    getAllSections: [ DataSection ]
+    getUserCVData(user_id: String!, data_section_id: String!): UserCVData
 }
 
 type Mutation {
-    generatePDF(firstName: String!): String
+    generatePDF(first_name: String!): String
+
+    addUser(
+      first_name: String!
+      last_name: String!
+      preferred_name: String
+      email: String!
+      role: String!
+      rank: String
+      primary_department: String
+      secondary_department: String
+      primary_faculty: String
+      secondary_faculty: String
+      campus: String
+      keywords: String
+      institution_user_id: String
+      scopus_id: Int
+      orcid_id: String
+    ): String
+
+    updateUser(
+      first_name: String
+      last_name: String
+      preferred_name: String
+      email: String
+      role: String
+      rank: String
+      primary_department: String
+      secondary_department: String
+      primary_faculty: String
+      secondary_faculty: String
+      campus: String
+      keywords: String
+      institution_user_id: String
+      scopus_id: Int
+      orcid_id: String
+    ): String
+
+    addSection(
+      title: String!
+      description: String!
+      data_type: String
+      attributes: String! # JSON
+    ): String
+
+    addUserCVData(
+      user_id: String!
+      data_section_id: String!
+      data_details: String! # JSON
+    ): String
+
+    updateUserCVData(
+      userId: String!
+      dataSectionId: String!
+      dataDetails: String!
+    ): String
 }
