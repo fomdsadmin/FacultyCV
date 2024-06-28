@@ -75,6 +75,7 @@ type Mutation {
       institution_user_id: String
       scopus_id: Int
       orcid_id: String
+      user_id: String!
     ): String
 
     addSection(
