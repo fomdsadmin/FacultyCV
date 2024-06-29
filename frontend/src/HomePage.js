@@ -2,7 +2,7 @@ import React from 'react';
 import { generateClient } from 'aws-amplify/api';
 import { getUserQuery } from './graphql/queries';
 import { signOut } from 'aws-amplify/auth';
-import { getAllSections } from './graphql/queryHelpers';
+import { getAllSections } from './graphql/graphqlHelpers';
 
 const HomePage = ({ user }) => {
 

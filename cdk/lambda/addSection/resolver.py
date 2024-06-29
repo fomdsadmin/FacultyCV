@@ -20,7 +20,7 @@ def addSection(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO data_sections (title, description, data_type, attributes) VALUES (%s, %s, %s, %s)", (arguments['title'], arguments['description'], arguments['dataType'], arguments['attributes']))
+    cursor.execute("INSERT INTO data_sections (title, description, data_type, attributes) VALUES (%s, %s, %s, %s)", (arguments['title'], arguments['description'], arguments['data_type'], arguments['attributes']))
     cursor.close()
     connection.commit()
     connection.close()

@@ -27,10 +27,10 @@ def getUserCVData(arguments):
     if len(results) == 0:
         return {}
     return {
-        'userCVDataId': results[0][0],
-        'userId': results[0][1],
-        'dataSectionId': results[0][2],
-        'dataDetails': results[0][3]
+        'user_cv_data_id': results[0][0],
+        'user_id': results[0][1],
+        'data_section_id': results[0][2],
+        'data_details': results[0][3]
     }
 
 def lambda_handler(event, context):

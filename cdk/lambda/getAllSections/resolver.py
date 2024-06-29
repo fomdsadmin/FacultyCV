@@ -27,7 +27,7 @@ def getAllSections(arguments):
     data_sections = []
     for result in results:
         data_sections.append({
-            'dataSectionId': result[0],
+            'data_section_id': result[0],
             'title': result[1],
             'description': result[2],
             'data_type': result[3],

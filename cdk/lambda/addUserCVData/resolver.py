@@ -21,7 +21,7 @@ def addUserCVData(arguments):
     print("Connected to Database")
     cursor = connection.cursor()
     # Store data in the user_cv_data table
-    cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details) VALUES (%s, %s, %s)", (arguments['userId'], arguments['dataSectionId'], arguments['dataDetails']))
+    cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details) VALUES (%s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], arguments['data_details']))
     cursor.close()
     connection.commit()
     connection.close()

@@ -21,7 +21,7 @@ def updateUserCVData(arguments):
     print("Connected to Database")
     cursor = connection.cursor()
     # Store data in the user_cv_data table
-    cursor.execute("UPDATE user_cv_data SET data_details = %s WHERE user_id = %s AND data_section_id = %s", (arguments['dataDetails'], arguments['userId'], arguments['dataSectionId']))
+    cursor.execute("UPDATE user_cv_data SET data_details = %s WHERE user_id = %s AND data_section_id = %s", (arguments['data_details'], arguments['user_id'], arguments['data_section_id']))
     cursor.close()
     connection.commit()
     connection.close()
