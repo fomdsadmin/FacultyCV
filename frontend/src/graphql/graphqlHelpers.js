@@ -112,7 +112,6 @@ export const addSection = async (title, description, data_type, attributes) => {
 /**
  * Function to add user data to the database
  * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
- *      user_id
  *      first_name
  *      last_name
  *      preferred_name
@@ -168,11 +167,11 @@ export const addUser = async (first_name, last_name, preferred_name,
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateUser = async (first_name, last_name, preferred_name,
+export const updateUser = async (user_id, first_name, last_name, preferred_name,
     email, role, rank, primary_department, secondary_department, primary_faculty,
     secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
         const results = await runGraphql(updateUserMutation(
-            first_name, last_name, preferred_name,
+            user_id, first_name, last_name, preferred_name,
             email, role, rank, primary_department, 
             secondary_department, primary_faculty,
             secondary_faculty, campus, keywords,

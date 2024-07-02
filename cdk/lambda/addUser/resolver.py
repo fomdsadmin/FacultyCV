@@ -57,7 +57,7 @@ def addUser(arguments):
         arguments['campus'] if 'campus' in arguments else None,
         arguments['keywords'] if 'keywords' in arguments else None,
         arguments['institution_user_id'] if 'institution_user_id' in arguments else None,
-        int(arguments['scopus_id']) if 'scopus_id' in arguments else None,
+        arguments['scopus_id'] if 'scopus_id' in arguments else None,
         arguments['orcid_id'] if 'orcid_id' in arguments else None
     ))
 

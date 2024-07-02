@@ -44,7 +44,7 @@ export const addUserCVDataMutation = (user_id, data_section_id, data_details) =>
     }
 `;
 
-export const updateUserMutation = (first_name, last_name, preferred_name,
+export const updateUserMutation = (user_id, first_name, last_name, preferred_name,
     email, role, rank, primary_department, secondary_department, primary_faculty,
     secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => `
     mutation UpdateUser {
@@ -64,6 +64,7 @@ export const updateUserMutation = (first_name, last_name, preferred_name,
             institution_user_id: "${institution_user_id}"
             scopus_id: "${scopus_id}"
             orcid_id: "${orcid_id}"
+            user_id: "${user_id}"
         )
     }
 `;

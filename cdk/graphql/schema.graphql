@@ -13,7 +13,7 @@ type User {
   campus: String
   keywords: String
   institution_user_id: String
-  scopus_id: Int
+  scopus_id: String
   orcid_id: String
 }
 
@@ -55,7 +55,7 @@ type Mutation {
       campus: String
       keywords: String
       institution_user_id: String
-      scopus_id: Int
+      scopus_id: String
       orcid_id: String
     ): String
 
@@ -73,7 +73,7 @@ type Mutation {
       campus: String
       keywords: String
       institution_user_id: String
-      scopus_id: Int
+      scopus_id: String
       orcid_id: String
       user_id: String!
     ): String
