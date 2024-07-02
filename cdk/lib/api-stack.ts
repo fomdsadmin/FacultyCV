@@ -48,6 +48,20 @@ export class ApiStack extends cdk.Stack {
       userPoolName: "faculty-cv-user-pool",
       signInAliases: { email: true },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      userVerification: {
+        emailSubject: "You need to verify your email",
+        emailBody:
+          "Thanks for signing up for Faculty CV. \n Your verification code is {####}",
+        emailStyle: cognito.VerificationEmailStyle.CODE,
+      },
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: false,
+      },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     this.userPoolClient = new cognito.UserPoolClient(
@@ -65,6 +79,23 @@ export class ApiStack extends cdk.Stack {
       }
     );
 
+    // User Groups
+    const facultyGroup = new cognito.CfnUserPoolGroup(this, 'FacultyGroup', {
+      groupName: 'Faculty',
+      userPoolId: this.userPool.userPoolId,
+    });
+
+    const assistantsGroup = new cognito.CfnUserPoolGroup(this, 'AssistantsGroup', {
+        groupName: 'Assistants',
+        userPoolId: this.userPool.userPoolId,
+    });
+
+    const adminsGroup = new cognito.CfnUserPoolGroup(this, 'AdminsGroup', {
+        groupName: 'Admins',
+        userPoolId: this.userPool.userPoolId,
+    });
+
+    // GraphQL Resolvers
     const assignResolver = (
       api: appsync.GraphqlApi,
       fieldName: string,

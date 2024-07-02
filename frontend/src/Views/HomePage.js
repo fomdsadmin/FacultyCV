@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
-import { generateClient } from 'aws-amplify/api';
-import { getFacultyMember } from '../graphql/queries';
+import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer';
 import FacultyMenu from '../Components/FacultyMenu';
+import '../CustomStyles/scrollbar.css';
+import { getUser } from '../graphql/graphqlHelpers.js';
 
 const HomePage = ({ user }) => {
   const [isSubmitting , setIsSubmitting] = useState(false);
+  const [userInfo, setUserInfo] = useState({});
+
+  useEffect(() => {
+    async function getUserInfo() {
+      try {
+        const userInformation = await getUser(user.signInDetails.loginId);
+        setUserInfo(userInformation);
+        console.log(userInformation);
+      } catch (error) {
+        console.log('Error getting user:', error);
+      }
+    }
+
+    getUserInfo();
+  }, []);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -21,7 +36,7 @@ const HomePage = ({ user }) => {
   return (
     <PageContainer>
       <FacultyMenu userName={user.signInDetails.loginId}></FacultyMenu>
-      <main className='ml-4 pr-5 overflow-auto scrollbar-thin scrollbar-webkit'>
+      <main className='ml-4 pr-5 overflow-auto custom-scrollbar'>
         <h1 className="text-4xl font-bold my-3 text-zinc-600">Profile</h1>
         <form onSubmit={handleSubmit}>
           <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Contact</h2>
@@ -91,16 +106,5 @@ const HomePage = ({ user }) => {
     </PageContainer>
   );
 };
-
-/* <button className="btn btn-info" onClick={async () => {
-          // Example query to graphql
-          const client = generateClient();
-          console.log(await client.graphql({
-            query: getFacultyMember({
-              firstName: '',
-              lastName: ''
-            })
-          }));
-        }}>Query</button> */
 
 export default HomePage;

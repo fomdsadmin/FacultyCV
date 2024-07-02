@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
+import { getCurrentUser, signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.js';
+import '../CustomStyles/scrollbar.css';
+import { addUser } from '../graphql/graphqlHelpers.js';
 
 
 const AuthPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState('');
   const [newUserPassword, setNewUserPassword] = useState(false);
   const [newSignUp, setNewSignUp] = useState(false);
   const [signUpConfirmation, setSignUpConfirmation] = useState(false);
@@ -63,6 +68,7 @@ const AuthPage = () => {
       });
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (user.isSignedIn) {
+        storeUserData(firstName, lastName, username, role);
         window.location.reload();
       }
     } catch (error) {
@@ -83,9 +89,10 @@ const AuthPage = () => {
         confirmationCode: confirmationCode
       });
       setLoading(false);
-      console.log('User logged in:', user.isSignUpComplete, user.nextStep.signInStep);
+      console.log('User signed up:', user.isSignUpComplete, user.nextStep.signInStep);
       if (user.isSignUpComplete) {
-        window.location.reload();
+        storeUserData(firstName, lastName, username, role);
+        //window.location.reload();
       }
     } catch (error) {
       console.log('Error setting new password:', error);
@@ -106,11 +113,17 @@ const AuthPage = () => {
     }
   };
 
+
   const handleSignUp = async (event) => {
     event.preventDefault();
     const confirmPassword = event.target.confirmPassword.value;
 
-    // TODO: ACCOUNT FOR MORE PASSWORD SPECIFICATIONS
+    // TODO: ACCOUNT FOR MORE PASSWORD SPECIFICATIONS (minLength: 8, 
+    // requireLowercase: true,
+    // requireUppercase: true,
+    // requireDigits: true,
+    // requireSymbols: false)
+    // TODO: ACCOUNT FOR MORE USERNAME SPECIFICATIONS (@mail.ubc.ca)
     if (password !== confirmPassword) {
       setPasswordError('Passwords do not match!');
       return;
@@ -139,10 +152,28 @@ const AuthPage = () => {
     }
   };
 
+  const storeUserData = async (first_name, last_name, email, role) => {
+    setLoading(true);
+    try {
+      const user = await signIn({
+        username: username,
+        password: password
+      });
+      console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
+    } catch (error) {
+      console.log('Error getting user:', error);
+    }
+    //put user in user group
+
+    //put user data in database
+    const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '');
+    console.log(result);
+  };
+
   return (
     <PageContainer>
       <div className="flex w-full rounded-lg mx-auto shadow-lg overflow-hidden bg-gray-100">
-        <div className="w-3/5 flex flex-col items-center justify-center overflow-auto scrollbar-thin scrollbar-webkit">
+        <div className="w-3/5 flex flex-col items-center justify-center overflow-auto custom-scrollbar">
           {loading && <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>}
           {!loading && !newUserPassword && !newSignUp && !signUpConfirmation && (
             <div>
@@ -171,9 +202,9 @@ const AuthPage = () => {
               <div className='flex flex-col items-center justify-center'>
                 <form onSubmit={handleSignUp}>
                   <label className="block text-xs mt-4">First Name</label>
-                  <input className="input input-bordered mt-1 h-10 w-full text-xs" name="firstName" placeholder="First Name" required />
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First Name" required />
                   <label className="block text-xs mt-4">Last Name</label>
-                  <input className="input input-bordered mt-1 h-10 w-full text-xs" name="lastName" placeholder="Last Name" required />
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last Name" required />
                   <label className="block text-xs mt-4">Email</label>
                   <input className="input input-bordered mt-1 h-10 w-full text-xs" value={username} onChange={e => setUsername(e.target.value)} placeholder="Email" required />
                   <label className="block text-xs mt-4">Password</label>
@@ -182,11 +213,11 @@ const AuthPage = () => {
                   <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmPassword" placeholder="Confirm Password" type="password" required />
                   <div className="mt-2 flex justify-between">
                     <div className="mt-2">
-                      <input type="radio" id="faculty" name="role" value="Faculty" defaultChecked />
+                      <input type="radio" id="faculty" name="role" value="Faculty" onChange={e => setRole(e.target.value)} defaultChecked />
                       <label className="ml-1 text-xs">Faculty</label>
                     </div>
                     <div className="mt-2">
-                        <input type="radio" id="assistant" name="role" value="Assistant" />
+                        <input type="radio" id="assistant" name="role" value="Assistant"onChange={e => setRole(e.target.value)} />
                         <label className="ml-1 text-xs">Assistant</label>
                     </div>
                   </div>
@@ -198,22 +229,33 @@ const AuthPage = () => {
             </div>
           )}
           {!loading && newUserPassword && (
-            <form onSubmit={handleNewPasswordUser}>
-              <input name="newPassword" placeholder="New Password" type="password" required />
-              <input name="confirmNewPassword" placeholder="Confirm New Password" type="password" required />
-              {passwordError && <div className="block text-m mb-1 mt-6 text-red-600">{passwordError}</div>}
-              <button type="submit">Submit New Password</button>
-            </form>
+            <div>
+              <h1 className="text-3xl font-bold my-3 text-zinc-600">New User</h1>
+              <p className='text-sm'>Please enter a new password for your account.</p>
+              <div className='flex flex-col items-center justify-center'>
+                <form onSubmit={handleNewPasswordUser}>
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" name="newPassword" placeholder="New Password" type="password" required />
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmNewPassword" placeholder="Confirm New Password" type="password" required />
+                  {passwordError && <div className="block text-m mb-1 mt-6 text-red-600">{passwordError}</div>}
+                  <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Submit New Password</button>
+                </form>
+              </div>
+            </div>
+            
           )}
           {!loading && signUpConfirmation && (
             <div>
-              <p>Account not confirmed. Please enter the confirmation code sent to your email.</p>
-              <form onSubmit={handleConfirmSignUp}>
-                <input name="confirmationCode" placeholder="Confirmation Code" type="password" required />
-                {confirmationError && <div className="block text-m mb-1 mt-6 text-red-600">{confirmationError}</div>}
-                <button type="submit">Submit</button>
-                <button type="button" onClick={resendConfirmationCode}>Resend Code</button>
-              </form>
+              <h1 className="text-3xl font-bold my-3 text-zinc-600">Account not confirmed</h1>
+              <p className='text-sm'>Please enter the confirmation code sent to your email.</p>
+              <div className='flex flex-col items-center justify-center'>
+                <form onSubmit={handleConfirmSignUp}>
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmationCode" placeholder="Confirmation Code" type="password" required />
+                  {confirmationError && <div className="block text-m mb-1 mt-6 text-red-600">{confirmationError}</div>}
+                  <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Submit</button>
+                  <button className="btn btn-secondary mt-4 min-h-5 h-8 w-full" type="button" onClick={resendConfirmationCode}>Resend Code</button>
+                </form>
+              </div>
+              
             </div>
           )}
         </div>
