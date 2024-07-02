@@ -33,3 +33,47 @@ export const addUserMutation = (first_name, last_name, preferred_name,
         )
     }
 `;
+
+export const addUserCVDataMutation = (user_id, data_section_id, data_details) => `
+    mutation AddUserCVDataMutation {
+        addUserCVData(
+            user_id: "${user_id}"
+            data_section_id: "${data_section_id}"
+            data_details: "${data_details}"
+        )
+    }
+`;
+
+export const updateUserMutation = (first_name, last_name, preferred_name,
+    email, role, rank, primary_department, secondary_department, primary_faculty,
+    secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => `
+    mutation UpdateUser {
+        updateUser(
+            first_name: "${first_name}"
+            last_name: "${last_name}"
+            preferred_name: "${preferred_name}"
+            email: "${email}"
+            role: "${role}"
+            rank: "${rank}"
+            primary_department: "${primary_department}"
+            secondary_department: "${secondary_department}"
+            primary_faculty: "${primary_faculty}"
+            secondary_faculty: "${secondary_faculty}"
+            campus: "${campus}"
+            keywords: "${keywords}"
+            institution_user_id: "${institution_user_id}"
+            scopus_id: "${scopus_id}"
+            orcid_id: "${orcid_id}"
+        )
+    }
+`;
+
+export const updateUserCVDataMutation = (user_id, data_section_id, data_details) => `
+    mutation UpdateUserCVDataMutation {
+        updateUserCVData(
+            user_id: "${user_id}"
+            data_section_id: "${data_section_id}"
+            data_details: "${data_details}"
+        )
+    }
+`;
