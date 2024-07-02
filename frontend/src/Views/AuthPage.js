@@ -63,6 +63,7 @@ const AuthPage = () => {
       });
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (user.isSignedIn) {
+        storeUserData();
         window.location.reload();
       }
     } catch (error) {
@@ -85,6 +86,7 @@ const AuthPage = () => {
       setLoading(false);
       console.log('User logged in:', user.isSignUpComplete, user.nextStep.signInStep);
       if (user.isSignUpComplete) {
+        storeUserData();
         window.location.reload();
       }
     } catch (error) {
@@ -106,11 +108,17 @@ const AuthPage = () => {
     }
   };
 
+
   const handleSignUp = async (event) => {
     event.preventDefault();
     const confirmPassword = event.target.confirmPassword.value;
 
-    // TODO: ACCOUNT FOR MORE PASSWORD SPECIFICATIONS
+    // TODO: ACCOUNT FOR MORE PASSWORD SPECIFICATIONS (minLength: 8, 
+    // requireLowercase: true,
+    // requireUppercase: true,
+    // requireDigits: true,
+    // requireSymbols: false)
+    // TODO: ACCOUNT FOR MORE USERNAME SPECIFICATIONS (@mail.ubc.ca)
     if (password !== confirmPassword) {
       setPasswordError('Passwords do not match!');
       return;
@@ -133,10 +141,18 @@ const AuthPage = () => {
           setSignUpConfirmation(true);
         }
       }
+      else {
+        storeUserData();
+      }
     } catch (error) {
       console.log('Error signing up:', error);
       setLoading(false);
     }
+  };
+
+  const storeUserData = async () => {
+    //put user in user group
+    //put user data in database
   };
 
   return (

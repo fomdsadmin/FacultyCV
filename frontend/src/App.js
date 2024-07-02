@@ -31,6 +31,7 @@ Amplify.configure({
 
 function App() {
   const [user, setUser] = useState(null);
+  //get user info and render page based on role
 
   useEffect(() => {
     async function getUser() {
