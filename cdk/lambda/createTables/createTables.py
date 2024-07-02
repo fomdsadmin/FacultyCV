@@ -66,7 +66,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('campus', 'varchar', '', False))
     columns.append(createColumn('keywords', 'varchar', '', False))
     columns.append(createColumn('institution_user_id', 'varchar', '', False))
-    columns.append(createColumn('scopus_id', 'int', '', False))
+    columns.append(createColumn('scopus_id', 'varchar', '', False))
     columns.append(createColumn('orcid_id', 'varchar', '', True))
     query = createQuery('users', columns)
     cursor.execute(query)
