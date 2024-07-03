@@ -46,19 +46,19 @@ def addUser(arguments):
     cursor.execute(query, (
         arguments['first_name'],
         arguments['last_name'],
-        arguments['preferred_name'] if 'preferred_name' in arguments else None, 
+        arguments['preferred_name'] if 'preferred_name' in arguments else '', 
         arguments['email'],
         arguments['role'],
-        arguments['rank'] if 'rank' in arguments else None,
-        arguments['primary_department'] if 'primary_department' in arguments else None,
-        arguments['secondary_department'] if 'secondary_department' in arguments else None,
-        arguments['primary_faculty'] if 'primary_faculty' in arguments else None,
-        arguments['secondary_faculty'] if 'secondary_faculty' in arguments else None,
-        arguments['campus'] if 'campus' in arguments else None,
-        arguments['keywords'] if 'keywords' in arguments else None,
-        arguments['institution_user_id'] if 'institution_user_id' in arguments else None,
-        arguments['scopus_id'] if 'scopus_id' in arguments else None,
-        arguments['orcid_id'] if 'orcid_id' in arguments else None
+        arguments['rank'] if 'rank' in arguments else '',
+        arguments['primary_department'] if 'primary_department' in arguments else '',
+        arguments['secondary_department'] if 'secondary_department' in arguments else '',
+        arguments['primary_faculty'] if 'primary_faculty' in arguments else '',
+        arguments['secondary_faculty'] if 'secondary_faculty' in arguments else '',
+        arguments['campus'] if 'campus' in arguments else '',
+        arguments['keywords'] if 'keywords' in arguments else '',
+        arguments['institution_user_id'] if 'institution_user_id' in arguments else '',
+        arguments['scopus_id'] if 'scopus_id' in arguments else '',
+        arguments['orcid_id'] if 'orcid_id' in arguments else ''
     ))
 
     cursor.close()
