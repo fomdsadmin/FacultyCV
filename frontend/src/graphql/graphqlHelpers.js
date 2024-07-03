@@ -19,7 +19,7 @@ const runGraphql = async (query) => {
  *  {
  *      attributes: JSON object with placeholder value - used to determine the structure (and not the actual data) of the section
  *      dataSectionId: Identifier for the section in the DB
- *      dataType: Umbrella term for the section
+ *      data_type: Umbrella term for the section
  *      description
  *      title  
  *  }, ...

@@ -1,6 +1,6 @@
-export const getUserQuery = ({email}) => `
+export const getUserQuery = (email) => `
     query GetUser {
-        getUser(
+        getUser (
             email: "${email}"
         ) {
             user_id
@@ -46,4 +46,5 @@ export const getUserCVDataQuery = (user_id, data_section_id) => `
             data_section_id
             data_details
         }
+    }
 `;
