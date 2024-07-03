@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getCurrentUser, signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, adminAddUserToGroup } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.js';
 import '../CustomStyles/scrollbar.css';
 import { addUser } from '../graphql/graphqlHelpers.js';
@@ -10,12 +10,12 @@ const AuthPage = () => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState('Faculty');
   const [newUserPassword, setNewUserPassword] = useState(false);
   const [newSignUp, setNewSignUp] = useState(false);
   const [signUpConfirmation, setSignUpConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
-  //TODO: SET MORE ERRORS
+  //TODO: SET MORE ERRORS AND FIX ERROR VIEW
   const [passwordError, setPasswordError] = useState('');
   const [confirmationError, setConfirmationError] = useState('');
   const [forgotPassword, setForgotPassword] = useState(false); //TODO: FORGOT PASSWORD FUNCTIONALITY
@@ -69,7 +69,6 @@ const AuthPage = () => {
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (user.isSignedIn) {
         storeUserData(firstName, lastName, username, role);
-        window.location.reload();
       }
     } catch (error) {
       console.log('Error setting new password:', error);
@@ -92,7 +91,6 @@ const AuthPage = () => {
       console.log('User signed up:', user.isSignUpComplete, user.nextStep.signInStep);
       if (user.isSignUpComplete) {
         storeUserData(firstName, lastName, username, role);
-        //window.location.reload();
       }
     } catch (error) {
       console.log('Error setting new password:', error);
@@ -118,17 +116,24 @@ const AuthPage = () => {
     event.preventDefault();
     const confirmPassword = event.target.confirmPassword.value;
 
-    // TODO: ACCOUNT FOR MORE PASSWORD SPECIFICATIONS (minLength: 8, 
-    // requireLowercase: true,
-    // requireUppercase: true,
-    // requireDigits: true,
-    // requireSymbols: false)
-    // TODO: ACCOUNT FOR MORE USERNAME SPECIFICATIONS (@mail.ubc.ca)
+    // Password specifications
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[^\s]{8,}$/;
+
+    // Username specification
+    const usernameRegex = /@mail\.ubc\.ca$/;
+
     if (password !== confirmPassword) {
       setPasswordError('Passwords do not match!');
       return;
+    } else if (!passwordRegex.test(password)) {
+      setPasswordError('Password must be at least 8 characters long, contain a lowercase letter, an uppercase letter, and a digit.');
+      return;
+    } else if (!usernameRegex.test(username)) {
+      setPasswordError('Email must be a valid UBC email address.');
+      return;
     }
     setPasswordError('');
+
     try {
       setLoading(true);
       const { isSignUpComplete, userId, nextStep } = await signUp({
@@ -154,6 +159,8 @@ const AuthPage = () => {
 
   const storeUserData = async (first_name, last_name, email, role) => {
     setLoading(true);
+
+    //sign in user
     try {
       const user = await signIn({
         username: username,
@@ -162,12 +169,23 @@ const AuthPage = () => {
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
     } catch (error) {
       console.log('Error getting user:', error);
+      setLoading(false);
+      return;
     }
+
     //put user in user group
 
+
     //put user data in database
-    const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '');
-    console.log(result);
+    try {
+      const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '');
+      console.log(result);
+    } catch (error) {
+      console.log('Error adding user to database:', error);
+      setLoading(false);
+    }
+
+    window.location.reload();
   };
 
   return (
@@ -222,7 +240,7 @@ const AuthPage = () => {
                     </div>
                   </div>
                   
-                  {passwordError && <div className="block text-m mb-1 mt-6 text-red-600">{passwordError}</div>}
+                  {passwordError && <div className="text-m mb-1 mt-6 text-red-600">{passwordError}</div>}
                   <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Create Account</button>
                 </form>
               </div>

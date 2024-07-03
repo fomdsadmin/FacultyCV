@@ -10,6 +10,7 @@ import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Reports from './Views/Reports';
 import Assistants from './Views/Assistants';
+import { getUser } from './graphql/graphqlHelpers.js';
 
 Amplify.configure({
   API: {
@@ -31,14 +32,26 @@ Amplify.configure({
 
 function App() {
   const [user, setUser] = useState(null);
+  const [userInfo, setUserInfo] = useState({});
   //get user info and render page based on role
 
   useEffect(() => {
-    async function getUser() {
+    async function getUserInfo(email) {
+      try {
+        const userInformation = await getUser(email);
+        setUserInfo(userInformation);
+        console.log(userInformation);
+      } catch (error) {
+        console.log('Error getting user:', error);
+      }
+    }
+
+    async function getCognitoUser() {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
         console.log(currentUser.signInDetails.loginId, "is signed in");
+        getUserInfo(currentUser.signInDetails.loginId);
         <Navigate to="/home" />
       }
       catch (error) {
@@ -48,13 +61,13 @@ function App() {
       }
     }
     
-    getUser();
+    getCognitoUser();
   }, []);
 
   return (
     <Router>
       <Routes>
-        <Route path="/home" element={user ? <HomePage user = {user} /> : <Navigate to="/auth" />} />
+        <Route path="/home" element={user ? <HomePage userInfo = {userInfo} /> : <Navigate to="/auth" />} />
         <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage />} />
         <Route path="/academic-work" element={user ? <AcademicWork user = {user} /> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports user = {user} /> : <Navigate to="/auth" />} />

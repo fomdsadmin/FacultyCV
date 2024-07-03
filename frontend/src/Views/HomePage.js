@@ -2,40 +2,60 @@ import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer';
 import FacultyMenu from '../Components/FacultyMenu';
 import '../CustomStyles/scrollbar.css';
+import { updateUser } from '../graphql/graphqlHelpers';
 import { getUser } from '../graphql/graphqlHelpers.js';
 
-const HomePage = ({ user }) => {
-  const [isSubmitting , setIsSubmitting] = useState(false);
-  const [userInfo, setUserInfo] = useState({});
+const HomePage = ({ userInfo }) => {
+  const [user, setUser] = useState(userInfo);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    async function getUserInfo() {
-      try {
-        const userInformation = await getUser(user.signInDetails.loginId);
-        setUserInfo(userInformation);
-        console.log(userInformation);
-      } catch (error) {
-        console.log('Error getting user:', error);
-      }
-    }
+    setUser(userInfo);
+  }, [userInfo]);
 
-    getUserInfo();
-  }, []);
-
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
-    // Simulate a delay of 5 seconds
-    setTimeout(() => {
-      // handle form submission here
-      // After 5 seconds, set isSubmitting back to false
+
+    try {
+      const formData = new FormData(event.target);
+      const formValues = {
+        preferred_name: formData.get('preferredName'),
+        current_rank: formData.get('currentRank'),
+        primary_department: formData.get('primaryDepartment'),
+        secondary_department: formData.get('secondaryDepartment'),
+        primary_faculty: formData.get('primaryFaculty'),
+        secondary_faculty: formData.get('secondaryFaculty'),
+        campus: formData.get('campus'),
+        keywords: formData.get('keywords'),
+        institution_user_id: formData.get('institutionUserId'),
+        scopus_id: formData.get('scopusId'),
+        orcid_id: formData.get('orcidId'),
+      };
+
+      console.log('Form Values:', formValues);
+      console.log('User ID:', user.user_id);
+
+      const response = await updateUser({
+        id: user.user_id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        role: user.role,
+        ...formValues,
+      });
+
+      console.log(response);
       setIsSubmitting(false);
-    }, 2000);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <PageContainer>
-      <FacultyMenu userName={user.signInDetails.loginId}></FacultyMenu>
+      <FacultyMenu userName={user.email}></FacultyMenu>
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar'>
         <h1 className="text-4xl font-bold my-3 text-zinc-600">Profile</h1>
         <form onSubmit={handleSubmit}>
@@ -43,19 +63,19 @@ const HomePage = ({ user }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
             <div>
               <label className="block text-sm mb-1">First Name</label>
-              <input id="firstName" type="text" value="Abhi" className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" disabled />
+              <input id="firstName" type="text" value={user.first_name || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly />
             </div>
             <div>
               <label className="block text-sm mb-1">Last Name</label>
-              <input id="lastName" type="text" value="Verma" className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" disabled />
+              <input id="lastName" type="text" value={user.last_name || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly/>
             </div>
             <div>
               <label className="block text-sm mb-1">Preferred Name</label>
-              <input id="preferredName" type="text" className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+              <input id="preferredName" name="preferredName" type="text" defaultValue={user.preferred_name || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
             <div>
               <label className="block text-sm mb-1">Email</label>
-              <input id="email" type="text" value={user.signInDetails.loginId} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" disabled />
+              <input id="email" type="text" value={user.email || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly />
             </div>
           </div>
 
@@ -63,27 +83,27 @@ const HomePage = ({ user }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
             <div>
               <label className="block text-sm mb-1">Primary Department</label>
-              <input id="primaryDepartment" type="text" className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+              <input id="primaryDepartment" name="primaryDepartment" type="text" defaultValue={user.primary_department || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
             <div>
               <label className="block text-sm mb-1">Secondary Department</label>
-              <input id="secondaryDepartment" type="text" className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+              <input id="secondaryDepartment" name="secondaryDepartment" type="text" defaultValue={user.secondary_department || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
             <div>
               <label className="block text-sm mb-1">Primary Faculty</label>
-              <input id="primaryFaculty" type="text" className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+              <input id="primaryFaculty" name="primaryFaculty" type="text" defaultValue={user.primary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
             <div>
               <label className="block text-sm mb-1">Secondary Faculty</label>
-              <input id="secondaryFaculty" type="text" className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+              <input id="secondaryFaculty" name="secondaryFaculty" type="text" defaultValue={user.secondary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
             <div>
               <label className="block text-sm mb-1">Current Rank</label>
-              <input id="currentRank" type="text" className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+              <input id="currentRank" name="currentRank" type="text" defaultValue={user.rank || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
             <div>
               <label className="block text-sm mb-1">Campus</label>
-              <input id="campus" type="text" className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+              <input id="campus" name="campus" type="text" defaultValue={user.campus || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
           </div>
 
@@ -91,11 +111,11 @@ const HomePage = ({ user }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
             <div>
               <label className="block text-sm mb-1">Orcid ID</label>
-              <input id="orcidId" type="text" className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+              <input id="orcidId" name="orcidId" type="text" defaultValue={user.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
             <div>
               <label className="block text-sm mb-1">Scopus ID</label>
-              <input id="scopusId" type="text" className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+              <input id="scopusId" name="scopusId" type="text" defaultValue={user.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
           </div>
           <button type="submit" className="btn btn-success py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
