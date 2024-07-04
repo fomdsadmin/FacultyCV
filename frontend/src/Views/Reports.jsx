@@ -1,5 +1,5 @@
 import React from 'react';
-import PageContainer from './PageContainer';
+import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
 
 const Reports = ({ user }) => {

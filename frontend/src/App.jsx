@@ -4,12 +4,12 @@ import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import HomePage from './Views/HomePage';
-import AuthPage from './Views/AuthPage';
-import NotFound from './Views/NotFound';
-import AcademicWork from './Views/AcademicWork';
-import Reports from './Views/Reports';
-import Assistants from './Views/Assistants';
+import HomePage from './Views/HomePage.jsx';
+import AuthPage from './Views/AuthPage.jsx';
+import NotFound from './Views/NotFound.jsx';
+import AcademicWork from './Views/AcademicWork.jsx';
+import Reports from './Views/Reports.jsx';
+import Assistants from './Views/Assistants.jsx';
 import { getUser } from './graphql/graphqlHelpers.js';
 
 Amplify.configure({

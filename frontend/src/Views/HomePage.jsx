@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import PageContainer from './PageContainer';
-import FacultyMenu from '../Components/FacultyMenu';
+import PageContainer from './PageContainer.jsx';
+import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
-import { updateUser } from '../graphql/graphqlHelpers';
-import { getUser } from '../graphql/graphqlHelpers.js';
+import { updateUser } from '../graphql/graphqlHelpers.js';
 
 const HomePage = ({ userInfo }) => {
   const [user, setUser] = useState(userInfo);
@@ -19,34 +18,26 @@ const HomePage = ({ userInfo }) => {
 
     try {
       const formData = new FormData(event.target);
-      const formValues = {
-        preferred_name: formData.get('preferredName'),
-        current_rank: formData.get('currentRank'),
-        primary_department: formData.get('primaryDepartment'),
-        secondary_department: formData.get('secondaryDepartment'),
-        primary_faculty: formData.get('primaryFaculty'),
-        secondary_faculty: formData.get('secondaryFaculty'),
-        campus: formData.get('campus'),
-        keywords: formData.get('keywords'),
-        institution_user_id: formData.get('institutionUserId'),
-        scopus_id: formData.get('scopusId'),
-        orcid_id: formData.get('orcidId'),
-      };
-
-      console.log('Form Values:', formValues);
-      console.log('User ID:', user.user_id);
-
-      const response = await updateUser({
-        id: user.user_id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-        role: user.role,
-        ...formValues,
-      });
-
-      console.log(response);
-      setIsSubmitting(false);
+      const result = await updateUser(
+        user.user_id, 
+        user.first_name,
+        user.last_name, 
+        formData.get('preferredName'), 
+        user.email,
+        user.role,
+        formData.get('currentRank'),
+        formData.get('primaryDepartment'),
+        formData.get('secondaryDepartment'),
+        formData.get('primaryFaculty'),
+        formData.get('secondaryFaculty'),
+        formData.get('campus'),
+        '',
+        formData.get('institutionUserId'),
+        formData.get('scopusId'),
+        formData.get('orcidId')
+      );
+      console.log(result);
+      window.location.reload();
     } catch (error) {
       console.error('Error updating user:', error);
       setIsSubmitting(false);
@@ -109,6 +100,10 @@ const HomePage = ({ userInfo }) => {
 
           <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Identifications</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div>
+              <label className="block text-sm mb-1">Institution ID</label>
+              <input id="institutionUserId" name="institutionUserId" type="text" defaultValue={user.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
+            </div>
             <div>
               <label className="block text-sm mb-1">Orcid ID</label>
               <input id="orcidId" name="orcidId" type="text" defaultValue={user.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />

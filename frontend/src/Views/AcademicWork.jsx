@@ -1,5 +1,5 @@
 import React from 'react';
-import PageContainer from './PageContainer';
+import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
 import { Container, Section, Bar } from '@column-resizer/react';
 import { IoFilterOutline } from "react-icons/io5";

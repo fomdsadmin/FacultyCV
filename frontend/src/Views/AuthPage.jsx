@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, adminAddUserToGroup } from 'aws-amplify/auth';
-import PageContainer from './PageContainer.js';
+import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
 import { addUser } from '../graphql/graphqlHelpers.js';
 
