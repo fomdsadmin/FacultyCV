@@ -4,11 +4,11 @@ import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import HomePage from './Views/HomePage.jsx';
-import AuthPage from './Views/AuthPage.jsx';
-import NotFound from './Views/NotFound.jsx';
-import AcademicWork from './Views/AcademicWork.jsx';
-import Reports from './Views/Reports.jsx';
+import HomePage from './Views/HomePage';
+import AuthPage from './Views/AuthPage';
+import NotFound from './Views/NotFound';
+import AcademicWork from './Views/AcademicWork';
+import Reports from './Views/Reports';
 import Assistants from './Views/Assistants.jsx';
 import { getUser } from './graphql/graphqlHelpers.js';
 
@@ -33,41 +33,40 @@ Amplify.configure({
 function App() {
   const [user, setUser] = useState(null);
   const [userInfo, setUserInfo] = useState({});
-  //get user info and render page based on role
 
-  useEffect(() => {
-    async function getUserInfo(email) {
-      try {
-        const userInformation = await getUser(email);
-        setUserInfo(userInformation);
-        console.log(userInformation);
-      } catch (error) {
-        console.log('Error getting user:', error);
-      }
+  async function getUserInfo(email) {
+    try {
+      const userInformation = await getUser(email);
+      setUserInfo(userInformation);
+      console.log(userInformation);
+    } catch (error) {
+      console.log('Error getting user:', error);
     }
+  }
 
-    async function getCognitoUser() {
-      try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-        console.log(currentUser.signInDetails.loginId, "is signed in");
-        getUserInfo(currentUser.signInDetails.loginId);
-        <Navigate to="/home" />
-      }
-      catch (error) {
-        setUser(null);
-        console.log('Error getting user:', error);
-        <Navigate to="/auth" />
-      }
+  async function getCognitoUser() {
+    try {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      console.log(currentUser.signInDetails.loginId, "is signed in");
+      getUserInfo(currentUser.signInDetails.loginId);
+      <Navigate to="/home" />
     }
-    
+    catch (error) {
+      setUser(null);
+      console.log('Error getting user:', error);
+      <Navigate to="/auth" />
+    }
+  }
+
+  useEffect(() => {    
     getCognitoUser();
   }, []);
 
   return (
     <Router>
       <Routes>
-        <Route path="/home" element={user ? <HomePage userInfo = {userInfo} /> : <Navigate to="/auth" />} />
+        <Route path="/home" element={user ? <HomePage userInfo = {userInfo} getUser={getUserInfo}/> : <Navigate to="/auth" />} />
         <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage />} />
         <Route path="/academic-work" element={user ? <AcademicWork user = {user} /> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports user = {user} /> : <Navigate to="/auth" />} />

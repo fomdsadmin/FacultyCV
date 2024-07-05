@@ -4,7 +4,7 @@ import FacultyMenu from '../Components/FacultyMenu';
 import { Container, Section, Bar } from '@column-resizer/react';
 import WorkSection from '../Components/WorkSection';
 import '../CustomStyles/scrollbar.css';
-import Filters from '../Components/Filters';
+import Filters from '../Components/Filters.jsx';
 import Publications from '../Components/Publications';
 
 const sectionsMockObject = [

@@ -4,7 +4,6 @@ import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
 import { addUser } from '../graphql/graphqlHelpers.js';
 
-
 const AuthPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

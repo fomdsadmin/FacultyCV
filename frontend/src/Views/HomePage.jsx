@@ -4,7 +4,7 @@ import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
 import { updateUser } from '../graphql/graphqlHelpers.js';
 
-const HomePage = ({ userInfo }) => {
+const HomePage = ({ userInfo, getUser }) => {
   const [user, setUser] = useState(userInfo);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,7 +37,8 @@ const HomePage = ({ userInfo }) => {
         formData.get('orcidId')
       );
       console.log(result);
-      window.location.reload();
+      getUser(user.email);
+      setIsSubmitting(false);
     } catch (error) {
       console.error('Error updating user:', error);
       setIsSubmitting(false);
