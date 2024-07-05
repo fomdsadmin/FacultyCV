@@ -5,15 +5,19 @@ import { TiDownloadOutline } from "react-icons/ti";
 import { IoPersonAddOutline } from "react-icons/io5";
 import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'aws-amplify/auth';
+import { useNavigate } from 'react-router-dom';
 
-const FacultyMenu = ({ userName }) => {
+const FacultyMenu = ({ userName, getCognitoUser }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     try {
-      signOut();
+      await signOut();
       console.log('Logged out');
-      window.location.reload();
+      getCognitoUser();
+      console.log('Navigating to /auth');
+      navigate('/auth');
     }
     catch (error) {
       console.log('Error logging out:', error);

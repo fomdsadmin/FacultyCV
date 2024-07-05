@@ -3,14 +3,14 @@ import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import HomePage from './Views/HomePage';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import AuthPage from './Views/AuthPage';
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
-import Reports from './Views/Reports';
+import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
 import { getUser } from './graphql/graphqlHelpers.js';
+import FacultyHomePage from './Views/FacultyHomePage.jsx';
 
 Amplify.configure({
   API: {
@@ -66,11 +66,11 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/home" element={user ? <HomePage userInfo = {userInfo} getUser={getUserInfo}/> : <Navigate to="/auth" />} />
-        <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage />} />
-        <Route path="/academic-work" element={user ? <AcademicWork user = {user} /> : <Navigate to="/auth" />} />
-        <Route path="/reports" element={user ? <Reports user = {user} /> : <Navigate to="/auth" />} />
-        <Route path="/assistants" element={user ? <Assistants user = {user} /> : <Navigate to="/auth" />} />
+        <Route path="/home" element={user ? <FacultyHomePage userInfo = {userInfo} getCognitoUser = {getCognitoUser} getUser={getUserInfo}/> : <Navigate to="/auth" />} />
+        <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage getCognitoUser = {getCognitoUser} />} />
+        <Route path="/academic-work" element={user ? <AcademicWork userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/reports" element={user ? <Reports userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/assistants" element={user ? <Assistants userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
