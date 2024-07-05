@@ -69,9 +69,9 @@ function App() {
       <Routes>
         <Route path="/home" element={user ? <HomePage userInfo = {userInfo} /> : <Navigate to="/auth" />} />
         <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage />} />
-        <Route path="/academic-work" element={user ? <AcademicWork user = {user} /> : <Navigate to="/auth" />} />
-        <Route path="/reports" element={user ? <Reports user = {user} /> : <Navigate to="/auth" />} />
-        <Route path="/assistants" element={user ? <Assistants user = {user} /> : <Navigate to="/auth" />} />
+        <Route path="/academic-work" element={user ? <AcademicWork user = {userInfo} /> : <Navigate to="/auth" />} />
+        <Route path="/reports" element={user ? <Reports user = {userInfo} /> : <Navigate to="/auth" />} />
+        <Route path="/assistants" element={user ? <Assistants user = {userInfo} /> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

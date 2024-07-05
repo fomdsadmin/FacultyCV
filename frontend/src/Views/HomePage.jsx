@@ -46,7 +46,7 @@ const HomePage = ({ userInfo }) => {
 
   return (
     <PageContainer>
-      <FacultyMenu userName={user.email}></FacultyMenu>
+      <FacultyMenu userName={user.first_name}></FacultyMenu>
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar'>
         <h1 className="text-4xl font-bold my-3 text-zinc-600">Profile</h1>
         <form onSubmit={handleSubmit}>
@@ -113,7 +113,7 @@ const HomePage = ({ userInfo }) => {
               <input id="scopusId" name="scopusId" type="text" defaultValue={user.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" />
             </div>
           </div>
-          <button type="submit" className="btn btn-success py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
+          <button type="submit" className="btn btn-success text-white py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save'}
           </button>
         </form>

@@ -29,9 +29,9 @@ const EntryModal = ({ isNew, onClose, entryType, ...fields }) => {
     return (
         <dialog className="modal-dialog" open>
             <form method="dialog" onSubmit={handleSubmit}>
-                <h3 className="font-bold text-lg">{isNew ? "Add" : "Edit"} {entryType}</h3>
+                <h3 className="font-bold mb-3 text-lg">{isNew ? "Add" : "Edit"} {entryType}</h3>
 
-                <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>✕</button>
+                <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" onClick={onClose}>✕</button>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {filteredKeys.map((key) => (

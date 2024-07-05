@@ -2,9 +2,7 @@ import React from "react";
 import '../CustomStyles/filters.css';
 import FilterButton from './FilterButton';
 
-const filters = ['Accolades', 'Education', 'Teaching'];
-
-const Filters = ({ activeFilters, onFilterChange }) => {
+const Filters = ({ activeFilters, onFilterChange, filters }) => {
   const handleFilterClick = (filter) => {
     const newFilters = activeFilters.includes(filter)
       ? activeFilters.filter(f => f !== filter)
