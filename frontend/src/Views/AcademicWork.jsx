@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
 import { Container, Section, Bar } from '@column-resizer/react';
@@ -17,9 +17,14 @@ const sectionsMockObject = [
   { section: 'Service', category: '' }
 ];
 
-const AcademicWork = ({ user }) => {
+const AcademicWork = ({ userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
+  const [user, setUser] = useState(userInfo);
+
+  useEffect(() => {
+    setUser(userInfo);
+  }, [userInfo]);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -39,7 +44,7 @@ const AcademicWork = ({ user }) => {
 
   return (
     <PageContainer>
-      <FacultyMenu userName={user.signInDetails.loginId}></FacultyMenu>
+      <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
       <main className='flex-1 h-full'>
         <Container className='w-full h-full'>
           <Section minSize={330} className='!overflow-auto !h-full custom-scrollbar'>

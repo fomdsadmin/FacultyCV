@@ -1,16 +1,22 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
 
-const Assistants = ({ user }) => {
-    return (
-        <PageContainer>
-            <FacultyMenu userName={user.signInDetails.loginId} />
-            <main className='ml-4'>
-                <h1 className="text-4xl font-bold my-3 text-zinc-600">Assistants</h1>
-            </main>
-        </PageContainer>
-    )
+const Assistants = ({ userInfo, getCognitoUser }) => {
+  const [user, setUser] = useState(userInfo);
+
+  useEffect(() => {
+    setUser(userInfo);
+  }, [userInfo]);
+
+  return (
+    <PageContainer>
+      <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser}/>
+      <main className='ml-4'>
+        <h1 className="text-4xl font-bold my-3 text-zinc-600">Assistants</h1>
+      </main>
+    </PageContainer>
+  )
 }
 
 export default Assistants;

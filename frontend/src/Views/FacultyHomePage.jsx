@@ -4,7 +4,7 @@ import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
 import { updateUser } from '../graphql/graphqlHelpers.js';
 
-const HomePage = ({ userInfo, getUser }) => {
+const FacultyHomePage = ({ userInfo, getCognitoUser, getUser }) => {
   const [user, setUser] = useState(userInfo);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,7 +47,7 @@ const HomePage = ({ userInfo, getUser }) => {
 
   return (
     <PageContainer>
-      <FacultyMenu userName={user.email}></FacultyMenu>
+      <FacultyMenu getCognitoUser={getCognitoUser} userName={user.preferred_name || user.first_name}></FacultyMenu>
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar'>
         <h1 className="text-4xl font-bold my-3 text-zinc-600">Profile</h1>
         <form onSubmit={handleSubmit}>
@@ -123,4 +123,4 @@ const HomePage = ({ userInfo, getUser }) => {
   );
 };
 
-export default HomePage;
+export default FacultyHomePage;

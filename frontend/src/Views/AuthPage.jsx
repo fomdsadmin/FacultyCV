@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, adminAddUserToGroup } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
 import { addUser } from '../graphql/graphqlHelpers.js';
+import { useNavigate } from 'react-router-dom';
 
-const AuthPage = () => {
+const AuthPage = ({ getCognitoUser }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -14,10 +15,11 @@ const AuthPage = () => {
   const [newSignUp, setNewSignUp] = useState(false);
   const [signUpConfirmation, setSignUpConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
-  //TODO: SET MORE ERRORS AND FIX ERROR VIEW
+  //TODO: SET MORE ERRORS (make one error) (username/password incorrect, no user found, etc.) AND FIX ERROR VIEW
   const [passwordError, setPasswordError] = useState('');
   const [confirmationError, setConfirmationError] = useState('');
   const [forgotPassword, setForgotPassword] = useState(false); //TODO: FORGOT PASSWORD FUNCTIONALITY
+  const navigate = useNavigate();
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -37,7 +39,8 @@ const AuthPage = () => {
           setLoading(false);
         }
       } else {
-        window.location.reload();
+        getCognitoUser();
+        navigate('/home');
       }
     } catch (error) {
       console.log('Error logging in:', error);
@@ -183,8 +186,8 @@ const AuthPage = () => {
       console.log('Error adding user to database:', error);
       setLoading(false);
     }
-
-    window.location.reload();
+    getCognitoUser();
+    navigate('/home');
   };
 
   return (
