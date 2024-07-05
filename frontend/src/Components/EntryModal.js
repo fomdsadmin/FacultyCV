@@ -49,7 +49,7 @@ const EntryModal = ({ isNew, onClose, entryType, ...fields }) => {
                 </div>
 
                 <div className="flex justify-end">
-                    <button type="submit" className="text-white btn btn-success py-1 px-2 w-1/5 min-h-0 h-8 leading-tight">
+                    <button type="submit" className="text-white btn btn-success mt-3 py-1 px-2 w-1/5 min-h-0 h-8 leading-tight">
                         Save
                     </button>
                 </div>

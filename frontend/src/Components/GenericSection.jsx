@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
+import EntryModal from './EntryModal';
 
 
 // Function to rank fields based on importance
@@ -17,6 +18,8 @@ const rankFields = (entry) => {
       details: 10,
       other: 11,
       description: 12,
+      inventor: 13,
+      supervisor: 14
     };
   
     const rankedFields = Object.entries(entry)
@@ -34,6 +37,14 @@ const rankFields = (entry) => {
     } else {
       return rankedFields.slice(0, 2).map(([key, value]) => value);
     }
+  };
+
+  const generateEmptyEntry = (attributes) => {
+    const emptyEntry = {};
+    for (const key of Object.keys(attributes)) {
+      emptyEntry[key] = '';
+    }
+    return emptyEntry;
   };
 
 const GenericSection = ({ section }) => {
@@ -362,76 +373,138 @@ const GenericSection = ({ section }) => {
       };
 
     
-  const [searchTerm, setSearchTerm] = useState('');
-  const [fieldData, setFieldData] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
+    const [fieldData, setFieldData] = useState([]);
+    const [entryData, setEntryData] = useState([]);
 
-  useEffect(() => {
-    const filteredData = mockData[section.data_section_id]?.filter(entry => {
-      const [field1, field2] = rankFields(entry);
-      return (
-        (field1 && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (field2 && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }) || [];
+    const [selectedEntry, setSelectedEntry] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isNew, setIsNew] = useState(false);
 
-    const rankedData = filteredData.map(entry => {
-      const [field1, field2] = rankFields(entry);
-      return { ...entry, field1, field2 };
-    });
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
 
-    setFieldData(rankedData);
-  }, [searchTerm, section.data_section_id]);
+    const handleEdit = (entry) => {
+        console.log("entry " + entry.title);
+        
+        const { field1, field2, ...newEntry } = entry;
+        
+        setIsNew(false);
+        setSelectedEntry(newEntry);
+        
+        console.log("selected entry " + newEntry);
+        
+        setIsModalOpen(true);
+    };
+    
+    const handleCloseModal = () => {
+        setSelectedEntry(null);
+        setIsModalOpen(false);
+    };
 
-  return (
-    <div>
-      <div className='m-4 max-w-lg flex'>
-        <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
-        <button className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>new</button>
-      </div>
+    const handleNew = () => {
+        setIsNew(true);
+        const emptyEntry = generateEmptyEntry(section.attributes);
+        setSelectedEntry(emptyEntry);
+        setIsModalOpen(true);
+    };
 
-      <div className='m-4 max-w-lg flex'>
-        <label className="input input-bordered flex items-center gap-2 flex-1">
-          <input
-            type="text"
-            className="grow"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            className="h-4 w-4 opacity-70"
-          >
-            <path
-              fillRule="evenodd"
-              d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-              clipRule="evenodd" />
-          </svg>
-        </label>
-      </div>
+    useEffect(() => {
+        const filteredData = mockData[section.data_section_id]?.filter(entry => {
+        const [field1, field2] = rankFields(entry);
+        return (
+            (field1 && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (field2 && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+        }) || [];
 
-      <div>
-        {fieldData.length > 0 ? (
-          fieldData.map((entry, index) => (
-            <GenericEntry
-              key={index}
-              onEdit={() => console.log('Edit', entry)}
-              field1={entry.field1}
-              field2={entry.field2}
+        const rankedData = filteredData.map(entry => {
+        const [field1, field2] = rankFields(entry);
+        
+        return { ...entry, field1, field2 };
+        });
+
+        const entryFields = filteredData.map(entry => {
+
+        return { ...entry };
+        });
+
+        setEntryData(entryFields);
+
+        setFieldData(rankedData);
+
+        console.log("field data " + JSON.stringify(fieldData));
+        console.log("entry data " + JSON.stringify(entryData));
+        
+    }, [searchTerm, section.data_section_id]);
+
+    return (
+        <div>
+        <div className='m-4 max-w-lg flex'>
+            <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
+            <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>new</button>
+        </div>
+
+        <div className='m-4 max-w-lg flex'>
+            <label className="input input-bordered flex items-center gap-2 flex-1">
+            <input
+                type="text"
+                className="grow"
+                placeholder="Search"
+                value={searchTerm}
+                onChange={handleSearchChange}
             />
-          ))
-        ) : (
-          <p className="m-4">No data found</p>
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                className="h-4 w-4 opacity-70"
+            >
+                <path
+                fillRule="evenodd"
+                d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                clipRule="evenodd" />
+            </svg>
+            </label>
+        </div>
+
+        <div>
+            {fieldData.length > 0 ? (
+            fieldData.map((entry, index) => (
+                <GenericEntry
+                key={index}
+                onEdit={() => handleEdit(entry)}
+                field1={entry.field1}
+                field2={entry.field2}
+                />
+            ))
+            ) : (
+            <p className="m-4">No data found</p>
+            )}
+        </div>
+
+        {isModalOpen && selectedEntry && !isNew && (
+                <EntryModal
+                    isNew={false}
+                    {...selectedEntry}
+                    entryType={section.title}
+                    onClose={handleCloseModal}
+                />
+            )}
+
+        {isModalOpen && selectedEntry && isNew && (
+            <EntryModal
+                isNew={true}
+                {...selectedEntry}
+                entryType={section.title}
+                onClose={handleCloseModal}
+            />
         )}
-      </div>
-    </div>
-  );
+
+        </div>
+    );
 };
 
 export default GenericSection;
