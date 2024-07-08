@@ -6,33 +6,296 @@ import WorkSection from '../Components/WorkSection';
 import '../CustomStyles/scrollbar.css';
 import Filters from '../Components/Filters.jsx';
 import Publications from '../Components/Publications';
+import GenericSection from '../Components/GenericSection.jsx';
 
-const sectionsMockObject = [
-  { section: 'Publications', category: '' },
-  { section: 'Grants', category: '' },
-  { section: 'Patents', category: '' },
-  { section: 'Awards', category: 'Accolades' },
-  { section: 'Primary Education', category: 'Education' },
-  { section: 'Courses', category: 'Teaching' },
-  { section: 'Service', category: '' }
+const dataSections = [
+  {
+    data_section_id: 'DS016',
+    title: 'Publications',
+    description: 'Details of the publications by the faculty member',
+    data_type: 'Research',
+    attributes: {
+      publication_id: 'varchar',
+      publication_type: 'varchar',
+      publication_title: 'varchar',
+      scopus_ids: 'varchar',
+      publisher: 'varchar',
+      publication_year: 'int',
+      keywords: 'varchar',
+      journal: 'varchar',
+      link: 'varchar',
+      doi: 'varchar',
+      num_citations: 'int',
+    },
+  },
+  {
+    data_section_id: 'DS001',
+    title: 'Previous Education',
+    description: 'Details of the faculty member\'s previous education',
+    data_type: 'Education',
+    attributes: {
+      university_id: 'varchar',
+      faculty_member_id: 'varchar',
+      university_name: 'varchar',
+      degree: 'varchar',
+      subject_area: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS002',
+    title: 'Continuing Education',
+    description: 'Details of the faculty member\'s continuing education',
+    data_type: 'Education',
+    attributes: {
+      university_id: 'varchar',
+      faculty_member_id: 'varchar',
+      university_name: 'varchar',
+      rank: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS003',
+    title: 'Continuing Medical Education',
+    description: 'Details of the faculty member\'s continuing medical education',
+    data_type: 'Education',
+    attributes: {
+      university_id: 'varchar',
+      faculty_member_id: 'varchar',
+      university_name: 'varchar',
+      type: 'varchar',
+      detail: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS004',
+    title: 'Dissertations',
+    description: 'Details of the faculty member\'s dissertations',
+    data_type: 'Research',
+    attributes: {
+      dissertation_id: 'varchar',
+      faculty_member_id: 'varchar',
+      title: 'varchar',
+      supervisor: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS005',
+    title: 'Qualifications',
+    description: 'Details of the faculty member\'s qualifications',
+    data_type: 'Professional',
+    attributes: {
+      qualification_id: 'varchar',
+      faculty_member_id: 'varchar',
+      details: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS006',
+    title: 'Courses Taught',
+    description: 'Details of the courses taught by the faculty member',
+    data_type: 'Teaching',
+    attributes: {
+      course_id: 'varchar',
+      faculty_member_id: 'varchar',
+      course_name: 'varchar',
+      description: 'varchar',
+      class_size: 'int',
+      lecture_hours_taught: 'int',
+      tutorial_hours_taught: 'int',
+      lab_hours_taught: 'int',
+      other_hours_taught: 'int',
+      role: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS007',
+    title: 'Students Supervised',
+    description: 'Details of the students supervised by the faculty member',
+    data_type: 'Mentorship',
+    attributes: {
+      student_supervised_id: 'varchar',
+      faculty_member_id: 'varchar',
+      student_name: 'varchar',
+      program: 'varchar',
+      degree: 'varchar',
+      description: 'varchar',
+      role: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS008',
+    title: 'Current Employment Records',
+    description: 'Details of the faculty member\'s current employment',
+    data_type: 'Employment',
+    attributes: {
+      employment_record_id: 'varchar',
+      faculty_member_id: 'varchar',
+      company: 'varchar',
+      rank_or_title: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS009',
+    title: 'Previous Employment Records',
+    description: 'Details of the faculty member\'s previous employment',
+    data_type: 'Employment',
+    attributes: {
+      employment_record_id: 'varchar',
+      faculty_member_id: 'varchar',
+      company: 'varchar',
+      rank_or_title: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS010',
+    title: 'Absence',
+    description: 'Details of the faculty member\'s absences',
+    data_type: 'Employment',
+    attributes: {
+      employment_record_id: 'varchar',
+      faculty_member_id: 'varchar',
+      company: 'varchar',
+      type: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS011',
+    title: 'Service',
+    description: 'Details of the faculty member\'s service',
+    data_type: 'Service',
+    attributes: {
+      service_id: 'varchar',
+      faculty_member_id: 'varchar',
+      service_type: 'varchar',
+      service_title: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS012',
+    title: 'Awards',
+    description: 'Details of the awards received by the faculty member',
+    data_type: 'Accolades',
+    attributes: {
+      award_id: 'varchar',
+      faculty_member_id: 'varchar',
+      award_name: 'varchar',
+      award_duration: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS013',
+    title: 'Presentations',
+    description: 'Details of the presentations given by the faculty member',
+    data_type: 'Research',
+    attributes: {
+      presentation_id: 'varchar',
+      faculty_member_id: 'varchar',
+      title: 'varchar',
+      venue: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS014',
+    title: 'Participations',
+    description: 'Details of the participations by the faculty member',
+    data_type: 'Professional',
+    attributes: {
+      participation_id: 'varchar',
+      faculty_member_id: 'varchar',
+      title: 'varchar',
+      role: 'varchar',
+      venue: 'varchar',
+      dates: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS017',
+    title: 'Grants',
+    description: 'Details of the grants received by the faculty member',
+    data_type: 'Research',
+    attributes: {
+      grant_id: 'varchar',
+      keywords: 'varchar',
+      agency: 'varchar',
+      department: 'varchar',
+      grant_program: 'varchar',
+      project_title: 'varchar',
+      amount: 'int',
+      name: 'varchar',
+      dates: 'varchar',
+      faculty_member_id: 'varchar',
+    },
+  },
+  {
+    data_section_id: 'DS018',
+    title: 'Patents',
+    description: 'Details of the patents held by the faculty member',
+    data_type: 'Research',
+    attributes: {
+      patent_id: 'varchar',
+      patent_number: 'varchar',
+      patent_country_code: 'varchar',
+      patent_kind_code: 'varchar',
+      patent_title: 'varchar',
+      patent_inventors: 'varchar',
+      patent_family_number: 'varchar',
+      patent_classification: 'varchar',
+      patent_publication_date: 'varchar',
+      faculty_member_id: 'varchar',
+    },
+  },
 ];
 
 const AcademicWork = ({ userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
-  const [user, setUser] = useState(userInfo);
-
-  useEffect(() => {
-    setUser(userInfo);
-  }, [userInfo]);
+  const [activeSection, setActiveSection] = useState(  
+    {
+    data_section_id: 'DS016',
+    title: 'Publications',
+    description: 'Details of the publications by the faculty member',
+    data_type: 'Research',
+    attributes: {
+      publication_id: 'varchar',
+      publication_type: 'varchar',
+      publication_title: 'varchar',
+      scopus_ids: 'varchar',
+      publisher: 'varchar',
+      publication_year: 'int',
+      keywords: 'varchar',
+      journal: 'varchar',
+      link: 'varchar',
+      doi: 'varchar',
+      num_citations: 'int',
+    },
+  });
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
-  const searchedSections = sectionsMockObject.filter(entry => {
-    const section = entry.section || '';
-    const category = entry.category || '';
+  const filters = Array.from(new Set(dataSections.map(section => section.data_type)));
+
+  const handleManageClick = (value) => {
+
+    const section = dataSections.filter((section) => section.data_section_id == value);
+
+    setActiveSection(section[0]);
+  }
+
+  const searchedSections = dataSections.filter(entry => {
+    const section = entry.title || '';
+    const category = entry.data_type || '';
 
     const matchesSearch = section.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
       category.toLowerCase().startsWith(searchTerm.toLowerCase());
@@ -44,7 +307,7 @@ const AcademicWork = ({ userInfo, getCognitoUser }) => {
 
   return (
     <PageContainer>
-      <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
+      <FacultyMenu userName={user.first_name}></FacultyMenu>
       <main className='flex-1 h-full'>
         <Container className='w-full h-full'>
           <Section minSize={330} className='!overflow-auto !h-full custom-scrollbar'>
@@ -71,14 +334,20 @@ const AcademicWork = ({ userInfo, getCognitoUser }) => {
                 </svg>
               </label>
             </div>
-            <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters}></Filters>
+            <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters>
             {searchedSections.map((section) => (
-              <WorkSection key={section.section} title={section.section} category={section.category}></WorkSection>
+              <WorkSection onClick={handleManageClick} key={section.data_section_id} id={section.data_section_id} title={section.title} category={section.data_type}></WorkSection>
             ))}
           </Section>
           <Bar size={4} className='bg-neutral h-screen' style={{ cursor: 'col-resize' }} />
           <Section minSize={240} className='!overflow-auto !h-full custom-scrollbar'>
-            <Publications></Publications>
+            {activeSection.title == 'Publications' && 
+              <Publications></Publications>
+            } 
+
+            {activeSection.title != 'Publications' &&
+              <GenericSection section={activeSection}></GenericSection>
+            }
           </Section>
         </Container>
       </main>
