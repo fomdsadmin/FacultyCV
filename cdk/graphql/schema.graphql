@@ -32,10 +32,21 @@ type UserCVData {
   data_details: String!
 }
 
+type ElsevierAuthorProfile {
+  last_name: String!
+  first_name: String!
+  name_variants: String
+  subjects: String
+  current_affiliation: String
+  scopus_id: String!
+  orcid: String
+}
+
 type Query {
     getUser(email: String!): User
     getAllSections: [ DataSection ]
     getUserCVData(user_id: String!, data_section_id: String!): UserCVData
+    getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]
 }
 
 type Mutation {

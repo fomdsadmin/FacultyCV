@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
 import { Container, Section, Bar } from '@column-resizer/react';
 import WorkSection from '../Components/WorkSection';
 import '../CustomStyles/scrollbar.css';
-import Filters from '../Components/Filters';
+import Filters from '../Components/Filters.jsx';
 import Publications from '../Components/Publications';
 import GenericSection from '../Components/GenericSection.jsx';
 
@@ -256,7 +256,7 @@ const dataSections = [
   },
 ];
 
-const AcademicWork = ({ user }) => {
+const AcademicWork = ({ userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeSection, setActiveSection] = useState(  

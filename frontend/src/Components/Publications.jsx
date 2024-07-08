@@ -199,7 +199,7 @@ const Publications = () => {
         <div>
             <div className='m-4 max-w-lg flex'>
                 <h2 className="text-left text-4xl font-bold text-zinc-600">Publications</h2> 
-                <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>new</button>   
+                <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>New</button>   
             </div>
             <div className='m-4 max-w-lg flex'>
                 <label className="input input-bordered flex items-center gap-2 flex-1">

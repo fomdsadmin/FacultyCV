@@ -40,8 +40,15 @@ export class ApiStack extends cdk.Stack {
       description: "Lambda layer containing the psycopg2 Python library",
     });
 
+    const requestsLayer = new LayerVersion(this, "requestsLambdaLayer", {
+      code: Code.fromAsset("./layers/requests.zip"),
+      compatibleRuntimes: [Runtime.PYTHON_3_9],
+      description: "Lambda layer containing the requests Python library"
+    });
+
     this.layerList["psycopg2"] = psycopgLayer;
     this.layerList["reportlab"] = reportLabLayer;
+    this.layerList["requests"] = requestsLayer;
 
     // Auth
     this.userPool = new cognito.UserPool(this, "FacultyCVUserPool", {
@@ -268,6 +275,15 @@ export class ApiStack extends cdk.Stack {
       {},
       resolverRole,
       [psycopgLayer]
+    )
+    createResolver(
+      this.api,
+      "getElsevierAuthorMatches",
+      ["getElsevierAuthorMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
     )
   }
 }
