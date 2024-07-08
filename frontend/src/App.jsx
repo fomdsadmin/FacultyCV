@@ -45,6 +45,7 @@ function App() {
       setLoading(false);
       console.log(userInformation);
     } catch (error) {
+      setLoading(false);
       console.log('Error getting user:', error);
     }
   }
@@ -60,6 +61,7 @@ function App() {
     catch (error) {
       setUser(null);
       console.log('Error getting user:', error);
+      setLoading(false);
       <Navigate to="/auth" />
     }
   }
