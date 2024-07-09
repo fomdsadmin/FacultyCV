@@ -279,6 +279,11 @@ const AcademicWork = ({ userInfo, getCognitoUser }) => {
       num_citations: 'int',
     },
   });
+  const [user, setUser] = useState(userInfo);
+
+  useEffect(() => {
+    setUser(userInfo);
+  }, [userInfo]);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -307,7 +312,7 @@ const AcademicWork = ({ userInfo, getCognitoUser }) => {
 
   return (
     <PageContainer>
-      <FacultyMenu userName={user.first_name}></FacultyMenu>
+      <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
       <main className='flex-1 h-full'>
         <Container className='w-full h-full'>
           <Section minSize={330} className='!overflow-auto !h-full custom-scrollbar'>

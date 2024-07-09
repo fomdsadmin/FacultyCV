@@ -58,6 +58,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('preferred_name', 'varchar', '', False))
     columns.append(createColumn('email', 'varchar', '', False))
     columns.append(createColumn('role', 'varchar', '', False))
+    columns.append(createColumn('bio', 'varchar', '', False))
     columns.append(createColumn('rank', 'varchar', '', False))
     columns.append(createColumn('primary_department', 'varchar', '', False))
     columns.append(createColumn('secondary_department', 'varchar', '', False))
@@ -88,6 +89,14 @@ def lambda_handler(event, context):
     columns.append(createColumn('data_section_id', 'varchar', '', False))
     columns.append(createColumn('data_details', 'JSON', '', True))
     query = createQuery('user_cv_data', columns)
+    cursor.execute(query)
+
+    # Create University Info Table
+    columns = []
+    columns.append(createColumn('university_info_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('type', 'varchar', '', False))
+    columns.append(createColumn('value', 'varchar', '', True))
+    query = createQuery('university_info', columns)
     cursor.execute(query)
 
     cursor.close()

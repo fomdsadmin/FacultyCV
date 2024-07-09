@@ -41,16 +41,17 @@ def getUser(arguments):
             'preferred_name': result[3],
             'email': result[4],
             'role': result[5],
-            'rank': result[6],
-            'primary_department': result[7],
-            'secondary_department': result[8],
-            'primary_faculty': result[9],
-            'secondary_faculty': result[10],
-            'campus': result[11],
-            'keywords': result[12],
-            'institution_user_id': result[13],
-            'scopus_id': result[14],
-            'orcid_id': result[15]
+            'bio': result[6],
+            'rank': result[7],
+            'primary_department': result[8],
+            'secondary_department': result[9],
+            'primary_faculty': result[10],
+            'secondary_faculty': result[11],
+            'campus': result[12],
+            'keywords': result[13],
+            'institution_user_id': result[14],
+            'scopus_id': result[15],
+            'orcid_id': result[16]
         }
     else:
         user = "User not found"

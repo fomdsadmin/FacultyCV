@@ -285,5 +285,32 @@ export class ApiStack extends cdk.Stack {
       resolverRole,
       [requestsLayer]
     )
+    createResolver(
+      this.api,
+      "getAllUniversityInfo",
+      ["getAllUniversityInfo"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addUniversityInfo",
+      ["addUniversityInfo"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateUniversityInfo",
+      ["updateUniversityInfo"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
   }
 }

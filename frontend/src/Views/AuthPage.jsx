@@ -180,7 +180,7 @@ const AuthPage = ({ getCognitoUser }) => {
 
     //put user data in database
     try {
-      const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '');
+      const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '');
       console.log(result);
     } catch (error) {
       console.log('Error adding user to database:', error);
