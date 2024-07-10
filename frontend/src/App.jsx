@@ -14,6 +14,7 @@ import PageContainer from './Views/PageContainer.jsx';
 import FacultyHomePage from './Views/FacultyHomePage.jsx';
 import AssistantHomePage from './Views/AssistantHomePage.jsx';
 import AdminHomePage from './Views/AdminHomePage.jsx';
+import Archive from './Views/Archive.jsx';
 
 Amplify.configure({
   API: {
@@ -97,6 +98,7 @@ function App() {
         <Route path="/academic-work" element={user ? <AcademicWork userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/assistants" element={user ? <Assistants userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/archive" element={user ? <Archive userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

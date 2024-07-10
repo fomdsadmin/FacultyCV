@@ -2,6 +2,8 @@ import React from "react";
 import '../CustomStyles/filters.css';
 import FilterButton from './FilterButton';
 
+
+
 const Filters = ({ activeFilters, onFilterChange, filters }) => {
   const handleFilterClick = (filter) => {
     const newFilters = activeFilters.includes(filter)
