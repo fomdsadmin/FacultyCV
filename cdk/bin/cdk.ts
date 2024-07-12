@@ -6,6 +6,7 @@ import { ApiStack } from '../lib/api-stack';
 import { VpcStack } from '../lib/vpc-stack';
 import { DatabaseStack } from '../lib/database-stack';
 import { DbFetchStack } from '../lib/dbfetch-stack';
+import { DataFetchStack } from '../lib/datafetch-stack';
 
 const app = new cdk.App();
 
@@ -26,5 +27,9 @@ const amplifyStack = new AmplifyStack(app, 'AmplifyStack', apiStack,
 );
 
 const dbFetchStack = new DbFetchStack(app, 'DbFetchStack', databaseStack, apiStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
+
+const dataFetchStack = new DataFetchStack(app, 'DataFetchStack', databaseStack, apiStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
