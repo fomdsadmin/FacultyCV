@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import PageContainer from "./PageContainer";
 import FacultyMenu from "../Components/FacultyMenu";
+import { rankFields } from '../utils/rankingUtils';
+import GenericEntry from "../Components/GenericEntry";
 
 const archived = [
     {
@@ -495,9 +497,23 @@ const archived = [
     }
   ]
 
+  // "data_section_id": "DS001",
+  // "title": "Previous Education",
+  // "description": "Details of the faculty member's previous education",
+  // "data_type": "Education",
+  // "attributes": {
+  //   "university_id": "U001",
+  //   "faculty_member_id": "F001",
+  //   "university_name": "University A",
+  //   "degree": "BSc Computer Science",
+  //   "subject_area": "Computer Science",
+  //   "dates": "2000-2004"
+  // }
+
 const Archive = ({ userInfo, getCognitoUser }) => {
     const [user, setUser] = useState(userInfo);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filteredEntries, setFilteredEntries] = useState([]);
 
     useEffect(() => {
         setUser(userInfo);
@@ -505,14 +521,14 @@ const Archive = ({ userInfo, getCognitoUser }) => {
 
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
-      };    
+    };
 
     return (
         <PageContainer>
             <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser} />
                 <main className='flex-1 h-full !overflow-auto !h-full custom-scrollbar'>
                     <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
-                    <div className='m-4 max-w-lg flex'>
+                    <div className='m-4 max-w-3xl flex'>
                     <label className="input input-bordered flex items-center gap-2 flex-1">
                         <input
                         type="text"
@@ -534,6 +550,23 @@ const Archive = ({ userInfo, getCognitoUser }) => {
                         </svg>
                     </label>
                     </div>  
+
+                  {archived.map((entry) => {
+
+                    const [fieldA, fieldB] = rankFields(entry.attributes);
+                    
+                    return(
+                      <GenericEntry 
+                        key={entry.data_section_id} 
+                        isArchived={true}
+                        field1={entry.title}
+                        field2={fieldA}
+                        field3={fieldB}
+                      ></GenericEntry>
+                    )
+                    
+                  })}
+
                 </main>
         </PageContainer>
     )
