@@ -7,7 +7,7 @@ const PublicationsEntry = ({ onEdit, ...publication }) => {
     return (
         <div className="min-h-8 shadow-glow mx-4 my-2 max-w-lg px-2 flex items-center">
             <div className="mr-2">
-                <RiDraggable className="h-5 w-5" />
+                {/* <RiDraggable className="h-5 w-5" /> */}
             </div>
             
             <p className="font-bold text-sm break-words"> {publication.publication_year}, {publication.publication_title} </p>

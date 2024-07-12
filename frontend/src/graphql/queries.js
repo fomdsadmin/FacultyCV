@@ -9,6 +9,7 @@ export const getUserQuery = (email) => `
             preferred_name
             email
             role
+            bio
             rank
             primary_department
             secondary_department
@@ -45,6 +46,16 @@ export const getUserCVDataQuery = (user_id, data_section_id) => `
             user_id
             data_section_id
             data_details
+        }
+    }
+`;
+
+export const getAllUniversityInfoQuery = () => `
+    query GetAllUniversityInfo {
+        getAllUniversityInfo {
+            university_info_id
+            type
+            value
         }
     }
 `;

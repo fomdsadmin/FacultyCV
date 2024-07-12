@@ -29,6 +29,7 @@ def addUser(arguments):
         preferred_name, 
         email, 
         role,
+        bio,
         rank, 
         primary_department, 
         secondary_department, 
@@ -39,7 +40,7 @@ def addUser(arguments):
         institution_user_id, 
         scopus_id, 
         orcid_id
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
 
     # Execute the query with the provided arguments
@@ -49,6 +50,7 @@ def addUser(arguments):
         arguments['preferred_name'] if 'preferred_name' in arguments else '', 
         arguments['email'],
         arguments['role'],
+        arguments['bio'] if 'bio' in arguments else '',
         arguments['rank'] if 'rank' in arguments else '',
         arguments['primary_department'] if 'primary_department' in arguments else '',
         arguments['secondary_department'] if 'secondary_department' in arguments else '',

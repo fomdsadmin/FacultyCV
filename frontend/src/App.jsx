@@ -10,7 +10,10 @@ import AcademicWork from './Views/AcademicWork';
 import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
 import { getUser } from './graphql/graphqlHelpers.js';
+import PageContainer from './Views/PageContainer.jsx';
 import FacultyHomePage from './Views/FacultyHomePage.jsx';
+import AssistantHomePage from './Views/AssistantHomePage.jsx';
+import AdminHomePage from './Views/AdminHomePage.jsx';
 
 Amplify.configure({
   API: {
@@ -33,13 +36,16 @@ Amplify.configure({
 function App() {
   const [user, setUser] = useState(null);
   const [userInfo, setUserInfo] = useState({});
+  const [loading, setLoading] = useState(true);
 
   async function getUserInfo(email) {
     try {
       const userInformation = await getUser(email);
       setUserInfo(userInformation);
+      setLoading(false);
       console.log(userInformation);
     } catch (error) {
+      setLoading(false);
       console.log('Error getting user:', error);
     }
   }
@@ -55,6 +61,7 @@ function App() {
     catch (error) {
       setUser(null);
       console.log('Error getting user:', error);
+      setLoading(false);
       <Navigate to="/auth" />
     }
   }
@@ -63,10 +70,29 @@ function App() {
     getCognitoUser();
   }, []);
 
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className='flex items-center justify-center w-full'>
+          <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+        </div>
+      </PageContainer>
+    ) 
+  }
+
   return (
     <Router>
       <Routes>
-        <Route path="/home" element={user ? <FacultyHomePage userInfo = {userInfo} getCognitoUser = {getCognitoUser} getUser={getUserInfo}/> : <Navigate to="/auth" />} />
+        <Route path="/home" element={user ? (
+          userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          userInfo.role === 'Assistant' ? <AssistantHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          <PageContainer>
+            <div className='flex items-center justify-center w-full'>
+              <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+            </div>
+          </PageContainer>
+        ) : <Navigate to="/auth" />} />
         <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage getCognitoUser = {getCognitoUser} />} />
         <Route path="/academic-work" element={user ? <AcademicWork userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />

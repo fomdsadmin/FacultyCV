@@ -1,6 +1,6 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery } from './queries';
-import { addSectionMutation, addUserCVDataMutation, addUserMutation, updateUserCVDataMutation, updateUserMutation } from './mutations';
+import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery } from './queries';
+import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation } from './mutations';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -42,6 +42,7 @@ export const getAllSections = async () => {
  *      preferred_name
  *      email
  *      role
+ *      bio
  *      rank
  *      primary_department
  *      secondary_department
@@ -77,6 +78,22 @@ export const getUserCVData = async (user_id, data_section_id) => {
     return results['data']['getUserCVData'];
 }
 
+/**
+ * Function to get all university info
+ * Return value:
+ * [
+ *  {
+ *      university_info_id: Identifier for the university info in the DB
+ *      type
+ *      value
+ *  }, ...
+ * ]
+ */
+export const getAllUniversityInfo = async () => {
+    const results = await runGraphql(getAllUniversityInfoQuery())
+    return results['data']['getAllUniversityInfo'];
+}
+
 // --- POST ---
 
 /**
@@ -109,6 +126,7 @@ export const addSection = async (title, description, data_type, attributes) => {
     return results['data']['addSection'];
 }
 
+
 /**
  * Function to add user data to the database
  * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
@@ -117,6 +135,7 @@ export const addSection = async (title, description, data_type, attributes) => {
  *      preferred_name
  *      email
  *      role
+ *      bio
  *      rank
  *      primary_department
  *      secondary_department
@@ -131,16 +150,29 @@ export const addSection = async (title, description, data_type, attributes) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const addUser = async (first_name, last_name, preferred_name,
-    email, role, rank, primary_department, secondary_department, primary_faculty,
+    email, role, bio, rank, primary_department, secondary_department, primary_faculty,
     secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
         const results = await runGraphql(addUserMutation(
             first_name, last_name, preferred_name,
-            email, role, rank, primary_department, 
+            email, role, bio, rank, primary_department, 
             secondary_department, primary_faculty,
             secondary_faculty, campus, keywords,
             institution_user_id, scopus_id, orcid_id
         ));
         return results['data']['addUser'];
+}
+
+/**
+ * Function to add university info to university_info table
+ * Arguments:
+ * type
+ * value
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const addUniversityInfo = async (type, value) => {
+    const results = await runGraphql(addUniversityInfoMutation(type, value));
+    return results['data']['addUniversityInfo'];
 }
 
 // --- UPDATE ---
@@ -154,6 +186,7 @@ export const addUser = async (first_name, last_name, preferred_name,
  *      preferred_name
  *      email
  *      role
+ *      bio
  *      rank
  *      primary_department
  *      secondary_department
@@ -168,11 +201,11 @@ export const addUser = async (first_name, last_name, preferred_name,
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateUser = async (user_id, first_name, last_name, preferred_name,
-    email, role, rank, primary_department, secondary_department, primary_faculty,
+    email, role, bio, rank, primary_department, secondary_department, primary_faculty,
     secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
         const results = await runGraphql(updateUserMutation(
             user_id, first_name, last_name, preferred_name,
-            email, role, rank, primary_department, 
+            email, role, bio, rank, primary_department, 
             secondary_department, primary_faculty,
             secondary_faculty, campus, keywords,
             institution_user_id, scopus_id, orcid_id
@@ -192,4 +225,20 @@ export const updateUser = async (user_id, first_name, last_name, preferred_name,
 export const updateUserCVData = async (user_id, data_section_id, data_details) => {
     const results = await runGraphql(updateUserCVDataMutation(user_id, data_section_id, data_details));
     return results['data']['updateUserCVData'];
+}
+
+/**
+ * Function to update university info
+ * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
+ *      university_info_id
+ *      type
+ *      value
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateUniversityInfo = async (university_info_id, type, value) => {
+        const results = await runGraphql(updateUniversityInfoMutation(
+            university_info_id, type, value
+        ));
+        return results['data']['updateUniversityInfo'];
 }

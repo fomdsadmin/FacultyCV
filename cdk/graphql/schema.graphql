@@ -5,6 +5,7 @@ type User {
   preferred_name: String
   email: String
   role: String
+  bio: String
   rank: String
   primary_department: String
   secondary_department: String
@@ -42,11 +43,18 @@ type ElsevierAuthorProfile {
   orcid: String
 }
 
+type UniversityInfo {
+  university_info_id: String!
+  type: String
+  value: String
+}
+
 type Query {
     getUser(email: String!): User
     getAllSections: [ DataSection ]
     getUserCVData(user_id: String!, data_section_id: String!): UserCVData
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]
+    getAllUniversityInfo: [ UniversityInfo ]
 }
 
 type Mutation {
@@ -58,6 +66,7 @@ type Mutation {
       preferred_name: String
       email: String!
       role: String!
+      bio: String
       rank: String
       primary_department: String
       secondary_department: String
@@ -76,6 +85,7 @@ type Mutation {
       preferred_name: String
       email: String
       role: String
+      bio: String
       rank: String
       primary_department: String
       secondary_department: String
@@ -106,5 +116,16 @@ type Mutation {
       user_id: String!
       data_section_id: String!
       data_details: String!
+    ): String
+
+    addUniversityInfo(
+      type: String!
+      value: String!
+    ): String
+
+    updateUniversityInfo(
+      university_id: String!
+      type: String
+      value: String
     ): String
 }
