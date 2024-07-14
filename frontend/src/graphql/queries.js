@@ -59,3 +59,19 @@ export const getAllUniversityInfoQuery = () => `
         }
     }
 `;
+
+export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution_name) => `
+    query getElsevierAuthorMatches {
+        getElsevierAuthorMatches (
+            first_name: "${first_name}", last_name: "${last_name}", institution_name: "${institution_name}"
+        ) {
+            last_name,
+            first_name,
+            name_variants,
+            subjects,
+            current_affiliation,
+            scopus_id,
+            orcid
+        }
+    }
+`;

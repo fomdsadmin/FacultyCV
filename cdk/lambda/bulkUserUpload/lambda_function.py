@@ -36,6 +36,7 @@ def writeRowToDB(row, conn, cursor):
         preferred_name, 
         email, 
         role,
+        bio,
         rank, 
         primary_department, 
         secondary_department, 
@@ -46,9 +47,9 @@ def writeRowToDB(row, conn, cursor):
         institution_user_id, 
         scopus_id, 
         orcid_id
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
-    values = (row[0], row[1], row[2], row[4], "", row[17], row[6], row[8], row[10], row[12], row[14], "", row[3], "", "")
+    values = (row[0], row[1], row[2], row[4], "", "", row[17], row[6], row[8], row[10], row[12], row[14], "", row[3], "", "")
     cursor.execute(query, values)
     conn.commit()
     return 1

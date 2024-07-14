@@ -36,7 +36,7 @@ Amplify.configure({
 function App() {
   const [user, setUser] = useState(null);
   const [userInfo, setUserInfo] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   async function getUserInfo(email) {
     try {

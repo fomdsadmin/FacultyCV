@@ -1,5 +1,5 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery } from './queries';
+import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery } from './queries';
 import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation } from './mutations';
 
 const runGraphql = async (query) => {
@@ -93,6 +93,41 @@ export const getAllUniversityInfo = async () => {
     const results = await runGraphql(getAllUniversityInfoQuery())
     return results['data']['getAllUniversityInfo'];
 }
+
+/**
+ * Function to get potential matches for an author using the Elsevier API
+ * Arguments:
+ * first_name
+ * last_name
+ * institution_name
+ * Return value:
+ * [
+ *  {
+ *      last_name
+ *      first_name
+ *      current_affiliation
+ *      name_variants,
+ *      subjects,
+ *      scopus_id,
+ *      orcid
+ *  }, ...
+ * ]
+ */
+export const getElsevierAuthorMatches = async (first_name, last_name, institution_name) => {
+    const results = await runGraphql(getElsevierAuthorMatchesQuery(first_name, last_name, institution_name))
+    return results['data']['getElsevierAuthorMatches'];
+}
+
+// --- PUT ---
+
+/**
+ * Function to update user data
+ * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
+ *      user_id
+ *      first_name
+ *      last_name
+ *      preferred_name
+ *      email
 
 // --- POST ---
 

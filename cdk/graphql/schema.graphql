@@ -128,4 +128,10 @@ type Mutation {
       type: String
       value: String
     ): String
+
+    linkScopusId(
+      user_id: String!,
+      scopus_id: String!,
+      orcid_id: String
+    ): String
 }
