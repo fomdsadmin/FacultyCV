@@ -2,7 +2,7 @@ import { Amplify } from 'aws-amplify';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
-import { getCurrentUser } from 'aws-amplify/auth';
+import { getCurrentUser, signOut } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import AuthPage from './Views/AuthPage';
 import NotFound from './Views/NotFound';
@@ -43,7 +43,7 @@ function App() {
       const userInformation = await getUser(email);
       setUserInfo(userInformation);
       setLoading(false);
-      console.log(userInformation);
+      return userInformation;
     } catch (error) {
       setLoading(false);
       console.log('Error getting user:', error);
@@ -55,11 +55,12 @@ function App() {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
       console.log(currentUser.signInDetails.loginId, "is signed in");
-      getUserInfo(currentUser.signInDetails.loginId);
+      await getUserInfo(currentUser.signInDetails.loginId);
       <Navigate to="/home" />
     }
     catch (error) {
       setUser(null);
+      signOut();
       console.log('Error getting user:', error);
       setLoading(false);
       <Navigate to="/auth" />
@@ -84,8 +85,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/home" element={user ? (
-          userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
-          userInfo.role === 'Assistant' ? <AssistantHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          userInfo.role === 'Admins' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          userInfo.role === 'Assistants' ? <AssistantHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
           userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
           <PageContainer>
             <div className='flex items-center justify-center w-full'>
