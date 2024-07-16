@@ -9,7 +9,7 @@ import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
-import { getUser } from './graphql/graphqlHelpers.js';
+import { getElsevierAuthorMatches, getUser } from './graphql/graphqlHelpers.js';
 import PageContainer from './Views/PageContainer.jsx';
 import FacultyHomePage from './Views/FacultyHomePage.jsx';
 import AssistantHomePage from './Views/AssistantHomePage.jsx';
