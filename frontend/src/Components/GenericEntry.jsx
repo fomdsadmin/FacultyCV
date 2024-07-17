@@ -1,28 +1,47 @@
 import React from 'react';
-import { RiDraggable } from 'react-icons/ri';
 import { FaRegEdit } from 'react-icons/fa';
 import { IoClose } from 'react-icons/io5';
+import { LuUndo2 } from "react-icons/lu";
 
-const GenericEntry = ({ onEdit, field1, field2 }) => {
+const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, onDelete, field1, field2, field3 }) => {
+
   return (
-    <div className="min-h-8 shadow-glow mx-4 my-2 max-w-lg px-2 flex items-center">
+    <div className="min-h-8 shadow-glow mx-4 my-2 max-w-3xl px-2 flex items-center">
       <div className="mr-2">
-        {/* <RiDraggable className="h-5 w-5" /> */}
       </div>
       
       <p className="font-bold text-sm break-words">
         {field1}
         {field2 ? `, ${field2}` : ''}
+        {field3 ? `, ${field3}` : ''}
       </p>
 
       <div className="flex items-center space-x-0 ml-auto">
-        <button className="btn btn-xs btn-circle btn-ghost" onClick={onEdit}>
-          <FaRegEdit className="h-4 w-4" />
-        </button>
+
+        {!isArchived &&
+          <div>
+            <button className="btn btn-xs btn-circle btn-ghost" onClick={() => onEdit()}>
+              <FaRegEdit className="h-4 w-4" />
+            </button>
+                    
+            <button className="btn btn-xs btn-circle btn-ghost" onClick={() => onArchive()}>
+              <IoClose className="h-4 w-4" />
+            </button>
+          </div>
+        }
+
+        {isArchived &&
+          <div>
+            <button className="btn btn-xs btn-circle btn-ghost" onClick={onRestore}>
+              <LuUndo2 className="h-4 w-4" />
+            </button>
+            <button className="btn btn-xs btn-circle btn-ghost" onClick={onDelete}>
+            <IoClose className="h-4 w-4" />
+            </button>
+          </div>
+        }
         
-        <button className="btn btn-xs btn-circle btn-ghost">
-          <IoClose className="h-4 w-4" />
-        </button>
+
       </div>
     </div>
   );

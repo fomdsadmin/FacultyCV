@@ -6,6 +6,8 @@ import { IoPersonAddOutline } from "react-icons/io5";
 import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
+import { FaRegTrashAlt } from "react-icons/fa";
+
 
 const FacultyMenu = ({ userName, getCognitoUser }) => {
   const location = useLocation();
@@ -49,6 +51,12 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
           <Link to='/assistants'>
             <IoPersonAddOutline className="h-5 w-5" />
             <p className={`ml-2 ${location.pathname === '/assistants' ? 'font-bold' : ''}`}>Assistants</p>
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === '/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/archive'>
+            <FaRegTrashAlt className="h-4 w-4" />
+            <p className={`ml-2 ${location.pathname === '/archive' ? 'font-bold' : ''}`}>Archive</p>
           </Link>
         </li>
         <li className="mt-auto">
