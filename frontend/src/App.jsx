@@ -52,6 +52,7 @@ function App() {
 
   async function getCognitoUser() {
     try {
+      setLoading(true);
       const currentUser = await getCurrentUser();
       setUser(currentUser);
       console.log(currentUser.signInDetails.loginId, "is signed in");
@@ -60,6 +61,7 @@ function App() {
     }
     catch (error) {
       setUser(null);
+      setUserInfo(null);
       signOut();
       console.log('Error getting user:', error);
       setLoading(false);
