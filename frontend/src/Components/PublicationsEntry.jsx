@@ -3,7 +3,7 @@ import { RiDraggable } from "react-icons/ri";
 import { IoClose } from "react-icons/io5";
 import { FaRegEdit } from "react-icons/fa";
 
-const PublicationsEntry = ({ onEdit, ...publication }) => {
+const PublicationsEntry = ({ onEdit, onArchive, ...publication }) => {
     return (
         <div className="min-h-8 shadow-glow mx-4 my-2 max-w-lg px-2 flex items-center">
             <div className="mr-2">
@@ -17,7 +17,7 @@ const PublicationsEntry = ({ onEdit, ...publication }) => {
                     <FaRegEdit className="h-4 w-4" />
                 </button>
                 
-                <button className="btn btn-xs btn-circle btn-ghost">
+                <button className="btn btn-xs btn-circle btn-ghost" onClick={onArchive}>
                     <IoClose className="h-4 w-4" />
                 </button>
             </div>

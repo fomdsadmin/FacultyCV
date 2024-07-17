@@ -516,11 +516,40 @@ const Archive = ({ userInfo, getCognitoUser }) => {
     const [filteredEntries, setFilteredEntries] = useState([]);
 
     useEffect(() => {
-        setUser(userInfo);
-    }, [userInfo]);
+      setUser(userInfo);
+  
+      const filtered = archived.filter(entry => {
+        const { title, description, attributes } = entry;
+        const [fieldA, fieldB] = rankFields(attributes);
+  
+        const searchTermLower = searchTerm.toLowerCase();
+
+        console.log(searchTermLower);
+  
+        return (
+          title.toLowerCase().includes(searchTermLower) ||
+          description.toLowerCase().includes(searchTermLower) ||
+          (fieldA && fieldA.toLowerCase().includes(searchTermLower)) ||
+          (fieldB && fieldB.toLowerCase().includes(searchTermLower))
+        );
+      });
+  
+      setFilteredEntries(filtered);
+    }, [searchTerm, userInfo]);
+
 
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
+    };
+
+    const handleRestore = (entry) => {
+        // Implement restore functionality here
+        console.log('Restoring entry ' + entry.data_section_id);
+    };
+
+    const handleDelete = (entry) => { 
+        // Implement delete functionality here
+        console.log('Deleting entry ' + entry.data_section_id);
     };
 
     return (
@@ -551,17 +580,20 @@ const Archive = ({ userInfo, getCognitoUser }) => {
                     </label>
                     </div>  
 
-                  {archived.map((entry) => {
+                  {filteredEntries.map((entry, index) => {
 
                     const [fieldA, fieldB] = rankFields(entry.attributes);
+
                     
                     return(
                       <GenericEntry 
-                        key={entry.data_section_id} 
+                        key={index} 
                         isArchived={true}
                         field1={entry.title}
                         field2={fieldA}
                         field3={fieldB}
+                        onRestore={() => handleRestore(entry)}
+                        onDelete={() => handleDelete(entry)}
                       ></GenericEntry>
                     )
                     

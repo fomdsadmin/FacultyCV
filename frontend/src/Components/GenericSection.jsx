@@ -351,17 +351,21 @@ const GenericSection = ({ section }) => {
         setSearchTerm(event.target.value);
     };
 
+    const handleArchive = (entry) => {
+      console.log("archived entry " + entry.title);
+    };
+
     const handleEdit = (entry) => {
-        console.log("entry " + entry.title);
-        
-        const { field1, field2, ...newEntry } = entry;
-        
-        setIsNew(false);
-        setSelectedEntry(newEntry);
-        
-        console.log("selected entry " + newEntry);
-        
-        setIsModalOpen(true);
+      console.log("entry " + entry.title);
+      
+      const { field1, field2, ...newEntry } = entry;
+      
+      setIsNew(false);
+      setSelectedEntry(newEntry);
+      
+      console.log("selected entry " + newEntry);
+      
+      setIsModalOpen(true);
     };
     
     const handleCloseModal = () => {
@@ -444,6 +448,7 @@ const GenericSection = ({ section }) => {
                 onEdit={() => handleEdit(entry)}
                 field1={entry.field1}
                 field2={entry.field2}
+                onArchive={() =>  handleArchive(entry)}
                 />
             ))
             ) : (
