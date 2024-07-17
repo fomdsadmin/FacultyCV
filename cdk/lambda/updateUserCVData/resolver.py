@@ -20,8 +20,8 @@ def updateUserCVData(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    # Store data in the user_cv_data table
-    cursor.execute("UPDATE user_cv_data SET data_details = %s WHERE user_id = %s AND data_section_id = %s", (arguments['data_details'], arguments['user_id'], arguments['data_section_id']))
+    data_details_json = json.dumps(arguments['data_details'])  # Convert data_details dictionary to JSON string
+    cursor.execute("UPDATE user_cv_data SET data_details = %s WHERE user_id = %s AND data_section_id = %s", (data_details_json, arguments['user_id'], arguments['data_section_id']))
     cursor.close()
     connection.commit()
     connection.close()

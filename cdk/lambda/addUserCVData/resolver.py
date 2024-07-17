@@ -20,8 +20,8 @@ def addUserCVData(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    # Store data in the user_cv_data table
-    cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details) VALUES (%s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], arguments['data_details']))
+    data_details_json = json.dumps(arguments['data_details'])  # Convert data_details dictionary to JSON string
+    cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details) VALUES (%s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], data_details_json))
     cursor.close()
     connection.commit()
     connection.close()

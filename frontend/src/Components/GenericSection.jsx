@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
 import EntryModal from './EntryModal';
+import { getUserCVData, addUserCVData } from '../graphql/graphqlHelpers';
 
 
 // Function to rank fields based on importance
@@ -47,21 +48,18 @@ const rankFields = (entry) => {
     return emptyEntry;
   };
 
-const GenericSection = ({ section }) => {
+const GenericSection = ({ user, section }) => {
+  const [userData, setUserData] = useState([]);
 
     const mockData = {
         DS001: [
           {
-            university_id: 'U001',
-            faculty_member_id: 'F001',
             university_name: 'University A',
             degree: 'BSc Computer Science',
             subject_area: 'Computer Science',
             dates: '2000-2004',
           },
           {
-            university_id: 'U002',
-            faculty_member_id: 'F002',
             university_name: 'University B',
             degree: 'BA Economics',
             subject_area: 'Economics',
@@ -70,15 +68,11 @@ const GenericSection = ({ section }) => {
         ],
         DS002: [
           {
-            university_id: 'C001',
-            faculty_member_id: 'F001',
             university_name: 'University A',
             rank: 'Senior Lecturer',
             dates: '2006-2010',
           },
           {
-            university_id: 'C002',
-            faculty_member_id: 'F002',
             university_name: 'University B',
             rank: 'Assistant Professor',
             dates: '2011-2015',
@@ -86,16 +80,12 @@ const GenericSection = ({ section }) => {
         ],
         DS003: [
           {
-            university_id: 'M001',
-            faculty_member_id: 'F001',
             university_name: 'Medical University A',
             type: 'CME',
             detail: 'Cardiology',
             dates: '2005-2006',
           },
           {
-            university_id: 'M002',
-            faculty_member_id: 'F002',
             university_name: 'Medical University B',
             type: 'CME',
             detail: 'Neurology',
@@ -104,34 +94,24 @@ const GenericSection = ({ section }) => {
         ],
         DS004: [
           {
-            dissertation_id: 'D001',
-            faculty_member_id: 'F001',
             title: 'A Study on Machine Learning Algorithms',
             supervisor: 'Dr. Smith',
           },
           {
-            dissertation_id: 'D002',
-            faculty_member_id: 'F002',
             title: 'Economic Impacts of Globalization',
             supervisor: 'Dr. Johnson',
           },
         ],
         DS005: [
           {
-            qualification_id: 'Q001',
-            faculty_member_id: 'F001',
             details: 'Certified Data Scientist',
           },
           {
-            qualification_id: 'Q002',
-            faculty_member_id: 'F002',
             details: 'Certified Financial Analyst',
           },
         ],
         DS006: [
           {
-            course_id: 'CT001',
-            faculty_member_id: 'F001',
             course_name: 'Introduction to Computer Science',
             description: 'Basics of Computer Science',
             class_size: 100,
@@ -143,8 +123,6 @@ const GenericSection = ({ section }) => {
             dates: '2020-2021',
           },
           {
-            course_id: 'CT002',
-            faculty_member_id: 'F002',
             course_name: 'Advanced Economics',
             description: 'In-depth study of economic theories',
             class_size: 80,
@@ -158,8 +136,6 @@ const GenericSection = ({ section }) => {
         ],
         DS007: [
           {
-            student_supervised_id: 'SS001',
-            faculty_member_id: 'F001',
             student_name: 'John Doe',
             program: 'PhD',
             degree: 'Computer Science',
@@ -168,8 +144,6 @@ const GenericSection = ({ section }) => {
             dates: '2018-2021',
           },
           {
-            student_supervised_id: 'SS002',
-            faculty_member_id: 'F002',
             student_name: 'Jane Smith',
             program: 'Masters',
             degree: 'Economics',
@@ -180,15 +154,11 @@ const GenericSection = ({ section }) => {
         ],
         DS008: [
           {
-            employment_record_id: 'ECR001',
-            faculty_member_id: 'F001',
             company: 'Tech Corp',
             rank_or_title: 'Senior Developer',
             dates: '2020-Present',
           },
           {
-            employment_record_id: 'ECR002',
-            faculty_member_id: 'F002',
             company: 'Finance Inc.',
             rank_or_title: 'Chief Economist',
             dates: '2018-Present',
@@ -196,15 +166,11 @@ const GenericSection = ({ section }) => {
         ],
         DS009: [
           {
-            employment_record_id: 'PER001',
-            faculty_member_id: 'F001',
             company: 'Software Solutions',
             rank_or_title: 'Developer',
             dates: '2015-2020',
           },
           {
-            employment_record_id: 'PER002',
-            faculty_member_id: 'F002',
             company: 'Economics Ltd.',
             rank_or_title: 'Analyst',
             dates: '2013-2018',
@@ -212,15 +178,11 @@ const GenericSection = ({ section }) => {
         ],
         DS010: [
           {
-            employment_record_id: 'A001',
-            faculty_member_id: 'F001',
             company: 'Tech Corp',
             type: 'Sabbatical',
             dates: '2023',
           },
           {
-            employment_record_id: 'A002',
-            faculty_member_id: 'F002',
             company: 'Finance Inc.',
             type: 'Medical Leave',
             dates: '2022',
@@ -228,15 +190,11 @@ const GenericSection = ({ section }) => {
         ],
         DS011: [
           {
-            service_id: 'S001',
-            faculty_member_id: 'F001',
             service_type: 'Committee',
             service_title: 'Tech Committee',
             dates: '2020-2021',
           },
           {
-            service_id: 'S002',
-            faculty_member_id: 'F002',
             service_type: 'Board',
             service_title: 'Finance Board',
             dates: '2019-2020',
@@ -244,29 +202,21 @@ const GenericSection = ({ section }) => {
         ],
         DS012: [
           {
-            award_id: 'A001',
-            faculty_member_id: 'F001',
             award_name: 'Best Researcher',
             award_duration: '2021',
           },
           {
-            award_id: 'A002',
-            faculty_member_id: 'F002',
             award_name: 'Outstanding Analyst',
             award_duration: '2020',
           },
         ],
         DS013: [
           {
-            presentation_id: 'P001',
-            faculty_member_id: 'F001',
             title: 'AI in Modern Tech',
             venue: 'Tech Conference 2021',
             dates: '2021',
           },
           {
-            presentation_id: 'P002',
-            faculty_member_id: 'F002',
             title: 'Economic Forecasting',
             venue: 'Economics Symposium 2020',
             dates: '2020',
@@ -274,16 +224,12 @@ const GenericSection = ({ section }) => {
         ],
         DS014: [
           {
-            participation_id: 'PA001',
-            faculty_member_id: 'F001',
             title: 'Economic Conference',
             role: 'Speaker',
             venue: 'Economics Hall',
             dates: '2022',
           },
           {
-            participation_id: 'PA002',
-            faculty_member_id: 'F002',
             title: 'Tech Expo',
             role: 'Panelist',
             venue: 'Tech Center',
@@ -372,7 +318,6 @@ const GenericSection = ({ section }) => {
         ],
       };
 
-    
     const [searchTerm, setSearchTerm] = useState('');
 
     const [fieldData, setFieldData] = useState([]);
@@ -412,12 +357,13 @@ const GenericSection = ({ section }) => {
     };
 
     useEffect(() => {
-        const filteredData = mockData[section.data_section_id]?.filter(entry => {
-        const [field1, field2] = rankFields(entry);
-        return (
-            (field1 && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (field2 && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
+        getUserData();
+        const filteredData = userData.map(entry => {
+          const [field1, field2] = rankFields(entry.data_details);
+          return (
+              (field1 && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+              (field2 && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+          );
         }) || [];
 
         const rankedData = filteredData.map(entry => {
@@ -440,11 +386,21 @@ const GenericSection = ({ section }) => {
         
     }, [searchTerm, section.data_section_id]);
 
+    useEffect(() => {
+        getUserData();
+    }, [user]);
+
+    const getUserData = async () => {
+      const data = await getUserCVData(user.user_id, section.data_section_id);
+      console.log(data);
+      setUserData(data);
+    }
+
     return (
         <div>
         <div className='m-4 max-w-lg flex'>
             <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
-            <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>new</button>
+            <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>New</button>
         </div>
 
         <div className='m-4 max-w-lg flex'>
