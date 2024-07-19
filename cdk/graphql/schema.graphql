@@ -113,9 +113,8 @@ type Mutation {
     ): String
 
     updateUserCVData(
-      user_id: String!
-      data_section_id: String!
-      data_details: String!
+      user_cv_data_id: String!
+      data_details: AWSJSON! # JSON
     ): String
 
     addUniversityInfo(

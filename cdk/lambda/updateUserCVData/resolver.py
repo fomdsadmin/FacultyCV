@@ -21,7 +21,7 @@ def updateUserCVData(arguments):
     print("Connected to Database")
     cursor = connection.cursor()
     data_details_json = json.dumps(arguments['data_details'])  # Convert data_details dictionary to JSON string
-    cursor.execute("UPDATE user_cv_data SET data_details = %s WHERE user_id = %s AND data_section_id = %s", (data_details_json, arguments['user_id'], arguments['data_section_id']))
+    cursor.execute("UPDATE user_cv_data SET data_details = %s WHERE user_cv_data_id = %s", (data_details_json, arguments['user_cv_data_id']))
     cursor.close()
     connection.commit()
     connection.close()

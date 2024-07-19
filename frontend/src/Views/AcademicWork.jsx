@@ -246,35 +246,15 @@ import { getAllSections } from '../graphql/graphqlHelpers.js';
 const AcademicWork = ({ userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
-  const [activeSection, setActiveSection] = useState(null
-  //   {
-  //   data_section_id: 'DS016',
-  //   title: 'Publications',
-  //   description: 'Details of the publications by the faculty member',
-  //   data_type: 'Research',
-  //   attributes: {
-  //     publication_id: 'varchar',
-  //     publication_type: 'varchar',
-  //     publication_title: 'varchar',
-  //     scopus_ids: 'varchar',
-  //     publisher: 'varchar',
-  //     publication_year: 'int',
-  //     keywords: 'varchar',
-  //     journal: 'varchar',
-  //     link: 'varchar',
-  //     doi: 'varchar',
-  //     num_citations: 'int',
-  //   },
-  // }
-  
-);
+  const [activeSection, setActiveSection] = useState(null);
   const [user, setUser] = useState(userInfo);
   const [dataSections, setDataSections] = useState([]);
+  const [loading, setLoading] = useState(true); // Add loading state
 
   useEffect(() => {
     setUser(userInfo);
     getDataSections();
-  }, [userInfo]);
+  }, []);
 
   const getDataSections = async () => {
     const retrievedSections = await getAllSections();
@@ -287,6 +267,7 @@ const AcademicWork = ({ userInfo, getCognitoUser }) => {
 
     console.log(parsedSections);
     setDataSections(parsedSections);
+    setLoading(false);
   }
 
   const handleSearchChange = (event) => {
@@ -318,47 +299,53 @@ const AcademicWork = ({ userInfo, getCognitoUser }) => {
     <PageContainer>
       <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
       <main className='flex-1 h-full'>
-        <Container className='w-full h-full'>
-          <Section minSize={330} className='!overflow-auto !h-full custom-scrollbar'>
-            <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Academic Work</h1>
-            <div className='m-4 max-w-lg flex'>
-              <label className="input input-bordered flex items-center gap-2 flex-1">
-                <input
-                  type="text"
-                  className="grow"
-                  placeholder="Search"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                  className="h-4 w-4 opacity-70"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-                    clipRule="evenodd" />
-                </svg>
-              </label>
+        {loading ? (
+            <div className='flex items-center justify-center w-full'>
+              <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
             </div>
-            <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters>
-            {searchedSections.map((section) => (
-              <WorkSection onClick={handleManageClick} key={section.data_section_id} id={section.data_section_id} title={section.title} category={section.data_type}></WorkSection>
-            ))}
-          </Section>
-          <Bar size={4} className='bg-neutral h-screen' style={{ cursor: 'col-resize' }} />
-          <Section minSize={240} className='!overflow-auto !h-full custom-scrollbar'>
-            {activeSection!=null && activeSection.title == 'Publications' && 
-              <Publications></Publications>
-            } 
+          ) : (
+          <Container className='w-full h-full'>
+            <Section minSize={330} className='!overflow-auto !h-full custom-scrollbar'>
+              <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Academic Work</h1>
+              <div className='m-4 max-w-lg flex'>
+                <label className="input input-bordered flex items-center gap-2 flex-1">
+                  <input
+                    type="text"
+                    className="grow"
+                    placeholder="Search"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                  />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    className="h-4 w-4 opacity-70"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                      clipRule="evenodd" />
+                  </svg>
+                </label>
+              </div>
+              <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters>
+              {searchedSections.map((section) => (
+                <WorkSection onClick={handleManageClick} key={section.data_section_id} id={section.data_section_id} title={section.title} category={section.data_type}></WorkSection>
+              ))}
+            </Section>
+            <Bar size={4} className='bg-neutral h-screen' style={{ cursor: 'col-resize' }} />
+            <Section minSize={240} className='!overflow-auto !h-full custom-scrollbar'>
+              {activeSection!=null && activeSection.title == 'Publications' && 
+                <Publications></Publications>
+              } 
 
-            {activeSection!=null && activeSection.title != 'Publications' &&
-              <GenericSection user = {user} section={activeSection}></GenericSection>
-            }
-          </Section>
-        </Container>
+              {activeSection!=null && activeSection.title != 'Publications' &&
+                <GenericSection user = {user} section={activeSection}></GenericSection>
+              }
+            </Section>
+          </Container>
+        )}
       </main>
     </PageContainer>
   );

@@ -11,7 +11,7 @@ const FacultyHomePage = ({ userInfo, getCognitoUser, getUser }) => {
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [campuses, setCampuses] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
 
   useEffect(() => {
