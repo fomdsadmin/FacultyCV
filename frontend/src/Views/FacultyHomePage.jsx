@@ -11,7 +11,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, setUser, getCognitoUser, getUs
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [campuses, setCampuses] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
   // TODO - To fix this -> too many requests being made, old state retained after auth
   useEffect(() => {

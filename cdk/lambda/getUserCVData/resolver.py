@@ -24,14 +24,17 @@ def getUserCVData(arguments):
     results = cursor.fetchall()
     cursor.close()
     connection.close()
+    user_cv_data = []
     if len(results) == 0:
         return {}
-    return {
-        'user_cv_data_id': results[0][0],
-        'user_id': results[0][1],
-        'data_section_id': results[0][2],
-        'data_details': results[0][3]
-    }
+    for result in results:
+        user_cv_data.append({
+            'user_cv_data_id': result[0],
+            'user_id': result[1],
+            'data_section_id': result[2],
+            'data_details': result[3]
+        })
+    return user_cv_data
 
 def lambda_handler(event, context):
     return getUserCVData(event['arguments'])

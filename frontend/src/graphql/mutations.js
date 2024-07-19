@@ -103,11 +103,10 @@ export const updateUserMutation = (user_id, first_name, last_name, preferred_nam
     }
 `;
 
-export const updateUserCVDataMutation = (user_id, data_section_id, data_details) => `
+export const updateUserCVDataMutation = (user_cv_data_id, data_details) => `
     mutation UpdateUserCVDataMutation {
         updateUserCVData(
-            user_id: "${user_id}"
-            data_section_id: "${data_section_id}"
+            user_cv_data_id: "${user_cv_data_id}"
             data_details: "${data_details}"
         )
     }

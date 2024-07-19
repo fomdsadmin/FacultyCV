@@ -266,14 +266,13 @@ export const updateUser = async (user_id, first_name, last_name, preferred_name,
 /**
  * Function to update user cv data - the section info associated with a user
  * Arguments:
- * user_id - ID of the user the profile belongs to
- * data_section_id - ID of the data section as returned by the getAllSections call
+ * user_cv_data_id - ID of the user cv data
  * data_details - JSON String
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateUserCVData = async (user_id, data_section_id, data_details) => {
-    const results = await runGraphql(updateUserCVDataMutation(user_id, data_section_id, data_details));
+export const updateUserCVData = async (user_cv_data_id, data_details) => {
+    const results = await runGraphql(updateUserCVDataMutation(user_cv_data_id, data_details));
     return results['data']['updateUserCVData'];
 }
 
