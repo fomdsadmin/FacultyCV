@@ -72,12 +72,14 @@ const GenericSection = ({ user, section }) => {
         );
       });
       console.log("filtered data: " + JSON.stringify(filteredData));
-      
+  
       const rankedData = filteredData.map(entry => {
-        const [field1, field2] = rankFields(entry);
+        const [field1, field2] = rankFields(entry.data_details);
         return { ...entry, field1, field2 };
       });
+  
       setFieldData(rankedData);
+  
     } catch (error) {
       console.error('Error fetching data:', error);
     }
