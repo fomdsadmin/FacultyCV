@@ -14,12 +14,9 @@ import { rankFields } from '../utils/rankingUtils';
   };
 
 const GenericSection = ({ user, section }) => {
-  const [userData, setUserData] = useState([]);
-
   const [searchTerm, setSearchTerm] = useState('');
 
   const [fieldData, setFieldData] = useState([]);
-  const [entryData, setEntryData] = useState([]);
 
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,7 +64,6 @@ const GenericSection = ({ user, section }) => {
         data_details: JSON.parse(data.data_details),
       }));
 
-      setUserData(parsedData);    
       const filteredData = parsedData.filter(entry => {
         const [field1, field2] = rankFields(entry.data_details);
         return (
@@ -81,14 +77,7 @@ const GenericSection = ({ user, section }) => {
         const [field1, field2] = rankFields(entry);
         return { ...entry, field1, field2 };
       });
-
-      const entryFields = filteredData.map(entry => {
-        return { ...entry };
-      });
-  
-      setEntryData(entryFields);
       setFieldData(rankedData);
-  
     } catch (error) {
       console.error('Error fetching data:', error);
     }

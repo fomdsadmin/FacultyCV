@@ -243,16 +243,14 @@ import { getAllSections } from '../graphql/graphqlHelpers.js';
 //   },
 // ];
 
-const AcademicWork = ({ userInfo, getCognitoUser }) => {
+const AcademicWork = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeSection, setActiveSection] = useState(null);
-  const [user, setUser] = useState(userInfo);
   const [dataSections, setDataSections] = useState([]);
   const [loading, setLoading] = useState(true); // Add loading state
 
   useEffect(() => {
-    setUser(userInfo);
     getDataSections();
   }, []);
 
@@ -297,7 +295,7 @@ const AcademicWork = ({ userInfo, getCognitoUser }) => {
 
   return (
     <PageContainer>
-      <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
+      <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
       <main className='flex-1 h-full'>
         {loading ? (
             <div className='flex items-center justify-center w-full'>
@@ -341,7 +339,7 @@ const AcademicWork = ({ userInfo, getCognitoUser }) => {
               } 
 
               {activeSection!=null && activeSection.title != 'Publications' &&
-                <GenericSection user = {user} section={activeSection}></GenericSection>
+                <GenericSection user={userInfo} section={activeSection}></GenericSection>
               }
             </Section>
           </Container>

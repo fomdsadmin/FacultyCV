@@ -90,7 +90,7 @@ function App() {
         <Route path="/home" element={user ? (
           userInfo.role === 'Admins' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
           userInfo.role === 'Assistants' ? <AssistantHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
-          userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
           <PageContainer>
             <div className='flex items-center justify-center w-full'>
               <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
