@@ -54,6 +54,29 @@ export const addUniversityInfoMutation = (type, value) => `
     }
 `;
 
+export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
+    if(orcid_id) {
+        return `
+            mutation LinkScopusId {
+                linkScopusId(
+                    user_id: "${user_id}",
+                    scopus_id: "${scopus_id}",
+                    orcid_id: "${orcid_id}"
+                )
+            }
+        `;
+    } else {
+        return `
+            mutation LinkScopusId {
+                linkScopusId(
+                    user_id: "${user_id}",
+                    scopus_id: "${scopus_id}"
+                )
+            }
+        `;
+    }
+}
+
 export const updateUserMutation = (user_id, first_name, last_name, preferred_name,
     email, role, bio, rank, primary_department, secondary_department, primary_faculty,
     secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => `

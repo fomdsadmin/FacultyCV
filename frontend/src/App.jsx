@@ -2,18 +2,19 @@ import { Amplify } from 'aws-amplify';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
-import { getCurrentUser } from 'aws-amplify/auth';
+import { getCurrentUser, signOut } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import AuthPage from './Views/AuthPage';
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
-import { getUser } from './graphql/graphqlHelpers.js';
+import { getElsevierAuthorMatches, getUser } from './graphql/graphqlHelpers.js';
 import PageContainer from './Views/PageContainer.jsx';
 import FacultyHomePage from './Views/FacultyHomePage.jsx';
 import AssistantHomePage from './Views/AssistantHomePage.jsx';
 import AdminHomePage from './Views/AdminHomePage.jsx';
+import Archive from './Views/Archive.jsx';
 
 Amplify.configure({
   API: {
@@ -36,14 +37,14 @@ Amplify.configure({
 function App() {
   const [user, setUser] = useState(null);
   const [userInfo, setUserInfo] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   async function getUserInfo(email) {
     try {
       const userInformation = await getUser(email);
       setUserInfo(userInformation);
       setLoading(false);
-      console.log(userInformation);
+      return userInformation;
     } catch (error) {
       setLoading(false);
       console.log('Error getting user:', error);
@@ -52,14 +53,17 @@ function App() {
 
   async function getCognitoUser() {
     try {
+      setLoading(true);
       const currentUser = await getCurrentUser();
       setUser(currentUser);
       console.log(currentUser.signInDetails.loginId, "is signed in");
-      getUserInfo(currentUser.signInDetails.loginId);
+      await getUserInfo(currentUser.signInDetails.loginId);
       <Navigate to="/home" />
     }
     catch (error) {
       setUser(null);
+      setUserInfo(null);
+      signOut();
       console.log('Error getting user:', error);
       setLoading(false);
       <Navigate to="/auth" />
@@ -84,8 +88,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/home" element={user ? (
-          userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
-          userInfo.role === 'Assistant' ? <AssistantHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          userInfo.role === 'Admins' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          userInfo.role === 'Assistants' ? <AssistantHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
           userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
           <PageContainer>
             <div className='flex items-center justify-center w-full'>
@@ -97,6 +101,7 @@ function App() {
         <Route path="/academic-work" element={user ? <AcademicWork userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/assistants" element={user ? <Assistants userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/archive" element={user ? <Archive userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

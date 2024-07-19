@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession, signOut } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
-import { addUser } from '../graphql/graphqlHelpers.js';
+import { addUser, getUser, updateUser } from '../graphql/graphqlHelpers.js';
 import { useNavigate } from 'react-router-dom';
 
 const AuthPage = ({ getCognitoUser }) => {
@@ -10,7 +10,7 @@ const AuthPage = ({ getCognitoUser }) => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState('Faculty');
+  const [role, setRole] = useState('');
   const [newUserPassword, setNewUserPassword] = useState(false);
   const [newSignUp, setNewSignUp] = useState(false);
   const [signUpConfirmation, setSignUpConfirmation] = useState(false);
@@ -20,6 +20,16 @@ const AuthPage = ({ getCognitoUser }) => {
   const [confirmationError, setConfirmationError] = useState('');
   const [forgotPassword, setForgotPassword] = useState(false); //TODO: FORGOT PASSWORD FUNCTIONALITY
   const navigate = useNavigate();
+
+  async function getUserGroup() {
+    try {
+      const session = await fetchAuthSession();
+      const groups = session.tokens.idToken.payload['cognito:groups']
+      return groups ? groups[0] : null;
+    } catch (error) {
+      console.log('Error getting user group:', error);
+    }
+  }
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -70,7 +80,16 @@ const AuthPage = ({ getCognitoUser }) => {
       });
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (user.isSignedIn) {
-        storeUserData(firstName, lastName, username, role);
+        if (role)
+          storeUserData(firstName, lastName, username, role);
+        else {
+          // If role isn't set, fetch the user group
+          const group = await getUserGroup();
+          if (!group) {
+            throw new Error('User group not found');
+          }
+          storeUserData(firstName, lastName, username, group);
+        }
       }
     } catch (error) {
       console.log('Error setting new password:', error);
@@ -164,11 +183,16 @@ const AuthPage = ({ getCognitoUser }) => {
 
     //sign in user
     try {
-      const user = await signIn({
-        username: username,
-        password: password
-      });
-      console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
+      let user = null;
+      try {
+        user = await getCurrentUser();
+      } catch (error) {
+        console.log('Not signed in, signing in...', error);
+        user = await signIn({
+          username: username,
+          password: password
+        });
+      }      
     } catch (error) {
       console.log('Error getting user:', error);
       setLoading(false);
@@ -178,13 +202,31 @@ const AuthPage = ({ getCognitoUser }) => {
     //put user in user group
 
 
-    //put user data in database
+    // put user data in database if it doesn't already exist
     try {
-      const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '');
-      console.log(result);
+      const userInformation = await getUser(email);
+      console.log('User already exists in database');
+
+      if (!userInformation.role) {
+        console.log(`Updating user with group ${role}`);
+        console.log(
+          await updateUser(
+            userInformation.user_id, userInformation.first_name, userInformation.last_name, userInformation.preferred_name,
+            userInformation.email, role, userInformation.bio, userInformation.rank,
+            userInformation.primary_department, userInformation.secondary_department, userInformation.primary_faculty,
+            userInformation.secondary_faculty, userInformation.campus, userInformation.keywords,
+            userInformation.institution_user_id, userInformation.scopus_id, userInformation.orcid_id
+          )
+        )
+      }
     } catch (error) {
-      console.log('Error adding user to database:', error);
-      setLoading(false);
+      try {
+        const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '');
+        console.log(result);
+      } catch (error) {
+        console.log('Error adding user to database:', error);
+        setLoading(false);
+      }
     }
     getCognitoUser();
     navigate('/home');

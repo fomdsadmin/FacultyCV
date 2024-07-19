@@ -1,6 +1,6 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery } from './queries';
-import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation } from './mutations';
+import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery } from './queries';
+import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation, linkScopusIdMutation } from './mutations';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -94,6 +94,41 @@ export const getAllUniversityInfo = async () => {
     return results['data']['getAllUniversityInfo'];
 }
 
+/**
+ * Function to get potential matches for an author using the Elsevier API
+ * Arguments:
+ * first_name
+ * last_name
+ * institution_name
+ * Return value:
+ * [
+ *  {
+ *      last_name
+ *      first_name
+ *      current_affiliation
+ *      name_variants,
+ *      subjects,
+ *      scopus_id,
+ *      orcid
+ *  }, ...
+ * ]
+ */
+export const getElsevierAuthorMatches = async (first_name, last_name, institution_name) => {
+    const results = await runGraphql(getElsevierAuthorMatchesQuery(first_name, last_name, institution_name))
+    return results['data']['getElsevierAuthorMatches'];
+}
+
+// --- PUT ---
+
+/**
+ * Function to update user data
+ * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
+ *      user_id
+ *      first_name
+ *      last_name
+ *      preferred_name
+ *      email
+
 // --- POST ---
 
 /**
@@ -173,6 +208,21 @@ export const addUser = async (first_name, last_name, preferred_name,
 export const addUniversityInfo = async (type, value) => {
     const results = await runGraphql(addUniversityInfoMutation(type, value));
     return results['data']['addUniversityInfo'];
+}
+
+/**
+ * Function to link a user profile with a scopus id. To be used in conjunction with the getElsevierAuthorMatches function
+ * Optionally, the orcid can be specified (if match is found with the scopus id returned by the getElsevierAuthorMatches function call)
+ * Arguments:
+ * user_id
+ * scopus_id
+ * orcid_id - optional
+ * Return value:
+ * String saying "Scopus ID linked successfully" if call succeeded, anything else means call failed
+ */
+export const linkScopusId = async (user_id, scopus_id, orcid_id) => {
+    const results = await runGraphql(linkScopusIdMutation(user_id, scopus_id, orcid_id));
+    return results['data']['linkScopusId'];
 }
 
 // --- UPDATE ---

@@ -12,6 +12,11 @@ const Publications = () => {
         setSearchTerm(event.target.value);
     };
 
+    const handleArchive = (publication) => {
+        // Implement archive functionality here
+        console.log('Archiving publication' + publication.publication_id);
+    };
+
     const handleEdit = (publication) => {
         setIsNew(false)
         setSelectedPublication(publication);
@@ -225,7 +230,11 @@ const Publications = () => {
             </div>
 
             {searchedEntries.map((publication) => (
-                <PublicationsEntry key={publication.publication_id} {...publication} onEdit={() => handleEdit(publication)} />
+                <PublicationsEntry 
+                  key={publication.publication_id} 
+                  {...publication} onEdit={() => handleEdit(publication)} 
+                  onArchive={() => handleArchive(publication)}
+                  />
             ))}
 
             {isModalOpen && selectedPublication && !isNew && (

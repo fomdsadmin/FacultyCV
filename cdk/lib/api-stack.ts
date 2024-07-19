@@ -312,5 +312,14 @@ export class ApiStack extends cdk.Stack {
       resolverRole,
       [psycopgLayer]
     );
+    createResolver(
+      this.api,
+      "linkScopusId",
+      ["linkScopusId"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
   }
 }

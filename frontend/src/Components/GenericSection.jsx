@@ -2,43 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
 import EntryModal from './EntryModal';
 import { getUserCVData } from '../graphql/graphqlHelpers';
-
-
-// Function to rank fields based on importance
-const rankFields = (entry) => {
-    const importance = {
-      dates: 1,
-      title: 2,
-      name: 3,
-      rank: 4,
-      role: 5,
-      department: 6,
-      type: 7,
-      publisher: 8,
-      journal: 9,
-      details: 10,
-      other: 11,
-      description: 12,
-      inventor: 13,
-      supervisor: 14
-    };
-  
-    const rankedFields = Object.entries(entry)
-      .filter(([key, value]) => !key.toLowerCase().includes('id') && Object.keys(importance).some(importantKey => key.toLowerCase().includes(importantKey)))
-      .sort((a, b) => {
-        const aKey = Object.keys(importance).find(importantKey => a[0].toLowerCase().includes(importantKey));
-        const bKey = Object.keys(importance).find(importantKey => b[0].toLowerCase().includes(importantKey));
-        return importance[aKey] - importance[bKey];
-      });
-  
-    if (rankedFields.length === 0) {
-      return [];
-    } else if (rankedFields.length === 1) {
-      return [rankedFields[0][1]];
-    } else {
-      return rankedFields.slice(0, 2).map(([key, value]) => value);
-    }
-  };
+import { rankFields } from '../utils/rankingUtils';
 
   const generateEmptyEntry = (attributes) => {
     const emptyEntry = {};
@@ -65,6 +29,10 @@ const GenericSection = ({ user, section }) => {
 
   const handleSearchChange = (event) => {
       setSearchTerm(event.target.value);
+  };
+
+  const handleArchive = (entry) => {
+    console.log("archived entry " + entry.title);
   };
 
   const handleEdit = (entry) => {
@@ -108,12 +76,12 @@ const GenericSection = ({ user, section }) => {
         );
       });
       console.log("filtered data: " + JSON.stringify(filteredData));
-  
+      
       const rankedData = filteredData.map(entry => {
-        const [field1, field2] = rankFields(entry.data_details);
+        const [field1, field2] = rankFields(entry);
         return { ...entry, field1, field2 };
       });
-  
+
       const entryFields = filteredData.map(entry => {
         return { ...entry };
       });
@@ -174,10 +142,12 @@ const GenericSection = ({ user, section }) => {
             {fieldData.length > 0 ? (
             fieldData.map((entry, index) => (
                 <GenericEntry
+                isArchived={false}
                 key={index}
                 onEdit={() => handleEdit(entry)}
                 field1={entry.field1}
                 field2={entry.field2}
+                onArchive={() =>  handleArchive(entry)}
                 />
             ))
             ) : (

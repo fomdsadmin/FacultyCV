@@ -43,7 +43,7 @@ def getPotentialMatches(arguments):
     num_results = int(results['search-results']['opensearch:totalResults'])
     entries = results['search-results']['entry']
     if num_results == 0:
-        return results
+        return potential_match_list
     else:
         for entry in entries:
             # NAME
