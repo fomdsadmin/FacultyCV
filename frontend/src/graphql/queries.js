@@ -101,3 +101,15 @@ export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution
         }
     }
 `;
+
+export const getUserConnectionsQuery = (user_id) => `
+    query GetUserConnections {
+        getUserConnections (
+            user_id: "${user_id}",
+        ) {
+            user_connection_id
+            user_id
+            user_connection
+        }
+    }
+`;

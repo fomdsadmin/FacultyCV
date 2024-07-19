@@ -36,7 +36,7 @@ export const addUserMutation = (first_name, last_name, preferred_name,
 `;
 
 export const addUserCVDataMutation = (user_id, data_section_id, data_details) => `
-    mutation AddUserCVDataMutation {
+    mutation AddUserCVData {
         addUserCVData(
             user_id: "${user_id}"
             data_section_id: "${data_section_id}"
@@ -50,6 +50,15 @@ export const addUniversityInfoMutation = (type, value) => `
         addUniversityInfo(
             type: "${type}",
             value: "${value}"
+        )
+    }
+`;
+
+export const addUserConnectionMutation = (user_id, user_connection) => `
+    mutation AddUserConnection {
+        addUserConnection(
+            user_id: "${user_id}"
+            user_connection: "${user_connection}"
         )
     }
 `;
@@ -104,7 +113,7 @@ export const updateUserMutation = (user_id, first_name, last_name, preferred_nam
 `;
 
 export const updateUserCVDataMutation = (user_cv_data_id, data_details) => `
-    mutation UpdateUserCVDataMutation {
+    mutation UpdateUserCVData {
         updateUserCVData(
             user_cv_data_id: "${user_cv_data_id}"
             data_details: "${data_details}"
@@ -114,11 +123,28 @@ export const updateUserCVDataMutation = (user_cv_data_id, data_details) => `
 
 
 export const updateUniversityInfoMutation = (university_info_id, type, value) => `
-    mutation UpdateUser {
-        updateUser(
+    mutation UpdateUniversityInfo {
+        updateUniversityInfo(
             type: "${type}"
             value: "${value}"
-            user_id: "${university_info_id}"
+            university_info_id: "${university_info_id}"
+        )
+    }
+`;
+
+export const updateUserConnectionMutation = (user_connection_id, user_connection) => `
+    mutation UpdateUserConnection {
+        updateUserConnection(
+            user_connection_id: "${user_connection_id}"
+            user_connection: "${user_connection}"
+        )
+    }
+`;
+
+export const deleteUserConnectionMutation = (user_connection_id) => `
+    mutation DeleteUserConnection {
+        deleteUserConnection(
+            user_connection_id: "${user_connection_id}"
         )
     }
 `;

@@ -330,5 +330,41 @@ export class ApiStack extends cdk.Stack {
       resolverRole,
       [psycopgLayer]
     );
+    createResolver(
+      this.api,
+      "getUserConnections",
+      ["getUserConnections"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addUserConnection",
+      ["addUserConnection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateUserConnection",
+      ["updateUserConnection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "deleteUserConnection",
+      ["deleteUserConnection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
   }
 }

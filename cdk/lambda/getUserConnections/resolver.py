@@ -20,7 +20,7 @@ def getUserCVData(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT user_connection_id, user_id, user_connection FROM user_connections WHERE user_id = %s', (arguments['user_id']))
+    cursor.execute('SELECT user_connection_id, user_id, user_connection FROM user_connections WHERE user_id = %s', (arguments['user_id'],))
     results = cursor.fetchall()
     cursor.close()
     connection.close()

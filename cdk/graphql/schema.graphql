@@ -62,7 +62,7 @@ type Query {
     getUserCVData(user_id: String!, data_section_id: String!): [UserCVData]
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]
     getAllUniversityInfo: [ UniversityInfo ]
-    getAllUserConnections: [ UserConnection ]
+    getUserConnections(user_id: String!): [ UserConnection ]
 }
 
 type Mutation {
@@ -145,7 +145,7 @@ type Mutation {
     ): String
 
     updateUniversityInfo(
-      university_id: String!
+      university_info_id: String!
       type: String
       value: String
     ): String
