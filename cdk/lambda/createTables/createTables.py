@@ -99,6 +99,14 @@ def lambda_handler(event, context):
     query = createQuery('university_info', columns)
     cursor.execute(query)
 
+    # Create User Connections Table
+    columns = []
+    columns.append(createColumn('user_connection_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('user_id', 'varchar', '', False))
+    columns.append(createColumn('user_connection', 'JSON', '', True))
+    query = createQuery('user_connections', columns)
+    cursor.execute(query)
+
     cursor.close()
     connection.commit()
     connection.close()

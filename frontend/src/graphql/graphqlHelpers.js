@@ -1,5 +1,5 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery } from './queries';
+import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery } from './queries';
 import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation, linkScopusIdMutation } from './mutations';
 
 const runGraphql = async (query) => {
@@ -58,6 +58,36 @@ export const getAllSections = async () => {
 export const getUser = async (email) => {
     const results = await runGraphql(getUserQuery(email));
     return results['data']['getUser'];
+}
+
+/**
+ * Function to get existing user data
+ * Arguments:
+ * institution_user_id
+ * Return value:
+ * {
+ *      user_id
+ *      first_name
+ *      last_name
+ *      preferred_name
+ *      email
+ *      role
+ *      bio
+ *      rank
+ *      primary_department
+ *      secondary_department
+ *      primary_faculty
+ *      secondary_faculty
+ *      campus
+ *      keywords
+ *      institution_user_id
+ *      scopus_id
+ *      orcid_id
+ *   }
+ */
+export const getExistingUser = async (institution_user_id) => {
+    const results = await runGraphql(getExistingUserQuery(institution_user_id));
+    return results['data']['getExistingUser'];
 }
 
 /**

@@ -49,12 +49,20 @@ type UniversityInfo {
   value: String
 }
 
+type UserConnection {
+  user_connection_id: String!
+  user_id: String!
+  user_connection: AWSJSON! #JSON
+}
+
 type Query {
     getUser(email: String!): User
+    getExistingUser(institution_user_id: String!): User
     getAllSections: [ DataSection ]
     getUserCVData(user_id: String!, data_section_id: String!): [UserCVData]
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]
     getAllUniversityInfo: [ UniversityInfo ]
+    getAllUserConnections: [ UserConnection ]
 }
 
 type Mutation {
@@ -120,6 +128,20 @@ type Mutation {
     addUniversityInfo(
       type: String!
       value: String!
+    ): String
+
+    addUserConnection(
+      user_id: String!
+      user_connection: AWSJSON! #JSON
+    ): String
+
+    updateUserConnection(
+      user_connection_id: String!
+      user_connection: AWSJSON! #JSON
+    ): String
+
+    deleteUserConnection(
+      user_connection_id: String!
     ): String
 
     updateUniversityInfo(

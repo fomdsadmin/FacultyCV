@@ -3,7 +3,7 @@ import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
 import { getCurrentUser, signOut } from 'aws-amplify/auth';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './Views/AuthPage';
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
@@ -42,6 +42,7 @@ function App() {
   async function getUserInfo(email) {
     try {
       const userInformation = await getUser(email);
+      console.log('User information:', userInformation);
       setUserInfo(userInformation);
       setLoading(false);
       return userInformation;
@@ -88,8 +89,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/home" element={user ? (
-          userInfo.role === 'Admins' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
-          userInfo.role === 'Assistants' ? <AssistantHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          userInfo.role === 'Admins' ? <AdminHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+          userInfo.role === 'Assistants' ? <AssistantHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
           userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
           <PageContainer>
             <div className='flex items-center justify-center w-full'>

@@ -7,7 +7,7 @@ import { rankFields } from '../utils/rankingUtils';
   const generateEmptyEntry = (attributes) => {
     const emptyEntry = {};
     for (const key of Object.keys(attributes)) {
-      const newKey = key.toLowerCase().replace(/ /g, '_'); // Convert key to lowercase and replace spaces with underscores
+      const newKey = key.toLowerCase().replace(/ /g, '_');
       emptyEntry[newKey] = '';
     }
     return emptyEntry;

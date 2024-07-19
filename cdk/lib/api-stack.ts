@@ -206,6 +206,15 @@ export class ApiStack extends cdk.Stack {
     );
     createResolver(
       this.api,
+      "getExistingUser",
+      ["getExistingUser"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
       "pdfGenerator",
       ["generatePDF"],
       "Mutation",

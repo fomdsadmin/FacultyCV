@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession, signOut } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
-import { addUser, getUser, updateUser } from '../graphql/graphqlHelpers.js';
+import { addUser, getUser, updateUser, getExistingUser } from '../graphql/graphqlHelpers.js';
 import { useNavigate } from 'react-router-dom';
 
 const AuthPage = ({ getCognitoUser }) => {
@@ -11,6 +11,7 @@ const AuthPage = ({ getCognitoUser }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState('');
+  const [institution_user_id, setInstitutionUserId] = useState('12345'); // INSTITUTION USER ID TO ADD BULK USERS
   const [newUserPassword, setNewUserPassword] = useState(false);
   const [newSignUp, setNewSignUp] = useState(false);
   const [signUpConfirmation, setSignUpConfirmation] = useState(false);
@@ -81,14 +82,14 @@ const AuthPage = ({ getCognitoUser }) => {
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (user.isSignedIn) {
         if (role)
-          storeUserData(firstName, lastName, username, role);
+          storeUserData(firstName, lastName, username, role, institution_user_id);
         else {
           // If role isn't set, fetch the user group
           const group = await getUserGroup();
           if (!group) {
             throw new Error('User group not found');
           }
-          storeUserData(firstName, lastName, username, group);
+          storeUserData(firstName, lastName, username, group, institution_user_id);
         }
       }
     } catch (error) {
@@ -111,7 +112,7 @@ const AuthPage = ({ getCognitoUser }) => {
       setLoading(false);
       console.log('User signed up:', user.isSignUpComplete, user.nextStep.signInStep);
       if (user.isSignUpComplete) {
-        storeUserData(firstName, lastName, username, role);
+        storeUserData(firstName, lastName, username, role, institution_user_id);
       }
     } catch (error) {
       console.log('Error setting new password:', error);
@@ -178,7 +179,7 @@ const AuthPage = ({ getCognitoUser }) => {
     }
   };
 
-  const storeUserData = async (first_name, last_name, email, role) => {
+  const storeUserData = async (first_name, last_name, email, role, institution_user_id) => {
     setLoading(true);
 
     //sign in user
@@ -204,15 +205,14 @@ const AuthPage = ({ getCognitoUser }) => {
 
     // put user data in database if it doesn't already exist
     try {
-      const userInformation = await getUser(email);
+      const userInformation = await getExistingUser(institution_user_id);
       console.log('User already exists in database');
-
       if (!userInformation.role) {
         console.log(`Updating user with group ${role}`);
         console.log(
           await updateUser(
             userInformation.user_id, userInformation.first_name, userInformation.last_name, userInformation.preferred_name,
-            userInformation.email, role, userInformation.bio, userInformation.rank,
+            email, role, userInformation.bio, userInformation.rank,
             userInformation.primary_department, userInformation.secondary_department, userInformation.primary_faculty,
             userInformation.secondary_faculty, userInformation.campus, userInformation.keywords,
             userInformation.institution_user_id, userInformation.scopus_id, userInformation.orcid_id
@@ -229,6 +229,7 @@ const AuthPage = ({ getCognitoUser }) => {
       }
     }
     getCognitoUser();
+    console.log('User data stored and navigating to home page');
     navigate('/home');
   };
 

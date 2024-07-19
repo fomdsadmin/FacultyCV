@@ -78,7 +78,7 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
   return (
     <PageContainer>
       <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser} />
-      <main className='flex-1 h-full !overflow-auto !h-full custom-scrollbar'>
+      <main className='flex-1 !overflow-auto !h-full custom-scrollbar'>
         <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Assistants</h1>
         <div className='m-4 max-w-lg flex'>
           <label className="input input-bordered flex items-center gap-2 flex-1">
