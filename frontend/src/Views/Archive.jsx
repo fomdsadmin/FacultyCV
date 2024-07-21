@@ -511,13 +511,10 @@ const archived = [
   // }
 
 const Archive = ({ userInfo, getCognitoUser }) => {
-    const [user, setUser] = useState(userInfo);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredEntries, setFilteredEntries] = useState([]);
 
-    useEffect(() => {
-      setUser(userInfo);
-  
+    useEffect(() => {  
       const filtered = archived.filter(entry => {
         const { title, description, attributes } = entry;
         const [fieldA, fieldB] = rankFields(attributes);
@@ -554,8 +551,8 @@ const Archive = ({ userInfo, getCognitoUser }) => {
 
     return (
         <PageContainer>
-            <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser} />
-                <main className='flex-1 h-full !overflow-auto !h-full custom-scrollbar'>
+            <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser} />
+                <main className='flex-1 !overflow-auto !h-full custom-scrollbar'>
                     <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
                     <div className='m-4 max-w-3xl flex'>
                     <label className="input input-bordered flex items-center gap-2 flex-1">

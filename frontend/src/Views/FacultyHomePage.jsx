@@ -5,18 +5,15 @@ import '../CustomStyles/scrollbar.css';
 import { getOrcidAuthorMatches, linkOrcid, linkScopusId, updateUser } from '../graphql/graphqlHelpers.js';
 import { getAllUniversityInfo, getElsevierAuthorMatches } from '../graphql/graphqlHelpers.js';
 
-const FacultyHomePage = ({ userInfo, setUserInfo, setUser, getCognitoUser, getUser }) => {
-  //const [user, setUser] = useState(userInfo);
+const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [campuses, setCampuses] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
   // TODO - To fix this -> too many requests being made, old state retained after auth
   useEffect(() => {
-    //setUser(userInfo);
-    //console.log(userInfo);
     sortUniversityInfo();
   }, [userInfo]);
 

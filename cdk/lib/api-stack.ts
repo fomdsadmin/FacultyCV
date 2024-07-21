@@ -206,6 +206,15 @@ export class ApiStack extends cdk.Stack {
     );
     createResolver(
       this.api,
+      "getExistingUser",
+      ["getExistingUser"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
       "pdfGenerator",
       ["generatePDF"],
       "Mutation",
@@ -334,6 +343,42 @@ export class ApiStack extends cdk.Stack {
       this.api,
       "linkOrcid",
       ["linkOrcid"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getUserConnection",
+      ["getUserConnection"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addUserConnection",
+      ["addUserConnection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateUserConnection",
+      ["updateUserConnection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "deleteUserConnection",
+      ["deleteUserConnection"],
       "Mutation",
       {},
       resolverRole,

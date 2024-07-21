@@ -23,14 +23,14 @@ type DataSection {
   title: String!
   description: String!
   data_type: String
-  attributes: String! # JSON
+  attributes: AWSJSON! # JSON
 }
 
 type UserCVData {
   user_cv_data_id: String!
   user_id: String!
   data_section_id: String!
-  data_details: String!
+  data_details: AWSJSON! #JSON
 }
 
 type ElsevierAuthorProfile {
@@ -59,13 +59,21 @@ type UniversityInfo {
   value: String
 }
 
+type UserConnection {
+  user_connection_id: String!
+  user_id: String!
+  user_connection: AWSJSON! #JSON
+}
+
 type Query {
     getUser(email: String!): User
+    getExistingUser(institution_user_id: String!): User
     getAllSections: [ DataSection ]
     getUserCVData(user_id: String!, data_section_id: String!): UserCVData
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
     getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!
     getAllUniversityInfo: [ UniversityInfo ]
+    getUserConnections(user_id: String!): [ UserConnection ]
 }
 
 type Mutation {
@@ -114,19 +122,18 @@ type Mutation {
       title: String!
       description: String!
       data_type: String
-      attributes: String! # JSON
+      attributes: AWSJSON! # JSON
     ): String
 
     addUserCVData(
       user_id: String!
       data_section_id: String!
-      data_details: String! # JSON
+      data_details: AWSJSON! # JSON
     ): String
 
     updateUserCVData(
-      user_id: String!
-      data_section_id: String!
-      data_details: String!
+      user_cv_data_id: String!
+      data_details: AWSJSON! # JSON
     ): String
 
     addUniversityInfo(
@@ -134,8 +141,22 @@ type Mutation {
       value: String!
     ): String
 
+    addUserConnection(
+      user_id: String!
+      user_connection: AWSJSON! #JSON
+    ): String
+
+    updateUserConnection(
+      user_connection_id: String!
+      user_connection: AWSJSON! #JSON
+    ): String
+
+    deleteUserConnection(
+      user_connection_id: String!
+    ): String
+
     updateUniversityInfo(
-      university_id: String!
+      university_info_id: String!
       type: String
       value: String
     ): String

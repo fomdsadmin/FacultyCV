@@ -20,7 +20,8 @@ def addSection(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO data_sections (title, description, data_type, attributes) VALUES (%s, %s, %s, %s)", (arguments['title'], arguments['description'], arguments['data_type'], arguments['attributes']))
+    attributes_json = json.dumps(arguments['attributes'])  # Convert attributes dictionary to JSON string
+    cursor.execute("INSERT INTO data_sections (title, description, data_type, attributes) VALUES (%s, %s, %s, %s)", (arguments['title'], arguments['description'], arguments['data_type'], attributes_json))
     cursor.close()
     connection.commit()
     connection.close()

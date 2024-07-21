@@ -1,6 +1,6 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getOrcidAuthorMatchesQuery } from './queries';
-import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation, linkScopusIdMutation, linkOrcidIdMutation, linkOrcidMutation } from './mutations';
+import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, getOrcidAuthorMatchesQuery } from './queries';
+import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, updateUserConnectionMutation, deleteUserConnectionMutation, linkOrcidMutation } from './mutations';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -58,6 +58,36 @@ export const getAllSections = async () => {
 export const getUser = async (email) => {
     const results = await runGraphql(getUserQuery(email));
     return results['data']['getUser'];
+}
+
+/**
+ * Function to get existing user data
+ * Arguments:
+ * institution_user_id
+ * Return value:
+ * {
+ *      user_id
+ *      first_name
+ *      last_name
+ *      preferred_name
+ *      email
+ *      role
+ *      bio
+ *      rank
+ *      primary_department
+ *      secondary_department
+ *      primary_faculty
+ *      secondary_faculty
+ *      campus
+ *      keywords
+ *      institution_user_id
+ *      scopus_id
+ *      orcid_id
+ *   }
+ */
+export const getExistingUser = async (institution_user_id) => {
+    const results = await runGraphql(getExistingUserQuery(institution_user_id));
+    return results['data']['getExistingUser'];
 }
 
 /**
@@ -140,6 +170,22 @@ export const getElsevierAuthorMatches = async (first_name, last_name, institutio
 export const getOrcidAuthorMatches = async (first_name, last_name, institution_name) => {
     const results = await runGraphql(getOrcidAuthorMatchesQuery(first_name, last_name, institution_name))
     return results['data']['getOrcidAuthorMatches'];
+};
+
+/*
+ * Function to get user connections given the user id
+ * Arguments:
+ * user_id
+ * Return value:
+ * {
+ *      user_connection_id
+ *      user_id
+ *      user_connection: JSON string
+ * }
+ */
+export const getUserConnections = async (user_id) => {
+    const results = await runGraphql(getUserConnectionsQuery(user_id));
+    return results['data']['getUserConnections'];
 }
 
 // --- PUT ---
@@ -235,6 +281,19 @@ export const addUniversityInfo = async (type, value) => {
 }
 
 /**
+ * Function to add user connections
+ * Arguments:
+ * user_id - ID of the user the profile belongs to
+ * user_connection - JSON String
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const addUserConnection = async (user_id, user_connection) => {
+    const results = await runGraphql(addUserConnectionMutation(user_id, user_connection));
+    return results['data']['addUserConnection'];
+}
+
+/**
  * Function to link a user profile with a scopus id. To be used in conjunction with the getElsevierAuthorMatches function
  * Optionally, the orcid can be specified (if match is found with the scopus id returned by the getElsevierAuthorMatches function call)
  * Arguments:
@@ -303,14 +362,13 @@ export const updateUser = async (user_id, first_name, last_name, preferred_name,
 /**
  * Function to update user cv data - the section info associated with a user
  * Arguments:
- * user_id - ID of the user the profile belongs to
- * data_section_id - ID of the data section as returned by the getAllSections call
+ * user_cv_data_id - ID of the user cv data
  * data_details - JSON String
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateUserCVData = async (user_id, data_section_id, data_details) => {
-    const results = await runGraphql(updateUserCVDataMutation(user_id, data_section_id, data_details));
+export const updateUserCVData = async (user_cv_data_id, data_details) => {
+    const results = await runGraphql(updateUserCVDataMutation(user_cv_data_id, data_details));
     return results['data']['updateUserCVData'];
 }
 
@@ -328,4 +386,31 @@ export const updateUniversityInfo = async (university_info_id, type, value) => {
             university_info_id, type, value
         ));
         return results['data']['updateUniversityInfo'];
+}
+
+/**
+ * Function to update user connections
+ * Arguments:
+ * user_connection_id - ID of the user connection
+ * user_connection - JSON String
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateUserConnection = async (user_connection_id, user_connection) => {
+    const results = await runGraphql(updateUserConnectionMutation(user_connection_id, user_connection));
+    return results['data']['updateUserConnection'];
+}
+
+// --- DELETE ---
+
+/**
+ * Function to delete user connections
+ * Arguments:
+ * user_connection_id - ID of the user connection
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const deleteUserConnection = async (user_connection_id) => {
+    const results = await runGraphql(deleteUserConnectionMutation(user_connection_id));
+    return results['data']['deleteUserConnection'];
 }

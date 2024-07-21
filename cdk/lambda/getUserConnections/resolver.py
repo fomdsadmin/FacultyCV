@@ -15,18 +15,25 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def addUserCVData(arguments):
+def getUserCVData(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    data_details_json = json.dumps(arguments['data_details'])  # Convert data_details dictionary to JSON string
-    cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details) VALUES (%s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], data_details_json))
+    cursor.execute('SELECT user_connection_id, user_id, user_connection FROM user_connections WHERE user_id = %s', (arguments['user_id'],))
+    results = cursor.fetchall()
     cursor.close()
-    connection.commit()
     connection.close()
-    return "SUCCESS"
+    user_connections = []
+    if len(results) == 0:
+        return {}
+    for result in results:
+        user_connections.append({
+            'user_connection_id': result[0],
+            'user_id': result[1],
+            'user_connection': result[2]
+        })
+    return user_connections
 
 def lambda_handler(event, context):
-    arguments = event['arguments']
-    return addUserCVData(arguments=arguments)
+    return getUserCVData(event['arguments'])

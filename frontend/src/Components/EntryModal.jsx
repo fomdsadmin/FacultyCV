@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
+import { addUserCVData, updateUserCVData } from '../graphql/graphqlHelpers';
 
-const EntryModal = ({ isNew, onClose, entryType, ...fields }) => {
+const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_data_id, fetchData}) => {
     const [formData, setFormData] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         setFormData(fields);
@@ -17,13 +19,31 @@ const EntryModal = ({ isNew, onClose, entryType, ...fields }) => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
+        setIsSubmitting(true);
         e.preventDefault();
-        console.log('Form data submitted:', formData);
-        // Handle form submission here
+        // Stringify formData and escape special characters
+        const formDataString = JSON.stringify(formData).replace(/"/g, '\\"');
+        console.log(`${formDataString}`);
+        try {
+            // Handle form submission here
+            if (isNew) {
+                // Handle adding new entry
+                const result = await addUserCVData(user.user_id, section.data_section_id, `${formDataString}`);
+                console.log(result);
+            } else {
+                // Handle editing existing entry
+                const result = await updateUserCVData(user_cv_data_id, `${formDataString}`);
+                console.log(result);
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+        }
+        setIsSubmitting(false);
         onClose();
+        fetchData();
     };
-
+    
     const filteredKeys = Object.keys(formData).filter(key => !key.toLowerCase().includes('id'));
 
     return (
@@ -49,8 +69,8 @@ const EntryModal = ({ isNew, onClose, entryType, ...fields }) => {
                 </div>
 
                 <div className="flex justify-end">
-                    <button type="submit" className="text-white btn btn-success mt-3 py-1 px-2 w-1/5 min-h-0 h-8 leading-tight">
-                        Save
+                    <button type="submit" className="btn btn-success text-white mt-3 py-1 px-2 w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
+                        {isSubmitting ? 'Saving...' : 'Save'}
                     </button>
                 </div>
             </form>

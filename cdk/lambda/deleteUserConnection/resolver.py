@@ -15,13 +15,12 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def addUserCVData(arguments):
+def deleteUserConnection(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    data_details_json = json.dumps(arguments['data_details'])  # Convert data_details dictionary to JSON string
-    cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details) VALUES (%s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], data_details_json))
+    cursor.execute("DELETE FROM user_connections WHERE user_connection_id = %s", (arguments['user_connection_id'],))
     cursor.close()
     connection.commit()
     connection.close()
@@ -29,4 +28,4 @@ def addUserCVData(arguments):
 
 def lambda_handler(event, context):
     arguments = event['arguments']
-    return addUserCVData(arguments=arguments)
+    return deleteUserConnection(arguments=arguments)

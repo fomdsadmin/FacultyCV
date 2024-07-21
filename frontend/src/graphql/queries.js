@@ -24,6 +24,32 @@ export const getUserQuery = (email) => `
     }
 `;
 
+export const getExistingUserQuery = (institution_user_id) => `
+    query GetExistingUser {
+        getExistingUser (
+            institution_user_id: "${institution_user_id}"
+        ) {
+            user_id
+            first_name
+            last_name
+            preferred_name
+            email
+            role
+            bio
+            rank
+            primary_department
+            secondary_department
+            primary_faculty
+            secondary_faculty
+            campus
+            keywords
+            institution_user_id
+            scopus_id
+            orcid_id
+        }
+    }
+`;
+
 export const getAllSectionsQuery = () => `
     query GetAllSections {
         getAllSections {
@@ -76,6 +102,7 @@ export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution
     }
 `;
 
+
 export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_name) => `
     query getOrcidAuthorMatches {
         getOrcidAuthorMatches (
@@ -88,6 +115,18 @@ export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_na
             keywords,
             orcid_id,
             researcher_urls
+            }
+    }
+`;
+
+export const getUserConnectionsQuery = (user_id) => `
+    query GetUserConnections {
+        getUserConnections (
+            user_id: "${user_id}",
+        ) {
+            user_connection_id
+            user_id
+            user_connection
         }
     }
 `;
