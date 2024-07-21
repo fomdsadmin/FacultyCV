@@ -77,6 +77,15 @@ export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
     }
 }
 
+export const linkOrcidMutation = (user_id, orcid_id) => `
+    mutation LinkOrcid {
+        linkOrcid(
+            user_id: "${user_id}",
+            orcid_id: "${orcid_id}"
+        )
+    }
+`;
+
 export const updateUserMutation = (user_id, first_name, last_name, preferred_name,
     email, role, bio, rank, primary_department, secondary_department, primary_faculty,
     secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => `

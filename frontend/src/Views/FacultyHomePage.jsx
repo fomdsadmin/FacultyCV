@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
-import { linkScopusId, updateUser } from '../graphql/graphqlHelpers.js';
+import { getOrcidAuthorMatches, linkOrcid, linkScopusId, updateUser } from '../graphql/graphqlHelpers.js';
 import { getAllUniversityInfo, getElsevierAuthorMatches } from '../graphql/graphqlHelpers.js';
 
 const FacultyHomePage = ({ userInfo, setUserInfo, setUser, getCognitoUser, getUser }) => {
@@ -18,10 +18,6 @@ const FacultyHomePage = ({ userInfo, setUserInfo, setUser, getCognitoUser, getUs
     //setUser(userInfo);
     //console.log(userInfo);
     sortUniversityInfo();
-    const getElsevierMatches = async () => {
-      console.log(await getElsevierAuthorMatches(userInfo.first_name, userInfo.last_name, 'University of British Columbia'));
-    }
-    //getElsevierMatches();
   }, [userInfo]);
 
   const sortUniversityInfo = () => {

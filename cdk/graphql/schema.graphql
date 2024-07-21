@@ -43,6 +43,16 @@ type ElsevierAuthorProfile {
   orcid: String
 }
 
+type OrcidAuthorProfile {
+  last_name: String!
+  first_name: String!
+  credit_name: String
+  name_variants: String
+  keywords: String
+  researcher_urls: [ String ]
+  orcid_id: String!
+}
+
 type UniversityInfo {
   university_info_id: String!
   type: String
@@ -54,6 +64,7 @@ type Query {
     getAllSections: [ DataSection ]
     getUserCVData(user_id: String!, data_section_id: String!): UserCVData
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
+    getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!
     getAllUniversityInfo: [ UniversityInfo ]
 }
 
@@ -133,5 +144,10 @@ type Mutation {
       user_id: String!,
       scopus_id: String!,
       orcid_id: String
+    ): String
+
+    linkOrcid(
+      user_id: String!,
+      orcid_id: String!
     ): String
 }
