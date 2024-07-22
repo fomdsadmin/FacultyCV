@@ -343,15 +343,15 @@ export class ApiStack extends cdk.Stack {
       this.api,
       "linkOrcid",
       ["linkOrcid"],
-      "Query",
+      "Mutation",
       {},
       resolverRole,
       [psycopgLayer]
     );
     createResolver(
       this.api,
-      "getUserConnection",
-      ["getUserConnection"],
+      "getUserConnections",
+      ["getUserConnections"],
       "Query",
       {},
       resolverRole,
