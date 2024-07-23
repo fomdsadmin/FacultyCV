@@ -1,6 +1,6 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, getArchivedUserCVDataQuery } from './queries';
-import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation } from './mutations';
+import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery } from './queries';
+import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, linkOrcidMutation } from './mutations';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -148,7 +148,7 @@ export const getAllUniversityInfo = async () => {
  * Arguments:
  * first_name
  * last_name
- * institution_name
+ * institution_name - optional (specify empty string if omitting)
  * Return value:
  * [
  *  {
@@ -168,6 +168,30 @@ export const getElsevierAuthorMatches = async (first_name, last_name, institutio
 }
 
 /**
+ * Function to get potential matches for an author using the Orcid API
+ * Arguments:
+ * first_name
+ * last_name
+ * institution_name optional (specify empty string if omitting)
+ * Return value:
+ * [
+ *  {
+ *      last_name
+ *      first_name
+ *      credit_name,
+ *      name_variants,
+ *      keywords,
+ *      researcher_urls,
+ *      orcid_id
+ *  }, ...
+ * ]
+ */
+export const getOrcidAuthorMatches = async (first_name, last_name, institution_name) => {
+    const results = await runGraphql(getOrcidAuthorMatchesQuery(first_name, last_name, institution_name))
+    return results['data']['getOrcidAuthorMatches'];
+};
+
+/*
  * Function to get user connections given the user id
  * Arguments:
  * user_id
@@ -301,6 +325,19 @@ export const addUserConnection = async (user_id, user_connection) => {
 export const linkScopusId = async (user_id, scopus_id, orcid_id) => {
     const results = await runGraphql(linkScopusIdMutation(user_id, scopus_id, orcid_id));
     return results['data']['linkScopusId'];
+}
+
+/**
+ * Function to link a user profile with a orcid id. To be used in conjunction with the getOrcidAuthorMatches function
+ * Arguments:
+ * user_id
+ * orcid_id
+ * Return value:
+ * String saying "Orcid ID linked successfully" if call succeeded, anything else means call failed
+ */
+export const linkOrcid = async (user_id, orcid_id) => {
+    const results = await runGraphql(linkOrcidMutation(user_id, orcid_id));
+    return results['data']['linkOrcid'];
 }
 
 // --- UPDATE ---

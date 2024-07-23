@@ -117,6 +117,23 @@ export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution
     }
 `;
 
+
+export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_name) => `
+    query getOrcidAuthorMatches {
+        getOrcidAuthorMatches (
+            first_name: "${first_name}", last_name: "${last_name}", institution_name: "${institution_name}"
+        ) {
+            last_name,
+            first_name,
+            credit_name
+            name_variants,
+            keywords,
+            orcid_id,
+            researcher_urls
+            }
+    }
+`;
+
 export const getUserConnectionsQuery = (user_id) => `
     query GetUserConnections {
         getUserConnections (
