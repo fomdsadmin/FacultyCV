@@ -559,6 +559,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
         setFilteredEntries(filtered);
       } catch (error) {
         console.error('Error fetching data:', error);
+        setFilteredEntries([]); // Set filteredEntries to an empty array in case of error
       }
     }
     
