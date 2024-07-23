@@ -86,7 +86,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   return (
     <PageContainer>
       <FacultyMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name}></FacultyMenu>
-      <main className='ml-4 pr-5 overflow-auto custom-scrollbar'>
+      <main className='ml-4 pr-5 overflow-auto custom-scrollbar mb-4'>
         <h1 className="text-4xl font-bold my-3 text-zinc-600">Profile</h1>
         {loading ? (
           <div className='flex items-center justify-center w-full'>
