@@ -1,6 +1,6 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery } from './queries';
-import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, updateUserConnectionMutation, deleteUserConnectionMutation } from './mutations';
+import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, getArchivedUserCVDataQuery } from './queries';
+import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation } from './mutations';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -106,6 +106,25 @@ export const getExistingUser = async (institution_user_id) => {
 export const getUserCVData = async (user_id, data_section_id) => {
     const results = await runGraphql(getUserCVDataQuery(user_id, data_section_id));
     return results['data']['getUserCVData'];
+}
+
+/**
+ * Function to get the archived user cv data given the user id
+ * Arguments:
+ * user_id
+ * Return value:
+ * {
+ *      user_cv_data_id
+ *      user_id
+ *      data_section_id
+ *      data_details: JSON string
+ *      archive
+ *      archive_timestamp
+ * }
+ */
+export const getArchivedUserCVData = async (user_id) => {
+    const results = await runGraphql(getArchivedUserCVDataQuery(user_id));
+    return results['data']['getArchivedUserCVData'];
 }
 
 /**
@@ -333,6 +352,19 @@ export const updateUser = async (user_id, first_name, last_name, preferred_name,
 export const updateUserCVData = async (user_cv_data_id, data_details) => {
     const results = await runGraphql(updateUserCVDataMutation(user_cv_data_id, data_details));
     return results['data']['updateUserCVData'];
+}
+
+/**
+ * Function to update user cv data - the archive status
+ * Arguments:
+ * user_cv_data_id - ID of the user cv data
+ * archive - Boolean
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateUserCVDataArchive = async (user_cv_data_id, archive) => {
+    const results = await runGraphql(updateUserCVDataArchiveMutation(user_cv_data_id, archive));
+    return results['data']['updateUserCVDataArchive'];
 }
 
 /**

@@ -15,7 +15,7 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def updateUser(arguments):
+def updateUniversityInfo(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to database")
@@ -42,4 +42,4 @@ def updateUser(arguments):
     return "University info updated successfully"
 
 def lambda_handler(event, context):
-    return updateUser(event['arguments'])
+    return updateUniversityInfo(event['arguments'])

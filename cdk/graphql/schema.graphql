@@ -31,6 +31,8 @@ type UserCVData {
   user_id: String!
   data_section_id: String!
   data_details: AWSJSON! #JSON
+  archive: Boolean
+  archive_timestamp: String
 }
 
 type ElsevierAuthorProfile {
@@ -60,6 +62,7 @@ type Query {
     getExistingUser(institution_user_id: String!): User
     getAllSections: [ DataSection ]
     getUserCVData(user_id: String!, data_section_id: String!): [UserCVData]
+    getArchivedUserCVData(user_id: String!): [UserCVData]
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]
     getAllUniversityInfo: [ UniversityInfo ]
     getUserConnections(user_id: String!): [ UserConnection ]
@@ -122,7 +125,9 @@ type Mutation {
 
     updateUserCVData(
       user_cv_data_id: String!
-      data_details: AWSJSON! # JSON
+      data_details: AWSJSON # JSON
+      archive: Boolean
+      archive_timestamp: String
     ): String
 
     addUniversityInfo(

@@ -35,9 +35,6 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, onDelete, fiel
             <button className="btn btn-xs btn-circle btn-ghost" onClick={onRestore}>
               <LuUndo2 className="h-4 w-4" />
             </button>
-            <button className="btn btn-xs btn-circle btn-ghost" onClick={onDelete}>
-            <IoClose className="h-4 w-4" />
-            </button>
           </div>
         }
         

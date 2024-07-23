@@ -15,7 +15,7 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def updateUserCVData(arguments):
+def updateUserConnection(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
@@ -29,4 +29,4 @@ def updateUserCVData(arguments):
 
 def lambda_handler(event, context):
     arguments = event['arguments']
-    return updateUserCVData(arguments=arguments)
+    return updateUserConnection(arguments=arguments)

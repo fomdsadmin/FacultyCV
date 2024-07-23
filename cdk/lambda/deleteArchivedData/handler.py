@@ -1,6 +1,7 @@
 import boto3
 import json
 import psycopg2
+from datetime import datetime, timedelta
 
 sm_client = boto3.client('secretsmanager')
 
@@ -15,18 +16,26 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def addUserConnection(arguments):
+def deleteArchivedData():
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
-    print("Connected to Database")
+    print("Connected to database")
     cursor = connection.cursor()
-    user_connection_json = json.dumps(arguments['user_connection'])  # Convert user_connection dictionary to JSON string
-    cursor.execute("INSERT INTO user_connections (user_id, user_connection) VALUES (%s, %s)", (arguments['user_id'], user_connection_json))
+    
+    # Calculate the date one month ago
+    one_month_ago = datetime.now() - timedelta(days=30)
+    
+    # Delete rows where archive is true and archive_timestamp is older than one month
+    delete_query = """
+    DELETE FROM user_cv_data
+    WHERE archive = true AND archive_timestamp < %s
+    """
+    cursor.execute(delete_query, (one_month_ago,))
+    
     cursor.close()
     connection.commit()
     connection.close()
-    return "SUCCESS"
+    return "Archived data deleted successfully"
 
 def lambda_handler(event, context):
-    arguments = event['arguments']
-    return addUserConnection(arguments=arguments)
+    return deleteArchivedData()

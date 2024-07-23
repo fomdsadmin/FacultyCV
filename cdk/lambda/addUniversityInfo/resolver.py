@@ -15,7 +15,7 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def addSection(arguments):
+def addUniversityInfo(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
@@ -27,4 +27,4 @@ def addSection(arguments):
     return "SUCCESS"
 
 def lambda_handler(event, context):
-    return addSection(event['arguments'])
+    return addUniversityInfo(event['arguments'])

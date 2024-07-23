@@ -87,7 +87,9 @@ def lambda_handler(event, context):
     columns.append(createColumn('user_cv_data_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
     columns.append(createColumn('user_id', 'varchar', '', False))
     columns.append(createColumn('data_section_id', 'varchar', '', False))
-    columns.append(createColumn('data_details', 'JSON', '', True))
+    columns.append(createColumn('data_details', 'JSON', '', False))
+    columns.append(createColumn('archive', 'boolean', 'DEFAULT false', False))
+    columns.append(createColumn('archive_timestamp', 'timestamp', '', True))
     query = createQuery('user_cv_data', columns)
     cursor.execute(query)
 

@@ -121,6 +121,14 @@ export const updateUserCVDataMutation = (user_cv_data_id, data_details) => `
     }
 `;
 
+export const updateUserCVDataArchiveMutation = (user_cv_data_id, archive) => `
+    mutation UpdateUserCVData {
+        updateUserCVData(
+            user_cv_data_id: "${user_cv_data_id}"
+            archive: ${archive}
+        )
+    }
+`;
 
 export const updateUniversityInfoMutation = (university_info_id, type, value) => `
     mutation UpdateUniversityInfo {

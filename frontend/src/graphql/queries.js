@@ -76,6 +76,21 @@ export const getUserCVDataQuery = (user_id, data_section_id) => `
     }
 `;
 
+export const getArchivedUserCVDataQuery = (user_id) => `
+    query GetArchivedUserCVData {
+        getArchivedUserCVData (
+            user_id: "${user_id}",
+        ) {
+            user_cv_data_id
+            user_id
+            data_section_id
+            data_details
+            archive
+            archive_timestamp
+        }
+    }
+`;
+
 export const getAllUniversityInfoQuery = () => `
     query GetAllUniversityInfo {
         getAllUniversityInfo {
