@@ -145,3 +145,13 @@ export const getUserConnectionsQuery = (user_id) => `
         }
     }
 `;
+
+export const getAllTemplatesQuery = () => `
+    query GetAllTemplates {
+        getAllTemplates {
+            template_id
+            title
+            data_section_ids
+        }
+    }
+`;
