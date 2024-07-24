@@ -67,17 +67,23 @@ type UserConnection {
   user_connection: AWSJSON! #JSON
 }
 
+type Template {
+  template_id: String!
+  title: String!
+  data_section_ids: String!
+}
+
 type Query {
     getUser(email: String!): User
     getExistingUser(institution_user_id: String!): User
     getAllSections: [ DataSection ]
     getUserCVData(user_id: String!, data_section_id: String!): [UserCVData]
     getArchivedUserCVData(user_id: String!): [UserCVData]
-    getUserCVData(user_id: String!, data_section_id: String!): UserCVData
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
     getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!
     getAllUniversityInfo: [ UniversityInfo ]
     getUserConnections(user_id: String!): [ UserConnection ]
+    getAllTemplates: [ Template ]
 }
 
 type Mutation {
@@ -176,5 +182,20 @@ type Mutation {
     linkOrcid(
       user_id: String!,
       orcid_id: String!
+    ): String
+
+    addTemplate(
+      title: String!
+      data_section_ids: String!
+    ): String
+
+    updateTemplate(
+      template_id: String!
+      title: String
+      data_section_ids: String
+    ): String
+
+    deleteTemplate(
+      template_id: String!
     ): String
 }

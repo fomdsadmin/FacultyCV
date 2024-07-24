@@ -109,6 +109,14 @@ def lambda_handler(event, context):
     query = createQuery('user_connections', columns)
     cursor.execute(query)
 
+    # Create Templates Table
+    columns = []
+    columns.append(createColumn('template_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('title', 'varchar', '', False))
+    columns.append(createColumn('data_section_ids', 'varchar', '', True))
+    query = createQuery('templates', columns)
+    cursor.execute(query)
+
     cursor.close()
     connection.commit()
     connection.close()

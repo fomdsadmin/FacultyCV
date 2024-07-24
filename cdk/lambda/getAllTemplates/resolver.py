@@ -15,23 +15,23 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def getAllUniversityInfo(arguments):
+def getAllTemplates(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT university_info_id, type, value FROM university_info')
+    cursor.execute('SELECT template_id, title, data_section_ids FROM templates')
     results = cursor.fetchall()
     cursor.close()
     connection.close()
-    university_info = []
+    templates = []
     for result in results:
-        university_info.append({
-            'university_info_id': result[0],
-            'type': result[1],
-            'value': result[2],
+        templates.append({
+            'template_id': result[0],
+            'title': result[1],
+            'data_section_ids': result[2]
         })
-    return university_info
+    return templates
 
 def lambda_handler(event, context):
-    return getAllUniversityInfo(event['arguments'])
+    return getAllTemplates(event['arguments'])
