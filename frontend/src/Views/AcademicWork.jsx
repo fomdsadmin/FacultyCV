@@ -297,14 +297,22 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
     <PageContainer>
       <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
       <main className='flex-1 h-full'>
-        <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Academic Work</h1>
         {loading ? (
+          <Container className='w-full h-full'>
+            <Section minSize={330} className='!overflow-auto !h-full custom-scrollbar'>
+            <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Academic Work</h1>
             <div className='flex items-center justify-center w-full'>
               <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
             </div>
+            </Section>
+            <bar size={4} className='bg-neutral h-screen' style={{ cursor: 'col-resize' }} />
+            <Section> 
+            </Section>
+          </Container>
           ) : (
           <Container className='w-full h-full'>
             <Section minSize={330} className='!overflow-auto !h-full custom-scrollbar'>
+            <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Academic Work</h1>
               <div className='m-4 max-w-lg flex'>
                 <label className="input input-bordered flex items-center gap-2 flex-1">
                   <input
