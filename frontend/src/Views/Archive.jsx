@@ -519,7 +519,6 @@ const Archive = ({ userInfo, getCognitoUser }) => {
     useEffect(() => {
       setLoading(true);
       fetchArchivedUserCVData();
-      setLoading(false);
     }, [searchTerm, userInfo]);
     
     async function fetchArchivedUserCVData() {
@@ -561,6 +560,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
         console.error('Error fetching data:', error);
         setFilteredEntries([]); // Set filteredEntries to an empty array in case of error
       }
+      setLoading(false);
     }
     
     async function fetchAndMatchSections(parsedData) {
