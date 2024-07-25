@@ -55,9 +55,9 @@ def writeRowToDB(row, conn, cursor):
     return 1
 
 '''
-Fetches a .csv file of HR data from S3, removes all researchers with irrelevant ranks, then cleans 
-the name data by setting all characters to lower case, removing all special characters. Returns a list
-of start and end indices that is fed to the next step of the step function
+Fetches a .csv file of HR data from S3, removes all researchers with irrelevant ranks and
+filters out users that already exist in the database.
+Puts the filtered data into the DB.
 Requires no input
 '''
 def lambda_handler(event, context):
