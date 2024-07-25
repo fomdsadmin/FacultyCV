@@ -15,18 +15,28 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def addUserConnection(arguments):
+def getArchivedUserCVData(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    user_connection_json = json.dumps(arguments['user_connection'])  # Convert user_connection dictionary to JSON string
-    cursor.execute("INSERT INTO user_connections (user_id, user_connection) VALUES (%s, %s)", (arguments['user_id'], user_connection_json))
+    cursor.execute('SELECT user_cv_data_id, user_id, data_section_id, data_details, archive, archive_timestamp FROM user_cv_data WHERE user_id = %s AND archive = true', (arguments['user_id'],))
+    results = cursor.fetchall()
     cursor.close()
-    connection.commit()
     connection.close()
-    return "SUCCESS"
+    archived_user_cv_data = []
+    if len(results) == 0:
+        return {}
+    for result in results:
+        archived_user_cv_data.append({
+            'user_cv_data_id': result[0],
+            'user_id': result[1],
+            'data_section_id': result[2],
+            'data_details': result[3],
+            'archive': result[4],
+            'archive_timestamp': result[5].isoformat() if result[5] else None
+        })
+    return archived_user_cv_data
 
 def lambda_handler(event, context):
-    arguments = event['arguments']
-    return addUserConnection(arguments=arguments)
+    return getArchivedUserCVData(event['arguments'])

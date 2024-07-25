@@ -15,7 +15,7 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def getUser(arguments):
+def getExistingUser(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to database")
@@ -62,4 +62,4 @@ def getUser(arguments):
     return user
 
 def lambda_handler(event, context):
-    return getUser(event['arguments'])
+    return getExistingUser(event['arguments'])

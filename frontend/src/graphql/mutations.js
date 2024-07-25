@@ -63,6 +63,15 @@ export const addUserConnectionMutation = (user_id, user_connection) => `
     }
 `;
 
+export const addTemplateMutation = (title, data_section_ids) => `
+    mutation AddTemplate {
+        addTemplate(
+            title: "${title}"
+            data_section_ids: "${data_section_ids}"
+        )
+    }
+`;
+
 export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
     if(orcid_id) {
         return `
@@ -130,6 +139,14 @@ export const updateUserCVDataMutation = (user_cv_data_id, data_details) => `
     }
 `;
 
+export const updateUserCVDataArchiveMutation = (user_cv_data_id, archive) => `
+    mutation UpdateUserCVData {
+        updateUserCVData(
+            user_cv_data_id: "${user_cv_data_id}"
+            archive: ${archive}
+        )
+    }
+`;
 
 export const updateUniversityInfoMutation = (university_info_id, type, value) => `
     mutation UpdateUniversityInfo {
@@ -150,10 +167,28 @@ export const updateUserConnectionMutation = (user_connection_id, user_connection
     }
 `;
 
+export const updateTemplateMutation = (template_id, title, data_section_ids) => `
+    mutation UpdateTemplate {
+        updateTemplate(
+            template_id: "${template_id}"
+            title: "${title}"
+            data_section_ids: "${data_section_ids}"
+        )
+    }
+`;
+
 export const deleteUserConnectionMutation = (user_connection_id) => `
     mutation DeleteUserConnection {
         deleteUserConnection(
             user_connection_id: "${user_connection_id}"
+        )
+    }
+`;
+
+export const deleteTemplateMutation = (template_id) => `
+    mutation DeleteTemplate {
+        deleteTemplate(
+            template_id: "${template_id}"
         )
     }
 `;

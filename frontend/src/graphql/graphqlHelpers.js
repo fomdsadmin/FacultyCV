@@ -1,6 +1,12 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, getOrcidAuthorMatchesQuery } from './queries';
-import { addSectionMutation, addUserCVDataMutation, addUserMutation, addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, updateUserConnectionMutation, deleteUserConnectionMutation, linkOrcidMutation } from './mutations';
+import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, 
+    getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, 
+    getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery } from './queries';
+import { addSectionMutation, addUserCVDataMutation, addUserMutation, 
+    addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
+    updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
+    updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
+    linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation } from './mutations';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -109,6 +115,25 @@ export const getUserCVData = async (user_id, data_section_id) => {
 }
 
 /**
+ * Function to get the archived user cv data given the user id
+ * Arguments:
+ * user_id
+ * Return value:
+ * {
+ *      user_cv_data_id
+ *      user_id
+ *      data_section_id
+ *      data_details: JSON string
+ *      archive
+ *      archive_timestamp
+ * }
+ */
+export const getArchivedUserCVData = async (user_id) => {
+    const results = await runGraphql(getArchivedUserCVDataQuery(user_id));
+    return results['data']['getArchivedUserCVData'];
+}
+
+/**
  * Function to get all university info
  * Return value:
  * [
@@ -186,6 +211,22 @@ export const getOrcidAuthorMatches = async (first_name, last_name, institution_n
 export const getUserConnections = async (user_id) => {
     const results = await runGraphql(getUserConnectionsQuery(user_id));
     return results['data']['getUserConnections'];
+}
+
+/**
+ * Function to get all templates
+ * Return value:
+ * [
+ *  {
+ *      template_id: Identifier for template in the DB
+ *      title
+ *      data_section_ids
+ *  }, ...
+ * ]
+ */
+export const getAllTemplates = async () => {
+    const results = await runGraphql(getAllTemplatesQuery())
+    return results['data']['getAllTemplates'];
 }
 
 // --- PUT ---
@@ -294,6 +335,19 @@ export const addUserConnection = async (user_id, user_connection) => {
 }
 
 /**
+ * Function to add template
+ * Arguments:
+ * title - title of template
+ * data_section_ids - list of data section ids
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const addTemplate = async (title, data_section_ids) => {
+    const results = await runGraphql(addTemplateMutation(title, data_section_ids));
+    return results['data']['addTemplate'];
+}
+
+/**
  * Function to link a user profile with a scopus id. To be used in conjunction with the getElsevierAuthorMatches function
  * Optionally, the orcid can be specified (if match is found with the scopus id returned by the getElsevierAuthorMatches function call)
  * Arguments:
@@ -373,6 +427,19 @@ export const updateUserCVData = async (user_cv_data_id, data_details) => {
 }
 
 /**
+ * Function to update user cv data - the archive status
+ * Arguments:
+ * user_cv_data_id - ID of the user cv data
+ * archive - Boolean
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateUserCVDataArchive = async (user_cv_data_id, archive) => {
+    const results = await runGraphql(updateUserCVDataArchiveMutation(user_cv_data_id, archive));
+    return results['data']['updateUserCVDataArchive'];
+}
+
+/**
  * Function to update university info
  * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
  *      university_info_id
@@ -401,6 +468,20 @@ export const updateUserConnection = async (user_connection_id, user_connection) 
     return results['data']['updateUserConnection'];
 }
 
+/**
+ * Function to update user connections
+ * Arguments:
+ * template_id - ID of the template
+ * title - title of the template
+ * data_section_ids - list of data section ids
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateTemplate = async (template_id, title, data_section_ids) => {
+    const results = await runGraphql(updateTemplateMutation(template_id, title, data_section_ids));
+    return results['data']['updateTemplate'];
+}
+
 // --- DELETE ---
 
 /**
@@ -413,4 +494,16 @@ export const updateUserConnection = async (user_connection_id, user_connection) 
 export const deleteUserConnection = async (user_connection_id) => {
     const results = await runGraphql(deleteUserConnectionMutation(user_connection_id));
     return results['data']['deleteUserConnection'];
+}
+
+/**
+ * Function to delete templates
+ * Arguments:
+ * template_id - ID of the template
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const deleteTemplate = async (template_id) => {
+    const results = await runGraphql(deleteTemplateMutation(template_id));
+    return results['data']['deleteTemplate'];
 }

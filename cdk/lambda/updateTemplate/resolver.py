@@ -15,18 +15,31 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def addUserConnection(arguments):
+def updateTemplate(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
-    print("Connected to Database")
+    print("Connected to database")
     cursor = connection.cursor()
-    user_connection_json = json.dumps(arguments['user_connection'])  # Convert user_connection dictionary to JSON string
-    cursor.execute("INSERT INTO user_connections (user_id, user_connection) VALUES (%s, %s)", (arguments['user_id'], user_connection_json))
+
+    # Prepare the UPDATE query
+    query = """
+    UPDATE templates SET 
+      title = %s,
+      data_section_ids = %s
+    WHERE template_id = %s
+    """
+
+    # Execute the query with the provided arguments
+    cursor.execute(query, (
+        arguments['title'] if 'title' in arguments else '',
+        arguments['data_section_ids'] if 'data_section_ids' in arguments else '',
+        arguments['template_id']
+    ))
+
     cursor.close()
     connection.commit()
     connection.close()
     return "SUCCESS"
 
 def lambda_handler(event, context):
-    arguments = event['arguments']
-    return addUserConnection(arguments=arguments)
+    return updateTemplate(event['arguments'])

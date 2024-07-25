@@ -10,6 +10,8 @@ import {
 } from "aws-cdk-lib/aws-lambda";
 import { Role, ServicePrincipal, ManagedPolicy, Policy, PolicyStatement, PolicyDocument, Effect } from "aws-cdk-lib/aws-iam";
 import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
 import { DatabaseStack } from "./database-stack";
 
 export class ApiStack extends cdk.Stack {
@@ -278,6 +280,15 @@ export class ApiStack extends cdk.Stack {
     )
     createResolver(
       this.api,
+      "getArchivedUserCVData",
+      ["getArchivedUserCVData"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    )
+    createResolver(
+      this.api,
       "updateUserCVData",
       ["updateUserCVData"],
       "Mutation",
@@ -384,5 +395,73 @@ export class ApiStack extends cdk.Stack {
       resolverRole,
       [psycopgLayer]
     );
+    createResolver(
+      this.api,
+      "getAllTemplates",
+      ["getAllTemplates"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addTemplate",
+      ["addTemplate"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateTemplate",
+      ["updateTemplate"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "deleteTemplate",
+      ["deleteTemplate"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+
+    // Lambda function to delete archived rows
+    const deleteArchivedDataLambda = new Function(this, "DeleteArchivedDataLambda", {
+      functionName: "deleteArchivedDataLambda",
+      runtime: Runtime.PYTHON_3_9,
+      memorySize: 512,
+      code: Code.fromAsset("./lambda/deleteArchivedData"),
+      handler: "handler.lambda_handler",
+      architecture: Architecture.X86_64,
+      timeout: cdk.Duration.minutes(1),
+      environment: {},
+      role: resolverRole,
+      layers: [psycopgLayer],
+      vpc: databaseStack.dbInstance.vpc // Same VPC as the database
+    });
+
+    // Add permissions for the Lambda function to access the RDS database
+    deleteArchivedDataLambda.addToRolePolicy(new PolicyStatement({
+      actions: [
+        "rds-db:connect"
+      ],
+      effect: Effect.ALLOW,
+      resources: [databaseStack.dbInstance.instanceArn]
+    }));
+
+    // Schedule the Lambda function to run daily
+    const rule = new events.Rule(this, "ScheduleRule", {
+      schedule: events.Schedule.rate(cdk.Duration.days(1)),
+    });
+
+    rule.addTarget(new targets.LambdaFunction(deleteArchivedDataLambda));
+
   }
 }

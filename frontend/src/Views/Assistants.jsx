@@ -63,11 +63,12 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
   //TODO: FIX SEARCH FUNCTIONALITY
 
   useEffect(() => {
-    getAllUserConnections();
-  }, []);
-
-  const getAllUserConnections = async () => {
     setLoading(true);
+    getAllUserConnections();
+    setLoading(false)
+  }, [searchTerm, userInfo]);
+
+  async function getAllUserConnections() {
     try {
       const retrievedUserConnections = await getUserConnections(userInfo.user_id);
 
@@ -89,7 +90,6 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
     } catch (error) {
       console.error('Error:', error);
     }
-    setLoading(false);
   }
 
   const handleSearchChange = (event) => {

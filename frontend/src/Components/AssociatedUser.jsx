@@ -29,7 +29,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
         };
 
         calculateFontSize();
-    }, [connection.user_connection.first_name, connection.user_connection.last_name]);
+    }, []);
 
     const handleRemoveClick = () => {
         setClickRemoved(true);
@@ -57,10 +57,16 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
     const handleAccept = async () => {
         setIsAccepting(true);
         // handle accepting invite here
+        const updatedConnection = {
+            ...connection,
+            user_connection: {
+                ...connection.user_connection,
+                status: "confirmed"
+            }
+        };
+        const updatedConnectionString = JSON.stringify(updatedConnection.user_connection).replace(/"/g, '\\"');
         try {
-            connection.user_connection.status = 'confirmed';
-            const userConnectionString = JSON.stringify(connection.user_connection).replace(/"/g, '\\"');
-            const response = await updateUserConnection(connection.user_connection_id, `${userConnectionString}`);
+            const response = await updateUserConnection(connection.user_connection_id, `${updatedConnectionString}`);
             console.log("Updated", response);
         } catch (error) {
             console.error('Error:', error);
@@ -97,7 +103,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
                         <button onClick={handleRemoveConfirm} className="text-white btn btn-warning min-h-0 h-6 leading-tight" disabled={isRemoving}>
                             {isRemoving ? 'Declining...' : 'Decline'}
                         </button>
-                        <button onClick={handleAccept} className="text-white btn btn-success min-h-0 h-6 leading-tight mb-1" disabled={isAccepting}>
+                        <button onClick={handleAccept} className="text-white btn btn-success min-h-0 h-6 leading-tight" disabled={isAccepting}>
                             {isAccepting ? 'Accepting...' : 'Accept'}
                         </button>
                     </div>

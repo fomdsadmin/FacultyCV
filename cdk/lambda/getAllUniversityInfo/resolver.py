@@ -15,7 +15,7 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def getAllSections(arguments):
+def getAllUniversityInfo(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
@@ -34,4 +34,4 @@ def getAllSections(arguments):
     return university_info
 
 def lambda_handler(event, context):
-    return getAllSections(event['arguments'])
+    return getAllUniversityInfo(event['arguments'])

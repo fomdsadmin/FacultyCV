@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
 import EntryModal from './EntryModal';
-import { getUserCVData } from '../graphql/graphqlHelpers';
+import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
 
   const generateEmptyEntry = (attributes) => {
@@ -28,8 +28,18 @@ const GenericSection = ({ user, section }) => {
       setSearchTerm(event.target.value);
   };
 
-  const handleArchive = (entry) => {
-    console.log("archived entry " + entry.title);
+  const handleArchive = async (entry) => {
+    setLoading(true);
+      // Implement restore functionality here
+      try {
+        const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
+        console.log('Archived entry ', result);
+      }
+      catch (error) {
+        console.error('Error archiving entry:', error);
+      }
+      await fetchData();
+    setLoading(false);
   };
 
   const handleEdit = (entry) => {

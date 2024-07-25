@@ -15,7 +15,7 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def getUserCVData(arguments):
+def getUserConnections(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
@@ -36,4 +36,4 @@ def getUserCVData(arguments):
     return user_connections
 
 def lambda_handler(event, context):
-    return getUserCVData(event['arguments'])
+    return getUserConnections(event['arguments'])
