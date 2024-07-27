@@ -115,11 +115,20 @@ export class DataFetchStack extends cdk.Stack {
       s3.EventType.OBJECT_CREATED_PUT,
       new LambdaDestination(bulkUserUpload),
       {
-        prefix: "user_data/institution_data",
+        prefix: "user_data/",
         suffix: ".csv"
       }
     )
     
+    s3Bucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED_PUT,
+      new LambdaDestination(bulkTeachingDataUpload),
+      {
+        prefix: "user_data/teaching_data",
+        suffix: ".csv"
+      }
+    )
+
     // Give the lambdas permission to access the S3 Bucket
     s3Bucket.grantReadWrite(bulkUserUpload);
     s3Bucket.grantReadWrite(bulkTeachingDataUpload);
