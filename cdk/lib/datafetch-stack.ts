@@ -115,7 +115,7 @@ export class DataFetchStack extends cdk.Stack {
       s3.EventType.OBJECT_CREATED_PUT,
       new LambdaDestination(bulkUserUpload),
       {
-        prefix: "user_data/",
+        prefix: "user_data/institution_data",
         suffix: ".csv"
       }
     )
