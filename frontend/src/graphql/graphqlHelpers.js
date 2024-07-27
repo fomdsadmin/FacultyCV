@@ -1,7 +1,8 @@
 import { generateClient } from 'aws-amplify/api';
 import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, 
     getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, 
-    getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery } from './queries';
+    getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
+    getTeachingDataMatchesQuery} from './queries';
 import { addSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -229,6 +230,24 @@ export const getAllTemplates = async () => {
     return results['data']['getAllTemplates'];
 }
 
+/**
+ * Function to get teaching data matches from bulk loaded TTPS data
+ * Arguments:
+ * institution_user_id
+ * Return value:
+ * [
+ *  {
+ *      teaching_data_id
+ *      user_id
+ *      data_details: JSON string
+ *  }, ...
+ * ]
+ */
+export const getTeachingDataMatches = async (institution_user_id) => {
+    const results = await runGraphql(getTeachingDataMatchesQuery(institution_user_id));
+    return results['data']['getTeachingDataMatches'];
+}
+
 // --- PUT ---
 
 /**
@@ -373,6 +392,26 @@ export const linkScopusId = async (user_id, scopus_id, orcid_id) => {
 export const linkOrcid = async (user_id, orcid_id) => {
     const results = await runGraphql(linkOrcidMutation(user_id, orcid_id));
     return results['data']['linkOrcid'];
+}
+
+/**
+ * Function to link bulk loaded teaching data to profile
+ * Arguments:
+ * user_id
+ * data_details - JSON String
+ * Return value:
+ * String saying "Teaching data linked successfully" if call succeeded, anything else means call failed
+ */
+export const linkTeachingData = async (user_id, data_details) => {
+    // First get the data_section_id for the teaching data
+    const results = await getAllSections();
+    const data_section_id = results.find(section => section.title === "Courses taught").data_section_id;
+    const status =  await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
+    if (status === "SUCCESS") {
+        return "Teaching data linked successfully";
+    } else {
+        return "Failed to link teaching data";
+    }
 }
 
 // --- UPDATE ---

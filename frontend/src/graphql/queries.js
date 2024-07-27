@@ -155,3 +155,15 @@ export const getAllTemplatesQuery = () => `
         }
     }
 `;
+
+export const getTeachingDataMatchesQuery = (institution_user_id) => `
+    query GetTeachingDataMatches {
+        getTeachingDataMatches (
+            institution_user_id: "${institution_user_id}",
+        ) {
+            teaching_data_id
+            institution_user_id
+            data_details
+        }
+    }
+`;

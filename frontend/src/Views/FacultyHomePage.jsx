@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
-import { getOrcidAuthorMatches, linkOrcid, linkScopusId, updateUser } from '../graphql/graphqlHelpers.js';
+import { getOrcidAuthorMatches, getTeachingDataMatches, linkOrcid, linkScopusId, linkTeachingData, updateUser } from '../graphql/graphqlHelpers.js';
 import { getAllUniversityInfo, getElsevierAuthorMatches } from '../graphql/graphqlHelpers.js';
 
 const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {

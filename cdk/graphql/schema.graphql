@@ -73,6 +73,12 @@ type Template {
   data_section_ids: String!
 }
 
+type TeachingData {
+  teaching_data_id: String!
+  data_details: AWSJSON! #JSON
+  institution_user_id: String!
+}
+
 type Query {
     getUser(email: String!): User
     getExistingUser(institution_user_id: String!): User
@@ -84,6 +90,7 @@ type Query {
     getAllUniversityInfo: [ UniversityInfo ]
     getUserConnections(user_id: String!): [ UserConnection ]
     getAllTemplates: [ Template ]
+    getTeachingDataMatches(institution_user_id: String!): [TeachingData]
 }
 
 type Mutation {
