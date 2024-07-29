@@ -167,3 +167,29 @@ export const getTeachingDataMatchesQuery = (institution_user_id) => `
         }
     }
 `;
+
+export const getPublicationMatches = (scopus_id, page_number, results_per_page) => `
+    query GetPublicationMatches {
+        getPublicationMatches (
+            scopus_id: "${scopus_id}",
+            page_number: ${page_number},
+            results_per_page: ${results_per_page}
+        ) {
+            publications {
+                publication_id
+                title
+                cited_by
+                keywords
+                journal
+                link
+                doi
+                year_published
+                author_names
+                author_ids
+            }
+            total_results
+            page_number
+            results_per_page
+        }
+    }
+`;

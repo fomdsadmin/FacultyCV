@@ -248,6 +248,35 @@ export const getTeachingDataMatches = async (institution_user_id) => {
     return results['data']['getTeachingDataMatches'];
 }
 
+/**
+ * Function to get publication matches using a user's scopus id
+ * Arguments:
+ * scopus_id
+ * page_number - a zero-indexed page_number to fetch data for e.g. page 0 contains data from publications[0] to publications[results_per_page - 1] and so on
+ * results_per_page
+ * Return value: {
+ *      publications [{
+ *               publication_id
+ *               title
+ *               cited_by
+ *               keywords
+ *               journal
+ *               link
+ *               doi
+ *               year_published
+ *               author_names
+ *               author_ids
+ *       }, ...]
+ *       total_results
+ *       page_number
+ *       results_per_page
+ *  }
+ */
+export const getPublicationMatches = async (scopus_id, page_number, results_per_page) => {
+    const results = await runGraphql(getPublicationMatches(scopus_id, page_number, results_per_page));
+    return results['data']['getPublicationMatches'];
+}
+
 // --- PUT ---
 
 /**
