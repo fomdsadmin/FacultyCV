@@ -4,6 +4,7 @@ import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
 import { getOrcidAuthorMatches, linkOrcid, linkScopusId, updateUser } from '../graphql/graphqlHelpers.js';
 import { getAllUniversityInfo, getElsevierAuthorMatches } from '../graphql/graphqlHelpers.js';
+import ProfileLinkModal from '../Components/ProfileLinkModal.jsx';
 
 const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -11,6 +12,8 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   const [faculties, setFaculties] = useState([]);
   const [campuses, setCampuses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(false);
+  const [selectedAuthor, setSelectedAuthor] = useState(null);
 
   // TODO - To fix this -> too many requests being made, old state retained after auth
   useEffect(() => {
@@ -45,6 +48,26 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
       setLoading(false);
     });
   };
+
+  const showModal = () => {
+    setModal(!modal);
+  };
+
+  const handleClose = () => {
+    setModal(false);
+  };
+
+  const handleSelectAuthor = (author) => {
+    setSelectedAuthor(author);
+  };
+
+  const handleLink = async () => {
+    console.log("Linking profiles...");
+    const orcidMatches = await getOrcidAuthorMatches("Michael", "Hayden", "University of British Columbia");
+    const scopusMatches = await getElsevierAuthorMatches("Michael", "Hayden", "University of British Columbia");
+    console.log(orcidMatches);
+    console.log(scopusMatches);
+  };  
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -159,8 +182,9 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               </div>
             </div>
 
-            <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Identifications</h2>
+            {/* <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Identifications</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <button onClick={handleLink}>link to profiles</button>
               <div>
                 <label className="block text-sm mb-1">Institution ID</label>
                 <input id="institutionUserId" name="institutionUserId" type="text" value={userInfo.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, institution_user_id: e.target.value })}/>
@@ -173,7 +197,18 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
                 <label className="block text-sm mb-1">Scopus ID</label>
                 <input id="scopusId" name="scopusId" type="text" value={userInfo.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, scopus_id: e.target.value })}/>
               </div>
-            </div>
+            </div> */}
+
+
+            {modal && (
+              <ProfileLinkModal setClose={handleClose} setAuthor={handleSelectAuthor} author={selectedAuthor} />
+            )  
+            }
+
+            <button onClick={showModal} className="btn btn-secondary text-white py-1 px-2 float-left w-1/5 min-h-0 h-8 leading-tight">
+              Link to Identifications
+            </button>
+
             <button type="submit" className="btn btn-success text-white py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : 'Save'}
             </button>
