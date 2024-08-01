@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { getOrcidAuthorMatches } from '../graphql/graphqlHelpers.js';
 
 
@@ -76,6 +76,12 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
   const [manualScopusId, setManualScopusId] = useState(scopusId);
   const [manualOrcidId, setManualOrcidId] = useState(orcidId);
   const [reviewed, setReviewed] = useState(false);
+
+  useEffect(() => {
+    if (scopusId || orcidId) {
+      setReviewed(true);
+    }
+  }, [scopusId, orcidId]);
 
   const handleLinkClick = (author) => {
     setLoading(true);
