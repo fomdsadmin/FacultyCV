@@ -124,6 +124,20 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Institution</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div>
+                <label className="block text-sm mb-1">Primary Faculty</label>
+                <select id="primaryFaculty" name="primaryFaculty" value={userInfo.primary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, primary_faculty: e.target.value })}>
+                  <option value="">-</option>
+                  {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Secondary Faculty</label>
+                <select id="secondaryFaculty" name="secondaryFaculty" value={userInfo.secondary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, secondary_faculty: e.target.value })}>
+                  <option value="">-</option>
+                  {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm mb-1">Primary Department</label>
                 <select id="primaryDepartment" name="primaryDepartment" value={userInfo.primary_department || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, primary_department: e.target.value })}>
@@ -136,20 +150,6 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
                 <select id="secondaryDepartment" name="secondaryDepartment" value={userInfo.secondary_department || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, secondary_department: e.target.value })}>
                   <option value="">-</option>
                   {departments.map((department, index) => <option key={index} value={department}>{department}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Primary Faculty</label>
-                <select id="primaryFaculty" name="primaryFaculty" value={userInfo.primary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, primary_faculty: e.target.value })}>
-                  <option value="">-</option>
-                  {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Secondary Faculty</label>
-                <select id="secondaryFaculty" name="secondaryFaculty" value={userInfo.secondary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, secondary_faculty: e.target.value })}>
-                  <option value="">-</option>
-                  {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
                 </select>
               </div>
               <div>
@@ -168,15 +168,11 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Identifications</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
               <div>
-                <label className="block text-sm mb-1">Institution ID</label>
-                <input id="institutionUserId" name="institutionUserId" type="text" value={userInfo.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, institution_user_id: e.target.value })}/>
-              </div>
-              <div>
                 <label className="block text-sm mb-1">Orcid ID</label>
                 <input id="orcidId" name="orcidId" type="text" value={userInfo.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, orcid_id: e.target.value })}/>
               </div>
               <div>
-                <label className="block text-sm mb-1">Scopus ID</label>
+                <label className="block text-sm mb-1">Scopus IDs</label>
                 <input id="scopusId" name="scopusId" type="text" value={userInfo.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, scopus_id: e.target.value })}/>
               </div>
             </div>

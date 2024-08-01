@@ -30,15 +30,16 @@ const GenericSection = ({ user, section }) => {
 
   const handleArchive = async (entry) => {
     setLoading(true);
-      // Implement restore functionality here
-      try {
-        const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
-        console.log('Archived entry ', result);
-      }
-      catch (error) {
-        console.error('Error archiving entry:', error);
-      }
-      await fetchData();
+    setFieldData([]);
+    // Implement restore functionality here
+    try {
+      const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
+      console.log('Archived entry ', result);
+    }
+    catch (error) {
+      console.error('Error archiving entry:', error);
+    }
+    await fetchData();
     setLoading(false);
   };
 
@@ -57,8 +58,11 @@ const GenericSection = ({ user, section }) => {
 
   const handleNew = () => {
       setIsNew(true);
+      if (typeof section.attributes === 'string') {
+        section.attributes = JSON.parse(section.attributes);
+      }
       const emptyEntry = generateEmptyEntry(section.attributes);
-      console.log(emptyEntry);
+      console.log("emptyEntry", emptyEntry);
       const newEntry = {fields: emptyEntry, data_id: null};
       setSelectedEntry(newEntry);
       setIsModalOpen(true);
@@ -67,7 +71,6 @@ const GenericSection = ({ user, section }) => {
   async function fetchData() {
     try {
       const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
-  
       // Parse the data_details field from a JSON string to a JSON object
       const parsedData = retrievedData.map(data => ({
         ...data,
@@ -112,7 +115,7 @@ const GenericSection = ({ user, section }) => {
           <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
           <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>New</button>
         </div>
-
+        <div className='m-4 max-w-lg flex'>{section.description}</div>
         <div className='m-4 max-w-lg flex'>
           <label className="input input-bordered flex items-center gap-2 flex-1">
           <input

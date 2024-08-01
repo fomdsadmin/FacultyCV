@@ -540,6 +540,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
         }
     
         const filtered = matchedData.filter(entry => {
+          console.log("entry", entry);
           const { title, description, attributes } = entry;
           const [fieldA, fieldB] = rankFields(attributes);
     
@@ -655,19 +656,23 @@ const Archive = ({ userInfo, getCognitoUser }) => {
                   </svg>
                 </label>
               </div>  
-              {filteredEntries.map((entry, index) => {
-                const [fieldA, fieldB] = rankFields(entry.data_details);
-                return (
-                  <GenericEntry 
-                    key={index} 
-                    isArchived={true}
-                    field1={entry.title}
-                    field2={fieldA}
-                    field3={fieldB}
-                    onRestore={() => handleRestore(entry)}
-                  />
-                );
-              })}
+              {filteredEntries.length === 0 ? (
+                <div className="text-zinc-600 mt-4 ml-4">No archived entries</div>
+              ) : (
+                filteredEntries.map((entry, index) => {
+                  const [fieldA, fieldB] = rankFields(entry.data_details);
+                  return (
+                    <GenericEntry
+                      key={index}
+                      isArchived={true}
+                      field1={entry.title}
+                      field2={fieldA}
+                      field3={fieldB}
+                      onRestore={() => handleRestore(entry)}
+                    />
+                  );
+                })
+              )}
             </>
           )}
         </main>

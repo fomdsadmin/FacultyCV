@@ -25,7 +25,7 @@ def getCredentials():
     return credentials
 
 def writeRowToDB(row, conn, cursor):
-    cursor.execute("SELECT 1 FROM data_sections WHERE title = %s AND description = %s AND data_type = %s AND attributes = %s", (row[0], row[1], row[2], row[3]))
+    cursor.execute("SELECT 1 FROM data_sections WHERE title = %s AND description = %s AND data_type = %s", (row[0], row[1], row[2]))
     existing_row = cursor.fetchone()
     if existing_row:
         return 0
@@ -47,6 +47,7 @@ def lambda_handler(event, context):
     key = 'user_data/data_sections.csv' 
     data = s3_client.get_object(Bucket=bucket_name, Key=key)
     table_rows = list(csv.reader(codecs.getreader("utf-8-sig")(data["Body"])))
+    table_rows = table_rows[1:]  # Skip the first row
     credentials = getCredentials()
     rows_written = 0
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])

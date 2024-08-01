@@ -434,7 +434,7 @@ export const linkOrcid = async (user_id, orcid_id) => {
 export const linkTeachingData = async (user_id, data_details) => {
     // First get the data_section_id for the teaching data
     const results = await getAllSections();
-    const data_section_id = results.find(section => section.title === "Courses taught").data_section_id;
+    const data_section_id = results.find(section => section.title === "Courses Taught").data_section_id;
     const status =  await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
     if (status === "SUCCESS") {
         return "Teaching data linked successfully";
