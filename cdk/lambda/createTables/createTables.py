@@ -109,6 +109,45 @@ def lambda_handler(event, context):
     query = createQuery('user_connections', columns)
     cursor.execute(query)
 
+    # Create Teaching Data Table to store bulk loaded teaching data
+    columns = []
+    columns.append(createColumn('teaching_data_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('year', 'varchar', '', False))
+    columns.append(createColumn('session', 'varchar', '', False))
+    columns.append(createColumn('course', 'varchar', '', False))
+    columns.append(createColumn('description', 'varchar', '', False))
+    columns.append(createColumn('scheduled_hours', 'int', '', False))
+    columns.append(createColumn('class_size', 'int', '', False))
+    columns.append(createColumn('lectures', 'int', '', False))
+    columns.append(createColumn('tutorials', 'int', '', False))
+    columns.append(createColumn('labs', 'int', '', False))
+    columns.append(createColumn('other', 'int', '', False))
+    columns.append(createColumn('institution_user_id', 'varchar', '', True))
+    query = createQuery('teaching_data', columns)
+    cursor.execute(query)
+
+    # Add built-in data sections here
+    
+    # Query template to be reused
+    query = "INSERT INTO data_sections (title, description, data_type, attributes) SELECT %s, %s, %s, %s "
+    query += "WHERE NOT EXISTS (SELECT * FROM data_sections WHERE data_type = %s AND title = %s)"
+
+    # Attributes is just used to show the structure of the data
+    attributes = json.dumps({
+        'Year': '',
+        'Session': '',
+        'Course': '',
+        'Description': '',
+        'Scheduled Hours': '',
+        'Class size': '',
+        'Lectures': '',
+        'Tutorials': '',
+        'Labs': '',
+        'Other': ''
+    })
+    data = ('Courses taught', 'Teaching experience', 'Teaching', attributes, 'Teaching', 'Courses taught')
+    cursor.execute(query, data)
+
     # Create Templates Table
     columns = []
     columns.append(createColumn('template_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
@@ -121,3 +160,8 @@ def lambda_handler(event, context):
     connection.commit()
     connection.close()
     print("Tables Created")
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Tables Created')
+    }

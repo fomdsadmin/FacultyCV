@@ -74,11 +74,14 @@ const GenericSection = ({ user, section }) => {
         data_details: JSON.parse(data.data_details),
       }));
 
+      console.log(parsedData)
+
       const filteredData = parsedData.filter(entry => {
         const [field1, field2] = rankFields(entry.data_details);
+        console.log(field1, field2);
         return (
-          (field1 && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+          (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
       console.log("filtered data: " + JSON.stringify(filteredData));

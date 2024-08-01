@@ -54,11 +54,12 @@ export class DataFetchStack extends cdk.Stack {
     /*
         Create the lambda roles
     */
-    const bulkUserUploadRole = new Role(this, 'CleanBulkUserDataRole', {
+    const bulkLoadRole = new Role(this, 'CleanBulkUserDataRole', {
         roleName: 'CleanBulkUserDataRole',
         assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-        });
-        bulkUserUploadRole.addToPolicy(new PolicyStatement({
+        managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess")]
+    });
+    bulkLoadRole.addToPolicy(new PolicyStatement({
         effect: Effect.ALLOW,
         actions: [
             // S3
@@ -67,7 +68,7 @@ export class DataFetchStack extends cdk.Stack {
         ],
         resources: [s3Bucket.bucketArn]
     }));
-    bulkUserUploadRole.addToPolicy(new PolicyStatement({
+    bulkLoadRole.addToPolicy(new PolicyStatement({
         effect: Effect.ALLOW,
         actions: [            
             //Needed to put the Lambda in a VPC
@@ -79,7 +80,7 @@ export class DataFetchStack extends cdk.Stack {
         ],
         resources: ["*"] // must be *
     }));
-    bulkUserUploadRole.addToPolicy(new PolicyStatement({
+    bulkLoadRole.addToPolicy(new PolicyStatement({
       effect: Effect.ALLOW,
       actions: [
         //Secrets Manager
@@ -98,7 +99,25 @@ export class DataFetchStack extends cdk.Stack {
         handler: 'lambda_function.lambda_handler',
         code: lambda.Code.fromAsset('lambda/bulkUserUpload'),
         timeout: cdk.Duration.minutes(15),
-        role: bulkUserUploadRole,
+        role: bulkLoadRole,
+        memorySize: 512,
+        environment: {
+          S3_BUCKET_NAME: s3Bucket.bucketName,
+        },
+        vpc: databaseStack.dbInstance.vpc, // add to the same vpc as rds
+        vpcSubnets: {
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+        },
+        layers: [apiStack.getLayers()['psycopg2']]
+    });
+
+    const bulkTeachingDataUpload = new lambda.Function(this, 'facultyCV-bulkTeachingDataUpload', {
+        functionName: 'facultycv-bulkTeachingDataUpload',
+        runtime: lambda.Runtime.PYTHON_3_9,
+        handler: 'lambda_function.lambda_handler',
+        code: lambda.Code.fromAsset('lambda/bulkTeachingDataUpload'),
+        timeout: cdk.Duration.minutes(15),
+        role: bulkLoadRole,
         memorySize: 512,
         environment: {
           S3_BUCKET_NAME: s3Bucket.bucketName,
@@ -174,9 +193,19 @@ export class DataFetchStack extends cdk.Stack {
       }
     )
     
+    s3Bucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED_PUT,
+      new LambdaDestination(bulkTeachingDataUpload),
+      {
+        prefix: "user_data/teaching_data",
+        suffix: ".csv"
+      }
+    )
+
     // Give the lambdas permission to access the S3 Bucket
     s3Bucket.grantReadWrite(bulkUserUpload);
     s3BucketDataSections.grantReadWrite(bulkDataSectionsUpload);
     s3BucketUniversityInfo.grantReadWrite(bulkUniversityInfoUpload);
+    s3Bucket.grantReadWrite(bulkTeachingDataUpload);
   }
 }
