@@ -168,6 +168,10 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Identifications</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
               <div>
+                <label className="block text-sm mb-1">Institution ID</label>
+                <input id="institutionUserId" name="institutionUserId" type="text" value={userInfo.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, institution_user_id: e.target.value })}/>
+              </div>
+              <div>
                 <label className="block text-sm mb-1">Orcid ID</label>
                 <input id="orcidId" name="orcidId" type="text" value={userInfo.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, orcid_id: e.target.value })}/>
               </div>
