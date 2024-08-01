@@ -39,7 +39,7 @@ def writeRowToDB(row, conn, cursor):
 
 def lambda_handler(event, context):
     bucket_name = os.environ.get('S3_BUCKET_NAME')
-    key = 'university_info/university_info.csv' 
+    key = 'user_data/university_info.csv' 
     data = s3_client.get_object(Bucket=bucket_name, Key=key)
     table_rows = list(csv.reader(codecs.getreader("utf-8-sig")(data["Body"])))
     credentials = getCredentials()

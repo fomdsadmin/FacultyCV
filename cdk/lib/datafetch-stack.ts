@@ -22,7 +22,7 @@ export class DataFetchStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
-    // Create the S3 Buckets
+    // Create the S3 Bucket
     const s3Bucket = new s3.Bucket(this, 'facultyCV-user-data-s3-bucket', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
@@ -31,25 +31,6 @@ export class DataFetchStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
     });
-
-    const s3BucketDataSections = new s3.Bucket(this, 'facultyCV-data-sections-s3-bucket', {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-      versioned: true,
-      publicReadAccess: false,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.S3_MANAGED,
-    });
-    
-    const s3BucketUniversityInfo = new s3.Bucket(this, 'facultyCV-university-info-s3-bucket', {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-      versioned: true,
-      publicReadAccess: false,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.S3_MANAGED,
-    });
-
 
     /*
         Create the lambda roles
@@ -135,10 +116,10 @@ export class DataFetchStack extends cdk.Stack {
       handler: 'lambda_function.lambda_handler',
       code: lambda.Code.fromAsset('lambda/bulkDataSectionsUpload'),
       timeout: cdk.Duration.minutes(15),
-      role: bulkUserUploadRole, // assuming the same role can be used
+      role: bulkLoadRole, // assuming the same role can be used
       memorySize: 512,
       environment: {
-        S3_BUCKET_NAME: s3BucketDataSections.bucketName,
+        S3_BUCKET_NAME: s3Bucket.bucketName,
       },
       vpc: databaseStack.dbInstance.vpc,
       vpcSubnets: {
@@ -153,10 +134,10 @@ export class DataFetchStack extends cdk.Stack {
       handler: 'lambda_function.lambda_handler',
       code: lambda.Code.fromAsset('lambda/bulkUniversityInfoUpload'),
       timeout: cdk.Duration.minutes(15),
-      role: bulkUserUploadRole, // assuming the same role can be used
+      role: bulkLoadRole, // assuming the same role can be used
       memorySize: 512,
       environment: {
-        S3_BUCKET_NAME: s3BucketUniversityInfo.bucketName,
+        S3_BUCKET_NAME: s3Bucket.bucketName,
       },
       vpc: databaseStack.dbInstance.vpc,
       vpcSubnets: {
@@ -175,20 +156,20 @@ export class DataFetchStack extends cdk.Stack {
       }
     )
 
-    s3BucketDataSections.addEventNotification(
+    s3Bucket.addEventNotification(
       s3.EventType.OBJECT_CREATED_PUT,
       new LambdaDestination(bulkDataSectionsUpload),
       {
-        prefix: "data_sections/data_sections",
+        prefix: "user_data/data_sections",
         suffix: ".csv"
       }
     )
 
-    s3BucketUniversityInfo.addEventNotification(
+    s3Bucket.addEventNotification(
       s3.EventType.OBJECT_CREATED_PUT,
       new LambdaDestination(bulkUniversityInfoUpload),
       {
-        prefix: "university_info/university_info",
+        prefix: "user_data/university_info",
         suffix: ".csv"
       }
     )
@@ -204,8 +185,8 @@ export class DataFetchStack extends cdk.Stack {
 
     // Give the lambdas permission to access the S3 Bucket
     s3Bucket.grantReadWrite(bulkUserUpload);
-    s3BucketDataSections.grantReadWrite(bulkDataSectionsUpload);
-    s3BucketUniversityInfo.grantReadWrite(bulkUniversityInfoUpload);
+    s3Bucket.grantReadWrite(bulkDataSectionsUpload);
+    s3Bucket.grantReadWrite(bulkUniversityInfoUpload);
     s3Bucket.grantReadWrite(bulkTeachingDataUpload);
   }
 }
