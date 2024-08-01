@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { getOrcidAuthorMatches } from '../graphql/graphqlHelpers.js';
+
+
 
 const authors = [
   {
@@ -56,6 +59,14 @@ const authors = [
     orcid: null,
   },
 ];
+
+// we call getElsevierAuthorMatches and display the results, 
+// if there's an orcid id and scopus id on the one they select we're done. 
+// If there's a scopus id, but no orcid then we call getOrcidAuthorMatches. 
+// If there are no results from getElsevierAuthorMatches, 
+// we try getOrcidAuthorMatches and display results, but we won't have a scopus id.
+
+// const authors = getOrcidAuthorMatches("Michael", "Hayden", "university of british columbia");
 
 const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId, onLink }) => {
   const [loading, setLoading] = useState(false);
