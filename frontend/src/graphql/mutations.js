@@ -4,7 +4,7 @@ export const addSectionMutation = (title, description, data_type, attributes) =>
             title: "${title}",
             description: "${description}",
             data_type: "${data_type}",
-            attributes: "${attributes}"
+            attributes: ${attributes}
         )
     }
 `;
@@ -40,7 +40,7 @@ export const addUserCVDataMutation = (user_id, data_section_id, data_details) =>
         addUserCVData(
             user_id: "${user_id}"
             data_section_id: "${data_section_id}"
-            data_details: "${data_details}"
+            data_details: ${data_details}
         )
     }
 `;
@@ -134,7 +134,7 @@ export const updateUserCVDataMutation = (user_cv_data_id, data_details) => `
     mutation UpdateUserCVData {
         updateUserCVData(
             user_cv_data_id: "${user_cv_data_id}"
-            data_details: "${data_details}"
+            data_details: ${data_details}
         )
     }
 `;

@@ -1,7 +1,8 @@
 import { generateClient } from 'aws-amplify/api';
 import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, 
     getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, 
-    getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery } from './queries';
+    getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
+    getTeachingDataMatchesQuery} from './queries';
 import { addSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -229,6 +230,53 @@ export const getAllTemplates = async () => {
     return results['data']['getAllTemplates'];
 }
 
+/**
+ * Function to get teaching data matches from bulk loaded TTPS data
+ * Arguments:
+ * institution_user_id
+ * Return value:
+ * [
+ *  {
+ *      teaching_data_id
+ *      user_id
+ *      data_details: JSON string
+ *  }, ...
+ * ]
+ */
+export const getTeachingDataMatches = async (institution_user_id) => {
+    const results = await runGraphql(getTeachingDataMatchesQuery(institution_user_id));
+    return results['data']['getTeachingDataMatches'];
+}
+
+/**
+ * Function to get publication matches using a user's scopus id
+ * Arguments:
+ * scopus_id
+ * page_number - a zero-indexed page_number to fetch data for e.g. page 0 contains data from publications[0] to publications[results_per_page - 1] and so on
+ * results_per_page
+ * Return value: {
+ *      publications [{
+ *               publication_id
+ *               title
+ *               cited_by
+ *               keywords
+ *               journal
+ *               link
+ *               doi
+ *               year_published
+ *               author_names
+ *               author_ids
+ *       }, ...]
+ *       total_results
+ *       page_number
+ *       results_per_page
+ *  }
+ */
+export const getPublicationMatches = async (scopus_id, page_number, results_per_page) => {
+    const results = await runGraphql(getPublicationMatches(scopus_id, page_number, results_per_page));
+    return results['data']['getPublicationMatches'];
+}
+
 // --- PUT ---
 
 /**
@@ -373,6 +421,26 @@ export const linkScopusId = async (user_id, scopus_id, orcid_id) => {
 export const linkOrcid = async (user_id, orcid_id) => {
     const results = await runGraphql(linkOrcidMutation(user_id, orcid_id));
     return results['data']['linkOrcid'];
+}
+
+/**
+ * Function to link bulk loaded teaching data to profile
+ * Arguments:
+ * user_id
+ * data_details - JSON String
+ * Return value:
+ * String saying "Teaching data linked successfully" if call succeeded, anything else means call failed
+ */
+export const linkTeachingData = async (user_id, data_details) => {
+    // First get the data_section_id for the teaching data
+    const results = await getAllSections();
+    const data_section_id = results.find(section => section.title === "Courses Taught").data_section_id;
+    const status =  await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
+    if (status === "SUCCESS") {
+        return "Teaching data linked successfully";
+    } else {
+        return "Failed to link teaching data";
+    }
 }
 
 // --- UPDATE ---

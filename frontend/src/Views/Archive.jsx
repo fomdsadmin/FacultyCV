@@ -540,6 +540,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
         }
     
         const filtered = matchedData.filter(entry => {
+          console.log("entry", entry);
           const { title, description, attributes } = entry;
           const [fieldA, fieldB] = rankFields(attributes);
     
@@ -622,10 +623,16 @@ const Archive = ({ userInfo, getCognitoUser }) => {
     // };
 
     return (
-        <PageContainer>
-            <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser} />
-            <main className='flex-1 !overflow-auto !h-full custom-scrollbar'>
-              <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
+      <PageContainer>
+        <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser} />
+        <main className='flex-1 !overflow-auto !h-full custom-scrollbar'>
+          <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
+          {loading ? (
+            <div className='flex items-center justify-center w-full'>
+              <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+            </div>
+          ) : (
+            <>
               <div className='m-4 max-w-3xl flex'>
                 <label className="input input-bordered flex items-center gap-2 flex-1">
                   <input
@@ -649,18 +656,14 @@ const Archive = ({ userInfo, getCognitoUser }) => {
                   </svg>
                 </label>
               </div>  
-
-              {loading ? (
-                <div className='flex items-center justify-center w-full'>
-                  <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-                </div>
+              {filteredEntries.length === 0 ? (
+                <div className="text-zinc-600 mt-4 ml-4">No archived entries</div>
               ) : (
                 filteredEntries.map((entry, index) => {
                   const [fieldA, fieldB] = rankFields(entry.data_details);
-
                   return (
-                    <GenericEntry 
-                      key={index} 
+                    <GenericEntry
+                      key={index}
                       isArchived={true}
                       field1={entry.title}
                       field2={fieldA}
@@ -670,8 +673,10 @@ const Archive = ({ userInfo, getCognitoUser }) => {
                   );
                 })
               )}
-            </main>
-        </PageContainer>
+            </>
+          )}
+        </main>
+      </PageContainer>
     )
 }
 

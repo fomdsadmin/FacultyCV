@@ -109,6 +109,23 @@ def lambda_handler(event, context):
     query = createQuery('user_connections', columns)
     cursor.execute(query)
 
+    # Create Teaching Data Table to store bulk loaded teaching data
+    columns = []
+    columns.append(createColumn('teaching_data_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('year', 'varchar', '', False))
+    columns.append(createColumn('session', 'varchar', '', False))
+    columns.append(createColumn('course', 'varchar', '', False))
+    columns.append(createColumn('description', 'varchar', '', False))
+    columns.append(createColumn('scheduled_hours', 'int', '', False))
+    columns.append(createColumn('class_size', 'int', '', False))
+    columns.append(createColumn('lectures', 'int', '', False))
+    columns.append(createColumn('tutorials', 'int', '', False))
+    columns.append(createColumn('labs', 'int', '', False))
+    columns.append(createColumn('other', 'int', '', False))
+    columns.append(createColumn('institution_user_id', 'varchar', '', True))
+    query = createQuery('teaching_data', columns)
+    cursor.execute(query)
+
     # Create Templates Table
     columns = []
     columns.append(createColumn('template_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
@@ -121,3 +138,8 @@ def lambda_handler(event, context):
     connection.commit()
     connection.close()
     print("Tables Created")
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Tables Created')
+    }

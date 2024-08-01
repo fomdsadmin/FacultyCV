@@ -431,6 +431,24 @@ export class ApiStack extends cdk.Stack {
       resolverRole,
       [psycopgLayer]
     );
+    createResolver(
+      this.api,
+      "getTeachingDataMatches",
+      ["getTeachingDataMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getPublicationMatches",
+      ["getPublicationMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    );
 
     // Lambda function to delete archived rows
     const deleteArchivedDataLambda = new Function(this, "DeleteArchivedDataLambda", {

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
-import { getAllUniversityInfo, updateUser } from '../graphql/graphqlHelpers.js';
 import ProfileLinkModal from '../Components/ProfileLinkModal.jsx';
+import { getOrcidAuthorMatches, getTeachingDataMatches, linkOrcid, linkScopusId, linkTeachingData, updateUser } from '../graphql/graphqlHelpers.js';
+import { getAllUniversityInfo, getElsevierAuthorMatches } from '../graphql/graphqlHelpers.js';
 
 const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,6 +83,12 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
       console.error('Error updating user:', error);
     }
   };
+  
+  /*const testOnClick = async () => {
+    const result = await getTeachingDataMatches(userInfo.institution_user_id);
+    console.log(result);
+    console.log(await linkTeachingData(userInfo.user_id, result[0].data_details))
+  }*/
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -153,6 +160,20 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Institution</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div>
+                <label className="block text-sm mb-1">Primary Faculty</label>
+                <select id="primaryFaculty" name="primaryFaculty" value={userInfo.primary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, primary_faculty: e.target.value })}>
+                  <option value="">-</option>
+                  {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Secondary Faculty</label>
+                <select id="secondaryFaculty" name="secondaryFaculty" value={userInfo.secondary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, secondary_faculty: e.target.value })}>
+                  <option value="">-</option>
+                  {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm mb-1">Primary Department</label>
                 <select id="primaryDepartment" name="primaryDepartment" value={userInfo.primary_department || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, primary_department: e.target.value })}>
@@ -165,20 +186,6 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
                 <select id="secondaryDepartment" name="secondaryDepartment" value={userInfo.secondary_department || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, secondary_department: e.target.value })}>
                   <option value="">-</option>
                   {departments.map((department, index) => <option key={index} value={department}>{department}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Primary Faculty</label>
-                <select id="primaryFaculty" name="primaryFaculty" value={userInfo.primary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, primary_faculty: e.target.value })}>
-                  <option value="">-</option>
-                  {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Secondary Faculty</label>
-                <select id="secondaryFaculty" name="secondaryFaculty" value={userInfo.secondary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, secondary_faculty: e.target.value })}>
-                  <option value="">-</option>
-                  {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
                 </select>
               </div>
               <div>
@@ -209,6 +216,21 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               Link to Identifications
             </button>
 
+            <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Identifications</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <div>
+                <label className="block text-sm mb-1">Institution ID</label>
+                <input id="institutionUserId" name="institutionUserId" type="text" value={userInfo.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, institution_user_id: e.target.value })}/>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Orcid ID</label>
+                <input id="orcidId" name="orcidId" type="text" value={userInfo.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, orcid_id: e.target.value })}/>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Scopus IDs</label>
+                <input id="scopusId" name="scopusId" type="text" value={userInfo.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, scopus_id: e.target.value })}/>
+              </div>
+            </div>
             <button type="submit" className="btn btn-success text-white py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : 'Save'}
             </button>
