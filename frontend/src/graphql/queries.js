@@ -168,7 +168,7 @@ export const getTeachingDataMatchesQuery = (institution_user_id) => `
     }
 `;
 
-export const getPublicationMatches = (scopus_id, page_number, results_per_page) => `
+export const getPublicationMatchesQuery = (scopus_id, page_number, results_per_page) => `
     query GetPublicationMatches {
         getPublicationMatches (
             scopus_id: "${scopus_id}",
@@ -188,8 +188,8 @@ export const getPublicationMatches = (scopus_id, page_number, results_per_page) 
                 author_ids
             }
             total_results
-            page_number
-            results_per_page
+            current_page
+            total_pages
         }
     }
 `;

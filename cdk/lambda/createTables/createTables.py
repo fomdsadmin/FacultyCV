@@ -126,13 +126,22 @@ def lambda_handler(event, context):
     query = createQuery('teaching_data', columns)
     cursor.execute(query)
 
-    # Add built-in data sections here
-    
+    # Create Templates Table
+    columns = []
+    columns.append(createColumn('template_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('title', 'varchar', '', False))
+    columns.append(createColumn('data_section_ids', 'varchar', '', True))
+    query = createQuery('templates', columns)
+    cursor.execute(query)
+
     # Query template to be reused
     query = "INSERT INTO data_sections (title, description, data_type, attributes) SELECT %s, %s, %s, %s "
     query += "WHERE NOT EXISTS (SELECT * FROM data_sections WHERE data_type = %s AND title = %s)"
 
+    # Add built-in data sections here
     # Attributes is just used to show the structure of the data
+
+    # Courses Taught
     attributes = json.dumps({
         'Year': '',
         'Session': '',
@@ -148,13 +157,21 @@ def lambda_handler(event, context):
     data = ('Courses taught', 'Teaching experience', 'Teaching', attributes, 'Teaching', 'Courses taught')
     cursor.execute(query, data)
 
-    # Create Templates Table
-    columns = []
-    columns.append(createColumn('template_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
-    columns.append(createColumn('title', 'varchar', '', False))
-    columns.append(createColumn('data_section_ids', 'varchar', '', True))
-    query = createQuery('templates', columns)
-    cursor.execute(query)
+    # Publications
+    attributes = json.dumps({
+        'Publication ID': '',
+        'Title': '',
+        'Cited By': '',
+        'Keywords': '',
+        'Journal': '',
+        'Link': '',
+        'doi': '',
+        'Year Published': '',
+        'Authors': '',
+        'Author Scopus IDs': ''
+    })
+    data = ('Publications', 'Publication works', 'Research', attributes, 'Research', 'Publications')
+    cursor.execute(query, data)
 
     cursor.close()
     connection.commit()
