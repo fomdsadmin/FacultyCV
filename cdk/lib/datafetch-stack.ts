@@ -32,7 +32,6 @@ export class DataFetchStack extends cdk.Stack {
       encryption: s3.BucketEncryption.S3_MANAGED,
     });
 
-
     /*
         Create the lambda roles
     */
@@ -111,11 +110,66 @@ export class DataFetchStack extends cdk.Stack {
         layers: [apiStack.getLayers()['psycopg2']]
     });
 
+    const bulkDataSectionsUpload = new lambda.Function(this, 'facultyCV-bulkDataSectionsUpload', {
+      functionName: 'facultycv-bulkDataSectionsUpload',
+      runtime: lambda.Runtime.PYTHON_3_9,
+      handler: 'lambda_function.lambda_handler',
+      code: lambda.Code.fromAsset('lambda/bulkDataSectionsUpload'),
+      timeout: cdk.Duration.minutes(15),
+      role: bulkLoadRole, // assuming the same role can be used
+      memorySize: 512,
+      environment: {
+        S3_BUCKET_NAME: s3Bucket.bucketName,
+      },
+      vpc: databaseStack.dbInstance.vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+      },
+      layers: [apiStack.getLayers()['psycopg2']]
+    });
+    
+    const bulkUniversityInfoUpload = new lambda.Function(this, 'facultyCV-bulkUniversityInfoUpload', {
+      functionName: 'facultycv-bulkUniversityInfoUpload',
+      runtime: lambda.Runtime.PYTHON_3_9,
+      handler: 'lambda_function.lambda_handler',
+      code: lambda.Code.fromAsset('lambda/bulkUniversityInfoUpload'),
+      timeout: cdk.Duration.minutes(15),
+      role: bulkLoadRole, // assuming the same role can be used
+      memorySize: 512,
+      environment: {
+        S3_BUCKET_NAME: s3Bucket.bucketName,
+      },
+      vpc: databaseStack.dbInstance.vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+      },
+      layers: [apiStack.getLayers()['psycopg2']]
+    });
+
+    // Add event notifications for the buckets
     s3Bucket.addEventNotification(
       s3.EventType.OBJECT_CREATED_PUT,
       new LambdaDestination(bulkUserUpload),
       {
         prefix: "user_data/institution_data",
+        suffix: ".csv"
+      }
+    )
+
+    s3Bucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED_PUT,
+      new LambdaDestination(bulkDataSectionsUpload),
+      {
+        prefix: "user_data/data_sections",
+        suffix: ".csv"
+      }
+    )
+
+    s3Bucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED_PUT,
+      new LambdaDestination(bulkUniversityInfoUpload),
+      {
+        prefix: "user_data/university_info",
         suffix: ".csv"
       }
     )
@@ -131,6 +185,8 @@ export class DataFetchStack extends cdk.Stack {
 
     // Give the lambdas permission to access the S3 Bucket
     s3Bucket.grantReadWrite(bulkUserUpload);
+    s3Bucket.grantReadWrite(bulkDataSectionsUpload);
+    s3Bucket.grantReadWrite(bulkUniversityInfoUpload);
     s3Bucket.grantReadWrite(bulkTeachingDataUpload);
   }
 }

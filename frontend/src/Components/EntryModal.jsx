@@ -8,6 +8,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
+        console.log(fields);
         setFormData(fields);
     }, []);
 
@@ -29,11 +30,11 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
             // Handle form submission here
             if (isNew) {
                 // Handle adding new entry
-                const result = await addUserCVData(user.user_id, section.data_section_id, `${formDataString}`);
+                const result = await addUserCVData(user.user_id, section.data_section_id, `"${formDataString}"`);
                 console.log(result);
             } else {
                 // Handle editing existing entry
-                const result = await updateUserCVData(user_cv_data_id, `${formDataString}`);
+                const result = await updateUserCVData(user_cv_data_id, `"${formDataString}"`);
                 console.log(result);
             }
         } catch (error) {
@@ -43,6 +44,13 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
         onClose();
         fetchData();
     };
+
+    const formatKey = (key) => {
+        return key
+          .split('_')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      };
     
     const filteredKeys = Object.keys(formData).filter(key => !key.toLowerCase().includes('id'));
 
@@ -50,13 +58,11 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
         <dialog className="modal-dialog" open>
             <form method="dialog" onSubmit={handleSubmit}>
                 <h3 className="font-bold mb-3 text-lg">{isNew ? "Add" : "Edit"} {entryType}</h3>
-
                 <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" onClick={onClose}>✕</button>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {filteredKeys.map((key) => (
                         <div key={key} className="mb-1">
-                            <label className="block text-sm capitalize">{key.replace('_', ' ')}</label>
+                            <label className="block text-sm capitalize">{formatKey(key)}</label>
                             <input
                                 type="text"
                                 name={key}
