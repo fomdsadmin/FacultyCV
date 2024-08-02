@@ -7,6 +7,8 @@ import '../CustomStyles/scrollbar.css';
 import Filters from '../Components/Filters.jsx';
 import Publications from '../Components/Publications';
 import GenericSection from '../Components/GenericSection.jsx';
+import CoursesTaughtSection from '../Components/CoursesTaughtSection.jsx';
+import SecureFundingSection from '../Components/SecureFundingSection.jsx';
 import { getAllSections } from '../graphql/graphqlHelpers.js';
 
 // const dataSections = [
@@ -344,9 +346,14 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
             <Section minSize={240} className='!overflow-auto !h-full custom-scrollbar'>
               {activeSection!=null && activeSection.title == 'Publications' && 
                 <Publications></Publications>
+              }
+              {activeSection!=null && activeSection.title == 'Secure Funding' && 
+                <SecureFundingSection user={userInfo} section={activeSection}></SecureFundingSection>
+              }
+              {activeSection!=null && activeSection.title == 'Courses Taught' && 
+                <CoursesTaughtSection user={userInfo} section={activeSection}></CoursesTaughtSection>
               } 
-
-              {activeSection!=null && activeSection.title != 'Publications' &&
+              {activeSection!=null && activeSection.title != 'Publications' && activeSection.title != 'Courses Taught' && activeSection.title != 'Secure Funding' &&
                 <GenericSection user={userInfo} section={activeSection}></GenericSection>
               }
             </Section>

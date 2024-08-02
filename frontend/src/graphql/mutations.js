@@ -192,3 +192,11 @@ export const deleteTemplateMutation = (template_id) => `
         )
     }
 `;
+
+export const deleteTeachingDataMutation = (teaching_data_id) => `
+    mutation DeleteTeachingData {
+        deleteTeachingData(
+            teaching_data_id: "${teaching_data_id}"
+        )
+    }
+`;

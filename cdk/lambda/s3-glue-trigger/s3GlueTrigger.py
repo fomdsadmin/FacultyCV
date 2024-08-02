@@ -24,10 +24,6 @@ A special case is the SSHRC datasets that include a program codes csv file, so
 we make sure that the Glue job is started only when both files are there when we perform a
 S3 ListObjectsV2 api call.
 
-then after each file is cleaned and put into a clean folder with their uniqe paths, s3 will
-send another event and this lambda will trigger the assign ids job. This job has a max concurrency
-value of 7 to allows at least 4 simultaneous invocations.
-
 and finally a job will be trigger to insert the data into the database when all of them have 
 the ids assigned.
 

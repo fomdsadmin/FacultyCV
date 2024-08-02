@@ -3,7 +3,7 @@ import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
 import ProfileLinkModal from '../Components/ProfileLinkModal.jsx';
-import { getOrcidAuthorMatches, getTeachingDataMatches, linkOrcid, linkScopusId, linkTeachingData, updateUser } from '../graphql/graphqlHelpers.js';
+import { getOrcidAuthorMatches, linkOrcid, linkScopusId, updateUser } from '../graphql/graphqlHelpers.js';
 import { getAllUniversityInfo, getElsevierAuthorMatches } from '../graphql/graphqlHelpers.js';
 
 const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {
@@ -216,7 +216,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               Link to Identifications
             </button>
 
-          {/* <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Identifications</h2>
+          <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Identifications</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
             <div>
               <label className="block text-sm mb-1">Institution ID</label>
@@ -230,7 +230,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               <label className="block text-sm mb-1">Scopus IDs</label>
               <input id="scopusId" name="scopusId" type="text" value={userInfo.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, scopus_id: e.target.value })}/>
             </div>
-          </div> */}
+          </div>
           <button type="submit" className="btn btn-success text-white py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save'}
           </button>

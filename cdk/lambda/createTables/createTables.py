@@ -126,6 +126,21 @@ def lambda_handler(event, context):
     query = createQuery('teaching_data', columns)
     cursor.execute(query)
 
+    # Create Grants Table to store bulk load grants data
+    columns = []
+    columns.append(createColumn('grant_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('first_name', 'varchar', '', False))
+    columns.append(createColumn('last_name', 'varchar', '', False))
+    columns.append(createColumn('keywords', 'varchar', '', False))
+    columns.append(createColumn('agency', 'varchar', '', False))
+    columns.append(createColumn('department', 'varchar', '', False))
+    columns.append(createColumn('program', 'varchar', '', False))
+    columns.append(createColumn('title', 'varchar', '', False))
+    columns.append(createColumn('amount', 'int', '', False))
+    columns.append(createColumn('dates', 'varchar', '', True))
+    query = createQuery('grants', columns)
+    cursor.execute(query)
+
     # Create Templates Table
     columns = []
     columns.append(createColumn('template_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))

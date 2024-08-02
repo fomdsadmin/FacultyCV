@@ -39,11 +39,11 @@ def cleanCihr(bucket, key_raw, key_clean):
     # add Agency column with string CIHR
     df["Agency"] = "CIHR"
 
-    # rename Program_Name column to Grant Program
-    df["Grant Program"] = df["Program_Name"]
+    # rename Program_Name column to Program
+    df["Program"] = df["Program_Name"]
 
-    # rename Project_Title column to Project Title
-    df["Project Title"] = df["Project_Title"]
+    # rename Project_Title column to Title
+    df["Title"] = df["Project_Title"]
 
     # remove comma and convert Amount to integer
     df["CIHR_Contribution"] = df["CIHR_Contribution"].str.replace(",", "")
@@ -73,10 +73,6 @@ def cleanCihr(bucket, key_raw, key_clean):
 
     # Create Dates column in the format <start year>-<end year>
     df["Dates"] = df["Start Year"].astype(str) + '-' + df["End Year"].astype(str)
-
-    # # Add Start Date and End Date column
-    # df["Start Date"] = np.nan
-    # df["End Date"] = np.nan
 
     # Create "Faculty Member ID" column
     df["Faculty Member ID"] = np.nan

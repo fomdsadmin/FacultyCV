@@ -7,7 +7,8 @@ import { addSectionMutation, addUserCVDataMutation, addUserMutation,
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
     updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
-    linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation } from './mutations';
+    linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation, 
+    deleteTeachingDataMutation } from './mutations';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -423,25 +424,25 @@ export const linkOrcid = async (user_id, orcid_id) => {
     return results['data']['linkOrcid'];
 }
 
-/**
- * Function to link bulk loaded teaching data to profile
- * Arguments:
- * user_id
- * data_details - JSON String
- * Return value:
- * String saying "Teaching data linked successfully" if call succeeded, anything else means call failed
- */
-export const linkTeachingData = async (user_id, data_details) => {
-    // First get the data_section_id for the teaching data
-    const results = await getAllSections();
-    const data_section_id = results.find(section => section.title === "Courses Taught").data_section_id;
-    const status =  await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
-    if (status === "SUCCESS") {
-        return "Teaching data linked successfully";
-    } else {
-        return "Failed to link teaching data";
-    }
-}
+// /**
+//  * Function to link bulk loaded teaching data to profile
+//  * Arguments:
+//  * user_id
+//  * data_details - JSON String
+//  * Return value:
+//  * String saying "Teaching data linked successfully" if call succeeded, anything else means call failed
+//  */
+// export const linkTeachingData = async (user_id, data_details) => {
+//     // First get the data_section_id for the teaching data
+//     const results = await getAllSections();
+//     const data_section_id = results.find(section => section.title === "Courses Taught").data_section_id;
+//     const status =  await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
+//     if (status === "SUCCESS") {
+//         return "Teaching data linked successfully";
+//     } else {
+//         return "Failed to link teaching data";
+//     }
+// }
 
 // --- UPDATE ---
 
@@ -574,4 +575,16 @@ export const deleteUserConnection = async (user_connection_id) => {
 export const deleteTemplate = async (template_id) => {
     const results = await runGraphql(deleteTemplateMutation(template_id));
     return results['data']['deleteTemplate'];
+}
+
+/**
+ * Function to delete teaching data
+ * Arguments:
+ * template_id - ID of the teaching data
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const deleteTeachingData = async (teaching_data_id) => {
+    const results = await runGraphql(deleteTeachingDataMutation(teaching_data_id));
+    return results['data']['deleteTeachingData'];
 }

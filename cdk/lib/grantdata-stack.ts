@@ -267,17 +267,6 @@ export class GrantDataStack extends Stack {
         suffix: ".csv",
         }
     );
-  
-    // Put pyjarowinkler whl file to glue S3 bucket
-    new s3deploy.BucketDeployment(this, "DeployGlueJobExtraLibs", {
-        sources: [
-        s3deploy.Source.asset("./glue/extra-python-lib/downloaded_modules"),
-        s3deploy.Source.asset("./glue/extra-python-lib/custom_modules/dist"),
-        ],
-        exclude: [".DS_Store"],
-        destinationBucket: this.glueS3Bucket,
-        destinationKeyPrefix: "extra-python-libs",
-    });
     
     const securityGroup = new ec2.SecurityGroup(this, "glueSecurityGroup", {
         vpc: vpcStack.vpc,
@@ -326,7 +315,6 @@ export class GrantDataStack extends Stack {
     const MAX_CONCURRENT_RUNS = 7; // 7 concurrent runs of the same job simultaneously
     const TIMEOUT = 120; // 120 min timeout duration
     const defaultArguments = {
-        "--extra-py-files": `s3://${this.glueS3Bucket.bucketName}/extra-python-libs/pyjarowinkler-1.8-py2.py3-none-any.whl,s3://${this.glueS3Bucket.bucketName}/extra-python-libs/custom_utils-0.1-py3-none-any.whl`,
         "library-set": "analytics",
         "--SECRET_NAME": databaseStack.secretPath,
         "--BUCKET_NAME": grantDataS3Bucket.bucketName,

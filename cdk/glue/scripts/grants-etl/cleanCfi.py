@@ -5,20 +5,20 @@ import pandas as pd
 import numpy as np
 import boto3
 from custom_utils.utils import fetchFromS3, putToS3
-from awsglue.utils import getResolvedOptions
+# from awsglue.utils import getResolvedOptions
 
 # TESTING PURPOSES
-# session = boto3.Session(profile_name='abhi')
-# BUCKET_NAME = 'grant-data-test-bucket'
-# FILENAME_RAW = 'CFI.csv'
-# FILENAME_CLEAN = 'CFI-clean.csv'
+session = boto3.Session(profile_name='abhi')
+BUCKET_NAME = 'grant-data-test-bucket'
+FILENAME_RAW = 'raw/CFI.csv'
+FILENAME_CLEAN = 'clean/CFI-clean.csv'
 
-# define job parameters
-args = getResolvedOptions(
-    sys.argv, ["BUCKET_NAME", "FILENAME_RAW", "FILENAME_CLEAN"])
-BUCKET_NAME = args["BUCKET_NAME"]
-FILENAME_RAW = args["FILENAME_RAW"]
-FILENAME_CLEAN = args["FILENAME_CLEAN"]
+# # define job parameters
+# args = getResolvedOptions(
+#     sys.argv, ["BUCKET_NAME", "FILENAME_RAW", "FILENAME_CLEAN"])
+# BUCKET_NAME = args["BUCKET_NAME"]
+# FILENAME_RAW = args["FILENAME_RAW"]
+# FILENAME_CLEAN = args["FILENAME_CLEAN"]
 
 """
 This function will clean the CFI data by splitting column Name into First Name and 
@@ -52,16 +52,16 @@ def cleanCfi(bucket, key_raw, key_clean):
     # add Agency column with string CFI
     df["Agency"] = "CFI"
 
-    # Grant Program column
-    df["Grant Program"] = df["Fund"]
+    # Program column
+    df["Program"] = df["Fund"]
 
     # Amount column
     df["CFI Contribution"] = df["CFI Contribution"].str.replace(",", "")
     df["CFI Contribution"] = df["CFI Contribution"].str.replace("$", "", regex=False)
     df["Amount"] = pd.to_numeric(df["CFI Contribution"]).astype(int)
 
-    # Project Title column
-    df["Project Title"] = df["Project title"]
+    # Title column
+    df["Title"] = df["Project title"]
 
     # Extract year from "Funding decision year" column
     funding_decision_year = df["Funding decision year"].astype(str)

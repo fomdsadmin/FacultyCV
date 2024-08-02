@@ -227,4 +227,8 @@ type Mutation {
     deleteTemplate(
       template_id: String!
     ): String
+
+    deleteTeachingData(
+      teaching_data_id: String!
+    ): String
 }

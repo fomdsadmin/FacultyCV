@@ -51,7 +51,7 @@ def cleanSshrc(bucket, key_raw, key_clean, key_program_codes):
         ",", "", 1)  # remove comma
     df = df.merge(right=df_program_codes, left_on="Program Code",
                   right_on="Code", how="left")
-    df["Grant Program"] = df["Funding Opportunities"]
+    df["Program"] = df["Funding Opportunities"]
 
     # remove comma, $ and convert Amount to integer
     df["Amount ($)"] = df["Amount ($)"].str.replace(",", "")
@@ -59,8 +59,8 @@ def cleanSshrc(bucket, key_raw, key_clean, key_program_codes):
     df["Amount ($)"] = pd.to_numeric(df["Amount ($)"]).astype(int)
     df["Amount"] = df["Amount ($)"]
 
-    # new column Project Title
-    df["Project Title"] = df["Title of project"]
+    # new column Title
+    df["Title"] = df["Title of project"]
 
     # new Keywords column with nan
     df["Keywords"] = np.nan

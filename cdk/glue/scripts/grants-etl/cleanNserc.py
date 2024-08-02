@@ -43,9 +43,6 @@ def cleanNserc(bucket, key_raw, key_clean):
     # add Agency column with string NSERC
     df["Agency"] = "NSERC"
 
-    # rename Program column to Grant Program
-    df["Grant Program"] = df["Program"]
-
     # remove comma and convert Amount to integer
     df["Amount($)"] = df["Amount($)"].str.replace(",", "")
     df["Amount($)"] = pd.to_numeric(df["Amount($)"])
@@ -57,6 +54,9 @@ def cleanNserc(bucket, key_raw, key_clean):
     # rename Fiscal Year columns
     df["Dates"] = df["Fiscal Year"]
 
+    # rename Project Title column to Title
+    df["Title"] = df["Project Title"]
+
     # # add Start Date and End Date column
     # df["Start Date"] = np.nan
     # df["End Date"] = np.nan
@@ -65,7 +65,7 @@ def cleanNserc(bucket, key_raw, key_clean):
     df["Faculty Member ID"] = np.nan
 
     # drop old columns
-    df = df.drop(columns=["Program", "Fiscal Year", "Name", "Amount($)"])
+    df = df.drop(columns=["Program", "Fiscal Year", "Name", "Amount($)", "Project Title"])
 
     putToS3(df=df, key=key_clean, bucket=bucket)
 
