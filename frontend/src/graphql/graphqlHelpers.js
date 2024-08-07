@@ -2,7 +2,8 @@ import { generateClient } from 'aws-amplify/api';
 import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, 
     getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, 
     getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
-    getTeachingDataMatchesQuery, getSecureFundingMatchesQuery} from './queries';
+    getTeachingDataMatchesQuery,
+    getPublicationMatchesQuery, getSecureFundingMatchesQuery} from './queries';
 import { addSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -269,12 +270,12 @@ export const getTeachingDataMatches = async (institution_user_id) => {
  *               author_ids
  *       }, ...]
  *       total_results
- *       page_number
- *       results_per_page
+ *       current_page
+ *       total_pages
  *  }
  */
 export const getPublicationMatches = async (scopus_id, page_number, results_per_page) => {
-    const results = await runGraphql(getPublicationMatches(scopus_id, page_number, results_per_page));
+    const results = await runGraphql(getPublicationMatchesQuery(scopus_id, page_number, results_per_page));
     return results['data']['getPublicationMatches'];
 }
 
@@ -444,25 +445,45 @@ export const linkOrcid = async (user_id, orcid_id) => {
     return results['data']['linkOrcid'];
 }
 
-// /**
-//  * Function to link bulk loaded teaching data to profile
-//  * Arguments:
-//  * user_id
-//  * data_details - JSON String
-//  * Return value:
-//  * String saying "Teaching data linked successfully" if call succeeded, anything else means call failed
-//  */
-// export const linkTeachingData = async (user_id, data_details) => {
-//     // First get the data_section_id for the teaching data
-//     const results = await getAllSections();
-//     const data_section_id = results.find(section => section.title === "Courses Taught").data_section_id;
-//     const status =  await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
-//     if (status === "SUCCESS") {
-//         return "Teaching data linked successfully";
-//     } else {
-//         return "Failed to link teaching data";
-//     }
-// }
+/**
+ * Function to link bulk loaded teaching data to profile
+ * Arguments:
+ * user_id
+ * data_details - JSON String
+ * Return value:
+ * String saying "Teaching data linked successfully" if call succeeded, anything else means call failed
+ */
+export const linkTeachingData = async (user_id, data_details) => {
+    // First get the data_section_id for the teaching data
+    const results = await getAllSections();
+    const data_section_id = results.find(section => section.title === "Courses Taught").data_section_id;
+    const status =  await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
+    if (status === "SUCCESS") {
+        return "Teaching data linked successfully";
+    } else {
+        return "Failed to link teaching data";
+    }
+}
+
+/**
+ * Function to link a publication to the user
+ * Arguments:
+ * user_id
+ * data_details
+ * Return value:
+ * String saying "Publication linked successfully" if call succeeded, anything else means call failed
+ */
+export const linkPublication = async (user_id, data_details) => {
+    // First get the data_section_id for the teaching data
+    const results = await getAllSections();
+    const data_section_id = results.find(section => section.title === "Publications").data_section_id;
+    const status =  await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
+    if (status === "SUCCESS") {
+        return "Publication linked successfully";
+    } else {
+        return "Failed to link publication";
+    }
+}
 
 // --- UPDATE ---
 
