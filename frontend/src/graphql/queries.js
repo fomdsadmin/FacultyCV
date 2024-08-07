@@ -193,3 +193,17 @@ export const getPublicationMatches = (scopus_id, page_number, results_per_page) 
         }
     }
 `;
+
+export const getSecureFundingMatchesQuery = (first_name, last_name) => `
+    query GetSecureFundingMatches {
+        getSecureFundingMatches (
+            first_name: "${first_name}",
+            last_name: "${last_name}"
+        ) {
+            secure_funding_id
+            first_name
+            last_name
+            data_details
+        }
+    }
+`;

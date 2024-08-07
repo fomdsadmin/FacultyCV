@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
 import EntryModal from './EntryModal';
-import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelpers';
+import { getUserCVData, updateUserCVDataArchive, getSecureFundingMatches, addUserCVData } from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
 
   const generateEmptyEntry = (attributes) => {
@@ -23,6 +23,8 @@ const SecureFundingSection = ({ user, section }) => {
   const [isNew, setIsNew] = useState(false);
 
   const [loading, setLoading] = useState(true);
+  const [retrievingData, setRetrievingData] = useState(false);
+
 
   const handleSearchChange = (event) => {
       setSearchTerm(event.target.value);
@@ -67,6 +69,32 @@ const SecureFundingSection = ({ user, section }) => {
       setSelectedEntry(newEntry);
       setIsModalOpen(true);
   };
+
+  async function fetchSecureFundingData() {
+    setRetrievingData(true);
+    try {
+      const retrievedData = await getSecureFundingMatches('Susan', 'Day');
+      console.log(retrievedData);
+
+      // for (const dataObject of retrievedData) {
+      //   const { data_details } = dataObject; // Extract the data_details property
+
+      //   // Handle adding new entry using data_details
+      //   try {
+      //     const data_details_json = data_details.replace(/"/g, '\\"'); // Escape special characters
+      //     console.log('Adding new entry:', `"${data_details_json}"`);
+      //     const result = await addUserCVData(user.user_id, section.data_section_id, `"${data_details_json}"`);
+      //     console.log(result);
+      //   } catch (error) {
+      //     console.error('Error adding new entry:', error);
+      //   }
+      // }
+    } catch (error) {
+      console.error('Error fetching secure funding data:', error);
+    }
+    fetchData();
+    setRetrievingData(false);
+  }
   
   async function fetchData() {
     try {
@@ -114,7 +142,9 @@ const SecureFundingSection = ({ user, section }) => {
         <div className='m-4 max-w-lg flex'>
           <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
           <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>New</button>
-        </div>
+          <button onClick={fetchSecureFundingData} className='ml-2 text-white btn btn-info min-h-0 h-8 leading-tight' disabled={retrievingData}>
+            {retrievingData ? 'Retrieving...' : 'Retrieve Data'}
+          </button>        </div>
         <div className='m-4 max-w-lg flex'>{section.description}</div>
         <div className='m-4 max-w-lg flex'>
           <label className="input input-bordered flex items-center gap-2 flex-1">

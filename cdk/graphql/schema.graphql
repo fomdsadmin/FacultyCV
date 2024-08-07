@@ -100,6 +100,13 @@ type PublicationMatches {
   current_page: Int!
 }
 
+type SecureFunding {
+  secure_funding_id: String!
+  first_name: String!
+  last_name: String!
+  data_details: AWSJSON! #JSON
+}
+
 type Query {
     getUser(email: String!): User
     getExistingUser(institution_user_id: String!): User
@@ -113,6 +120,7 @@ type Query {
     getAllTemplates: [ Template ]
     getTeachingDataMatches(institution_user_id: String!): [TeachingData]
     getPublicationMatches(scopus_id: String!, page_number: Int!, results_per_page: Int!): PublicationMatches
+    getSecureFundingMatches(first_name: String!, last_name: String!): [SecureFunding]
 }
 
 type Mutation {
@@ -226,9 +234,5 @@ type Mutation {
 
     deleteTemplate(
       template_id: String!
-    ): String
-
-    deleteTeachingData(
-      teaching_data_id: String!
     ): String
 }

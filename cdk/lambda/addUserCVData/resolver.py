@@ -20,12 +20,23 @@ def addUserCVData(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    data_details_json = json.dumps(arguments['data_details'])  # Convert data_details dictionary to JSON string
-    cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details) VALUES (%s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], data_details_json))
-    cursor.close()
-    connection.commit()
-    connection.close()
-    return "SUCCESS"
+
+    # Check if an entry with the same data_details exists
+    data_details_json = json.dumps(arguments['data_details'])
+    cursor.execute("SELECT COUNT(*) FROM user_cv_data WHERE data_details::jsonb = %s", (data_details_json,))
+    existing_count = cursor.fetchone()[0]
+
+    if existing_count == 0:
+        # Insert the new entry
+        cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details) VALUES (%s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], data_details_json,))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return "SUCCESS"
+    else:
+        cursor.close()
+        connection.close()
+        return "Entry already exists"
 
 def lambda_handler(event, context):
     arguments = event['arguments']

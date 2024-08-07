@@ -436,6 +436,9 @@ export class GrantDataStack extends Stack {
         "storeData" +
         ".py",
     },
+    connections: {
+        connections: [gluePostgresConnectionName],
+    },
     executionProperty: {
         maxConcurrentRuns: MAX_CONCURRENT_RUNS,
     },

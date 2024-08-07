@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
 import EntryModal from './EntryModal';
-import { getUserCVData, updateUserCVDataArchive, getTeachingDataMatches, addUserCVData, deleteTeachingData } from '../graphql/graphqlHelpers';
+import { getUserCVData, updateUserCVDataArchive, getTeachingDataMatches, addUserCVData } from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
 
 const generateEmptyEntry = (attributes) => {
@@ -84,13 +84,6 @@ const CoursesTaughtSection = ({ user, section }) => {
           console.log('Adding new entry:', `"${data_details_json}"`);
           const result = await addUserCVData(user.user_id, section.data_section_id, `"${data_details_json}"`);
           console.log(result);
-          try {
-            // Delete entry in Teaching Data table
-            const deleteResult = await deleteTeachingData(dataObject.teaching_data_id);
-            console.log('Deleting teaching data table entry', deleteResult);
-          } catch (error) {
-            console.error('Error deleting entry:', error);
-          }
         } catch (error) {
           console.error('Error adding new entry:', error);
         }

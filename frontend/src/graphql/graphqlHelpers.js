@@ -2,13 +2,13 @@ import { generateClient } from 'aws-amplify/api';
 import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, 
     getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, 
     getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
-    getTeachingDataMatchesQuery} from './queries';
+    getTeachingDataMatchesQuery, getSecureFundingMatchesQuery} from './queries';
 import { addSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
     updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
     linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation, 
-    deleteTeachingDataMutation } from './mutations';
+    } from './mutations';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -276,6 +276,26 @@ export const getTeachingDataMatches = async (institution_user_id) => {
 export const getPublicationMatches = async (scopus_id, page_number, results_per_page) => {
     const results = await runGraphql(getPublicationMatches(scopus_id, page_number, results_per_page));
     return results['data']['getPublicationMatches'];
+}
+
+/**
+ * Function to get secure funding matches from grants data
+ * Arguments:
+ * first_name,
+ * last_name
+ * Return value:
+ * [
+ *  {
+ *      secure_funding_id
+ *      first_name,
+ *      last_name,
+ *      data_details: JSON string
+ *  }, ...
+ * ]
+ */
+export const getSecureFundingMatches = async (first_name, last_name) => {
+    const results = await runGraphql(getSecureFundingMatchesQuery(first_name, last_name));
+    return results['data']['getSecureFundingMatches'];
 }
 
 // --- PUT ---
@@ -575,16 +595,4 @@ export const deleteUserConnection = async (user_connection_id) => {
 export const deleteTemplate = async (template_id) => {
     const results = await runGraphql(deleteTemplateMutation(template_id));
     return results['data']['deleteTemplate'];
-}
-
-/**
- * Function to delete teaching data
- * Arguments:
- * template_id - ID of the teaching data
- * Return value:
- * String saying SUCCESS if call succeeded, anything else means call failed
- */
-export const deleteTeachingData = async (teaching_data_id) => {
-    const results = await runGraphql(deleteTeachingDataMutation(teaching_data_id));
-    return results['data']['deleteTeachingData'];
 }

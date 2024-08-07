@@ -8,16 +8,15 @@ import psycopg2.extras as extras
 import boto3
 from datetime import datetime
 from awsglue.utils import getResolvedOptions
-from custom_utils.utils import fetchFromS3, putToS3
 
 s3_client = boto3.client("s3")
 sm_client = boto3.client('secretsmanager')
 
 # get environment variable for this Glue job
 args = getResolvedOptions(
-    sys.argv, ["BUCKET_NAME", "FILENAME_ID", "SECRET_NAME"])
+    sys.argv, ["BUCKET_NAME", "FILENAME_CLEAN", "SECRET_NAME"])
 BUCKET_NAME = args["BUCKET_NAME"]
-FILENAME_ID = args["FILENAME_ID"]
+FILENAME_CLEAN = args["FILENAME_CLEAN"]
 SECRET_NAME = args["SECRET_NAME"]
 
 def getCredentials():
@@ -36,7 +35,7 @@ def storeData():
     global FILENAME_INSERT
 
     s3_client = boto3.resource('s3')
-    response = s3_client.Object(BUCKET_NAME, FILENAME_ID).get()
+    response = s3_client.Object(BUCKET_NAME, FILENAME_CLEAN).get()
     
     data_types = {
         'First Name': str,
