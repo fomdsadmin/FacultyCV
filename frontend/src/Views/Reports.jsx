@@ -20,7 +20,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 
   useEffect(() => {
     setUser(userInfo);
-    getDataSections();
+    //getDataSections();
   }, [userInfo]);
 
   useEffect(() => {

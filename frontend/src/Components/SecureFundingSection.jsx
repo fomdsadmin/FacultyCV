@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
 import EntryModal from './EntryModal';
-import { getUserCVData, updateUserCVDataArchive, getSecureFundingMatches, addUserCVData } from '../graphql/graphqlHelpers';
+import { FaArrowLeft } from 'react-icons/fa';
+import SecureFundingModal from './SecureFundingModal';
+import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
 
   const generateEmptyEntry = (attributes) => {
@@ -13,7 +15,7 @@ import { rankFields } from '../utils/rankingUtils';
     return emptyEntry;
   };
 
-const SecureFundingSection = ({ user, section }) => {
+const SecureFundingSection = ({ user, section, handleBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [fieldData, setFieldData] = useState([]);
@@ -56,6 +58,7 @@ const SecureFundingSection = ({ user, section }) => {
   const handleCloseModal = () => {
       setSelectedEntry(null);
       setIsModalOpen(false);
+      setRetrievingData(false);
   };
 
   const handleNew = () => {
@@ -69,32 +72,6 @@ const SecureFundingSection = ({ user, section }) => {
       setSelectedEntry(newEntry);
       setIsModalOpen(true);
   };
-
-  async function fetchSecureFundingData() {
-    setRetrievingData(true);
-    try {
-      const retrievedData = await getSecureFundingMatches('Susan', 'Day');
-      console.log(retrievedData);
-
-      // for (const dataObject of retrievedData) {
-      //   const { data_details } = dataObject; // Extract the data_details property
-
-      //   // Handle adding new entry using data_details
-      //   try {
-      //     const data_details_json = data_details.replace(/"/g, '\\"'); // Escape special characters
-      //     console.log('Adding new entry:', `"${data_details_json}"`);
-      //     const result = await addUserCVData(user.user_id, section.data_section_id, `"${data_details_json}"`);
-      //     console.log(result);
-      //   } catch (error) {
-      //     console.error('Error adding new entry:', error);
-      //   }
-      // }
-    } catch (error) {
-      console.error('Error fetching secure funding data:', error);
-    }
-    fetchData();
-    setRetrievingData(false);
-  }
   
   async function fetchData() {
     try {
@@ -140,9 +117,12 @@ const SecureFundingSection = ({ user, section }) => {
     <div>
       <div>
         <div className='m-4 max-w-lg flex'>
+          <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4'>
+            <FaArrowLeft className="h-6 w-6 text-zinc-800" />
+          </button>
           <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
-          <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>New</button>
-          <button onClick={fetchSecureFundingData} className='ml-2 text-white btn btn-info min-h-0 h-8 leading-tight' disabled={retrievingData}>
+          <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight' disabled={retrievingData}>New</button>
+          <button onClick={() => setRetrievingData(true)} className='ml-2 text-white btn btn-info min-h-0 h-8 leading-tight' disabled={retrievingData}>
             {retrievingData ? 'Retrieving...' : 'Retrieve Data'}
           </button>        </div>
         <div className='m-4 max-w-lg flex'>{section.description}</div>
@@ -216,6 +196,16 @@ const SecureFundingSection = ({ user, section }) => {
               entryType={section.title}
               fetchData={fetchData}
               onClose={handleCloseModal}
+            />
+          )}
+
+          {retrievingData && (
+            <SecureFundingModal
+              user = {user}
+              section = {section}
+              onClose={handleCloseModal}
+              setRetrievingData={setRetrievingData}
+              fetchData={fetchData}
             />
           )}
         </div>

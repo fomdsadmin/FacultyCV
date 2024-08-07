@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
 import EntryModal from './EntryModal';
+import { FaArrowLeft } from 'react-icons/fa';
 import { getUserCVData, updateUserCVDataArchive, getTeachingDataMatches, addUserCVData } from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
 
@@ -13,7 +14,7 @@ const generateEmptyEntry = (attributes) => {
   return emptyEntry;
 };
 
-const CoursesTaughtSection = ({ user, section }) => {
+const CoursesTaughtSection = ({ user, section, handleBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [fieldData, setFieldData] = useState([]);
@@ -139,8 +140,11 @@ const CoursesTaughtSection = ({ user, section }) => {
     <div>
       <div>
         <div className='m-4 max-w-lg flex'>
+          <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4'>
+            <FaArrowLeft className="h-6 w-6 text-zinc-800" />
+          </button>
           <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
-          <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>New</button>
+          <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight' disabled={retrievingData}>New</button>
           <button onClick={fetchCourseData} className='ml-2 text-white btn btn-info min-h-0 h-8 leading-tight' disabled={retrievingData}>
             {retrievingData ? 'Retrieving...' : 'Retrieve Data'}
           </button>
