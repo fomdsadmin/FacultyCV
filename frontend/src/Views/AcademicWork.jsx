@@ -64,7 +64,6 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
 
   const handleBack = () => {
     setActiveSection(null);
-    console.log('Back');
   };
   
   return (

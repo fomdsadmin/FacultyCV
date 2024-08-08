@@ -11,6 +11,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [campuses, setCampuses] = useState([]);
+  const [ranks, setRanks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [scopusId, setScopusId] = useState(userInfo.scopus_id || "");
@@ -25,6 +26,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
       let departments = [];
       let faculties = [];
       let campuses = [];
+      let ranks = [];
 
       result.forEach(element => {
         if (element.type === 'Department') {
@@ -33,16 +35,20 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
           faculties.push(element.value);
         } else if (element.type === 'Campus') {
           campuses.push(element.value);
+        } else if (element.type === 'Rank') {
+          ranks.push(element.value);
         }
       });
 
       departments.sort();
       faculties.sort();
       campuses.sort();
+      ranks.sort();
 
       setDepartments(departments);
       setFaculties(faculties);
       setCampuses(campuses);
+      setRanks(ranks);
       setLoading(false);
     });
   };
@@ -197,7 +203,10 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               </div>
               <div>
                 <label className="block text-sm mb-1">Current Rank</label>
-                <input id="currentRank" name="currentRank" type="text" value={userInfo.rank || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, rank: e.target.value })}/>
+                <select id="rank" name="rank" value={userInfo.rank || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, rank: e.target.value })}>
+                  <option value="">-</option>
+                  {ranks.map((rank, index) => <option key={index} value={rank}>{rank}</option>)}
+                </select>
               </div>
             </div>
 

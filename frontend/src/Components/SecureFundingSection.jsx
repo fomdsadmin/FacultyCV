@@ -15,7 +15,7 @@ import { rankFields } from '../utils/rankingUtils';
     return emptyEntry;
   };
 
-const SecureFundingSection = ({ user, section, handleBack }) => {
+const SecureFundingSection = ({ user, section, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [fieldData, setFieldData] = useState([]);
@@ -113,13 +113,17 @@ const SecureFundingSection = ({ user, section, handleBack }) => {
     fetchData();
   }, [searchTerm, section.data_section_id]);
 
+  const handleBack = () => {
+    onBack();
+  };
+
   return (
     <div>
       <div>
+        <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5'>
+          <FaArrowLeft className="h-6 w-6 text-zinc-800" />
+        </button>
         <div className='m-4 max-w-lg flex'>
-          <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4'>
-            <FaArrowLeft className="h-6 w-6 text-zinc-800" />
-          </button>
           <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
           <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight' disabled={retrievingData}>New</button>
           <button onClick={() => setRetrievingData(true)} className='ml-2 text-white btn btn-info min-h-0 h-8 leading-tight' disabled={retrievingData}>
@@ -131,7 +135,7 @@ const SecureFundingSection = ({ user, section, handleBack }) => {
           <input
               type="text"
               className="grow"
-              placeholder="Search"
+              placeholder={`Search ${section.title}`}
               value={searchTerm}
               onChange={handleSearchChange}
           />
