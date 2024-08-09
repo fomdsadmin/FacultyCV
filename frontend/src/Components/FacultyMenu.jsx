@@ -12,17 +12,20 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
+    setIsSigningOut(true);
     try {
       await signOut();
       console.log('Logged out');
       getCognitoUser();
       console.log('Navigating to /auth');
       navigate('/auth');
-    }
-    catch (error) {
+    } catch (error) {
       console.log('Error logging out:', error);
+    } finally {
+      setIsSigningOut(false);
     }
   }
 
@@ -31,11 +34,11 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
   }
 
   return (
-    <div className={`py-2 border-r-2 border-neutral ${isCollapsed ? 'w-20' : 'w-60'}`}>
+    <div className={`py-2 border-r-2 border-neutral max-h-screen ${isCollapsed ? 'w-20' : 'w-60'}`}>
       <button onClick={toggleCollapse} className="btn btn-ghost mb-4">
         <FaBars className="h-5 w-5" />
       </button>
-      <ul className="menu rounded-box flex-shrink-0 h-full">
+      <ul className="menu rounded-box flex-shrink-0">
         <li className={`mb-2 ${location.pathname === '/home' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/home'>
             <TbHome className="h-5 w-5" />
@@ -66,9 +69,16 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
             {!isCollapsed && <p className={`ml-2 ${location.pathname === '/archive' ? 'font-bold' : ''}`}>Archive</p>}
           </Link>
         </li>
-        <li className="mt-auto">
-          <button className="text-white btn btn-warning py-1 px-4 w-full mx-auto min-h-0 h-8 leading-tight" onClick={handleSignOut}>Sign out</button>
-        </li>
+        {!isCollapsed && (
+          <li className="mt-auto">
+            <button 
+              className="text-white btn btn-warning py-1 px-4 w-full mx-auto min-h-0 h-8 leading-tight" 
+              onClick={handleSignOut} 
+              disabled={isSigningOut}>
+              {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+            </button>
+          </li>
+        )}
       </ul>
     </div>
   )

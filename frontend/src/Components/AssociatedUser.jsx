@@ -20,7 +20,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
     useEffect(() => {
         console.log("connection", connection);
         const calculateFontSize = () => {
-            const nameLength = `${connection.user_connection.first_name} ${connection.user_connection.last_name}`.length;
+            const nameLength = `${connection.assistant_first_name} ${connection.assistant_last_name}`.length;
             if (nameLength > 20) {
                 setFontSize(Math.max(16, 18 - (nameLength - 20) / 2));
             } else {
@@ -56,17 +56,8 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
 
     const handleAccept = async () => {
         setIsAccepting(true);
-        // handle accepting invite here
-        const updatedConnection = {
-            ...connection,
-            user_connection: {
-                ...connection.user_connection,
-                status: "confirmed"
-            }
-        };
-        const updatedConnectionString = JSON.stringify(updatedConnection.user_connection).replace(/"/g, '\\"');
         try {
-            const response = await updateUserConnection(connection.user_connection_id, `${updatedConnectionString}`);
+            const response = await updateUserConnection(connection.user_connection_id, 'confirmed');
             console.log("Updated", response);
         } catch (error) {
             console.error('Error:', error);
@@ -80,13 +71,13 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
             <div className="flex flex-col justify-center">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h3 className="card-title" style={{ fontSize: `${fontSize}px` }} title={`${connection.user_connection.first_name} ${connection.user_connection.last_name}`}>
-                        {truncateString(`${connection.user_connection.first_name} ${connection.user_connection.last_name}`, truncationLength)}
+                        <h3 className="card-title" style={{ fontSize: `${fontSize}px` }} title={`${connection.assistant_first_name} ${connection.assistant_last_name}`}>
+                        {truncateString(`${connection.assistant_first_name} ${connection.assistant_last_name}`, truncationLength)}
                         </h3>
-                        <p className="truncate">{connection.user_connection.email}</p>
+                        <p className="truncate">{connection.assistant_email}</p>
                     </div>
-                    {!clickedRemove && connection.user_connection.status === "confirmed" && <button onClick={handleRemoveClick}><TiDelete className="text-error w-6 h-6 m-0" /></button>}
-                    {clickedRemove && connection.user_connection.status === "confirmed" && (
+                    {!clickedRemove && connection.status === "confirmed" && <button onClick={handleRemoveClick}><TiDelete className="text-error w-6 h-6 m-0" /></button>}
+                    {clickedRemove && connection.status === "confirmed" && (
                     <div className="flex flex-col space-y-1">
                         <button onClick={handleCancel} className="text-white btn btn-primary min-h-0 h-6 leading-tight">Cancel</button>
                         <button onClick={handleRemoveConfirm} className="text-white btn btn-warning min-h-0 h-6 ml-auto leading-tight" disabled={isRemoving}>
@@ -98,7 +89,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
                 
             </div>
             <div className="card-actions">
-                {connection.user_connection.status === "pending" && (
+                {connection.status === "pending" && (
                     <div className="flex justify-between w-full mt-2">
                         <button onClick={handleRemoveConfirm} className="text-white btn btn-warning min-h-0 h-6 leading-tight" disabled={isRemoving}>
                             {isRemoving ? 'Declining...' : 'Decline'}

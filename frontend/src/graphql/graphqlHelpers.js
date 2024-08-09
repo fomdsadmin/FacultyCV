@@ -203,16 +203,26 @@ export const getOrcidAuthorMatches = async (first_name, last_name, institution_n
 /*
  * Function to get user connections given the user id
  * Arguments:
- * user_id
+ * user_id: string
+ * isFaculty: boolean (optional, defaults to true)
  * Return value:
+ * Array of objects:
  * {
  *      user_connection_id
- *      user_id
- *      user_connection: JSON string
+ *      faculty_user_id
+ *      faculty_first_name
+ *      faculty_last_name
+ *      faculty_email
+ *      assistant_user_id
+ *      assistant_first_name
+ *      assistant_last_name
+ *      assistant_email
+ *      status
  * }
  */
-export const getUserConnections = async (user_id) => {
-    const results = await runGraphql(getUserConnectionsQuery(user_id));
+export const getUserConnections = async (user_id, isFaculty = true) => {
+    const query = getUserConnectionsQuery(user_id, isFaculty);
+    const results = await runGraphql(query);
     return results['data']['getUserConnections'];
 }
 
@@ -394,15 +404,31 @@ export const addUniversityInfo = async (type, value) => {
 /**
  * Function to add user connections
  * Arguments:
- * user_id - ID of the user the profile belongs to
- * user_connection - JSON String
+ * faculty_user_id - ID of the faculty user
+ * faculty_first_name
+ * faculty_last_name
+ * faculty_email
+ * assistant_user_id - ID of the assistant user
+ * assistant_first_name
+ * assistant_last_name
+ * assistant_email
+ * status
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUserConnection = async (user_id, user_connection) => {
-    const results = await runGraphql(addUserConnectionMutation(user_id, user_connection));
+export const addUserConnection = async (
+    faculty_user_id, faculty_first_name, faculty_last_name, faculty_email,
+    assistant_user_id, assistant_first_name, assistant_last_name, assistant_email,
+    status
+) => {
+    const results = await runGraphql(addUserConnectionMutation(
+        faculty_user_id, faculty_first_name, faculty_last_name, faculty_email,
+        assistant_user_id, assistant_first_name, assistant_last_name, assistant_email,
+        status
+    ));
     return results['data']['addUserConnection'];
 }
+
 
 /**
  * Function to add template
@@ -569,12 +595,12 @@ export const updateUniversityInfo = async (university_info_id, type, value) => {
  * Function to update user connections
  * Arguments:
  * user_connection_id - ID of the user connection
- * user_connection - JSON String
+ * status - New status for the user connection
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateUserConnection = async (user_connection_id, user_connection) => {
-    const results = await runGraphql(updateUserConnectionMutation(user_connection_id, user_connection));
+export const updateUserConnection = async (user_connection_id, status) => {
+    const results = await runGraphql(updateUserConnectionMutation(user_connection_id, status));
     return results['data']['updateUserConnection'];
 }
 

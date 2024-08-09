@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import PageContainer from "./PageContainer";
-import FacultyMenu from "../Components/FacultyMenu";
+import AssistantMenu from "../Components/AssistantMenu";
+import Assistant_FacultyMenu from "../Components/Assistant_FacultyMenu";
 import { rankFields } from '../utils/rankingUtils';
 import GenericEntry from "../Components/GenericEntry";
 import { getArchivedUserCVData, getAllSections, updateUserCVDataArchive } from "../graphql/graphqlHelpers";
 
-const Archive = ({ userInfo, getCognitoUser }) => {
+const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredEntries, setFilteredEntries] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -111,67 +112,66 @@ const Archive = ({ userInfo, getCognitoUser }) => {
         setLoading(false);
     };
 
-    // const handleDelete = (entry) => { 
-    //     // Implement delete functionality here
-    //     console.log('Deleting entry ' + entry.data_section_id);
-    // };
-
     return (
-      <PageContainer>
-        <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser} />
-        <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
-          <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
-          {loading ? (
-            <div className='flex items-center justify-center w-full'>
-              <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-            </div>
-          ) : (
-            <>
-              <div className='m-4 max-w-3xl flex'>
-                <label className="input input-bordered flex items-center gap-2 flex-1">
-                  <input
-                    type="text"
-                    className="grow"
-                    placeholder="Search"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                  />
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    className="h-4 w-4 opacity-70"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-                      clipRule="evenodd"
+      <div>
+        <AssistantMenu getCognitoUser={getCognitoUser} userName={assistantUserInfo.preferred_name || assistantUserInfo.first_name}></AssistantMenu>
+        <PageContainer>
+          <Assistant_FacultyMenu userInfo={userInfo} assistantUserInfo={assistantUserInfo} />
+          <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
+            <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
+            {loading ? (
+              <div className='flex items-center justify-center w-full'>
+                <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+              </div>
+            ) : (
+              <>
+                <div className='m-4 max-w-3xl flex'>
+                  <label className="input input-bordered flex items-center gap-2 flex-1">
+                    <input
+                      type="text"
+                      className="grow"
+                      placeholder="Search"
+                      value={searchTerm}
+                      onChange={handleSearchChange}
                     />
-                  </svg>
-                </label>
-              </div>  
-              {filteredEntries.length === 0 ? (
-                <div className="text-zinc-600 mt-4 ml-4">No archived entries</div>
-              ) : (
-                filteredEntries.map((entry, index) => {
-                  const [fieldA, fieldB] = rankFields(entry.data_details);
-                  return (
-                    <GenericEntry
-                      key={index}
-                      isArchived={true}
-                      field1={entry.title}
-                      field2={fieldA}
-                      field3={fieldB}
-                      onRestore={() => handleRestore(entry)}
-                    />
-                  );
-                })
-              )}
-            </>
-          )}
-        </main>
-      </PageContainer>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      className="h-4 w-4 opacity-70"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </label>
+                </div>  
+                {filteredEntries.length === 0 ? (
+                  <div className="text-zinc-600 mt-4 ml-4">No archived entries</div>
+                ) : (
+                  filteredEntries.map((entry, index) => {
+                    const [fieldA, fieldB] = rankFields(entry.data_details);
+                    return (
+                      <GenericEntry
+                        key={index}
+                        isArchived={true}
+                        field1={entry.title}
+                        field2={fieldA}
+                        field3={fieldB}
+                        onRestore={() => handleRestore(entry)}
+                      />
+                    );
+                  })
+                )}
+              </>
+            )}
+          </main>
+        </PageContainer>
+      </div>
+      
     )
 }
 
-export default Archive;
+export default Assistant_Archive;

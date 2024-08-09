@@ -104,8 +104,15 @@ def lambda_handler(event, context):
     # Create User Connections Table
     columns = []
     columns.append(createColumn('user_connection_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
-    columns.append(createColumn('user_id', 'varchar', '', False))
-    columns.append(createColumn('user_connection', 'JSON', '', True))
+    columns.append(createColumn('faculty_user_id', 'varchar', '', False))
+    columns.append(createColumn('faculty_first_name', 'varchar', '', False))
+    columns.append(createColumn('faculty_last_name', 'varchar', '', False))
+    columns.append(createColumn('faculty_email', 'varchar', '', False))
+    columns.append(createColumn('assistant_user_id', 'varchar', '', False))
+    columns.append(createColumn('assistant_first_name', 'varchar', '', False))
+    columns.append(createColumn('assistant_last_name', 'varchar', '', False))
+    columns.append(createColumn('assistant_email', 'varchar', '', False))
+    columns.append(createColumn('status', 'varchar', '', True))
     query = createQuery('user_connections', columns)
     cursor.execute(query)
 

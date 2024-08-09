@@ -20,8 +20,7 @@ def updateUserConnection(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    user_connection_json = json.dumps(arguments['user_connection'])  # Convert user_connection dictionary to JSON string
-    cursor.execute("UPDATE user_connections SET user_connection = %s WHERE user_connection_id = %s", (user_connection_json, arguments['user_connection_id']))
+    cursor.execute("UPDATE user_connections SET status = %s WHERE user_connection_id = %s", (arguments['status'], arguments['user_connection_id']))
     cursor.close()
     connection.commit()
     connection.close()

@@ -134,14 +134,21 @@ export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_na
     }
 `;
 
-export const getUserConnectionsQuery = (user_id) => `
+export const getUserConnectionsQuery = (user_id, isFaculty = true) => `
     query GetUserConnections {
         getUserConnections (
-            user_id: "${user_id}",
+            ${isFaculty ? 'faculty_user_id' : 'assistant_user_id'}: "${user_id}"
         ) {
             user_connection_id
-            user_id
-            user_connection
+            faculty_user_id
+            faculty_first_name
+            faculty_last_name
+            faculty_email
+            assistant_user_id
+            assistant_first_name
+            assistant_last_name
+            assistant_email
+            status
         }
     }
 `;

@@ -63,8 +63,15 @@ type UniversityInfo {
 
 type UserConnection {
   user_connection_id: String!
-  user_id: String!
-  user_connection: AWSJSON! #JSON
+  faculty_user_id: String!
+  faculty_first_name: String!
+  faculty_last_name: String!
+  faculty_email: String!
+  assistant_user_id: String!
+  assistant_first_name: String!
+  assistant_last_name: String!
+  assistant_email: String!
+  status: String!
 }
 
 type Template {
@@ -116,7 +123,7 @@ type Query {
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
     getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!
     getAllUniversityInfo: [ UniversityInfo ]
-    getUserConnections(user_id: String!): [ UserConnection ]
+    getUserConnections(faculty_user_id: String, assistant_user_id: String): [ UserConnection ]
     getAllTemplates: [ Template ]
     getTeachingDataMatches(institution_user_id: String!): [TeachingData]
     getPublicationMatches(scopus_id: String!, page_number: Int!, results_per_page: Int!): PublicationMatches
@@ -191,13 +198,20 @@ type Mutation {
     ): String
 
     addUserConnection(
-      user_id: String!
-      user_connection: AWSJSON! #JSON
+      faculty_user_id: String!
+      faculty_first_name: String!
+      faculty_last_name: String!
+      faculty_email: String!
+      assistant_user_id: String!
+      assistant_first_name: String!
+      assistant_last_name: String!
+      assistant_email: String!
+      status: String!
     ): String
 
     updateUserConnection(
       user_connection_id: String!
-      user_connection: AWSJSON! #JSON
+      status: String!
     ): String
 
     deleteUserConnection(

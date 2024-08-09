@@ -15,6 +15,11 @@ import FacultyHomePage from './Views/FacultyHomePage.jsx';
 import AssistantHomePage from './Views/AssistantHomePage.jsx';
 import AdminHomePage from './Views/AdminHomePage.jsx';
 import Archive from './Views/Archive.jsx';
+import Assistant_FacultyHomePage from './Views/Assistant_FacultyHomePage.jsx';
+import Assistant_Archive from './Views/Assistant_Archive.jsx';
+import Assistant_Reports from './Views/Assistant_Reports.jsx';
+import Assistant_Assistants from './Views/Assistant_Assistants.jsx';
+import Assistant_AcademicWork from './Views/Assistant_AcademicWork.jsx';
 
 Amplify.configure({
   API: {
@@ -37,15 +42,20 @@ Amplify.configure({
 function App() {
   const [user, setUser] = useState(null);
   const [userInfo, setUserInfo] = useState({});
+  const [assistantUserInfo, setAssistantUserInfo] = useState({});
   const [loading, setLoading] = useState(false);
 
   async function getUserInfo(email) {
     try {
       const userInformation = await getUser(email);
-      console.log('User information:', userInformation);
-      setUserInfo(userInformation);
+      if (userInformation.role === 'Assistants') {
+        setAssistantUserInfo(userInformation);
+        console.log('Assistant user information:', userInformation);
+      } else {
+        setUserInfo(userInformation);
+        console.log('User information:', userInformation);
+      }
       setLoading(false);
-      return userInformation;
     } catch (error) {
       setLoading(false);
       console.log('Error getting user:', error);
@@ -63,7 +73,8 @@ function App() {
     }
     catch (error) {
       setUser(null);
-      setUserInfo(null);
+      setUserInfo({});
+      setAssistantUserInfo({});
       signOut();
       console.log('Error getting user:', error);
       setLoading(false);
@@ -88,21 +99,26 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/home" element={user ? (
-          userInfo.role === 'Admins' ? <AdminHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
-          userInfo.role === 'Assistants' ? <AssistantHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
-          userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
-          <PageContainer>
-            <div className='flex items-center justify-center w-full'>
-              <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-            </div>
-          </PageContainer>
+      <Route path="/home" element={user ? (
+        Object.keys(userInfo).length !== 0 && userInfo.role === 'Admins' ? <AdminHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+        Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === 'Assistants' ? <AssistantHomePage userInfo={assistantUserInfo} setUserInfo={setAssistantUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+        Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+        <PageContainer>
+          <div className='flex items-center justify-center w-full'>
+            <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+          </div>
+        </PageContainer>
         ) : <Navigate to="/auth" />} />
         <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage getCognitoUser = {getCognitoUser} />} />
         <Route path="/academic-work" element={user ? <AcademicWork userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/assistants" element={user ? <Assistants userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/archive" element={user ? <Archive userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/assistant/home" element={user ? <Assistant_FacultyHomePage assistantUserInfo={assistantUserInfo} userInfo={userInfo} setUserInfo={setUserInfo} getUser={getUserInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/assistant/academic-work" element={user ? <Assistant_AcademicWork assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/assistant/reports" element={user ? <Assistant_Reports assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/assistant/assistants" element={user ? <Assistant_Assistants assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/assistant/archive" element={user ? <Assistant_Archive assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

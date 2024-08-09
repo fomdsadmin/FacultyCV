@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
-import { Container, Section, Bar } from '@column-resizer/react';
 import WorkSection from '../Components/WorkSection';
 import '../CustomStyles/scrollbar.css';
 import Filters from '../Components/Filters.jsx';
@@ -69,7 +68,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
   return (
     <PageContainer>
       <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
-      <main className='flex-1 h-full'>
+      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
         {loading ? (
           <div className='w-full h-full flex items-center justify-center'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
