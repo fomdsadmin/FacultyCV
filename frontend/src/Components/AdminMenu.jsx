@@ -1,12 +1,9 @@
 import React, { useState } from "react";
-import { TbHome } from "react-icons/tb";
-import { HiOutlineAcademicCap } from "react-icons/hi2";
-import { TiDownloadOutline } from "react-icons/ti";
-import { IoPersonAddOutline } from "react-icons/io5";
+import { FaUsers, FaChartLine, FaFileAlt, FaThList } from "react-icons/fa";
 import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
-import { FaRegTrashAlt, FaBars } from "react-icons/fa";
+import { FaBars } from "react-icons/fa";
 
 const FacultyMenu = ({ userName, getCognitoUser }) => {
   const location = useLocation();
@@ -38,35 +35,35 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
       <button onClick={toggleCollapse} className="btn btn-ghost mb-4">
         <FaBars className="h-5 w-5" />
       </button>
+      {!isCollapsed && (
+        <div className='ml-3 mb-2 font-bold text-lg'>
+          {userName}
+        </div>
+      )}
       <ul className="menu rounded-box flex-shrink-0">
+        
         <li className={`mb-2 ${location.pathname === '/home' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/home'>
-            <TbHome className="h-5 w-5" />
-            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/home' ? 'font-bold' : ''}`}>{userName}</p>}
+            <FaUsers className="h-5 w-5" />
+            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/home' ? 'font-bold' : ''}`}>Users</p>}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === '/academic-work' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/academic-work'>
-            <HiOutlineAcademicCap className="h-5 w-5" />
-            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/academic-work' ? 'font-bold' : ''}`}>Academic Work</p>}
+        <li className={`mb-2 ${location.pathname === '/analytics' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/analytics'>
+            <FaChartLine className="h-5 w-5" />
+            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/analytics' ? 'font-bold' : ''}`}>Analytics</p>}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === '/reports' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/reports'>
-            <TiDownloadOutline className="h-5 w-5" />
-            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/reports' ? 'font-bold' : ''}`}>Reports</p>}
+        <li className={`mb-2 ${location.pathname === '/templates' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/templates'>
+            <FaFileAlt className="h-5 w-5" />
+            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/templates' ? 'font-bold' : ''}`}>Templates</p>}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === '/assistants' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/assistants'>
-            <IoPersonAddOutline className="h-5 w-5" />
-            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/assistants' ? 'font-bold' : ''}`}>Assistants</p>}
-          </Link>
-        </li>
-        <li className={`mb-6 ${location.pathname === '/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/archive'>
-            <FaRegTrashAlt className="h-4 w-4" />
-            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/archive' ? 'font-bold' : ''}`}>Archive</p>}
+        <li className={`mb-6 ${location.pathname === '/sections' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/sections'>
+            <FaThList className="h-5 w-5" />
+            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/sections' ? 'font-bold' : ''}`}>Sections</p>}
           </Link>
         </li>
         {!isCollapsed && (

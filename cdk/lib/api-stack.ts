@@ -94,13 +94,13 @@ export class ApiStack extends cdk.Stack {
       userPoolId: this.userPool.userPoolId,
     });
 
-    const assistantsGroup = new cognito.CfnUserPoolGroup(this, 'AssistantsGroup', {
-        groupName: 'Assistants',
+    const assistantGroup = new cognito.CfnUserPoolGroup(this, 'AssistantGroup', {
+        groupName: 'Assistant',
         userPoolId: this.userPool.userPoolId,
     });
 
-    const adminsGroup = new cognito.CfnUserPoolGroup(this, 'AdminsGroup', {
-        groupName: 'Admins',
+    const adminGroup = new cognito.CfnUserPoolGroup(this, 'AdminGroup', {
+        groupName: 'Admin',
         userPoolId: this.userPool.userPoolId,
     });
 
@@ -201,6 +201,15 @@ export class ApiStack extends cdk.Stack {
       this.api,
       "getUser",
       ["getUser"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getAllUsers",
+      ["getAllUsers"],
       "Query",
       {},
       resolverRole,

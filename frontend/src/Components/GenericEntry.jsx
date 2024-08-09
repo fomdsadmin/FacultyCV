@@ -6,7 +6,7 @@ import { LuUndo2 } from "react-icons/lu";
 const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, onDelete, field1, field2, field3 }) => {
 
   return (
-    <div className="min-h-8 shadow-glow mx-4 my-2 max-w-3xl px-2 flex items-center">
+    <div className="min-h-8 shadow-glow mx-4 my-2 px-2 flex items-center">
       <div className="mr-2">
       </div>
       

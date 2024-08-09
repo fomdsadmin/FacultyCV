@@ -60,7 +60,7 @@ const Assistant_Assistants = ({assistantUserInfo, userInfo, getCognitoUser }) =>
               </div>
             ) : (
               <div>
-                <div className='m-4 max-w-lg flex'>
+                <div className='m-4 flex'>
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
                       type="text"

@@ -24,6 +24,30 @@ export const getUserQuery = (email) => `
     }
 `;
 
+export const getAllUsersQuery = () => `
+    query GetAllUsers {
+        getAllUsers {
+            user_id
+            first_name
+            last_name
+            preferred_name
+            email
+            role
+            bio
+            rank
+            primary_department
+            secondary_department
+            primary_faculty
+            secondary_faculty
+            campus
+            keywords
+            institution_user_id
+            scopus_id
+            orcid_id
+        }
+    }
+`;
+
 export const getExistingUserQuery = (institution_user_id) => `
     query GetExistingUser {
         getExistingUser (

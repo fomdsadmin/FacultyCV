@@ -58,7 +58,7 @@ const Assistant_FacultyMenu = ({ userInfo, assistantUserInfo }) => {
             {!isCollapsed && <p className={`ml-2 ${location.pathname === '/assistant/assistants' ? 'font-bold' : ''}`}>Assistants</p>}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === '/assistant/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
+        <li className={`mb-6 ${location.pathname === '/assistant/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/assistant/archive'>
             <FaRegTrashAlt className="h-4 w-4" />
             {!isCollapsed && <p className={`ml-2 ${location.pathname === '/assistant/archive' ? 'font-bold' : ''}`}>Archive</p>}

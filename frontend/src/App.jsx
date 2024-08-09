@@ -20,6 +20,9 @@ import Assistant_Archive from './Views/Assistant_Archive.jsx';
 import Assistant_Reports from './Views/Assistant_Reports.jsx';
 import Assistant_Assistants from './Views/Assistant_Assistants.jsx';
 import Assistant_AcademicWork from './Views/Assistant_AcademicWork.jsx';
+import Analytics from './Views/Analytics.jsx';
+import Templates from './Views/Templates.jsx';
+import Sections from './Views/Sections.jsx';
 
 Amplify.configure({
   API: {
@@ -48,7 +51,7 @@ function App() {
   async function getUserInfo(email) {
     try {
       const userInformation = await getUser(email);
-      if (userInformation.role === 'Assistants') {
+      if (userInformation.role === 'Assistant') {
         setAssistantUserInfo(userInformation);
         console.log('Assistant user information:', userInformation);
       } else {
@@ -100,8 +103,8 @@ function App() {
     <Router>
       <Routes>
       <Route path="/home" element={user ? (
-        Object.keys(userInfo).length !== 0 && userInfo.role === 'Admins' ? <AdminHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
-        Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === 'Assistants' ? <AssistantHomePage userInfo={assistantUserInfo} setUserInfo={setAssistantUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+        Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser}/> :
+        Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === 'Assistant' ? <AssistantHomePage userInfo={assistantUserInfo} setUserInfo={setAssistantUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
         Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
         <PageContainer>
           <div className='flex items-center justify-center w-full'>
@@ -119,6 +122,9 @@ function App() {
         <Route path="/assistant/reports" element={user ? <Assistant_Reports assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/assistant/assistants" element={user ? <Assistant_Assistants assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/assistant/archive" element={user ? <Assistant_Archive assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/analytics" element={user ? <Analytics userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/templates" element={user ? <Templates userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/sections" element={user ? <Sections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

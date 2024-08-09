@@ -1,9 +1,8 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, 
+import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUsersQuery, getAllUniversityInfoQuery, 
     getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, 
     getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
-    getTeachingDataMatchesQuery,
-    getPublicationMatchesQuery, getSecureFundingMatchesQuery} from './queries';
+    getTeachingDataMatchesQuery, getPublicationMatchesQuery, getSecureFundingMatchesQuery} from './queries';
 import { addSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -20,6 +19,36 @@ const runGraphql = async (query) => {
 }
 
 // --- GET ---
+
+/**
+ * Function to get all users
+ * Return value:
+ * [
+ *  {
+ *      user_id
+ *     first_name
+ *    last_name
+ *   preferred_name
+ *  email
+ * role
+ * bio
+ * rank
+ * primary_department
+ * secondary_department
+ * primary_faculty
+ * secondary_faculty
+ * campus
+ * keywords
+ * institution_user_id
+ * scopus_id
+ * orcid_id
+ *  }, ...
+ * ]
+ */
+export const getAllUsers = async () => {
+    const results = await runGraphql(getAllUsersQuery())
+    return results['data']['getAllUsers'];
+}
 
 /**
  * Function to get all sections that are part of the schema

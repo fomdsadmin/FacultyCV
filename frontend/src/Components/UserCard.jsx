@@ -1,6 +1,6 @@
 import React from "react";
 
-const WorkSection = ({ onClick, id, title, category }) => {
+const UserCard = ({ onClick, id, firstName, lastName, email, role }) => {
 
     const handleClick = () => {
         onClick(id);
@@ -11,8 +11,9 @@ const WorkSection = ({ onClick, id, title, category }) => {
             <div className="flex justify-between items-center ">
                 
                 <div className="flex flex-col justify-center">
-                    <h3 className="card-title">{title}</h3>
-                    <p>{category}</p>
+                    <h3 className="card-title">{firstName} {lastName}</h3>
+                    <h1>{email}</h1>
+                    <p>{role}</p>
                 </div>
 
                 <div className="card-actions">
@@ -24,4 +25,4 @@ const WorkSection = ({ onClick, id, title, category }) => {
     )
 }
 
-export default WorkSection;
+export default UserCard;
