@@ -80,6 +80,7 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
     <PageContainer>
       <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
+        <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users</h1>
         {loading ? (
           <div className='flex items-center justify-center w-full'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -88,7 +89,6 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
           <div>
             {activeUser === null ? (
               <div className='!overflow-auto !h-full custom-scrollbar'>
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users</h1>
                 <div className='m-4 flex'>
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input

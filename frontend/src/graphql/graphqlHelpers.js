@@ -1,9 +1,9 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUsersQuery, getAllUniversityInfoQuery, 
-    getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, 
-    getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
+import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUsersQuery, 
+    getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, 
+    getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
     getTeachingDataMatchesQuery, getPublicationMatchesQuery, getSecureFundingMatchesQuery} from './queries';
-import { addSectionMutation, addUserCVDataMutation, addUserMutation, 
+import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
     updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
@@ -68,6 +68,23 @@ export const getAllSections = async () => {
     return results['data']['getAllSections'];
 }
 
+/**
+ * Function to get all archived sections that are part of the schema
+ * Return value:
+ * [
+ *  {
+ *      attributes: JSON object with placeholder value - used to determine the structure (and not the actual data) of the section
+ *      dataSectionId: Identifier for the section in the DB
+ *      data_type: Umbrella term for the section
+ *      description
+ *      title  
+ *  }, ...
+ * ]
+ */
+export const getArchivedSections = async () => {
+    const results = await runGraphql(getArchivedSectionsQuery())
+    return results['data']['getArchivedSections'];
+}
 /**
  * Function to get user data
  * Arguments:
@@ -576,6 +593,19 @@ export const updateUser = async (user_id, first_name, last_name, preferred_name,
             institution_user_id, scopus_id, orcid_id
         ));
         return results['data']['updateUser'];
+}
+
+/**
+ * Function to update data section - the archive status
+ * Arguments:
+ * data_section_id - ID of the data section
+ * archive - Boolean
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateSection = async (data_section_id, archive) => {
+    const results = await runGraphql(updateSectionMutation(data_section_id, archive));
+    return results['data']['updateSection'];
 }
 
 /**

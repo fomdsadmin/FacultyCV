@@ -82,6 +82,20 @@ export const getAllSectionsQuery = () => `
             data_type
             description
             title
+            archive
+        }
+    }
+`;
+
+export const getArchivedSectionsQuery = () => `
+    query GetArchivedSections {
+        getArchivedSections {
+            attributes
+            data_section_id
+            data_type
+            description
+            title
+            archive
         }
     }
 `;

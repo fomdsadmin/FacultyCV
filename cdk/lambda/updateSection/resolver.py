@@ -1,6 +1,7 @@
 import boto3
 import json
 import psycopg2
+from datetime import datetime
 
 sm_client = boto3.client('secretsmanager')
 
@@ -15,26 +16,17 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def getAllSections(arguments):
+def updateSection(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT data_section_id, title, description, data_type, attributes, archive FROM data_sections WHERE archive != true')
-    results = cursor.fetchall()
+    cursor.execute("UPDATE data_sections SET archive = %s WHERE data_section_id = %s", (arguments['archive'], arguments['data_section_id']))
     cursor.close()
+    connection.commit()
     connection.close()
-    data_sections = []
-    for result in results:
-        data_sections.append({
-            'data_section_id': result[0],
-            'title': result[1],
-            'description': result[2],
-            'data_type': result[3],
-            'attributes': result[4],
-            'archive': result[5]
-        })
-    return data_sections
+    return "SUCCESS"
 
 def lambda_handler(event, context):
-    return getAllSections(event['arguments'])
+    arguments = event['arguments']
+    return updateSection(arguments=arguments)

@@ -262,8 +262,26 @@ export class ApiStack extends cdk.Stack {
     );
     createResolver(
       this.api,
+      "getArchivedSections",
+      ["getArchivedSections"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
       "addSection",
       ["addSection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateSection",
+      ["updateSection"],
       "Mutation",
       {},
       resolverRole,

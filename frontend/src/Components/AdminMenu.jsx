@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaUsers, FaChartLine, FaFileAlt, FaThList } from "react-icons/fa";
+import { FaUsers, FaChartLine, FaFileAlt, FaThList, FaTrashAlt } from "react-icons/fa";
 import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
@@ -60,10 +60,16 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
             {!isCollapsed && <p className={`ml-2 ${location.pathname === '/templates' ? 'font-bold' : ''}`}>Templates</p>}
           </Link>
         </li>
-        <li className={`mb-6 ${location.pathname === '/sections' ? 'bg-gray-200 rounded-lg' : ''}`}>
+        <li className={`mb-2 ${location.pathname === '/sections' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/sections'>
             <FaThList className="h-5 w-5" />
             {!isCollapsed && <p className={`ml-2 ${location.pathname === '/sections' ? 'font-bold' : ''}`}>Sections</p>}
+          </Link>
+        </li>
+        <li className={`mb-6 ${location.pathname === '/archived-sections' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/archived-sections'>
+            <FaTrashAlt className="h-4 w-4" />
+            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/archived-sections' ? 'font-bold' : ''}`}>Archived Sections</p>}
           </Link>
         </li>
         {!isCollapsed && (

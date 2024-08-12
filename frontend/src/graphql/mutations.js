@@ -141,6 +141,15 @@ export const updateUserMutation = (user_id, first_name, last_name, preferred_nam
     }
 `;
 
+export const updateSectionMutation = (data_section_id, archive) => `
+    mutation UpdateSection {
+        updateSection(
+            data_section_id: "${data_section_id}"
+            archive: ${archive}
+        )
+    }
+`;
+
 export const updateUserCVDataMutation = (user_cv_data_id, data_details) => `
     mutation UpdateUserCVData {
         updateUserCVData(

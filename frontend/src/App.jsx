@@ -23,6 +23,7 @@ import Assistant_AcademicWork from './Views/Assistant_AcademicWork.jsx';
 import Analytics from './Views/Analytics.jsx';
 import Templates from './Views/Templates.jsx';
 import Sections from './Views/Sections.jsx';
+import ArchivedSections from './Views/ArchivedSections.jsx';
 
 Amplify.configure({
   API: {
@@ -125,6 +126,7 @@ function App() {
         <Route path="/analytics" element={user ? <Analytics userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/templates" element={user ? <Templates userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/sections" element={user ? <Sections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/archived-sections" element={user ? <ArchivedSections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

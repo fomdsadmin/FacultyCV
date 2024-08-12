@@ -17,12 +17,11 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
   const [confirmedConnections, setConfirmedConnections] = useState([]);
 
   useEffect(() => {
-    setLoading(true);
     getAllUserConnections();
-    setLoading(false)
   }, [searchTerm]);
 
   async function getAllUserConnections() {
+    setLoading(true);
     try {
       let retrievedUserConnections;
       if (user.role === 'Faculty') {
@@ -43,6 +42,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
     } catch (error) {
       console.error('Error:', error);
     }
+    setLoading(false)
   }
 
   const handleSearchChange = (event) => {

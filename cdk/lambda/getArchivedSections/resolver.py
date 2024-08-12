@@ -15,18 +15,20 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def getAllSections(arguments):
+def getArchivedSections(arguments):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT data_section_id, title, description, data_type, attributes, archive FROM data_sections WHERE archive != true')
+    cursor.execute('SELECT data_section_id, title, description, data_type, attributes, archive FROM data_sections WHERE archive = true')
     results = cursor.fetchall()
     cursor.close()
     connection.close()
-    data_sections = []
+    archived_data_sections = []
+    if len(results) == 0:
+        return {}
     for result in results:
-        data_sections.append({
+        archived_data_sections.append({
             'data_section_id': result[0],
             'title': result[1],
             'description': result[2],
@@ -34,7 +36,7 @@ def getAllSections(arguments):
             'attributes': result[4],
             'archive': result[5]
         })
-    return data_sections
+    return archived_data_sections
 
 def lambda_handler(event, context):
-    return getAllSections(event['arguments'])
+    return getArchivedSections(event['arguments'])
