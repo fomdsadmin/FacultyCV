@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { getOrcidAuthorMatches } from '../graphql/graphqlHelpers.js';
-
-
+import React, { useState, useEffect, useRef } from "react";
 
 const authors = [
   {
@@ -10,8 +7,8 @@ const authors = [
     current_affiliation: "BC Children's Hospital Research Institute",
     name_variants: ["Michael R. Hayden", "Michael Hayden"],
     subjects: ["Genetics", "Pediatrics"],
-    scopus_id: "893",
-    orcid: "0000-0001-2345-6789",
+    scopus_id: "55765887300",
+    orcid: "0000-0001-5159-1419",
   },
   {
     last_name: "Hayden",
@@ -20,7 +17,7 @@ const authors = [
     name_variants: ["Michael E. Hayden", "Michael Hayden"],
     subjects: ["Physics", "Materials Science"],
     scopus_id: "120",
-    orcid: "0000-0002-3456-7890",
+    orcid: "0000-0001-5159-1419",
   },
   {
     last_name: "Hayden",
@@ -28,54 +25,45 @@ const authors = [
     current_affiliation: "The University of British Columbia",
     name_variants: ["Michael R. Hayden", "Michael Hayden"],
     subjects: ["Neurology", "Biochemistry"],
-    scopus_id: "1",
-    orcid: "0000-0003-4567-8901",
+    scopus_id: "57222035992",
+    orcid: "0000-0001-5159-1419",
   },
   {
-    last_name: "Test",
-    first_name: "No Ids",
+    last_name: "no scopus",
+    first_name: "Michael E.",
+    current_affiliation: "Simon Fraser University",
+    name_variants: ["Michael E. Hayden", "Michael Hayden"],
+    subjects: ["Physics", "Materials Science"],
+    scopus_id: "",
+    orcid: "0000-0001-5159-1419",
+  },
+  {
+    last_name: "no orcid",
+    first_name: "Michael R.",
     current_affiliation: "The University of British Columbia",
     name_variants: ["Michael R. Hayden", "Michael Hayden"],
     subjects: ["Neurology", "Biochemistry"],
-    scopus_id: null,
-    orcid: null,
-  },
-  {
-    last_name: "Test",
-    first_name: "No Scopus",
-    current_affiliation: "The University of British Columbia",
-    name_variants: ["Michael R. Hayden", "Michael Hayden"],
-    subjects: ["Neurology", "Biochemistry"],
-    scopus_id: null,
-    orcid: "012345",
-  },
-  {
-    last_name: "Test",
-    first_name: "No Orcid",
-    current_affiliation: "The University of British Columbia",
-    name_variants: ["Michael R. Hayden", "Michael Hayden"],
-    subjects: ["Neurology", "Biochemistry"],
-    scopus_id: "012345",
-    orcid: null,
+    scopus_id: "57222035992",
+    orcid: "",
   },
 ];
-
-// we call getElsevierAuthorMatches and display the results, 
-// if there's an orcid id and scopus id on the one they select we're done. 
-// If there's a scopus id, but no orcid then we call getOrcidAuthorMatches. 
-// If there are no results from getElsevierAuthorMatches, 
-// we try getOrcidAuthorMatches and display results, but we won't have a scopus id.
-
-// const authors = getOrcidAuthorMatches("Michael", "Hayden", "university of british columbia");
 
 const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId, onLink }) => {
   const [loading, setLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isManual, setIsManual] = useState(false);
   const [updateStatus, setUpdateStatus] = useState(null);
-  const [manualScopusId, setManualScopusId] = useState(scopusId);
+  const [manualScopusId, setManualScopusId] = useState(() => {
+    if (Array.isArray(scopusId)) return scopusId;
+    if (scopusId) return scopusId.split(",");
+    return [];
+  });
   const [manualOrcidId, setManualOrcidId] = useState(orcidId);
   const [reviewed, setReviewed] = useState(false);
+  const [linkedScopusIds, setLinkedScopusIds] = useState(manualScopusId);
+
+  const scopusInputRef = useRef(null);
+  const orcidInputRef = useRef(null);
 
   useEffect(() => {
     if (scopusId || orcidId) {
@@ -88,11 +76,15 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
     setTimeout(() => {
       setLoading(false);
       setManualOrcidId(author.orcid || "");
-      setManualScopusId(author.scopus_id || "");
-      setScopusId(author.scopus_id || "");
+      
+      const newScopusId = author.scopus_id ? author.scopus_id.split(",") : [];
+      const updatedScopusIds = [...new Set([...linkedScopusIds, ...newScopusId])];
+      
+      setLinkedScopusIds(updatedScopusIds);
+      setScopusId(updatedScopusIds.join(","));
       setOrcidId(author.orcid || "");
       setReviewed(true);
-      onLink(author.scopus_id || "", author.orcid || "");
+      onLink(updatedScopusIds.join(","), author.orcid || "");
     }, 700);
   };
 
@@ -105,28 +97,54 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
     setScopusId("");
     setOrcidId("");
     setManualOrcidId("");
-    setManualScopusId("");
+    setManualScopusId([]);
+    setLinkedScopusIds([]);
     setReviewed(false);
     onLink("", "");
   };
 
   const handleSaveManualEntry = () => {
-    setScopusId(manualScopusId);
+    setScopusId(linkedScopusIds.join(","));
     setOrcidId(manualOrcidId);
-    setReviewed(true);
     setIsManual(false);
-    onLink(manualScopusId, manualOrcidId);
+    setReviewed(true);
+    onLink(linkedScopusIds.join(","), manualOrcidId);
   };
 
-  const handleBlur = () => {
+  const handleScopusBlur = () => {
+    const newScopusIds = scopusInputRef.current.value.split(",");
+    setLinkedScopusIds(newScopusIds);
+    setScopusId(newScopusIds.join(","));
     setUpdateStatus("Updating...");
     setTimeout(() => {
-      setScopusId(manualScopusId);
       setOrcidId(manualOrcidId);
       setReviewed(true);
       setUpdateStatus("Linked");
-      onLink(manualScopusId, manualOrcidId);
+      onLink(newScopusIds.join(","), manualOrcidId);
     }, 700);
+  };
+
+  const handleOrcidBlur = () => {
+    const newOrcidId = orcidInputRef.current.value;
+    setManualOrcidId(newOrcidId);
+    setOrcidId(newOrcidId);
+    setUpdateStatus("Updating...");
+    setTimeout(() => {
+      setScopusId(linkedScopusIds.join(","));
+      setReviewed(true);
+      setUpdateStatus("Linked");
+      onLink(linkedScopusIds.join(","), newOrcidId);
+    }, 700);
+  };
+
+  const handleAddScopusId = () => {
+    setLinkedScopusIds([...linkedScopusIds, ""]);
+  };
+
+  const handleScopusIdChange = (index, value) => {
+    const newScopusIds = [...linkedScopusIds];
+    newScopusIds[index] = value;
+    setLinkedScopusIds(newScopusIds);
   };
 
   return (
@@ -154,7 +172,12 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
 
         {reviewed && (
           <div>
-            <h2 className="font-bold text-2xl">Linked Profile</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="font-bold text-2xl">Linked Profile</h2>
+              <button onClick={() => setReviewed(false)} className="btn btn-sm btn-secondary text-white mr-6">
+                Link Another Scopus ID
+              </button>
+            </div>
             <div className="border-t my-2"></div>
           </div>
         )}
@@ -188,17 +211,24 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
           <form>
             <label className="form-control w-full max-w-xs">
               <div className="label">
-                <span className="label-text-alt">Scopus ID</span>
+                <span className="label-text-alt">Scopus ID(s)</span>
               </div>
-              <input
-                type="text"
-                value={manualScopusId}
-                onChange={(e) => setManualScopusId(e.target.value)}
-                className="input input-sm input-bordered w-full max-w-xs"
-              />
+              {linkedScopusIds.map((id, index) => (
+                <div key={index} className="flex items-center mt-2">
+                  <input
+                    type="text"
+                    value={id}
+                    onChange={(e) => handleScopusIdChange(index, e.target.value)}
+                    className="input input-sm input-bordered w-full max-w-xs mr-2"
+                  />
+                </div>
+              ))}
+              <button type="button" onClick={handleAddScopusId} className="btn btn-sm btn-secondary text-white mt-2">
+                Add Scopus ID
+              </button>
             </label>
 
-            <label className="form-control w-full max-w-xs">
+            <label className="form-control w-full max-w-xs mt-4">
               <div className="label">
                 <span className="label-text-alt">Orcid ID</span>
               </div>
@@ -206,7 +236,9 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
                 type="text"
                 value={manualOrcidId}
                 onChange={(e) => setManualOrcidId(e.target.value)}
+                ref={orcidInputRef}
                 className="input input-sm input-bordered w-full max-w-xs"
+                onBlur={handleOrcidBlur}
               />
             </label>
 
@@ -223,36 +255,60 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
             <p className="text-lg font-bold">Loading...</p>
           </div>
         )}
+
+
         {reviewed && !loading && (
           <div className="mt-4">
-            <div className="flex">
-              <p>Scopus ID:</p>
-              {scopusId ? (
-                <p className="ml-1">{scopusId}</p>
+
+            <div className="flex justify-between">
+
+            <div className="flex flex-1 flex-col">
+              <p className="font-bold">Scopus Author ID(s):</p>
+              {linkedScopusIds.length > 0 ? (
+                linkedScopusIds.map((id, index) => (
+                  <a
+                    key={index}
+                    href={`https://www.scopus.com/authid/detail.uri?authorId=${id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-accent text-white my-1 mr-8"
+                  >
+                   {id}
+                  </a>
+                ))
               ) : (
                 <input
                   type="text"
-                  value={manualScopusId}
-                  onChange={(e) => setManualScopusId(e.target.value)}
+                  defaultValue={linkedScopusIds.join(",")}
+                  ref={scopusInputRef}
                   className="ml-1 input input-bordered input-xs w-full max-w-32"
-                  onBlur={handleBlur}
+                  onBlur={handleScopusBlur}
                 />
               )}
             </div>
 
-            <div className="flex">
-              <p>Orcid ID:</p>
+            <div className="flex flex-col flex-1">
+              <p className="font-bold">Orcid ID:</p>
               {orcidId ? (
-                <p className="ml-1">{orcidId}</p>
-              ) : (
+                  <a
+                    href={`https://orcid.org/${orcidId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-accent text-white my-1 mr-8"
+                  >
+                    {orcidId}
+                  </a>
+                ) : (
                 <input
                   type="text"
-                  value={manualOrcidId}
-                  onChange={(e) => setManualOrcidId(e.target.value)}
+                  defaultValue={manualOrcidId}
+                  ref={orcidInputRef}
                   className="ml-1 input input-bordered input-xs w-full max-w-32"
-                  onBlur={handleBlur}
+                  onBlur={handleOrcidBlur}
                 />
               )}
+            </div>
+
             </div>
 
             <div
@@ -270,6 +326,7 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
             </div>
           </div>
         )}
+
       </div>
     </dialog>
   );
