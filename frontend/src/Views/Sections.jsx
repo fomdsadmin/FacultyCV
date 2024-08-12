@@ -86,7 +86,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
               <div className='!overflow-auto !h-full custom-scrollbar'>
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Sections</h1>
                 <button 
-                  className="btn btn-success text-white m-4" 
+                  className="btn btn-info text-white m-4" 
                   onClick={handleAddNewSection}
                 >
                   Add New Section
