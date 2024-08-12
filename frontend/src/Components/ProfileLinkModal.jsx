@@ -1,55 +1,57 @@
 import React, { useState, useEffect, useRef } from "react";
+import {getElsevierAuthorMatches, getOrcidAuthorMatches} from "../graphql/graphqlHelpers";
 
-const authors = [
-  {
-    last_name: "Hayden",
-    first_name: "Michael R.",
-    current_affiliation: "BC Children's Hospital Research Institute",
-    name_variants: ["Michael R. Hayden", "Michael Hayden"],
-    subjects: ["Genetics", "Pediatrics"],
-    scopus_id: "55765887300",
-    orcid: "0000-0001-5159-1419",
-  },
-  {
-    last_name: "Hayden",
-    first_name: "Michael E.",
-    current_affiliation: "Simon Fraser University",
-    name_variants: ["Michael E. Hayden", "Michael Hayden"],
-    subjects: ["Physics", "Materials Science"],
-    scopus_id: "120",
-    orcid: "0000-0001-5159-1419",
-  },
-  {
-    last_name: "Hayden",
-    first_name: "Michael R.",
-    current_affiliation: "The University of British Columbia",
-    name_variants: ["Michael R. Hayden", "Michael Hayden"],
-    subjects: ["Neurology", "Biochemistry"],
-    scopus_id: "57222035992",
-    orcid: "0000-0001-5159-1419",
-  },
-  {
-    last_name: "no scopus",
-    first_name: "Michael E.",
-    current_affiliation: "Simon Fraser University",
-    name_variants: ["Michael E. Hayden", "Michael Hayden"],
-    subjects: ["Physics", "Materials Science"],
-    scopus_id: "",
-    orcid: "0000-0001-5159-1419",
-  },
-  {
-    last_name: "no orcid",
-    first_name: "Michael R.",
-    current_affiliation: "The University of British Columbia",
-    name_variants: ["Michael R. Hayden", "Michael Hayden"],
-    subjects: ["Neurology", "Biochemistry"],
-    scopus_id: "57222035992",
-    orcid: "",
-  },
-];
+// const authors = [
+//   {
+//     last_name: "Hayden",
+//     first_name: "Michael R.",
+//     current_affiliation: "BC Children's Hospital Research Institute",
+//     name_variants: ["Michael R. Hayden", "Michael Hayden"],
+//     subjects: ["Genetics", "Pediatrics"],
+//     scopus_id: "55765887300",
+//     orcid: "0000-0001-5159-1419",
+//   },
+//   {
+//     last_name: "Hayden",
+//     first_name: "Michael E.",
+//     current_affiliation: "Simon Fraser University",
+//     name_variants: ["Michael E. Hayden", "Michael Hayden"],
+//     subjects: ["Physics", "Materials Science"],
+//     scopus_id: "120",
+//     orcid: "0000-0001-5159-1419",
+//   },
+//   {
+//     last_name: "Hayden",
+//     first_name: "Michael R.",
+//     current_affiliation: "The University of British Columbia",
+//     name_variants: ["Michael R. Hayden", "Michael Hayden"],
+//     subjects: ["Neurology", "Biochemistry"],
+//     scopus_id: "57222035992",
+//     orcid: "0000-0001-5159-1419",
+//   },
+//   {
+//     last_name: "no scopus",
+//     first_name: "Michael E.",
+//     current_affiliation: "Simon Fraser University",
+//     name_variants: ["Michael E. Hayden", "Michael Hayden"],
+//     subjects: ["Physics", "Materials Science"],
+//     scopus_id: "",
+//     orcid: "0000-0001-5159-1419",
+//   },
+//   {
+//     last_name: "no orcid",
+//     first_name: "Michael R.",
+//     current_affiliation: "The University of British Columbia",
+//     name_variants: ["Michael R. Hayden", "Michael Hayden"],
+//     subjects: ["Neurology", "Biochemistry"],
+//     scopus_id: "57222035992",
+//     orcid: "",
+//   },
+// ];
 
 const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId, onLink }) => {
   const [loading, setLoading] = useState(false);
+  const [authors, setAuthors] = useState([]);
   const [isHovered, setIsHovered] = useState(false);
   const [isManual, setIsManual] = useState(false);
   const [updateStatus, setUpdateStatus] = useState(null);
@@ -66,10 +68,53 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
   const orcidInputRef = useRef(null);
 
   useEffect(() => {
+    fetchAuthorMatches();
     if (scopusId || orcidId) {
       setReviewed(true);
     }
   }, [scopusId, orcidId]);
+
+  const fetchAuthorMatches = async () => {
+    setLoading(true);
+    let formattedElsevierMatches = [];
+    let formattedOrcidMatches = [];
+    try {
+      const elsevierMatches = await getElsevierAuthorMatches('Michael', 'Hayden', 'University of British Columbia');
+      formattedElsevierMatches = elsevierMatches.map(match => ({
+        last_name: match.last_name || '',
+        first_name: match.first_name || '',
+        current_affiliation: match.current_affiliation || '',
+        name_variants: match.name_variants || '',
+        subjects: match.subjects || '',
+        scopus_id: match.scopus_id || '',
+        orcid: match.orcid ? match.orcid.replace(/[\[\]]/g, '') : ''
+      }));
+      console.log("formattedElsevierMatches", formattedElsevierMatches);
+    } catch (error) {
+      console.error("Error fetching elsevier matches:", error);
+    }    
+  
+    try {
+      const orcidMatches = await getOrcidAuthorMatches('Michael', 'Hayden', 'University of British Columbia');
+      formattedOrcidMatches = orcidMatches.map(match => ({
+        last_name: match.last_name || '',
+        first_name: match.first_name || '',
+        current_affiliation: "University of British Columbia",
+        name_variants: match.name_variants || '',
+        subjects: match.keywords ? match.keywords.replace(/[\[\]]/g, '') : [],
+        scopus_id: '',
+        orcid: match.orcid_id || ''
+      }));
+      console.log("formattedOrcidMatches", formattedOrcidMatches);
+    } catch (error) {
+      console.error("Error fetching orcid matches:", error);
+    }
+  
+    const authors = [...formattedElsevierMatches, ...formattedOrcidMatches];
+    setAuthors(authors);
+    setLoading(false);
+  };
+  
 
   const handleLinkClick = (author) => {
     setLoading(true);
@@ -192,7 +237,9 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
                 {author.first_name} {author.last_name}
               </p>
               <p className="text-sm">{author.current_affiliation}</p>
-              <p className="text-sm">{author.subjects.join(", ")}</p>
+              <p className="text-sm">{author.subjects}</p>
+              <p className="text-sm">Scopus ID: {author.scopus_id || 'Not found'}</p>
+              <p className="text-sm">Orcid ID: {author.orcid || 'Not found'}</p>
             </div>
             <div>
               <button

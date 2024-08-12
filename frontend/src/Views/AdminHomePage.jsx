@@ -5,7 +5,6 @@ import AdminMenu from '../Components/AdminMenu.jsx';
 import Filters from '../Components/Filters.jsx';
 import ManageUser from '../Components/ManageUser.jsx';
 import UserCard from '../Components/UserCard.jsx';
-import ChangeRoleModal from '../Components/ChangeRoleModal.jsx';
 import { getAllUsers } from '../graphql/graphqlHelpers.js';
 
 const AdminHomePage = ({ userInfo, getCognitoUser }) => {
@@ -14,7 +13,6 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
   const [activeUser, setActiveUser] = useState(null);
   const [activeFilters, setActiveFilters] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [openChangeRoleModal, setOpenChangeRoleModal] = useState(false);
 
   useEffect(() => {
     fetchAllUsers();
@@ -122,9 +120,6 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
               </div>
             )}
           </div>
-        )}
-        {openChangeRoleModal && (
-          <ChangeRoleModal done={true}/>
         )}
       </main>
     </PageContainer>
