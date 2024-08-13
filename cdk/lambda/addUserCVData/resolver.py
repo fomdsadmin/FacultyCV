@@ -21,9 +21,9 @@ def addUserCVData(arguments):
     print("Connected to Database")
     cursor = connection.cursor()
 
-    # Check if an entry with the same data_details exists
+    # Check if an entry with the same data_details, user_id, and data_section_id exists
     data_details_json = json.dumps(arguments['data_details'])
-    cursor.execute("SELECT COUNT(*) FROM user_cv_data WHERE data_details::jsonb = %s", (data_details_json,))
+    cursor.execute("SELECT COUNT(*) FROM user_cv_data WHERE data_details::jsonb = %s AND user_id = %s AND data_section_id = %s", (data_details_json, arguments['user_id'], arguments['data_section_id']))
     existing_count = cursor.fetchone()[0]
 
     if existing_count == 0:

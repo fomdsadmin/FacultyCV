@@ -51,7 +51,6 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         const publicationJSON = JSON.stringify(publication).replace(/"/g, '\\"');
         // Handle adding new entry using data_details
         try {
-          //const data_details_json = data_details.replace(/"/g, '\\"'); // Escape special characters
           console.log('Adding new entry:', `"${publicationJSON}"`);
           const result = await addUserCVData(user.user_id, section.data_section_id, `"${publicationJSON}"`);
           console.log(result);
