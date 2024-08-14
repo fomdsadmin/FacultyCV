@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
 import { addUser, getUser, updateUser, getExistingUser } from '../graphql/graphqlHelpers.js';
@@ -11,7 +11,7 @@ const AuthPage = ({ getCognitoUser }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState('');
-  const [institution_user_id, setInstitutionUserId] = useState('12345'); // INSTITUTION USER ID TO ADD BULK USERS
+  const [institution_user_id, setInstitutionUserId] = useState('12345'); // HARDCODED INSTITUTION USER ID TO ADD BULK USERS
   const [newUserPassword, setNewUserPassword] = useState(false);
   const [newSignUp, setNewSignUp] = useState(false);
   const [signUpConfirmation, setSignUpConfirmation] = useState(false);
@@ -181,7 +181,6 @@ const AuthPage = ({ getCognitoUser }) => {
 
   const storeUserData = async (first_name, last_name, email, role, institution_user_id) => {
     setLoading(true);
-
     //sign in user
     try {
       let user = null;
@@ -199,7 +198,6 @@ const AuthPage = ({ getCognitoUser }) => {
       setLoading(false);
       return;
     }
-
     //put user in user group
 
 

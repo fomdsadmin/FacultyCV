@@ -8,6 +8,7 @@ import { DatabaseStack } from '../lib/database-stack';
 import { DbFetchStack } from '../lib/dbfetch-stack';
 import { DataFetchStack } from '../lib/datafetch-stack';
 import { GrantDataStack } from '../lib/grantdata-stack';
+import { PatentDataStack } from '../lib/patentdata-stack';
 
 const app = new cdk.App();
 
@@ -36,5 +37,9 @@ const dataFetchStack = new DataFetchStack(app, 'DataFetchStack', databaseStack, 
 );
 
 const grantDataStack = new GrantDataStack(app, 'GrantDataStack', vpcStack, databaseStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
+
+const patentDataStack = new PatentDataStack(app, 'PatentDataStack', grantDataStack, databaseStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );

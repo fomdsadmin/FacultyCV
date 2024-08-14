@@ -1,8 +1,9 @@
 import { generateClient } from 'aws-amplify/api';
 import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUsersQuery, 
     getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, 
-    getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
-    getTeachingDataMatchesQuery, getPublicationMatchesQuery, getSecureFundingMatchesQuery} from './queries';
+    getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, 
+    getAllTemplatesQuery, getTeachingDataMatchesQuery, getPublicationMatchesQuery, 
+    getSecureFundingMatchesQuery, getPatentMatchesQuery} from './queries';
 import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -353,6 +354,26 @@ export const getPublicationMatches = async (scopus_id, page_number, results_per_
 export const getSecureFundingMatches = async (first_name, last_name) => {
     const results = await runGraphql(getSecureFundingMatchesQuery(first_name, last_name));
     return results['data']['getSecureFundingMatches'];
+}
+
+/**
+ * Function to get patent matches from patents data
+ * Arguments:
+ * first_name,
+ * last_name
+ * Return value:
+ * [
+ *  {
+ *      secure_funding_id
+ *      first_name,
+ *      last_name,
+ *      data_details: JSON string
+ *  }, ...
+ * ]
+ */
+export const getPatentMatches = async (first_name, last_name) => {
+    const results = await runGraphql(getPatentMatchesQuery(first_name, last_name));
+    return results['data']['getPatentMatches'];
 }
 
 // --- PUT ---

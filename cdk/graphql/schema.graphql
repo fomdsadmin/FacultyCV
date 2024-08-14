@@ -115,6 +115,13 @@ type SecureFunding {
   data_details: AWSJSON! #JSON
 }
 
+type Patent {
+  patent_id: String!
+  first_name: String!
+  last_name: String!
+  data_details: AWSJSON! #JSON
+}
+
 type Query {
     getUser(email: String!): User
     getExistingUser(institution_user_id: String!): User
@@ -131,6 +138,7 @@ type Query {
     getPublicationMatches(scopus_id: String!, page_number: Int!, results_per_page: Int!): PublicationMatches
     getSecureFundingMatches(first_name: String!, last_name: String!): [SecureFunding]
     getAllUsers: [ User ]
+    getPatentMatches(first_name: String!, last_name: String!): [Patent]
 }
 
 type Mutation {

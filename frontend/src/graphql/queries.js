@@ -252,3 +252,17 @@ export const getSecureFundingMatchesQuery = (first_name, last_name) => `
         }
     }
 `;
+
+export const getPatentMatchesQuery = (first_name, last_name) => `
+    query GetPatentMatches {
+        getPatentMatches (
+            first_name: "${first_name}",
+            last_name: "${last_name}"
+        ) {
+            patent_id
+            first_name
+            last_name
+            data_details
+        }
+    }
+`;
