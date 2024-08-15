@@ -94,11 +94,11 @@ const NewSection = ({ onBack, getDataSections, sections }) => {
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Data Type</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Section Type</label>
           <input
             type="text"
             className="input input-bordered w-full"
-            placeholder="Enter section data type"
+            placeholder="Enter section type"
             value={dataType}
             onChange={(e) => setDataType(e.target.value)}
           />

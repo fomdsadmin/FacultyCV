@@ -16,7 +16,7 @@ type User {
   institution_user_id: String
   scopus_id: String
   orcid_id: String
-  joined_timestamp: AWSTimestamp
+  joined_timestamp: String
 }
 
 type DataSection {
@@ -143,6 +143,8 @@ type Query {
 }
 
 type Mutation {
+    addToUserGroup(userName: String!, userGroup: String!): String
+
     generatePDF(first_name: String!): String
 
     addUser(

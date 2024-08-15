@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, 
+  getCurrentUser, resetPassword, confirmResetPassword, updatePassword } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
-import { addUser, getUser, updateUser, getExistingUser } from '../graphql/graphqlHelpers.js';
+import { addUser, getUser, updateUser, getExistingUser, addToUserGroup } from '../graphql/graphqlHelpers.js';
 import { useNavigate } from 'react-router-dom';
 
 const AuthPage = ({ getCognitoUser }) => {
@@ -10,29 +11,20 @@ const AuthPage = ({ getCognitoUser }) => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState('');
-  const [institution_user_id, setInstitutionUserId] = useState('12345'); // HARDCODED INSTITUTION USER ID TO ADD BULK USERS
+  const [role, setRole] = useState('Faculty');
+  const [institution_user_id, setInstitutionUserId] = useState('0'); // HARDCODED INSTITUTION USER ID TO ADD BULK USERS
   const [newUserPassword, setNewUserPassword] = useState(false);
   const [newSignUp, setNewSignUp] = useState(false);
   const [signUpConfirmation, setSignUpConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
-  //TODO: SET MORE ERRORS (make one error) (username/password incorrect, no user found, etc.) AND FIX ERROR VIEW
   const [passwordError, setPasswordError] = useState('');
   const [confirmationError, setConfirmationError] = useState('');
+  const [incorrectPasswordError, setIncorrectPasswordError] = useState('');
   const [forgotPassword, setForgotPassword] = useState(false); //TODO: FORGOT PASSWORD FUNCTIONALITY
   const navigate = useNavigate();
 
-  async function getUserGroup() {
-    try {
-      const session = await fetchAuthSession();
-      const groups = session.tokens.idToken.payload['cognito:groups']
-      return groups ? groups[0] : null;
-    } catch (error) {
-      console.log('Error getting user group:', error);
-    }
-  }
-
   const handleLogin = async (event) => {
+    setIncorrectPasswordError('');
     event.preventDefault();
     try {
       setLoading(true);
@@ -55,6 +47,7 @@ const AuthPage = ({ getCognitoUser }) => {
       }
     } catch (error) {
       console.log('Error logging in:', error);
+      setIncorrectPasswordError('Incorrect email or password.');
       setLoading(false);
     }
   };
@@ -81,16 +74,7 @@ const AuthPage = ({ getCognitoUser }) => {
       });
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (user.isSignedIn) {
-        if (role)
-          storeUserData(firstName, lastName, username, role, institution_user_id);
-        else {
-          // If role isn't set, fetch the user group
-          const group = await getUserGroup();
-          if (!group) {
-            throw new Error('User group not found');
-          }
-          storeUserData(firstName, lastName, username, group, institution_user_id);
-        }
+        storeUserData(firstName, lastName, username, role, institution_user_id);
       }
     } catch (error) {
       console.log('Error setting new password:', error);
@@ -198,9 +182,17 @@ const AuthPage = ({ getCognitoUser }) => {
       setLoading(false);
       return;
     }
+
     //put user in user group
-
-
+    try {
+      const result = await addToUserGroup(email, role);
+      console.log('Adding user to user group', result);
+    } catch (error) {
+      console.log('Error adding user to group:', error);
+      setLoading(false);
+      return;
+    }
+    
     // put user data in database if it doesn't already exist
     try {
       const userInformation = await getExistingUser(institution_user_id);
@@ -251,9 +243,25 @@ const AuthPage = ({ getCognitoUser }) => {
                   <button className="btn btn-neutral mt-6 mb-3 w-full text-base" type="submit">Sign In</button>
                 </form>
                 <span className="text-zinc-600 text-sm font-bold underline underline-offset-2 cursor-pointer" onClick={() => setForgotPassword(true)}>Forgot Password</span>
+                {incorrectPasswordError && <div className="text-m mt-4 text-red-600">{incorrectPasswordError}</div>}
               </div>
             </div>
           )}
+          {/* {!loading && forgotPassword && (
+            <div>
+              <h1 className="text-3xl font-bold my-3 text-zinc-600">Reset Password</h1>
+              <p className='text-sm'>Please enter the email for your account.</p>
+              <div className='flex flex-col items-center justify-center max-w-xl'>
+                <form onSubmit>
+                  <label className="block text-xs mt-4">Email</label>
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" value={username} onChange={e => setUsername(e.target.value)} placeholder="Email" required />
+                  {passwordError && <div className="block text-m mb-1 mt-6 text-red-600">{passwordError}</div>}
+                  <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Send Reset Code</button>
+                </form>
+              </div>
+            </div>
+            
+          )} */}
           {!loading && newSignUp && (
             <div className='mt-20 mb-5'>
               <div>
@@ -292,13 +300,33 @@ const AuthPage = ({ getCognitoUser }) => {
           {!loading && newUserPassword && (
             <div>
               <h1 className="text-3xl font-bold my-3 text-zinc-600">New User</h1>
-              <p className='text-sm'>Please enter a new password for your account.</p>
-              <div className='flex flex-col items-center justify-center'>
+              <p className='text-sm'>Please enter a the following information for your account.</p>
+              <div className='flex flex-col items-center justify-center max-w-xl'>
                 <form onSubmit={handleNewPasswordUser}>
+                  <label className="block text-xs mt-4">First Name</label>
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First Name" required />
+                  <label className="block text-xs mt-4">Last Name</label>
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last Name" required />
+                  <label className="block text-xs mt-4">New Password</label>
                   <input className="input input-bordered mt-1 h-10 w-full text-xs" name="newPassword" placeholder="New Password" type="password" required />
+                  <label className="block text-xs mt-4">Confirm New Password</label>
                   <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmNewPassword" placeholder="Confirm New Password" type="password" required />
+                  <div className="mt-2 flex justify-between">
+                    <div className="mt-2">
+                      <input type="radio" id="faculty" name="role" value="Faculty" onChange={e => setRole(e.target.value)} defaultChecked />
+                      <label className="ml-1 text-xs">Faculty</label>
+                    </div>
+                    <div className="mt-2">
+                        <input type="radio" id="assistant" name="role" value="Assistant"onChange={e => setRole(e.target.value)} />
+                        <label className="ml-1 text-xs">Assistant</label>
+                    </div>
+                    <div className="mt-2">
+                        <input type="radio" id="admin" name="role" value="Admin"onChange={e => setRole(e.target.value)} />
+                        <label className="ml-1 text-xs">Admin</label>
+                    </div>
+                  </div>
                   {passwordError && <div className="block text-m mb-1 mt-6 text-red-600">{passwordError}</div>}
-                  <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Submit New Password</button>
+                  <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Submit</button>
                 </form>
               </div>
             </div>

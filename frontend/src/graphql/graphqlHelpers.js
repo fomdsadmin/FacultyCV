@@ -8,7 +8,8 @@ import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUs
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
     updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
-    linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation, 
+    linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation,
+    addToUserGroupMutation
     } from './mutations';
 
 const runGraphql = async (query) => {
@@ -376,18 +377,16 @@ export const getPatentMatches = async (first_name, last_name) => {
     return results['data']['getPatentMatches'];
 }
 
-// --- PUT ---
+// --- POST ---
 
 /**
- * Function to update user data
- * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
- *      user_id
- *      first_name
- *      last_name
- *      preferred_name
- *      email
-
-// --- POST ---
+ * Function to add user to user group
+ *
+ */
+export const addToUserGroup = async (userName, userGroup) => {
+    const results = await runGraphql(addToUserGroupMutation(userName, userGroup));
+    return results['data']['addToUserGroup'];
+}
 
 /**
  * Function to add user CV data - the section info associated with a user
