@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
-import ProfileLinkModal from '../Components/ProfileLinkModal.jsx';
-import { getOrcidAuthorMatches, linkOrcid, linkScopusId, updateUser } from '../graphql/graphqlHelpers.js';
-import { getAllUniversityInfo, getElsevierAuthorMatches } from '../graphql/graphqlHelpers.js';
+import { updateUser } from '../graphql/graphqlHelpers.js';
+import { getAllUniversityInfo } from '../graphql/graphqlHelpers.js';
+import ProfileLinkModal from '../Components/ProfileLinkModal.jsx'; // Import the modal
 
 const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -13,9 +13,10 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   const [campuses, setCampuses] = useState([]);
   const [ranks, setRanks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(false);
   const [scopusId, setScopusId] = useState(userInfo.scopus_id || "");
   const [orcidId, setOrcidId] = useState(userInfo.orcid_id || "");
+  const [modalOpen, setModalOpen] = useState(false); // State to control modal visibility
+  const [activeModal, setActiveModal] = useState(null); // Track which ID (Scopus or ORCID) is being modified
 
   useEffect(() => {
     sortUniversityInfo();
@@ -53,14 +54,15 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
     });
   };
 
-  const showModal = () => {
-    setModal(!modal);
+  const handleScopusIdClick = () => {
+    setActiveModal('Scopus');
+    setModalOpen(true);
   };
 
-  const handleClose = () => {
-    setModal(false);
+  const handleOrcidIdClick = () => {
+    setActiveModal('ORCID');
+    setModalOpen(true);
   };
-
   const handleLink = async (newScopusId, newOrcidId) => {
     try {
       await updateUser(
@@ -79,22 +81,19 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
         userInfo.campus,
         '',
         userInfo.institution_user_id,
-        newScopusId,
-        newOrcidId
+        newScopusId, // Update Scopus IDs
+        newOrcidId   // Update ORCID ID
       );
-      setScopusId(newScopusId);
-      setOrcidId(newOrcidId);
-      getUser(userInfo.email);
+  
+      setScopusId(newScopusId); // Save the new Scopus ID string
+      setOrcidId(newOrcidId);   // Save the new ORCID ID
+  
+      getUser(userInfo.email);  // Fetch the updated user info
     } catch (error) {
       console.error('Error updating user:', error);
     }
   };
   
-  /*const testOnClick = async () => {
-    const result = await getTeachingDataMatches(userInfo.institution_user_id);
-    console.log(result);
-    console.log(await linkTeachingData(userInfo.user_id, result[0].data_details))
-  }*/
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -126,6 +125,10 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
       console.error('Error updating user:', error);
       setIsSubmitting(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
   };
 
   return (
@@ -210,43 +213,46 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               </div>
             </div>
 
-            {modal && (
-              <ProfileLinkModal 
-                setClose={handleClose} 
-                orcidId={orcidId} 
-                setOrcidId={setOrcidId} 
-                scopusId={scopusId} 
-                setScopusId={setScopusId} 
-                onLink={handleLink} 
-              />
-            )}
-
-           
-          <h2 className="text-lg font-bold mb-2 text-zinc-500">Identifications</h2>
-          <button type="button" onClick={showModal} className="btn btn-secondary text-white py-1 px-2 float-left w-1/5 min-h-0 h-8 mr-4 mt-5 leading-tight">
-            Link Identifications
-          </button>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-            <div>
-              <label className="block text-sm mb-1">Scopus ID(s)</label>
-              <input id="scopusId" name="scopusId" type="text" value={userInfo.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly onChange={(e) => setUserInfo({ ...userInfo, scopus_id: e.target.value })}/>
+            <h2 className="text-lg font-bold mb-2 text-zinc-500">Identifications</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <div>
+                <label className="block text-sm mb-1">Scopus ID</label>
+                <button
+                  type="button"
+                  onClick={handleScopusIdClick}
+                  className="btn btn-sm btn-secondary text-white py-1 px-2 w-full"
+                >
+                  {scopusId ? `Scopus ID: ${scopusId}` : "Add Scopus ID"}
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">ORCID ID</label>
+                <button
+                  type="button"
+                  onClick={handleOrcidIdClick}
+                  className="btn btn-sm btn-secondary text-white py-1 px-2 w-full"
+                >
+                  {orcidId ? `ORCID ID: ${orcidId}` : "Add ORCID ID"}
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm mb-1">Orcid ID</label>
-              <input id="orcidId" name="orcidId" type="text" value={userInfo.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly onChange={(e) => setUserInfo({ ...userInfo, orcid_id: e.target.value })}/>
-            </div>
-            {/* <div>
-              <label className="block text-sm mb-1">Institution ID</label>
-              <input id="institutionUserId" name="institutionUserId" type="text" value={userInfo.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, institution_user_id: e.target.value })}/>
-            </div> */}
-          </div>
-          
-          <button type="submit" className="btn btn-success text-white py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save'}
-          </button>
+            
+            <button type="submit" className="btn btn-success text-white py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save'}
+            </button>
           </form>
         )}
       </main>
+
+      {modalOpen && (
+        <ProfileLinkModal 
+          setClose={handleCloseModal} 
+          setOrcidId={setOrcidId} 
+          setScopusId={setScopusId} 
+          orcidId={orcidId} 
+          scopusId={scopusId} 
+        />
+      )}
     </PageContainer>
   );
 };
