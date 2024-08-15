@@ -20,6 +20,7 @@ export const getUserQuery = (email) => `
             institution_user_id
             scopus_id
             orcid_id
+            joined_timestamp
         }
     }
 `;
@@ -70,6 +71,7 @@ export const getExistingUserQuery = (institution_user_id) => `
             institution_user_id
             scopus_id
             orcid_id
+            joined_timestamp
         }
     }
 `;

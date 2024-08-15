@@ -51,7 +51,8 @@ def getUser(arguments):
             'keywords': result[13],
             'institution_user_id': result[14],
             'scopus_id': result[15],
-            'orcid_id': result[16]
+            'orcid_id': result[16],
+            'joined_timestamp': result[17]
         }
     else:
         user = "User not found"

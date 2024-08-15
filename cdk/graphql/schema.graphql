@@ -16,6 +16,7 @@ type User {
   institution_user_id: String
   scopus_id: String
   orcid_id: String
+  joined_timestamp: AWSTimestamp
 }
 
 type DataSection {

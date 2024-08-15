@@ -68,7 +68,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('keywords', 'varchar', '', False))
     columns.append(createColumn('institution_user_id', 'varchar', '', False))
     columns.append(createColumn('scopus_id', 'varchar', '', False))
-    columns.append(createColumn('orcid_id', 'varchar', '', True))
+    columns.append(createColumn('orcid_id', 'varchar', '', False))
+    columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', True))  # Add this line
     query = createQuery('users', columns)
     cursor.execute(query)
 

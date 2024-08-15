@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
 import { addSection } from '../graphql/graphqlHelpers';
 
-const NewSection = ({ onBack, getDataSections }) => {
+const NewSection = ({ onBack, getDataSections, sections }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dataType, setDataType] = useState('');
@@ -28,6 +28,7 @@ const NewSection = ({ onBack, getDataSections }) => {
   const handleCreateSection = async () => {
     const newErrors = {};
     if (!title) newErrors.title = 'Title is required';
+    if (sections.some(section => section.title === title)) newErrors.title = 'Section title already exists';
     if (!description) newErrors.description = 'Description is required';
     if (!dataType) newErrors.dataType = 'Data type is required';
     if (attributes.length === 0 || Object.keys(attributes[0]).length === 0) newErrors.attributes = 'At least one attribute is required';
