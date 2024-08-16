@@ -16,7 +16,7 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
     setInitialRender(false);
     try {
       // Switch to first name and last name
-      const retrievedData = await getPatentMatches('Steven', 'Pelech');
+      const retrievedData = await getPatentMatches(user.first_name, user.last_name);
       console.log(retrievedData);
   
       const allDataDetails = []; // Initialize an array to accumulate data_details
@@ -77,8 +77,13 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
     <dialog className="modal-dialog" open>
       <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" onClick={onClose}>✕</button>
       {initialRender ? (
-        <div className='flex items-center justify-center w-full mt-5 mb-5'>
-          <button type="button" className="btn btn-secondary" onClick={() => fetchPatentsData()}>Fetch Patents Data</button>
+        <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
+          <div className='text-center'>
+            The data is fetched from the European Patent Office, which contains both published patent applications and published patents from not just European countries but also other major intellectual property offices.
+          </div>
+          <button type="button" className="btn btn-secondary mt-5" onClick={() => fetchPatentsData()}>
+            Fetch Patents Data
+          </button>
         </div>
       ) : (
         fetchingData ? (

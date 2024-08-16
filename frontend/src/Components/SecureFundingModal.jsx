@@ -16,7 +16,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     setInitialRender(false);
     try {
       // Switch to first name and last name
-      const retrievedData = await getSecureFundingMatches('Susan', 'Day');
+      const retrievedData = await getSecureFundingMatches(user.first_name, user.last_name);
       console.log(retrievedData);
   
       const allDataDetails = []; // Initialize an array to accumulate data_details
@@ -75,9 +75,18 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     <dialog className="modal-dialog" open>
       <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" onClick={onClose}>✕</button>
       {initialRender ? (
-        <div className='flex items-center justify-center w-full mt-5 mb-5'>
-          <button type="button" className="btn btn-secondary" onClick={() => fetchSecureFundingData()}>Fetch Secure Funding Data</button>
-        </div>
+        <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
+          <div className='text-center mb-4'>
+            <div className='mb-2'>The data is fetched from the following grant sources:</div>
+            <div className='text-sm'>1. Canadian Institutes of Health Research (CIHR)</div>
+            <div className='text-sm'>2. Natural Sciences and Engineering Research Council of Canada (NSERC)</div>
+            <div className='text-sm'>3. Social Sciences and Humanities Research Council (SSHRC)</div>
+            <div className='text-sm'>4. Canada Foundation for Innovation (CFI)</div>
+          </div>
+          <button type="button" className="btn btn-secondary mt-5" onClick={() => fetchSecureFundingData()}>
+            Fetch Secure Funding Data
+          </button>
+        </div>      
       ) : (
         fetchingData ? (
           <div className='flex items-center justify-center w-full mt-5 mb-5'>

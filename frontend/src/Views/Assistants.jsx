@@ -82,6 +82,10 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
                 </button>
               </div>
 
+              {pendingConnections.length === 0 && confirmedConnections.length === 0 &&
+                <div className="text-center m-4 text-lg text-zinc-600">No connections found</div>
+              }
+              
               {pendingConnections.length > 0 && 
                 <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Invitations</h2>
               }

@@ -86,6 +86,7 @@ function App() {
       setUser(currentUser);
       console.log(currentUser.signInDetails.loginId, "is signed in");
       await getUserInfo(currentUser.signInDetails.loginId);
+      getUserGroup().then((group) => setUserGroup(group));
       <Navigate to="/home" />
     }
     catch (error) {
@@ -101,7 +102,6 @@ function App() {
 
   useEffect(() => {    
     getCognitoUser();
-    getUserGroup().then((group) => setUserGroup(group));
   }, []);
 
   if (loading) {
