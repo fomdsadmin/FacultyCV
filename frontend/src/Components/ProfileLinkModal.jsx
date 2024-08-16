@@ -89,7 +89,7 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
         scopus_id: match.scopus_id || '',
         orcid: match.orcid ? match.orcid.replace(/[\[\]]/g, '') : ''
       }));
-      
+      console.log("formattedElsevierMatches", formattedElsevierMatches);
     } catch (error) {
       console.error("Error fetching elsevier matches:", error);
     }    
@@ -105,7 +105,7 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
         scopus_id: '',
         orcid: match.orcid_id || ''
       }));
-      
+      console.log("formattedOrcidMatches", formattedOrcidMatches);
     } catch (error) {
       console.error("Error fetching orcid matches:", error);
     }

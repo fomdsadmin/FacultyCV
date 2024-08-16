@@ -29,7 +29,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
       attributes: JSON.parse(section.attributes),
     }));
 
-    
+    console.log('Sections:', parsedSections);
 
     setDataSections(parsedSections);
     setLoading(false);

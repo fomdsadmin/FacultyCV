@@ -10,7 +10,7 @@ const DeleteTemplateModal = ({ setIsModalOpen, template, onBack, fetchTemplates 
     setDeletingTemplate(true);
     try {
       const result = await deleteTemplate(template.template_id);
-      
+      console.log('Deleted template:', result);
     } catch (error) {
       console.error('Error deleting template: ', error);
     }

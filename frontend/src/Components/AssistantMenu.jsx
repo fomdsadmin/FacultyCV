@@ -12,12 +12,12 @@ const AssistantMenu = ({ userName, getCognitoUser }) => {
     setIsLoggingOut(true);
     try {
       await signOut();
-      
+      console.log('Logged out');
       getCognitoUser();
-      
+      console.log('Navigating to /auth');
       navigate('/auth');
     } catch (error) {
-      
+      console.log('Error logging out:', error);
     } finally {
       setIsLoggingOut(false);
     }

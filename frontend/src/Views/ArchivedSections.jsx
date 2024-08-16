@@ -23,7 +23,7 @@ const ArchivedSections = ({ getCognitoUser, userInfo }) => {
         attributes: JSON.parse(section.attributes),
       }));
 
-      
+      console.log('Sections:', parsedSections);
 
       setDataSections(parsedSections);
     } catch (error) {
@@ -50,11 +50,11 @@ const ArchivedSections = ({ getCognitoUser, userInfo }) => {
     setLoading(true);
     try {
       const result = await updateSection(id, false);
-      
+      console.log('Data section restored:', result);
     } catch (error) {
       console.error('Error restoring section:', error);
     }
-    
+    console.log('Restore section:', id);
     await getDataSections();
     setLoading(false);
   };

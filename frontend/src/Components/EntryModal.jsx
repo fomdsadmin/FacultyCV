@@ -8,7 +8,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        
+        console.log(fields);
         setFormData(fields);
     }, []);
 
@@ -25,17 +25,17 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
         e.preventDefault();
         // Stringify formData and escape special characters
         const formDataString = JSON.stringify(formData).replace(/"/g, '\\"');
-        
+        console.log(`"${formDataString}"`);
         try {
             // Handle form submission here
             if (isNew) {
                 // Handle adding new entry
                 const result = await addUserCVData(user.user_id, section.data_section_id, `"${formDataString}"`);
-                
+                console.log(result);
             } else {
                 // Handle editing existing entry
                 const result = await updateUserCVData(user_cv_data_id, `"${formDataString}"`);
-                
+                console.log(result);
             }
         } catch (error) {
             console.error('Error submitting form:', error);

@@ -25,7 +25,7 @@ const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
           ...data,
           data_details: JSON.parse(data.data_details),
         }));
-        
+        console.log(parsedData);
     
         // Match the data with their respective sections
         const matchedData = await fetchAndMatchSections(parsedData);
@@ -35,13 +35,13 @@ const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
         }
     
         const filtered = matchedData.filter(entry => {
-          
+          console.log("entry", entry);
           const { title, description, attributes } = entry;
           const [fieldA, fieldB] = rankFields(attributes);
     
           const searchTermLower = searchTerm.toLowerCase();
     
-          
+          console.log(searchTermLower);
     
           return (
             title.toLowerCase().includes(searchTermLower) ||
@@ -69,7 +69,7 @@ const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
           attributes: JSON.parse(section.attributes),
         }));
     
-        
+        console.log(parsedSections);
     
         // Add additional fields from parsedSections to parsedData if their data_section_ids match
         const updatedData = parsedData.map(data => {
@@ -103,7 +103,7 @@ const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
         // Implement restore functionality here
         try {
           const result = await updateUserCVDataArchive(entry.user_cv_data_id, false);
-          
+          console.log('Restored entry ', result);
         }
         catch (error) {
           console.error('Error restoring entry:', error);

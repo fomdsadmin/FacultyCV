@@ -36,7 +36,7 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
     // Implement restore functionality here
     try {
       const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
-      
+      console.log('Archived entry ', result);
     }
     catch (error) {
       console.error('Error archiving entry:', error);
@@ -49,7 +49,7 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
     const newEntry = {fields: entry.data_details, data_id: entry.user_cv_data_id};
     setIsNew(false);
     setSelectedEntry(newEntry);
-    
+    console.log(newEntry);
     setIsModalOpen(true);
   };
   
@@ -64,7 +64,7 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
         section.attributes = JSON.parse(section.attributes);
       }
       const emptyEntry = generateEmptyEntry(section.attributes);
-      
+      console.log("emptyEntry", emptyEntry);
       const newEntry = {fields: emptyEntry, data_id: null};
       setSelectedEntry(newEntry);
       setIsModalOpen(true);
@@ -74,7 +74,7 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
     setRetrievingData(true);
     try {
       const retrievedData = await getTeachingDataMatches(user.institution_user_id);
-      
+      console.log(retrievedData);
 
       for (const dataObject of retrievedData) {
         const { data_details } = dataObject; // Extract the data_details property
@@ -82,9 +82,9 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
         // Handle adding new entry using data_details
         try {
           const data_details_json = data_details.replace(/"/g, '\\"'); // Escape special characters
-          
+          console.log('Adding new entry:', `"${data_details_json}"`);
           const result = await addUserCVData(user.user_id, section.data_section_id, `"${data_details_json}"`);
-          
+          console.log(result);
         } catch (error) {
           console.error('Error adding new entry:', error);
         }
@@ -105,17 +105,17 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
         data_details: JSON.parse(data.data_details),
       }));
 
-      
+      console.log(parsedData)
 
       const filteredData = parsedData.filter(entry => {
         const [field1, field2] = rankFields(entry.data_details);
-        
+        console.log(field1, field2);
         return (
           (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
-      
+      console.log("filtered data: " + JSON.stringify(filteredData));
   
       const rankedData = filteredData.map(entry => {
         const [field1, field2] = rankFields(entry.data_details);

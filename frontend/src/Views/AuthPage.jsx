@@ -38,7 +38,7 @@ const AuthPage = ({ getCognitoUser }) => {
         username: username,
         password: password
       });
-      
+      console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (!user.isSignedIn) {
         setUsername(username);
         if (user.nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
@@ -53,7 +53,7 @@ const AuthPage = ({ getCognitoUser }) => {
         navigate('/home');
       }
     } catch (error) {
-      
+      console.log('Error logging in:', error);
       setLoginError('Incorrect email or password.');
       setLoading(false);
     }
@@ -77,7 +77,7 @@ const AuthPage = ({ getCognitoUser }) => {
     setError('');
     try {
       setLoading(true);
-      
+      console.log('Setting new password for user:', username);
       const attributes = {};
       const user = await confirmSignIn({
         challengeResponse: newPassword,
@@ -85,12 +85,12 @@ const AuthPage = ({ getCognitoUser }) => {
           userAttributes: attributes
         }
       });
-      
+      console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (user.isSignedIn) {
         storeUserData(firstName, lastName, username, role, institution_user_id);
       }
     } catch (error) {
-      
+      console.log('Error setting new password:', error);
       setLoading(false);
       setNewUserPassword(false);
     }
@@ -108,12 +108,12 @@ const AuthPage = ({ getCognitoUser }) => {
         confirmationCode: confirmationCode
       });
       setLoading(false);
-      
+      console.log('User signed up:', user.isSignUpComplete, user.nextStep.signInStep);
       if (user.isSignUpComplete) {
         storeUserData(firstName, lastName, username, role, institution_user_id);
       }
     } catch (error) {
-      
+      console.log('Error setting new password:', error);
       setError('Invalid confirmation code');
       setLoading(false);
     }
@@ -126,7 +126,7 @@ const AuthPage = ({ getCognitoUser }) => {
       setLoading(false);
       setError('');
     } catch (error) {
-      
+      console.log('Error resending confirmation code:', error);
       setLoading(false);
     }
   };
@@ -166,14 +166,14 @@ const AuthPage = ({ getCognitoUser }) => {
       });
       setLoading(false);
       setNewSignUp(false);
-      
+      console.log('User signed up:', isSignUpComplete, userId, nextStep);
       if (!isSignUpComplete) {
         if (nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
           setSignUpConfirmation(true);
         }
       }
     } catch (error) {
-      
+      console.log('Error signing up:', error.message);
       if (error.message === 'User already exists') {
         setSignUpError('An account with this email already exists.');
       }
@@ -189,14 +189,14 @@ const AuthPage = ({ getCognitoUser }) => {
       try {
         user = await getCurrentUser();
       } catch (error) {
-        
+        console.log('Not signed in, signing in...', error);
         user = await signIn({
           username: username,
           password: password
         });
       }      
     } catch (error) {
-      
+      console.log('Error getting user:', error);
       setLoading(false);
       return;
     }
@@ -204,9 +204,9 @@ const AuthPage = ({ getCognitoUser }) => {
     //put user in user group
     try {
       const result = await addToUserGroup(email, role);
-      
+      console.log('Adding user to user group', result);
     } catch (error) {
-      
+      console.log('Error adding user to group:', error);
       setLoading(false);
       return;
     }
@@ -214,9 +214,9 @@ const AuthPage = ({ getCognitoUser }) => {
     // put user data in database if it doesn't already exist
     try {
       const userInformation = await getExistingUser(institution_user_id);
-      
+      console.log('User already exists in database');
       if (!userInformation.role) {
-        
+        console.log(`Updating user with group ${role}`);
         const result = await updateUser(
             userInformation.user_id, userInformation.first_name, userInformation.last_name, userInformation.preferred_name,
             email, role, userInformation.bio, userInformation.rank,
@@ -224,20 +224,20 @@ const AuthPage = ({ getCognitoUser }) => {
             userInformation.secondary_faculty, userInformation.campus, userInformation.keywords,
             userInformation.institution_user_id, userInformation.scopus_id, userInformation.orcid_id
         )
-        
+        console.log('updated user:', result)
     
       }
     } catch (error) {
       try {
         const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '');
-        
+        console.log(result);
       } catch (error) {
-        
+        console.log('Error adding user to database:', error);
         setLoading(false);
       }
     }
     getCognitoUser();
-    
+    console.log('User data stored and navigating to home page');
     navigate('/home');
   };
 
@@ -247,9 +247,9 @@ const AuthPage = ({ getCognitoUser }) => {
     try {
       const output = await resetPassword({ username });
       handleResetPasswordNextSteps(output);
-      
+      console.log("username", username);
     } catch (error) {
-      
+      console.log(error.message);
       setMessage("");
       if (error.message === "Attempt limit exceeded, please try after some time.") {
         setForgotPasswordError("Attempt limit exceeded, please try after some time.");
@@ -273,7 +273,7 @@ const AuthPage = ({ getCognitoUser }) => {
       case "DONE":
         setMessage("Successfully reset password.");
         setDone(true);
-        
+        console.log("Successfully reset password.");
         break;
     }
   }
@@ -303,14 +303,14 @@ const AuthPage = ({ getCognitoUser }) => {
         confirmationCode,
         newPassword,
       });
-      
+      console.log("username", username);
       setMessage("Password successfully reset.");
       setDone(true);
       setForgotPasswordError("");
     } catch (error) {
-      
-      
-      
+      console.log(error);
+      console.log(username);
+      console.log(confirmationCode);
       setForgotPasswordError("Invalid confirmation code.");
     }
   }

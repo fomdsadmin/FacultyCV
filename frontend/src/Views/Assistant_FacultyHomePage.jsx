@@ -93,8 +93,8 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
   
   /*const testOnClick = async () => {
     const result = await getTeachingDataMatches(userInfo.institution_user_id);
-    
-    
+    console.log(result);
+    console.log(await linkTeachingData(userInfo.user_id, result[0].data_details))
   }*/
 
   const handleSubmit = async (event) => {

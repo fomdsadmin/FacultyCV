@@ -34,11 +34,11 @@ const Assistant_Reports = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
       attributes: JSON.parse(section.attributes),
     }));
 
-    
+    console.log(parsedSections);
     setDataSections(parsedSections);
-    
+    console.log("building Latex");
     setLoading(false);
-    
+    console.log(userInfo);
   }
 
   const escapeLatex = (text) => {
@@ -70,11 +70,11 @@ const Assistant_Reports = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
   
     for (const section of dataSections) {
       try {
-        
+        console.log(`Fetching data for section: ${section.title}`);
         let sectionData = await getUserCVData(userInfo.user_id, section.data_section_id);
   
         if (!sectionData || sectionData.length === 0) {
-          
+          console.log(`No data found for section ID: ${section.data_section_id}`);
           continue; // Skip to the next section if there's no data
         }
   
@@ -83,11 +83,11 @@ const Assistant_Reports = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
           data_details: JSON.parse(data.data_details),
         }));
   
-        
+        console.log(`Parsed data for section ${section.title}:`, parsedData);
   
         // Get the attribute keys for the table headers
         const headers = Object.keys(section.attributes);
-        
+        console.log(`Headers for section ${section.title}:`, headers);
   
         latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
         latex += `\\begin{tabularx}{\\textwidth}{| ${headers.map(() => 'X').join(' | ')} |}\n`;
@@ -100,7 +100,7 @@ const Assistant_Reports = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
             // Convert header to snake_case to match the keys in data_details
             const key = header.replace(/\s+/g, '_').toLowerCase();
             const value = item.data_details[key];
-            
+            console.log(`Value for key ${key} in section ${section.title}:`, value);
             return escapeLatex(value !== undefined ? value : ''); // Handle missing data
           }).join(' & ');
           latex += `${row} \\\\ \n`;
@@ -116,7 +116,7 @@ const Assistant_Reports = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
   
     latex += `\\end{document}`;
   
-    
+    console.log(latex);
   
     return latex;
   }

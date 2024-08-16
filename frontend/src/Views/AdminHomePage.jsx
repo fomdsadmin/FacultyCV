@@ -23,10 +23,10 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
     try {
         const users = await getAllUsers();
         const filteredUsers = users.filter(user => user.email !== userInfo.email);
-        
+        console.log(filteredUsers);
         setUsers(filteredUsers);
     } catch (error) {
-        
+        console.log('Error getting users:', error);
     }
     setLoading(false);
 }

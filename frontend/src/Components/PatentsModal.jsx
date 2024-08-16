@@ -17,7 +17,7 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
     try {
       // Switch to first name and last name
       const retrievedData = await getPatentMatches(user.first_name, user.last_name);
-      
+      console.log(retrievedData);
   
       const allDataDetails = []; // Initialize an array to accumulate data_details
       const uniqueDataDetails = new Set(); // Initialize a set to track unique entries
@@ -36,7 +36,7 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
         }
       }
 
-      
+      console.log('allDataDetails', allDataDetails);
   
       setAllPatentsData(allDataDetails); // Set the state once after the loop
       setSelectedPatentsData(allDataDetails); // Set the selected data to all data
@@ -61,9 +61,9 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
     for (const data of selectedPatentsData) {
       try {
         const dataJSON = JSON.stringify(data).replace(/"/g, '\\"');
-        
+        console.log('Adding new entry:', `"${dataJSON}"`);
         const result = await addUserCVData(user.user_id, section.data_section_id, `"${dataJSON}"`);
-        
+        console.log(result);
       } catch (error) {
         console.error('Error adding new entry:', error);
       }

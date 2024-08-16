@@ -23,7 +23,7 @@ const Templates = ({ getCognitoUser, userInfo }) => {
     setTemplates([]);
     const retrievedTemplates = await getAllTemplates();
 
-    
+    console.log('Templates:', retrievedTemplates);
 
     setTemplates(retrievedTemplates);
     setLoading(false);

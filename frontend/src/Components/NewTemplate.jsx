@@ -20,7 +20,7 @@ const NewTemplate = ({ onBack, fetchTemplates }) => {
       ...section,
       showMinus: true,
     }));
-    
+    console.log('Sections:', sectionsWithToggle);
     setSections(sectionsWithToggle);
     setLoading(false);
   };
@@ -41,11 +41,11 @@ const NewTemplate = ({ onBack, fetchTemplates }) => {
     }
 
     const selectedSectionIdsString = selectedSectionIds.join(',');
-    
+    console.log('Selected section IDs:', selectedSectionIdsString);
     setAddingTemplate(true);
     try {
       const result = await addTemplate(title, selectedSectionIdsString);
-      
+      console.log('Created template:', result);
     } catch (error) {
       console.error('Error creating template:', error);
     }

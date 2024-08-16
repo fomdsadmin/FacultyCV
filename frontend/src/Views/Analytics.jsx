@@ -35,11 +35,11 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
       setFacultyUsers(filteredFacultyUsers);
       setAssistantUsers(filteredAssistantUsers);
       setAdminUsers(filteredAdminUsers);
-      
+      console.log(users);
       fetchAllUserCVData(filteredFacultyUsers)
       fetchFacultyConnections(filteredAssistantUsers);
     } catch (error) {
-      
+      console.log('Error getting users:', error);
     }
     setLoading(false);
   }
@@ -50,19 +50,19 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
       const universityInfo = await getAllUniversityInfo();
       setDepartments(universityInfo.filter(info => info.type === 'Department').map(info => info.value));
     } catch (error) {
-      
+      console.log('Error getting university info:', error);
     }
     setLoading(false);
   }
 
   async function fetchAllUserCVData(users) {
-    
+    console.log('faculty users', users);
     setLoading(true);
     let dataSections = [];
     try {
       dataSections = await getAllSections();
     } catch (error) {
-      
+      console.log('Error getting data sections:', error);
     }
   
     // Find the IDs for Publications, Secured Funding, and Patents
@@ -81,19 +81,19 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
         const fetchedPublications = await getUserCVData(user.user_id, publicationSectionId);
         publicationsData = [...publicationsData, ...fetchedPublications];
       } catch (error) {
-        
+        console.log(`Error getting publications data for user ${user.user_id}:`, error);
       }
       try {
         const fetchedGrants = await getUserCVData(user.user_id, secureFundingSectionId);
         grantsData = [...grantsData, ...fetchedGrants];
       } catch (error) {
-        
+        console.log(`Error getting grant data for user ${user.user_id}:`, error);
       }
       try {
         const fetchedPatents = await getUserCVData(user.user_id, patentSectionId);
         patentsData = [...patentsData, ...fetchedPatents];
       } catch (error) {
-        
+        console.log(`Error getting patent data for user ${user.user_id}:`, error);
       }
     }
 
@@ -105,7 +105,7 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
         //add object with dataDetails as an int and data.user_id to totalGrantMoneyRaised
         totalGrantMoneyRaised.push({amount: parseInt(dataDetails.amount), user_id: data.user_id});
       } catch (error) {
-        
+        console.log('Error calculating grant', error);
       }
     }
 
@@ -124,10 +124,10 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
     for (const user of users) {
       try {
         const newConnections = await getUserConnections(user.user_id, false);
-        
+        console.log('new connections:', newConnections);
         connections = [...connections, ...newConnections];
       } catch (error) {
-        
+        console.log('Error getting faculty connections:', error);
       }
     }
     setFacultyConnections(connections);
