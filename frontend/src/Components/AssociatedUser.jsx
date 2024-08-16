@@ -18,7 +18,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
     };
 
     useEffect(() => {
-        console.log("connection", connection);
+        
         const calculateFontSize = () => {
             const nameLength = `${connection.assistant_first_name} ${connection.assistant_last_name}`.length;
             if (nameLength > 20) {
@@ -46,7 +46,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
         // handle an actual removal here
         try {
             const response = await deleteUserConnection(connection.user_connection_id);
-            console.log("Removed", response);
+            
         } catch (error) {
             console.error('Error:', error);
         }
@@ -58,7 +58,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
         setIsAccepting(true);
         try {
             const response = await updateUserConnection(connection.user_connection_id, 'confirmed');
-            console.log("Updated", response);
+            
         } catch (error) {
             console.error('Error:', error);
         }

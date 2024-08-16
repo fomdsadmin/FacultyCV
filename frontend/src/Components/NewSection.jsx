@@ -39,9 +39,9 @@ const NewSection = ({ onBack, getDataSections, sections }) => {
     }
 
     setAddingSection(true);
-    console.log('Section Title:', title);
-    console.log('Section Description:', description);
-    console.log('Data Type:', dataType);
+    
+    
+    
     const combinedAttributes = attributes.reduce((acc, obj) => {
       Object.keys(obj).forEach(key => {
         acc[key] = '';
@@ -50,10 +50,10 @@ const NewSection = ({ onBack, getDataSections, sections }) => {
     }, {});
 
     const attributesJSONString = JSON.stringify(combinedAttributes).replace(/"/g, '\\"');
-    console.log(`"${attributesJSONString}"`);
+    
     try {
       const result = await addSection(title, description, dataType, `"${attributesJSONString}"`);
-      console.log('Created section:', result);
+      
     } catch (error) {
       console.error('Error creating section:', error);
     }

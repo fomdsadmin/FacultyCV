@@ -24,7 +24,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
           ...data,
           data_details: JSON.parse(data.data_details),
         }));
-        console.log(parsedData);
+        
     
         // Match the data with their respective sections
         const matchedData = await fetchAndMatchSections(parsedData);
@@ -34,13 +34,13 @@ const Archive = ({ userInfo, getCognitoUser }) => {
         }
     
         const filtered = matchedData.filter(entry => {
-          console.log("entry", entry);
+          
           const { title, description, attributes } = entry;
           const [fieldA, fieldB] = rankFields(attributes);
     
           const searchTermLower = searchTerm.toLowerCase();
     
-          console.log(searchTermLower);
+          
     
           return (
             title.toLowerCase().includes(searchTermLower) ||
@@ -68,7 +68,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
           attributes: JSON.parse(section.attributes),
         }));
     
-        console.log(parsedSections);
+        
     
         // Add additional fields from parsedSections to parsedData if their data_section_ids match
         const updatedData = parsedData.map(data => {
@@ -102,7 +102,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
         // Implement restore functionality here
         try {
           const result = await updateUserCVDataArchive(entry.user_cv_data_id, false);
-          console.log('Restored entry ', result);
+          
         }
         catch (error) {
           console.error('Error restoring entry:', error);
@@ -113,7 +113,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
 
     // const handleDelete = (entry) => { 
     //     // Implement delete functionality here
-    //     console.log('Deleting entry ' + entry.data_section_id);
+    //     
     // };
 
     return (

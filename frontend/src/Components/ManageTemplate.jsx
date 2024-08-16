@@ -29,7 +29,7 @@ const ManageTemplate = ({ template, onBack, fetchTemplates }) => {
       }
       return a.showMinus ? -1 : 1;
     });
-    console.log('Sections:', orderedSections);
+    
     setSections(orderedSections);
     setLoading(false);
   };
@@ -46,10 +46,10 @@ const ManageTemplate = ({ template, onBack, fetchTemplates }) => {
     
     setSavingTemplate(true);
     const selectedSectionIdsString = selectedSectionIds.join(',');
-    console.log('Selected section IDs:', selectedSectionIdsString);
+    
     try {
       const result = await updateTemplate(template.template_id, template.title, selectedSectionIdsString);
-      console.log('Updated template:', result);
+      
     } catch (error) {
       console.error('Error updating template:', error);
     }

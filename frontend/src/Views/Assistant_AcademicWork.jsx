@@ -32,7 +32,7 @@ const Assistant_AcademicWork = ({ getCognitoUser, userInfo, assistantUserInfo })
       attributes: JSON.parse(section.attributes),
     }));
 
-    console.log(parsedSections);
+    
     setDataSections(parsedSections);
     setLoading(false);
   }

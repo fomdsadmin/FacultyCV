@@ -35,7 +35,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         // Fetch data for the current scopus ID
         while (pageNumber < totalPages) {
           const retrievedData = await getPublicationMatches(scopusId.trim(), pageNumber, pageSize);
-          console.log(retrievedData);
+          
 
           // Add the publications from the current page to the array
           publications = [...publications, ...retrievedData.publications];
@@ -61,14 +61,14 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
   async function addPublicationsData(publications) {
     setAddingData(true);
     setCount(1); // Reset count to 1 before starting
-    console.log('Adding publications data...', publications);
+    
     for (const publication of publications) {
         const publicationJSON = JSON.stringify(publication).replace(/"/g, '\\"');
         // Handle adding new entry using data_details
         try {
-          console.log('Adding new entry:', `"${publicationJSON}"`);
+          
           const result = await addUserCVData(user.user_id, section.data_section_id, `"${publicationJSON}"`);
-          console.log(result);
+          
         } catch (error) {
           console.error('Error adding new entry:', error);
         }

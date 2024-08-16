@@ -31,7 +31,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
         userInfo.scopus_id,
         userInfo.orcid_id
       );
-      console.log('Updated user:', updatedUser);
+      
       fetchAllUsers();
       handleBack();
     } catch {

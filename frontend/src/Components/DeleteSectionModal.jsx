@@ -10,7 +10,7 @@ const DeleteSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }
     setDeletingSection(true);
     try {
       const result = await updateSection(section.data_section_id, true);
-      console.log('Data section archived:', result)
+      
     } catch (error) {
       console.error('Error deleting section: ', error);
     }

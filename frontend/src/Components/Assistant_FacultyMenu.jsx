@@ -16,10 +16,10 @@ const Assistant_FacultyMenu = ({ userInfo, assistantUserInfo }) => {
   const handleExit = async () => {
     setIsExiting(true);
     try {
-      console.log('returning to assistant home');
+      
       navigate('/home');
     } catch (error) {
-      console.log('Error during exit:', error);
+      
     }
     setIsExiting(false);
   }

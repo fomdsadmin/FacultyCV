@@ -53,12 +53,12 @@ function App() {
   async function getUserGroup() {
     try {
       const session = await fetchAuthSession();
-      console.log('Session', session);
+      
       const groups = session.tokens.idToken.payload['cognito:groups']
-      console.log('User group:', groups);
+      
       return groups ? groups[0] : null;
     } catch (error) {
-      console.log('Error getting user group:', error);
+      
     }
   }
 
@@ -67,15 +67,15 @@ function App() {
       const userInformation = await getUser(email);
       if (userInformation.role === 'Assistant') {
         setAssistantUserInfo(userInformation);
-        console.log('Assistant user information:', userInformation);
+        
       } else {
         setUserInfo(userInformation);
-        console.log('User information:', userInformation);
+        
       }
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      console.log('Error getting user:', error);
+      
     }
   }
 
@@ -84,7 +84,7 @@ function App() {
       setLoading(true);
       const currentUser = await getCurrentUser();
       setUser(currentUser);
-      console.log(currentUser.signInDetails.loginId, "is signed in");
+      
       await getUserInfo(currentUser.signInDetails.loginId);
       getUserGroup().then((group) => setUserGroup(group));
       <Navigate to="/home" />
@@ -94,7 +94,7 @@ function App() {
       setUserInfo({});
       setAssistantUserInfo({});
       signOut();
-      console.log('Error getting user:', error);
+      
       setLoading(false);
       <Navigate to="/auth" />
     }

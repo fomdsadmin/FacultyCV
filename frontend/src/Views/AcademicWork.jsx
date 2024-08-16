@@ -31,7 +31,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
       attributes: JSON.parse(section.attributes),
     }));
 
-    console.log(parsedSections);
+    
     setDataSections(parsedSections);
     setLoading(false);
   }
