@@ -3,7 +3,7 @@ import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
 import ProfileLinkModal from '../Components/ProfileLinkModal.jsx';
-import { getOrcidAuthorMatches, getTeachingDataMatches, linkOrcid, linkScopusId, linkTeachingData, updateUser } from '../graphql/graphqlHelpers.js';
+import { getOrcidAuthorMatches, linkOrcid, linkScopusId, updateUser } from '../graphql/graphqlHelpers.js';
 import { getAllUniversityInfo, getElsevierAuthorMatches } from '../graphql/graphqlHelpers.js';
 
 const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {
@@ -11,6 +11,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [campuses, setCampuses] = useState([]);
+  const [ranks, setRanks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [scopusId, setScopusId] = useState(userInfo.scopus_id || "");
@@ -25,6 +26,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
       let departments = [];
       let faculties = [];
       let campuses = [];
+      let ranks = [];
 
       result.forEach(element => {
         if (element.type === 'Department') {
@@ -33,16 +35,20 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
           faculties.push(element.value);
         } else if (element.type === 'Campus') {
           campuses.push(element.value);
+        } else if (element.type === 'Rank') {
+          ranks.push(element.value);
         }
       });
 
       departments.sort();
       faculties.sort();
       campuses.sort();
+      ranks.sort();
 
       setDepartments(departments);
       setFaculties(faculties);
       setCampuses(campuses);
+      setRanks(ranks);
       setLoading(false);
     });
   };
@@ -197,7 +203,10 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               </div>
               <div>
                 <label className="block text-sm mb-1">Current Rank</label>
-                <input id="currentRank" name="currentRank" type="text" value={userInfo.rank || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, rank: e.target.value })}/>
+                <select id="rank" name="rank" value={userInfo.rank || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, rank: e.target.value })}>
+                  <option value="">-</option>
+                  {ranks.map((rank, index) => <option key={index} value={rank}>{rank}</option>)}
+                </select>
               </div>
             </div>
 
@@ -212,25 +221,26 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               />
             )}
 
-            <button type="button" onClick={showModal} className="btn btn-secondary text-white py-1 px-2 float-left w-1/5 min-h-0 h-8 leading-tight">
-              Link to Identifications
-            </button>
-
-          {/* <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Identifications</h2>
+           
+          <h2 className="text-lg font-bold mb-2 text-zinc-500">Identifications</h2>
+          <button type="button" onClick={showModal} className="btn btn-secondary text-white py-1 px-2 float-left w-1/5 min-h-0 h-8 mr-4 mt-5 leading-tight">
+            Link Identifications
+          </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
             <div>
-              <label className="block text-sm mb-1">Institution ID</label>
-              <input id="institutionUserId" name="institutionUserId" type="text" value={userInfo.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, institution_user_id: e.target.value })}/>
+              <label className="block text-sm mb-1">Scopus ID(s)</label>
+              <input id="scopusId" name="scopusId" type="text" value={userInfo.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly onChange={(e) => setUserInfo({ ...userInfo, scopus_id: e.target.value })}/>
             </div>
             <div>
               <label className="block text-sm mb-1">Orcid ID</label>
-              <input id="orcidId" name="orcidId" type="text" value={userInfo.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, orcid_id: e.target.value })}/>
+              <input id="orcidId" name="orcidId" type="text" value={userInfo.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly onChange={(e) => setUserInfo({ ...userInfo, orcid_id: e.target.value })}/>
             </div>
-            <div>
-              <label className="block text-sm mb-1">Scopus IDs</label>
-              <input id="scopusId" name="scopusId" type="text" value={userInfo.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, scopus_id: e.target.value })}/>
-            </div>
-          </div> */}
+            {/* <div>
+              <label className="block text-sm mb-1">Institution ID</label>
+              <input id="institutionUserId" name="institutionUserId" type="text" value={userInfo.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, institution_user_id: e.target.value })}/>
+            </div> */}
+          </div>
+          
           <button type="submit" className="btn btn-success text-white py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save'}
           </button>

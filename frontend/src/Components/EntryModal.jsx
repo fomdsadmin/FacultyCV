@@ -25,7 +25,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
         e.preventDefault();
         // Stringify formData and escape special characters
         const formDataString = JSON.stringify(formData).replace(/"/g, '\\"');
-        console.log(`${formDataString}`);
+        console.log(`"${formDataString}"`);
         try {
             // Handle form submission here
             if (isNew) {

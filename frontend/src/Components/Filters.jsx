@@ -13,7 +13,7 @@ const Filters = ({ activeFilters, onFilterChange, filters }) => {
   };
 
   return (
-    <div className='ml-4 mr-2 max-w-lg filters-container'>
+    <div className='ml-4 mr-2 filters-container'>
       {filters.map((filter) => (
         <FilterButton
           key={filter}

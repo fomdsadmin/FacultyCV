@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
 import { getAllSections, getUserCVData } from '../graphql/graphqlHelpers.js';
-
-
-
-
 import '../CustomStyles/scrollbar.css';
-
 import Report from '../Components/Report.jsx';
 
 const mockPrevReports = ["Grants 2024", "Teaching 2023", "Publications 2022"];
@@ -20,7 +15,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 
   useEffect(() => {
     setUser(userInfo);
-    getDataSections();
+    //getDataSections();
   }, [userInfo]);
 
   useEffect(() => {
@@ -40,6 +35,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 
     console.log(parsedSections);
     setDataSections(parsedSections);
+    console.log("Data Sections:" + dataSections);
     console.log("building Latex");
     setLoading(false);
     console.log(userInfo);
@@ -67,15 +63,97 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 \\usepackage{array}
 \\usepackage{booktabs}
 \\usepackage{tabularx}
+\\usepackage{longtable}
 
 \\begin{document}
 \\small 
-  `;
+
+\\begin{center}
+\\textbf{\\Large University of British Columbia} \\\\
+\\textbf{\\Large Curriculum Vitae for Faculty Members} \\\\
+\\end{center}
+
+\\begin{flushleft}
+\\begin{tabularx}{\\textwidth}{@{}lXr@{}}
+\\textbf{INITIALS:} & ${escapeLatex(user.first_name.charAt(0) + user.last_name.charAt(0))} & \\textbf{Date:} ${escapeLatex(new Date().toLocaleDateString('en-CA'))} \\\\
+\\end{tabularx}
+\\end{flushleft}
+
+\\begin{flushleft}
+\\begin{tabularx}{\\textwidth}{|p{2cm}|X|p{3cm}|X|}
+\\hline
+\\textbf{SURNAME:} & ${escapeLatex(user.last_name)}  &
+\\textbf{FIRST NAME:} & ${escapeLatex(user.first_name)} \\\\
+\\hline
+\\end{tabularx}
+\\end{flushleft}
+
+\\vspace{-0.5cm} 
+
+\\begin{flushleft}
+\\begin{tabularx}{\\textwidth}{|p{3cm}|X|}
+\\hline
+\\textbf{DEPARTMENT:} & ${escapeLatex(user.primary_department)} \\\\
+\\hline
+\\end{tabularx}
+\\end{flushleft}
+
+\\vspace{-0.5cm} 
+
+\\begin{flushleft}
+\\textbf{JOINT APPOINTMENTS:} \\\\
+\\begin{tabularx}{\\textwidth}{|X|}
+\\hline
+${escapeLatex(user.secondary_department)} \\\\
+\\hline
+\\end{tabularx}
+\\end{flushleft}
+
+\\vspace{-0.5cm} 
+
+\\begin{flushleft}
+\\textbf{AFFILIATIONS:} \\\\
+\\begin{tabularx}{\\textwidth}{|X|}
+\\hline
+${escapeLatex(user.secondary_faculty)}, ${escapeLatex(user.primary_faculty)} \\\\
+\\hline
+\\end{tabularx}
+\\end{flushleft}
+
+\\vspace{-0.5cm} 
+
+\\begin{flushleft}
+\\textbf{LOCATION(S):} \\\\
+\\begin{tabularx}{\\textwidth}{|X|}
+\\hline
+${escapeLatex(user.campus)} \\\\
+\\hline
+\\end{tabularx}
+\\end{flushleft}
+
+\\vspace{-0.5cm} 
+
+\\begin{flushleft}
+\\begin{tabularx}{\\textwidth}{|p{5cm}|X|}
+\\hline
+\\textbf{PRESENT RANK:} & ${escapeLatex(user.rank)} \\\\
+\\hline
+\\end{tabularx}
+\\end{flushleft}
+`;
   
     for (const section of dataSections) {
       try {
+      
         console.log(`Fetching data for section: ${section.title}`);
-        let sectionData = await getUserCVData(userInfo.user_id, section.data_section_id);
+        let sectionData;
+        try {
+          sectionData = await getUserCVData(userInfo.user_id, section.data_section_id);
+        } catch (error) {
+         
+        }
+        
+        
   
         if (!sectionData || sectionData.length === 0) {
           console.log(`No data found for section ID: ${section.data_section_id}`);
@@ -88,9 +166,12 @@ const Reports = ({ userInfo, getCognitoUser }) => {
         }));
   
         console.log(`Parsed data for section ${section.title}:`, parsedData);
-  
+
+        // Ensure attributes are properly parsed
+        const attributes = JSON.parse(section.attributes);
+
         // Get the attribute keys for the table headers
-        const headers = Object.keys(section.attributes);
+        const headers = Object.keys(attributes);
         console.log(`Headers for section ${section.title}:`, headers);
   
         latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
@@ -141,7 +222,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   return (
     <PageContainer className="custom-scrollbar">
       <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser} />
-      <main className='ml-2 h-full w-full'>
+      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
         <div className='flex w-full h-full'>
           <div className='flex-1 min-w-96 !overflow-auto !h-full custom-scrollbar'>
             <h1 className="text-4xl ml-2 font-bold my-3 text-zinc-600">Reports</h1>

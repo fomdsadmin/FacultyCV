@@ -68,7 +68,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('keywords', 'varchar', '', False))
     columns.append(createColumn('institution_user_id', 'varchar', '', False))
     columns.append(createColumn('scopus_id', 'varchar', '', False))
-    columns.append(createColumn('orcid_id', 'varchar', '', True))
+    columns.append(createColumn('orcid_id', 'varchar', '', False))
+    columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', True))  # Add this line
     query = createQuery('users', columns)
     cursor.execute(query)
 
@@ -78,7 +79,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('title', 'varchar', '', False))
     columns.append(createColumn('description', 'varchar', '', False))
     columns.append(createColumn('data_type', 'varchar', '', False))
-    columns.append(createColumn('attributes', 'JSON', '', True))
+    columns.append(createColumn('attributes', 'JSON', '', False))
+    columns.append(createColumn('archive', 'boolean', 'DEFAULT false', True))
     query = createQuery('data_sections', columns)
     cursor.execute(query)
 
@@ -104,8 +106,15 @@ def lambda_handler(event, context):
     # Create User Connections Table
     columns = []
     columns.append(createColumn('user_connection_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
-    columns.append(createColumn('user_id', 'varchar', '', False))
-    columns.append(createColumn('user_connection', 'JSON', '', True))
+    columns.append(createColumn('faculty_user_id', 'varchar', '', False))
+    columns.append(createColumn('faculty_first_name', 'varchar', '', False))
+    columns.append(createColumn('faculty_last_name', 'varchar', '', False))
+    columns.append(createColumn('faculty_email', 'varchar', '', False))
+    columns.append(createColumn('assistant_user_id', 'varchar', '', False))
+    columns.append(createColumn('assistant_first_name', 'varchar', '', False))
+    columns.append(createColumn('assistant_last_name', 'varchar', '', False))
+    columns.append(createColumn('assistant_email', 'varchar', '', False))
+    columns.append(createColumn('status', 'varchar', '', True))
     query = createQuery('user_connections', columns)
     cursor.execute(query)
 
@@ -126,6 +135,21 @@ def lambda_handler(event, context):
     query = createQuery('teaching_data', columns)
     cursor.execute(query)
 
+    # Create Grants Table to store bulk load grants data
+    columns = []
+    columns.append(createColumn('grant_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('first_name', 'varchar', '', False))
+    columns.append(createColumn('last_name', 'varchar', '', False))
+    columns.append(createColumn('keywords', 'varchar', '', False))
+    columns.append(createColumn('agency', 'varchar', '', False))
+    columns.append(createColumn('department', 'varchar', '', False))
+    columns.append(createColumn('program', 'varchar', '', False))
+    columns.append(createColumn('title', 'varchar', '', False))
+    columns.append(createColumn('amount', 'int', '', False))
+    columns.append(createColumn('dates', 'varchar', '', True))
+    query = createQuery('grants', columns)
+    cursor.execute(query)
+
     # Create Templates Table
     columns = []
     columns.append(createColumn('template_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
@@ -134,6 +158,21 @@ def lambda_handler(event, context):
     query = createQuery('templates', columns)
     cursor.execute(query)
 
+    # Create Patents Table to store bulk load patents data
+    columns = []
+    columns.append(createColumn('patent_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('title', 'varchar', '', False))
+    columns.append(createColumn('first_name', 'varchar', '', False))
+    columns.append(createColumn('last_name', 'varchar', '', False))
+    columns.append(createColumn('publication_number', 'varchar', '', False))
+    columns.append(createColumn('publication_date', 'varchar', '', False))
+    columns.append(createColumn('family_number', 'varchar', '', False))
+    columns.append(createColumn('country_code', 'varchar', '', False))
+    columns.append(createColumn('kind_code', 'varchar', '', False))
+    columns.append(createColumn('classification', 'varchar', '', True))
+    query = createQuery('patents', columns)
+    cursor.execute(query)
+    
     cursor.close()
     connection.commit()
     connection.close()

@@ -1,19 +1,23 @@
 export const rankFields = (entry) => {
     const importance = {
       dates: 1,
-      title: 2,
-      name: 3,
-      rank: 4,
-      role: 5,
-      department: 6,
-      type: 7,
-      publisher: 8,
-      journal: 9,
-      details: 10,
-      other: 11,
-      description: 12,
-      inventor: 13,
-      supervisor: 14
+      year: 2,
+      title: 3,
+      'university/organization': 4,
+      'university/organization/company': 5,
+      course: 6,
+      name: 7,
+      rank: 8,
+      role: 9,
+      department: 10,
+      type: 11,
+      publisher: 12,
+      journal: 13,
+      details: 14,
+      other: 15,
+      description: 16,
+      inventor: 17,
+      supervisor: 18
     };
   
     const rankedFields = Object.entries(entry)

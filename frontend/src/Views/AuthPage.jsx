@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, 
+  getCurrentUser, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
-import { addUser, getUser, updateUser, getExistingUser } from '../graphql/graphqlHelpers.js';
+import { addUser, getUser, updateUser, getExistingUser, addToUserGroup } from '../graphql/graphqlHelpers.js';
 import { useNavigate } from 'react-router-dom';
 
 const AuthPage = ({ getCognitoUser }) => {
@@ -10,30 +11,27 @@ const AuthPage = ({ getCognitoUser }) => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState('');
-  const [institution_user_id, setInstitutionUserId] = useState('12345'); // INSTITUTION USER ID TO ADD BULK USERS
+  const [role, setRole] = useState('Faculty');
+  const [institution_user_id, setInstitutionUserId] = useState('0'); // HARDCODED INSTITUTION USER ID TO ADD BULK USERS
   const [newUserPassword, setNewUserPassword] = useState(false);
   const [newSignUp, setNewSignUp] = useState(false);
   const [signUpConfirmation, setSignUpConfirmation] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  //TODO: SET MORE ERRORS (make one error) (username/password incorrect, no user found, etc.) AND FIX ERROR VIEW
-  const [passwordError, setPasswordError] = useState('');
-  const [confirmationError, setConfirmationError] = useState('');
-  const [forgotPassword, setForgotPassword] = useState(false); //TODO: FORGOT PASSWORD FUNCTIONALITY
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [signUpError, setSignUpError] = useState('');
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [done, setDone] = useState(false);
   const navigate = useNavigate();
 
-  async function getUserGroup() {
-    try {
-      const session = await fetchAuthSession();
-      const groups = session.tokens.idToken.payload['cognito:groups']
-      return groups ? groups[0] : null;
-    } catch (error) {
-      console.log('Error getting user group:', error);
-    }
-  }
-
   const handleLogin = async (event) => {
+    setLoginError('');
     event.preventDefault();
+    const username= event.target.email.value;
+    const password = event.target.password.value;
+
     try {
       setLoading(true);
       const user = await signIn({
@@ -42,6 +40,7 @@ const AuthPage = ({ getCognitoUser }) => {
       });
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (!user.isSignedIn) {
+        setUsername(username);
         if (user.nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
           setNewUserPassword(true);
           setLoading(false);
@@ -55,6 +54,7 @@ const AuthPage = ({ getCognitoUser }) => {
       }
     } catch (error) {
       console.log('Error logging in:', error);
+      setLoginError('Incorrect email or password.');
       setLoading(false);
     }
   };
@@ -64,11 +64,17 @@ const AuthPage = ({ getCognitoUser }) => {
     const newPassword = event.target.newPassword.value;
     const confirmNewPassword = event.target.confirmNewPassword.value;
 
+    // Password specifications
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[^\s]{8,}$/;
+
     if (newPassword !== confirmNewPassword) {
-      setPasswordError('Passwords do not match!');
+      setError('Passwords do not match!');
       return;
-    }
-    setPasswordError('');
+    } else if (!passwordRegex.test(newPassword)) {
+      setError('Password must be at least 8 characters long, contain a lowercase letter, an uppercase letter, and a digit.');
+      return;
+    } 
+    setError('');
     try {
       setLoading(true);
       console.log('Setting new password for user:', username);
@@ -81,16 +87,7 @@ const AuthPage = ({ getCognitoUser }) => {
       });
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (user.isSignedIn) {
-        if (role)
-          storeUserData(firstName, lastName, username, role, institution_user_id);
-        else {
-          // If role isn't set, fetch the user group
-          const group = await getUserGroup();
-          if (!group) {
-            throw new Error('User group not found');
-          }
-          storeUserData(firstName, lastName, username, group, institution_user_id);
-        }
+        storeUserData(firstName, lastName, username, role, institution_user_id);
       }
     } catch (error) {
       console.log('Error setting new password:', error);
@@ -103,6 +100,7 @@ const AuthPage = ({ getCognitoUser }) => {
     event.preventDefault();
     const confirmationCode = event.target.confirmationCode.value;
 
+    setError('');
     try {
       setLoading(true);
       const user = await confirmSignUp({
@@ -116,7 +114,7 @@ const AuthPage = ({ getCognitoUser }) => {
       }
     } catch (error) {
       console.log('Error setting new password:', error);
-      setConfirmationError('Invalid confirmation code');
+      setError('Invalid confirmation code');
       setLoading(false);
     }
   };
@@ -126,7 +124,7 @@ const AuthPage = ({ getCognitoUser }) => {
       setLoading(true);
       await resendSignUpCode({ username: username });
       setLoading(false);
-      setConfirmationError('');
+      setError('');
     } catch (error) {
       console.log('Error resending confirmation code:', error);
       setLoading(false);
@@ -141,20 +139,21 @@ const AuthPage = ({ getCognitoUser }) => {
     // Password specifications
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[^\s]{8,}$/;
 
-    // Username specification
-    const usernameRegex = /@mail\.ubc\.ca$/;
+    // // Username specification
+    // const usernameRegex = /@mail\.ubc\.ca$/;
 
     if (password !== confirmPassword) {
-      setPasswordError('Passwords do not match!');
+      setSignUpError('Passwords do not match!');
       return;
     } else if (!passwordRegex.test(password)) {
-      setPasswordError('Password must be at least 8 characters long, contain a lowercase letter, an uppercase letter, and a digit.');
-      return;
-    } else if (!usernameRegex.test(username)) {
-      setPasswordError('Email must be a valid UBC email address.');
+      setSignUpError('Password must be at least 8 characters long, contain a lowercase letter, an uppercase letter, and a digit.');
       return;
     }
-    setPasswordError('');
+    // } else if (!usernameRegex.test(username)) {
+    //   setSignUpError('Email must be a valid UBC email address.');
+    //   return;
+    // }
+    setSignUpError('');
 
     try {
       setLoading(true);
@@ -174,14 +173,16 @@ const AuthPage = ({ getCognitoUser }) => {
         }
       }
     } catch (error) {
-      console.log('Error signing up:', error);
+      console.log('Error signing up:', error.message);
+      if (error.message === 'User already exists') {
+        setSignUpError('An account with this email already exists.');
+      }
       setLoading(false);
     }
   };
 
   const storeUserData = async (first_name, last_name, email, role, institution_user_id) => {
     setLoading(true);
-
     //sign in user
     try {
       let user = null;
@@ -201,23 +202,30 @@ const AuthPage = ({ getCognitoUser }) => {
     }
 
     //put user in user group
-
-
+    try {
+      const result = await addToUserGroup(email, role);
+      console.log('Adding user to user group', result);
+    } catch (error) {
+      console.log('Error adding user to group:', error);
+      setLoading(false);
+      return;
+    }
+    
     // put user data in database if it doesn't already exist
     try {
       const userInformation = await getExistingUser(institution_user_id);
       console.log('User already exists in database');
       if (!userInformation.role) {
         console.log(`Updating user with group ${role}`);
-        console.log(
-          await updateUser(
+        const result = await updateUser(
             userInformation.user_id, userInformation.first_name, userInformation.last_name, userInformation.preferred_name,
             email, role, userInformation.bio, userInformation.rank,
             userInformation.primary_department, userInformation.secondary_department, userInformation.primary_faculty,
             userInformation.secondary_faculty, userInformation.campus, userInformation.keywords,
             userInformation.institution_user_id, userInformation.scopus_id, userInformation.orcid_id
-          )
         )
+        console.log('updated user:', result)
+    
       }
     } catch (error) {
       try {
@@ -233,12 +241,86 @@ const AuthPage = ({ getCognitoUser }) => {
     navigate('/home');
   };
 
+  async function handleResetPassword(event) {
+    event.preventDefault();
+    setForgotPasswordError('');
+    try {
+      const output = await resetPassword({ username });
+      handleResetPasswordNextSteps(output);
+      console.log("username", username);
+    } catch (error) {
+      console.log(error.message);
+      setMessage("");
+      if (error.message === "Attempt limit exceeded, please try after some time.") {
+        setForgotPasswordError("Attempt limit exceeded, please try after some time.");
+      }
+      else {
+        setForgotPasswordError('User does not exist.');
+      }
+    }
+  }
+
+  function handleResetPasswordNextSteps(output) {
+    const { nextStep } = output;
+    switch (nextStep.resetPasswordStep) {
+      case "CONFIRM_RESET_PASSWORD_WITH_CODE":
+        const codeDeliveryDetails = nextStep.codeDeliveryDetails;
+        setMessage(
+          `Confirmation code was sent to ${codeDeliveryDetails.deliveryMedium}`
+        );
+        setForgotPassword("confirmReset");
+        break;
+      case "DONE":
+        setMessage("Successfully reset password.");
+        setDone(true);
+        console.log("Successfully reset password.");
+        break;
+    }
+  }
+
+  async function handleConfirmResetPassword(event) {
+    event.preventDefault();
+    const confirmationCode = event.target.confirmationCode.value;
+    const newPassword = event.target.newPassword.value;
+    const confirmPassword = event.target.confirmNewPassword.value;
+
+    // Password specifications
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[^\s]{8,}$/;
+
+    setForgotPasswordError('');
+
+    if (newPassword !== confirmPassword) {
+      setForgotPasswordError('Passwords do not match!');
+      return;
+    } else if (!passwordRegex.test(newPassword)) {
+      setForgotPasswordError('Password must be at least 8 characters long, contain a lowercase letter, an uppercase letter, and a digit.');
+      return;
+    } 
+
+    try {
+      await confirmResetPassword({
+        username,
+        confirmationCode,
+        newPassword,
+      });
+      console.log("username", username);
+      setMessage("Password successfully reset.");
+      setDone(true);
+      setForgotPasswordError("");
+    } catch (error) {
+      console.log(error);
+      console.log(username);
+      console.log(confirmationCode);
+      setForgotPasswordError("Invalid confirmation code.");
+    }
+  }
+
   return (
     <PageContainer>
       <div className="flex w-full rounded-lg mx-auto shadow-lg overflow-hidden bg-gray-100">
         <div className="w-3/5 flex flex-col items-center justify-center overflow-auto custom-scrollbar">
           {loading && <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>}
-          {!loading && !newUserPassword && !newSignUp && !signUpConfirmation && (
+          {!loading && !newUserPassword && !newSignUp && !signUpConfirmation && !forgotPassword && (
             <div>
               <div>
               <h1 className="text-4xl font-bold my-3 text-zinc-600">Sign in to manage your CV</h1>
@@ -247,14 +329,75 @@ const AuthPage = ({ getCognitoUser }) => {
               <div className='flex flex-col items-center justify-center'>
                 <form onSubmit={handleLogin}>
                   <label className="block text-m mb-1 mt-6">Email</label>
-                  <input className="input input-bordered w-full text-sm" value={username} onChange={e => setUsername(e.target.value)} placeholder="Email" required />
+                  <input className="input input-bordered w-full text-sm" name="email" placeholder="Email" required />
                   <label className="block text-m mb-1 mt-6">Password</label>
-                  <input className="input input-bordered w-full text-sm" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" type="password" required />
+                  <input className="input input-bordered w-full text-sm" name="password" placeholder="Password" type="password" required />
                   <button className="btn btn-neutral mt-6 mb-3 w-full text-base" type="submit">Sign In</button>
                 </form>
-                <span className="text-zinc-600 text-sm font-bold underline underline-offset-2 cursor-pointer" onClick={() => setForgotPassword(true)}>Forgot Password</span>
+                <span className="text-zinc-600 text-sm font-bold underline underline-offset-2 cursor-pointer" onClick={() => setForgotPassword('forgotPassword')}>Forgot Password</span>
+                {loginError && <div className="text-sm mt-4 text-red-600">{loginError}</div>}
               </div>
             </div>
+          )}
+          {!loading && forgotPassword==='forgotPassword' && (
+            <div>
+              {!done && (
+                <div>
+                <h1 className="text-3xl font-bold my-3 text-zinc-600">Reset Password</h1>
+                <p className='text-sm'>Please enter the email for your account.</p>
+                <div className='flex flex-col items-center justify-center max-w-xl'>
+                  <form onSubmit={handleResetPassword}>
+                    <label className="block text-xs mt-4">Email</label>
+                    <input className="input input-bordered mt-1 h-10 w-full text-xs" value={username} onChange={e => setUsername(e.target.value)} placeholder="Email" required />
+                    <button className="btn btn-neutral mt-4 mb-3 min-h-5 h-8 w-full" type="submit">Send Reset Code</button>
+                  </form>
+                  <span className="text-zinc-600 text-sm font-bold underline underline-offset-2 cursor-pointer" onClick={() => setForgotPassword('')}>Back to Login</span>
+                  {forgotPasswordError && <div className="text-sm mt-4 text-red-600">{forgotPasswordError}</div>}
+                </div>
+              </div>
+              )}
+              {done && (
+                <div>
+                  <div className="block text-m mb-3 mt-6 text-green-600">
+                    {message}
+                  </div>
+                  <span className="text-zinc-600 text-sm font-bold underline underline-offset-2 cursor-pointer" onClick={() => setForgotPassword('')}>Back to Login</span>
+                </div>
+              )}
+            </div>
+            
+          )}
+          {!loading && forgotPassword==='confirmReset' && (
+            <div>
+              {!done && (
+                <div>
+                  <h1 className="text-3xl font-bold my-3 text-zinc-600">Reset Password</h1>
+                  {message && <div className="text-m mt-4">A confirmation code was sent to {username}</div>}
+                  <div className='flex flex-col items-center justify-center max-w-xl'>
+                    <form onSubmit={handleConfirmResetPassword}>
+                      <label className="block text-xs mt-4">Confirmation Code</label>
+                      <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmationCode" placeholder="Confirmation Code" required />
+                      <label className="block text-xs mt-4">New Password</label>
+                      <input className="input input-bordered mt-1 h-10 w-full text-xs" name="newPassword" placeholder="New Password" type="password" required />
+                      <label className="block text-xs mt-4">Confirm New Password</label>
+                      <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmNewPassword" placeholder="Confirm New Password" type="password" required />
+                      <button className="btn btn-neutral mt-4 mb-3 min-h-5 h-8 w-full" type="submit">Submit</button>
+                    </form>
+                    <span className="text-zinc-600 text-sm font-bold underline underline-offset-2 cursor-pointer" onClick={() => setForgotPassword('')}>Back to Login</span>
+                    {forgotPasswordError && <div className="block text-sm mb-1 mt-6 text-red-600">{forgotPasswordError}</div>}
+                  </div>
+                </div>
+              )}
+              {done && (
+                <div>
+                  <div className="block text-m mb-3 mt-6 text-green-600">
+                    {message}
+                  </div>
+                  <span className="text-zinc-600 text-sm font-bold underline underline-offset-2 cursor-pointer" onClick={() => setForgotPassword('')}>Back to Login</span>
+                </div>
+              )}
+            </div>
+            
           )}
           {!loading && newSignUp && (
             <div className='mt-20 mb-5'>
@@ -284,24 +427,43 @@ const AuthPage = ({ getCognitoUser }) => {
                         <label className="ml-1 text-xs">Assistant</label>
                     </div>
                   </div>
-                  
-                  {passwordError && <div className="text-m mb-1 mt-6 text-red-600">{passwordError}</div>}
                   <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Create Account</button>
                 </form>
+                {signUpError && <div className="mb-1 max-w-sm text-sm mt-6 text-red-600">{signUpError}</div>}
               </div>
             </div>
           )}
           {!loading && newUserPassword && (
             <div>
               <h1 className="text-3xl font-bold my-3 text-zinc-600">New User</h1>
-              <p className='text-sm'>Please enter a new password for your account.</p>
-              <div className='flex flex-col items-center justify-center'>
+              <p className='text-sm'>Please enter a the following information for your account.</p>
+              <div className='flex flex-col items-center justify-center max-w-xl'>
                 <form onSubmit={handleNewPasswordUser}>
+                  <label className="block text-xs mt-4">First Name</label>
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First Name" required />
+                  <label className="block text-xs mt-4">Last Name</label>
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last Name" required />
+                  <label className="block text-xs mt-4">New Password</label>
                   <input className="input input-bordered mt-1 h-10 w-full text-xs" name="newPassword" placeholder="New Password" type="password" required />
+                  <label className="block text-xs mt-4">Confirm New Password</label>
                   <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmNewPassword" placeholder="Confirm New Password" type="password" required />
-                  {passwordError && <div className="block text-m mb-1 mt-6 text-red-600">{passwordError}</div>}
-                  <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Submit New Password</button>
+                  <div className="mt-2 flex justify-between">
+                    <div className="mt-2">
+                      <input type="radio" id="faculty" name="role" value="Faculty" onChange={e => setRole(e.target.value)} defaultChecked />
+                      <label className="ml-1 text-xs">Faculty</label>
+                    </div>
+                    <div className="mt-2">
+                        <input type="radio" id="assistant" name="role" value="Assistant"onChange={e => setRole(e.target.value)} />
+                        <label className="ml-1 text-xs">Assistant</label>
+                    </div>
+                    <div className="mt-2">
+                        <input type="radio" id="admin" name="role" value="Admin"onChange={e => setRole(e.target.value)} />
+                        <label className="ml-1 text-xs">Admin</label>
+                    </div>
+                  </div>
+                  <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Submit</button>
                 </form>
+                {error && <div className="block max-w-sm text-sm mb-1 mt-6 text-red-600">{error}</div>}
               </div>
             </div>
             
@@ -312,11 +474,11 @@ const AuthPage = ({ getCognitoUser }) => {
               <p className='text-sm'>Please enter the confirmation code sent to your email.</p>
               <div className='flex flex-col items-center justify-center'>
                 <form onSubmit={handleConfirmSignUp}>
-                  <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmationCode" placeholder="Confirmation Code" type="password" required />
-                  {confirmationError && <div className="block text-m mb-1 mt-6 text-red-600">{confirmationError}</div>}
+                  <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmationCode" placeholder="Confirmation Code" required />
                   <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Submit</button>
                   <button className="btn btn-secondary mt-4 min-h-5 h-8 w-full" type="button" onClick={resendConfirmationCode}>Resend Code</button>
                 </form>
+                {error && <div className="block mb-1 text-sm mt-6 text-red-600">{error}</div>}
               </div>
               
             </div>

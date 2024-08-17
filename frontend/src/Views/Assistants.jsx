@@ -3,103 +3,52 @@ import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
 import AssociatedUser from '../Components/AssociatedUser.jsx';
 import { getUserConnections } from '../graphql/graphqlHelpers.js';
-
-// const assistants = [
-//   {
-//     id: 1,
-//     firstName: 'Alice Betty Joan',
-//     lastName: 'Johnson Smith Carter',
-//     department: 'Anatomy',
-//     faculty: 'Faculty of Medicine',
-//     status: 'confirmed'
-//   },
-//   {
-//     id: 2,
-//     firstName: 'Bob',
-//     lastName: 'Smith',
-//     department: 'Physiology',
-//     faculty: 'Faculty of Medicine',
-//     status: 'confirmed'
-//   },
-//   {
-//     id: 3,
-//     firstName: 'Carol',
-//     lastName: 'Davis',
-//     department: 'Biochemistry',
-//     faculty: 'Faculty of Medicine',
-//     status: 'confirmed'
-//   },
-//   {
-//     id: 4,
-//     firstName: 'David',
-//     lastName: 'Martinez',
-//     department: 'Pharmacology',
-//     faculty: 'Faculty of Medicine',
-//     status: 'pending'
-//   },
-//   {
-//     id: 5,
-//     firstName: 'Eva',
-//     lastName: 'Brown',
-//     department: 'Microbiology',
-//     faculty: 'Faculty of Medicine',
-//     status: 'confirmed'
-//   },
-//   {
-//     id: 6,
-//     firstName: 'Frank',
-//     lastName: 'Wilson',
-//     department: 'Pathology',
-//     faculty: 'Faculty of Medicine',
-//     status: 'confirmed'
-//   }
-// ];
+import { FaSync } from 'react-icons/fa';
 
 const Assistants = ({ userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [pendingConnections, setPendingConnections] = useState([]);
   const [confirmedConnections, setConfirmedConnections] = useState([]);
   const [loading, setLoading] = useState(true);
-  //TODO: FIX SEARCH FUNCTIONALITY
 
   useEffect(() => {
     setLoading(true);
     getAllUserConnections();
-    setLoading(false)
   }, [searchTerm, userInfo]);
 
   async function getAllUserConnections() {
     try {
       const retrievedUserConnections = await getUserConnections(userInfo.user_id);
 
-      // Parse the user_connection field from a JSON string to a JSON object
-      const parsedUserConnections = retrievedUserConnections.map(connection => ({
-        ...connection,
-        user_connection: JSON.parse(connection.user_connection),
-      }));
-
-      const filteredUserConnections = parsedUserConnections.filter(connection => 
-        connection.user_connection.first_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-        connection.user_connection.last_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-        connection.user_connection.email.toLowerCase().startsWith(searchTerm.toLowerCase())
+      const filteredUserConnections = retrievedUserConnections.filter(connection => 
+        connection.assistant_first_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+        connection.assistant_last_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+        connection.assistant_email.toLowerCase().startsWith(searchTerm.toLowerCase())
       );
       
       console.log('User connections', retrievedUserConnections);
-      setPendingConnections(filteredUserConnections.filter(connection => connection.user_connection.status === 'pending'));
-      setConfirmedConnections(filteredUserConnections.filter(connection => connection.user_connection.status === 'confirmed'));
+      setPendingConnections(filteredUserConnections.filter(connection => connection.status === 'pending'));
+      setConfirmedConnections(filteredUserConnections.filter(connection => connection.status === 'confirmed'));
     } catch (error) {
       console.error('Error:', error);
     }
+    setLoading(false)
   }
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
+  const refresh = async () => {
+    setLoading(true)
+    await getAllUserConnections()
+    setLoading(false)
+  };
+
   return (
     <PageContainer>
       <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser} />
-      <main className='flex-1 !overflow-auto !h-full custom-scrollbar'>
+      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
         <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Assistants</h1>
         {loading ? (
             <div className='flex items-center justify-center w-full'>
@@ -107,7 +56,7 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
             </div>
           ) : (
             <div>
-              <div className='m-4 max-w-lg flex'>
+              <div className='m-4 flex'>
                 <label className="input input-bordered flex items-center gap-2 flex-1">
                   <input
                     type="text"
@@ -128,8 +77,15 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
                       clipRule="evenodd" />
                   </svg>
                 </label>
+                <button onClick={refresh} className="btn btn-ghost">
+                  <FaSync className="h-5 w-5 text-gray-600" />
+                </button>
               </div>
 
+              {pendingConnections.length === 0 && confirmedConnections.length === 0 &&
+                <div className="text-center m-4 text-lg text-zinc-600">No connections found</div>
+              }
+              
               {pendingConnections.length > 0 && 
                 <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Invitations</h2>
               }
@@ -140,7 +96,7 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
               </div>
               
               {confirmedConnections.length > 0 &&
-                <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active</h2>
+                <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active Connections</h2>
               }
               <div className='ml-4 mr-2 flex flex-wrap gap-4'>
                 {confirmedConnections.map((connection) => (

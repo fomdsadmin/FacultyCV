@@ -1,3 +1,12 @@
+export const addToUserGroupMutation = (userName, userGroup) => `
+    mutation AddToUserGroup {
+        addToUserGroup(
+            userName: "${userName}",
+            userGroup: "${userGroup}"
+        )
+    }
+`;
+
 export const addSectionMutation = (title, description, data_type, attributes) => `
     mutation AddSection {
         addSection(
@@ -54,11 +63,22 @@ export const addUniversityInfoMutation = (type, value) => `
     }
 `;
 
-export const addUserConnectionMutation = (user_id, user_connection) => `
+export const addUserConnectionMutation = (
+    faculty_user_id, faculty_first_name, faculty_last_name, faculty_email,
+    assistant_user_id, assistant_first_name, assistant_last_name, assistant_email,
+    status
+) => `
     mutation AddUserConnection {
         addUserConnection(
-            user_id: "${user_id}"
-            user_connection: "${user_connection}"
+            faculty_user_id: "${faculty_user_id}"
+            faculty_first_name: "${faculty_first_name}"
+            faculty_last_name: "${faculty_last_name}"
+            faculty_email: "${faculty_email}"
+            assistant_user_id: "${assistant_user_id}"
+            assistant_first_name: "${assistant_first_name}"
+            assistant_last_name: "${assistant_last_name}"
+            assistant_email: "${assistant_email}"
+            status: "${status}"
         )
     }
 `;
@@ -130,6 +150,15 @@ export const updateUserMutation = (user_id, first_name, last_name, preferred_nam
     }
 `;
 
+export const updateSectionMutation = (data_section_id, archive) => `
+    mutation UpdateSection {
+        updateSection(
+            data_section_id: "${data_section_id}"
+            archive: ${archive}
+        )
+    }
+`;
+
 export const updateUserCVDataMutation = (user_cv_data_id, data_details) => `
     mutation UpdateUserCVData {
         updateUserCVData(
@@ -158,11 +187,11 @@ export const updateUniversityInfoMutation = (university_info_id, type, value) =>
     }
 `;
 
-export const updateUserConnectionMutation = (user_connection_id, user_connection) => `
+export const updateUserConnectionMutation = (user_connection_id, status) => `
     mutation UpdateUserConnection {
         updateUserConnection(
             user_connection_id: "${user_connection_id}"
-            user_connection: "${user_connection}"
+            status: "${status}"
         )
     }
 `;

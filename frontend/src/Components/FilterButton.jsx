@@ -7,6 +7,7 @@ const FilterButton = ({ filter, onClick, isActive }) => {
     <button
       className={`btn ${isActive ? 'btn-active' : 'btn-accent'} text-white mr-2 leading-tight min-h-0 h-6 px-2 py-1 text-sm flex items-center whitespace-nowrap overflow-hidden text-ellipsis`}
       onClick={onClick}
+      title={filter}
     >
       <span className="flex-shrink-0 w-4 flex justify-center">
         {isActive ? <IoClose className="h-4 w-4" /> : <FaCheck className="h-3 w-3" />}

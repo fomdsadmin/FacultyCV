@@ -16,6 +16,7 @@ type User {
   institution_user_id: String
   scopus_id: String
   orcid_id: String
+  joined_timestamp: String
 }
 
 type DataSection {
@@ -24,6 +25,7 @@ type DataSection {
   description: String!
   data_type: String
   attributes: AWSJSON! # JSON
+  archive: Boolean
 }
 
 type UserCVData {
@@ -63,8 +65,15 @@ type UniversityInfo {
 
 type UserConnection {
   user_connection_id: String!
-  user_id: String!
-  user_connection: AWSJSON! #JSON
+  faculty_user_id: String!
+  faculty_first_name: String!
+  faculty_last_name: String!
+  faculty_email: String!
+  assistant_user_id: String!
+  assistant_first_name: String!
+  assistant_last_name: String!
+  assistant_email: String!
+  status: String!
 }
 
 type Template {
@@ -100,22 +109,42 @@ type PublicationMatches {
   current_page: Int!
 }
 
+type SecureFunding {
+  secure_funding_id: String!
+  first_name: String!
+  last_name: String!
+  data_details: AWSJSON! #JSON
+}
+
+type Patent {
+  patent_id: String!
+  first_name: String!
+  last_name: String!
+  data_details: AWSJSON! #JSON
+}
+
 type Query {
     getUser(email: String!): User
     getExistingUser(institution_user_id: String!): User
     getAllSections: [ DataSection ]
+    getArchivedSections: [ DataSection ]
     getUserCVData(user_id: String!, data_section_id: String!): [UserCVData]
     getArchivedUserCVData(user_id: String!): [UserCVData]
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
     getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!
     getAllUniversityInfo: [ UniversityInfo ]
-    getUserConnections(user_id: String!): [ UserConnection ]
+    getUserConnections(faculty_user_id: String, assistant_user_id: String): [ UserConnection ]
     getAllTemplates: [ Template ]
     getTeachingDataMatches(institution_user_id: String!): [TeachingData]
     getPublicationMatches(scopus_id: String!, page_number: Int!, results_per_page: Int!): PublicationMatches
+    getSecureFundingMatches(first_name: String!, last_name: String!): [SecureFunding]
+    getAllUsers: [ User ]
+    getPatentMatches(first_name: String!, last_name: String!): [Patent]
 }
 
 type Mutation {
+    addToUserGroup(userName: String!, userGroup: String!): String
+
     generatePDF(first_name: String!): String
 
     addUser(
@@ -164,6 +193,11 @@ type Mutation {
       attributes: AWSJSON! # JSON
     ): String
 
+    updateSection(
+      data_section_id: String!
+      archive: Boolean
+    ): String
+
     addUserCVData(
       user_id: String!
       data_section_id: String!
@@ -183,13 +217,20 @@ type Mutation {
     ): String
 
     addUserConnection(
-      user_id: String!
-      user_connection: AWSJSON! #JSON
+      faculty_user_id: String!
+      faculty_first_name: String!
+      faculty_last_name: String!
+      faculty_email: String!
+      assistant_user_id: String!
+      assistant_first_name: String!
+      assistant_last_name: String!
+      assistant_email: String!
+      status: String!
     ): String
 
     updateUserConnection(
       user_connection_id: String!
-      user_connection: AWSJSON! #JSON
+      status: String!
     ): String
 
     deleteUserConnection(

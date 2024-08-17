@@ -1,5 +1,9 @@
 import * as appsync from "aws-cdk-lib/aws-appsync";
 import * as cdk from "aws-cdk-lib";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import { Duration } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
   Architecture,
@@ -56,6 +60,9 @@ export class ApiStack extends cdk.Stack {
     this.userPool = new cognito.UserPool(this, "FacultyCVUserPool", {
       userPoolName: "faculty-cv-user-pool",
       signInAliases: { email: true },
+      autoVerify: {
+        email: true,
+      },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       userVerification: {
         emailSubject: "You need to verify your email",
@@ -94,13 +101,13 @@ export class ApiStack extends cdk.Stack {
       userPoolId: this.userPool.userPoolId,
     });
 
-    const assistantsGroup = new cognito.CfnUserPoolGroup(this, 'AssistantsGroup', {
-        groupName: 'Assistants',
+    const assistantGroup = new cognito.CfnUserPoolGroup(this, 'AssistantGroup', {
+        groupName: 'Assistant',
         userPoolId: this.userPool.userPoolId,
     });
 
-    const adminsGroup = new cognito.CfnUserPoolGroup(this, 'AdminsGroup', {
-        groupName: 'Admins',
+    const adminGroup = new cognito.CfnUserPoolGroup(this, 'AdminGroup', {
+        groupName: 'Admin',
         userPoolId: this.userPool.userPoolId,
     });
 
@@ -185,22 +192,95 @@ export class ApiStack extends cdk.Stack {
       description: "IAM role for the lambda resolver function",
     });
 
+    // Grant access to Secret Manager
     resolverRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
         actions: [
-          "ec2:CreateNetworkInterface", 
-          "ec2:DeleteNetworkInterface",
-          "ec2:DescribeNetworkInterfaces"
+          //Secrets Manager
+          "secretsmanager:GetSecretValue",
         ],
-        effect: Effect.ALLOW,
-        resources: ['*']
+        resources: [
+          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:*`,
+        ],
       })
+    );
+
+    // Grant access to EC2
+    resolverRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          "ec2:CreateNetworkInterface",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DeleteNetworkInterface",
+          "ec2:AssignPrivateIpAddresses",
+          "ec2:UnassignPrivateIpAddresses",
+        ],
+        resources: ["*"], // must be *
+      })
+    );
+
+    // Grant access to log
+    resolverRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          //Logs
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ],
+        resources: ["arn:aws:logs:*:*:*"],
+      })
+    );
+
+    // Grant permission to add users to an IAM group
+    resolverRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+          "iam:AddUserToGroup",
+      ],
+      resources: [
+          `arn:aws:iam::${this.account}:user/*`,
+          `arn:aws:iam::${this.account}:group/*`,
+      ],
+    }));
+
+    // Grant permission to add users to a Cognito user group
+    resolverRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+          "cognito-idp:AdminAddUserToGroup",
+      ],
+      resources: [
+          `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${this.userPool.userPoolId}`,
+      ],
+    }));
+
+    createResolver(
+      this.api,
+      "addToUserGroup",
+      ["addToUserGroup"],
+      "Mutation",
+      {USER_POOL_ID: this.userPool.userPoolId},
+      resolverRole,
+      []
     );
 
     createResolver(
       this.api,
       "getUser",
       ["getUser"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getAllUsers",
+      ["getAllUsers"],
       "Query",
       {},
       resolverRole,
@@ -253,8 +333,26 @@ export class ApiStack extends cdk.Stack {
     );
     createResolver(
       this.api,
+      "getArchivedSections",
+      ["getArchivedSections"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
       "addSection",
       ["addSection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateSection",
+      ["updateSection"],
       "Mutation",
       {},
       resolverRole,
@@ -448,6 +546,24 @@ export class ApiStack extends cdk.Stack {
       {},
       resolverRole,
       [requestsLayer]
+    );
+    createResolver(
+      this.api,
+      "getSecureFundingMatches",
+      ["getSecureFundingMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getPatentMatches",
+      ["getPatentMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
     );
 
     // Lambda function to delete archived rows

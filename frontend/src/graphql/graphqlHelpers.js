@@ -1,14 +1,16 @@
 import { generateClient } from 'aws-amplify/api';
-import { getAllSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUniversityInfoQuery, 
-    getElsevierAuthorMatchesQuery, getExistingUserQuery, getUserConnectionsQuery, 
-    getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
-    getTeachingDataMatchesQuery,
-    getPublicationMatchesQuery} from './queries';
-import { addSectionMutation, addUserCVDataMutation, addUserMutation, 
+import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUsersQuery, 
+    getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, 
+    getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, 
+    getAllTemplatesQuery, getTeachingDataMatchesQuery, getPublicationMatchesQuery, 
+    getSecureFundingMatchesQuery, getPatentMatchesQuery} from './queries';
+import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
     updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
-    linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation } from './mutations';
+    linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation,
+    addToUserGroupMutation
+    } from './mutations';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -19,6 +21,36 @@ const runGraphql = async (query) => {
 }
 
 // --- GET ---
+
+/**
+ * Function to get all users
+ * Return value:
+ * [
+ *  {
+ *      user_id
+ *     first_name
+ *    last_name
+ *   preferred_name
+ *  email
+ * role
+ * bio
+ * rank
+ * primary_department
+ * secondary_department
+ * primary_faculty
+ * secondary_faculty
+ * campus
+ * keywords
+ * institution_user_id
+ * scopus_id
+ * orcid_id
+ *  }, ...
+ * ]
+ */
+export const getAllUsers = async () => {
+    const results = await runGraphql(getAllUsersQuery())
+    return results['data']['getAllUsers'];
+}
 
 /**
  * Function to get all sections that are part of the schema
@@ -38,6 +70,23 @@ export const getAllSections = async () => {
     return results['data']['getAllSections'];
 }
 
+/**
+ * Function to get all archived sections that are part of the schema
+ * Return value:
+ * [
+ *  {
+ *      attributes: JSON object with placeholder value - used to determine the structure (and not the actual data) of the section
+ *      dataSectionId: Identifier for the section in the DB
+ *      data_type: Umbrella term for the section
+ *      description
+ *      title  
+ *  }, ...
+ * ]
+ */
+export const getArchivedSections = async () => {
+    const results = await runGraphql(getArchivedSectionsQuery())
+    return results['data']['getArchivedSections'];
+}
 /**
  * Function to get user data
  * Arguments:
@@ -202,16 +251,26 @@ export const getOrcidAuthorMatches = async (first_name, last_name, institution_n
 /*
  * Function to get user connections given the user id
  * Arguments:
- * user_id
+ * user_id: string
+ * isFaculty: boolean (optional, defaults to true)
  * Return value:
+ * Array of objects:
  * {
  *      user_connection_id
- *      user_id
- *      user_connection: JSON string
+ *      faculty_user_id
+ *      faculty_first_name
+ *      faculty_last_name
+ *      faculty_email
+ *      assistant_user_id
+ *      assistant_first_name
+ *      assistant_last_name
+ *      assistant_email
+ *      status
  * }
  */
-export const getUserConnections = async (user_id) => {
-    const results = await runGraphql(getUserConnectionsQuery(user_id));
+export const getUserConnections = async (user_id, isFaculty = true) => {
+    const query = getUserConnectionsQuery(user_id, isFaculty);
+    const results = await runGraphql(query);
     return results['data']['getUserConnections'];
 }
 
@@ -278,18 +337,56 @@ export const getPublicationMatches = async (scopus_id, page_number, results_per_
     return results['data']['getPublicationMatches'];
 }
 
-// --- PUT ---
+/**
+ * Function to get secure funding matches from grants data
+ * Arguments:
+ * first_name,
+ * last_name
+ * Return value:
+ * [
+ *  {
+ *      secure_funding_id
+ *      first_name,
+ *      last_name,
+ *      data_details: JSON string
+ *  }, ...
+ * ]
+ */
+export const getSecureFundingMatches = async (first_name, last_name) => {
+    const results = await runGraphql(getSecureFundingMatchesQuery(first_name, last_name));
+    return results['data']['getSecureFundingMatches'];
+}
 
 /**
- * Function to update user data
- * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
- *      user_id
- *      first_name
- *      last_name
- *      preferred_name
- *      email
+ * Function to get patent matches from patents data
+ * Arguments:
+ * first_name,
+ * last_name
+ * Return value:
+ * [
+ *  {
+ *      secure_funding_id
+ *      first_name,
+ *      last_name,
+ *      data_details: JSON string
+ *  }, ...
+ * ]
+ */
+export const getPatentMatches = async (first_name, last_name) => {
+    const results = await runGraphql(getPatentMatchesQuery(first_name, last_name));
+    return results['data']['getPatentMatches'];
+}
 
 // --- POST ---
+
+/**
+ * Function to add user to user group
+ *
+ */
+export const addToUserGroup = async (userName, userGroup) => {
+    const results = await runGraphql(addToUserGroupMutation(userName, userGroup));
+    return results['data']['addToUserGroup'];
+}
 
 /**
  * Function to add user CV data - the section info associated with a user
@@ -373,15 +470,31 @@ export const addUniversityInfo = async (type, value) => {
 /**
  * Function to add user connections
  * Arguments:
- * user_id - ID of the user the profile belongs to
- * user_connection - JSON String
+ * faculty_user_id - ID of the faculty user
+ * faculty_first_name
+ * faculty_last_name
+ * faculty_email
+ * assistant_user_id - ID of the assistant user
+ * assistant_first_name
+ * assistant_last_name
+ * assistant_email
+ * status
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUserConnection = async (user_id, user_connection) => {
-    const results = await runGraphql(addUserConnectionMutation(user_id, user_connection));
+export const addUserConnection = async (
+    faculty_user_id, faculty_first_name, faculty_last_name, faculty_email,
+    assistant_user_id, assistant_first_name, assistant_last_name, assistant_email,
+    status
+) => {
+    const results = await runGraphql(addUserConnectionMutation(
+        faculty_user_id, faculty_first_name, faculty_last_name, faculty_email,
+        assistant_user_id, assistant_first_name, assistant_last_name, assistant_email,
+        status
+    ));
     return results['data']['addUserConnection'];
 }
+
 
 /**
  * Function to add template
@@ -503,6 +616,19 @@ export const updateUser = async (user_id, first_name, last_name, preferred_name,
 }
 
 /**
+ * Function to update data section - the archive status
+ * Arguments:
+ * data_section_id - ID of the data section
+ * archive - Boolean
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateSection = async (data_section_id, archive) => {
+    const results = await runGraphql(updateSectionMutation(data_section_id, archive));
+    return results['data']['updateSection'];
+}
+
+/**
  * Function to update user cv data - the section info associated with a user
  * Arguments:
  * user_cv_data_id - ID of the user cv data
@@ -548,12 +674,12 @@ export const updateUniversityInfo = async (university_info_id, type, value) => {
  * Function to update user connections
  * Arguments:
  * user_connection_id - ID of the user connection
- * user_connection - JSON String
+ * status - New status for the user connection
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateUserConnection = async (user_connection_id, user_connection) => {
-    const results = await runGraphql(updateUserConnectionMutation(user_connection_id, user_connection));
+export const updateUserConnection = async (user_connection_id, status) => {
+    const results = await runGraphql(updateUserConnectionMutation(user_connection_id, status));
     return results['data']['updateUserConnection'];
 }
 

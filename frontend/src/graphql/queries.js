@@ -20,6 +20,31 @@ export const getUserQuery = (email) => `
             institution_user_id
             scopus_id
             orcid_id
+            joined_timestamp
+        }
+    }
+`;
+
+export const getAllUsersQuery = () => `
+    query GetAllUsers {
+        getAllUsers {
+            user_id
+            first_name
+            last_name
+            preferred_name
+            email
+            role
+            bio
+            rank
+            primary_department
+            secondary_department
+            primary_faculty
+            secondary_faculty
+            campus
+            keywords
+            institution_user_id
+            scopus_id
+            orcid_id
         }
     }
 `;
@@ -46,6 +71,7 @@ export const getExistingUserQuery = (institution_user_id) => `
             institution_user_id
             scopus_id
             orcid_id
+            joined_timestamp
         }
     }
 `;
@@ -58,6 +84,20 @@ export const getAllSectionsQuery = () => `
             data_type
             description
             title
+            archive
+        }
+    }
+`;
+
+export const getArchivedSectionsQuery = () => `
+    query GetArchivedSections {
+        getArchivedSections {
+            attributes
+            data_section_id
+            data_type
+            description
+            title
+            archive
         }
     }
 `;
@@ -134,14 +174,21 @@ export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_na
     }
 `;
 
-export const getUserConnectionsQuery = (user_id) => `
+export const getUserConnectionsQuery = (user_id, isFaculty = true) => `
     query GetUserConnections {
         getUserConnections (
-            user_id: "${user_id}",
+            ${isFaculty ? 'faculty_user_id' : 'assistant_user_id'}: "${user_id}"
         ) {
             user_connection_id
-            user_id
-            user_connection
+            faculty_user_id
+            faculty_first_name
+            faculty_last_name
+            faculty_email
+            assistant_user_id
+            assistant_first_name
+            assistant_last_name
+            assistant_email
+            status
         }
     }
 `;
@@ -190,6 +237,34 @@ export const getPublicationMatchesQuery = (scopus_id, page_number, results_per_p
             total_results
             current_page
             total_pages
+        }
+    }
+`;
+
+export const getSecureFundingMatchesQuery = (first_name, last_name) => `
+    query GetSecureFundingMatches {
+        getSecureFundingMatches (
+            first_name: "${first_name}",
+            last_name: "${last_name}"
+        ) {
+            secure_funding_id
+            first_name
+            last_name
+            data_details
+        }
+    }
+`;
+
+export const getPatentMatchesQuery = (first_name, last_name) => `
+    query GetPatentMatches {
+        getPatentMatches (
+            first_name: "${first_name}",
+            last_name: "${last_name}"
+        ) {
+            patent_id
+            first_name
+            last_name
+            data_details
         }
     }
 `;
