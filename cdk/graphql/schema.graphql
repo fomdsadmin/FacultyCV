@@ -140,6 +140,7 @@ type Query {
     getSecureFundingMatches(first_name: String!, last_name: String!): [SecureFunding]
     getAllUsers: [ User ]
     getPatentMatches(first_name: String!, last_name: String!): [Patent]
+    getPresignedUrl(jwt: String!, key: String!, type: String): String
 }
 
 type Mutation {

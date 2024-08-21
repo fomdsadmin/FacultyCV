@@ -24,6 +24,7 @@ import Analytics from './Views/Analytics.jsx';
 import Templates from './Views/Templates.jsx';
 import Sections from './Views/Sections.jsx';
 import ArchivedSections from './Views/ArchivedSections.jsx';
+import { getJWT } from './getAuthToken.js';
 
 Amplify.configure({
   API: {
@@ -53,6 +54,7 @@ function App() {
   async function getUserGroup() {
     try {
       const session = await fetchAuthSession();
+      console.log(await getJWT());
       console.log('Session', session);
       const groups = session.tokens.idToken.payload['cognito:groups']
       console.log('User group:', groups);

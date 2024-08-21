@@ -17,6 +17,7 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import { DatabaseStack } from "./database-stack";
+import { CVGenStack } from "./cvgen-stack";
 
 export class ApiStack extends cdk.Stack {
   private readonly api: appsync.GraphqlApi;
@@ -29,7 +30,7 @@ export class ApiStack extends cdk.Stack {
   public addLayer = (name: string, layer: LayerVersion) =>
     (this.layerList[name] = layer);
   public getLayers = () => this.layerList;
-  constructor(scope: Construct, id: string, databaseStack: DatabaseStack, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, databaseStack: DatabaseStack, cvGenStack: CVGenStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
     this.layerList = {};
@@ -52,9 +53,16 @@ export class ApiStack extends cdk.Stack {
       description: "Lambda layer containing the requests Python library"
     });
 
+    const awsJwtVerifyLayer = new LayerVersion(this, "awsJwtVerifyLambdaLayer", {
+      code: Code.fromAsset("./layers/awsJwtVerify.zip"),
+      compatibleRuntimes: [Runtime.NODEJS_20_X],
+      description: "Lambda layer containing the aws-jwt-verify NodeJS library"
+    })
+
     this.layerList["psycopg2"] = psycopgLayer;
     this.layerList["reportlab"] = reportLabLayer;
     this.layerList["requests"] = requestsLayer;
+    this.layerList["aws-jwt-verify"] = awsJwtVerifyLayer;
 
     // Auth
     this.userPool = new cognito.UserPool(this, "FacultyCVUserPool", {
@@ -134,11 +142,12 @@ export class ApiStack extends cdk.Stack {
       typeName: string,
       env: { [key: string]: string },
       role: Role,
-      layers: LayerVersion[]
+      layers: LayerVersion[],
+      runtime: Runtime = Runtime.PYTHON_3_9
     ) => {
       const resolver = new Function(this, `facultycv-${directory}-resolver`, {
         functionName: `facultycv-${directory}-resolver`,
-        runtime: Runtime.PYTHON_3_9,
+        runtime: runtime,
         memorySize: 512,
         code: Code.fromAsset(`./lambda/${directory}`),
         handler: "resolver.lambda_handler",
@@ -256,6 +265,14 @@ export class ApiStack extends cdk.Stack {
       resources: [
           `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${this.userPool.userPoolId}`,
       ],
+    }));
+
+    resolverRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "s3:*Object",
+      ],
+      resources: [cvGenStack.cvS3Bucket.bucketArn + "/*"]
     }));
 
     createResolver(
@@ -411,6 +428,20 @@ export class ApiStack extends cdk.Stack {
       {},
       resolverRole,
       [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getPresignedUrl",
+      ["getPresignedUrl"],
+      "Query",
+      {
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
+        USER_POOL_ID: this.userPool.userPoolId,
+        CLIENT_ID: this.userPoolClient.userPoolClientId
+      },
+      resolverRole,
+      [awsJwtVerifyLayer],
+      Runtime.NODEJS_20_X
     );
     createResolver(
       this.api,

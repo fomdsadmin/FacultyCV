@@ -21,7 +21,9 @@ const databaseStack = new DatabaseStack(app, 'DatabaseStack', vpcStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 
-const apiStack = new ApiStack(app, 'ApiStack', databaseStack,
+const cvGenStack = new CVGenStack(app, 'CVGenStack', { env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }});
+
+const apiStack = new ApiStack(app, 'ApiStack', databaseStack, cvGenStack,
    {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
@@ -36,8 +38,6 @@ const dbFetchStack = new DbFetchStack(app, 'DbFetchStack', databaseStack, apiSta
 const dataFetchStack = new DataFetchStack(app, 'DataFetchStack', databaseStack, apiStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
-
-const cvGenStack = new CVGenStack(app, 'CVGenStack', { env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }});
 
 const grantDataStack = new GrantDataStack(app, 'GrantDataStack', vpcStack, databaseStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
