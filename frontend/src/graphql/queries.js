@@ -268,3 +268,13 @@ export const getPatentMatchesQuery = (first_name, last_name) => `
         }
     }
 `;
+
+export const getPresignedUrlQuery = (jwt, fileKey, type) => `
+    query GetPresignedUrl {
+        getPresignedUrl (
+            jwt: "${jwt}",
+            key: "${fileKey}",
+            type: "${type}"
+        )
+    }
+`;

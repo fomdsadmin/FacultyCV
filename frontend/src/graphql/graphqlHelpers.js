@@ -3,7 +3,8 @@ import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getU
     getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, 
     getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, 
     getAllTemplatesQuery, getTeachingDataMatchesQuery, getPublicationMatchesQuery, 
-    getSecureFundingMatchesQuery, getPatentMatchesQuery} from './queries';
+    getSecureFundingMatchesQuery, getPatentMatchesQuery,
+    getPresignedUrlQuery} from './queries';
 import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -375,6 +376,21 @@ export const getSecureFundingMatches = async (first_name, last_name) => {
 export const getPatentMatches = async (first_name, last_name) => {
     const results = await runGraphql(getPatentMatchesQuery(first_name, last_name));
     return results['data']['getPatentMatches'];
+}
+
+/**
+ * Function to get a presigned URL authorized to PUT or GET an object to/from a dedicated partition
+ * in the CV S3 bucket for the tenant whose JWT token is passed
+ * Arguments:
+ * jwt - the jwt session token
+ * fileKey - the key of the file to get the presigned URL for (assume that the S3 bucket is being used only by one tenant, partitions are handled by the resolver)
+ * type - the type of operation (PUT or GET)
+ * Return value:
+ * String - the presigned URL
+ */
+export const getPresignedUrl = async (jwt, fileKey, type) => {
+    const results = await runGraphql(getPresignedUrlQuery(jwt, fileKey, type));
+    return results['data']['getPresignedUrl'];
 }
 
 // --- POST ---

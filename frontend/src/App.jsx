@@ -9,7 +9,7 @@ import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
-import { getUser } from './graphql/graphqlHelpers.js';
+import { getPresignedUrl, getUser } from './graphql/graphqlHelpers.js';
 import PageContainer from './Views/PageContainer.jsx';
 import FacultyHomePage from './Views/FacultyHomePage.jsx';
 import AssistantHomePage from './Views/AssistantHomePage.jsx';
@@ -54,7 +54,7 @@ function App() {
   async function getUserGroup() {
     try {
       const session = await fetchAuthSession();
-      console.log(await getJWT());
+      // console.log(await getPresignedUrl(await getJWT(), 'resume2.tex', 'PUT'));
       console.log('Session', session);
       const groups = session.tokens.idToken.payload['cognito:groups']
       console.log('User group:', groups);
