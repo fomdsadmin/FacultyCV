@@ -1,4 +1,5 @@
-const { CognitoJwtVerifier } = require("aws-jwt-verify");
+const { JwtRsaVerifier } = require("aws-jwt-verify");
+const { validateCognitoJwtFields } = require("aws-jwt-verify/cognito-verifier");
 const { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
@@ -33,11 +34,16 @@ exports.lambda_handler = async(event, context) => {
     const fileKey = event['arguments']['key'];
     const type = event['arguments']['type'];
 
-    const verifier = CognitoJwtVerifier.create({
-        userPoolId: process.env.USER_POOL_ID,
-        tokenUse: "access",
-        clientId: process.env.CLIENT_ID
-    });
+    const verifier = JwtRsaVerifier.create([{
+        issuer: process.env.USER_POOL_ISS,
+        audience: null,
+        customJwtCheck: ({payload}) => validateCognitoJwtFields(payload, {
+                tokenUse: "access",
+                clientId: process.env.CLIENT_ID,
+        }),
+    },
+    // Add more IDPs here
+    ]);
 
     // First check if the JWT token is valid
     let payload = null;

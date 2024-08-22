@@ -437,7 +437,7 @@ export class ApiStack extends cdk.Stack {
       "Query",
       {
         BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
-        USER_POOL_ID: this.userPool.userPoolId,
+        USER_POOL_ISS: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPool.userPoolId}`,
         CLIENT_ID: this.userPoolClient.userPoolClientId
       },
       resolverRole,
