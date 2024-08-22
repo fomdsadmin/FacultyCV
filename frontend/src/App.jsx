@@ -54,7 +54,6 @@ function App() {
   async function getUserGroup() {
     try {
       const session = await fetchAuthSession();
-      console.log(await getJWT());
       console.log('Session', session);
       const groups = session.tokens.idToken.payload['cognito:groups']
       console.log('User group:', groups);
