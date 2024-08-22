@@ -1,5 +1,5 @@
 const { CognitoJwtVerifier } = require("aws-jwt-verify");
-const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const getPresignedUrl = async (fileKey, type) => {
@@ -7,6 +7,25 @@ const getPresignedUrl = async (fileKey, type) => {
     const commandFunction = type == "GET" ? GetObjectCommand : PutObjectCommand;
     const command = new commandFunction({ Bucket: process.env.BUCKET_NAME, Key: fileKey });
     return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+}
+
+const getLastModified = async (fileKey) => {
+    const s3Client = new S3Client();
+    const input = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: fileKey
+    };
+    try {
+        const command = new HeadObjectCommand(input);
+        const response = await s3Client.send(command);
+        const lastModified = response.LastModified;
+        return Math.floor(lastModified.getTime() / 1000);
+    } catch (error) {
+        if (error.name === 'NotFound') {
+            return -1;
+        }
+        throw error;
+    }
 }
 
 exports.lambda_handler = async(event, context) => {
@@ -33,6 +52,16 @@ exports.lambda_handler = async(event, context) => {
 
     // To store/get multiple tenant's CV's separately
     const actualFileKey = payload.username + '/' + fileKey;
+
+    // If the type is GET, then the corresponding .tex file should be created before the PDF requested
+    // Else PDF is outdated and the requester needs to wait
+    if (type == "GET") {
+        const lastModifiedLatex = await getLastModified(actualFileKey.replace('pdf', 'tex'));
+        const lastModifiedPdf = await getLastModified(actualFileKey);
+        if (lastModifiedLatex == -1 || lastModifiedPdf == -1 || lastModifiedLatex > lastModifiedPdf) {
+            return "WAIT";
+        }
+    }
 
     const url = await getPresignedUrl(actualFileKey, type);
 

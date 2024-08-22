@@ -4,6 +4,7 @@ import FacultyMenu from '../Components/FacultyMenu';
 import { getAllSections, getAllTemplates, getUserCVData } from '../graphql/graphqlHelpers.js';
 import '../CustomStyles/scrollbar.css';
 import Report from '../Components/Report.jsx';
+import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
 
 const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
@@ -13,6 +14,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [Templates, setTemplates] = useState([]);
   const [latex, setLatex] = useState('');
   const [buildingLatex, setBuildingLatex] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,15 +26,18 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     };
   
     fetchData();
-  }, [userInfo]); 
+  }, [userInfo]);
 
+  useEffect(() => {
+    if (selectedTemplate) {
+      getDataSections(selectedTemplate);
+    }
+  }, [selectedTemplate]);
 
   const handleTemplateChange = (template) => {
     setSelectedTemplate(template);
-    // console.log("THIS IS TEMPLATE:" + template.data_section_ids);
-    getDataSections(template);
+    console.log(template);
   };
-  
 
   const getDataSections = async (template) => {
     const retrievedSections = await getAllSections();
@@ -64,9 +69,15 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 
     setBuildingLatex(true);
     let latex = await buildLatex(filteredSections);
+    const key = `${selectedTemplate.template_id}/resume.tex`;
+    // Upload .tex to S3
+    await uploadLatexToS3(latex, key);
+    // Wait till a url to the latest PDF is available
+    const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
     setLatex(latex);
     setBuildingLatex(false); 
     setLoading(false);
+    setDownloadUrl(url);
   }
 
   const escapeLatex = (text) => {
@@ -288,8 +299,9 @@ ${escapeLatex(user.campus)} \\\\
                     'Preview'
                   )}
                 </button>
+                <a href={downloadUrl} download>
                 <button
-                  onClick={handleDownload}
+                  //onClick={handleDownload}
                   className={`mt-6 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
                   disabled={buildingLatex}
                 >
@@ -301,6 +313,7 @@ ${escapeLatex(user.campus)} \\\\
                     'Download'
                   )}
                 </button>
+                </a>
               </div>
             )}
 

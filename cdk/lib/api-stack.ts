@@ -271,8 +271,9 @@ export class ApiStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       actions: [
         "s3:*Object",
+        "s3:ListBucket",
       ],
-      resources: [cvGenStack.cvS3Bucket.bucketArn + "/*"]
+      resources: [cvGenStack.cvS3Bucket.bucketArn + "/*", cvGenStack.cvS3Bucket.bucketArn]
     }));
 
     createResolver(
