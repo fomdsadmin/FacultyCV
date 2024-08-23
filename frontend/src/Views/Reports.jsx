@@ -112,7 +112,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\usepackage{array}
       \\usepackage{booktabs}
       \\usepackage{tabularx}
-      \\usepackage{longtable}
+      \\usepackage{longtable} % To handle long tables
       \\usepackage{hyperref}
   
       \\begin{document}
@@ -192,6 +192,14 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\end{flushleft}
     `;
   
+    const calculateColumnWidths = (headers, totalWidth = 19, columnSpacing = 0.5) => {
+      const numColumns = headers.length;
+      const totalSpacing = (numColumns - 1) * columnSpacing;
+      const contentWidth = totalWidth - totalSpacing;
+      const columnWidth = (contentWidth / numColumns).toFixed(2);
+      return headers.map(() => `p{${columnWidth}cm}`).join(' | ');
+    };
+  
     for (const section of sections) {
       try {
         console.log(`Fetching data for section: ${section.title}`);
@@ -213,34 +221,99 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           data_details: JSON.parse(data.data_details),
         }));
   
-        let attributes = JSON.parse(section.attributes);
-        let headers = Object.keys(attributes);
+        // PATENTS //
+        if (section.title.toLowerCase() === 'patents') {
+          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
   
-        // Check if the section title is "publications"
-        if (section.title.toLowerCase() === 'publications') {
-          // Filter out fields for "publications" section
-          headers = headers.filter(header => !['doi', 'link', 'publication_id'].includes(header.toLowerCase()));
-        }
+          parsedData.forEach((item, index) => {
+            const { first_name, last_name, title, publication_number, publication_date, country_code, kind_code, family_number } = item.data_details;
   
-        latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
-        latex += `\\begin{tabularx}{\\textwidth}{| ${headers.map(() => 'X').join(' | ')} |}\n`;
-        latex += `\\hline\n`;
-        latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\\\\\ \n';  // Fixed backslash
-        latex += `\\hline\n`;
+            const patentCitation = `${index + 1}. ${escapeLatex(last_name)}, ${escapeLatex(first_name)}. ${escapeLatex(title)}. ${escapeLatex(publication_number)}, ${escapeLatex(country_code + '-' + kind_code)} / ${escapeLatex(family_number)}, filed ${escapeLatex(publication_date)}`;
   
-        for (const item of parsedData) {
-          const row = headers
-            .map((header) => {
-              const key = header.replace(/\s+/g, '_').toLowerCase();
-              const value = item.data_details[key];
-              return escapeLatex(value !== undefined ? value : '');
-            })
-            .join(' & ');
-          latex += `${row} \\\\\\\\ \n`;  // Fixed backslash
+            latex += patentCitation;
+  
+            if (index < parsedData.length - 1) {
+              latex += ` \\\\\n`;
+            } else {
+              latex += `\n`;
+            }
+          });
+  
+        // COURSES TAUGHT //
+        } else if (section.title.toLowerCase() === 'courses taught') {
+          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+  
+          let attributes = JSON.parse(section.attributes);
+          let headers = Object.keys(attributes).filter(header => header.toLowerCase() !== 'description');
+  
+          const columns = calculateColumnWidths(headers);
+  
+          latex += `\\begin{longtable}{| ${columns} |}\n`;
           latex += `\\hline\n`;
-        }
+          latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
   
-        latex += `\\end{tabularx}\n\n`;
+          for (const item of parsedData) {
+            const row = headers
+              .map((header) => {
+                const key = header.replace(/\s+/g, '_').toLowerCase();
+                const value = item.data_details[key];
+                return escapeLatex(value !== undefined ? value : '');
+              })
+              .join(' & ');
+            latex += `${row} \\\\ \\hline\n`;
+          }
+  
+          latex += `\\end{longtable}\n\n`;
+  
+        // PUBLICATIONS //
+        } else if (section.title.toLowerCase() === 'publications') {
+          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+  
+          let headers = ['Title', 'Year Published', 'Journal', 'Author Names'];
+          const columns = calculateColumnWidths(headers);
+  
+          latex += `\\begin{longtable}{| ${columns} |}\n`;
+          latex += `\\hline\n`;
+          latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
+  
+          for (const item of parsedData) {
+            const row = headers
+              .map((header) => {
+                const key = header.replace(/\s+/g, '_').toLowerCase();
+                const value = item.data_details[key];
+                return escapeLatex(value !== undefined ? value : '');
+              })
+              .join(' & ');
+            latex += `${row} \\\\ \\hline\n`;
+          }
+  
+          latex += `\\end{longtable}\n\n`;
+  
+        // OTHER //
+        } else {
+          let attributes = JSON.parse(section.attributes);
+          let headers = Object.keys(attributes);
+  
+          const columns = calculateColumnWidths(headers);
+  
+          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+          latex += `\\begin{longtable}{| ${columns} |}\n`;
+          latex += `\\hline\n`;
+          latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
+  
+          for (const item of parsedData) {
+            const row = headers
+              .map((header) => {
+                const key = header.replace(/\s+/g, '_').toLowerCase();
+                const value = item.data_details[key];
+                return escapeLatex(value !== undefined ? value : '');
+              })
+              .join(' & ');
+            latex += `${row} \\\\ \\hline\n`;
+          }
+  
+          latex += `\\end{longtable}\n\n`;
+        }
       } catch (error) {
         console.error(`Error processing section ID: ${section.data_section_id}`, error);
       }
@@ -249,9 +322,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     latex += `\\end{document}`;
     return latex;
   };
-  
-  
-  
   
 
   const handlePreview = () => {
