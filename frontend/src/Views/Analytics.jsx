@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import AdminMenu from '../Components/AdminMenu.jsx';
 import AnalyticsCard from '../Components/AnalyticsCard.jsx';
-import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, getAllSections } from '../graphql/graphqlHelpers.js';
+import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, getAllSections, getNumberOfGeneratedCVs } from '../graphql/graphqlHelpers.js';
 
 const Analytics = ({ getCognitoUser, userInfo }) => {
   const [loading, setLoading] = useState(false);
@@ -23,6 +23,7 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
   useEffect(() => {
     fetchUsers();
     fetchUniversityInfo();
+    fetchGeneratedCVs();
   }, []);
 
   async function fetchUsers() {
@@ -51,6 +52,17 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
       setDepartments(universityInfo.filter(info => info.type === 'Department').map(info => info.value));
     } catch (error) {
       console.log('Error getting university info:', error);
+    }
+    setLoading(false);
+  }
+
+  async function fetchGeneratedCVs() {
+    setLoading(true);
+    try {
+      const generatedCVs = await getNumberOfGeneratedCVs();
+      setTotalCVsGenerated(generatedCVs);
+    } catch (error) {
+      console.log('Error getting generated CVs:', error);
     }
     setLoading(false);
   }

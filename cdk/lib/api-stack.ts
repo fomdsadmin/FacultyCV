@@ -446,6 +446,17 @@ export class ApiStack extends cdk.Stack {
     );
     createResolver(
       this.api,
+      "getNumberOfGeneratedCVs",
+      ["getNumberOfGeneratedCVs"],
+      "Query",
+      {
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName
+      },
+      resolverRole,
+      []
+    )
+    createResolver(
+      this.api,
       "addUniversityInfo",
       ["addUniversityInfo"],
       "Mutation",

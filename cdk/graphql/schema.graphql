@@ -141,6 +141,7 @@ type Query {
     getAllUsers: [ User ]
     getPatentMatches(first_name: String!, last_name: String!): [Patent]
     getPresignedUrl(jwt: String!, key: String!, type: String): String
+    getNumberOfGeneratedCVs: Int! 
 }
 
 type Mutation {

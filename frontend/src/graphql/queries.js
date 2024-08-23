@@ -278,3 +278,9 @@ export const getPresignedUrlQuery = (jwt, fileKey, type) => `
         )
     }
 `;
+
+export const getNumberOfGeneratedCVsQuery = () => `
+    query GetNumberOfGeneratedCVs {
+        getNumberOfGeneratedCVs
+    }
+`;
