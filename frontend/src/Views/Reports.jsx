@@ -5,6 +5,7 @@ import { getAllSections, getAllTemplates, getUserCVData } from '../graphql/graph
 import '../CustomStyles/scrollbar.css';
 import Report from '../Components/Report.jsx';
 import PDFViewer from '../Components/PDFViewer.jsx';
+import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
 
 const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
@@ -15,6 +16,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [latex, setLatex] = useState('');
   const [buildingLatex, setBuildingLatex] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,7 +24,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       const templates = await getAllTemplates();
       setTemplates(templates);
     };
-
     fetchData();
   }, [userInfo]);
 
@@ -62,10 +63,16 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 
     setBuildingLatex(true);
     let latex = await buildLatex(filteredSections);
+    const key = `${selectedTemplate.template_id}/resume.tex`;
+    // Upload .tex to S3
+    await uploadLatexToS3(latex, key);
+    // Wait till a url to the latest PDF is available
+    const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
     setLatex(latex);
     setBuildingLatex(false);
     setLoading(false);
-  };
+    setDownloadUrl(url);
+  }
 
   const escapeLatex = (text) => {
     if (typeof text !== 'string') {

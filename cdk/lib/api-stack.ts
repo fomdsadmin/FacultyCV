@@ -271,8 +271,9 @@ export class ApiStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       actions: [
         "s3:*Object",
+        "s3:ListBucket",
       ],
-      resources: [cvGenStack.cvS3Bucket.bucketArn + "/*"]
+      resources: [cvGenStack.cvS3Bucket.bucketArn + "/*", cvGenStack.cvS3Bucket.bucketArn]
     }));
 
     createResolver(
@@ -436,13 +437,24 @@ export class ApiStack extends cdk.Stack {
       "Query",
       {
         BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
-        USER_POOL_ID: this.userPool.userPoolId,
+        USER_POOL_ISS: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPool.userPoolId}`,
         CLIENT_ID: this.userPoolClient.userPoolClientId
       },
       resolverRole,
       [awsJwtVerifyLayer],
       Runtime.NODEJS_20_X
     );
+    createResolver(
+      this.api,
+      "getNumberOfGeneratedCVs",
+      ["getNumberOfGeneratedCVs"],
+      "Query",
+      {
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName
+      },
+      resolverRole,
+      []
+    )
     createResolver(
       this.api,
       "addUniversityInfo",

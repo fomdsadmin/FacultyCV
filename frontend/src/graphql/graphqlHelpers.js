@@ -4,7 +4,8 @@ import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getU
     getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, 
     getAllTemplatesQuery, getTeachingDataMatchesQuery, getPublicationMatchesQuery, 
     getSecureFundingMatchesQuery, getPatentMatchesQuery,
-    getPresignedUrlQuery} from './queries';
+    getPresignedUrlQuery,
+    getNumberOfGeneratedCVsQuery} from './queries';
 import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -391,6 +392,16 @@ export const getPatentMatches = async (first_name, last_name) => {
 export const getPresignedUrl = async (jwt, fileKey, type) => {
     const results = await runGraphql(getPresignedUrlQuery(jwt, fileKey, type));
     return results['data']['getPresignedUrl'];
+}
+
+/**
+ * Function to get the number of reports in the S3 bucket
+ * Return value:
+ * Integer - the number of reports in the S3 bucket
+ */
+export const getNumberOfGeneratedCVs = async () => {
+    const results = await runGraphql(getNumberOfGeneratedCVsQuery());
+    return results['data']['getNumberOfGeneratedCVs'];
 }
 
 // --- POST ---
