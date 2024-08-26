@@ -4,12 +4,18 @@ import PageContainer from './PageContainer.jsx';
 import AdminMenu from '../Components/AdminMenu.jsx';
 import AnalyticsCard from '../Components/AnalyticsCard.jsx';
 import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, getAllSections, getNumberOfGeneratedCVs } from '../graphql/graphqlHelpers.js';
+import { formatDateToLongString } from '../utils/time.js';
+import { LineGraph } from '../Components/LineGraph.jsx';
 
 const Analytics = ({ getCognitoUser, userInfo }) => {
   const [loading, setLoading] = useState(false);
   const [facultyUsers, setFacultyUsers] = useState([]);
   const [assistantUsers, setAssistantUsers] = useState([]);
   const [adminUsers, setAdminUsers] = useState([]);
+  const [facultyUserTimestamps, setFacultyUserTimestamps] = useState([]);
+  const [assistantUserTimestamps, setAssistantUserTimestamps] = useState([]);
+  const [adminUserTimestamps, setAdminUserTimestamps] = useState([]);
+  const [allUserTimestamps, setAllUserTimestamps] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [role, setRole] = useState('All');
   const [department, setDepartment] = useState('All');
@@ -19,6 +25,9 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
   const [grantMoneyRaised, setGrantMoneyRaised] = useState([]);
   const [facultyConnections, setFacultyConnections] = useState([]);
   const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
+
+  // The time range in days that the graph shows
+  const TIME_RANGE = 50;
 
   useEffect(() => {
     fetchUsers();
@@ -33,9 +42,40 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
       const filteredFacultyUsers = users.filter(user => user.role === 'Faculty');
       const filteredAssistantUsers = users.filter(user => user.role === 'Assistant');
       const filteredAdminUsers = users.filter(user => user.role === 'Admin');
+      const facutlyTimestamps = filteredFacultyUsers
+                                .map(user => new Date(user.joined_timestamp))
+                                .sort((a, b) => a - b)
+                                .map(timestamp => {
+                                  timestamp.setHours(0, 0, 0, 0);
+                                  return timestamp;
+                                });
+      const adminTimestamps = filteredAdminUsers
+                              .map(user => new Date(user.joined_timestamp))
+                              .sort((a, b) => a - b)
+                              .map(timestamp => {
+                                timestamp.setHours(0, 0, 0, 0);
+                                return timestamp;
+                              });
+      const assistantTimestamps = filteredAssistantUsers
+                                  .map(user => new Date(user.joined_timestamp))
+                                  .sort((a, b) => a - b)
+                                  .map(timestamp => {
+                                    timestamp.setHours(0, 0, 0, 0);
+                                    return timestamp;
+                                  });
+      const allTimestamps = users.map(user => new Date(user.joined_timestamp))
+                            .sort((a, b) => a - b)
+                            .map(timestamp => {
+                              timestamp.setHours(0, 0, 0, 0);
+                              return timestamp;
+                            });
       setFacultyUsers(filteredFacultyUsers);
       setAssistantUsers(filteredAssistantUsers);
       setAdminUsers(filteredAdminUsers);
+      setAllUserTimestamps(allTimestamps);
+      setFacultyUserTimestamps(facutlyTimestamps);
+      setAdminUserTimestamps(adminTimestamps);
+      setAssistantUserTimestamps(assistantTimestamps);
       console.log(users);
       fetchAllUserCVData(filteredFacultyUsers)
       fetchFacultyConnections(filteredAssistantUsers);
@@ -165,6 +205,61 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
     .reduce((total, grant) => total + grant.amount, 0)
     .toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
+  const getGraphData = () => {
+    const data = [];
+    const endDate = new Date();
+    endDate.setHours(0, 0, 0, 0);
+    let users = 0;
+    const startDate = new Date(endDate);
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(startDate.getDate() - TIME_RANGE);
+    switch (role) {
+      case 'Faculty':
+        users = facultyUserTimestamps.filter(date => date < startDate).length;
+        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
+          const formattedDate = formatDateToLongString(date);
+          users += facultyUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
+          data.push({
+            date: formattedDate,
+            Users: users
+          });
+        }
+        break;
+      case 'Assistant':
+        users = assistantUserTimestamps.filter(date => date < startDate).length;
+        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
+          const formattedDate = formatDateToLongString(date);
+          users += assistantUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
+          data.push({
+            date: formattedDate,
+            Users: users
+          });
+        }
+        break;
+      case 'Admin':
+        users = adminUserTimestamps.filter(date => date < startDate).length;
+        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
+          const formattedDate = formatDateToLongString(date);
+          users += adminUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
+          data.push({
+            date: formattedDate,
+            Users: users
+          });
+        }
+        break;
+      default:
+        users = allUserTimestamps.filter(date => date < startDate).length;
+        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
+          const formattedDate = formatDateToLongString(date);
+          users += allUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
+          data.push({
+            date: formattedDate,
+            Users: users
+          });
+        }
+    }
+    return data;  
+  }
   return (
     <PageContainer>
       <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
@@ -240,6 +335,10 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
                   <AnalyticsCard title="Admin Users" value={adminUsers.length} />
                 </>
               )}
+            </div>
+            <div className='h-[300px] w-[75%]'>
+              <h2 className='text-left m-4 text-l font-bold text-zinc-600 pt-[8px] pb-[8px]'>Number of Users with time</h2>
+              <LineGraph data={getGraphData()} />
             </div>
           </div>
         )}

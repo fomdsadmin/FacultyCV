@@ -45,6 +45,7 @@ export const getAllUsersQuery = () => `
             institution_user_id
             scopus_id
             orcid_id
+            joined_timestamp
         }
     }
 `;

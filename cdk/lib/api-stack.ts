@@ -454,7 +454,7 @@ export class ApiStack extends cdk.Stack {
       },
       resolverRole,
       []
-    )
+    );
     createResolver(
       this.api,
       "addUniversityInfo",

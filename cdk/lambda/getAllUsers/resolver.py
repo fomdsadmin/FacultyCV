@@ -32,7 +32,7 @@ def getAllUsers(arguments):
         'user_id', 'first_name', 'last_name', 'preferred_name', 'email',
         'role', 'bio', 'rank', 'primary_department', 'secondary_department',
         'primary_faculty', 'secondary_faculty', 'campus', 'keywords',
-        'institution_user_id', 'scopus_id', 'orcid_id'
+        'institution_user_id', 'scopus_id', 'orcid_id', 'joined_timestamp'
     ]
     
     # Convert query results to a list of dictionaries
