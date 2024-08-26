@@ -14,6 +14,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [Templates, setTemplates] = useState([]);
   const [latex, setLatex] = useState('');
   const [buildingLatex, setBuildingLatex] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,6 +30,14 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     setSelectedTemplate(template);
     getDataSections(template);
   };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const searchedTemplates = Templates.filter(template =>
+    template.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getDataSections = async (template) => {
     const retrievedSections = await getAllSections();
@@ -293,24 +302,46 @@ const Reports = ({ userInfo, getCognitoUser }) => {
         } else {
           let attributes = JSON.parse(section.attributes);
           let headers = Object.keys(attributes);
-  
-          const columns = calculateColumnWidths(headers);
-  
+
           latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
-          latex += `\\begin{longtable}{| ${columns} |}\n`;
-          latex += `\\hline\n`;
-          latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
-  
-          for (const item of parsedData) {
-            const row = headers
-              .map((header) => {
+
+          if (headers.length === 1) {
+
+            let counter = 1;
+
+            latex += `\\begin{longtable}{| p{0.5cm} | p{17.7cm} |}\n`;
+            latex += `\\hline\n`;
+
+            for (const item of parsedData) {
+              const row = headers.map((header) => {
                 const key = header.replace(/\s+/g, '_').toLowerCase();
                 const value = item.data_details[key];
                 return escapeLatex(value !== undefined ? value : '');
-              })
-              .join(' & ');
-            latex += `${row} \\\\ \\hline\n`;
-          }
+              }).join(' & '); 
+              latex += `${counter} & ${row} \\\\ \\hline\n`;
+              counter++;
+            }
+          } else {
+
+            const columns = calculateColumnWidths(headers);
+    
+
+            latex += `\\begin{longtable}{| ${columns} |}\n`;
+            latex += `\\hline\n`;
+            latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
+    
+            for (const item of parsedData) {
+              const row = headers
+                .map((header) => {
+                  const key = header.replace(/\s+/g, '_').toLowerCase();
+                  const value = item.data_details[key];
+                  return escapeLatex(value !== undefined ? value : '');
+                })
+                .join(' & ');
+              latex += `${row} \\\\ \\hline\n`;
+            }
+
+        }
   
           latex += `\\end{longtable}\n\n`;
         }
@@ -323,11 +354,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     return latex;
   };
   
-
-  const handlePreview = () => {
-    console.log(latex);
-    // Need to add PDF viewing functionality
-  };
 
   const handleDownload = () => {
     const lastName = user.last_name || 'unknown';
@@ -349,47 +375,77 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser} />
       <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4">
         <div className="flex w-full h-full">
+          
           {/* Content Section */}
           <div className="flex-1 min-w-80 !overflow-auto !h-full custom-scrollbar mr-4">
             <h1 className="text-4xl ml-2 font-bold my-3 text-zinc-600">Reports</h1>
             <h2 className="text-2xl ml-2 font-bold my-3 text-zinc-600">Select a Template</h2>
 
-            <div className="overflow-auto h-auto mb-6 custom-scrollbar">
-              {Templates.map((template, index) => (
-                <Report
-                  key={index}
-                  title={template.title}
-                  onClick={() => handleTemplateChange(template)}
-                  isSelected={selectedTemplate && selectedTemplate.template_id === template.template_id}
-                />
-              ))}
-            </div>
-
-            {selectedTemplate && (
-              <div className="fixed bottom-0 left-1/8 ml-2 ">
-                <button
-                  onClick={handlePreview}
-                  className={`mr-2 mt-6 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-accent'} min-h-0 h-6 leading-tight mb-1`}
-                  disabled={buildingLatex}
-                >
-                  {buildingLatex ? <span className="loader"></span> : 'Open Editor'}
-                </button>
-                <button
-                  onClick={handleDownload}
-                  className={`mt-6 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
-                  disabled={buildingLatex}
-                >
-                  {buildingLatex ? <span className="loader"></span> : 'Download'}
-                </button>
+            <div className="w-full flex flex-col">
+   
+              <div className="w-full max-w-xs mb-4 ml-2"> 
+                <label className="input input-bordered flex items-center gap-2 w-full">
+                  <input
+                    type="text"
+                    className="grow"
+                    placeholder="Search Templates"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                  />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    className="h-4 w-4 opacity-70"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </label>
               </div>
-            )}
+
+              {/* Template List */}
+              <div className="w-full max-w-lg overflow-auto h-auto mb-6 custom-scrollbar"> {/* Restricting width of the template list */}
+                {searchedTemplates.map((template, index) => (
+                  <Report
+                    key={index}
+                    title={template.title}
+                    onClick={() => handleTemplateChange(template)}
+                    isSelected={selectedTemplate && selectedTemplate.template_id === template.template_id}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* PDF Viewer Section */}
-          {selectedTemplate && !buildingLatex && (
-            <div className="flex-shrink-0 w-2/3 h-full overflow-auto custom-scrollbar">
-              <PDFViewer />
-            </div>
+          {selectedTemplate && (
+            <>
+              {buildingLatex ? (
+                <div className='w-3/5 h-full relative'>
+                  <span className='page-loader w-full' style={{ zIndex: 100, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></span>
+                </div>
+              ) : (
+                <div className='w-3/5 h-full'>
+                  <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
+                    <PDFViewer />
+                  </div>
+
+                  <div className='flex justify-center'>
+                    <button
+                      onClick={handleDownload}
+                      className={`mt-2 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
+                      disabled={buildingLatex}
+                    >
+                      {buildingLatex ? <span className="loader"></span> : 'Download'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
