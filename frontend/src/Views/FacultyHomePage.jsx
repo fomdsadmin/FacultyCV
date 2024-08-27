@@ -89,12 +89,6 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
       console.error('Error updating user:', error);
     }
   };
-  
-  /*const testOnClick = async () => {
-    const result = await getTeachingDataMatches(userInfo.institution_user_id);
-    console.log(result);
-    console.log(await linkTeachingData(userInfo.user_id, result[0].data_details))
-  }*/
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -131,14 +125,28 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   return (
     <PageContainer>
       <FacultyMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name}></FacultyMenu>
-      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
-        <h1 className="text-4xl font-bold my-3 text-zinc-600">Profile</h1>
+      
+      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4 relative'>
+        
+        <div className="flex items-center justify-between mt-4 mb-4">
+          <h1 className="text-4xl ml-4 font-bold text-zinc-600">Profile</h1>
+          <button
+            type="button"
+            className="btn btn-success text-white py-1 px-2 w-1/5 min-h-0 h-8 leading-tight"
+            disabled={isSubmitting}
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+
         {loading ? (
           <div className='flex items-center justify-center w-full'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className='ml-4'>
+            
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Contact</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
               <div>
@@ -160,13 +168,13 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
             </div>
 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Bio</h2>
-              <div className="col-span-1 sm:col-span-2 md:col-span-4">
-                <textarea id="bio" name="bio" value={userInfo.bio || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, bio: e.target.value })}></textarea>
-              </div>
+            <div className="col-span-1 sm:col-span-2 md:col-span-4">
+              <textarea id="bio" name="bio" value={userInfo.bio || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, bio: e.target.value })}></textarea>
+            </div>
 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Institution</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-            <div>
+              <div>
                 <label className="block text-sm mb-1">Primary Faculty</label>
                 <select id="primaryFaculty" name="primaryFaculty" value={userInfo.primary_faculty || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, primary_faculty: e.target.value })}>
                   <option value="">-</option>
@@ -221,29 +229,21 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               />
             )}
 
-           
-          <h2 className="text-lg font-bold mb-2 text-zinc-500">Identifications</h2>
-          <button type="button" onClick={showModal} className="btn btn-secondary text-white py-1 px-2 float-left w-1/5 min-h-0 h-8 mr-4 mt-5 leading-tight">
-            Link Identifications
-          </button>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-            <div>
-              <label className="block text-sm mb-1">Scopus ID(s)</label>
-              <input id="scopusId" name="scopusId" type="text" value={userInfo.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly onChange={(e) => setUserInfo({ ...userInfo, scopus_id: e.target.value })}/>
+            <h2 className="text-lg font-bold mb-2 text-zinc-500">Identifications</h2>
+            <button type="button" onClick={showModal} className="btn btn-secondary text-white py-1 px-2 float-left w-1/5 min-h-0 h-8 mr-4 mt-5 leading-tight">
+              Link Identifications
+            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <div>
+                <label className="block text-sm mb-1">Scopus ID(s)</label>
+                <input id="scopusId" name="scopusId" type="text" value={userInfo.scopus_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly onChange={(e) => setUserInfo({ ...userInfo, scopus_id: e.target.value })}/>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Orcid ID</label>
+                <input id="orcidId" name="orcidId" type="text" value={userInfo.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly onChange={(e) => setUserInfo({ ...userInfo, orcid_id: e.target.value })}/>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm mb-1">Orcid ID</label>
-              <input id="orcidId" name="orcidId" type="text" value={userInfo.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly onChange={(e) => setUserInfo({ ...userInfo, orcid_id: e.target.value })}/>
-            </div>
-            {/* <div>
-              <label className="block text-sm mb-1">Institution ID</label>
-              <input id="institutionUserId" name="institutionUserId" type="text" value={userInfo.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, institution_user_id: e.target.value })}/>
-            </div> */}
-          </div>
-          
-          <button type="submit" className="btn btn-success text-white py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save'}
-          </button>
+
           </form>
         )}
       </main>

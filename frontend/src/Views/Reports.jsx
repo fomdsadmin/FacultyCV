@@ -128,7 +128,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\usepackage{array}
       \\usepackage{booktabs}
       \\usepackage{tabularx}
-      \\usepackage{longtable} % To handle long tables
+      \\usepackage{longtable} 
       \\usepackage{hyperref}
   
       \\begin{document}
@@ -385,12 +385,12 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           
           {/* Content Section */}
           <div className="flex-1 min-w-80 !overflow-auto !h-full custom-scrollbar mr-4">
-            <h1 className="text-4xl ml-2 font-bold my-3 text-zinc-600">Reports</h1>
-            <h2 className="text-2xl ml-2 font-bold my-3 text-zinc-600">Select a Template</h2>
+            <h1 className="text-4xl ml-4 mt-4 font-bold my-3 text-zinc-600">Reports</h1>
+            <h2 className="text-2xl ml-4 font-bold my-3 text-zinc-600">Select a Template</h2>
 
             <div className="w-full flex flex-col">
    
-              <div className="w-full max-w-xs mb-4 ml-2"> 
+              <div className="w-full max-w-xs mb-4 ml-4"> 
                 <label className="input input-bordered flex items-center gap-2 w-full">
                   <input
                     type="text"
@@ -415,7 +415,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
               </div>
 
               {/* Template List */}
-              <div className="w-full max-w-lg overflow-auto h-auto mb-6 custom-scrollbar"> {/* Restricting width of the template list */}
+              <div className="w-full ml-2 max-w-lg overflow-auto h-auto mb-6 custom-scrollbar"> {/* Restricting width of the template list */}
                 {searchedTemplates.map((template, index) => (
                   <Report
                     key={index}
