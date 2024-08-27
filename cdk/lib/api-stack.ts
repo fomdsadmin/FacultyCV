@@ -119,6 +119,11 @@ export class ApiStack extends cdk.Stack {
         userPoolId: this.userPool.userPoolId,
     });
 
+    const departmentAdminGroup = new cognito.CfnUserPoolGroup(this, 'DepartmentAdminGroup', {
+      groupName: 'DepartmentAdmin',
+      userPoolId: this.userPool.userPoolId,
+  });
+
     // GraphQL Resolvers
     const assignResolver = (
       api: appsync.GraphqlApi,

@@ -3,6 +3,7 @@ import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode,
   getCurrentUser, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
+import { getAllUniversityInfo } from '../graphql/graphqlHelpers.js';
 import { addUser, getUser, updateUser, getExistingUser, addToUserGroup } from '../graphql/graphqlHelpers.js';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,7 +25,36 @@ const AuthPage = ({ getCognitoUser }) => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [done, setDone] = useState(false);
+  const [departments, setDepartments] = useState([]);
   const navigate = useNavigate();
+
+  const fetchDepartments = async () => {
+    getAllUniversityInfo().then(result => {
+      let departments = [];
+      let faculties = [];
+      let campuses = [];
+      let ranks = [];
+
+      result.forEach(element => {
+        if (element.type === 'Department') {
+          departments.push(element.value);
+        } else if (element.type === 'Faculty') {
+          faculties.push(element.value);
+        } else if (element.type === 'Campus') {
+          campuses.push(element.value);
+        } else if (element.type === 'Rank') {
+          ranks.push(element.value);
+        }
+      });
+      departments.sort();
+      faculties.sort();
+      campuses.sort();
+      ranks.sort();
+
+      console.log('Departments:', departments);
+
+      setDepartments(departments);
+  });
 
   const handleLogin = async (event) => {
     setLoginError('');
@@ -42,6 +72,7 @@ const AuthPage = ({ getCognitoUser }) => {
       if (!user.isSignedIn) {
         setUsername(username);
         if (user.nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
+          await fetchDepartments();
           setNewUserPassword(true);
           setLoading(false);
         } else if (user.nextStep.signInStep === 'CONFIRM_SIGN_UP') {
@@ -455,6 +486,13 @@ const AuthPage = ({ getCognitoUser }) => {
                     <div className="mt-2">
                         <input type="radio" id="assistant" name="role" value="Assistant"onChange={e => setRole(e.target.value)} />
                         <label className="ml-1 text-xs">Assistant</label>
+                    </div>
+                    <div className="mt-2">
+                        <input type="radio" id="admin" name="role" value="Admin"onChange={e => setRole(e.target.value)} />
+                        <label className="ml-1 text-xs">Department Admin</label>
+                        <select id="department" name="department" className="w-full rounded text-sm px-3 py-2 border border-gray-300" >
+                          {departments.map((department, index) => <option key={index} value={department}>{department}</option>)}
+                        </select>
                     </div>
                     <div className="mt-2">
                         <input type="radio" id="admin" name="role" value="Admin"onChange={e => setRole(e.target.value)} />

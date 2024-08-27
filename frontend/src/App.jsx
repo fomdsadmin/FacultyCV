@@ -24,6 +24,7 @@ import Analytics from './Views/Analytics.jsx';
 import Templates from './Views/Templates.jsx';
 import Sections from './Views/Sections.jsx';
 import ArchivedSections from './Views/ArchivedSections.jsx';
+import DepartmentAdminHomePage from './Views/DepartmentAdminHomePage.jsx';
 import { getJWT } from './getAuthToken.js';
 
 Amplify.configure({
