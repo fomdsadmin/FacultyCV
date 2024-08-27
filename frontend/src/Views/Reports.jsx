@@ -18,6 +18,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [downloadUrl, setDownloadUrl] = useState(null);
 
+
   useEffect(() => {
 
     setUser(userInfo);
@@ -365,18 +366,18 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   
 
   const handleDownload = () => {
-    const lastName = user.last_name || 'unknown';
-    const templateTitle = selectedTemplate?.title || 'template';
-    const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-
-    const fileName = `${lastName}/${templateTitle}/${currentDate}.tex`;
-
+    if (!downloadUrl) {
+      console.error("No download URL available");
+      return;
+    }
+  
+    // Create an anchor element and trigger a download
     const element = document.createElement('a');
-    const file = new Blob([latex], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = fileName;
+    element.href = downloadUrl;
+    element.download = `report_${user.last_name || 'unknown'}.pdf`; // Set the file name, you can customize this as needed
     document.body.appendChild(element);
     element.click();
+    document.body.removeChild(element); // Clean up the DOM by removing the anchor element
   };
 
   return (
@@ -440,7 +441,9 @@ const Reports = ({ userInfo, getCognitoUser }) => {
               ) : (
                 <div className='w-3/5 h-full'>
                   <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
-                    <PDFViewer />
+                    <PDFViewer 
+                      url={downloadUrl}
+                    />
                   </div>
 
                   <div className='flex justify-center'>

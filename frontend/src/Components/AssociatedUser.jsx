@@ -74,7 +74,9 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
                         <h3 className="card-title" style={{ fontSize: `${fontSize}px` }} title={`${connection.assistant_first_name} ${connection.assistant_last_name}`}>
                         {truncateString(`${connection.assistant_first_name} ${connection.assistant_last_name}`, truncationLength)}
                         </h3>
-                        <p className="truncate">{connection.assistant_email}</p>
+                        <p className="truncate" title={connection.assistant_email}>
+                            {truncateString(connection.assistant_email, truncationLength)}
+                        </p>
                     </div>
                     {!clickedRemove && connection.status === "confirmed" && <button onClick={handleRemoveClick}><TiDelete className="text-error w-6 h-6 m-0" /></button>}
                     {clickedRemove && connection.status === "confirmed" && (
