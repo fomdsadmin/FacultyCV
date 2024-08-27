@@ -110,9 +110,15 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
                   </label>
                 </div>
                 <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters>
-                {searchedUsers.map((user) => (
-                  <UserCard onClick={handleManageClick} key={user.user_id} id={user.user_id} firstName={user.first_name} lastName={user.last_name} email={user.email} role={user.role}></UserCard>
-                ))}
+                {searchedUsers.length === 0 ? (
+                  <div className='flex items-center justify-center w-full'>
+                    <div className="block text-m mb-1 mt-6 text-zinc-600">No Users Found</div>
+                  </div>
+                ) : (
+                  searchedUsers.map((user) => (
+                    <UserCard onClick={handleManageClick} key={user.user_id} id={user.user_id} firstName={user.first_name} lastName={user.last_name} email={user.email} role={user.role}></UserCard>
+                  ))
+                )}
               </div>
             ) : (
               <div className='!overflow-auto !h-full custom-scrollbar'>

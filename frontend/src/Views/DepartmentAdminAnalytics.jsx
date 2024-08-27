@@ -7,7 +7,7 @@ import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, g
 import { formatDateToLongString } from '../utils/time.js';
 import { LineGraph } from '../Components/LineGraph.jsx';
 
-const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
+const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin }) => {
   const [loading, setLoading] = useState(false);
   const [facultyUsers, setFacultyUsers] = useState([]);
   const [assistantUsers, setAssistantUsers] = useState([]);

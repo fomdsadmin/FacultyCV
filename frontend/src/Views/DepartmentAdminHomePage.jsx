@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
 import Filters from '../Components/Filters.jsx';
-import ManageUser from '../Components/ManageUser.jsx';
+import ManageDepartmentUser from '../Components/ManageDepartmentUser.jsx';
 import UserCard from '../Components/UserCard.jsx';
 import { getAllUsers } from '../graphql/graphqlHelpers.js';
 
@@ -22,7 +22,7 @@ const DepartmentAdminHomePage = ({ userInfo, getCognitoUser, department }) => {
     setLoading(true);
     try {
         const users = await getAllUsers();
-        const filteredUsers = users.filter(user => user.email !== userInfo.email);
+        const filteredUsers = users.filter(user => user.email !== userInfo.email && (user.primary_department === department || user.secondary_department === department));
         console.log(filteredUsers);
         setUsers(filteredUsers);
     } catch (error) {
@@ -110,13 +110,20 @@ const DepartmentAdminHomePage = ({ userInfo, getCognitoUser, department }) => {
                   </label>
                 </div>
                 <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters>
-                {searchedUsers.map((user) => (
-                  <UserCard onClick={handleManageClick} key={user.user_id} id={user.user_id} firstName={user.first_name} lastName={user.last_name} email={user.email} role={user.role}></UserCard>
-                ))}
+                {searchedUsers.length === 0 ? (
+                  <div className='flex items-center justify-center w-full'>
+                    <div className="block text-m mb-1 mt-6 text-zinc-600">No {department} Users Found</div>
+                  </div>
+                ) : (
+                  searchedUsers.map((user) => (
+                    <UserCard onClick={handleManageClick} key={user.user_id} id={user.user_id} firstName={user.first_name} lastName={user.last_name} email={user.email} role={user.role}></UserCard>
+                  ))
+                )}
+              
               </div>
             ) : (
               <div className='!overflow-auto !h-full custom-scrollbar'>
-                <ManageUser user={activeUser} onBack={handleBack} fetchAllUsers={fetchAllUsers}></ManageUser>                
+                <ManageDepartmentUser user={activeUser} onBack={handleBack} fetchAllUsers={fetchAllUsers} department={department}></ManageDepartmentUser>                
               </div>
             )}
           </div>
