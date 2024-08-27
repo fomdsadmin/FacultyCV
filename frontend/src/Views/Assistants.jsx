@@ -77,7 +77,7 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
                       clipRule="evenodd" />
                   </svg>
                 </label>
-                <button onClick={refresh} className="btn btn-ghost">
+                <button onClick={refresh} className="ml-2 btn btn-ghost">
                   <FaSync className="h-5 w-5 text-gray-600" />
                 </button>
               </div>
