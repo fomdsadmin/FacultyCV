@@ -15,8 +15,8 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   const [loading, setLoading] = useState(true);
   const [scopusId, setScopusId] = useState(userInfo.scopus_id || "");
   const [orcidId, setOrcidId] = useState(userInfo.orcid_id || "");
-  const [modalOpen, setModalOpen] = useState(false); // State to control modal visibility
-  const [activeModal, setActiveModal] = useState(null); // Track which ID (Scopus or ORCID) is being modified
+  const [modalOpen, setModalOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState(null); 
 
   useEffect(() => {
     sortUniversityInfo();
@@ -60,39 +60,30 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   };
 
   const handleOrcidIdClick = () => {
-    setActiveModal('ORCID');
+    setActiveModal('Orcid');
     setModalOpen(true);
   };
-  const handleLink = async (newScopusId, newOrcidId) => {
-    try {
-      await updateUser(
-        userInfo.user_id,
-        userInfo.first_name,
-        userInfo.last_name,
-        userInfo.preferred_name,
-        userInfo.email,
-        userInfo.role,
-        userInfo.bio,
-        userInfo.rank,
-        userInfo.primary_department,
-        userInfo.secondary_department,
-        userInfo.primary_faculty,
-        userInfo.secondary_faculty,
-        userInfo.campus,
-        '',
-        userInfo.institution_user_id,
-        newScopusId, // Update Scopus IDs
-        newOrcidId   // Update ORCID ID
-      );
-  
-      setScopusId(newScopusId); // Save the new Scopus ID string
-      setOrcidId(newOrcidId);   // Save the new ORCID ID
-  
-      getUser(userInfo.email);  // Fetch the updated user info
-    } catch (error) {
-      console.error('Error updating user:', error);
-    }
+
+  const handleClearScopusId = () => {
+    setScopusId("");
   };
+
+  const handleClearOrcidId = () => {
+    setOrcidId("");
+  };
+
+  const handleScopusLink = (newScopusId) => {
+    const updatedScopusId = scopusId ? `${scopusId},${newScopusId}` : newScopusId;
+    setScopusId(updatedScopusId);
+    setModalOpen(false);
+  };
+
+  const handleOrcidLink = (newOrcidId) => {
+    setOrcidId(newOrcidId);
+    setModalOpen(false);
+  }
+
+  
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -229,23 +220,60 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
             <h2 className="text-lg font-bold mb-2 text-zinc-500">Identifications</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
               <div>
-                <label className="block text-sm mb-1">Scopus ID</label>
-                <button
-                  type="button"
-                  onClick={handleScopusIdClick}
-                  className="btn btn-sm btn-secondary text-white py-1 px-2 w-full"
-                >
-                  {scopusId ? `Scopus ID: ${scopusId}` : "Add Scopus ID"}
-                </button>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm">Scopus ID(s):</label>
+                {scopusId && (
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-warning text-white font-bold"
+                    onClick={handleClearScopusId}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+                <div className="flex flex-col gap-2">
+
+                  {scopusId && scopusId.split(',').map((id, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      className="btn btn-sm btn-secondary text-white py-1 px-2"
+                      onClick={() => window.open(`https://www.scopus.com/authid/detail.uri?authorId=${id}`, '_blank')}
+                    >
+                      {id}
+                    </button>
+                  ))}
+                  
+                  <button
+                    type="button"
+                    onClick={handleScopusIdClick}
+                    className="btn btn-sm btn-success text-white py-1 px-2 w-full"
+                  >
+                    Add Scopus ID
+                  </button>
+                </div>
+
               </div>
               <div>
-                <label className="block text-sm mb-1">ORCID ID</label>
+                <div className='flex flex-wrap justify-between mb-2'>
+                  <label className="block text-sm">ORCID ID:</label>
+                  {orcidId && ( 
+                   <button
+                      type="button"
+                      className="btn btn-xs btn-warning text-white ml-2 font-bold"
+                      onClick={handleClearOrcidId}
+                    >
+                      Clear
+                  </button>
+                  )}
+                </div>
                 <button
                   type="button"
-                  onClick={handleOrcidIdClick}
-                  className="btn btn-sm btn-secondary text-white py-1 px-2 w-full"
-                >
-                  {orcidId ? `ORCID ID: ${orcidId}` : "Add ORCID ID"}
+                  onClick={() => orcidId ? window.open(`https://orcid.org/${orcidId}`, '_blank') : handleOrcidIdClick()}
+                  className={`btn btn-sm ${orcidId ? 'btn-secondary' : 'btn-success'} text-white py-1 px-2 w-full`}
+                  >
+                  {orcidId ? `${orcidId}` : "Add ORCID ID"}
                 </button>
               </div>
             </div>
@@ -257,11 +285,11 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
 
       {modalOpen && (
         <ProfileLinkModal 
+          user={userInfo}
+          activeModal={activeModal}
           setClose={handleCloseModal} 
-          setOrcidId={setOrcidId} 
-          setScopusId={setScopusId} 
-          orcidId={orcidId} 
-          scopusId={scopusId} 
+          setOrcidId={handleOrcidLink} 
+          setScopusId={handleScopusLink} 
         />
       )}
     </PageContainer>

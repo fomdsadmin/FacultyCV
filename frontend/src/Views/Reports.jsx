@@ -21,7 +21,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   useEffect(() => {
 
     setUser(userInfo);
-    getDataSections();
     const fetchData = async () => {
       setUser(userInfo);
       const templates = await getAllTemplates();

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getElsevierAuthorMatches, getOrcidAuthorMatches } from "../graphql/graphqlHelpers";
 
-const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId, handleLink }) => {
+const ProfileLinkModal = ({ user, activeModal, setClose, setOrcidId, setScopusId }) => {
   const [loading, setLoading] = useState(false);
   const [authors, setAuthors] = useState([]);
 
@@ -15,7 +15,7 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
     let formattedOrcidMatches = [];
 
     try {
-      const elsevierMatches = await getElsevierAuthorMatches('Michael', 'Hayden', 'University of British Columbia');
+      const elsevierMatches = await getElsevierAuthorMatches(user.first_name, user.last_name, 'University of British Columbia');
       formattedElsevierMatches = elsevierMatches.map(match => ({
         last_name: match.last_name || '',
         first_name: match.first_name || '',
@@ -30,11 +30,11 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
     }
 
     try {
-      const orcidMatches = await getOrcidAuthorMatches('Michael', 'Hayden', 'University of British Columbia');
+      const orcidMatches = await getOrcidAuthorMatches(user.first_name, user.last_name, 'University of British Columbia');
       formattedOrcidMatches = orcidMatches.map(match => ({
         last_name: match.last_name || '',
         first_name: match.first_name || '',
-        current_affiliation: "University of British Columbia",
+        current_affiliation: match.current_affiliation || '',
         name_variants: match.name_variants || '',
         subjects: match.keywords ? match.keywords.replace(/[\[\]]/g, '') : [],
         scopus_id: '',
@@ -50,8 +50,12 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
   };
 
   const handleAuthorLink = (scopusIdToAdd, orcidIdToAdd) => {
-    handleLink(scopusIdToAdd, orcidIdToAdd);
-    setClose(); // Close the modal after linking
+    if (activeModal === 'Scopus') {
+      setScopusId(scopusIdToAdd);
+    } else {
+      setOrcidId(orcidIdToAdd);
+    }
+    setClose(); 
   };
 
   return (
@@ -74,6 +78,12 @@ const ProfileLinkModal = ({ setClose, setOrcidId, setScopusId, orcidId, scopusId
         {loading && (
           <div className="text-center mt-4">
             <p className="text-lg font-bold">Loading...</p>
+          </div>
+        )}
+
+        {!loading && authors.length === 0 && (
+          <div className="text-center mt-4">
+            <p className="text-lg text-gray-500">No matches found</p>
           </div>
         )}
 
