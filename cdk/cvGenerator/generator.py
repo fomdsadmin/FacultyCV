@@ -47,6 +47,11 @@ def handler(event, context):
     s3_file_key = event['Records'][0]['s3']['object']['key']
     local_file_path = 'resume.tex'
 
+    # If the file resume.pdf exists, delete it
+    if os.path.exists('resume.pdf'):
+        print("Old resume.pdf found, removing it!")
+        os.remove('resume.pdf')
+       
     download_file_from_s3(bucket_name, s3_file_key, local_file_path)
     runPdfLatex(local_file_path)
 
