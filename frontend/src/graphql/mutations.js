@@ -1,3 +1,12 @@
+export const addToUserGroupMutation = (userName, userGroup) => `
+    mutation AddToUserGroup {
+        addToUserGroup(
+            userName: "${userName}",
+            userGroup: "${userGroup}"
+        )
+    }
+`;
+
 export const addSectionMutation = (title, description, data_type, attributes) => `
     mutation AddSection {
         addSection(

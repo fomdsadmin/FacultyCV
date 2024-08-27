@@ -2,14 +2,14 @@ import { Amplify } from 'aws-amplify';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
-import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import { getCurrentUser, signOut, fetchAuthSession } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './Views/AuthPage';
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
-import { getUser } from './graphql/graphqlHelpers.js';
+import { getPresignedUrl, getUser } from './graphql/graphqlHelpers.js';
 import PageContainer from './Views/PageContainer.jsx';
 import FacultyHomePage from './Views/FacultyHomePage.jsx';
 import AssistantHomePage from './Views/AssistantHomePage.jsx';
@@ -24,6 +24,7 @@ import Analytics from './Views/Analytics.jsx';
 import Templates from './Views/Templates.jsx';
 import Sections from './Views/Sections.jsx';
 import ArchivedSections from './Views/ArchivedSections.jsx';
+import { getJWT } from './getAuthToken.js';
 
 Amplify.configure({
   API: {
@@ -48,6 +49,19 @@ function App() {
   const [userInfo, setUserInfo] = useState({});
   const [assistantUserInfo, setAssistantUserInfo] = useState({});
   const [loading, setLoading] = useState(false);
+  const [userGroup, setUserGroup] = useState(null);
+
+  async function getUserGroup() {
+    try {
+      const session = await fetchAuthSession();
+      console.log('Session', session);
+      const groups = session.tokens.idToken.payload['cognito:groups']
+      console.log('User group:', groups);
+      return groups ? groups[0] : null;
+    } catch (error) {
+      console.log('Error getting user group:', error);
+    }
+  }
 
   async function getUserInfo(email) {
     try {
@@ -73,6 +87,7 @@ function App() {
       setUser(currentUser);
       console.log(currentUser.signInDetails.loginId, "is signed in");
       await getUserInfo(currentUser.signInDetails.loginId);
+      getUserGroup().then((group) => setUserGroup(group));
       <Navigate to="/home" />
     }
     catch (error) {

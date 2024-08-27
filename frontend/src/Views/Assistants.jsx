@@ -14,7 +14,6 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
   useEffect(() => {
     setLoading(true);
     getAllUserConnections();
-    setLoading(false)
   }, [searchTerm, userInfo]);
 
   async function getAllUserConnections() {
@@ -33,6 +32,7 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
     } catch (error) {
       console.error('Error:', error);
     }
+    setLoading(false)
   }
 
   const handleSearchChange = (event) => {
@@ -77,11 +77,15 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
                       clipRule="evenodd" />
                   </svg>
                 </label>
-                <button onClick={refresh} className="btn btn-ghost">
+                <button onClick={refresh} className="ml-2 btn btn-ghost">
                   <FaSync className="h-5 w-5 text-gray-600" />
                 </button>
               </div>
 
+              {pendingConnections.length === 0 && confirmedConnections.length === 0 &&
+                <div className="text-center m-4 text-lg text-zinc-600">No connections found</div>
+              }
+              
               {pendingConnections.length > 0 && 
                 <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Invitations</h2>
               }
@@ -92,7 +96,7 @@ const Assistants = ({ userInfo, getCognitoUser }) => {
               </div>
               
               {confirmedConnections.length > 0 &&
-                <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active</h2>
+                <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active Connections</h2>
               }
               <div className='ml-4 mr-2 flex flex-wrap gap-4'>
                 {confirmedConnections.map((connection) => (

@@ -68,7 +68,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('keywords', 'varchar', '', False))
     columns.append(createColumn('institution_user_id', 'varchar', '', False))
     columns.append(createColumn('scopus_id', 'varchar', '', False))
-    columns.append(createColumn('orcid_id', 'varchar', '', True))
+    columns.append(createColumn('orcid_id', 'varchar', '', False))
+    columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', True))  # Add this line
     query = createQuery('users', columns)
     cursor.execute(query)
 
@@ -157,6 +158,21 @@ def lambda_handler(event, context):
     query = createQuery('templates', columns)
     cursor.execute(query)
 
+    # Create Patents Table to store bulk load patents data
+    columns = []
+    columns.append(createColumn('patent_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('title', 'varchar', '', False))
+    columns.append(createColumn('first_name', 'varchar', '', False))
+    columns.append(createColumn('last_name', 'varchar', '', False))
+    columns.append(createColumn('publication_number', 'varchar', '', False))
+    columns.append(createColumn('publication_date', 'varchar', '', False))
+    columns.append(createColumn('family_number', 'varchar', '', False))
+    columns.append(createColumn('country_code', 'varchar', '', False))
+    columns.append(createColumn('kind_code', 'varchar', '', False))
+    columns.append(createColumn('classification', 'varchar', '', True))
+    query = createQuery('patents', columns)
+    cursor.execute(query)
+    
     cursor.close()
     connection.commit()
     connection.close()

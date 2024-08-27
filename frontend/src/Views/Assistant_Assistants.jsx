@@ -16,7 +16,6 @@ const Assistant_Assistants = ({assistantUserInfo, userInfo, getCognitoUser }) =>
   useEffect(() => {
     setLoading(true);
     getAllUserConnections();
-    setLoading(false)
   }, [searchTerm, userInfo]);
 
   async function getAllUserConnections() {
@@ -35,6 +34,7 @@ const Assistant_Assistants = ({assistantUserInfo, userInfo, getCognitoUser }) =>
     } catch (error) {
       console.error('Error:', error);
     }
+    setLoading(false)
   }
 
   const handleSearchChange = (event) => {
@@ -96,7 +96,7 @@ const Assistant_Assistants = ({assistantUserInfo, userInfo, getCognitoUser }) =>
                 </div>
                 
                 {confirmedConnections.length > 0 &&
-                  <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active</h2>
+                  <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active Connections</h2>
                 }
                 <div className='ml-4 mr-2 flex flex-wrap gap-4'>
                   {confirmedConnections.map((connection) => (

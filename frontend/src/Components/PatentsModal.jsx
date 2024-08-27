@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
-import SecureFundingEntry from './SecureFundingEntry';
-import { getSecureFundingMatches, addUserCVData } from '../graphql/graphqlHelpers';
+import PatentsEntry from './PatentsEntry';
+import { getPatentMatches, addUserCVData } from '../graphql/graphqlHelpers';
 
-const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
-  const [allSecureFundingData, setAllSecureFundingData] = useState([]);
-  const [selectedSecureFundingData, setSelectedSecureFundingData] = useState([]);
+const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
+  const [allPatentsData, setAllPatentsData] = useState([]);
+  const [selectedPatentsData, setSelectedPatentsData] = useState([]);
   const [fetchingData, setFetchingData] = useState(true);
   const [initialRender, setInitialRender] = useState(true);
   const [addingData, setAddingData] = useState(false);
 
-  async function fetchSecureFundingData() {
+  async function fetchPatentsData() {
     setFetchingData(true);
     setInitialRender(false);
     try {
       // Switch to first name and last name
-      const retrievedData = await getSecureFundingMatches(user.first_name, user.last_name);
+      const retrievedData = await getPatentMatches(user.first_name, user.last_name);
       console.log(retrievedData);
   
       const allDataDetails = []; // Initialize an array to accumulate data_details
@@ -26,8 +26,8 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
         const { data_details } = dataObject; // Extract the data_details property
         const data_details_json = JSON.parse(data_details);
   
-        // Create a unique key based on first_name, last_name, title, and amount
-        const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}`;
+        // Create a unique key based on first_name, last_name, publication_number
+        const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.publication_date}`;
   
         // Check if the unique key is already in the set
         if (!uniqueDataDetails.has(uniqueKey)) {
@@ -35,28 +35,30 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
           allDataDetails.push(data_details_json); // Accumulate data_details
         }
       }
+
+      console.log('allDataDetails', allDataDetails);
   
-      setAllSecureFundingData(allDataDetails); // Set the state once after the loop
-      setSelectedSecureFundingData(allDataDetails); // Set the selected data to all data
+      setAllPatentsData(allDataDetails); // Set the state once after the loop
+      setSelectedPatentsData(allDataDetails); // Set the selected data to all data
     } catch (error) {
-      console.error('Error fetching secure funding data:', error);
+      console.error('Error fetching patents data:', error);
     }
     setFetchingData(false);
   }
 
-  const handleSelect = (secureFundingData, isAdded) => {
-    setSelectedSecureFundingData(prevState => {
+  const handleSelect = (patentsData, isAdded) => {
+    setSelectedPatentsData(prevState => {
       if (isAdded) {
-        return [...prevState, secureFundingData];
+        return [...prevState, patentsData];
       } else {
-        return prevState.filter(data => data !== secureFundingData);
+        return prevState.filter(data => data !== patentsData);
       }
     });
   };
 
-  async function addSecureFundingData() {
+  async function addPatentsData() {
     setAddingData(true);
-    for (const data of selectedSecureFundingData) {
+    for (const data of selectedPatentsData) {
       try {
         const dataJSON = JSON.stringify(data).replace(/"/g, '\\"');
         console.log('Adding new entry:', `"${dataJSON}"`);
@@ -76,41 +78,37 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" onClick={onClose}>✕</button>
       {initialRender ? (
         <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
-          <div className='text-center mb-4'>
-            <div className='mb-2'>The data is fetched from the following grant sources:</div>
-            <div className='text-sm'>1. Canadian Institutes of Health Research (CIHR)</div>
-            <div className='text-sm'>2. Natural Sciences and Engineering Research Council of Canada (NSERC)</div>
-            <div className='text-sm'>3. Social Sciences and Humanities Research Council (SSHRC)</div>
-            <div className='text-sm'>4. Canada Foundation for Innovation (CFI)</div>
+          <div className='text-center'>
+            The data is fetched from the European Patent Office, which contains both published patent applications and published patents from not just European countries but also other major intellectual property offices.
           </div>
-          <button type="button" className="btn btn-secondary mt-5" onClick={() => fetchSecureFundingData()}>
-            Fetch Secure Funding Data
+          <button type="button" className="btn btn-secondary mt-5" onClick={() => fetchPatentsData()}>
+            Fetch Patents Data
           </button>
-        </div>      
+        </div>
       ) : (
         fetchingData ? (
           <div className='flex items-center justify-center w-full mt-5 mb-5'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">
-              Fetching secure funding data...
+              Fetching patents data...
             </div>
           </div>
         ) : (
           <div className='flex items-center justify-center w-full mt-5 mb-5'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">
-              {allSecureFundingData.length === 0 ? (
+              {allPatentsData.length === 0 ? (
                 "No data found"
               ) : (
                 <>
                   <button
                     type="button"
                     className="btn btn-secondary mb-4"
-                    onClick={addSecureFundingData}
+                    onClick={addPatentsData}
                     disabled={addingData}
                   >
-                    {addingData ? "Adding secure funding data..." : "Add Secure Funding Data"}
+                    {addingData ? "Adding patents data..." : "Add Patents Data"}
                   </button>
-                  {allSecureFundingData.map((secureFundingData, index) => (
-                    <SecureFundingEntry key={index} secureFundingData={secureFundingData} onSelect={handleSelect} />
+                  {allPatentsData.map((patentData, index) => (
+                    <PatentsEntry key={index} patentData={patentData} onSelect={handleSelect} />
                   ))}
                 </>
               )}
@@ -122,4 +120,4 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
   );
 };
 
-export default SecureFundingModal;
+export default PatentsModal;

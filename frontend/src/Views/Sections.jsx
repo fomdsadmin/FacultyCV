@@ -81,7 +81,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
         ) : (
           <>
             {openNewSection ? (
-              <NewSection onBack={handleBackFromNewSection} getDataSections={getDataSections} />  // Render NewSection when openNewSection is true
+              <NewSection onBack={handleBackFromNewSection} getDataSections={getDataSections} sections={dataSections}/>  // Render NewSection when openNewSection is true
             ) : activeSection === null ? (
               <div className='!overflow-auto !h-full custom-scrollbar'>
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Sections</h1>

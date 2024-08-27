@@ -17,7 +17,6 @@ const AssistantHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) =
   useEffect(() => {
     setLoading(true);
     getAllUserConnections();
-    setLoading(false)
   }, [searchTerm, userInfo]);
 
   async function getAllUserConnections() {
@@ -36,6 +35,7 @@ const AssistantHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) =
     } catch (error) {
       console.error('Error:', error);
     }
+    setLoading(false)
   }
 
   const handleSearchChange = (event) => {
@@ -94,24 +94,29 @@ const AssistantHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) =
                   <FaSync className="h-5 w-5 text-gray-600" />
                 </button>
               </div>
-
-              {pendingConnections.length > 0 && 
-                <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Pending</h2>
-              }
-              <div className='ml-4 mr-2 flex flex-wrap gap-4'>
-                {pendingConnections.map((connection) => (
-                  <AssociatedConnection key={connection.user_connection_id} connection={connection} getUser={getUser}/>
-                ))}
-              </div>
-              
-              {confirmedConnections.length > 0 &&
-                <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active</h2>
-              }
-              <div className='ml-4 mr-2 flex flex-wrap gap-4'>
-                {confirmedConnections.map((connection) => (
-                  <AssociatedConnection key={connection.user_connection_id} connection={connection} getUser={getUser}/>
-                ))}
-              </div>
+              {pendingConnections.length === 0 && confirmedConnections.length === 0 ? (
+                <div className="text-center m-4 text-lg text-zinc-600">No connections found</div>
+              ) : (
+                <>
+                  {pendingConnections.length > 0 && 
+                    <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Pending Connections</h2>
+                  }
+                  <div className='ml-4 mr-2 flex flex-wrap gap-4'>
+                    {pendingConnections.map((connection) => (
+                      <AssociatedConnection key={connection.user_connection_id} connection={connection} getUser={getUser}/>
+                    ))}
+                  </div>
+                  
+                  {confirmedConnections.length > 0 &&
+                    <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active Connections</h2>
+                  }
+                  <div className='ml-4 mr-2 flex flex-wrap gap-4'>
+                    {confirmedConnections.map((connection) => (
+                      <AssociatedConnection key={connection.user_connection_id} connection={connection} getUser={getUser}/>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
       </main>

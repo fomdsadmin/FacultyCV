@@ -7,7 +7,9 @@ import { VpcStack } from '../lib/vpc-stack';
 import { DatabaseStack } from '../lib/database-stack';
 import { DbFetchStack } from '../lib/dbfetch-stack';
 import { DataFetchStack } from '../lib/datafetch-stack';
+import { CVGenStack } from '../lib/cvgen-stack';
 import { GrantDataStack } from '../lib/grantdata-stack';
+import { PatentDataStack } from '../lib/patentdata-stack';
 
 const app = new cdk.App();
 
@@ -19,7 +21,9 @@ const databaseStack = new DatabaseStack(app, 'DatabaseStack', vpcStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 
-const apiStack = new ApiStack(app, 'ApiStack', databaseStack,
+const cvGenStack = new CVGenStack(app, 'CVGenStack', { env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }});
+
+const apiStack = new ApiStack(app, 'ApiStack', databaseStack, cvGenStack,
    {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
@@ -36,5 +40,9 @@ const dataFetchStack = new DataFetchStack(app, 'DataFetchStack', databaseStack, 
 );
 
 const grantDataStack = new GrantDataStack(app, 'GrantDataStack', vpcStack, databaseStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
+
+const patentDataStack = new PatentDataStack(app, 'PatentDataStack', grantDataStack, databaseStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );

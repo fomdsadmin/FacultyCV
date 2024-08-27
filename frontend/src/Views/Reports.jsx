@@ -1,50 +1,116 @@
 import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
-import { getAllSections, getUserCVData } from '../graphql/graphqlHelpers.js';
+import { getAllSections, getAllTemplates, getUserCVData } from '../graphql/graphqlHelpers.js';
 import '../CustomStyles/scrollbar.css';
 import Report from '../Components/Report.jsx';
-
-const mockPrevReports = ["Grants 2024", "Teaching 2023", "Publications 2022"];
+import PDFViewer from '../Components/PDFViewer.jsx';
+import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
 
 const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
   const [selectedTemplate, setSelectedTemplate] = useState('');
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
   const [dataSections, setDataSections] = useState([]);
+  const [Templates, setTemplates] = useState([]);
+  const [latex, setLatex] = useState('');
+  const [buildingLatex, setBuildingLatex] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState(null);
 
   useEffect(() => {
+
     setUser(userInfo);
     getDataSections();
+    const fetchData = async () => {
+      setUser(userInfo);
+      const templates = await getAllTemplates();
+      setTemplates(templates);
+    };
+    fetchData();
   }, [userInfo]);
 
-  useEffect(() => {
-    if (dataSections.length > 0) {
-      buildLatex();
-    }
-  }, [dataSections]);
+  const handleTemplateChange = (template) => {
+    setSelectedTemplate(template);
+    getDataSections(template);
+  };
 
-  const getDataSections = async () => {
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const searchedTemplates = Templates.filter(template =>
+    template.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getDataSections = async (template) => {
     const retrievedSections = await getAllSections();
+    const sectionIds = template.data_section_ids;
 
-    // Parse the attributes field from a JSON string to a JSON object
-    const parsedSections = retrievedSections.map(section => ({
+    const parsedSections = retrievedSections.map((section) => ({
       ...section,
       attributes: JSON.parse(section.attributes),
     }));
 
-    console.log(parsedSections);
-    setDataSections(parsedSections);
-    console.log("Data Sections:" + dataSections);
-    console.log("building Latex");
+    let filteredSections = [];
+
+    if (sectionIds != null && sectionIds.length > 0) {
+      filteredSections = parsedSections.filter((section) =>
+        sectionIds.includes(section.data_section_id)
+      );
+    } else {
+      filteredSections = parsedSections;
+    }
+
+    setDataSections(filteredSections);
+
+    setBuildingLatex(true);
+    let latex = await buildLatex(filteredSections);
+    const key = `${selectedTemplate.template_id}/resume.tex`;
+    // Upload .tex to S3
+    await uploadLatexToS3(latex, key);
+    // Wait till a url to the latest PDF is available
+    const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
+    setLatex(latex);
+    setBuildingLatex(false);
     setLoading(false);
-    console.log(userInfo);
+    setDownloadUrl(url);
   }
 
   const escapeLatex = (text) => {
-    if (!text) return '';
+    if (typeof text !== 'string') {
+      if (Array.isArray(text)) {
+        return text.map(item => escapeLatex(item)).join(', ');
+      }
+      if (text === null || text === undefined) {
+        return '';
+      }
+      return String(text);
+    }
+  
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    let escapedText = '';
+    let lastIndex = 0;
+  
+    // Process each URL separately and wrap it in \url{}
+    text.replace(urlPattern, (match, offset) => {
+      escapedText += escapeLatexNonUrl(text.slice(lastIndex, offset));
+      escapedText += `\\url{${match}}`;
+      lastIndex = offset + match.length;
+      return match;
+    });
+  
+    // Escape remaining text
+    escapedText += escapeLatexNonUrl(text.slice(lastIndex));
+    return escapedText;
+  };
+  
+  const escapeLatexNonUrl = (text) => {
     return text
-      .replace(/\\/g, '\\textbackslash')
+      .replace(/\u2032/g, '\\(\\prime\\)')
+      .replace(/\u202F/g, ' ')
+      .replace(/\u02BC/g, "'")
+      .replace(/\\/g, '\\textbackslash ')
       .replace(/\{/g, '\\{')
       .replace(/\}/g, '\\}')
       .replace(/\$/g, '\\$')
@@ -52,214 +118,349 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       .replace(/%/g, '\\%')
       .replace(/&/g, '\\&')
       .replace(/_/g, '\\_')
-      .replace(/\^/g, '\\textasciicircum')
-      .replace(/~/g, '\\textasciitilde');
+      .replace(/\^/g, '\\textasciicircum ')
+      .replace(/~/g, '\\textasciitilde ');
   };
   
-  const buildLatex = async () => {
+  const buildLatex = async (sections) => {
     let latex = `
-\\documentclass{article}
-\\usepackage[margin=0.5in]{geometry}
-\\usepackage{array}
-\\usepackage{booktabs}
-\\usepackage{tabularx}
-\\usepackage{longtable}
-
-\\begin{document}
-\\small 
-
-\\begin{center}
-\\textbf{\\Large University of British Columbia} \\\\
-\\textbf{\\Large Curriculum Vitae for Faculty Members} \\\\
-\\end{center}
-
-\\begin{flushleft}
-\\begin{tabularx}{\\textwidth}{@{}lXr@{}}
-\\textbf{INITIALS:} & ${escapeLatex(user.first_name.charAt(0) + user.last_name.charAt(0))} & \\textbf{Date:} ${escapeLatex(new Date().toLocaleDateString('en-CA'))} \\\\
-\\end{tabularx}
-\\end{flushleft}
-
-\\begin{flushleft}
-\\begin{tabularx}{\\textwidth}{|p{2cm}|X|p{3cm}|X|}
-\\hline
-\\textbf{SURNAME:} & ${escapeLatex(user.last_name)}  &
-\\textbf{FIRST NAME:} & ${escapeLatex(user.first_name)} \\\\
-\\hline
-\\end{tabularx}
-\\end{flushleft}
-
-\\vspace{-0.5cm} 
-
-\\begin{flushleft}
-\\begin{tabularx}{\\textwidth}{|p{3cm}|X|}
-\\hline
-\\textbf{DEPARTMENT:} & ${escapeLatex(user.primary_department)} \\\\
-\\hline
-\\end{tabularx}
-\\end{flushleft}
-
-\\vspace{-0.5cm} 
-
-\\begin{flushleft}
-\\textbf{JOINT APPOINTMENTS:} \\\\
-\\begin{tabularx}{\\textwidth}{|X|}
-\\hline
-${escapeLatex(user.secondary_department)} \\\\
-\\hline
-\\end{tabularx}
-\\end{flushleft}
-
-\\vspace{-0.5cm} 
-
-\\begin{flushleft}
-\\textbf{AFFILIATIONS:} \\\\
-\\begin{tabularx}{\\textwidth}{|X|}
-\\hline
-${escapeLatex(user.secondary_faculty)}, ${escapeLatex(user.primary_faculty)} \\\\
-\\hline
-\\end{tabularx}
-\\end{flushleft}
-
-\\vspace{-0.5cm} 
-
-\\begin{flushleft}
-\\textbf{LOCATION(S):} \\\\
-\\begin{tabularx}{\\textwidth}{|X|}
-\\hline
-${escapeLatex(user.campus)} \\\\
-\\hline
-\\end{tabularx}
-\\end{flushleft}
-
-\\vspace{-0.5cm} 
-
-\\begin{flushleft}
-\\begin{tabularx}{\\textwidth}{|p{5cm}|X|}
-\\hline
-\\textbf{PRESENT RANK:} & ${escapeLatex(user.rank)} \\\\
-\\hline
-\\end{tabularx}
-\\end{flushleft}
-`;
+      \\documentclass{article}
+      \\usepackage[utf8]{inputenc}
+      \\usepackage{textgreek}
+      \\usepackage[margin=0.5in]{geometry}
+      \\usepackage{array}
+      \\usepackage{booktabs}
+      \\usepackage{tabularx}
+      \\usepackage{longtable} 
+      \\usepackage{hyperref}
   
-    for (const section of dataSections) {
-      try {
+      \\begin{document}
+      \\small
       
+      \\begin{center}
+      \\textbf{\\Large University of British Columbia} \\\\
+      \\textbf{\\Large Curriculum Vitae for Faculty Members} \\\\
+      \\end{center}
+      
+      \\begin{flushleft}
+      \\begin{tabularx}{\\textwidth}{@{}lXr@{}}
+      \\textbf{INITIALS:} & ${escapeLatex(user.first_name.charAt(0) + user.last_name.charAt(0))} & \\textbf{Date:} ${escapeLatex(new Date().toLocaleDateString('en-CA'))} \\\\
+      \\end{tabularx}
+      \\end{flushleft}
+      
+      \\begin{flushleft}
+      \\begin{tabularx}{\\textwidth}{|p{3cm}|X|p{3cm}|X|}
+      \\hline
+      \\textbf{SURNAME:} & ${escapeLatex(user.last_name)} &
+      \\textbf{FIRST NAME:} & ${escapeLatex(user.first_name)} \\\\
+      \\hline
+      \\end{tabularx}
+      \\end{flushleft}
+      
+      \\vspace{-0.5cm}
+      
+      \\begin{flushleft}
+      \\begin{tabularx}{\\textwidth}{|p{4cm}|X|}
+      \\hline
+      \\textbf{DEPARTMENT:} & ${escapeLatex(user.primary_department)} \\\\
+      \\hline
+      \\end{tabularx}
+      \\end{flushleft}
+      
+      \\vspace{-0.5cm}
+      
+      \\begin{flushleft}
+      \\textbf{JOINT APPOINTMENTS:} \\\\
+      \\begin{tabularx}{\\textwidth}{|X|}
+      \\hline
+      ${escapeLatex(user.secondary_department)} \\\\
+      \\hline
+      \\end{tabularx}
+      \\end{flushleft}
+      
+      \\vspace{-0.5cm}
+      
+      \\begin{flushleft}
+      \\textbf{AFFILIATIONS:} \\\\
+      \\begin{tabularx}{\\textwidth}{|X|}
+      \\hline
+      ${escapeLatex(user.secondary_faculty)}, ${escapeLatex(user.primary_faculty)} \\\\
+      \\hline
+      \\end{tabularx}
+      \\end{flushleft}
+      
+      \\vspace{-0.5cm}
+      
+      \\begin{flushleft}
+      \\textbf{LOCATION(S):} \\\\
+      \\begin{tabularx}{\\textwidth}{|X|}
+      \\hline
+      ${escapeLatex(user.campus)} \\\\
+      \\hline
+      \\end{tabularx}
+      \\end{flushleft}
+      
+      \\vspace{-0.5cm}
+      
+      \\begin{flushleft}
+      \\begin{tabularx}{\\textwidth}{|p{5cm}|X|}
+      \\hline
+      \\textbf{PRESENT RANK:} & ${escapeLatex(user.rank)} \\\\
+      \\hline
+      \\end{tabularx}
+      \\end{flushleft}
+    `;
+  
+    const calculateColumnWidths = (headers, totalWidth = 19, columnSpacing = 0.5) => {
+      const numColumns = headers.length;
+      const totalSpacing = (numColumns - 1) * columnSpacing;
+      const contentWidth = totalWidth - totalSpacing;
+      const columnWidth = (contentWidth / numColumns).toFixed(2);
+      return headers.map(() => `p{${columnWidth}cm}`).join(' | ');
+    };
+  
+    for (const section of sections) {
+      try {
         console.log(`Fetching data for section: ${section.title}`);
         let sectionData;
         try {
           sectionData = await getUserCVData(userInfo.user_id, section.data_section_id);
         } catch (error) {
-         
+          console.error(`Error fetching data for section ID: ${section.data_section_id}:`, error);
+          continue;
         }
-        
-        
   
         if (!sectionData || sectionData.length === 0) {
           console.log(`No data found for section ID: ${section.data_section_id}`);
-          continue; // Skip to the next section if there's no data
+          continue;
         }
   
-        const parsedData = sectionData.map(data => ({
+        const parsedData = sectionData.map((data) => ({
           ...data,
           data_details: JSON.parse(data.data_details),
         }));
   
-        console.log(`Parsed data for section ${section.title}:`, parsedData);
-
-        // Ensure attributes are properly parsed
-        const attributes = JSON.parse(section.attributes);
-
-        // Get the attribute keys for the table headers
-        const headers = Object.keys(attributes);
-        console.log(`Headers for section ${section.title}:`, headers);
+        // PATENTS //
+        if (section.title.toLowerCase() === 'patents') {
+          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
   
-        latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
-        latex += `\\begin{tabularx}{\\textwidth}{| ${headers.map(() => 'X').join(' | ')} |}\n`;
-        latex += `\\hline\n`;
-        latex += headers.map(header => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \n';
-        latex += `\\hline\n`;
+          parsedData.forEach((item, index) => {
+            const { first_name, last_name, title, publication_number, publication_date, country_code, kind_code, family_number } = item.data_details;
   
-        for (const item of parsedData) {
-          const row = headers.map(header => {
-            // Convert header to snake_case to match the keys in data_details
-            const key = header.replace(/\s+/g, '_').toLowerCase();
-            const value = item.data_details[key];
-            console.log(`Value for key ${key} in section ${section.title}:`, value);
-            return escapeLatex(value !== undefined ? value : ''); // Handle missing data
-          }).join(' & ');
-          latex += `${row} \\\\ \n`;
+            const patentCitation = `${index + 1}. ${escapeLatex(last_name)}, ${escapeLatex(first_name)}. ${escapeLatex(title)}. ${escapeLatex(publication_number)}, ${escapeLatex(country_code + '-' + kind_code)} / ${escapeLatex(family_number)}, filed ${escapeLatex(publication_date)}`;
+  
+            latex += patentCitation;
+  
+            if (index < parsedData.length - 1) {
+              latex += ` \\\\\n`;
+            } else {
+              latex += `\n`;
+            }
+          });
+  
+        // COURSES TAUGHT //
+        } else if (section.title.toLowerCase() === 'courses taught') {
+          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+  
+          let attributes = JSON.parse(section.attributes);
+          let headers = Object.keys(attributes).filter(header => header.toLowerCase() !== 'description');
+  
+          const columns = calculateColumnWidths(headers);
+  
+          latex += `\\begin{longtable}{| ${columns} |}\n`;
           latex += `\\hline\n`;
+          latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
+  
+          for (const item of parsedData) {
+            const row = headers
+              .map((header) => {
+                const key = header.replace(/\s+/g, '_').toLowerCase();
+                const value = item.data_details[key];
+                return escapeLatex(value !== undefined ? value : '');
+              })
+              .join(' & ');
+            latex += `${row} \\\\ \\hline\n`;
+          }
+  
+          latex += `\\end{longtable}\n\n`;
+  
+        // PUBLICATIONS //
+        } else if (section.title.toLowerCase() === 'publications') {
+          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+  
+          let headers = ['Title', 'Year Published', 'Journal', 'Author Names'];
+          const columns = calculateColumnWidths(headers);
+  
+          latex += `\\begin{longtable}{| ${columns} |}\n`;
+          latex += `\\hline\n`;
+          latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
+  
+          for (const item of parsedData) {
+            const row = headers
+              .map((header) => {
+                const key = header.replace(/\s+/g, '_').toLowerCase();
+                const value = item.data_details[key];
+                return escapeLatex(value !== undefined ? value : '');
+              })
+              .join(' & ');
+            latex += `${row} \\\\ \\hline\n`;
+          }
+  
+          latex += `\\end{longtable}\n\n`;
+  
+        // OTHER //
+        } else {
+          let attributes = JSON.parse(section.attributes);
+          let headers = Object.keys(attributes);
+
+          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+
+          if (headers.length === 1) {
+
+            let counter = 1;
+
+            latex += `\\begin{longtable}{| p{0.5cm} | p{17.7cm} |}\n`;
+            latex += `\\hline\n`;
+
+            for (const item of parsedData) {
+              const row = headers.map((header) => {
+                const key = header.replace(/\s+/g, '_').toLowerCase();
+                const value = item.data_details[key];
+                return escapeLatex(value !== undefined ? value : '');
+              }).join(' & '); 
+              latex += `${counter} & ${row} \\\\ \\hline\n`;
+              counter++;
+            }
+          } else {
+
+            const columns = calculateColumnWidths(headers);
+    
+
+            latex += `\\begin{longtable}{| ${columns} |}\n`;
+            latex += `\\hline\n`;
+            latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
+    
+            for (const item of parsedData) {
+              const row = headers
+                .map((header) => {
+                  const key = header.replace(/\s+/g, '_').toLowerCase();
+                  const value = item.data_details[key];
+                  return escapeLatex(value !== undefined ? value : '');
+                })
+                .join(' & ');
+              latex += `${row} \\\\ \\hline\n`;
+            }
+
         }
   
-        latex += `\\end{tabularx}\n\n`;
-  
+          latex += `\\end{longtable}\n\n`;
+        }
       } catch (error) {
-        console.error(`Error fetching data for section ID: ${section.data_section_id}`, error);
+        console.error(`Error processing section ID: ${section.data_section_id}`, error);
       }
     }
   
     latex += `\\end{document}`;
-  
-    console.log(latex);
-  
     return latex;
-  }
+  };
   
 
-  const handleSave = () => {
-    // Save report logic
-  };
+  const handleDownload = () => {
+    const lastName = user.last_name || 'unknown';
+    const templateTitle = selectedTemplate?.title || 'template';
+    const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
-  const getFormattedDate = () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const fileName = `${lastName}/${templateTitle}/${currentDate}.tex`;
+
+    const element = document.createElement('a');
+    const file = new Blob([latex], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = fileName;
+    document.body.appendChild(element);
+    element.click();
   };
 
   return (
     <PageContainer className="custom-scrollbar">
       <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser} />
-      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
-        <div className='flex w-full h-full'>
-          <div className='flex-1 min-w-96 !overflow-auto !h-full custom-scrollbar'>
-            <h1 className="text-4xl ml-2 font-bold my-3 text-zinc-600">Reports</h1>
-            <label className="form-control ml-2 w-full max-w-xs">
-              <div className="label">
-                <span className="label-text">Template</span>
+      <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4">
+        <div className="flex w-full h-full">
+          
+          {/* Content Section */}
+          <div className="flex-1 min-w-80 !overflow-auto !h-full custom-scrollbar mr-4">
+            <h1 className="text-4xl ml-4 mt-4 font-bold my-3 text-zinc-600">Reports</h1>
+            <h2 className="text-2xl ml-4 font-bold my-3 text-zinc-600">Select a Template</h2>
+
+            <div className="w-full flex flex-col">
+   
+              <div className="w-full max-w-xs mb-4 ml-4"> 
+                <label className="input input-bordered flex items-center gap-2 w-full">
+                  <input
+                    type="text"
+                    className="grow"
+                    placeholder="Search Templates"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                  />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    className="h-4 w-4 opacity-70"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </label>
               </div>
-              <select 
-                className="select select-bordered"
-                value={selectedTemplate}
-                onChange={(e) => setSelectedTemplate(e.target.value)}
-              >
-                <option disabled value="">Select Template</option>
-                <option value="Teaching">Teaching</option>
-                <option value="Grant_Application">Grant Application</option>
-                <option value="Publications">Publications</option>
-              </select>
-            </label>
-            <label className="ml-2 mt-2 form-control w-full max-w-xs">
-              <div className="label">
-                <span className="label-text">Title</span>
+
+              {/* Template List */}
+              <div className="w-full ml-2 max-w-lg overflow-auto h-auto mb-6 custom-scrollbar"> {/* Restricting width of the template list */}
+                {searchedTemplates.map((template, index) => (
+                  <Report
+                    key={index}
+                    title={template.title}
+                    onClick={() => handleTemplateChange(template)}
+                    isSelected={selectedTemplate && selectedTemplate.template_id === template.template_id}
+                  />
+                ))}
               </div>
-              <input type="text" placeholder="Type here" className="input input-bordered w-full max-w-xs" />
-            </label>
-            <button onClick={handleSave} className="ml-2 mt-6 text-white btn btn-success min-h-0 h-6 leading-tight mb-1">Save</button>
-            
-            <h2 className="ml-2 mt-10 text-2xl font-bold my-3 text-zinc-600">Previous</h2>
-            {mockPrevReports.map((report, index) => (
-              <Report key={index} title={report} />
-            ))}
+            </div>
           </div>
-          <div className='flex-none w-0.5 bg-neutral h-screen' />
- 
+
+          {/* PDF Viewer Section */}
+          {selectedTemplate && (
+            <>
+              {buildingLatex ? (
+                <div className='w-3/5 h-full relative'>
+                  <span className='page-loader w-full' style={{ zIndex: 100, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></span>
+                </div>
+              ) : (
+                <div className='w-3/5 h-full'>
+                  <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
+                    <PDFViewer />
+                  </div>
+
+                  <div className='flex justify-center'>
+                    <button
+                      onClick={handleDownload}
+                      className={`mt-2 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
+                      disabled={buildingLatex}
+                    >
+                      {buildingLatex ? <span className="loader"></span> : 'Download'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </main>
     </PageContainer>
   );
-}
+};
 
 export default Reports;

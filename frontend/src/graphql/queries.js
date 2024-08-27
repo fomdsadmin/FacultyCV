@@ -20,6 +20,7 @@ export const getUserQuery = (email) => `
             institution_user_id
             scopus_id
             orcid_id
+            joined_timestamp
         }
     }
 `;
@@ -70,6 +71,7 @@ export const getExistingUserQuery = (institution_user_id) => `
             institution_user_id
             scopus_id
             orcid_id
+            joined_timestamp
         }
     }
 `;
@@ -250,5 +252,35 @@ export const getSecureFundingMatchesQuery = (first_name, last_name) => `
             last_name
             data_details
         }
+    }
+`;
+
+export const getPatentMatchesQuery = (first_name, last_name) => `
+    query GetPatentMatches {
+        getPatentMatches (
+            first_name: "${first_name}",
+            last_name: "${last_name}"
+        ) {
+            patent_id
+            first_name
+            last_name
+            data_details
+        }
+    }
+`;
+
+export const getPresignedUrlQuery = (jwt, fileKey, type) => `
+    query GetPresignedUrl {
+        getPresignedUrl (
+            jwt: "${jwt}",
+            key: "${fileKey}",
+            type: "${type}"
+        )
+    }
+`;
+
+export const getNumberOfGeneratedCVsQuery = () => `
+    query GetNumberOfGeneratedCVs {
+        getNumberOfGeneratedCVs
     }
 `;

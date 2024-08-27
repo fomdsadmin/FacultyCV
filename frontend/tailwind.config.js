@@ -9,6 +9,9 @@ module.exports = {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
+      height: {
+        '90vh': '90vh',
+      },
       typography: (theme) => ({
         DEFAULT: {
           css: {

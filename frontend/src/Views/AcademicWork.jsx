@@ -78,7 +78,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
             {activeSection === null ? (
               <div className='!overflow-auto !h-full custom-scrollbar'>
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Academic Work</h1>
-                <div className='m-4  flex'>
+                <div className='m-4 flex'>
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
                       type="text"

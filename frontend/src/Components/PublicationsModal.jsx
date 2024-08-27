@@ -6,36 +6,50 @@ import { useNavigate } from 'react-router-dom';
 
 const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
   const [allFetchedPublications, setAllFetchedPublications] = useState([]);
-  const [pageSize, setPageSize] = useState(20); // Number of publications to fetch per page
+  const [pageSize, setPageSize] = useState(25); // Number of publications to fetch per page
   const [totalResults, setTotalResults] = useState('TBD');
   const [currentPage, setCurrentPage] = useState(0);
   const [fetchingData, setFetchingData] = useState(true);
   const [addingData, setAddingData] = useState(false);
   const [initialRender, setInitialRender] = useState(true);
+  const [currentScopusId, setCurrentScopusId] = useState('');
+  const [count, setCount] = useState(1); // Initialize count in state
+
   const navigate = useNavigate();
 
   async function fetchPublicationsData() {
     setInitialRender(false);
     try {
-      let pageNumber = 0;
-      let totalPages = 44; // Initialize with 1 to enter the loop
-      let totalResults = 0;
       let publications = [];
 
-      while (pageNumber < totalPages - 42) { // + 1
-        const retrievedData = await getPublicationMatches('55765887300', pageNumber, pageSize); //change to loop through real scopus ids
-        console.log(retrievedData);
+      // Split the scopus_id string into an array of IDs
+      const scopusIds = user.scopus_id.split(',');
 
-        // Add the publications from the current page to the array
-        publications = [...publications, ...retrievedData.publications];
+      // Loop through each scopus ID
+      for (let scopusId of scopusIds) {
+        setCurrentScopusId(scopusId.trim()); // Set currentScopusId before fetching data
+        let pageNumber = 0;
+        let totalPages = 1; // Initialize with 1 to enter the loop
+        let totalResults = 0;
 
-        // Update totalPages, totalResults, and increment pageNumber
-        totalPages = retrievedData.total_pages;
-        totalResults = retrievedData.total_results;
-        pageNumber += 1;
-        setCurrentPage(pageNumber);
-        setTotalResults(totalResults);
+        // Fetch data for the current scopus ID
+        while (pageNumber < totalPages) {
+          const retrievedData = await getPublicationMatches(scopusId.trim(), pageNumber, pageSize);
+          console.log(retrievedData);
+
+          // Add the publications from the current page to the array
+          publications = [...publications, ...retrievedData.publications];
+
+          // Update totalPages, totalResults, and increment pageNumber
+          totalPages = retrievedData.total_pages;
+          totalResults = retrievedData.total_results;
+          pageNumber += 1;
+          setCurrentPage(pageNumber);
+          setTotalResults(totalResults);
+        }
       }
+
+      // Add publications to the state
       addPublicationsData(publications);
       setAllFetchedPublications(publications);
     } catch (error) {
@@ -46,18 +60,19 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
 
   async function addPublicationsData(publications) {
     setAddingData(true);
+    setCount(1); // Reset count to 1 before starting
     console.log('Adding publications data...', publications);
     for (const publication of publications) {
         const publicationJSON = JSON.stringify(publication).replace(/"/g, '\\"');
         // Handle adding new entry using data_details
         try {
-          //const data_details_json = data_details.replace(/"/g, '\\"'); // Escape special characters
           console.log('Adding new entry:', `"${publicationJSON}"`);
           const result = await addUserCVData(user.user_id, section.data_section_id, `"${publicationJSON}"`);
           console.log(result);
         } catch (error) {
           console.error('Error adding new entry:', error);
         }
+        setCount(prevCount => prevCount + 1);
       }
       setAddingData(false);
       fetchData();
@@ -79,10 +94,13 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
       </button>
       {initialRender ? (
         user.scopus_id !== '' ? (
-          <div className='flex items-center justify-center w-full mt-5 mb-5'>
+          <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
+            <div className='text-center'>
+              The data is fetched from Elsevier using your Scopus ID(s).
+            </div>
             <button
               type="button"
-              className="btn btn-secondary text-white"
+              className="btn btn-secondary mt-4"
               onClick={() => fetchPublicationsData()}
             >
               Fetch Publications
@@ -103,15 +121,18 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
           </div>
         )
       ) : fetchingData ? (
-        <div className='flex items-center justify-center w-full mt-5 mb-5'>
-          <div className="block text-m mb-1 mt-6 mr-5 ml-5 text-zinc-600">
+        <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
+          <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
+            Fetching data for Scopus ID - {currentScopusId}
+          </div>
+          <div className="block text-m mb-1 text-zinc-600">
             Fetching {(currentPage + 1) * pageSize} out of {totalResults} publications...
           </div>
         </div>
       ) : (
         <div className='flex items-center justify-center w-full mt-5 mb-5'>
           <div className="block text-m mb-1 mt-6 text-zinc-600">
-            {addingData ? "Adding publication data..." : (allFetchedPublications.length === 0 ? "No Publications Found" : "Publications Added!")}
+            {addingData ? `Adding ${count} of ${allFetchedPublications.length} publications...` : (allFetchedPublications.length === 0 ? "No Publications Found" : "Publications Added!")}
           </div>
         </div>
       )}

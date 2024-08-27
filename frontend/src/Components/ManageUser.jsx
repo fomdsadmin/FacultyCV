@@ -118,7 +118,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
                   </div>
                   
                   {confirmedConnections.length > 0 &&
-                    <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active</h2>
+                    <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active Connections</h2>
                   }
                   <div className='ml-4 mr-2 flex flex-wrap gap-4'>
                     {confirmedConnections.map((connection) => (
@@ -161,28 +161,21 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
               ) : (
                 <>
                   {pendingConnections.length > 0 && 
-                    <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Invitations</h2>
+                    <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Pending Connections</h2>
                   }
                   <div className='ml-4 mr-2 flex flex-wrap gap-4'>
                     {pendingConnections.map((connection) => (
-                      <AssociatedUser key={connection.user_connection_id} connection={connection} getAllUserConnections={getAllUserConnections}/>
+                      <ConnectionCard key={connection.user_connection_id} connection={connection} getAllUserConnections={getAllUserConnections}/>
                     ))}
                   </div>
                   
                   {confirmedConnections.length > 0 &&
-                    <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active</h2>
+                    <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Active Connections</h2>
                   }
                   <div className='ml-4 mr-2 flex flex-wrap gap-4'>
                     {confirmedConnections.map((connection) => (
-                      <AssociatedUser key={connection.user_connection_id} connection={connection} getAllUserConnections={getAllUserConnections}/>
-                    ))}{pendingConnections.length > 0 && 
-                      <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">Pending</h2>
-                    }
-                    <div className='ml-4 mr-2 flex flex-wrap gap-4'>
-                      {pendingConnections.map((connection) => (
-                        <ConnectionCard key={connection.user_connection_id} firstName={connection.faculty_first_name} lastName={connection.faculty_last_name} emaill={connection.faculty_email} role='Faculty'/>
-                      ))}
-                    </div>
+                      <ConnectionCard key={connection.user_connection_id} connection={connection} getAllUserConnections={getAllUserConnections}/>
+                    ))}
                   </div>
                 </>
               )}

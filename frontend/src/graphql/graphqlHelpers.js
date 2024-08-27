@@ -1,13 +1,17 @@
 import { generateClient } from 'aws-amplify/api';
 import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUsersQuery, 
     getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, 
-    getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, getAllTemplatesQuery, 
-    getTeachingDataMatchesQuery, getPublicationMatchesQuery, getSecureFundingMatchesQuery} from './queries';
+    getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, 
+    getAllTemplatesQuery, getTeachingDataMatchesQuery, getPublicationMatchesQuery, 
+    getSecureFundingMatchesQuery, getPatentMatchesQuery,
+    getPresignedUrlQuery,
+    getNumberOfGeneratedCVsQuery} from './queries';
 import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
     updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
-    linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation, 
+    linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation,
+    addToUserGroupMutation
     } from './mutations';
 
 const runGraphql = async (query) => {
@@ -355,18 +359,61 @@ export const getSecureFundingMatches = async (first_name, last_name) => {
     return results['data']['getSecureFundingMatches'];
 }
 
-// --- PUT ---
+/**
+ * Function to get patent matches from patents data
+ * Arguments:
+ * first_name,
+ * last_name
+ * Return value:
+ * [
+ *  {
+ *      secure_funding_id
+ *      first_name,
+ *      last_name,
+ *      data_details: JSON string
+ *  }, ...
+ * ]
+ */
+export const getPatentMatches = async (first_name, last_name) => {
+    const results = await runGraphql(getPatentMatchesQuery(first_name, last_name));
+    return results['data']['getPatentMatches'];
+}
 
 /**
- * Function to update user data
- * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
- *      user_id
- *      first_name
- *      last_name
- *      preferred_name
- *      email
+ * Function to get a presigned URL authorized to PUT or GET an object to/from a dedicated partition
+ * in the CV S3 bucket for the tenant whose JWT token is passed
+ * Arguments:
+ * jwt - the jwt session token
+ * fileKey - the key of the file to get the presigned URL for (assume that the S3 bucket is being used only by one tenant, partitions are handled by the resolver)
+ * type - the type of operation (PUT or GET)
+ * Return value:
+ * String - the presigned URL
+ */
+export const getPresignedUrl = async (jwt, fileKey, type) => {
+    const results = await runGraphql(getPresignedUrlQuery(jwt, fileKey, type));
+    return results['data']['getPresignedUrl'];
+}
+
+/**
+ * Function to get the number of reports in the S3 bucket
+ * Return value:
+ * Integer - the number of reports in the S3 bucket
+ */
+export const getNumberOfGeneratedCVs = async () => {
+    const results = await runGraphql(getNumberOfGeneratedCVsQuery());
+    return results['data']['getNumberOfGeneratedCVs'];
+}
 
 // --- POST ---
+
+/**
+ * Function to add user to user group
+ *
+ */
+export const addToUserGroup = async (userName, userGroup) => {
+    const results = await runGraphql(addToUserGroupMutation(userName, userGroup));
+    return results['data']['addToUserGroup'];
+}
 
 /**
  * Function to add user CV data - the section info associated with a user
