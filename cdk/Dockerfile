@@ -15,7 +15,7 @@ RUN ./cvGenerator/install.sh
 ENV PATH="$PATH:/latex/bin/x86_64-linux"
 
 # Latex packages
-RUN tlmgr update --self && tlmgr install booktabs
+RUN tlmgr update --self && tlmgr install booktabs textgreek
 
 RUN pip3 install awslambdaric
 
