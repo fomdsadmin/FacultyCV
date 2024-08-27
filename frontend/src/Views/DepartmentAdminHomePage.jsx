@@ -1,13 +1,13 @@
 import React from 'react'
 import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
-import AdminMenu from '../Components/AdminMenu.jsx';
+import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
 import Filters from '../Components/Filters.jsx';
 import ManageUser from '../Components/ManageUser.jsx';
 import UserCard from '../Components/UserCard.jsx';
 import { getAllUsers } from '../graphql/graphqlHelpers.js';
 
-const DepartmentAdminHomePage = ({ userInfo, getCognitoUser }) => {
+const DepartmentAdminHomePage = ({ userInfo, getCognitoUser, department }) => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
@@ -76,9 +76,9 @@ const DepartmentAdminHomePage = ({ userInfo, getCognitoUser }) => {
 
   return (
     <PageContainer>
-      <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
-        <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users</h1>
+        <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">{department} Users</h1>
         {loading ? (
           <div className='flex items-center justify-center w-full'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>

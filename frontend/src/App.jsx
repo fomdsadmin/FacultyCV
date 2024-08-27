@@ -25,6 +25,10 @@ import Templates from './Views/Templates.jsx';
 import Sections from './Views/Sections.jsx';
 import ArchivedSections from './Views/ArchivedSections.jsx';
 import DepartmentAdminHomePage from './Views/DepartmentAdminHomePage.jsx';
+import DepartmentAdminAnalytics from './Views/DepartmentAdminAnalytics.jsx';
+import DepartmentAdminTemplates from './Views/DepartmentAdminTemplates.jsx';
+import DepartmentAdminSections from './Views/DepartmentAdminSections.jsx';
+import DepartmentAdminArchivedSections from './Views/DepartmentAdminArchivedSections.jsx';
 import { getJWT } from './getAuthToken.js';
 
 Amplify.configure({
@@ -121,6 +125,13 @@ function App() {
       <Routes>
       <Route path="/home" element={user ? (
         Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser}/> :
+        Object.keys(userInfo).length !== 0 && userInfo.role.startsWith('Admin-') ? (
+          <DepartmentAdminHomePage
+            userInfo={userInfo}
+            getCognitoUser={getCognitoUser}
+            department={userInfo.role.split('-')[1]} // Extract the department from the role
+          />
+        ) :
         Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === 'Assistant' ? <AssistantHomePage userInfo={assistantUserInfo} setUserInfo={setAssistantUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
         Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
         <PageContainer>
@@ -143,6 +154,10 @@ function App() {
         <Route path="/templates" element={user ? <Templates userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/sections" element={user ? <Sections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/archived-sections" element={user ? <ArchivedSections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/department-admin/analytics" element={user ? <DepartmentAdminAnalytics userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/department-admin/templates" element={user ? <DepartmentAdminTemplates userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/department-admin/sections" element={user ? <DepartmentAdminSections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/department-admin/archived-sections" element={user ? <DepartmentAdminArchivedSections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

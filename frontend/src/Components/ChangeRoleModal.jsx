@@ -8,6 +8,14 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
   const [changingRole, setChangingRole] = useState(false);
   const [confirmChange, setConfirmChange] = useState(false);
   const [newRole, setNewRole] = useState(userInfo.role);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
+
+  const handleDepartmentInputChange = (event) => {
+    const departmentName = event.target.value;
+    setSelectedDepartment(departmentName);
+    setNewRole(`Admin-${departmentName}`);
+  };
 
   async function changeRole() {
     setChangingRole(true);
@@ -69,8 +77,22 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
           >
             <option value="Faculty">Faculty</option>
             <option value="Assistant">Assistant</option>
+            <option value="Department Admin" selected={isDepartmentAdmin}>Department Admin</option>
             <option value="Admin">Admin</option>
           </select>
+
+          {isDepartmentAdmin && (
+            <div className="department-input">
+              <label className="block text-xs mt-4">Enter department name (Should be exactly the same as name in list of departments provided during deployment):</label>
+              <input
+                className="input input-bordered mt-1 h-10 w-full text-xs"
+                value={selectedDepartment}
+                onChange={handleDepartmentInputChange}
+                placeholder="Department Name"
+                required
+              />
+            </div>
+          )}
 
           {confirmChange && (
             <div>
