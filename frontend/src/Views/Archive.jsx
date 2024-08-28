@@ -151,7 +151,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
                 </label>
               </div>  
               {filteredEntries.length === 0 ? (
-                <div className="text-zinc-600 mt-4 ml-4">No archived entries</div>
+                <div className="text-center m-4 text-lg text-zinc-600">No archived entries</div>
               ) : (
                 filteredEntries.map((entry, index) => {
                   const [fieldA, fieldB] = rankFields(entry.data_details);
