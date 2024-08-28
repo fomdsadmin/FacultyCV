@@ -128,7 +128,7 @@ type Query {
     getExistingUser(institution_user_id: String!): User
     getAllSections: [ DataSection ]
     getArchivedSections: [ DataSection ]
-    getUserCVData(user_id: String!, data_section_id: String!): [UserCVData]
+    getUserCVData(user_id: String!, data_section_id: String, data_section_id_list: [String]): [UserCVData]
     getArchivedUserCVData(user_id: String!): [UserCVData]
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
     getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!

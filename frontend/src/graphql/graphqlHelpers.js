@@ -154,7 +154,9 @@ export const getExistingUser = async (institution_user_id) => {
  * Function to get user cv data given the user id and the data section id
  * Arguments:
  * user_id
- * data_section_id - ID of the data section as returned by the getAllSections call
+ * data_section_id - ID of the data section as returned by the getAllSections call (optional)
+ * data_section_id_list - List of data section ids to retrieve data for (optional)
+ * Must specify one of the two optional arguments
  * Return value:
  * {
  *      user_cv_data_id
@@ -163,8 +165,8 @@ export const getExistingUser = async (institution_user_id) => {
  *      data_details: JSON string
  * }
  */
-export const getUserCVData = async (user_id, data_section_id) => {
-    const results = await runGraphql(getUserCVDataQuery(user_id, data_section_id));
+export const getUserCVData = async (user_id, data_section_ids) => {
+    const results = await runGraphql(getUserCVDataQuery(user_id, data_section_ids));
     return results['data']['getUserCVData'];
 }
 

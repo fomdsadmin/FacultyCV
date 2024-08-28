@@ -103,19 +103,37 @@ export const getArchivedSectionsQuery = () => `
     }
 `;
 
-export const getUserCVDataQuery = (user_id, data_section_id) => `
-    query GetUserCVData {
+export const getUserCVDataQuery = (user_id, data_section_ids) => {
+    if (Array.isArray(data_section_ids)) {
+        let data_section_ids_string = "[";
+        data_section_ids.forEach((id) => {
+            data_section_ids_string += `"${id}",`;
+        });
+        data_section_ids_string = data_section_ids_string.slice(0, -1) + "]";
+        return `query GetUserCVData {
         getUserCVData (
             user_id: "${user_id}",
-            data_section_id: "${data_section_id}"
+            data_section_id_list: ${data_section_ids_string}
         ) {
             user_cv_data_id
             user_id
             data_section_id
             data_details
         }
-    }
-`;
+    }`
+    } else return `query GetUserCVData {
+        getUserCVData (
+            user_id: "${user_id}",
+            data_section_id: "${data_section_ids}"
+        ) {
+            user_cv_data_id
+            user_id
+            data_section_id
+            data_details
+        }
+    }`;
+}
+
 
 export const getArchivedUserCVDataQuery = (user_id) => `
     query GetArchivedUserCVData {

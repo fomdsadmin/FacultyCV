@@ -20,13 +20,16 @@ def getUserCVData(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT user_cv_data_id, user_id, data_section_id, data_details FROM user_cv_data WHERE user_id = %s AND data_section_id = %s AND archive != true', (arguments['user_id'], arguments['data_section_id']))
+    if ('data_section_id_list' not in arguments):
+        cursor.execute('SELECT user_cv_data_id, user_id, data_section_id, data_details FROM user_cv_data WHERE user_id = %s AND data_section_id = %s AND archive != true', (arguments['user_id'], arguments['data_section_id']))
+    else:
+        cursor.execute('SELECT user_cv_data_id, user_id, data_section_id, data_details FROM user_cv_data WHERE user_id = %s AND data_section_id IN %s AND archive != true', (arguments['user_id'], tuple(arguments['data_section_id_list'])))
     results = cursor.fetchall()
     cursor.close()
     connection.close()
     user_cv_data = []
     if len(results) == 0:
-        return {}
+        return []
     for result in results:
         user_cv_data.append({
             'user_cv_data_id': result[0],
