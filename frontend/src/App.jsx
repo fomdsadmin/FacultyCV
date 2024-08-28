@@ -2,7 +2,7 @@ import { Amplify } from 'aws-amplify';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
-import { getCurrentUser, signOut, fetchAuthSession } from 'aws-amplify/auth';
+import { fetchUserAttributes, signOut, fetchAuthSession } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './Views/AuthPage';
 import NotFound from './Views/NotFound';
@@ -88,10 +88,11 @@ function App() {
   async function getCognitoUser() {
     try {
       setLoading(true);
-      const currentUser = await getCurrentUser();
+      const attributes = await fetchUserAttributes();
+      const currentUser = attributes.email;
       setUser(currentUser);
-      console.log(currentUser.signInDetails.loginId, "is signed in");
-      await getUserInfo(currentUser.signInDetails.loginId);
+      console.log(currentUser, "is signed in");
+      await getUserInfo(currentUser);
       getUserGroup().then((group) => setUserGroup(group));
       <Navigate to="/home" />
     }

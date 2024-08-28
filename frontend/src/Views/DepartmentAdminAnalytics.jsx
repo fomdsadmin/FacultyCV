@@ -1,13 +1,13 @@
 import React from 'react'
 import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
-import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
+import AdminMenu from '../Components/AdminMenu.jsx';
 import AnalyticsCard from '../Components/AnalyticsCard.jsx';
 import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, getAllSections, getNumberOfGeneratedCVs } from '../graphql/graphqlHelpers.js';
 import { formatDateToLongString } from '../utils/time.js';
 import { LineGraph } from '../Components/LineGraph.jsx';
 
-const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin }) => {
+const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
   const [loading, setLoading] = useState(false);
   const [facultyUsers, setFacultyUsers] = useState([]);
   const [assistantUsers, setAssistantUsers] = useState([]);
@@ -25,6 +25,9 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin })
   const [grantMoneyRaised, setGrantMoneyRaised] = useState([]);
   const [facultyConnections, setFacultyConnections] = useState([]);
   const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
+  const [departmentAdminUsers, setDepartmentAdminUsers] = useState([]);
+  const [departmentAdminUserTimestamps, setDepartmentAdminUserTimestamps] = useState([]);
+
 
   // The time range in days that the graph shows
   const TIME_RANGE = 50;
@@ -42,7 +45,15 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin })
       const filteredFacultyUsers = users.filter(user => user.role === 'Faculty');
       const filteredAssistantUsers = users.filter(user => user.role === 'Assistant');
       const filteredAdminUsers = users.filter(user => user.role === 'Admin');
+      const filteredDepartmentAdminUsers = users.filter(user => user.role.startsWith('Admin-'));
       const facutlyTimestamps = filteredFacultyUsers
+                                .map(user => new Date(user.joined_timestamp))
+                                .sort((a, b) => a - b)
+                                .map(timestamp => {
+                                  timestamp.setHours(0, 0, 0, 0);
+                                  return timestamp;
+                                });
+      const departmentAdminTimestamps = filteredDepartmentAdminUsers
                                 .map(user => new Date(user.joined_timestamp))
                                 .sort((a, b) => a - b)
                                 .map(timestamp => {
@@ -72,6 +83,8 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin })
       setFacultyUsers(filteredFacultyUsers);
       setAssistantUsers(filteredAssistantUsers);
       setAdminUsers(filteredAdminUsers);
+      setDepartmentAdminUsers(filteredDepartmentAdminUsers);
+      setDepartmentAdminUserTimestamps(departmentAdminTimestamps);
       setAllUserTimestamps(allTimestamps);
       setFacultyUserTimestamps(facutlyTimestamps);
       setAdminUserTimestamps(adminTimestamps);
@@ -236,6 +249,17 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin })
           });
         }
         break;
+      case 'Department Admin':
+        users = departmentAdminUserTimestamps.filter(date => date < startDate).length;
+        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
+          const formattedDate = formatDateToLongString(date);
+          users += departmentAdminUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
+          data.push({
+            date: formattedDate,
+            Users: users
+          });
+        }
+        break;
       case 'Admin':
         users = adminUserTimestamps.filter(date => date < startDate).length;
         for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
@@ -262,7 +286,7 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin })
   }
   return (
     <PageContainer>
-      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+      <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
         <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Analytics</h1>
         <div className='m-4 flex space-x-4'>
@@ -278,6 +302,7 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin })
               <option value="All">All</option>
               <option value="Faculty">Faculty</option>
               <option value="Assistant">Assistant</option>
+              <option value="Department Admin">Department Admin</option>
               <option value="Admin">Admin</option>
             </select>
           </div>
@@ -311,6 +336,7 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin })
                   <AnalyticsCard title="Total Users" value={facultyUsers.length + assistantUsers.length + adminUsers.length} />
                   <AnalyticsCard title="Faculty Users" value={facultyUsers.length} />
                   <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
+                  <AnalyticsCard title="Department Admin Users" value={departmentAdminUsers.length} />
                   <AnalyticsCard title="Admin Users" value={adminUsers.length} />
                   <AnalyticsCard title="Total CVs Generated" value={totalCVsGenerated} />
                 </>
@@ -328,6 +354,11 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, departmentAdmin })
                 <>
                   <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
                   <AnalyticsCard title="Faculty Connections" value={facultyConnections.length} />
+                </>
+              )}
+              {role === 'Department Admin' && (
+                <>
+                  <AnalyticsCard title="Department Admin Users" value={departmentAdminUsers.length} />
                 </>
               )}
               {role === 'Admin' && (

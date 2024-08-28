@@ -25,6 +25,9 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
   const [grantMoneyRaised, setGrantMoneyRaised] = useState([]);
   const [facultyConnections, setFacultyConnections] = useState([]);
   const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
+  const [departmentAdminUsers, setDepartmentAdminUsers] = useState([]);
+  const [departmentAdminUserTimestamps, setDepartmentAdminUserTimestamps] = useState([]);
+
 
   // The time range in days that the graph shows
   const TIME_RANGE = 50;
@@ -42,7 +45,15 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
       const filteredFacultyUsers = users.filter(user => user.role === 'Faculty');
       const filteredAssistantUsers = users.filter(user => user.role === 'Assistant');
       const filteredAdminUsers = users.filter(user => user.role === 'Admin');
+      const filteredDepartmentAdminUsers = users.filter(user => user.role.startsWith('Admin-'));
       const facutlyTimestamps = filteredFacultyUsers
+                                .map(user => new Date(user.joined_timestamp))
+                                .sort((a, b) => a - b)
+                                .map(timestamp => {
+                                  timestamp.setHours(0, 0, 0, 0);
+                                  return timestamp;
+                                });
+      const departmentAdminTimestamps = filteredDepartmentAdminUsers
                                 .map(user => new Date(user.joined_timestamp))
                                 .sort((a, b) => a - b)
                                 .map(timestamp => {
@@ -72,6 +83,8 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
       setFacultyUsers(filteredFacultyUsers);
       setAssistantUsers(filteredAssistantUsers);
       setAdminUsers(filteredAdminUsers);
+      setDepartmentAdminUsers(filteredDepartmentAdminUsers);
+      setDepartmentAdminUserTimestamps(departmentAdminTimestamps);
       setAllUserTimestamps(allTimestamps);
       setFacultyUserTimestamps(facutlyTimestamps);
       setAdminUserTimestamps(adminTimestamps);
@@ -236,6 +249,17 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
           });
         }
         break;
+      case 'Department Admin':
+        users = departmentAdminUserTimestamps.filter(date => date < startDate).length;
+        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
+          const formattedDate = formatDateToLongString(date);
+          users += departmentAdminUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
+          data.push({
+            date: formattedDate,
+            Users: users
+          });
+        }
+        break;
       case 'Admin':
         users = adminUserTimestamps.filter(date => date < startDate).length;
         for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
@@ -278,6 +302,7 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
               <option value="All">All</option>
               <option value="Faculty">Faculty</option>
               <option value="Assistant">Assistant</option>
+              <option value="Department Admin">Department Admin</option>
               <option value="Admin">Admin</option>
             </select>
           </div>
@@ -311,6 +336,7 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
                   <AnalyticsCard title="Total Users" value={facultyUsers.length + assistantUsers.length + adminUsers.length} />
                   <AnalyticsCard title="Faculty Users" value={facultyUsers.length} />
                   <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
+                  <AnalyticsCard title="Department Admin Users" value={departmentAdminUsers.length} />
                   <AnalyticsCard title="Admin Users" value={adminUsers.length} />
                   <AnalyticsCard title="Total CVs Generated" value={totalCVsGenerated} />
                 </>
@@ -328,6 +354,11 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
                 <>
                   <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
                   <AnalyticsCard title="Faculty Connections" value={facultyConnections.length} />
+                </>
+              )}
+              {role === 'Department Admin' && (
+                <>
+                  <AnalyticsCard title="Department Admin Users" value={departmentAdminUsers.length} />
                 </>
               )}
               {role === 'Admin' && (
