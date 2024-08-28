@@ -1,10 +1,10 @@
 export const rankFields = (entry) => {
   const importance = {
     title: 1,
-    course: 2, 
-    name: 3,
+    course: 2,
+    year: 3,
     dates: 4,
-    year: 5,
+    name: 5,
     'university/organization': 6,
     'university/organization/company': 7,
     rank: 8,
