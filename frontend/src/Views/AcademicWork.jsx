@@ -30,6 +30,8 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
       ...section,
       attributes: JSON.parse(section.attributes),
     }));
+    
+    parsedSections.sort((a, b) => a.title.localeCompare(b.title));
 
     console.log(parsedSections);
     setDataSections(parsedSections);

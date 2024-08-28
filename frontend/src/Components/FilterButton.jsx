@@ -9,7 +9,7 @@ const FilterButton = ({ filter, onClick, isActive }) => {
       onClick={onClick}
       title={filter}
     >
-      <span className="flex-shrink-0 w-4 flex justify-center">
+      <span className="flex-shrink-0 w-8 flex justify-center">
         {isActive ? <IoClose className="h-4 w-4" /> : <FaCheck className="h-3 w-3" />}
       </span>
       <span className="ml-0 flex-1 truncate">{filter}</span>
