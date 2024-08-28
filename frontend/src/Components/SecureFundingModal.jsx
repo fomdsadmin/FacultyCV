@@ -44,6 +44,17 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     setFetchingData(false);
   }
 
+  async function fetchRiseData() {
+    setFetchingData(true);
+    setInitialRender(false);
+    try {
+      
+    } catch (error) {
+      console.error('Error fetching secure funding data:', error);
+    }
+    setFetchingData(false);
+  }
+
   const handleSelect = (secureFundingData, isAdded) => {
     setSelectedSecureFundingData(prevState => {
       if (isAdded) {
@@ -77,14 +88,20 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       {initialRender ? (
         <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
           <div className='text-center mb-4'>
-            <div className='mb-2'>The data is fetched from the following grant sources:</div>
+            <div className='text-center mb-1'>
+              <div className='mb-2'>Fetch data from RISE:</div>
+            </div>
+            <button type="button" className="btn btn-secondary mt-5 mb-8" onClick={() => fetchRiseData()}>
+              Fetch RISE Data
+            </button>
+            <div className='mb-2'>Fetch data from the following external grant sources:</div>
             <div className='text-sm'>1. Canadian Institutes of Health Research (CIHR)</div>
             <div className='text-sm'>2. Natural Sciences and Engineering Research Council of Canada (NSERC)</div>
             <div className='text-sm'>3. Social Sciences and Humanities Research Council (SSHRC)</div>
             <div className='text-sm'>4. Canada Foundation for Innovation (CFI)</div>
           </div>
-          <button type="button" className="btn btn-secondary mt-5" onClick={() => fetchSecureFundingData()}>
-            Fetch Secure Funding Data
+          <button type="button" className="btn btn-info mt-1" onClick={() => fetchSecureFundingData()}>
+            Fetch External Data
           </button>
         </div>      
       ) : (

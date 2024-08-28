@@ -267,6 +267,26 @@ export class GrantDataStack extends Stack {
         suffix: ".csv",
         }
     );
+
+    // Raw Rise data
+    grantDataS3Bucket.addEventNotification(
+        s3.EventType.OBJECT_CREATED_PUT,
+        new s3n.LambdaDestination(glueTrigger),
+        {
+        prefix: "raw/rise",
+        suffix: ".csv",
+        }
+    );
+    
+    // Clean Rise data
+    grantDataS3Bucket.addEventNotification(
+        s3.EventType.OBJECT_CREATED_PUT,
+        new s3n.LambdaDestination(glueTrigger),
+        {
+        prefix: "clean/rise",
+        suffix: ".csv",
+        }
+    );
     
     const securityGroup = new ec2.SecurityGroup(this, "glueSecurityGroup", {
         vpc: vpcStack.vpc,
@@ -421,6 +441,31 @@ export class GrantDataStack extends Stack {
     defaultArguments: defaultArguments,
     });
 
+    // Glue Job: clean rise data
+    const cleanRiseJobName = "facultyCV-clean-rise";
+    const cleanRiseJob = new glue.CfnJob(this, cleanRiseJobName, {
+    name: cleanRiseJobName,
+    role: glueRole.roleArn,
+    command: {
+        name: "pythonshell",
+        pythonVersion: PYTHON_VER,
+        scriptLocation:
+        "s3://" +
+        this.glueS3Bucket.bucketName +
+        "/scripts/grants-etl/" +
+        "cleanRise" +
+        ".py",
+    },
+    executionProperty: {
+        maxConcurrentRuns: 1,
+    },
+    maxRetries: MAX_RETRIES,
+    maxCapacity: MAX_CAPACITY,
+    timeout: TIMEOUT, // 120 min timeout duration
+    glueVersion: GLUE_VER,
+    defaultArguments: defaultArguments,
+    });
+
     // Glue Job: store data into table in database
     const storeDataJobName = "facultyCV-storeData";
     const storeDataJob = new glue.CfnJob(this, storeDataJobName, {
@@ -465,6 +510,7 @@ export class GrantDataStack extends Stack {
     cleanNsercJob.applyRemovalPolicy(RemovalPolicy.DESTROY);
     cleanSshrcJob.applyRemovalPolicy(RemovalPolicy.DESTROY);
     cleanCfiJob.applyRemovalPolicy(RemovalPolicy.DESTROY);
+    cleanRiseJob.applyRemovalPolicy(RemovalPolicy.DESTROY);
     storeDataJob.applyRemovalPolicy(RemovalPolicy.DESTROY);
     createFolders.applyRemovalPolicy(RemovalPolicy.DESTROY);
     glueTrigger.applyRemovalPolicy(RemovalPolicy.DESTROY);

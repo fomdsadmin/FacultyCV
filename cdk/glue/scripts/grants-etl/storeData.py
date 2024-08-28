@@ -67,19 +67,25 @@ def storeData():
     cursor = connection.cursor()
     print("Successfully connected to database")
 
-    # check for duplicate insertion
-    query = "SELECT first_name, last_name, keywords, agency, department, program, title, amount, dates FROM grants"
+    # Check the first value in the Agency column to determine the table
+    target_table = "grants"
+    if df_id['Agency'].iloc[0] == 'Rise':
+        target_table = "rise_data"
+
+    # Check for duplicate insertion
+    query = f"SELECT first_name, last_name, keywords, agency, department, program, title, amount, dates FROM {target_table}"
     cursor.execute(query)
     tableData = list(map(lambda tup: tuple("" if x == None else x for x in tup), cursor.fetchall()))
-    # the difference between the two sets is the data that are unique and can be inserted into the database
+    
+    # The difference between the two sets is the data that are unique and can be inserted into the database
     listOfValuesToInsert = list(set(cleanData) - set(tableData))
 
-    # inserting to db
-    query = "INSERT INTO grants (first_name, last_name, keywords, agency, department, program, title, amount, dates) VALUES %s"
+    # Inserting to db
+    query = f"INSERT INTO {target_table} (first_name, last_name, keywords, agency, department, program, title, amount, dates) VALUES %s"
     extras.execute_values(cursor, query, listOfValuesToInsert)
 
     connection.commit()
-    print(f"Inserted {len(listOfValuesToInsert)} more rows!")
+    print(f"Inserted {len(listOfValuesToInsert)} more rows into {target_table}!")
 
     # # For testing purposes
     # query = "SELECT * FROM public.grant_data LIMIT 1"

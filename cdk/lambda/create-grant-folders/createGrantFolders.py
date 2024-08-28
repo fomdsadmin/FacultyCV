@@ -10,3 +10,4 @@ def lambda_handler(event, context):
     s3.put_object(Bucket=bucket, Key="raw/nserc/")
     s3.put_object(Bucket=bucket, Key="raw/sshrc/")
     s3.put_object(Bucket=bucket, Key="raw/cfi/")
+    s3.put_object(Bucket=bucket, Key="raw/rise/")
