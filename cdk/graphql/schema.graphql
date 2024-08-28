@@ -146,6 +146,7 @@ type Query {
 
 type Mutation {
     addToUserGroup(userName: String!, userGroup: String!): String
+    removeFromUserGroup(userName: String!, userGroup: String!): String
 
     generatePDF(first_name: String!): String
 

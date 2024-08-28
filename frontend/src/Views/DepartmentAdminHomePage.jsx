@@ -1,13 +1,13 @@
 import React from 'react'
 import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
-import AdminMenu from '../Components/AdminMenu.jsx';
+import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
 import Filters from '../Components/Filters.jsx';
-import ManageUser from '../Components/ManageUser.jsx';
+import ManageDepartmentUser from '../Components/ManageDepartmentUser.jsx';
 import UserCard from '../Components/UserCard.jsx';
 import { getAllUsers } from '../graphql/graphqlHelpers.js';
 
-const AdminHomePage = ({ userInfo, getCognitoUser }) => {
+const DepartmentAdminHomePage = ({ userInfo, getCognitoUser, department }) => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
@@ -22,7 +22,8 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
     setLoading(true);
     try {
         const users = await getAllUsers();
-        const filteredUsers = users.filter(user => user.email !== userInfo.email);
+        console.log(users);
+        const filteredUsers = users.filter(user => user.email !== userInfo.email && (user.primary_department === department || user.secondary_department === department || user.role === `Admin-${department}`));
         console.log(filteredUsers);
         setUsers(filteredUsers);
     } catch (error) {
@@ -76,9 +77,9 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
 
   return (
     <PageContainer>
-      <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
-        <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users</h1>
+        <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">{department} Users</h1>
         {loading ? (
           <div className='flex items-center justify-center w-full'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -112,17 +113,18 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
                 <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters>
                 {searchedUsers.length === 0 ? (
                   <div className='flex items-center justify-center w-full'>
-                    <div className="block text-m mb-1 mt-6 text-zinc-600">No Users Found</div>
+                    <div className="block text-m mb-1 mt-6 text-zinc-600">No {department} Users Found</div>
                   </div>
                 ) : (
                   searchedUsers.map((user) => (
                     <UserCard onClick={handleManageClick} key={user.user_id} id={user.user_id} firstName={user.first_name} lastName={user.last_name} email={user.email} role={user.role}></UserCard>
                   ))
                 )}
+              
               </div>
             ) : (
               <div className='!overflow-auto !h-full custom-scrollbar'>
-                <ManageUser user={activeUser} onBack={handleBack} fetchAllUsers={fetchAllUsers}></ManageUser>                
+                <ManageDepartmentUser user={activeUser} onBack={handleBack} fetchAllUsers={fetchAllUsers} department={department}></ManageDepartmentUser>                
               </div>
             )}
           </div>
@@ -132,4 +134,4 @@ const AdminHomePage = ({ userInfo, getCognitoUser }) => {
   )
 }
 
-export default AdminHomePage;
+export default DepartmentAdminHomePage;

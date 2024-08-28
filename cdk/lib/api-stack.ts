@@ -119,6 +119,11 @@ export class ApiStack extends cdk.Stack {
         userPoolId: this.userPool.userPoolId,
     });
 
+    const departmentAdminGroup = new cognito.CfnUserPoolGroup(this, 'DepartmentAdminGroup', {
+      groupName: 'DepartmentAdmin',
+      userPoolId: this.userPool.userPoolId,
+  });
+
     // GraphQL Resolvers
     const assignResolver = (
       api: appsync.GraphqlApi,
@@ -256,11 +261,12 @@ export class ApiStack extends cdk.Stack {
       ],
     }));
 
-    // Grant permission to add users to a Cognito user group
+    // Grant permission to add/remove users to a Cognito user group
     resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
           "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminRemoveUserFromGroup",
       ],
       resources: [
           `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${this.userPool.userPoolId}`,
@@ -280,6 +286,16 @@ export class ApiStack extends cdk.Stack {
       this.api,
       "addToUserGroup",
       ["addToUserGroup"],
+      "Mutation",
+      {USER_POOL_ID: this.userPool.userPoolId},
+      resolverRole,
+      []
+    );
+
+    createResolver(
+      this.api,
+      "removeFromUserGroup",
+      ["removeFromUserGroup"],
       "Mutation",
       {USER_POOL_ID: this.userPool.userPoolId},
       resolverRole,

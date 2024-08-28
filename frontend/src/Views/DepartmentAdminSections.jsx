@@ -1,42 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react'
+import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
-import FacultyMenu from '../Components/FacultyMenu';
-import WorkSection from '../Components/WorkSection';
-import '../CustomStyles/scrollbar.css';
-import Filters from '../Components/Filters.jsx';
-import GenericSection from '../Components/GenericSection.jsx';
-import CoursesTaughtSection from '../Components/CoursesTaughtSection.jsx';
-import SecureFundingSection from '../Components/SecureFundingSection.jsx';
-import PublicationsSection from '../Components/PublicationsSection.jsx';
-import PatentsSection from '../Components/PatentsSection.jsx';
+import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
 import { getAllSections } from '../graphql/graphqlHelpers.js';
+import Filters from '../Components/Filters.jsx';
+import WorkSection from '../Components/WorkSection.jsx';
+import ManageSection from '../Components/ManageSection.jsx';
+import NewSection from '../Components/NewSection.jsx';
 
-const AcademicWork = ({ getCognitoUser, userInfo }) => {
+const DepartmentAdminSections = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeSection, setActiveSection] = useState(null);
   const [dataSections, setDataSections] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
+  const [openNewSection, setOpenNewSection] = useState(false);
 
   useEffect(() => {
     getDataSections();
   }, []);
 
   const getDataSections = async () => {
+    setDataSections([]);
     const retrievedSections = await getAllSections();
-  
-    // Parse the attributes field from a JSON string to a JSON object
+
     const parsedSections = retrievedSections.map(section => ({
       ...section,
       attributes: JSON.parse(section.attributes),
     }));
-    
-    parsedSections.sort((a, b) => a.title.localeCompare(b.title));
 
-    console.log(parsedSections);
+    console.log('Sections:', parsedSections);
+
     setDataSections(parsedSections);
     setLoading(false);
-  }
+  };
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -45,11 +42,9 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
   const filters = Array.from(new Set(dataSections.map(section => section.data_type)));
 
   const handleManageClick = (value) => {
-
     const section = dataSections.filter((section) => section.data_section_id == value);
-
     setActiveSection(section[0]);
-  }
+  };
 
   const searchedSections = dataSections.filter(entry => {
     const section = entry.title || '';
@@ -66,10 +61,18 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
   const handleBack = () => {
     setActiveSection(null);
   };
-  
+
+  const handleAddNewSection = () => {
+    setOpenNewSection(true);
+  };
+
+  const handleBackFromNewSection = () => {
+    setOpenNewSection(false);
+  };
+
   return (
     <PageContainer>
-      <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
+      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
         {loading ? (
           <div className='w-full h-full flex items-center justify-center'>
@@ -77,9 +80,17 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
           </div>
         ) : (
           <>
-            {activeSection === null ? (
+            {openNewSection ? (
+              <NewSection onBack={handleBackFromNewSection} getDataSections={getDataSections} sections={dataSections}/>  // Render NewSection when openNewSection is true
+            ) : activeSection === null ? (
               <div className='!overflow-auto !h-full custom-scrollbar'>
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Academic Work</h1>
+                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Sections</h1>
+                <button 
+                  className="btn btn-info text-white m-4" 
+                  onClick={handleAddNewSection}
+                >
+                  Add New Section
+                </button>
                 <div className='m-4 flex'>
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
@@ -109,28 +120,14 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
               </div>
             ) : (
               <div className='!overflow-auto !h-full custom-scrollbar'>
-                {activeSection.title === 'Publications' && 
-                  <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack}></PublicationsSection>
-                }
-                {activeSection.title === 'Patents' && 
-                  <PatentsSection user={userInfo} section={activeSection} onBack={handleBack}></PatentsSection>
-                }
-                {activeSection.title === 'Secure Funding' && 
-                  <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack}></SecureFundingSection>
-                }
-                {activeSection.title === 'Courses Taught' && 
-                  <CoursesTaughtSection user={userInfo} section={activeSection} onBack={handleBack}></CoursesTaughtSection>
-                } 
-                {activeSection.title !== 'Publications' && activeSection.title !== 'Patents' && activeSection.title !== 'Courses Taught' && activeSection.title !== 'Secure Funding' &&
-                  <GenericSection user={userInfo} section={activeSection} onBack={handleBack}></GenericSection>
-                }
+                <ManageSection section={activeSection} onBack={handleBack} getDataSections={getDataSections}></ManageSection>
               </div>
             )}
           </>
         )}
       </main>
     </PageContainer>
-  );    
-};
+  )
+}
 
-export default AcademicWork;
+export default DepartmentAdminSections;

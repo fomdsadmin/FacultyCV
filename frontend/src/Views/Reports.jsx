@@ -18,6 +18,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [downloadUrl, setDownloadUrl] = useState(null);
 
+
   useEffect(() => {
 
     setUser(userInfo);
@@ -363,25 +364,37 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   };
   
 
-  const handleDownload = () => {
-    const lastName = user.last_name || 'unknown';
-    const templateTitle = selectedTemplate?.title || 'template';
-    const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-
-    const fileName = `${lastName}/${templateTitle}/${currentDate}.tex`;
-
-    const element = document.createElement('a');
-    const file = new Blob([latex], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = fileName;
-    document.body.appendChild(element);
-    element.click();
+  const handleDownload = async () => {
+    if (!downloadUrl) {
+      console.error("No download URL available");
+      return;
+    }
+  
+    try {
+      const response = await fetch(downloadUrl, {
+        mode: 'cors'
+      });
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+  
+      const element = document.createElement('a');
+      element.href = url;
+      element.download = `${selectedTemplate.title}_${user.last_name || 'unknown'}.pdf`; 
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+  
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading the file:", error);
+    }
   };
+  
 
   return (
     <PageContainer className="custom-scrollbar">
       <FacultyMenu userName={user.preferred_name || user.first_name} getCognitoUser={getCognitoUser} />
-      <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4">
+      <main className="ml-4 overflow-auto custom-scrollbar w-full">
         <div className="flex w-full h-full">
           
           {/* Content Section */}
@@ -439,13 +452,15 @@ const Reports = ({ userInfo, getCognitoUser }) => {
               ) : (
                 <div className='w-3/5 h-full'>
                   <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
-                    <PDFViewer />
+                    <PDFViewer 
+                      url={downloadUrl}
+                    />
                   </div>
 
                   <div className='flex justify-center'>
                     <button
                       onClick={handleDownload}
-                      className={`mt-2 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
+                      className={`mt-5 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
                       disabled={buildingLatex}
                     >
                       {buildingLatex ? <span className="loader"></span> : 'Download'}

@@ -100,7 +100,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
             </div>
             <button
               type="button"
-              className="btn btn-secondary mt-4"
+              className="btn btn-secondary mt-4 text-white"
               onClick={() => fetchPublicationsData()}
             >
               Fetch Publications

@@ -7,7 +7,7 @@ import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, g
 import { formatDateToLongString } from '../utils/time.js';
 import { LineGraph } from '../Components/LineGraph.jsx';
 
-const Analytics = ({ getCognitoUser, userInfo }) => {
+const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
   const [loading, setLoading] = useState(false);
   const [facultyUsers, setFacultyUsers] = useState([]);
   const [assistantUsers, setAssistantUsers] = useState([]);
@@ -378,4 +378,4 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
   )  
 }
 
-export default Analytics
+export default DepartmentAdminAnalytics

@@ -24,8 +24,29 @@ const AuthPage = ({ getCognitoUser }) => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [done, setDone] = useState(false);
+  const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
   const navigate = useNavigate();
 
+  
+
+  const handleRoleChange = (event) => {
+    setRole('');
+    const selectedRole = event.target.value;
+    if (selectedRole === 'Department Admin') {
+      setIsDepartmentAdmin(true);
+    } else {
+      setIsDepartmentAdmin(false);
+      setRole(selectedRole);
+    }
+  };
+  
+  const handleDepartmentInputChange = (event) => {
+    const departmentName = event.target.value;
+    setSelectedDepartment(departmentName);
+    setRole(`Admin-${departmentName}`);
+  };
+  
   const handleLogin = async (event) => {
     setLoginError('');
     event.preventDefault();
@@ -203,8 +224,13 @@ const AuthPage = ({ getCognitoUser }) => {
 
     //put user in user group
     try {
-      const result = await addToUserGroup(email, role);
-      console.log('Adding user to user group', result);
+      if (role.startsWith('Admin-')) {
+        const result = await addToUserGroup(email, 'DepartmentAdmin');
+        console.log('Adding user to user group', result);
+      } else {
+        const result = await addToUserGroup(email, role);
+        console.log('Adding user to user group', result);
+      }
     } catch (error) {
       console.log('Error adding user to group:', error);
       setLoading(false);
@@ -447,19 +473,42 @@ const AuthPage = ({ getCognitoUser }) => {
                   <input className="input input-bordered mt-1 h-10 w-full text-xs" name="newPassword" placeholder="New Password" type="password" required />
                   <label className="block text-xs mt-4">Confirm New Password</label>
                   <input className="input input-bordered mt-1 h-10 w-full text-xs" name="confirmNewPassword" placeholder="Confirm New Password" type="password" required />
-                  <div className="mt-2 flex justify-between">
-                    <div className="mt-2">
-                      <input type="radio" id="faculty" name="role" value="Faculty" onChange={e => setRole(e.target.value)} defaultChecked />
-                      <label className="ml-1 text-xs">Faculty</label>
-                    </div>
-                    <div className="mt-2">
-                        <input type="radio" id="assistant" name="role" value="Assistant"onChange={e => setRole(e.target.value)} />
-                        <label className="ml-1 text-xs">Assistant</label>
-                    </div>
-                    <div className="mt-2">
-                        <input type="radio" id="admin" name="role" value="Admin"onChange={e => setRole(e.target.value)} />
+                  <div className='flex flex-col items-center justify-center max-w-sm'>
+                    <div className="mt-2 flex justify-between">
+                      <div className="mt-2">
+                        <input type="radio" id="faculty" name="role" value="Faculty" checked={role === 'Faculty'} onChange={handleRoleChange} defaultChecked />
+                        <label className="ml-1 text-xs mr-2">Faculty</label>
+                      </div>
+                      <div className="mt-2">
+                        <input type="radio" id="assistant" name="role" value="Assistant" checked={role === 'Assistant'} onChange={handleRoleChange} />
+                        <label className="ml-1 text-xs mr-2">Assistant</label>
+                      </div>
+                      <div className="mt-2">
+                        <input
+                          type="radio"
+                          value="Department Admin"
+                          checked={isDepartmentAdmin}
+                          onChange={handleRoleChange}
+                        />
+                        <label className="ml-1 text-xs mr-2">Department Admin</label>
+                      </div>
+                      <div className="mt-2">
+                        <input type="radio" id="admin" name="role" value="Admin" checked={role === 'Admin'} onChange={handleRoleChange} />
                         <label className="ml-1 text-xs">Admin</label>
+                      </div>
                     </div>
+                    {isDepartmentAdmin && (
+                      <div className="department-input">
+                        <label className="block text-xs mt-4">Enter department name (Should be exactly the same as name in list of departments provided during deployment):</label>
+                        <input
+                          className="input input-bordered mt-1 h-10 w-full text-xs"
+                          value={selectedDepartment}
+                          onChange={handleDepartmentInputChange}
+                          placeholder="Department Name"
+                          required
+                        />
+                      </div>
+                    )}
                   </div>
                   <button className="btn btn-neutral mt-4 min-h-5 h-8 w-full" type="submit">Submit</button>
                 </form>

@@ -81,9 +81,9 @@ const SecureFundingSection = ({ user, section, onBack }) => {
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
-
+  
       console.log(parsedData)
-
+  
       const filteredData = parsedData.filter(entry => {
         const [field1, field2] = rankFields(entry.data_details);
         console.log(field1, field2);
@@ -99,6 +99,22 @@ const SecureFundingSection = ({ user, section, onBack }) => {
         return { ...entry, field1, field2 };
       });
   
+      // Sorting logic
+      rankedData.sort((a, b) => {
+        const isDate = (str) => /\b\d{4}[-/]\d{2}[-/]\d{2}\b/.test(str) || /\b\d{4}\b/.test(str); // Regex to match dates like YYYY-MM-DD or YYYY
+        const dateA = isDate(a.field1) ? new Date(a.field1) : isDate(a.field2) ? new Date(a.field2) : null;
+        const dateB = isDate(b.field1) ? new Date(b.field1) : isDate(b.field2) ? new Date(b.field2) : null;
+  
+        if (dateA && dateB) {
+          return dateB - dateA; 
+          return -1;
+        } else if (dateB) {
+          return 1; 
+        } else {
+          return 0; 
+        }
+      });
+  
       setFieldData(rankedData);
   
     } catch (error) {
@@ -106,6 +122,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
     }
     setLoading(false);
   }
+  
 
   useEffect(() => {
     setLoading(true);

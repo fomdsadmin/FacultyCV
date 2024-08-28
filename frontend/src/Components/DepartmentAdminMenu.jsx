@@ -5,7 +5,7 @@ import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
 import { FaBars } from "react-icons/fa";
 
-const AdminMenu = ({ userName, getCognitoUser }) => {
+const DepartmentAdminMenu = ({ userName, getCognitoUser }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -48,28 +48,28 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
             {!isCollapsed && <p className={`ml-2 ${location.pathname === '/home' ? 'font-bold' : ''}`}>Users</p>}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === '/analytics' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/analytics'>
+        <li className={`mb-2 ${location.pathname === '/department-admin/analytics' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/department-admin/analytics'>
             <FaChartLine className="h-5 w-5" />
-            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/analytics' ? 'font-bold' : ''}`}>Analytics</p>}
+            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/department-admin/analytics' ? 'font-bold' : ''}`}>Analytics</p>}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === '/templates' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/templates'>
+        <li className={`mb-2 ${location.pathname === '/department-admin/templates' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/department-admin/templates'>
             <FaFileAlt className="h-5 w-5" />
-            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/templates' ? 'font-bold' : ''}`}>Templates</p>}
+            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/department-admin/templates' ? 'font-bold' : ''}`}>Templates</p>}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === '/sections' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/sections'>
+        <li className={`mb-2 ${location.pathname === '/department-admin/sections' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/department-admin/sections'>
             <FaThList className="h-5 w-5" />
-            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/sections' ? 'font-bold' : ''}`}>Sections</p>}
+            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/department-admin/sections' ? 'font-bold' : ''}`}>Sections</p>}
           </Link>
         </li>
-        <li className={`mb-6 ${location.pathname === '/archived-sections' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/archived-sections'>
+        <li className={`mb-6 ${location.pathname === '/department-admin/archived-sections' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/department-admin/archived-sections'>
             <FaTrashAlt className="h-4 w-4" />
-            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/archived-sections' ? 'font-bold' : ''}`}>Archived Sections</p>}
+            {!isCollapsed && <p className={`ml-2 ${location.pathname === '/department-admin/archived-sections' ? 'font-bold' : ''}`}>Archived Sections</p>}
           </Link>
         </li>
         {!isCollapsed && (
@@ -87,4 +87,4 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
   )
 }
 
-export default AdminMenu;
+export default DepartmentAdminMenu;
