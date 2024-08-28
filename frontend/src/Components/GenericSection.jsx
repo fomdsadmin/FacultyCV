@@ -70,38 +70,67 @@ const GenericSection = ({ user, section, onBack }) => {
   };
   
   async function fetchData() {
+    console.log('Fetching data for section:', section.title);
     try {
-      const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
-      // Parse the data_details field from a JSON string to a JSON object
-      const parsedData = retrievedData.map(data => ({
-        ...data,
-        data_details: JSON.parse(data.data_details),
-      }));
+        const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
+        // Parse the data_details field from a JSON string to a JSON object
+        const parsedData = retrievedData.map(data => ({
+            ...data,
+            data_details: JSON.parse(data.data_details),
+        }));
 
-      console.log(parsedData)
+        console.log(parsedData);
 
-      const filteredData = parsedData.filter(entry => {
-        const [field1, field2] = rankFields(entry.data_details);
-        console.log(field1, field2);
-        return (
-          (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-      });
-      console.log("filtered data: " + JSON.stringify(filteredData));
-  
-      const rankedData = filteredData.map(entry => {
-        const [field1, field2] = rankFields(entry.data_details);
-        return { ...entry, field1, field2 };
-      });
-  
-      setFieldData(rankedData);
-  
+        const filteredData = parsedData.filter(entry => {
+            const [field1, field2] = rankFields(entry.data_details);
+            console.log(field1, field2);
+            return (
+                (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+        });
+        console.log("filtered data: " + JSON.stringify(filteredData));
+
+        const rankedData = filteredData.map(entry => {
+            const [field1, field2] = rankFields(entry.data_details);
+
+            const findKeyForField = (field) => {
+                return Object.keys(entry.data_details).find(key => entry.data_details[key] === field);
+            };
+
+            const key1 = findKeyForField(field1);
+            const key2 = findKeyForField(field2);
+
+            return { ...entry, field1, field2, key1, key2 };
+        });
+
+        rankedData.sort((a, b) => {
+            const isDateOrYear = (key) => key && (key.toLowerCase().includes('date') || key.toLowerCase().includes('year'));
+
+            const dateA = isDateOrYear(a.key1) ? parseInt(a.field1) : isDateOrYear(a.key2) ? parseInt(a.field2) : null;
+            const dateB = isDateOrYear(b.key1) ? parseInt(b.field1) : isDateOrYear(b.key2) ? parseInt(b.field2) : null;
+
+            if (dateA && dateB) {
+                return dateB - dateA; 
+            } else if (dateA) {
+                return -1;
+            } else if (dateB) {
+                return 1;
+            }
+            return 0; 
+        });
+
+        setFieldData(rankedData);
+
     } catch (error) {
-      console.error('Error fetching data:', error);
+        console.error('Error fetching data:', error);
     }
     setLoading(false);
-  }
+    }
+
+
+
+
 
   useEffect(() => {
     setLoading(true);

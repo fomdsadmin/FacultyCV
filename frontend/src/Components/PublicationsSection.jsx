@@ -81,9 +81,9 @@ const PublicationsSection = ({ user, section, onBack }) => {
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
-
-      console.log(parsedData)
-
+  
+      console.log(parsedData);
+  
       const filteredData = parsedData.filter(entry => {
         const [field1, field2] = rankFields(entry.data_details);
         console.log(field1, field2);
@@ -99,6 +99,13 @@ const PublicationsSection = ({ user, section, onBack }) => {
         return { ...entry, field1, field2 };
       });
   
+      rankedData.sort((a, b) => {
+        const yearA = parseInt(a.field2, 10) || 0; 
+        const yearB = parseInt(b.field2, 10) || 0;
+  
+        return yearB - yearA;
+      });
+  
       setFieldData(rankedData);
   
     } catch (error) {
@@ -106,6 +113,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
     }
     setLoading(false);
   }
+  
 
   useEffect(() => {
     setLoading(true);

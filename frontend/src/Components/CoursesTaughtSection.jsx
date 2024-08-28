@@ -104,10 +104,11 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
-
-      console.log(parsedData)
-
+  
+      console.log(parsedData);
+  
       const filteredData = parsedData.filter(entry => {
+        console.log(entry.data_details);
         const [field1, field2] = rankFields(entry.data_details);
         console.log(field1, field2);
         return (
@@ -122,6 +123,23 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
         return { ...entry, field1, field2 };
       });
   
+      // Sorting logic
+      rankedData.sort((a, b) => {
+        const isYear = (str) => /\b\d{4}\b/.test(str); // Regex to match YYYY
+        const yearA = isYear(a.field1) ? parseInt(a.field1) : isYear(a.field2) ? parseInt(a.field2) : null;
+        const yearB = isYear(b.field1) ? parseInt(b.field1) : isYear(b.field2) ? parseInt(b.field2) : null;
+  
+        if (yearA && yearB) {
+          return yearB - yearA; 
+        } else if (yearA) {
+          return -1; 
+        } else if (yearB) {
+          return 1; 
+        } else {
+          return 0; 
+        }
+      });
+  
       setFieldData(rankedData);
   
     } catch (error) {
@@ -129,6 +147,7 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
     }
     setLoading(false);
   }
+  
 
   useEffect(() => {
     setLoading(true);
