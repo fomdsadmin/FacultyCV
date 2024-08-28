@@ -15,31 +15,28 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
     setFetchingData(true);
     setInitialRender(false);
     try {
-      // Switch to first name and last name
       const retrievedData = await getPatentMatches(user.first_name, user.last_name);
       console.log(retrievedData);
   
-      const allDataDetails = []; // Initialize an array to accumulate data_details
-      const uniqueDataDetails = new Set(); // Initialize a set to track unique entries
+      const allDataDetails = [];
+      const uniqueDataDetails = new Set();
   
       for (const dataObject of retrievedData) {
-        const { data_details } = dataObject; // Extract the data_details property
+        const { data_details } = dataObject;
         const data_details_json = JSON.parse(data_details);
   
-        // Create a unique key based on first_name, last_name, publication_number
         const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.publication_date}`;
   
-        // Check if the unique key is already in the set
         if (!uniqueDataDetails.has(uniqueKey)) {
-          uniqueDataDetails.add(uniqueKey); // Add the unique key to the set
-          allDataDetails.push(data_details_json); // Accumulate data_details
+          uniqueDataDetails.add(uniqueKey);
+          allDataDetails.push(data_details_json);
         }
       }
 
       console.log('allDataDetails', allDataDetails);
   
-      setAllPatentsData(allDataDetails); // Set the state once after the loop
-      setSelectedPatentsData(allDataDetails); // Set the selected data to all data
+      setAllPatentsData(allDataDetails);
+      setSelectedPatentsData(allDataDetails);
     } catch (error) {
       console.error('Error fetching patents data:', error);
     }
@@ -81,7 +78,7 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
           <div className='text-center'>
             The data is fetched from the European Patent Office, which contains both published patent applications and published patents from not just European countries but also other major intellectual property offices.
           </div>
-          <button type="button" className="btn btn-secondary mt-5" onClick={() => fetchPatentsData()}>
+          <button type="button" className="btn btn-secondary mt-5 text-white" onClick={fetchPatentsData}>
             Fetch Patents Data
           </button>
         </div>
@@ -93,26 +90,28 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
             </div>
           </div>
         ) : (
-          <div className='flex items-center justify-center w-full mt-5 mb-5'>
-            <div className="block text-m mb-1 mt-6 text-zinc-600">
+          <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
+            <div className="block text-m mt-6 text-zinc-600">
               {allPatentsData.length === 0 ? (
                 "No data found"
               ) : (
                 <>
-                  <button
-                    type="button"
-                    className="btn btn-secondary mb-4"
-                    onClick={addPatentsData}
-                    disabled={addingData}
-                  >
-                    {addingData ? "Adding patents data..." : "Add Patents Data"}
-                  </button>
                   {allPatentsData.map((patentData, index) => (
                     <PatentsEntry key={index} patentData={patentData} onSelect={handleSelect} />
                   ))}
                 </>
               )}
             </div>
+            {allPatentsData.length > 0 && (
+              <button
+                type="button"
+                className="btn btn-secondary mb-4 mt-4 text-white"
+                onClick={addPatentsData}
+                disabled={addingData}
+              >
+                {addingData ? "Adding patents data..." : "Add Patents Data"}
+              </button>
+            )}
           </div>
         )
       )}

@@ -83,7 +83,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
             <div className='text-sm'>3. Social Sciences and Humanities Research Council (SSHRC)</div>
             <div className='text-sm'>4. Canada Foundation for Innovation (CFI)</div>
           </div>
-          <button type="button" className="btn btn-secondary mt-5" onClick={() => fetchSecureFundingData()}>
+          <button type="button" className="btn btn-secondary mt-5 text-white" onClick={() => fetchSecureFundingData()}>
             Fetch Secure Funding Data
           </button>
         </div>      
@@ -95,27 +95,30 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
             </div>
           </div>
         ) : (
-          <div className='flex items-center justify-center w-full mt-5 mb-5'>
-            <div className="block text-m mb-1 mt-6 text-zinc-600">
+          <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
+            <div className="block text-m mt-6 text-zinc-600">
               {allSecureFundingData.length === 0 ? (
                 "No data found"
               ) : (
                 <>
-                  <button
-                    type="button"
-                    className="btn btn-secondary mb-4"
-                    onClick={addSecureFundingData}
-                    disabled={addingData}
-                  >
-                    {addingData ? "Adding secure funding data..." : "Add Secure Funding Data"}
-                  </button>
                   {allSecureFundingData.map((secureFundingData, index) => (
                     <SecureFundingEntry key={index} secureFundingData={secureFundingData} onSelect={handleSelect} />
                   ))}
                 </>
               )}
             </div>
+            {allSecureFundingData.length > 0 && (
+              <button
+                type="button"
+                className="btn btn-secondary mb-4 mt-4 text-white"
+                onClick={addSecureFundingData}
+                disabled={addingData}
+              >
+                {addingData ? "Adding secure funding data..." : "Add Secure Funding Data"}
+              </button>
+            )}
           </div>
+
         )
       )}
     </dialog>
