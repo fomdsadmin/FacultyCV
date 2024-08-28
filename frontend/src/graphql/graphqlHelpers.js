@@ -11,7 +11,7 @@ import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUs
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
     updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
     linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation,
-    addToUserGroupMutation
+    addToUserGroupMutation, removeFromUserGroupMutation
     } from './mutations';
 
 const runGraphql = async (query) => {
@@ -414,6 +414,15 @@ export const getNumberOfGeneratedCVs = async () => {
 export const addToUserGroup = async (userName, userGroup) => {
     const results = await runGraphql(addToUserGroupMutation(userName, userGroup));
     return results['data']['addToUserGroup'];
+}
+
+/**
+ * Function to remove user from user group
+ *
+ */
+export const removeFromUserGroup = async (userName, userGroup) => {
+    const results = await runGraphql(removeFromUserGroupMutation(userName, userGroup));
+    return results['data']['removeFromUserGroup'];
 }
 
 /**

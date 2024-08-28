@@ -22,7 +22,8 @@ const DepartmentAdminHomePage = ({ userInfo, getCognitoUser, department }) => {
     setLoading(true);
     try {
         const users = await getAllUsers();
-        const filteredUsers = users.filter(user => user.email !== userInfo.email && (user.primary_department === department || user.secondary_department === department));
+        console.log(users);
+        const filteredUsers = users.filter(user => user.email !== userInfo.email && (user.primary_department === department || user.secondary_department === department || user.role === `Admin-${department}`));
         console.log(filteredUsers);
         setUsers(filteredUsers);
     } catch (error) {

@@ -2,19 +2,31 @@ import React, { useState, useEffect } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { updateUser } from '../graphql/graphqlHelpers';
-import { addUserConnection, getUser, getAllUniversityInfo } from '../graphql/graphqlHelpers';
+import { addToUserGroup, removeFromUserGroup, getAllUniversityInfo } from '../graphql/graphqlHelpers';
 
 const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }) => {
   const [changingRole, setChangingRole] = useState(false);
   const [confirmChange, setConfirmChange] = useState(false);
-  const [newRole, setNewRole] = useState(userInfo.role);
-  const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
+  const [newRole, setNewRole] = useState(
+    userInfo.role.startsWith('Admin-') ? 'Admin-' : userInfo.role
+  );
+  const [selectedDepartment, setSelectedDepartment] = useState(
+    userInfo.role.startsWith('Admin-') ? userInfo.role.slice(6) : ''
+  );
+  const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(
+    userInfo.role.startsWith('Admin-') ? true : false
+  );
   const [departments, setDepartments] = useState([]);
 
   useEffect(() => {
     fetchUniversityInfo();
   }, []);
+
+  useEffect(() => {
+    if (isDepartmentAdmin) {
+      handleRoleChange({ target: { value: 'Admin-' } });
+    }
+  }, [selectedDepartment]);
 
   const fetchUniversityInfo = async () => {
     getAllUniversityInfo().then(result => {
@@ -47,46 +59,80 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
   const handleDepartmentInputChange = (event) => {
     const departmentName = event.target.value;
     setSelectedDepartment(departmentName);
-    setNewRole(`Admin-${departmentName}`);
   };
 
   async function changeRole() {
-    console.log(newRole);
-    // setChangingRole(true);
-    // try {
-    //   const updatedUser = await updateUser(
-    //     userInfo.user_id,
-    //     userInfo.first_name,
-    //     userInfo.last_name,
-    //     userInfo.preferred_name,
-    //     userInfo.email,
-    //     newRole,
-    //     userInfo.bio,
-    //     userInfo.rank,
-    //     userInfo.primary_department,
-    //     userInfo.secondary_department,
-    //     userInfo.primary_faculty,
-    //     userInfo.secondary_faculty,
-    //     userInfo.campus,
-    //     userInfo.keywords,
-    //     userInfo.institution_user_id,
-    //     userInfo.scopus_id,
-    //     userInfo.orcid_id
-    //   );
-    //   console.log('Updated user:', updatedUser);
-    //   fetchAllUsers();
-    //   handleBack();
-    // } catch {
-    //   console.error('Error changing role');
-    // }
-    // setChangingRole(false);
+    const updatedRole = newRole === 'Admin-' ? `${newRole}${selectedDepartment}` : newRole;
+    console.log(updatedRole);
+    setChangingRole(true);
+
+    if (updatedRole.startsWith('Admin-') && userInfo.role.startsWith('Admin-')) {
+
+    } else {
+      //put user in user group
+      try {
+        if (updatedRole.startsWith('Admin-')) {
+          const result = await addToUserGroup(userInfo.email, 'DepartmentAdmin');
+          console.log('Adding user to user group', result);
+        } else {
+          const result = await addToUserGroup(userInfo.email, updatedRole);
+          console.log('Adding user to user group', result);
+        }
+      } catch (error) {
+        console.log('Error adding user to group:', error);
+        return;
+      }
+
+      //remove user from user group
+      try {
+        if (userInfo.role.startsWith('Admin-')) {
+          const result = await removeFromUserGroup(userInfo.email, 'DepartmentAdmin');
+          console.log('Adding user to user group', result);
+        } else {
+          const result = await removeFromUserGroup(userInfo.email, userInfo.role);
+          console.log('Adding user to user group', result);
+        }
+      } catch (error) {
+        console.log('Error adding user to group:', error);
+        return;
+      }
+    }
+
+    try {
+      const updatedUser = await updateUser(
+        userInfo.user_id,
+        userInfo.first_name,
+        userInfo.last_name,
+        userInfo.preferred_name,
+        userInfo.email,
+        updatedRole,
+        userInfo.bio,
+        userInfo.rank,
+        userInfo.primary_department,
+        userInfo.secondary_department,
+        userInfo.primary_faculty,
+        userInfo.secondary_faculty,
+        userInfo.campus,
+        userInfo.keywords,
+        userInfo.institution_user_id,
+        userInfo.scopus_id,
+        userInfo.orcid_id
+      );
+      console.log('Updated user:', updatedUser);
+      fetchAllUsers();
+      handleBack();
+    } catch {
+      console.error('Error changing role');
+    }
+    setChangingRole(false);
   }
 
   const handleRoleChange = (event) => {
     const selectedRole = event.target.value;
     setNewRole(selectedRole);
-    setIsDepartmentAdmin(selectedRole === 'Department Admin');
-    if (selectedRole !== userInfo.role) {
+    setIsDepartmentAdmin(selectedRole === 'Admin-');
+    const updatedRole = selectedRole === 'Admin-' ? `${selectedRole}${selectedDepartment}` : selectedRole;
+    if (updatedRole !== userInfo.role || (updatedRole === 'Admin-' && selectedDepartment !== userInfo.role.slice(6))) {
       setConfirmChange(true);
     } else {
       setConfirmChange(false);
@@ -113,7 +159,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
           >
             <option value="Faculty">Faculty</option>
             <option value="Assistant">Assistant</option>
-            <option value="Department Admin">Department Admin</option>
+            <option value="Admin-">Department Admin</option>
             <option value="Admin">Admin</option>
           </select>
 
@@ -136,11 +182,15 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
           {confirmChange && (
             <div>
                 <p className='mt-10'>
-                  {newRole === 'Department Admin' || newRole === 'Admin-' 
-                    ? 'Please select a department above'
-                    : `Are you sure you want to change the role of this user to ${newRole}?`}
-                </p>              
-                <button type="button" className="text-white btn btn-warning mt-10 min-h-0 h-8 leading-tight" onClick={changeRole} disabled={changingRole || newRole==='Department Admin' || newRole==='Admin-'}>
+                  {newRole === 'Admin-' && selectedDepartment === '' ? (
+                    'Please select a department above'
+                  ) : newRole === 'Admin-' && selectedDepartment !== '' ? (
+                    `Are you sure you want to change the role of this user to Admin-${selectedDepartment}?`
+                  ) : (
+                    `Are you sure you want to change the role of this user to ${newRole}?`
+                  )}
+                </p>
+                <button type="button" className="text-white btn btn-warning mt-10 min-h-0 h-8 leading-tight" onClick={changeRole} disabled={changingRole || (newRole === 'Admin-' && selectedDepartment === '')}>
                 {changingRole ? 'Changing role...' : 'Confirm'}
               </button>
             </div>

@@ -7,6 +7,15 @@ export const addToUserGroupMutation = (userName, userGroup) => `
     }
 `;
 
+export const removeFromUserGroupMutation = (userName, userGroup) => `
+    mutation RemoveFromUserGroup {
+        removeFromUserGroup(
+            userName: "${userName}",
+            userGroup: "${userGroup}"
+        )
+    }
+`;
+
 export const addSectionMutation = (title, description, data_type, attributes) => `
     mutation AddSection {
         addSection(

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { updateUser } from '../graphql/graphqlHelpers';
-import { addUserConnection, getUser, getAllUniversityInfo } from '../graphql/graphqlHelpers';
+import { addToUserGroup, removeFromUserGroup } from '../graphql/graphqlHelpers';
 
 const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, department }) => {
   const [changingRole, setChangingRole] = useState(false);
@@ -11,6 +11,35 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
 
   async function changeRole() {
     setChangingRole(true);
+
+    //put user in user group
+    try {
+      if (newRole.startsWith('Admin-')) {
+        const result = await addToUserGroup(userInfo.email, 'DepartmentAdmin');
+        console.log('Adding user to user group', result);
+      } else {
+        const result = await addToUserGroup(userInfo.email, newRole);
+        console.log('Adding user to user group', result);
+      }
+    } catch (error) {
+      console.log('Error adding user to group:', error);
+      return;
+    }
+
+    //remove user from user group
+    try {
+      if (userInfo.role.startsWith('Admin-')) {
+        const result = await removeFromUserGroup(userInfo.email, 'DepartmentAdmin');
+        console.log('Adding user to user group', result);
+      } else {
+        const result = await removeFromUserGroup(userInfo.email, userInfo.role);
+        console.log('Adding user to user group', result);
+      }
+    } catch (error) {
+      console.log('Error adding user to group:', error);
+      return;
+    }
+
     try {
       const updatedUser = await updateUser(
         userInfo.user_id,
