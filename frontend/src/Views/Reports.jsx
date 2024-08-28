@@ -66,16 +66,32 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 
     setBuildingLatex(true);
     let latex = await buildLatex(filteredSections);
+    setLatex(latex);
     const key = `${selectedTemplate.template_id}/resume.tex`;
     // Upload .tex to S3
     await uploadLatexToS3(latex, key);
     // Wait till a url to the latest PDF is available
     const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
-    setLatex(latex);
+ 
     setBuildingLatex(false);
     setLoading(false);
     setDownloadUrl(url);
   }
+
+  const downloadLatexFile = () => {
+    try {
+        const blob = new Blob([latex], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'test.tex';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error('Error downloading LaTeX file:', error);
+    }
+};
+
 
   const escapeLatex = (text) => {
     if (typeof text !== 'string') {
@@ -284,29 +300,36 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   
           latex += `\\end{longtable}\n\n`;
   
-        // PUBLICATIONS //
-        } else if (section.title.toLowerCase() === 'publications') {
-          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
-  
-          let headers = ['Title', 'Year Published', 'Journal', 'Author Names'];
-          const columns = calculateColumnWidths(headers);
-  
-          latex += `\\begin{longtable}{| ${columns} |}\n`;
-          latex += `\\hline\n`;
-          latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
-  
-          for (const item of parsedData) {
-            const row = headers
-              .map((header) => {
-                const key = header.replace(/\s+/g, '_').toLowerCase();
-                const value = item.data_details[key];
-                return escapeLatex(value !== undefined ? value : '');
-              })
-              .join(' & ');
-            latex += `${row} \\\\ \\hline\n`;
-          }
-  
-          latex += `\\end{longtable}\n\n`;
+          // PUBLICATIONS //
+          } else if (section.title.toLowerCase() === 'publications') {
+            latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+
+            parsedData.forEach((item, index) => {
+                const { title, year_published, journal, author_names, doi } = item.data_details;
+
+                // Limit the number of authors to 6 and add "et al." if there are more
+                let authors = author_names.length > 6 
+                    ? `${escapeLatex(author_names.slice(0, 6).join(', '))} et al.`
+                    : escapeLatex(author_names.join(', '));
+
+                // Construct the citation string
+                let citation = `${index + 1}. ${authors} (${escapeLatex(year_published)}). ${escapeLatex(title)}. \\textit{${escapeLatex(journal)}}.`;
+
+                // Add DOI if it exists
+                if (doi) {
+                    citation += ` DOI: \\href{https://doi.org/${escapeLatex(doi)}}{${escapeLatex(doi)}}.`;
+                }
+
+                latex += citation;
+
+                // Add a line break between entries
+                if (index < parsedData.length - 1) {
+                    latex += ` \\\\\n`;
+                    latex += ` \\\\\n`;
+                } else {
+                    latex += `\n`;
+                }
+            });
   
         // OTHER //
         } else {
@@ -402,6 +425,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           <div className="flex-1 min-w-80 !overflow-auto !h-full custom-scrollbar mr-4">
             <h1 className="text-4xl ml-4 mt-4 font-bold my-3 text-zinc-600">Reports</h1>
             <h2 className="text-2xl ml-4 font-bold my-3 text-zinc-600">Select a Template</h2>
+            {/* <button className='btn btn-primary' onClick={downloadLatexFile}>Download LaTeX</button> */}
 
             <div className="w-full flex flex-col">
    

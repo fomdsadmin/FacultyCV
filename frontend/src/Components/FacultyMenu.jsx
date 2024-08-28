@@ -14,7 +14,6 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showText, setShowText] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [prevPath, setPrevPath] = useState(location.pathname);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -31,31 +30,19 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
 
   useEffect(() => {
     let timer;
-    const isPageSwitch = location.pathname !== prevPath;
 
-    if (!isCollapsed && !isPageSwitch) {
+    if (!isCollapsed) {
       timer = setTimeout(() => setShowText(true), 150);
-    }
-
-    if (!isCollapsed && isPageSwitch) {
-      setShowText(true);
-    }
-
-    if (isCollapsed) {
+    } else {
       setShowText(false);
     }
 
-    if (isPageSwitch) {
-      setPrevPath(location.pathname);
-      setShowText(false); 
-    }
-
     return () => clearTimeout(timer); 
-  }, [isCollapsed, location.pathname, prevPath]);
+  }, [isCollapsed]);
 
   return (
     <div
-      className={`transition-all duration-150 ease-in-out py-2 border-r-2 border-neutral max-h-screen ${isCollapsed ? 'w-18' : 'w-60'}`}
+      className={`relative transition-all duration-150 ease-in-out py-2 border-r-2 border-neutral max-h-screen ${isCollapsed ? 'w-18' : 'w-60'}`}
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
     >
@@ -90,19 +77,20 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/archive' ? 'font-bold' : ''}`}>Archive</p>}
           </Link>
         </li>
-        {!isCollapsed && showText && (
-          <li className="mt-auto">
-            <div className="relative">
-              <button 
-                className="fixed bottom-3 m-0 text-white btn btn-warning py-1 px-4 w-44 mx-auto min-h-0 h-8 leading-tight" 
-                onClick={handleSignOut} 
-                disabled={isSigningOut}>
-                {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-              </button>
-            </div>
-          </li>
-        )}
       </ul>
+
+      {/* Sign Out Button */}
+      <div className="absolute bottom-3 left-0 w-full flex justify-center">
+        {!isCollapsed && showText && (
+          <button 
+            className="text-white btn btn-warning py-1 px-4 w-44 min-h-0 h-8 leading-tight focus:outline-none hover:bg-warning-dark"
+            onClick={handleSignOut} 
+            disabled={isSigningOut}
+          >
+            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+          </button>
+        )}
+      </div>
     </div>
   );
 };
