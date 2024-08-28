@@ -217,7 +217,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       const columnWidth = (contentWidth / numColumns).toFixed(2);
       return headers.map(() => `p{${columnWidth}cm}`).join(' | ');
     };
-  
     for (const section of sections) {
       try {
         console.log(`Fetching data for section: ${section.title}`);
