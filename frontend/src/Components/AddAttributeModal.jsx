@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaTrash } from 'react-icons/fa';
 import { updateSection } from '../graphql/graphqlHelpers';
 
 const AddAttributeModal = ({ setIsAddAttributeModalOpen, onBack, getDataSections, section }) => {

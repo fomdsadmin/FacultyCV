@@ -23,6 +23,8 @@ const DepartmentAdminArchivedSections = ({ getCognitoUser, userInfo }) => {
         attributes: JSON.parse(section.attributes),
       }));
 
+      parsedSections.sort((a, b) => a.title.localeCompare(b.title));
+
       console.log('Sections:', parsedSections);
 
       setDataSections(parsedSections);
