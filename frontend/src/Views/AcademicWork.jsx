@@ -119,7 +119,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                   <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack}></SecureFundingSection>
                 }
                 {activeSection.title === 'Courses Taught' && 
-                  <CoursesTaughtSection user={userInfo} section={activeSection} onBack={handleBack}></CoursesTaughtSection>
+                  <CoursesTaughtSection userInfo={userInfo} section={activeSection} onBack={handleBack}></CoursesTaughtSection>
                 } 
                 {activeSection.title !== 'Publications' && activeSection.title !== 'Patents' && activeSection.title !== 'Courses Taught' && activeSection.title !== 'Secure Funding' &&
                   <GenericSection user={userInfo} section={activeSection} onBack={handleBack}></GenericSection>

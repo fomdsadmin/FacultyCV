@@ -116,6 +116,13 @@ type SecureFunding {
   data_details: AWSJSON! #JSON
 }
 
+type RiseData {
+  rise_data_id: String!
+  first_name: String!
+  last_name: String!
+  data_details: AWSJSON! #JSON
+}
+
 type Patent {
   patent_id: String!
   first_name: String!
@@ -138,6 +145,7 @@ type Query {
     getTeachingDataMatches(institution_user_id: String!): [TeachingData]
     getPublicationMatches(scopus_id: String!, page_number: Int!, results_per_page: Int!): PublicationMatches
     getSecureFundingMatches(first_name: String!, last_name: String!): [SecureFunding]
+    getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
     getAllUsers: [ User ]
     getPatentMatches(first_name: String!, last_name: String!): [Patent]
     getPresignedUrl(jwt: String!, key: String!, type: String): String

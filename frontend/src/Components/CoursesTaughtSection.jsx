@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
 import EntryModal from './EntryModal';
 import { FaArrowLeft } from 'react-icons/fa';
-import { getUserCVData, updateUserCVDataArchive, getTeachingDataMatches, addUserCVData } from '../graphql/graphqlHelpers';
+import { getUserCVData, updateUserCVDataArchive, getTeachingDataMatches, addUserCVData, getUserInstitutionId } from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
 
 const generateEmptyEntry = (attributes) => {
@@ -14,7 +14,8 @@ const generateEmptyEntry = (attributes) => {
   return emptyEntry;
 };
 
-const CoursesTaughtSection = ({ user, section, onBack }) => {
+const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
+  const [user, setUser] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
 
   const [fieldData, setFieldData] = useState([]);
@@ -73,28 +74,38 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
   async function fetchCourseData() {
     setRetrievingData(true);
     try {
-      const retrievedData = await getTeachingDataMatches(user.institution_user_id);
-      console.log(retrievedData);
+        console.log(user);
+        const retrievedData = await getTeachingDataMatches(user.user_institution_id);
+        console.log(retrievedData);
 
-      for (const dataObject of retrievedData) {
-        const { data_details } = dataObject; // Extract the data_details property
+        for (const dataObject of retrievedData) {
+            let { data_details } = dataObject; // Extract the data_details property
+            console.log('data details', data_details);
 
-        // Handle adding new entry using data_details
-        try {
-          const data_details_json = data_details.replace(/"/g, '\\"'); // Escape special characters
-          console.log('Adding new entry:', `"${data_details_json}"`);
-          const result = await addUserCVData(user.user_id, section.data_section_id, `"${data_details_json}"`);
-          console.log(result);
-        } catch (error) {
-          console.error('Error adding new entry:', error);
+            // Parse the data_details string to a JSON object
+            let dataDetailsObj = JSON.parse(data_details);
+
+            // Update the year based on the session
+            if (dataDetailsObj.session === 'Winter') {
+                dataDetailsObj.year = `January, ${dataDetailsObj.year}`;
+            } else if (dataDetailsObj.session === 'Fall') {
+                dataDetailsObj.year = `September, ${dataDetailsObj.year}`;
+            } else if (dataDetailsObj.session === 'Summer') {
+                dataDetailsObj.year = `May, ${dataDetailsObj.year}`;
+            }
+
+            // Convert the updated JSON object back to a string
+            data_details = JSON.stringify(dataDetailsObj).replace(/"/g, '\\"'); // Escape special characters
+            console.log('Adding new entry:', `"${data_details}"`);
+            const result = await addUserCVData(user.user_id, section.data_section_id, `"${data_details}"`);
+            console.log(result);
         }
-      }
     } catch (error) {
-      console.error('Error fetching course data:', error);
+        console.error('Error fetching course data:', error);
     }
     fetchData();
     setRetrievingData(false);
-  }
+}
   
   async function fetchData() {
     try {
@@ -148,11 +159,22 @@ const CoursesTaughtSection = ({ user, section, onBack }) => {
     setLoading(false);
   }
   
+  async function fetchUser() {
+    try {
+      const result = await getUserInstitutionId(userInfo.email);
+      console.log(result);
+      setUser(result);
+    }
+    catch (error) {
+      console.error('Error fetching user:', error);
+    }
+    fetchData();
+  }
 
   useEffect(() => {
     setLoading(true);
     setFieldData([]);
-    fetchData();
+    fetchUser();
   }, [searchTerm, section.data_section_id]);
 
   const handleBack = () => {

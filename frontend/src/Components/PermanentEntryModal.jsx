@@ -3,7 +3,7 @@ import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { addUserCVData, updateUserCVData } from '../graphql/graphqlHelpers';
 
-const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_data_id, fetchData }) => {
+const PermanentEntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_data_id, fetchData }) => {
     const [formData, setFormData] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -142,6 +142,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
                                         name="startDateMonth"
                                         value={formData.startDateMonth || ''}
                                         onChange={handleChange}
+                                        disabled={!isNew}
                                         className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                                     >
                                         <option value="">Month</option>
@@ -153,6 +154,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
                                         name="startDateYear"
                                         value={formData.startDateYear || ''}
                                         onChange={handleChange}
+                                        disabled={!isNew}
                                         className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                                     >
                                         <option value="">Year</option>
@@ -168,7 +170,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
                                         value={(formData.endDateYear === 'Current' || formData.endDateYear === 'None') ? formData.endDateYear : (formData.endDateMonth || '')}
                                         onChange={handleEndDateChange}
                                         className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-                                        disabled={formData.endDateYear === 'Current' || formData.endDateYear === 'None'}
+                                        disabled={!isNew || formData.endDateYear === 'Current' || formData.endDateYear === 'None'}
 
                                     >
                                         <option value="Current">Current</option>
@@ -183,7 +185,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
                                         value={(formData.endDateMonth === 'Current' || formData.endDateMonth === 'None') ? formData.endDateMonth : (formData.endDateYear || '')}
                                         onChange={handleChange}
                                         className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-                                        disabled={formData.endDateMonth === 'Current' || formData.endDateMonth === 'None'}
+                                        disabled={!isNew || formData.endDateMonth === 'Current' || formData.endDateMonth === 'None'}
                                     >
                                         <option value="Current">Current</option>
                                         <option value="None">None</option>
@@ -201,6 +203,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
                                     name={key}
                                     value={formData[key] || ''}
                                     onChange={handleChange}
+                                    disabled={!isNew}
                                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                                 >
                                     <option value="">Select Year</option>
@@ -217,6 +220,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
                                     name={key}
                                     value={formData[key] || ''}
                                     onChange={handleChange}
+                                    disabled={!isNew}
                                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                                 />
                             </div>
@@ -234,4 +238,4 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
     );
 }
 
-export default EntryModal;
+export default PermanentEntryModal;

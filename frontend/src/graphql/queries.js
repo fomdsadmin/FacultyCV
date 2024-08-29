@@ -17,6 +17,32 @@ export const getUserQuery = (email) => `
             secondary_faculty
             campus
             keywords
+            scopus_id
+            orcid_id
+            joined_timestamp
+        }
+    }
+`;
+
+export const getUserInstitutionIdQuery = (email) => `
+    query GetUser {
+        getUser (
+            email: "${email}"
+        ) {
+            user_id
+            first_name
+            last_name
+            preferred_name
+            email
+            role
+            bio
+            rank
+            primary_department
+            secondary_department
+            primary_faculty
+            secondary_faculty
+            campus
+            keywords
             institution_user_id
             scopus_id
             orcid_id
@@ -267,6 +293,20 @@ export const getSecureFundingMatchesQuery = (first_name, last_name) => `
             last_name: "${last_name}"
         ) {
             secure_funding_id
+            first_name
+            last_name
+            data_details
+        }
+    }
+`;
+
+export const getRiseDataMatchesQuery = (first_name, last_name) => `
+    query GetRiseDataMatches {
+        getRiseDataMatches (
+            first_name: "${first_name}",
+            last_name: "${last_name}"
+        ) {
+            rise_data_id
             first_name
             last_name
             data_details

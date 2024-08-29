@@ -237,10 +237,6 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
               <label className="block text-sm mb-1">Orcid ID</label>
               <input id="orcidId" name="orcidId" type="text" value={userInfo.orcid_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" readOnly onChange={(e) => setUserInfo({ ...userInfo, orcid_id: e.target.value })}/>
             </div>
-            {/* <div>
-              <label className="block text-sm mb-1">Institution ID</label>
-              <input id="institutionUserId" name="institutionUserId" type="text" value={userInfo.institution_user_id || ''} className="w-full rounded text-sm px-3 py-2 border border-gray-300" onChange={(e) => setUserInfo({ ...userInfo, institution_user_id: e.target.value })}/>
-            </div> */}
           </div>
             <button type="submit" className="btn btn-success text-white py-1 px-2 float-right w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : 'Save'}

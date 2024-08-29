@@ -3,8 +3,8 @@ import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getU
     getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, 
     getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, 
     getAllTemplatesQuery, getTeachingDataMatchesQuery, getPublicationMatchesQuery, 
-    getSecureFundingMatchesQuery, getPatentMatchesQuery,
-    getPresignedUrlQuery,
+    getSecureFundingMatchesQuery, getRiseDataMatchesQuery, getPatentMatchesQuery,
+    getPresignedUrlQuery, getUserInstitutionIdQuery,
     getNumberOfGeneratedCVsQuery} from './queries';
 import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
@@ -110,13 +110,42 @@ export const getArchivedSections = async () => {
  *      secondary_faculty
  *      campus
  *      keywords
- *      institution_user_id
  *      scopus_id
  *      orcid_id
  *   }
  */
 export const getUser = async (email) => {
     const results = await runGraphql(getUserQuery(email));
+    return results['data']['getUser'];
+}
+
+/**
+ * Function to get user data with institution_user_id
+ * Arguments:
+ * email
+ * Return value:
+ * {
+ *      user_id
+ *      first_name
+ *      last_name
+ *      preferred_name
+ *      email
+ *      role
+ *      bio
+ *      rank
+ *      primary_department
+ *      secondary_department
+ *      primary_faculty
+ *      secondary_faculty
+ *      institution_user_id
+ *      campus
+ *      keywords
+ *      scopus_id
+ *      orcid_id
+ *   }
+ */
+export const getUserInstitutionId = async (email) => {
+    const results = await runGraphql(getUserInstitutionIdQuery(email));
     return results['data']['getUser'];
 }
 
@@ -360,6 +389,26 @@ export const getPublicationMatches = async (scopus_id, page_number, results_per_
 export const getSecureFundingMatches = async (first_name, last_name) => {
     const results = await runGraphql(getSecureFundingMatchesQuery(first_name, last_name));
     return results['data']['getSecureFundingMatches'];
+}
+
+/**
+ * Function to get rise data matches from rise data
+ * Arguments:
+ * first_name,
+ * last_name
+ * Return value:
+ * [
+ *  {
+ *      rise_data_id
+ *      first_name,
+ *      last_name,
+ *      data_details: JSON string
+ *  }, ...
+ * ]
+ */
+export const getRiseDataMatches = async (first_name, last_name) => {
+    const results = await runGraphql(getRiseDataMatchesQuery(first_name, last_name));
+    return results['data']['getRiseDataMatches'];
 }
 
 /**

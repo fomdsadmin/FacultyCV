@@ -617,6 +617,15 @@ export class ApiStack extends cdk.Stack {
     );
     createResolver(
       this.api,
+      "getRiseDataMatches",
+      ["getRiseDataMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
       "getPatentMatches",
       ["getPatentMatches"],
       "Query",

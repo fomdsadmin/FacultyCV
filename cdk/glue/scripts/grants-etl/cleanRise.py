@@ -74,13 +74,6 @@ write the final csv file to a destination s3 bucket location.
 :param key_clean: the key(path) to a clean csv file after transformation
 :return: none
 """
-def split_name(full_name):
-    # Split the full name by the comma to separate last name and first name
-    last_name, first_name = full_name.split(',', 1)
-    # Strip any leading or trailing whitespace from the names
-    last_name = last_name.strip()
-    first_name = first_name.strip()
-    return pd.Series([first_name, last_name], index=['First Name', 'Last Name'])
 
 def cleanRise(bucket, key_raw, key_clean):
 
@@ -89,8 +82,10 @@ def cleanRise(bucket, key_raw, key_clean):
     # read raw data into a pandas DataFrame
     df = pd.read_csv(raw_data, skiprows=0, header=0)
 
-    # split Name into fname and lname
-    df[['First Name', 'Last Name']] = df['Researcher Name'].apply(split_name)
+    # Split "Researcher Name" into "First Name" and "Last Name"
+    first_name_last_name = df["Researcher Name"].str.split(",", expand=True)
+    df["First Name"] = first_name_last_name[1].str.strip()
+    df["Last Name"] = first_name_last_name[0].str.strip()
     
     # add Keywords column
     df["Keywords"] = np.nan
@@ -105,7 +100,9 @@ def cleanRise(bucket, key_raw, key_clean):
     df["Program"] = df["Program Name"]
 
     # Amount column
-    df["Amount"] = df["Award Amount"]
+    df["Award Amount"] = df["Award Amount"].str.replace(",", "")
+    df["Award Amount"] = df["Award Amount"].str.replace("$", "", regex=False)
+    df["Amount"] = pd.to_numeric(df["Award Amount"]).astype(int)
 
     # Title column
     df["Title"] = df["Project Title"]
@@ -123,8 +120,7 @@ def cleanRise(bucket, key_raw, key_clean):
         "Sponsor Type", "Sponsor Name", "Government", "Tri-Council Code", 
         "Program Name", "CFI BCKDF", "Faculty", "Researcher Home Faculty", 
         "FoM Department", "Researcher Home Department", "FoM Research Institute", 
-        "Institution Name", "FoM Research Centre Name"
-    ])
+        "Institution Name", "FoM Research Centre Name "])
 
     putToS3(df, bucket, key=key_clean)
 

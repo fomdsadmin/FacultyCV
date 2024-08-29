@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import GenericEntry from './GenericEntry';
-import EntryModal from './EntryModal';
+import PermanentEntry from './PermanentEntry';
+import PermanentEntryModal from './PermanentEntryModal';
 import { FaArrowLeft } from 'react-icons/fa';
 import SecureFundingModal from './SecureFundingModal';
 import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelpers';
@@ -179,7 +179,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
           <div>
             {fieldData.length > 0 ? (
             fieldData.map((entry, index) => (
-                <GenericEntry
+                <PermanentEntry
                 isArchived={false}
                 key={index}
                 onEdit={() => handleEdit(entry)}
@@ -194,7 +194,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
           </div>
 
           {isModalOpen && selectedEntry && !isNew && (
-            <EntryModal
+            <PermanentEntryModal
                 isNew={false}
                 user = {user}
                 section = {section}
@@ -207,7 +207,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
           )}
 
           {isModalOpen && selectedEntry && isNew && (
-            <EntryModal
+            <PermanentEntryModal
               isNew={true}
               user = {user}
               section = {section}

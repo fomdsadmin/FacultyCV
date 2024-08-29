@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import SecureFundingEntry from './SecureFundingEntry';
-import { getSecureFundingMatches, addUserCVData } from '../graphql/graphqlHelpers';
+import { getSecureFundingMatches, getRiseDataMatches, addUserCVData } from '../graphql/graphqlHelpers';
 
 const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
   const [allSecureFundingData, setAllSecureFundingData] = useState([]);
@@ -48,7 +48,29 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     setFetchingData(true);
     setInitialRender(false);
     try {
-      
+      // Switch to first name and last name
+      const retrievedData = await getRiseDataMatches('Ben', user.last_name);
+      console.log(retrievedData);
+  
+      const allDataDetails = []; // Initialize an array to accumulate data_details
+      const uniqueDataDetails = new Set(); // Initialize a set to track unique entries
+  
+      for (const dataObject of retrievedData) {
+        const { data_details } = dataObject; // Extract the data_details property
+        const data_details_json = JSON.parse(data_details);
+  
+        // Create a unique key based on first_name, last_name, title, and amount
+        const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}`;
+  
+        // Check if the unique key is already in the set
+        if (!uniqueDataDetails.has(uniqueKey)) {
+          uniqueDataDetails.add(uniqueKey); // Add the unique key to the set
+          allDataDetails.push(data_details_json); // Accumulate data_details
+        }
+      }
+  
+      setAllSecureFundingData(allDataDetails); // Set the state once after the loop
+      setSelectedSecureFundingData(allDataDetails); // Set the selected data to all data
     } catch (error) {
       console.error('Error fetching secure funding data:', error);
     }
@@ -69,6 +91,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     setAddingData(true);
     for (const data of selectedSecureFundingData) {
       try {
+        data.dates = `January, ${data.dates.replace(/-/g, '')}`;
         const dataJSON = JSON.stringify(data).replace(/"/g, '\\"');
         console.log('Adding new entry:', `"${dataJSON}"`);
         const result = await addUserCVData(user.user_id, section.data_section_id, `"${dataJSON}"`);
