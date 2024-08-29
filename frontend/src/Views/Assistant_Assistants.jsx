@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import PageContainer from './PageContainer.jsx';
 import AssistantMenu from '../Components/AssistantMenu.jsx';
 import Assistant_FacultyMenu from '../Components/Assistant_FacultyMenu.jsx';
 import AssociatedUser from '../Components/AssociatedUser.jsx';
 import { getUserConnections } from '../graphql/graphqlHelpers.js';
 import { FaSync } from 'react-icons/fa';
+import AssistnatPageContainer from '../Components/AssistantPageContainer.jsx';
 
 const Assistant_Assistants = ({assistantUserInfo, userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,7 +50,7 @@ const Assistant_Assistants = ({assistantUserInfo, userInfo, getCognitoUser }) =>
   return (
     <div>
       <AssistantMenu getCognitoUser={getCognitoUser} userName={assistantUserInfo.preferred_name || assistantUserInfo.first_name}></AssistantMenu>
-      <PageContainer>
+      <AssistnatPageContainer>
         <Assistant_FacultyMenu userInfo={userInfo} assistantUserInfo={assistantUserInfo} />
         <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
           <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Assistants</h1>
@@ -106,7 +106,7 @@ const Assistant_Assistants = ({assistantUserInfo, userInfo, getCognitoUser }) =>
               </div>
             )}
         </main>
-      </PageContainer>
+      </AssistnatPageContainer>
     </div>
     
   );

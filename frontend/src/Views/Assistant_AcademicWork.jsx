@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import PageContainer from './PageContainer.jsx';
+import AssistantPageContainer from '../Components/AssistantPageContainer.jsx';
 import AssistantMenu from '../Components/AssistantMenu.jsx';
 import Assistant_FacultyMenu from '../Components/Assistant_FacultyMenu.jsx';
 import WorkSection from '../Components/WorkSection.jsx';
@@ -69,7 +69,7 @@ const Assistant_AcademicWork = ({ getCognitoUser, userInfo, assistantUserInfo })
   return (
     <div>
       <AssistantMenu getCognitoUser={getCognitoUser} userName={assistantUserInfo.preferred_name || assistantUserInfo.first_name}></AssistantMenu>
-      <PageContainer>
+      <AssistantPageContainer>
         <Assistant_FacultyMenu userInfo={userInfo} assistantUserInfo={assistantUserInfo}></Assistant_FacultyMenu>
         <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
           {loading ? (
@@ -130,7 +130,7 @@ const Assistant_AcademicWork = ({ getCognitoUser, userInfo, assistantUserInfo })
             </>
           )}
         </main>
-      </PageContainer>
+      </AssistantPageContainer>
     </div>
     
   );    
