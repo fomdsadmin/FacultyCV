@@ -107,6 +107,7 @@ const NewSection = ({ onBack, getDataSections, sections }) => {
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">Attributes</label>
+          <p className="block text-xs font-medium text-gray-700 mb-2">(You can include a "dates" or "year" attribute)</p>
           {attributes.map((attribute, index) => (
             <div key={index} className="flex gap-4 mb-2 items-center">
               <input

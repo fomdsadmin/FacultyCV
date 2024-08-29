@@ -9,7 +9,8 @@ const DeleteSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }
   async function deleteSection() {
     setDeletingSection(true);
     try {
-      const result = await updateSection(section.data_section_id, true);
+      const attributesString = JSON.stringify(section.attributes).replace(/"/g, '\\"')
+      const result = await updateSection(section.data_section_id, true, `"${attributesString}"`);
       console.log('Data section archived:', result)
     } catch (error) {
       console.error('Error deleting section: ', error);

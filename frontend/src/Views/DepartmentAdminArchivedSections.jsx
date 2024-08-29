@@ -46,10 +46,11 @@ const DepartmentAdminArchivedSections = ({ getCognitoUser, userInfo }) => {
     return matchesSearch;
   });
 
-  const restoreSection = async (id) => {
+  const restoreSection = async (id, attributes) => {
     setLoading(true);
     try {
-      const result = await updateSection(id, false);
+      const attributesString = JSON.stringify(attributes).replace(/"/g, '\\"')
+      const result = await updateSection(id, false, `"${attributesString}"`);
       console.log('Data section restored:', result);
     } catch (error) {
       console.error('Error restoring section:', error);

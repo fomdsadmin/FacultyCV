@@ -6,7 +6,7 @@ const ArchiveSection = ({ section, restoreSection }) => {
 
     const handleClick = () => {
         setRestoring(true);
-        restoreSection(section.data_section_id);
+        restoreSection(section.data_section_id, section.attributes);
         setRestoring(false);
     }
 

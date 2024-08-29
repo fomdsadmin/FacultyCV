@@ -704,15 +704,16 @@ export const updateUser = async (user_id, first_name, last_name, preferred_name,
 }
 
 /**
- * Function to update data section - the archive status
+ * Function to update data section
  * Arguments:
  * data_section_id - ID of the data section
  * archive - Boolean
+ * attributes - JSON string
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateSection = async (data_section_id, archive) => {
-    const results = await runGraphql(updateSectionMutation(data_section_id, archive));
+export const updateSection = async (data_section_id, archive, attributes) => {
+    const results = await runGraphql(updateSectionMutation(data_section_id, archive, attributes));
     return results['data']['updateSection'];
 }
 

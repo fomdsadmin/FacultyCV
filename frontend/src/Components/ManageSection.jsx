@@ -2,9 +2,11 @@ import React from 'react';
 import { useState } from 'react';
 import { FaArrowLeft, FaTrash } from 'react-icons/fa';
 import DeleteSectionModal from './DeleteSectionModal';
+import AddAttributeModal from '../Components/AddAttributeModal.jsx';
 
 const ManageSection = ({ section, onBack, getDataSections }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddAttributeModalOpen, setIsAddAttributeModalOpen] = useState(false);
 
   const handleBack = () => {
     onBack();
@@ -12,6 +14,10 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
 
   const handleTrashClick = () => {
     setIsModalOpen(true);
+  };
+
+  const handleAddAttributeClick = () => {
+    setIsAddAttributeModalOpen(true);
   };
 
   const attributes = typeof section.attributes === 'string' ? JSON.parse(section.attributes) : section.attributes;
@@ -33,6 +39,7 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
       <div className='m-4 flex'>{section.description}</div>
 
       <div className='m-4'>
+        <button onClick={handleAddAttributeClick} className='btn btn-primary my-4 text-white'>Add Attribute</button>
         <h3 className="text-left text-xl font-semibold text-zinc-600">Attributes</h3>
         <ul className='list-disc list-inside text-zinc-600'>
           {Object.keys(attributes).map((key) => (
@@ -42,6 +49,9 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
       </div>
       {isModalOpen && (
         <DeleteSectionModal setIsModalOpen={setIsModalOpen} section={section} onBack={onBack} getDataSections={getDataSections}/>
+      )}
+      {isAddAttributeModalOpen && (
+        <AddAttributeModal setIsAddAttributeModalOpen={setIsAddAttributeModalOpen} onBack={onBack} section={section} getDataSections={getDataSections}/>
       )}
     </div>
   );

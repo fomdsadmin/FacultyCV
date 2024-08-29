@@ -207,6 +207,7 @@ type Mutation {
     updateSection(
       data_section_id: String!
       archive: Boolean
+      attributes: AWSJSON # JSON
     ): String
 
     addUserCVData(

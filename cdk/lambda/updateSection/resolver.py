@@ -21,7 +21,8 @@ def updateSection(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute("UPDATE data_sections SET archive = %s WHERE data_section_id = %s", (arguments['archive'], arguments['data_section_id']))
+    attributes_json = json.dumps(arguments['attributes'])  # Convert attributes dictionary to JSON string
+    cursor.execute("UPDATE data_sections SET archive = %s, attributes = %s WHERE data_section_id = %s", (arguments['archive'], attributes_json, arguments['data_section_id']))
     cursor.close()
     connection.commit()
     connection.close()

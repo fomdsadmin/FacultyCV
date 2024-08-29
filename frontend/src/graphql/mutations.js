@@ -159,11 +159,12 @@ export const updateUserMutation = (user_id, first_name, last_name, preferred_nam
     }
 `;
 
-export const updateSectionMutation = (data_section_id, archive) => `
+export const updateSectionMutation = (data_section_id, archive, attributes) => `
     mutation UpdateSection {
         updateSection(
             data_section_id: "${data_section_id}"
             archive: ${archive}
+            attributes: ${attributes}
         )
     }
 `;
