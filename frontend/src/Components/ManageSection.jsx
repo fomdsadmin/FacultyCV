@@ -2,7 +2,7 @@ import React from 'react';
 import { useState } from 'react';
 import { FaArrowLeft, FaTrash } from 'react-icons/fa';
 import DeleteSectionModal from './DeleteSectionModal';
-import AddAttributeModal from './addAttributeModal.jsx';
+import AddAttributeModal from './AddAttributeModal.jsx';
 
 const ManageSection = ({ section, onBack, getDataSections }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
