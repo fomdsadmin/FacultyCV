@@ -51,7 +51,7 @@ const AssistantHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) =
   return (
     <div>
       <AssistantMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className='flex-1 !overflow-auto !h-full custom-scrollbar'>
+      <main className='flex-1 pb-4 !overflow-auto !h-full !custom-scrollbar'>
         <div className='flex items-center justify-between'>
           <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Connections</h1>
           <button onClick={() => setIsModalOpen(true)} className='m-4 mt-8 text-white btn btn-success min-h-0 h-10 leading-tight'>New Invite</button>

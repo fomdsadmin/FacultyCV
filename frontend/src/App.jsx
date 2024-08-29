@@ -130,7 +130,7 @@ function App() {
           <DepartmentAdminHomePage
             userInfo={userInfo}
             getCognitoUser={getCognitoUser}
-            department={userInfo.role.split('-')[1]} // Extract the department from the role
+            // department={userInfo.role.split('-')[1]} // Extract the department from the role
           />
         ) :
         Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === 'Assistant' ? <AssistantHomePage userInfo={assistantUserInfo} setUserInfo={setAssistantUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :

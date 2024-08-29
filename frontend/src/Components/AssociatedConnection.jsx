@@ -51,7 +51,7 @@ const AssociatedConnection = ({ connection, getUser }) => {
     }
 
     return (
-        <div className={`bg-base-100 p-3 shadow-glow rounded-lg ${enteringProfile ? 'w-90' : 'w-72'}`}>
+        <div className={`bg-base-100 p-3 pb-4 shadow-glow rounded-lg ${enteringProfile ? 'w-90' : 'w-72'}`}>
             <div className="flex flex-col justify-center">
                 <div className="flex justify-between items-start">
                     <div>
