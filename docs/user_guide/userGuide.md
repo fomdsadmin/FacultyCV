@@ -1,4 +1,4 @@
-# Website User Guide
+# Faculty CV User Guide
 
 **Before You Begin:** Ensure that all preliminary setups, including necessary configurations, have been completed.
 
@@ -83,13 +83,18 @@ Faculty members have access to various tools and features to manage their academ
   - **Scopus and ORCID IDs:** These identifiers are found in public databases and can be clicked on to verify the faculty member's identity.
 - **Manual Saving:** All changes made to the profile must be manually saved by clicking the save button to ensure updates are retained.
 
+![Screenshot 2024-08-30 133306](https://github.com/user-attachments/assets/8ed05999-a12c-40f8-9696-614de23cfb4f)
+
 #### Academic Work
 
 - **Navigation:** Users can navigate through their academic work records using the search bar and can add or remove categories of academic work sections using filter buttons.
+![Screenshot 2024-08-30 133919](https://github.com/user-attachments/assets/4dd87af6-19c6-4ab7-9825-a2738ca9bda4)
 - **Managing Sections:** Each section allows users to review, archive, and edit entries. 
   - **External Data Sources:** Certain sections, like **Patents**, **Secure Funding**, **Publications**, and **Courses Taught**, use external datasets to fetch data.
   - **Pop-Up Explanations:** When fetching data from external sources, a pop-up will explain the sources and allow the user to add any relevant entries.
+![Screenshot 2024-08-30 134048](https://github.com/user-attachments/assets/75588266-e142-4fc7-b676-b4ff7ee6a4e3)
 - **Entry Management:** Under each entry, users have options to archive, edit (if editable), or view the entry. Entries can also be searched within each section.
+![Screenshot 2024-08-30 134146](https://github.com/user-attachments/assets/5615344b-321f-498a-9236-63bac8f94480)
 
 #### Reports
 
@@ -97,6 +102,7 @@ Faculty members have access to various tools and features to manage their academ
 - **Generating Reports:** By clicking on any template, the system generates a corresponding PDF and previews it on the screen.
   - **Download Option:** Users can download the generated PDF to their local computer by clicking the download button.
 - **Template Structure:** Templates specify which academic work sections are included in the report and in what order they appear.
+![Screenshot 2024-08-30 134252](https://github.com/user-attachments/assets/b5fd0ff3-221c-468e-8d79-371a9ad59dd6)
 
 #### Assistants
 
@@ -104,15 +110,14 @@ Faculty members have access to various tools and features to manage their academ
   - **Full Control:** Assistants who are granted access have full control over the faculty profiles they manage.
   - **Invitations:** This is where invitations for assistant access will appear, and they can be accepted or declined.
   - **Deactivating Connections:** Active connections can be deactivated by clicking the red "x" next to the assistant's name.
-
+![Screenshot 2024-08-30 134427](https://github.com/user-attachments/assets/59f1a554-2cf6-4ba5-a3ee-03b9e8ab4645)
 #### Archive
 
 - **Archived Entries:** Any entry from any academic section that has been archived will appear here.
   - **Restoring Entries:** Archived entries can be restored immediately by clicking the restore icon.
   - **Retention Period:** Entries will remain in the archive for three months before being permanently deleted.
 - **Search Functionality:** Archived sections can be searched to quickly locate specific entries.
-
-
+![Screenshot 2024-08-30 134457](https://github.com/user-attachments/assets/0618ec8f-3f51-4950-af09-de694e01cea4)
 
 ### Assistant Role
 
@@ -130,6 +135,9 @@ Assistants play a crucial role in supporting faculty members by managing their p
 - **Assistant Header:** Assistants will always see a header at the top of the page identifying their role, with an option to log out.
 - **Faculty Identification:** The left side menu will display the name of the faculty member they are working on behalf of, with an option to exit the faculty profile without logging out of the entire system.
 
+![Screenshot 2024-08-30 134610](https://github.com/user-attachments/assets/bd0f7fe7-273d-4fd9-b3e9-b9bd1fe0bc9e)
+
+![Screenshot 2024-08-30 134633](https://github.com/user-attachments/assets/93ed81e8-d281-4619-8190-988dcde4ce71)
 
 
 ### Admin Role
@@ -144,6 +152,9 @@ Admins, encompassing both Departmental Admins and Super Admins, are responsible 
   - **Adding Connections:**
     - For Faculty members, admins can add a new assistant who will have access to the faculty member's profile.
     - For Assistants, admins can add a new faculty connection that they can manage.
+   
+![Screenshot 2024-08-30 134706](https://github.com/user-attachments/assets/ee4931b8-9e8d-48c9-8178-67b425485108)
+
 
 #### Analytics
 
@@ -157,6 +168,9 @@ Admins, encompassing both Departmental Admins and Super Admins, are responsible 
   - **User Growth Over Time:** A timeline showing the growth in the number of users.
 - **Filtering Analytics:** Admins can filter analytics data by role or department using the menu at the top of the page.
   - **Departmental Limitations:** Departmental Admins can only view analytics data relevant to their department.
+ 
+![Screenshot 2024-08-30 134737](https://github.com/user-attachments/assets/75e25e0c-c309-4aad-a6ae-27ea45f72ced)
+
 
 #### Templates
 
@@ -164,6 +178,10 @@ Admins, encompassing both Departmental Admins and Super Admins, are responsible 
   - **Template Structure:** A template specifies which academic work sections are included in a report and in what order they appear.
   - **Managing Templates:** Existing templates can be adjusted to change the included sections or their order, or they can be deleted.
   - **Creating New Templates:** New templates automatically include all sections initially. Admins can toggle sections on or off with the x or check buttons, and reorder sections by drag-and-drop. Each new template should be named descriptively.
+ 
+![Screenshot 2024-08-30 134803](https://github.com/user-attachments/assets/c77781e7-d034-470e-88e1-60b15d109324)
+![Screenshot 2024-08-30 134830](https://github.com/user-attachments/assets/8e48a6f2-fb91-40b7-9e0d-6f072458497a)
+
 
 #### Sections
 
@@ -171,12 +189,15 @@ Admins, encompassing both Departmental Admins and Super Admins, are responsible 
   - **Note:** An existing field/attribute within a section cannot be deleted.
 - **Adding New Sections:** New sections can be created to describe a new type of activity that will appear under the academic work page for faculty users.
   - **Adding Attributes:** Any number of attributes can be added to a section, and they should be descriptive to ensure clarity.
+ 
+![Screenshot 2024-08-30 134848](https://github.com/user-attachments/assets/a61942fe-d890-4b78-8799-8d0dedb20d0a)
 
 #### Archived Sections
 
 - **Restoring Archived Sections:** Any deleted section will appear under the archived sections page and can be restored immediately. Archived sections are not visible to faculty users.
 - **Permanent Archiving:** Sections remain in the archive indefinitely and are never permanently deleted.
 
+![Screenshot 2024-08-30 134952](https://github.com/user-attachments/assets/f04ac4dc-18f1-4e15-8bf2-cc8d85b310ed)
 
 ## Common Features
 
