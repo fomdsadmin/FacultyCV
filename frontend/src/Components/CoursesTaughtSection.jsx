@@ -85,15 +85,6 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
             // Parse the data_details string to a JSON object
             let dataDetailsObj = JSON.parse(data_details);
 
-            // Update the year based on the session
-            if (dataDetailsObj.session === 'Winter') {
-                dataDetailsObj.year = `January, ${dataDetailsObj.year}`;
-            } else if (dataDetailsObj.session === 'Fall') {
-                dataDetailsObj.year = `September, ${dataDetailsObj.year}`;
-            } else if (dataDetailsObj.session === 'Summer') {
-                dataDetailsObj.year = `May, ${dataDetailsObj.year}`;
-            }
-
             // Convert the updated JSON object back to a string
             data_details = JSON.stringify(dataDetailsObj).replace(/"/g, '\\"'); // Escape special characters
             console.log('Adding new entry:', `"${data_details}"`);
@@ -158,17 +149,70 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
     }
     setLoading(false);
   }
+
+  async function fetchDataFirst(result) {
+    try {
+      const retrievedData = await getUserCVData(result.user_id, section.data_section_id);
+      // Parse the data_details field from a JSON string to a JSON object
+      const parsedData = retrievedData.map(data => ({
+        ...data,
+        data_details: JSON.parse(data.data_details),
+      }));
+  
+      console.log(parsedData);
+  
+      const filteredData = parsedData.filter(entry => {
+        console.log(entry.data_details);
+        const [field1, field2] = rankFields(entry.data_details);
+        console.log(field1, field2);
+        return (
+          (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+      });
+      console.log("filtered data: " + JSON.stringify(filteredData));
+  
+      const rankedData = filteredData.map(entry => {
+        const [field1, field2] = rankFields(entry.data_details);
+        return { ...entry, field1, field2 };
+      });
+  
+      // Sorting logic
+      rankedData.sort((a, b) => {
+        const isYear = (str) => /\b\d{4}\b/.test(str); // Regex to match YYYY
+        const yearA = isYear(a.field1) ? parseInt(a.field1) : isYear(a.field2) ? parseInt(a.field2) : null;
+        const yearB = isYear(b.field1) ? parseInt(b.field1) : isYear(b.field2) ? parseInt(b.field2) : null;
+  
+        if (yearA && yearB) {
+          return yearB - yearA; 
+        } else if (yearA) {
+          return -1; 
+        } else if (yearB) {
+          return 1; 
+        } else {
+          return 0; 
+        }
+      });
+  
+      setFieldData(rankedData);
+  
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+    setLoading(false);
+  }
   
   async function fetchUser() {
     try {
       const result = await getUserInstitutionId(userInfo.email);
       console.log(result);
       setUser(result);
+      fetchDataFirst(result);
     }
     catch (error) {
       console.error('Error fetching user:', error);
     }
-    fetchData();
+
   }
 
   useEffect(() => {

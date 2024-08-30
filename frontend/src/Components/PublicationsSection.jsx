@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import GenericEntry from './GenericEntry';
-import EntryModal from './EntryModal';
+import PermanentEntry from './PermanentEntry';
+import PermanentEntryModal from './PermanentEntryModal';
 import PublicationsModal from './PublicationsModal';
 import { FaArrowLeft } from 'react-icons/fa';
 import { getUserCVData, updateUserCVDataArchive, getPublicationMatches, addUserCVData } from '../graphql/graphqlHelpers';
@@ -170,7 +170,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
           <div>
             {fieldData.length > 0 ? (
             fieldData.map((entry, index) => (
-                <GenericEntry
+                <PermanentEntry
                 isArchived={false}
                 key={index}
                 onEdit={() => handleEdit(entry)}
@@ -185,7 +185,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </div>
 
           {isModalOpen && selectedEntry && !isNew && (
-            <EntryModal
+            <PermanentEntryModal
                 isNew={false}
                 user = {user}
                 section = {section}
@@ -198,11 +198,10 @@ const PublicationsSection = ({ user, section, onBack }) => {
           )}
 
           {isModalOpen && selectedEntry && isNew && (
-            <EntryModal
+            <PermanentEntryModal
               isNew={true}
               user = {user}
               section = {section}
-              userData = {fieldData}
               fields = {selectedEntry.fields}
               user_cv_data_id = {selectedEntry.data_id}
               entryType={section.title}

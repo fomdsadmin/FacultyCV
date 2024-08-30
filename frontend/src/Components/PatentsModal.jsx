@@ -57,6 +57,8 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
     setAddingData(true);
     for (const data of selectedPatentsData) {
       try {
+        data.year_published = data.publication_date.split('-')[0];
+        delete data.publication_date;  // Remove the old key
         const dataJSON = JSON.stringify(data).replace(/"/g, '\\"');
         console.log('Adding new entry:', `"${dataJSON}"`);
         const result = await addUserCVData(user.user_id, section.data_section_id, `"${dataJSON}"`);

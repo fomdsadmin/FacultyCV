@@ -33,7 +33,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         let totalResults = 0;
 
         // Fetch data for the current scopus ID
-        while (pageNumber < totalPages) {
+        while (pageNumber <= totalPages) {
           const retrievedData = await getPublicationMatches(scopusId.trim(), pageNumber, pageSize);
           console.log(retrievedData);
 
@@ -127,7 +127,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
             Fetching data for Scopus ID - {currentScopusId}
           </div>
           <div className="block text-m mb-1 text-zinc-600">
-            Fetching {(currentPage + 1) * pageSize} out of {totalResults} publications...
+          Fetching {Math.min((currentPage + 1) * pageSize, totalResults)} out of {totalResults} publications...
           </div>
         </div>
       ) : (

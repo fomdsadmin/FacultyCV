@@ -9,7 +9,9 @@ import ProfileLinkModal from '../Components/ProfileLinkModal.jsx'; // Import the
 const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
+  const [affiliations, setAffilitations] = useState([]);
   const [faculties, setFaculties] = useState([]);
+  const [institutions, setInstitutions] = useState([]);
   const [campuses, setCampuses] = useState([]);
   const [ranks, setRanks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,8 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
       let faculties = [];
       let campuses = [];
       let ranks = [];
+      let affiliations = [];
+      let institutions = [];
 
       result.forEach(element => {
         if (element.type === 'Department') {
@@ -40,6 +44,10 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
           campuses.push(element.value);
         } else if (element.type === 'Rank') {
           ranks.push(element.value);
+        } else if (element.type === 'Affiliation') {
+          affiliations.push(element.value);
+        } else if (element.type === 'Institution') {
+          institutions.push(element.value);
         }
       });
 
@@ -47,11 +55,19 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
       faculties.sort();
       campuses.sort();
       ranks.sort();
+      affiliations.sort();
+      institutions.sort();
+
+      console.log(departments);
+      console.log(institutions);
+      console.log(affiliations);
 
       setDepartments(departments);
       setFaculties(faculties);
       setCampuses(campuses);
       setRanks(ranks);
+      setAffilitations(affiliations);
+      setInstitutions(institutions);
       setLoading(false);
     });
   };

@@ -18,9 +18,15 @@ const PermanentEntryModal = ({ isNew, user, section, onClose, entryType, fields,
                 year_published: fields.year_published
             }));
         }
-        if ('dates' in fields || 'year' in fields) {
+        if ('year' in fields) {
+            setFormData(prevState => ({
+                ...prevState,
+                year: fields.year
+            }));
+        }
+        if ('dates' in fields) {
             setDateNeeded(true);
-            const dateField = 'dates' in fields ? 'dates' : 'year';
+            const dateField = 'dates';
             setDateFieldName(dateField);
             const [start, end] = fields[dateField].includes(' - ') ? fields[dateField].split(' - ') : (isNew ? [fields[dateField], ''] : [fields[dateField], 'None']);
             const [startDateMonth, startDateYear] = start.split(', ');
@@ -81,6 +87,12 @@ const PermanentEntryModal = ({ isNew, user, section, onClose, entryType, fields,
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if ('year_published' in formData && !formData.year_published) {
+            setError('Please select the year.');
+            return;
+        }
+
         const { startDateMonth, startDateYear, endDateMonth, endDateYear, ...rest } = formData;
         if ((dateNeeded) && (!startDateMonth || !startDateYear || (!endDateMonth && endDateMonth !== 'Current' && endDateMonth !== 'None') || (!endDateYear && endDateMonth !== 'Current' && endDateMonth !== 'None'))) {
             setError('Please select a start date and an end date.');
@@ -134,7 +146,7 @@ const PermanentEntryModal = ({ isNew, user, section, onClose, entryType, fields,
                 <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" onClick={onClose}>✕</button>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {filteredKeys.map((key) => (
-                        key === 'dates' || key === 'year' ? (
+                        key === 'dates' ? (
                             <div key={key} className="mb-1">
                                 <label className="block text-sm capitalize">Start Date</label>
                                 <div className="flex space-x-2">
@@ -196,7 +208,7 @@ const PermanentEntryModal = ({ isNew, user, section, onClose, entryType, fields,
                                     </select>
                                 </div>
                             </div>
-                        ) :  key === 'year_published' ? (
+                        ) :  key === 'year_published' || key === 'year' ? (
                             <div key={key} className="mb-1">
                                 <label className="block text-sm capitalize">{formatKey(key)}</label>
                                 <select
@@ -228,11 +240,14 @@ const PermanentEntryModal = ({ isNew, user, section, onClose, entryType, fields,
                     ))}
                 </div>
                 {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                {isNew && (
                 <div className="flex justify-end">
                     <button type="submit" className="btn btn-success text-white mt-3 py-1 px-2 w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
                         {isSubmitting ? 'Saving...' : 'Save'}
                     </button>
                 </div>
+                )}
+                
             </form>
         </dialog>
     );

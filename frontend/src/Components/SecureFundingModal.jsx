@@ -48,8 +48,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     setFetchingData(true);
     setInitialRender(false);
     try {
-      // Switch to first name and last name
-      const retrievedData = await getRiseDataMatches('Ben', user.last_name);
+      const retrievedData = await getRiseDataMatches(user.first_name, user.last_name);
       console.log(retrievedData);
   
       const allDataDetails = []; // Initialize an array to accumulate data_details
@@ -91,7 +90,8 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     setAddingData(true);
     for (const data of selectedSecureFundingData) {
       try {
-        data.dates = `January, ${data.dates.replace(/-/g, '')}`;
+        data.year = data.dates.split('-')[0];
+        delete data.dates;  // Remove the old key
         const dataJSON = JSON.stringify(data).replace(/"/g, '\\"');
         console.log('Adding new entry:', `"${dataJSON}"`);
         const result = await addUserCVData(user.user_id, section.data_section_id, `"${dataJSON}"`);

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
-import AdminMenu from '../Components/AdminMenu.jsx';
+import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
 import AnalyticsCard from '../Components/AnalyticsCard.jsx';
 import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, getAllSections, getNumberOfGeneratedCVs } from '../graphql/graphqlHelpers.js';
 import { formatDateToLongString } from '../utils/time.js';
@@ -286,7 +286,7 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
   }
   return (
     <PageContainer>
-      <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
         <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Analytics</h1>
         <div className='m-4 flex space-x-4'>

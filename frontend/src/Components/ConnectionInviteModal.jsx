@@ -3,7 +3,7 @@ import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { addUserConnection, getUser } from '../graphql/graphqlHelpers';
 
-const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen, admin = false }) => {
+const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen, admin = false, departmentAdmin = false, department='' }) => {
   const [email, setEmail] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
   const [error, setError] = useState('');
@@ -99,6 +99,15 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
       setError('Faculty can only form connections with assistants');
       setSendingInvite(false);
       return;
+    }
+
+    if (departmentAdmin) {
+      console.log(member);
+      if (userInfo.role==='Assistant' && member.primary_department !== department && member.secondary_department !== department) {
+        setError('You can only form connections with faculty in your department');
+        setSendingInvite(false);
+        return;
+      }
     }
 
     try {

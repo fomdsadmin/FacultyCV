@@ -188,6 +188,8 @@ const ManageDepartmentUser = ({ user, onBack, fetchAllUsers, department }) => {
               getAllUserConnections={getAllUserConnections}
               setIsModalOpen={setIsConnectionModalOpen}
               admin={true}
+              departmentAdmin={true}
+              department={department}
             />
           )}
 

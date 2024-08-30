@@ -98,6 +98,13 @@ const PatentsSection = ({ user, section, onBack }) => {
         const [field1, field2] = rankFields(entry.data_details);
         return { ...entry, field1, field2 };
       });
+
+      rankedData.sort((a, b) => {
+        const yearA = parseInt(a.field2, 10) || 0; 
+        const yearB = parseInt(b.field2, 10) || 0;
+  
+        return yearB - yearA;
+      });
   
       setFieldData(rankedData);
   
