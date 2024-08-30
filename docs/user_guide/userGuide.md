@@ -1,12 +1,5 @@
 # Faculty CV User Guide
 
-**Before You Begin:** Ensure that all preliminary setups, including necessary configurations, have been completed.
-
-- [Setup and Configuration Guide](./SetupGuide.md)
-
-This user guide will walk you through the functionalities available to each user role.
-
-
 ## Table of Contents
 
 1. [Overview](#overview)
