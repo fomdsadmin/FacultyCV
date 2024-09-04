@@ -11,10 +11,13 @@ export const getUserQuery = (email) => `
             role
             bio
             rank
+            institution
             primary_department
             secondary_department
             primary_faculty
             secondary_faculty
+            primary_affiliation
+            secondary_affiliation
             campus
             keywords
             scopus_id
@@ -62,10 +65,13 @@ export const getAllUsersQuery = () => `
             role
             bio
             rank
+            institution
             primary_department
             secondary_department
             primary_faculty
             secondary_faculty
+            primary_affiliation
+            secondary_affiliation
             campus
             keywords
             institution_user_id
@@ -89,10 +95,13 @@ export const getExistingUserQuery = (institution_user_id) => `
             role
             bio
             rank
+            institution
             primary_department
             secondary_department
             primary_faculty
             secondary_faculty
+            primary_affiliation
+            secondary_affiliation
             campus
             keywords
             institution_user_id
@@ -145,6 +154,7 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
             user_id
             data_section_id
             data_details
+            editable
         }
     }`
     } else return `query GetUserCVData {
@@ -156,6 +166,7 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
             user_id
             data_section_id
             data_details
+            editable
         }
     }`;
 }
@@ -172,6 +183,7 @@ export const getArchivedUserCVDataQuery = (user_id) => `
             data_details
             archive
             archive_timestamp
+            editable
         }
     }
 `;

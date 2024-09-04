@@ -28,8 +28,8 @@ export const addSectionMutation = (title, description, data_type, attributes) =>
 `;
 
 export const addUserMutation = (first_name, last_name, preferred_name,
-    email, role, bio, rank, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id
+    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
+    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id
 ) => `
     mutation AddUser {
         addUser(
@@ -40,10 +40,13 @@ export const addUserMutation = (first_name, last_name, preferred_name,
             role: "${role}"
             bio: "${bio}"
             rank: "${rank}"
+            institution: "${institution}"
             primary_department: "${primary_department}"
             secondary_department: "${secondary_department}"
             primary_faculty: "${primary_faculty}"
             secondary_faculty: "${secondary_faculty}"
+            primary_affiliation: "${primary_affiliation}"
+            secondary_affiliation: "${secondary_affiliation}"
             campus: "${campus}"
             keywords: "${keywords}"
             institution_user_id: "${institution_user_id}"
@@ -53,12 +56,13 @@ export const addUserMutation = (first_name, last_name, preferred_name,
     }
 `;
 
-export const addUserCVDataMutation = (user_id, data_section_id, data_details) => `
+export const addUserCVDataMutation = (user_id, data_section_id, data_details, editable) => `
     mutation AddUserCVData {
         addUserCVData(
             user_id: "${user_id}"
             data_section_id: "${data_section_id}"
             data_details: ${data_details}
+            editable: ${editable}
         )
     }
 `;
@@ -134,8 +138,8 @@ export const linkOrcidMutation = (user_id, orcid_id) => `
 `;
 
 export const updateUserMutation = (user_id, first_name, last_name, preferred_name,
-    email, role, bio, rank, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => `
+    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
+    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id) => `
     mutation UpdateUser {
         updateUser(
             first_name: "${first_name}"
@@ -145,10 +149,13 @@ export const updateUserMutation = (user_id, first_name, last_name, preferred_nam
             role: "${role}"
             bio: "${bio}"
             rank: "${rank}"
+            institution: "${institution}"
             primary_department: "${primary_department}"
             secondary_department: "${secondary_department}"
             primary_faculty: "${primary_faculty}"
             secondary_faculty: "${secondary_faculty}"
+            primary_affiliation: "${primary_affiliation}"
+            secondary_affiliation: "${secondary_affiliation}"
             campus: "${campus}"
             keywords: "${keywords}"
             institution_user_id: "${institution_user_id}"

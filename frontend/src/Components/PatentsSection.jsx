@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from './GenericEntry';
 import EntryModal from './EntryModal';
+import PermanentEntry from './PermanentEntry';
+import PermanentEntryModal from './PermanentEntryModal';
 import { FaArrowLeft } from 'react-icons/fa';
 import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
@@ -48,7 +50,7 @@ const PatentsSection = ({ user, section, onBack }) => {
   };
 
   const handleEdit = (entry) => {
-    const newEntry = {fields: entry.data_details, data_id: entry.user_cv_data_id};
+    const newEntry = {fields: entry.data_details, data_id: entry.user_cv_data_id, editable: entry.editable};
     setIsNew(false);
     setSelectedEntry(newEntry);
     console.log(newEntry);
@@ -167,47 +169,81 @@ const PatentsSection = ({ user, section, onBack }) => {
       ) : (
         <div>
           <div>
-            {fieldData.length > 0 ? (
+          {fieldData.length > 0 ? (
             fieldData.map((entry, index) => (
+              entry.editable ? (
                 <GenericEntry
-                isArchived={false}
-                key={index}
-                onEdit={() => handleEdit(entry)}
-                field1={entry.field1}
-                field2={entry.field2}
-                onArchive={() =>  handleArchive(entry)}
+                  key={index}
+                  onEdit={() => handleEdit(entry)}
+                  field1={entry.field1}
+                  field2={entry.field2}
+                  onArchive={() => handleArchive(entry)}
                 />
+              ) : (
+                <PermanentEntry
+                  isArchived={false}
+                  key={index}
+                  onEdit={() => handleEdit(entry)}
+                  field1={entry.field1}
+                  field2={entry.field2}
+                  onArchive={() => handleArchive(entry)}
+                />
+              )
             ))
-            ) : (
-            <p className="m-4">No data found</p>
-            )}
+          ) : (
+              <p className="m-4">No data found</p>
+          )}
           </div>
-
           {isModalOpen && selectedEntry && !isNew && (
-            <EntryModal
-                isNew={false}
-                user = {user}
-                section = {section}
-                fields = {selectedEntry.fields}
-                user_cv_data_id = {selectedEntry.data_id}
-                entryType={section.title}
-                fetchData={fetchData}
-                onClose={handleCloseModal}
-            />
+            selectedEntry.editable ? (
+                <EntryModal
+                    isNew={false}
+                    user={user}
+                    section={section}
+                    fields={selectedEntry.fields}
+                    user_cv_data_id={selectedEntry.data_id}
+                    entryType={section.title}
+                    fetchData={fetchData}
+                    onClose={handleCloseModal}
+                />
+            ) : (
+                <PermanentEntryModal
+                    isNew={false}
+                    user={user}
+                    section={section}
+                    fields={selectedEntry.fields}
+                    user_cv_data_id={selectedEntry.data_id}
+                    entryType={section.title}
+                    fetchData={fetchData}
+                    onClose={handleCloseModal}
+                />
+            )
           )}
 
           {isModalOpen && selectedEntry && isNew && (
-            <EntryModal
-              isNew={true}
-              user = {user}
-              section = {section}
-              userData = {fieldData}
-              fields = {selectedEntry.fields}
-              user_cv_data_id = {selectedEntry.data_id}
-              entryType={section.title}
-              fetchData={fetchData}
-              onClose={handleCloseModal}
-            />
+              selectedEntry.editable ? (
+                  <EntryModal
+                      isNew={true}
+                      user={user}
+                      section={section}
+                      fields={selectedEntry.fields}
+                      user_cv_data_id={selectedEntry.data_id}
+                      entryType={section.title}
+                      fetchData={fetchData}
+                      onClose={handleCloseModal}
+                  />
+              ) : (
+                  <PermanentEntryModal
+                      isNew={true}
+                      user={user}
+                      section={section}
+                      fields={selectedEntry.fields}
+                      user_cv_data_id={selectedEntry.data_id}
+                      entryType={section.title}
+                      fetchData={fetchData}
+                      onClose={handleCloseModal}
+                  />
+              )
           )}
 
           {retrievingData && (

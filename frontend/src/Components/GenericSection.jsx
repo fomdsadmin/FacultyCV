@@ -120,6 +120,8 @@ const GenericSection = ({ user, section, onBack }) => {
             return 0; 
         });
 
+        console.log(rankedData);
+
         setFieldData(rankedData);
 
     } catch (error) {

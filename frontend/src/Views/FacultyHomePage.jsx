@@ -119,10 +119,13 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
         userInfo.role,
         userInfo.bio,
         userInfo.rank,
+        userInfo.institution,
         userInfo.primary_department,
         userInfo.secondary_department,
         userInfo.primary_faculty,
         userInfo.secondary_faculty,
+        userInfo.primary_affiliation,
+        userInfo.secondary_affiliation,
         userInfo.campus,
         '',
         userInfo.institution_user_id,
@@ -237,8 +240,21 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               ></textarea>
             </div>
 
-            <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Institution</h2>
+            <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Institution Information</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <div>
+                <label className="block text-sm mb-1">Institution Name</label>
+                <select 
+                  id="institution" 
+                  name="institution" 
+                  value={userInfo.institution || ''} 
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
+                  onChange={handleInputChange} 
+                >
+                  <option value="">-</option>
+                  {institutions.map((institution, index) => <option key={index} value={institution}>{institution}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm mb-1">Primary Faculty</label>
                 <select 
@@ -289,6 +305,32 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
                 >
                   <option value="">-</option>
                   {departments.map((department, index) => <option key={index} value={department}>{department}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Primary Affiliation</label>
+                <select 
+                  id="primaryAffiliation" 
+                  name="primary_affiliation" 
+                  value={userInfo.primary_affiliation || ''} 
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
+                  onChange={handleInputChange} 
+                >
+                  <option value="">-</option>
+                  {affiliations.map((affiliation, index) => <option key={index} value={affiliation}>{affiliation}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Secondary Affiliation</label>
+                <select 
+                  id="secondaryAffiliation" 
+                  name="secondary_affiliation" 
+                  value={userInfo.secondary_affiliation || ''} 
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
+                  onChange={handleInputChange} 
+                >
+                  <option value="">-</option>
+                  {affiliations.map((affiliation, index) => <option key={index} value={affiliation}>{affiliation}</option>)}
                 </select>
               </div>
               <div>
@@ -386,7 +428,8 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
           activeModal={activeModal}
           setClose={handleCloseModal} 
           setOrcidId={handleOrcidLink} 
-          setScopusId={handleScopusLink} 
+          setScopusId={handleScopusLink}
+          institution={userInfo.institution} 
         />
       )}
     </PageContainer>

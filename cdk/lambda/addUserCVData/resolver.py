@@ -28,7 +28,7 @@ def addUserCVData(arguments):
 
     if existing_count == 0:
         # Insert the new entry
-        cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details) VALUES (%s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], data_details_json,))
+        cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable) VALUES (%s, %s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], data_details_json, arguments['editable'],))
         connection.commit()
         cursor.close()
         connection.close()

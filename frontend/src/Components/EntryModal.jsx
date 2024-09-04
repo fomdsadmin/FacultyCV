@@ -239,6 +239,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
                                     name={key}
                                     value={formData[key] || ''}
                                     onChange={handleChange}
+                                    maxLength={500}
                                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                                 />
                             </div>

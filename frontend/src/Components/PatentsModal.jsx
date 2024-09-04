@@ -15,7 +15,7 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
     setFetchingData(true);
     setInitialRender(false);
     try {
-      const retrievedData = await getPatentMatches(user.first_name, user.last_name);
+      const retrievedData = await getPatentMatches('Lorne A', user.last_name);
       console.log(retrievedData);
   
       const allDataDetails = [];
@@ -61,7 +61,7 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
         delete data.publication_date;  // Remove the old key
         const dataJSON = JSON.stringify(data).replace(/"/g, '\\"');
         console.log('Adding new entry:', `"${dataJSON}"`);
-        const result = await addUserCVData(user.user_id, section.data_section_id, `"${dataJSON}"`);
+        const result = await addUserCVData(user.user_id, section.data_section_id, `"${dataJSON}"`, false);
         console.log(result);
       } catch (error) {
         console.error('Error adding new entry:', error);

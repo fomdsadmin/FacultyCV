@@ -10,6 +10,8 @@ import AssistantPageContainer from '../Components/AssistantPageContainer.jsx';
 const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, getCognitoUser }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
+  const [affiliations, setAffilitations] = useState([]);
+  const [institutions, setInstitutions] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [campuses, setCampuses] = useState([]);
   const [ranks, setRanks] = useState([]);
@@ -35,7 +37,11 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
       const faculties = result.filter(item => item.type === 'Faculty').map(item => item.value).sort();
       const campuses = result.filter(item => item.type === 'Campus').map(item => item.value).sort();
       const ranks = result.filter(item => item.type === 'Rank').map(item => item.value).sort();
+      const affiliations = result.filter(item => item.type === 'Affiliation').map(item => item.value).sort();
+      const institutions = result.filter(item => item.type === 'Institution').map(item => item.value).sort();
 
+      setAffilitations(affiliations);
+      setInstitutions(institutions);
       setDepartments(departments);
       setFaculties(faculties);
       setCampuses(campuses);
@@ -91,10 +97,13 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
         userInfo.role,
         userInfo.bio,
         userInfo.rank,
+        userInfo.institution,
         userInfo.primary_department,
         userInfo.secondary_department,
         userInfo.primary_faculty,
         userInfo.secondary_faculty,
+        userInfo.primary_affiliation,
+        userInfo.secondary_affiliation,
         userInfo.campus,
         '',
         userInfo.institution_user_id,
@@ -213,6 +222,19 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Institution</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
               <div>
+                <label className="block text-sm mb-1">Institution Name</label>
+                <select 
+                  id="institution" 
+                  name="institution" 
+                  value={userInfo.institution || ''} 
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
+                  onChange={handleInputChange} 
+                >
+                  <option value="">-</option>
+                  {institutions.map((institution, index) => <option key={index} value={institution}>{institution}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm mb-1">Primary Faculty</label>
                 <select 
                   id="primaryFaculty" 
@@ -262,6 +284,32 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
                 >
                   <option value="">-</option>
                   {departments.map((department, index) => <option key={index} value={department}>{department}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Primary Affiliation</label>
+                <select 
+                  id="primaryAffiliation" 
+                  name="primary_affiliation" 
+                  value={userInfo.primary_affiliation || ''} 
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
+                  onChange={handleInputChange} 
+                >
+                  <option value="">-</option>
+                  {affiliations.map((affiliation, index) => <option key={index} value={affiliation}>{affiliation}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Secondary Affiliation</label>
+                <select 
+                  id="secondaryAffiliation" 
+                  name="secondary_affiliation" 
+                  value={userInfo.secondary_affiliation || ''} 
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
+                  onChange={handleInputChange} 
+                >
+                  <option value="">-</option>
+                  {affiliations.map((affiliation, index) => <option key={index} value={affiliation}>{affiliation}</option>)}
                 </select>
               </div>
               <div>
@@ -359,6 +407,7 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
           setClose={handleCloseModal} 
           setOrcidId={handleOrcidLink} 
           setScopusId={handleScopusLink} 
+          institution={userInfo.institution}
         />
       )}
       </AssistantPageContainer>

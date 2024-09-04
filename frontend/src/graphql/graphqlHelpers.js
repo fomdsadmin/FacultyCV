@@ -192,6 +192,7 @@ export const getExistingUser = async (institution_user_id) => {
  *      user_id
  *      data_section_id
  *      data_details: JSON string
+ *      editable: Boolean
  * }
  */
 export const getUserCVData = async (user_id, data_section_ids) => {
@@ -211,6 +212,7 @@ export const getUserCVData = async (user_id, data_section_ids) => {
  *      data_details: JSON string
  *      archive
  *      archive_timestamp
+ *      editable
  * }
  */
 export const getArchivedUserCVData = async (user_id) => {
@@ -482,11 +484,12 @@ export const removeFromUserGroup = async (userName, userGroup) => {
  * user_id - ID of the user the profile belongs to
  * data_section_id - ID of the data section as returned by the getAllSections call
  * data_details - JSON String
+ * editable - Boolean
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUserCVData = async (user_id, data_section_id, data_details) => {
-    const results = await runGraphql(addUserCVDataMutation(user_id, data_section_id, data_details));
+export const addUserCVData = async (user_id, data_section_id, data_details, editable=true) => {
+    const results = await runGraphql(addUserCVDataMutation(user_id, data_section_id, data_details, editable));
     return results['data']['addUserCVData'];
 }
 
@@ -530,13 +533,13 @@ export const addSection = async (title, description, data_type, attributes) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const addUser = async (first_name, last_name, preferred_name,
-    email, role, bio, rank, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
+    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
+    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
         const results = await runGraphql(addUserMutation(
             first_name, last_name, preferred_name,
-            email, role, bio, rank, primary_department, 
+            email, role, bio, rank, institution, primary_department, 
             secondary_department, primary_faculty,
-            secondary_faculty, campus, keywords,
+            secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords,
             institution_user_id, scopus_id, orcid_id
         ));
         return results['data']['addUser'];
@@ -691,13 +694,13 @@ export const linkPublication = async (user_id, data_details) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateUser = async (user_id, first_name, last_name, preferred_name,
-    email, role, bio, rank, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
+    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
+    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
         const results = await runGraphql(updateUserMutation(
             user_id, first_name, last_name, preferred_name,
-            email, role, bio, rank, primary_department, 
+            email, role, bio, rank, institution, primary_department, 
             secondary_department, primary_faculty,
-            secondary_faculty, campus, keywords,
+            secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords,
             institution_user_id, scopus_id, orcid_id
         ));
         return results['data']['updateUser'];
