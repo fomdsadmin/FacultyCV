@@ -104,17 +104,25 @@ const GenericSection = ({ user, section, onBack }) => {
             return { ...entry, field1, field2, key1, key2 };
         });
 
+        const extractYear = (dateStr) => {
+            if (dateStr.toLowerCase().includes('current')) {
+                return Infinity; // Use Infinity to ensure "Current" is always sorted higher
+            }
+            const years = dateStr.match(/\b\d{4}\b/g);
+            return years ? parseInt(years[years.length - 1]) : null; // Use the last year in the string
+        };
+        
         rankedData.sort((a, b) => {
-            const isDateOrYear = (key) => key && (key.toLowerCase().includes('date') || key.toLowerCase().includes('year'));
-
-            const dateA = isDateOrYear(a.key1) ? parseInt(a.field1) : isDateOrYear(a.key2) ? parseInt(a.field2) : null;
-            const dateB = isDateOrYear(b.key1) ? parseInt(b.field1) : isDateOrYear(b.key2) ? parseInt(b.field2) : null;
-
-            if (dateA && dateB) {
+            const isDateOrYear = (key) => key && (key.toLowerCase().includes('dates') || key.toLowerCase().includes('year'));
+        
+            const dateA = isDateOrYear(a.key1) ? extractYear(a.field1) : isDateOrYear(a.key2) ? extractYear(a.field2) : null;
+            const dateB = isDateOrYear(b.key1) ? extractYear(b.field1) : isDateOrYear(b.key2) ? extractYear(b.field2) : null;
+        
+            if (dateA !== null && dateB !== null) {
                 return dateB - dateA; 
-            } else if (dateA) {
+            } else if (dateA !== null) {
                 return -1;
-            } else if (dateB) {
+            } else if (dateB !== null) {
                 return 1;
             }
             return 0; 

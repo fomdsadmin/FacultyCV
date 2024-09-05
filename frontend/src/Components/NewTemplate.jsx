@@ -9,6 +9,8 @@ const NewTemplate = ({ onBack, fetchTemplates }) => {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [startYear, setStartYear] = useState('');
+  const [endYear, setEndYear] = useState('');
 
   useEffect(() => {
     fetchSections();
@@ -31,6 +33,16 @@ const NewTemplate = ({ onBack, fetchTemplates }) => {
       return;
     }
 
+    if (!startYear || !endYear) {
+      setErrorMessage('You must choose a start and end year.');
+      return;
+    }
+
+    if (endYear !== 'Current' && parseInt(endYear) <= parseInt(startYear)) {
+      setErrorMessage('End year must be after start year.');
+      return;
+    }
+
     const selectedSectionIds = sections
       .filter(section => section.showMinus)
       .map(section => section.data_section_id);
@@ -44,7 +56,7 @@ const NewTemplate = ({ onBack, fetchTemplates }) => {
     console.log('Selected section IDs:', selectedSectionIdsString);
     setAddingTemplate(true);
     try {
-      const result = await addTemplate(title, selectedSectionIdsString);
+      const result = await addTemplate(title, selectedSectionIdsString, startYear, endYear);
       console.log('Created template:', result);
     } catch (error) {
       console.error('Error creating template:', error);
@@ -84,6 +96,8 @@ const NewTemplate = ({ onBack, fetchTemplates }) => {
     setSections(newSections);
   };
 
+  const years = Array.from({ length: 100 }, (_, i) => (new Date().getFullYear() - i).toString());
+
   return (
     <div className=" ">
       <button onClick={onBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 mt-5 leading-tight mr-4">
@@ -121,9 +135,39 @@ const NewTemplate = ({ onBack, fetchTemplates }) => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
-              <h2 className='text-sm font-medium text-gray-700 mt-4'>Add or remove sections you want to include on the CV.</h2>
-              <h2 className='text-sm font-medium text-gray-700'> Drag and drop sections in the order you want them to appear on the CV.</h2>
             </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+              <select
+                className="input input-bordered w-full"
+                value={startYear}
+                onChange={(e) => setStartYear(e.target.value)}
+              >
+                <option value="">Select start year</option>
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+              <select
+                className="input input-bordered w-full"
+                value={endYear}
+                onChange={(e) => setEndYear(e.target.value)}
+              >
+                <option value="">Select end year</option>
+                <option value="Current">Current</option>
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+
+            <h2 className='text-sm font-medium text-gray-700 mt-6'>Add or remove sections you want to include on the CV.</h2>
+            <h2 className='text-sm font-medium text-gray-700'> Drag and drop sections in the order you want them to appear on the CV.</h2>
 
             <div className="flex justify-end mb-4 space-x-2">
               <button

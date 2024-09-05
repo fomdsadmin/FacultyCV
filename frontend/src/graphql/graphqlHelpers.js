@@ -318,6 +318,8 @@ export const getUserConnections = async (user_id, isFaculty = true) => {
  *      template_id: Identifier for template in the DB
  *      title
  *      data_section_ids
+ *      start_year
+ *      end_year
  *  }, ...
  * ]
  */
@@ -592,11 +594,13 @@ export const addUserConnection = async (
  * Arguments:
  * title - title of template
  * data_section_ids - list of data section ids
+ * start_year - start year of the template
+ * end_year - end year of the template
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addTemplate = async (title, data_section_ids) => {
-    const results = await runGraphql(addTemplateMutation(title, data_section_ids));
+export const addTemplate = async (title, data_section_ids, start_year, end_year) => {
+    const results = await runGraphql(addTemplateMutation(title, data_section_ids, start_year, end_year));
     return results['data']['addTemplate'];
 }
 
@@ -781,11 +785,13 @@ export const updateUserConnection = async (user_connection_id, status) => {
  * template_id - ID of the template
  * title - title of the template
  * data_section_ids - list of data section ids
+ * start_year - start year of the template
+ * end_year - end year of the template
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateTemplate = async (template_id, title, data_section_ids) => {
-    const results = await runGraphql(updateTemplateMutation(template_id, title, data_section_ids));
+export const updateTemplate = async (template_id, title, data_section_ids, start_year, end_year) => {
+    const results = await runGraphql(updateTemplateMutation(template_id, title, data_section_ids, start_year, end_year));
     return results['data']['updateTemplate'];
 }
 

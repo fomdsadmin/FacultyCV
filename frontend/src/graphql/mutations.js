@@ -96,11 +96,13 @@ export const addUserConnectionMutation = (
     }
 `;
 
-export const addTemplateMutation = (title, data_section_ids) => `
+export const addTemplateMutation = (title, data_section_ids, start_year, end_year) => `
     mutation AddTemplate {
         addTemplate(
             title: "${title}"
             data_section_ids: "${data_section_ids}"
+            start_year: "${start_year}"
+            end_year: "${end_year}"
         )
     }
 `;
@@ -213,12 +215,14 @@ export const updateUserConnectionMutation = (user_connection_id, status) => `
     }
 `;
 
-export const updateTemplateMutation = (template_id, title, data_section_ids) => `
+export const updateTemplateMutation = (template_id, title, data_section_ids, start_year, end_year) => `
     mutation UpdateTemplate {
         updateTemplate(
             template_id: "${template_id}"
             title: "${title}"
             data_section_ids: "${data_section_ids}"
+            start_year: "${start_year}"
+            end_year: "${end_year}"
         )
     }
 `;

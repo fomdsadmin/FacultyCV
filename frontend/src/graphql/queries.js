@@ -256,6 +256,8 @@ export const getAllTemplatesQuery = () => `
             template_id
             title
             data_section_ids
+            start_year
+            end_year
         }
     }
 `;

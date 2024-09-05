@@ -84,6 +84,8 @@ type Template {
   template_id: String!
   title: String!
   data_section_ids: String!
+  start_year: String
+  end_year: String
 }
 
 type TeachingData {
@@ -280,12 +282,16 @@ type Mutation {
     addTemplate(
       title: String!
       data_section_ids: String!
+      start_year: String
+      end_year: String
     ): String
 
     updateTemplate(
       template_id: String!
       title: String
       data_section_ids: String
+      start_year: String
+      end_year: String
     ): String
 
     deleteTemplate(

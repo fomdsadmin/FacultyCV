@@ -15,7 +15,7 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
     setFetchingData(true);
     setInitialRender(false);
     try {
-      const retrievedData = await getPatentMatches('Lorne A', user.last_name);
+      const retrievedData = await getPatentMatches(user.first_name, user.last_name);
       console.log(retrievedData);
   
       const allDataDetails = [];

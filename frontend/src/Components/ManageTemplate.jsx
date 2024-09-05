@@ -10,6 +10,8 @@ const ManageTemplate = ({ template, onBack, fetchTemplates }) => {
   const [loading, setLoading] = useState(true);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [startYear, setStartYear] = useState(template.start_year || '');
+  const [endYear, setEndYear] = useState(template.end_year || '');
 
   useEffect(() => {
     fetchSections();
@@ -35,20 +37,30 @@ const ManageTemplate = ({ template, onBack, fetchTemplates }) => {
   };
 
   const handleSaveTemplateChanges = async () => {
+    if (!startYear || !endYear) {
+      setErrorMessage('You must choose a start and end year.');
+      return;
+    }
+
+    if (endYear !== 'Current' && parseInt(endYear) <= parseInt(startYear)) {
+      setErrorMessage('End year must be after start year.');
+      return;
+    }
+
     const selectedSectionIds = sections
       .filter(section => section.showMinus)
       .map(section => section.data_section_id);
 
-      if (selectedSectionIds.length === 0) {
-        setErrorMessage('At least one section must be selected.');
-        return;
-      }
-    
+    if (selectedSectionIds.length === 0) {
+      setErrorMessage('At least one section must be selected.');
+      return;
+    }
+
     setSavingTemplate(true);
     const selectedSectionIdsString = selectedSectionIds.join(',');
     console.log('Selected section IDs:', selectedSectionIdsString);
     try {
-      const result = await updateTemplate(template.template_id, template.title, selectedSectionIdsString);
+      const result = await updateTemplate(template.template_id, template.title, selectedSectionIdsString, startYear, endYear);
       console.log('Updated template:', result);
     } catch (error) {
       console.error('Error updating template:', error);
@@ -92,6 +104,8 @@ const ManageTemplate = ({ template, onBack, fetchTemplates }) => {
     setIsModalOpen(true);
   };
 
+  const years = Array.from({ length: 100 }, (_, i) => (new Date().getFullYear() - i).toString());
+
   return (
     <div className=" ">
       <div className="flex justify-between items-center pt-4">
@@ -125,8 +139,38 @@ const ManageTemplate = ({ template, onBack, fetchTemplates }) => {
                 {savingTemplate ? 'Saving...' : 'Save Template Changes'}
               </button>
             </div>
+
             <div className="mb-4">
-              <h2 className='text-sm font-medium text-gray-700 mt-4'>Add or remove sections you want to include on the CV.</h2>
+              <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+              <select
+                className="input input-bordered w-full"
+                value={startYear}
+                onChange={(e) => setStartYear(e.target.value)}
+              >
+                <option value="">Select start year</option>
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+              <select
+                className="input input-bordered w-full"
+                value={endYear}
+                onChange={(e) => setEndYear(e.target.value)}
+              >
+                <option value="">Select end year</option>
+                <option value="Current">Current</option>
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <h2 className='text-sm font-medium text-gray-700 mt-6'>Add or remove sections you want to include on the CV.</h2>
               <h2 className='text-sm font-medium text-gray-700'> Drag and drop sections in the order you want them to appear on the CV.</h2>
             </div>
 

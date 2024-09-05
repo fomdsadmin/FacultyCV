@@ -97,7 +97,6 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
         console.error('Error fetching course data:', error);
     }
     fetchData();
-    setRetrievingData(false);
 }
   
   async function fetchData() {
@@ -150,6 +149,7 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
       console.error('Error fetching data:', error);
     }
     setLoading(false);
+    setRetrievingData(false);
   }
 
   async function fetchDataFirst(result) {

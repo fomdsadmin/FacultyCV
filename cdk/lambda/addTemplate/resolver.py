@@ -20,7 +20,7 @@ def addTemplate(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO templates (title, data_section_ids) VALUES (%s, %s)", (arguments['title'], arguments['data_section_ids'],))
+    cursor.execute("INSERT INTO templates (title, data_section_ids, start_year, end_year) VALUES (%s, %s, %s, %s)", (arguments['title'], arguments['data_section_ids'], arguments['start_year'], arguments['end_year'],))
     cursor.close()
     connection.commit()
     connection.close()

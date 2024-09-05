@@ -48,7 +48,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     setFetchingData(true);
     setInitialRender(false);
     try {
-      const retrievedData = await getRiseDataMatches("Ben", user.last_name);
+      const retrievedData = await getRiseDataMatches(user.first_name, user.last_name);
       console.log(retrievedData);
   
       const allDataDetails = []; // Initialize an array to accumulate data_details
