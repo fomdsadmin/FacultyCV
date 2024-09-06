@@ -1,24 +1,32 @@
 # Faculty CV User Guide
 
 ## Table of Contents
-
-1. [Overview](#overview)
-2. [Role-Based Access](#role-based-access)
-   - [Faculty Role](#faculty-role)
-     - [Profile](#profile)
-     - [Academic Work](#academic-work)
-     - [Reports](#reports)
-     - [Assistants](#assistants)
-     - [Archive](#archive)
-   - [Assistant Role](#assistant-role)
-     - [Connections](#connections)
-   - [Admin Role](#admin-role)
-     - [Users](#users)
-     - [Analytics](#analytics)
-     - [Templates](#templates)
-     - [Sections](#sections)
-     - [Archived Sections](#archived-sections)
-3. [Common Features](#common-features)
+<!-- no toc -->
+- [Overview](#overview)
+  - [Purpose](#purpose)
+  - [Key Features](#key-features)
+  - [User Roles](#user-roles)
+  - [Basic Navigation Tips](#basic-navigation-tips)
+- [Role-Based Access](#role-based-access)
+  - [Faculty Role](#faculty-role)
+    - [Profile](#profile)
+    - [Academic Work](#academic-work)
+    - [Reports](#reports)
+    - [Assistants](#assistants)
+    - [Archive](#archive)
+  - [Assistant Role](#assistant-role)
+    - [Connections](#connections)
+  - [Admin Role](#admin-role)
+    - [Users](#users)
+    - [Analytics](#analytics)
+    - [Templates](#templates)
+    - [Sections](#sections)
+    - [Archived Sections](#archived-sections)
+  - [Department Admin Role](#department-admin-role)
+    - [Users](#users-1)
+    - [Analytics](#analytics-1)
+    - [Templates](#templates-1)
+- [Common Features](#common-features)
 
 ## Overview
 
@@ -135,11 +143,11 @@ Assistants play a crucial role in supporting faculty members by managing their p
 
 ### Admin Role
 
-Admins, encompassing both Departmental Admins and Super Admins, are responsible for managing users, coordinating departmental activities, overseeing system-wide settings, and configuring report templates. Below is an overview of the common pages and functionalities available to admins.
+Admins are responsible for managing users, coordinating departmental activities, overseeing system-wide settings, and configuring report templates. Below is an overview of the common pages and functionalities available to admins.
 
 #### Users
 
-- **Viewing Users:** Admins can view all users within the platform, with Departmental Admins limited to users within their department.
+- **Viewing Users:** Admins can view all users within the platform.
 - **Search and Filters:** Users can be searched and filtered by type (e.g., Faculty, Assistant, Admin) or department.
 - **Managing Roles:** Admins have the ability to change user roles, granting or restricting access as needed.
   - **Adding Connections:**
@@ -191,6 +199,30 @@ Admins, encompassing both Departmental Admins and Super Admins, are responsible 
 - **Permanent Archiving:** Sections remain in the archive indefinitely and are never permanently deleted.
 
 ![Screenshot 2024-08-30 134952](https://github.com/user-attachments/assets/f04ac4dc-18f1-4e15-8bf2-cc8d85b310ed)
+
+### Department Admin Role
+
+Department Admins are responsible for managing users in their department, overseeing system-wide settings, and configuring report templates. Below is an overview of the common pages and functionalities available to department admins.
+
+#### Users
+
+- **Viewing Users:** Department Admins can view all users within their department.
+- **Search and Filters:** Users can be searched and filtered by type (e.g., Faculty, Assistant, Admin).
+- **Managing Roles:** Department Admins have the ability to change user roles, granting or restricting access as needed.
+  - **Adding Connections:**
+    - For Faculty members, admins can add a new assistant who will have access to the faculty member's profile.
+    - For Assistants, admins can add a new faculty connection that they can manage.
+   
+![Screenshot 2024-08-30 134706](https://github.com/user-attachments/assets/ee4931b8-9e8d-48c9-8178-67b425485108)
+
+
+#### Analytics
+The Analytics page has the same view and functionalities as the Admin for now, which can be found [here](#analytics)
+
+
+#### Templates
+The Templates page has the same view and functionalities as the Admin for now, which can be found [here](#templates)
+
 
 ## Common Features
 
