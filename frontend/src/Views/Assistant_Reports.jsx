@@ -152,6 +152,7 @@ const Assistant_Reports = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
       \\usepackage{tabularx}
       \\usepackage{longtable} 
       \\usepackage{hyperref}
+      \\usepackage{fontspec}
   
       \\begin{document}
       \\small

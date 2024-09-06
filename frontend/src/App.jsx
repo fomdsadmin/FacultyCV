@@ -30,6 +30,8 @@ import DepartmentAdminTemplates from './Views/DepartmentAdminTemplates.jsx';
 import DepartmentAdminSections from './Views/DepartmentAdminSections.jsx';
 import DepartmentAdminArchivedSections from './Views/DepartmentAdminArchivedSections.jsx';
 import { getJWT } from './getAuthToken.js';
+import { NotificationProvider } from './Contexts/NotificationContext.jsx';
+import Notification from './Components/Notification.jsx';
 
 Amplify.configure({
   API: {
@@ -122,7 +124,8 @@ function App() {
   }
 
   return (
-    <Router>
+    <NotificationProvider>
+      <Router>
       <Routes>
       <Route path="/home" element={user ? (
         Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser}/> :
@@ -163,6 +166,8 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
+    </NotificationProvider>
+    
   );
 }
 

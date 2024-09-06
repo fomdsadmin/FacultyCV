@@ -6,6 +6,7 @@ import '../CustomStyles/scrollbar.css';
 import Report from '../Components/Report.jsx';
 import PDFViewer from '../Components/PDFViewer.jsx';
 import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
+import { useNotification } from '../Contexts/NotificationContext.jsx';
 
 const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
@@ -17,10 +18,10 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [buildingLatex, setBuildingLatex] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [downloadUrl, setDownloadUrl] = useState(null);
+  const { setNotification } = useNotification();
 
 
   useEffect(() => {
-
     setUser(userInfo);
     const fetchData = async () => {
       setUser(userInfo);
@@ -31,6 +32,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   }, [userInfo]);
 
   const handleTemplateChange = (template) => {
+    console.log(template)
     setSelectedTemplate(template);
     getDataSections(template);
   };
@@ -65,14 +67,15 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     setDataSections(filteredSections);
 
     setBuildingLatex(true);
-    let latex = await buildLatex(filteredSections);
+    let latex = await buildLatex(filteredSections, template);
     setLatex(latex);
-    const key = `${selectedTemplate.template_id}/resume.tex`;
+    console.log(template)
+    const key = `${template.template_id}/resume.tex`;
     // Upload .tex to S3
     await uploadLatexToS3(latex, key);
     // Wait till a url to the latest PDF is available
     const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
- 
+    setNotification(true);
     setBuildingLatex(false);
     setLoading(false);
     setDownloadUrl(url);
@@ -138,7 +141,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       .replace(/~/g, '\\textasciitilde ');
   };
   
-  const buildLatex = async (sections) => {
+  const buildLatex = async (sections, template) => {
     let latex = `
       \\documentclass{article}
       \\usepackage[utf8]{inputenc}
@@ -149,6 +152,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\usepackage{tabularx}
       \\usepackage{longtable} 
       \\usepackage{hyperref}
+      \\usepackage{fontspec}
   
       \\begin{document}
       \\small
@@ -234,16 +238,14 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       const columnWidth = (contentWidth / numColumns).toFixed(2);
       return headers.map(() => `p{${columnWidth}cm}`).join(' | ');
     };
+    
+    let allSectionData = await getUserCVData(userInfo.user_id, template.data_section_ids.split(','));
+    
     for (const section of sections) {
       try {
         console.log(`Fetching data for section: ${section.title}`);
         let sectionData;
-        try {
-          sectionData = await getUserCVData(userInfo.user_id, section.data_section_id);
-        } catch (error) {
-          console.error(`Error fetching data for section ID: ${section.data_section_id}:`, error);
-          continue;
-        }
+        sectionData = allSectionData.filter((data) => data.data_section_id === section.data_section_id);
   
         if (!sectionData || sectionData.length === 0) {
           console.log(`No data found for section ID: ${section.data_section_id}`);
@@ -254,7 +256,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           ...data,
           data_details: JSON.parse(data.data_details),
         }));
-  
+        
         // PATENTS //
         if (section.title.toLowerCase() === 'patents') {
           latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
@@ -471,7 +473,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
             <>
               {buildingLatex ? (
                 <div className='w-3/5 h-full relative'>
-                  <span className='page-loader w-full' style={{ zIndex: 100, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></span>
+                  <span className='w-full' style={{ zIndex: 100, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>PDF generation in progress. You will be notified when this is done. Feel free to navigate away from this page.</span>
                 </div>
               ) : (
                 <div className='w-3/5 h-full'>

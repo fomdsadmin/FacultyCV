@@ -28,8 +28,13 @@ export class CVGenStack extends Stack {
 
         const cvGenLambda = new DockerImageFunction(this, 'cvGenFunction', {
             code: DockerImageCode.fromImageAsset('./'),
-            memorySize: 512,
-            timeout: Duration.minutes(15)
+            memorySize: 2048, // Extra memory needed for faster performance
+            timeout: Duration.minutes(15),
+            environment: {
+                "LUAOTFLOAD_TEXMFVAR": "/tmp/luatex-cache",
+                "TEXMFCONFIG": "/tmp/texmf-config",
+                "TEXMFVAR": "/tmp/texmf-var"
+            }
         });
 
         cvGenLambda.addToRolePolicy(new PolicyStatement({
