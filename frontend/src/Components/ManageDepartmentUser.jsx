@@ -5,7 +5,7 @@ import ConnectionCard from "./ConnectionCard";
 import AssociatedUser from "./AssociatedUser";
 import ConnectionInviteModal from "./ConnectionInviteModal";
 import ChangeRoleModalDepartment from "./ChangeRoleModalDepartment";
-import { getUserConnections } from '../graphql/graphqlHelpers';
+import { getUserConnections, getUser } from '../graphql/graphqlHelpers';
 import { IoMdAddCircleOutline } from "react-icons/io";
 
 const ManageDepartmentUser = ({ user, onBack, fetchAllUsers, department }) => {
@@ -30,7 +30,15 @@ const ManageDepartmentUser = ({ user, onBack, fetchAllUsers, department }) => {
         retrievedUserConnections = await getUserConnections(user.user_id, false);
       }
 
-      const filteredUserConnections = retrievedUserConnections.filter(connection => 
+      const departmentUserConnections = [];
+      for (const connection of retrievedUserConnections) {
+          const userDetails = await getUser(connection.faculty_email);
+          if (userDetails.primary_department === department || userDetails.secondary_department === department || userDetails.role === 'Assistant') {
+              departmentUserConnections.push(connection);
+          }
+      }
+
+      const filteredUserConnections = departmentUserConnections.filter(connection => 
         connection.assistant_first_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
         connection.assistant_last_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
         connection.assistant_email.toLowerCase().startsWith(searchTerm.toLowerCase())
@@ -188,6 +196,8 @@ const ManageDepartmentUser = ({ user, onBack, fetchAllUsers, department }) => {
               getAllUserConnections={getAllUserConnections}
               setIsModalOpen={setIsConnectionModalOpen}
               admin={true}
+              departmentAdmin={true}
+              department={department}
             />
           )}
 

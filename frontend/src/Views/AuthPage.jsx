@@ -3,7 +3,7 @@ import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode,
   getCurrentUser, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
-import { addUser, getUser, updateUser, getExistingUser, addToUserGroup } from '../graphql/graphqlHelpers.js';
+import { addUser, updateUser, getExistingUser, addToUserGroup } from '../graphql/graphqlHelpers.js';
 import { useNavigate } from 'react-router-dom';
 
 const AuthPage = ({ getCognitoUser }) => {
@@ -160,8 +160,9 @@ const AuthPage = ({ getCognitoUser }) => {
     // Password specifications
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[^\s]{8,}$/;
 
-    // // Username specification
-    // const usernameRegex = /@mail\.ubc\.ca$/;
+    // Username specification
+    const usernameRegex = /@[\w-]+\.ubc\.ca$/;
+    const username2Regex = /@ubc\.ca$/;
 
     if (password !== confirmPassword) {
       setSignUpError('Passwords do not match!');
@@ -169,11 +170,10 @@ const AuthPage = ({ getCognitoUser }) => {
     } else if (!passwordRegex.test(password)) {
       setSignUpError('Password must be at least 8 characters long, contain a lowercase letter, an uppercase letter, and a digit.');
       return;
+    } else if (!usernameRegex.test(username) && !username2Regex.test(username)) {
+      setSignUpError('Email must be a valid UBC email address.');
+      return;
     }
-    // } else if (!usernameRegex.test(username)) {
-    //   setSignUpError('Email must be a valid UBC email address.');
-    //   return;
-    // }
     setSignUpError('');
 
     try {
@@ -245,9 +245,9 @@ const AuthPage = ({ getCognitoUser }) => {
         console.log(`Updating user with group ${role}`);
         const result = await updateUser(
             userInformation.user_id, userInformation.first_name, userInformation.last_name, userInformation.preferred_name,
-            email, role, userInformation.bio, userInformation.rank,
+            email, role, userInformation.bio, userInformation.rank, userInformation.institution,
             userInformation.primary_department, userInformation.secondary_department, userInformation.primary_faculty,
-            userInformation.secondary_faculty, userInformation.campus, userInformation.keywords,
+            userInformation.secondary_faculty, userInformation.primary_affiliation, userInformation.secondary_affiliation, userInformation.campus, userInformation.keywords,
             userInformation.institution_user_id, userInformation.scopus_id, userInformation.orcid_id
         )
         console.log('updated user:', result)
@@ -255,7 +255,7 @@ const AuthPage = ({ getCognitoUser }) => {
       }
     } catch (error) {
       try {
-        const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '');
+        const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
         console.log(result);
       } catch (error) {
         console.log('Error adding user to database:', error);

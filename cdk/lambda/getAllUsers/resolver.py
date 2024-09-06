@@ -30,8 +30,8 @@ def getAllUsers(arguments):
     # Define a list of column names matching the 'users' table schema
     columns = [
         'user_id', 'first_name', 'last_name', 'preferred_name', 'email',
-        'role', 'bio', 'rank', 'primary_department', 'secondary_department',
-        'primary_faculty', 'secondary_faculty', 'campus', 'keywords',
+        'role', 'bio', 'rank', 'institution', 'primary_department', 'secondary_department',
+        'primary_faculty', 'secondary_faculty', 'primary_affiliation', 'secondary_affiliation', 'campus', 'keywords',
         'institution_user_id', 'scopus_id', 'orcid_id', 'joined_timestamp'
     ]
     

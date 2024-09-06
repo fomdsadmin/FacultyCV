@@ -2,10 +2,9 @@ import React, { useEffect, useState } from "react";
 import { TbHome } from "react-icons/tb";
 import { HiOutlineAcademicCap } from "react-icons/hi2";
 import { TiDownloadOutline } from "react-icons/ti";
-import { IoPersonAddOutline } from "react-icons/io5";
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { FaRegTrashAlt, FaBars } from "react-icons/fa";
+import { FaRegTrashAlt } from "react-icons/fa";
 
 const Assistant_FacultyMenu = ({ userInfo, assistantUserInfo }) => {
   const location = useLocation();
@@ -23,10 +22,6 @@ const Assistant_FacultyMenu = ({ userInfo, assistantUserInfo }) => {
       console.log('Error during exit:', error);
     }
     setIsExiting(false);
-  }
-
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
   }
 
   useEffect(() => {
@@ -67,12 +62,12 @@ const Assistant_FacultyMenu = ({ userInfo, assistantUserInfo }) => {
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/assistant/reports' ? 'font-bold' : ''}`}>Reports</p>}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === '/assistant/assistants' ? 'bg-gray-200 rounded-lg' : ''}`}>
+        {/* <li className={`mb-2 ${location.pathname === '/assistant/assistants' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/assistant/assistants'>
             <IoPersonAddOutline className="h-5 w-5" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/assistant/assistants' ? 'font-bold' : ''}`}>Assistants</p>}
           </Link>
-        </li>
+        </li> */}
         <li className={`mb-6 ${location.pathname === '/assistant/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/assistant/archive'>
             <FaRegTrashAlt className="h-4 w-4" />

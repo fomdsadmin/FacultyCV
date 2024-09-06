@@ -18,7 +18,7 @@ import Archive from './Views/Archive.jsx';
 import Assistant_FacultyHomePage from './Views/Assistant_FacultyHomePage.jsx';
 import Assistant_Archive from './Views/Assistant_Archive.jsx';
 import Assistant_Reports from './Views/Assistant_Reports.jsx';
-import Assistant_Assistants from './Views/Assistant_Assistants.jsx';
+//import Assistant_Assistants from './Views/Assistant_Assistants.jsx';
 import Assistant_AcademicWork from './Views/Assistant_AcademicWork.jsx';
 import Analytics from './Views/Analytics.jsx';
 import Templates from './Views/Templates.jsx';
@@ -27,8 +27,8 @@ import ArchivedSections from './Views/ArchivedSections.jsx';
 import DepartmentAdminHomePage from './Views/DepartmentAdminHomePage.jsx';
 import DepartmentAdminAnalytics from './Views/DepartmentAdminAnalytics.jsx';
 import DepartmentAdminTemplates from './Views/DepartmentAdminTemplates.jsx';
-import DepartmentAdminSections from './Views/DepartmentAdminSections.jsx';
-import DepartmentAdminArchivedSections from './Views/DepartmentAdminArchivedSections.jsx';
+//import DepartmentAdminSections from './Views/DepartmentAdminSections.jsx';
+//import DepartmentAdminArchivedSections from './Views/DepartmentAdminArchivedSections.jsx';
 import { getJWT } from './getAuthToken.js';
 import { NotificationProvider } from './Contexts/NotificationContext.jsx';
 import Notification from './Components/Notification.jsx';
@@ -152,7 +152,7 @@ function App() {
         <Route path="/assistant/home" element={user ? <Assistant_FacultyHomePage assistantUserInfo={assistantUserInfo} userInfo={userInfo} setUserInfo={setUserInfo} getUser={getUserInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/assistant/academic-work" element={user ? <Assistant_AcademicWork assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/assistant/reports" element={user ? <Assistant_Reports assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
-        <Route path="/assistant/assistants" element={user ? <Assistant_Assistants assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
+        {/* <Route path="/assistant/assistants" element={user ? <Assistant_Assistants assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} /> */}
         <Route path="/assistant/archive" element={user ? <Assistant_Archive assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/analytics" element={user ? <Analytics userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/templates" element={user ? <Templates userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
@@ -160,8 +160,8 @@ function App() {
         <Route path="/archived-sections" element={user ? <ArchivedSections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/department-admin/analytics" element={user ? <DepartmentAdminAnalytics userInfo={userInfo} getCognitoUser={getCognitoUser} departmentAdmin={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} />
         <Route path="/department-admin/templates" element={user ? <DepartmentAdminTemplates userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} />
-        <Route path="/department-admin/sections" element={user ? <DepartmentAdminSections userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} />
-        <Route path="/department-admin/archived-sections" element={user ? <DepartmentAdminArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} />
+        {/* <Route path="/department-admin/sections" element={user ? <DepartmentAdminSections userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} />
+        <Route path="/department-admin/archived-sections" element={user ? <DepartmentAdminArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} /> */}
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

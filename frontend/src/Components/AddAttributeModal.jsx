@@ -40,7 +40,12 @@ const AddAttributeModal = ({ setIsAddAttributeModalOpen, onBack, getDataSections
     }, {});
 
     // Merge combinedAttributes with existing attributes
-    const existingAttributes = JSON.parse(section.attributes);
+    let existingAttributes;
+    try {
+        existingAttributes = JSON.parse(section.attributes);
+    } catch (error) {
+        existingAttributes = section.attributes;
+    }
     const updatedAttributes = { ...existingAttributes, ...combinedAttributes };
 
     const attributesJSONString = JSON.stringify(updatedAttributes).replace(/"/g, '\\"');

@@ -20,7 +20,7 @@ def getArchivedUserCVData(arguments):
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT user_cv_data_id, user_id, data_section_id, data_details, archive, archive_timestamp FROM user_cv_data WHERE user_id = %s AND archive = true', (arguments['user_id'],))
+    cursor.execute('SELECT user_cv_data_id, user_id, data_section_id, data_details, archive, archive_timestamp, editable FROM user_cv_data WHERE user_id = %s AND archive = true', (arguments['user_id'],))
     results = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -34,7 +34,8 @@ def getArchivedUserCVData(arguments):
             'data_section_id': result[2],
             'data_details': result[3],
             'archive': result[4],
-            'archive_timestamp': result[5].isoformat() if result[5] else None
+            'archive_timestamp': result[5].isoformat() if result[5] else None,
+            'editable': result[6]
         })
     return archived_user_cv_data
 

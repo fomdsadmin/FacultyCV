@@ -45,7 +45,7 @@ const Templates = ({ getCognitoUser, userInfo }) => {
     const matchesSearch = title.toLowerCase().startsWith(searchTerm.toLowerCase());
 
     return matchesSearch;
-  });
+  }).sort((a, b) => { return a.title.localeCompare(b.title) });
 
   const handleBack = () => {
     setActiveTemplate(null);

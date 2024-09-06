@@ -7,10 +7,13 @@ type User {
   role: String
   bio: String
   rank: String
+  institution: String
   primary_department: String
   secondary_department: String
   primary_faculty: String
   secondary_faculty: String
+  primary_affiliation: String
+  secondary_affiliation: String
   campus: String
   keywords: String
   institution_user_id: String
@@ -35,6 +38,7 @@ type UserCVData {
   data_details: AWSJSON! #JSON
   archive: Boolean
   archive_timestamp: String
+  editable: Boolean
 }
 
 type ElsevierAuthorProfile {
@@ -80,6 +84,8 @@ type Template {
   template_id: String!
   title: String!
   data_section_ids: String!
+  start_year: String
+  end_year: String
 }
 
 type TeachingData {
@@ -166,10 +172,13 @@ type Mutation {
       role: String!
       bio: String
       rank: String
+      institution: String
       primary_department: String
       secondary_department: String
       primary_faculty: String
       secondary_faculty: String
+      primary_affiliation: String
+      secondary_affiliation: String
       campus: String
       keywords: String
       institution_user_id: String
@@ -185,10 +194,13 @@ type Mutation {
       role: String
       bio: String
       rank: String
+      institution: String
       primary_department: String
       secondary_department: String
       primary_faculty: String
       secondary_faculty: String
+      primary_affiliation: String
+      secondary_affiliation: String
       campus: String
       keywords: String
       institution_user_id: String
@@ -214,6 +226,7 @@ type Mutation {
       user_id: String!
       data_section_id: String!
       data_details: AWSJSON! # JSON
+      editable: Boolean!
     ): String
 
     updateUserCVData(
@@ -269,12 +282,16 @@ type Mutation {
     addTemplate(
       title: String!
       data_section_ids: String!
+      start_year: String
+      end_year: String
     ): String
 
     updateTemplate(
       template_id: String!
       title: String
       data_section_ids: String
+      start_year: String
+      end_year: String
     ): String
 
     deleteTemplate(

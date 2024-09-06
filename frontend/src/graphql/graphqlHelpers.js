@@ -192,6 +192,7 @@ export const getExistingUser = async (institution_user_id) => {
  *      user_id
  *      data_section_id
  *      data_details: JSON string
+ *      editable: Boolean
  * }
  */
 export const getUserCVData = async (user_id, data_section_ids) => {
@@ -211,6 +212,7 @@ export const getUserCVData = async (user_id, data_section_ids) => {
  *      data_details: JSON string
  *      archive
  *      archive_timestamp
+ *      editable
  * }
  */
 export const getArchivedUserCVData = async (user_id) => {
@@ -316,6 +318,8 @@ export const getUserConnections = async (user_id, isFaculty = true) => {
  *      template_id: Identifier for template in the DB
  *      title
  *      data_section_ids
+ *      start_year
+ *      end_year
  *  }, ...
  * ]
  */
@@ -482,11 +486,12 @@ export const removeFromUserGroup = async (userName, userGroup) => {
  * user_id - ID of the user the profile belongs to
  * data_section_id - ID of the data section as returned by the getAllSections call
  * data_details - JSON String
+ * editable - Boolean
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUserCVData = async (user_id, data_section_id, data_details) => {
-    const results = await runGraphql(addUserCVDataMutation(user_id, data_section_id, data_details));
+export const addUserCVData = async (user_id, data_section_id, data_details, editable=true) => {
+    const results = await runGraphql(addUserCVDataMutation(user_id, data_section_id, data_details, editable));
     return results['data']['addUserCVData'];
 }
 
@@ -530,13 +535,13 @@ export const addSection = async (title, description, data_type, attributes) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const addUser = async (first_name, last_name, preferred_name,
-    email, role, bio, rank, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
+    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
+    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
         const results = await runGraphql(addUserMutation(
             first_name, last_name, preferred_name,
-            email, role, bio, rank, primary_department, 
+            email, role, bio, rank, institution, primary_department, 
             secondary_department, primary_faculty,
-            secondary_faculty, campus, keywords,
+            secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords,
             institution_user_id, scopus_id, orcid_id
         ));
         return results['data']['addUser'];
@@ -589,11 +594,13 @@ export const addUserConnection = async (
  * Arguments:
  * title - title of template
  * data_section_ids - list of data section ids
+ * start_year - start year of the template
+ * end_year - end year of the template
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addTemplate = async (title, data_section_ids) => {
-    const results = await runGraphql(addTemplateMutation(title, data_section_ids));
+export const addTemplate = async (title, data_section_ids, start_year, end_year) => {
+    const results = await runGraphql(addTemplateMutation(title, data_section_ids, start_year, end_year));
     return results['data']['addTemplate'];
 }
 
@@ -691,13 +698,13 @@ export const linkPublication = async (user_id, data_details) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateUser = async (user_id, first_name, last_name, preferred_name,
-    email, role, bio, rank, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
+    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
+    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
         const results = await runGraphql(updateUserMutation(
             user_id, first_name, last_name, preferred_name,
-            email, role, bio, rank, primary_department, 
+            email, role, bio, rank, institution, primary_department, 
             secondary_department, primary_faculty,
-            secondary_faculty, campus, keywords,
+            secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords,
             institution_user_id, scopus_id, orcid_id
         ));
         return results['data']['updateUser'];
@@ -778,11 +785,13 @@ export const updateUserConnection = async (user_connection_id, status) => {
  * template_id - ID of the template
  * title - title of the template
  * data_section_ids - list of data section ids
+ * start_year - start year of the template
+ * end_year - end year of the template
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateTemplate = async (template_id, title, data_section_ids) => {
-    const results = await runGraphql(updateTemplateMutation(template_id, title, data_section_ids));
+export const updateTemplate = async (template_id, title, data_section_ids, start_year, end_year) => {
+    const results = await runGraphql(updateTemplateMutation(template_id, title, data_section_ids, start_year, end_year));
     return results['data']['updateTemplate'];
 }
 

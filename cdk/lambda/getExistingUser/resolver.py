@@ -43,16 +43,19 @@ def getExistingUser(arguments):
             'role': result[5],
             'bio': result[6],
             'rank': result[7],
-            'primary_department': result[8],
-            'secondary_department': result[9],
-            'primary_faculty': result[10],
-            'secondary_faculty': result[11],
-            'campus': result[12],
-            'keywords': result[13],
-            'institution_user_id': result[14],
-            'scopus_id': result[15],
-            'orcid_id': result[16],
-            'joined_timestamp': result[17]
+            'institution': result[8],
+            'primary_department': result[9],
+            'secondary_department': result[10],
+            'primary_faculty': result[11],
+            'secondary_faculty': result[12],
+            'primary_affiliation': result[13],
+            'secondary_affiliation': result[14],
+            'campus': result[15],
+            'keywords': result[16],
+            'institution_user_id': result[17],
+            'scopus_id': result[18],
+            'orcid_id': result[19],
+            'joined_timestamp': result[20]
         }
     else:
         user = "User not found"

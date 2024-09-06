@@ -12,7 +12,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [loading, setLoading] = useState(true);
-  const [dataSections, setDataSections] = useState([]);
   const [Templates, setTemplates] = useState([]);
   const [latex, setLatex] = useState('');
   const [buildingLatex, setBuildingLatex] = useState(true);
@@ -26,6 +25,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     const fetchData = async () => {
       setUser(userInfo);
       const templates = await getAllTemplates();
+      console.log('Templates:', templates);
       setTemplates(templates);
     };
     fetchData();
@@ -34,7 +34,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const handleTemplateChange = (template) => {
     console.log(template)
     setSelectedTemplate(template);
-    getDataSections(template);
+    createLatexFile(template);
   };
 
   const handleSearchChange = (event) => {
@@ -43,31 +43,11 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 
   const searchedTemplates = Templates.filter(template =>
     template.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => a.title.localeCompare(b.title));
 
-  const getDataSections = async (template) => {
-    const retrievedSections = await getAllSections();
-    const sectionIds = template.data_section_ids;
-
-    const parsedSections = retrievedSections.map((section) => ({
-      ...section,
-      attributes: JSON.parse(section.attributes),
-    }));
-
-    let filteredSections = [];
-
-    if (sectionIds != null && sectionIds.length > 0) {
-      filteredSections = parsedSections.filter((section) =>
-        sectionIds.includes(section.data_section_id)
-      );
-    } else {
-      filteredSections = parsedSections;
-    }
-
-    setDataSections(filteredSections);
-
+  const createLatexFile = async (template) => {
     setBuildingLatex(true);
-    let latex = await buildLatex(filteredSections, template);
+    let latex = await buildLatex(template);
     setLatex(latex);
     console.log(template)
     const key = `${template.template_id}/resume.tex`;
@@ -141,7 +121,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       .replace(/~/g, '\\textasciitilde ');
   };
   
-  const buildLatex = async (sections, template) => {
+  const buildLatex = async (template) => {
     let latex = `
       \\documentclass{article}
       \\usepackage[utf8]{inputenc}
@@ -190,13 +170,16 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\vspace{-0.5cm}
       
       \\begin{flushleft}
-      \\textbf{JOINT APPOINTMENTS:} \\\\
-      \\begin{tabularx}{\\textwidth}{|X|}
-      \\hline
-      ${escapeLatex(user.secondary_department)} \\\\
-      \\hline
-      \\end{tabularx}
+        \\textbf{JOINT APPOINTMENTS:} \\\\
+        \\begin{tabularx}{\\textwidth}{|X|}
+        \\hline
+        ${escapeLatex(user.secondary_department) ? escapeLatex(user.secondary_department) : ''}
+        ${user.secondary_department && user.primary_faculty ? ', ' : ''}${user.primary_faculty ? escapeLatex(user.primary_faculty) : ''}
+        ${(user.secondary_department || user.primary_faculty) && user.secondary_faculty ? ', ' : ''}${user.secondary_faculty ? escapeLatex(user.secondary_faculty) : ''} \\\\
+        \\hline
+        \\end{tabularx}
       \\end{flushleft}
+
       
       \\vspace{-0.5cm}
       
@@ -204,7 +187,8 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\textbf{AFFILIATIONS:} \\\\
       \\begin{tabularx}{\\textwidth}{|X|}
       \\hline
-      ${escapeLatex(user.secondary_faculty)}, ${escapeLatex(user.primary_faculty)} \\\\
+      ${escapeLatex(user.primary_affiliation) ? escapeLatex(user.primary_affiliation) : ''}
+      ${user.primary_affiliation && user.secondary_affiliation ? ', ' : ''}${user.secondary_affiliation ? escapeLatex(user.secondary_affiliation) : ''} \\\\
       \\hline
       \\end{tabularx}
       \\end{flushleft}
@@ -239,7 +223,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       return headers.map(() => `p{${columnWidth}cm}`).join(' | ');
     };
     
-    let allSectionData = await getUserCVData(userInfo.user_id, template.data_section_ids.split(','));
+    /*let allSectionData = await getUserCVData(userInfo.user_id, template.data_section_ids.split(','));
     
     for (const section of sections) {
       try {
@@ -255,20 +239,126 @@ const Reports = ({ userInfo, getCognitoUser }) => {
         const parsedData = sectionData.map((data) => ({
           ...data,
           data_details: JSON.parse(data.data_details),
-        }));
-        
+        }));*/
+
+    const retrievedSections = await getAllSections();
+    const sectionIds = template.data_section_ids;
+
+    const parsedSections = retrievedSections.map((section) => ({
+      ...section,
+      attributes: JSON.parse(section.attributes),
+    }));
+
+    let filteredSections = [];
+
+    if (sectionIds != null && sectionIds.length > 0) {
+      filteredSections = parsedSections
+        .filter((section) => sectionIds.includes(section.data_section_id))
+        .sort((a, b) => sectionIds.indexOf(a.data_section_id) - sectionIds.indexOf(b.data_section_id));
+    } else {
+      filteredSections = parsedSections;
+    }
+
+    console.log('Filtered sections:', filteredSections);
+
+    let sectionData;
+    try {
+      console.log('user id', userInfo.user_id);
+      const dataSectionIdsArray = template.data_section_ids.split(',');
+      console.log('template ids', dataSectionIdsArray);
+      sectionData = await getUserCVData(userInfo.user_id, dataSectionIdsArray);
+      console.log('Section data:', sectionData);
+    } catch (error) {
+      console.error('Error fetching data for template', error);
+    }
+
+    if (!sectionData || sectionData.length === 0) {
+      console.log('No data found for template: ', template.title);
+    }
+
+    const parsedData = sectionData.map((data) => ({
+      ...data,
+      data_details: JSON.parse(data.data_details),
+    }));
+
+    const currentYear = new Date().getFullYear().toString();
+
+    const isWithinRange = (year, startYear, endYear) => {
+      if (endYear === 'Current') {
+        return parseInt(year) >= parseInt(startYear);
+      }
+      return parseInt(year) >= parseInt(startYear) && parseInt(year) <= parseInt(endYear);
+    };
+
+    const extractYearFromDates = (dates) => {
+      if (dates.includes('-')) {
+        const parts = dates.split('-');
+        const endDate = parts[1].trim();
+        if (endDate === 'Current') {
+          return currentYear;
+        }
+        return endDate.split(', ')[1];
+      }
+      return dates.split(', ')[1];
+    };
+
+    for (const section of filteredSections) {
+      try {
+        const sectionData = parsedData.filter((item) => {
+          if (item.data_section_id !== section.data_section_id) {
+            return false;
+          }
+    
+          const { data_details } = item;
+          if (!data_details) {
+            return false;
+          }
+    
+          const { year, year_published, dates } = data_details;
+          const startYear = template.start_year;
+          const endYear = template.end_year;
+    
+          if (year) {
+            return isWithinRange(year, startYear, endYear);
+          }
+    
+          if (year_published) {
+            return isWithinRange(year_published, startYear, endYear);
+          }
+    
+          if (dates) {
+            const extractedYear = extractYearFromDates(dates);
+            return isWithinRange(extractedYear, startYear, endYear);
+          }
+    
+          return false;
+        })
+        .sort((a, b) => {
+          const getYear = (item) => {
+            const { year, year_published, dates } = item.data_details;
+            if (year) return parseInt(year);
+            if (year_published) return parseInt(year_published);
+            if (dates) return parseInt(extractYearFromDates(dates));
+            return 0;
+          };
+  
+          return getYear(b) - getYear(a);
+        });
+    
+        console.log(`Section ${section.title} data: ${sectionData}`);
         // PATENTS //
         if (section.title.toLowerCase() === 'patents') {
           latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+
+          sectionData.forEach((item, index) => {
+            const { first_name, last_name, year_published, title, publication_number, publication_date, country_code, kind_code, family_number } = item.data_details;
   
-          parsedData.forEach((item, index) => {
-            const { first_name, last_name, title, publication_number, publication_date, country_code, kind_code, family_number } = item.data_details;
-  
-            const patentCitation = `${index + 1}. ${escapeLatex(last_name)}, ${escapeLatex(first_name)}. ${escapeLatex(title)}. ${escapeLatex(publication_number)}, ${escapeLatex(country_code + '-' + kind_code)} / ${escapeLatex(family_number)}, filed ${escapeLatex(publication_date)}`;
+            const patentCitation = `${index + 1}. ${escapeLatex(last_name)}, ${escapeLatex(first_name)}. (${escapeLatex(year_published)}). ${escapeLatex(title)}. ${escapeLatex(publication_number)}, ${escapeLatex(country_code + '-' + kind_code)} / ${escapeLatex(family_number)}, filed ${escapeLatex(publication_date)}`;
   
             latex += patentCitation;
   
-            if (index < parsedData.length - 1) {
+            if (index < sectionData.length - 1) {
+              latex += ` \\\\\n`;
               latex += ` \\\\\n`;
             } else {
               latex += `\n`;
@@ -277,7 +367,8 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   
         // COURSES TAUGHT //
         } else if (section.title.toLowerCase() === 'courses taught') {
-          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+
+          latex += `\\subsection*{${escapeLatex(section.title)}}\\vspace{-1.0em}\n`;
   
           let attributes = JSON.parse(section.attributes);
           let headers = Object.keys(attributes).filter(header => header.toLowerCase() !== 'description');
@@ -288,7 +379,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           latex += `\\hline\n`;
           latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
   
-          for (const item of parsedData) {
+          for (const item of sectionData) {
             const row = headers
               .map((header) => {
                 const key = header.replace(/\s+/g, '_').toLowerCase();
@@ -305,13 +396,22 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           } else if (section.title.toLowerCase() === 'publications') {
             latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
 
-            parsedData.forEach((item, index) => {
+            sectionData.forEach((item, index) => {
                 const { title, year_published, journal, author_names, doi } = item.data_details;
 
-                // Limit the number of authors to 6 and add "et al." if there are more
-                let authors = author_names.length > 6 
+                let authors;
+                if (Array.isArray(author_names)) {
+                  // Limit the number of authors to 6 and add "et al." if there are more
+                  authors = author_names.length > 6 
                     ? `${escapeLatex(author_names.slice(0, 6).join(', '))} et al.`
                     : escapeLatex(author_names.join(', '));
+                } else {
+                  // If author_names is a string, check if it is a comma-separated string of more than 6 authors
+                  const authorArray = author_names.split(',').map(name => name.trim());
+                  authors = authorArray.length > 6 
+                    ? `${escapeLatex(authorArray.slice(0, 6).join(', '))} et al.`
+                    : escapeLatex(author_names);
+                }
 
                 // Construct the citation string
                 let citation = `${index + 1}. ${authors} (${escapeLatex(year_published)}). ${escapeLatex(title)}. \\textit{${escapeLatex(journal)}}.`;
@@ -324,7 +424,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
                 latex += citation;
 
                 // Add a line break between entries
-                if (index < parsedData.length - 1) {
+                if (index < sectionData.length - 1) {
                     latex += ` \\\\\n`;
                     latex += ` \\\\\n`;
                 } else {
@@ -337,7 +437,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           let attributes = JSON.parse(section.attributes);
           let headers = Object.keys(attributes);
 
-          latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
+          latex += `\\subsection*{${escapeLatex(section.title)}}\\vspace{-1.0em}\n`;
 
           if (headers.length === 1) {
 
@@ -346,7 +446,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
             latex += `\\begin{longtable}{| p{0.5cm} | p{17.7cm} |}\n`;
             latex += `\\hline\n`;
 
-            for (const item of parsedData) {
+            for (const item of sectionData) {
               const row = headers.map((header) => {
                 const key = header.replace(/\s+/g, '_').toLowerCase();
                 const value = item.data_details[key];
@@ -364,7 +464,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
             latex += `\\hline\n`;
             latex += headers.map((header) => `\\textbf{${escapeLatex(header)}}`).join(' & ') + ' \\\\ \\hline\n';
     
-            for (const item of parsedData) {
+            for (const item of sectionData) {
               const row = headers
                 .map((header) => {
                   const key = header.replace(/\s+/g, '_').toLowerCase();

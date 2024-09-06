@@ -33,7 +33,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         let totalResults = 0;
 
         // Fetch data for the current scopus ID
-        while (pageNumber < totalPages) {
+        while (pageNumber <= totalPages) {
           const retrievedData = await getPublicationMatches(scopusId.trim(), pageNumber, pageSize);
           console.log(retrievedData);
 
@@ -63,12 +63,13 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     setCount(1); // Reset count to 1 before starting
     console.log('Adding publications data...', publications);
     for (const publication of publications) {
-
+      publication.title = publication.title.replace(/"/g, '');
+      publication.journal = publication.journal.replace(/"/g, '');
       const publicationJSON = JSON.stringify(publication).replace(/"/g, '\\"');
       // Handle adding new entry using data_details
       try {
         console.log('Adding new entry:', `"${publicationJSON}"`);
-        const result = await addUserCVData(user.user_id, section.data_section_id, `"${publicationJSON}"`);
+        const result = await addUserCVData(user.user_id, section.data_section_id, `"${publicationJSON}"`, false);
         console.log(result);
       } catch (error) {
         console.error('Error adding new entry:', error);
@@ -87,7 +88,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     <dialog className="modal-dialog" open>
       <button
         type="button"
-        className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
+        className={`btn btn-sm btn-circle btn-ghost absolute right-4 top-4 ${fetchingData && !initialRender ? 'cursor-not-allowed' : ''}`}
         onClick={onClose}
         disabled={fetchingData && !initialRender}
       >
@@ -127,7 +128,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
             Fetching data for Scopus ID - {currentScopusId}
           </div>
           <div className="block text-m mb-1 text-zinc-600">
-            Fetching {(currentPage + 1) * pageSize} out of {totalResults} publications...
+          Fetching {Math.min((currentPage + 1) * pageSize, totalResults)} out of {totalResults} publications...
           </div>
         </div>
       ) : (

@@ -3,6 +3,7 @@ import * as cdk from "aws-cdk-lib";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as wafv2 from 'aws-cdk-lib/aws-wafv2';
 import { Duration } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
@@ -664,6 +665,59 @@ export class ApiStack extends cdk.Stack {
     });
 
     rule.addTarget(new targets.LambdaFunction(deleteArchivedDataLambda));
+
+    // Waf Firewall
+    const waf = new wafv2.CfnWebACL(this, 'waf', {
+      description: 'waf for Faculty CV',
+      scope: 'REGIONAL',
+      defaultAction: { allow: {} },
+      visibilityConfig: { 
+        sampledRequestsEnabled: true, 
+        cloudWatchMetricsEnabled: true,
+        metricName: 'facultyCV-firewall'
+      },
+      rules: [
+        {
+          name: 'AWS-AWSManagedRulesCommonRuleSet',
+          priority: 1,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: 'AWS',
+              name: 'AWSManagedRulesCommonRuleSet',
+            }
+          },
+          overrideAction: { none: {}},
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: 'AWS-AWSManagedRulesCommonRuleSet'
+          }
+        },
+        {
+          name: 'LimitRequests1000',
+          priority: 2,
+          action: {
+            block: {}
+          },
+          statement: {
+            rateBasedStatement: {
+              limit: 1000,
+              aggregateKeyType: "IP"
+            }
+          },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: 'LimitRequests1000'
+          }
+        },
+    ]
+    })
+
+    const wafAssociation = new wafv2.CfnWebACLAssociation(this, 'waf-association', {
+      resourceArn: this.api.arn,
+      webAclArn: waf.attrArn
+    });
 
   }
 }

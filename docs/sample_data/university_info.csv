@@ -12,6 +12,7 @@ Department,Family Practice
 Department,Medical Genetics
 Department,Medicine
 Department,Obstetrics & Gynaecology
+Department,Occupational Science & Occupational Therapy
 Department,Ophthalmology & Visual Sciences
 Department,Orthopaedics
 Department,Pathology & Laboratory Medicine
@@ -24,6 +25,34 @@ Department,Urologic Sciences
 Department,Audiology & Speech Sciences (School)
 Department,Biomedical Engineering (School)
 Department,Population & Public Health (School)
+Affiliation,BC Cancer Research Institute
+Affiliation,BC Centre on Substance Use
+Affiliation,BC Children’s Hospital Research Institute
+Affiliation,Centre for Advancing Health Outcomes
+Affiliation,Centre for Blood Research
+Affiliation,Centre for Cardiovascular Innovation
+Affiliation,Centre for Chronic Disease Prevention and Management
+Affiliation,Centre for Excellence in Indigenous Health
+Affiliation,Centre for Gender & Sexual Health Equity
+Affiliation,Centre for Health Education Scholarship
+Affiliation,Centre for Health Services & Policy Research
+Affiliation,Centre for Heart Lung Innovation
+Affiliation,Centre for Hip Health & Mobility
+Affiliation,Centre for Molecular Medicine and Therapeutics
+Affiliation,Djavad Mowafaghian Centre for Brain Health
+Affiliation,Edwin S.H. Leong Centre for Healthy Aging
+Affiliation,Human Early Learning Partnership
+Affiliation,ICORD
+Affiliation,Institute of Mental Health
+Affiliation,Life Sciences Institute
+Affiliation,Northern Centre for Clinical Research
+Affiliation,Providence Health Care Research Institute
+Affiliation,UBC Centre for Disease Control
+Affiliation,Vancouver Coastal Health Research Institute
+Affiliation,Vancouver Prostate Centre
+Affiliation,W. Maurice Young Centre for Applied Ethics
+Affiliation,Women’s Health Research Institute
+Institution,University of British Columbia
 Campus,UBC Vancouver
 Campus,UBC Okanagan
 Rank,Assistant Professor & Assistant Professor of Teaching
