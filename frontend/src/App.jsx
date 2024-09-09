@@ -32,6 +32,8 @@ import DepartmentAdminTemplates from './Views/DepartmentAdminTemplates.jsx';
 import { getJWT } from './getAuthToken.js';
 import { NotificationProvider } from './Contexts/NotificationContext.jsx';
 import Notification from './Components/Notification.jsx';
+import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
+import { CookieStorage } from 'aws-amplify/utils';
 
 Amplify.configure({
   API: {
@@ -50,6 +52,8 @@ Amplify.configure({
     }
   },
 });
+
+cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
 
 function App() {
   const [user, setUser] = useState(null);

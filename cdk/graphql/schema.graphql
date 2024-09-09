@@ -138,31 +138,72 @@ type Patent {
 
 type Query {
     getUser(email: String!): User
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getExistingUser(institution_user_id: String!): User
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getAllSections: [ DataSection ]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getArchivedSections: [ DataSection ]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getUserCVData(user_id: String!, data_section_id: String, data_section_id_list: [String]): [UserCVData]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getArchivedUserCVData(user_id: String!): [UserCVData]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getAllUniversityInfo: [ UniversityInfo ]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getUserConnections(faculty_user_id: String, assistant_user_id: String): [ UserConnection ]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getAllTemplates: [ Template ]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getTeachingDataMatches(institution_user_id: String!): [TeachingData]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getPublicationMatches(scopus_id: String!, page_number: Int!, results_per_page: Int!): PublicationMatches
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getSecureFundingMatches(first_name: String!, last_name: String!): [SecureFunding]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getAllUsers: [ User ]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getPatentMatches(first_name: String!, last_name: String!): [Patent]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getPresignedUrl(jwt: String!, key: String!, type: String): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     getNumberOfGeneratedCVs: Int!
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 }
 
 type Mutation {
     addToUserGroup(userName: String!, userGroup: String!): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    
     removeFromUserGroup(userName: String!, userGroup: String!): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     generatePDF(first_name: String!): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     addUser(
       first_name: String!
@@ -185,6 +226,7 @@ type Mutation {
       scopus_id: String
       orcid_id: String
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     updateUser(
       first_name: String
@@ -208,6 +250,7 @@ type Mutation {
       orcid_id: String
       user_id: String!
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     addSection(
       title: String!
@@ -215,12 +258,14 @@ type Mutation {
       data_type: String
       attributes: AWSJSON! # JSON
     ): String
+    @aws_auth(cognito_groups: ["Admin"])
 
     updateSection(
       data_section_id: String!
       archive: Boolean
       attributes: AWSJSON # JSON
     ): String
+    @aws_auth(cognito_groups: ["Admin"])
 
     addUserCVData(
       user_id: String!
@@ -228,6 +273,7 @@ type Mutation {
       data_details: AWSJSON! # JSON
       editable: Boolean!
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     updateUserCVData(
       user_cv_data_id: String!
@@ -235,11 +281,13 @@ type Mutation {
       archive: Boolean
       archive_timestamp: String
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     addUniversityInfo(
       type: String!
       value: String!
     ): String
+    @aws_auth(cognito_groups: ["Admin"])
 
     addUserConnection(
       faculty_user_id: String!
@@ -252,32 +300,38 @@ type Mutation {
       assistant_email: String!
       status: String!
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     updateUserConnection(
       user_connection_id: String!
       status: String!
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     deleteUserConnection(
       user_connection_id: String!
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     updateUniversityInfo(
       university_info_id: String!
       type: String
       value: String
     ): String
+    @aws_auth(cognito_groups: ["Admin"])
 
     linkScopusId(
       user_id: String!,
       scopus_id: String!,
       orcid_id: String
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     linkOrcid(
       user_id: String!,
       orcid_id: String!
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     addTemplate(
       title: String!
@@ -285,6 +339,7 @@ type Mutation {
       start_year: String
       end_year: String
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
     updateTemplate(
       template_id: String!
@@ -293,8 +348,10 @@ type Mutation {
       start_year: String
       end_year: String
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
     deleteTemplate(
       template_id: String!
     ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 }
