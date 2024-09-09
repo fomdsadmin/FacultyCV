@@ -190,6 +190,7 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
                   id="preferredName" 
                   name="preferred_name" 
                   type="text" 
+                  maxLength={100}
                   value={userInfo.preferred_name || ''} 
                   className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
                   onChange={handleInputChange} 
@@ -214,6 +215,7 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
                 id="bio" 
                 name="bio" 
                 value={userInfo.bio || ''} 
+                maxLength={500}
                 className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
                 onChange={handleInputChange} 
               ></textarea>

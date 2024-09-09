@@ -211,6 +211,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
                   id="preferredName" 
                   name="preferred_name" 
                   type="text" 
+                  maxLength={100}
                   value={userInfo.preferred_name || ''} 
                   className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
                   onChange={handleInputChange} 
@@ -234,6 +235,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
               <textarea 
                 id="bio" 
                 name="bio" 
+                maxLength={1000}
                 value={userInfo.bio || ''} 
                 className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
                 onChange={handleInputChange} 
