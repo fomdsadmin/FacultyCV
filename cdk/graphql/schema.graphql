@@ -147,19 +147,19 @@ type Query {
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
     
     getArchivedSections: [ DataSection ]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
     
     getUserCVData(user_id: String!, data_section_id: String, data_section_id_list: [String]): [UserCVData]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getArchivedUserCVData(user_id: String!): [UserCVData]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getAllUniversityInfo: [ UniversityInfo ]
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
@@ -171,22 +171,22 @@ type Query {
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
     
     getTeachingDataMatches(institution_user_id: String!): [TeachingData]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getPublicationMatches(scopus_id: String!, page_number: Int!, results_per_page: Int!): PublicationMatches
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getSecureFundingMatches(first_name: String!, last_name: String!): [SecureFunding]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getAllUsers: [ User ]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
     
     getPatentMatches(first_name: String!, last_name: String!): [Patent]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getPresignedUrl(jwt: String!, key: String!, type: String): String
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
@@ -273,7 +273,7 @@ type Mutation {
       data_details: AWSJSON! # JSON
       editable: Boolean!
     ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
 
     updateUserCVData(
       user_cv_data_id: String!
@@ -281,7 +281,7 @@ type Mutation {
       archive: Boolean
       archive_timestamp: String
     ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
 
     addUniversityInfo(
       type: String!
@@ -325,13 +325,13 @@ type Mutation {
       scopus_id: String!,
       orcid_id: String
     ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
 
     linkOrcid(
       user_id: String!,
       orcid_id: String!
     ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
 
     addTemplate(
       title: String!
