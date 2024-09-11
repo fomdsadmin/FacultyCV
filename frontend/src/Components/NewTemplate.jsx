@@ -21,7 +21,7 @@ const NewTemplate = ({ onBack, fetchTemplates }) => {
     const sectionsWithToggle = fetchedSections.map(section => ({
       ...section,
       showMinus: true,
-    }));
+    })).sort((a, b) => a.title.localeCompare(b.title));
     console.log('Sections:', sectionsWithToggle);
     setSections(sectionsWithToggle);
     setLoading(false);

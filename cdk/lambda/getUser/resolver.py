@@ -39,7 +39,28 @@ def getUser(event):
     # Prepare the SELECT query
     email = arguments['email']  # get the email from arguments
 
-    if email != cognito_email:
+    # Retrieve user_ids from users table
+    cursor.execute(f"SELECT user_id FROM users WHERE email = '{email}'")
+    email_user_id = cursor.fetchone()
+    cursor.execute(f"SELECT user_id, role FROM users WHERE email = '{cognito_email}'")
+    cognito_user_data = cursor.fetchone()
+
+    if not email_user_id or not cognito_user_data:
+        return "User not found"
+
+    email_user_id = email_user_id[0]
+    cognito_user_id = cognito_user_data[0]
+    cognito_user_role = cognito_user_data[1]
+
+    # Check user_connections table
+    cursor.execute(f"""
+    SELECT status FROM user_connections 
+    WHERE assistant_user_id = '{cognito_user_id}' 
+    AND faculty_user_id = '{email_user_id}'
+    """)
+    connection_status = cursor.fetchone()
+
+    if (not connection_status or connection_status[0] != 'confirmed') and (email_user_id != cognito_user_id) and ("Admin" not in cognito_user_role):
         return "Unauthorized"
 
     query = f"""
