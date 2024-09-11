@@ -16,7 +16,7 @@ This prototype application centralizes academic outputs and automates the creati
 
 The following architecture diagram illustrates the various AWS components utliized to deliver the solution. For an in-depth explanation of the frontend and backend stacks, refer to the [Architecture Deep Dive](docs/ArchitectureDeepDive.md).
 
-![Alt text](./docs/architecture/FacultyCV_architecture.png)
+![Alt text](./docs/architecture/FacultyCV_architecture.drawio.png)
 
 # Deployment Guide
 
