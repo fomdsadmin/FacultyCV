@@ -274,6 +274,17 @@ export class ApiStack extends cdk.Stack {
       ],
     }));
 
+    // Grant permission to get user details from Cognito
+    resolverRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+          "cognito-idp:AdminGetUser",
+      ],
+      resources: [
+          `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${this.userPool.userPoolId}`,
+      ],
+    }));
+
     resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
@@ -318,7 +329,7 @@ export class ApiStack extends cdk.Stack {
       "getUser",
       ["getUser"],
       "Query",
-      {},
+      {USER_POOL_ID: this.userPool.userPoolId},
       resolverRole,
       [psycopgLayer]
     );

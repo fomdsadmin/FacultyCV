@@ -53,7 +53,7 @@ const DepartmentAdminHomePage = ({ userInfo, getCognitoUser, department }) => {
         lastName.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
         email.toLowerCase().startsWith(searchTerm.toLowerCase());
 
-      const matchesFilter = activeFilters.length === 0 || activeFilters.includes(user.role);
+      const matchesFilter = activeFilters.length === 0 || !activeFilters.includes(user.role);
 
       return matchesSearch && matchesFilter;
     })

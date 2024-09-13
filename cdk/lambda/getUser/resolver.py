@@ -1,6 +1,7 @@
 import boto3
 import json
 import psycopg2
+import os
 
 sm_client = boto3.client('secretsmanager')
 
@@ -15,14 +16,53 @@ def getCredentials():
     credentials['db'] = secrets['dbname']
     return credentials
 
-def getUser(arguments):
+def getUser(event):
     credentials = getCredentials()
     connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
     print("Connected to database")
     cursor = connection.cursor()
     
+    arguments = event['arguments']
+
+    cognito_idp = boto3.client('cognito-idp')
+
+    user_name = event['identity']['claims']['username']
+    user_pool_id = os.environ['USER_POOL_ID']
+
+    # Get user attributes
+    user_attributes = cognito_idp.admin_get_user(
+        UserPoolId=user_pool_id,
+        Username=user_name
+    )
+
+    cognito_email = next(attr['Value'] for attr in user_attributes['UserAttributes'] if attr['Name'] == 'email')
     # Prepare the SELECT query
     email = arguments['email']  # get the email from arguments
+
+    # Retrieve user_ids from users table
+    cursor.execute(f"SELECT user_id FROM users WHERE email = '{email}'")
+    email_user_id = cursor.fetchone()
+    cursor.execute(f"SELECT user_id, role FROM users WHERE email = '{cognito_email}'")
+    cognito_user_data = cursor.fetchone()
+
+    if not email_user_id or not cognito_user_data:
+        return "User not found"
+
+    email_user_id = email_user_id[0]
+    cognito_user_id = cognito_user_data[0]
+    cognito_user_role = cognito_user_data[1]
+
+    # Check user_connections table
+    cursor.execute(f"""
+    SELECT status FROM user_connections 
+    WHERE assistant_user_id = '{cognito_user_id}' 
+    AND faculty_user_id = '{email_user_id}'
+    """)
+    connection_status = cursor.fetchone()
+
+    if (not connection_status or connection_status[0] != 'confirmed') and (email_user_id != cognito_user_id) and ("Admin" not in cognito_user_role):
+        return "Unauthorized"
+
     query = f"""
     SELECT * FROM users 
     WHERE email = '{email}'
@@ -66,4 +106,4 @@ def getUser(arguments):
     return user
 
 def lambda_handler(event, context):
-    return getUser(event['arguments'])
+    return getUser(event)
