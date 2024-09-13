@@ -251,6 +251,7 @@ type Mutation {
       scopus_id: String
       orcid_id: String
       user_id: String!
+      cognito_user_id: String
     ): String
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 

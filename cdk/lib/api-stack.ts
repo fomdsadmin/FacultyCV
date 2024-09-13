@@ -374,7 +374,9 @@ export class ApiStack extends cdk.Stack {
       "updateUser",
       ["updateUser"],
       "Mutation",
-      {},
+      {
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+      },
       resolverRole,
       [psycopgLayer]
     );

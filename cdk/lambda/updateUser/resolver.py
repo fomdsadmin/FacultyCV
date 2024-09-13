@@ -1,8 +1,12 @@
 import boto3
 import json
 import psycopg2
+from datetime import datetime
+import time
+import os
 
 sm_client = boto3.client('secretsmanager')
+dynamodb = boto3.client('dynamodb')
 
 def getCredentials():
     credentials = {}
@@ -70,6 +74,16 @@ def updateUser(arguments):
         arguments['user_id']
     ))
 
+    # Update the key cognito_user_id/ to the current timestamp
+    user_logs = {
+        'logEntryId': {'S': f"{arguments['cognito_user_id']}"},
+        'timestamp': {'N': f"{int(time.time())}"}
+    }
+    dynamodb.put_item(
+        TableName=os.environ['TABLE_NAME'],
+        Item=user_logs
+    )
+    print("Updated user logs")
     cursor.close()
     connection.commit()
     connection.close()

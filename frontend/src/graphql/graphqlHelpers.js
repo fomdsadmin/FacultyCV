@@ -716,12 +716,13 @@ export const linkPublication = async (user_id, data_details) => {
 export const updateUser = async (user_id, first_name, last_name, preferred_name,
     email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
     secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id) => {
+        const cognito_user_id = await getUserId();
         const results = await runGraphql(updateUserMutation(
             user_id, first_name, last_name, preferred_name,
             email, role, bio, rank, institution, primary_department, 
             secondary_department, primary_faculty,
             secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords,
-            institution_user_id, scopus_id, orcid_id
+            institution_user_id, scopus_id, orcid_id, cognito_user_id
         ));
         return results['data']['updateUser'];
 }

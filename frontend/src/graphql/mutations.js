@@ -142,7 +142,7 @@ export const linkOrcidMutation = (user_id, orcid_id) => `
 
 export const updateUserMutation = (user_id, first_name, last_name, preferred_name,
     email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id) => `
+    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id, cognito_user_id) => `
     mutation UpdateUser {
         updateUser(
             first_name: "${first_name}"
@@ -165,6 +165,7 @@ export const updateUserMutation = (user_id, first_name, last_name, preferred_nam
             scopus_id: "${scopus_id}"
             orcid_id: "${orcid_id}"
             user_id: "${user_id}"
+            cognito_user_id: "${cognito_user_id}"
         )
     }
 `;
