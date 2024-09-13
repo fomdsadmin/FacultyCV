@@ -5,7 +5,8 @@ import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getU
     getAllTemplatesQuery, getTeachingDataMatchesQuery, getPublicationMatchesQuery, 
     getSecureFundingMatchesQuery, getRiseDataMatchesQuery, getPatentMatchesQuery,
     getPresignedUrlQuery, getUserInstitutionIdQuery,
-    getNumberOfGeneratedCVsQuery} from './queries';
+    getNumberOfGeneratedCVsQuery,
+    cvIsUpToDateQuery} from './queries';
 import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -13,6 +14,7 @@ import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUs
     linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation,
     addToUserGroupMutation, removeFromUserGroupMutation
     } from './mutations';
+import { getUserId } from '../getAuthToken';
 
 const runGraphql = async (query) => {
     const client = generateClient();
@@ -460,6 +462,19 @@ export const getNumberOfGeneratedCVs = async () => {
     return results['data']['getNumberOfGeneratedCVs'];
 }
 
+/**
+ * Function to check if the CV needs updating
+ * Arguments:
+ * cognito_user_id
+ * template_id
+ * Return value:
+ * Boolean: true or false
+ */
+export const  cvIsUpToDate = async (cognito_user_id, template_id) => {
+    const results = await runGraphql(cvIsUpToDateQuery(cognito_user_id, template_id));
+    return results['data']['cvIsUpToDate'];
+}
+
 // --- POST ---
 
 /**
@@ -491,7 +506,8 @@ export const removeFromUserGroup = async (userName, userGroup) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const addUserCVData = async (user_id, data_section_id, data_details, editable=true) => {
-    const results = await runGraphql(addUserCVDataMutation(user_id, data_section_id, data_details, editable));
+    const cognito_user_id = await getUserId();
+    const results = await runGraphql(addUserCVDataMutation(user_id, data_section_id, data_details, editable, cognito_user_id));
     return results['data']['addUserCVData'];
 }
 
@@ -733,7 +749,8 @@ export const updateSection = async (data_section_id, archive, attributes) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateUserCVData = async (user_cv_data_id, data_details) => {
-    const results = await runGraphql(updateUserCVDataMutation(user_cv_data_id, data_details));
+    const cognito_user_id = await getUserId();
+    const results = await runGraphql(updateUserCVDataMutation(user_cv_data_id, data_details, cognito_user_id));
     return results['data']['updateUserCVData'];
 }
 

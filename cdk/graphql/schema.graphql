@@ -156,6 +156,7 @@ type Query {
     getPatentMatches(first_name: String!, last_name: String!): [Patent]
     getPresignedUrl(jwt: String!, key: String!, type: String): String
     getNumberOfGeneratedCVs: Int!
+    cvIsUpToDate(cognito_user_id: String!, template_id: String!): Boolean
 }
 
 type Mutation {
@@ -227,6 +228,7 @@ type Mutation {
       data_section_id: String!
       data_details: AWSJSON! # JSON
       editable: Boolean!
+      cognito_user_id: String
     ): String
 
     updateUserCVData(
@@ -234,6 +236,7 @@ type Mutation {
       data_details: AWSJSON # JSON
       archive: Boolean
       archive_timestamp: String
+      cognito_user_id: String
     ): String
 
     addUniversityInfo(

@@ -283,6 +283,16 @@ export class ApiStack extends cdk.Stack {
       resources: [cvGenStack.cvS3Bucket.bucketArn + "/*", cvGenStack.cvS3Bucket.bucketArn]
     }));
 
+    resolverRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "dynamodb:*"
+      ],
+      resources: [
+        cvGenStack.dynamoDBTable.tableArn
+      ]
+    }));
+
     createResolver(
       this.api,
       "addToUserGroup",
@@ -398,7 +408,9 @@ export class ApiStack extends cdk.Stack {
       "addUserCVData",
       ["addUserCVData"],
       "Mutation",
-      {},
+      {
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -425,7 +437,9 @@ export class ApiStack extends cdk.Stack {
       "updateUserCVData",
       ["updateUserCVData"],
       "Mutation",
-      {},
+      {
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+      },
       resolverRole,
       [psycopgLayer]
     )
@@ -460,6 +474,18 @@ export class ApiStack extends cdk.Stack {
       resolverRole,
       [awsJwtVerifyLayer],
       Runtime.NODEJS_20_X
+    );
+    createResolver(
+      this.api,
+      "cvIsUpToDate",
+      ["cvIsUpToDate"],
+      "Query",
+      {
+        TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName 
+      },
+      resolverRole,
+      [psycopgLayer]
     );
     createResolver(
       this.api,

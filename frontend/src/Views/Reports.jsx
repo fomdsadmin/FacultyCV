@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
-import { getAllSections, getAllTemplates, getUserCVData } from '../graphql/graphqlHelpers.js';
+import { cvIsUpToDate, getAllSections, getAllTemplates, getUserCVData } from '../graphql/graphqlHelpers.js';
 import '../CustomStyles/scrollbar.css';
 import Report from '../Components/Report.jsx';
 import PDFViewer from '../Components/PDFViewer.jsx';
 import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
 import { useNotification } from '../Contexts/NotificationContext.jsx';
+import { getUserId } from '../getAuthToken.js';
 
 const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
@@ -14,7 +15,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [loading, setLoading] = useState(true);
   const [Templates, setTemplates] = useState([]);
   const [latex, setLatex] = useState('');
-  const [buildingLatex, setBuildingLatex] = useState(true);
+  const [buildingLatex, setBuildingLatex] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [downloadUrl, setDownloadUrl] = useState(null);
   const { setNotification } = useNotification();
@@ -31,8 +32,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     fetchData();
   }, [userInfo]);
 
-  const handleTemplateChange = (template) => {
-    console.log(template)
+  const handleTemplateChange = async (template) => {
     setSelectedTemplate(template);
     createLatexFile(template);
   };
@@ -46,19 +46,29 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   ).sort((a, b) => a.title.localeCompare(b.title));
 
   const createLatexFile = async (template) => {
-    setBuildingLatex(true);
-    let latex = await buildLatex(template);
-    setLatex(latex);
-    console.log(template)
+    const cvUpToDate = await cvIsUpToDate(await getUserId(), template.template_id);
     const key = `${template.template_id}/resume.tex`;
-    // Upload .tex to S3
-    await uploadLatexToS3(latex, key);
-    // Wait till a url to the latest PDF is available
-    const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
-    setNotification(true);
-    setBuildingLatex(false);
-    setLoading(false);
-    setDownloadUrl(url);
+    if (!cvUpToDate) {
+      console.log("New changes! Generating a new CV...");
+      setBuildingLatex(true);
+      let latex = await buildLatex(template);
+      setLatex(latex);
+      // Upload .tex to S3
+      await uploadLatexToS3(latex, key);
+      // Wait till a url to the latest PDF is available
+      const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
+      setNotification(true);
+      setBuildingLatex(false);
+      setLoading(false);
+      setDownloadUrl(url);
+    }
+    else {
+      console.log("No new changes, fetching previously genertated CV");
+      // if no new .tex was uploaded, this will not need to wait 
+      const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
+      setLoading(false);
+      setDownloadUrl(url);
+    }
   }
 
   const downloadLatexFile = () => {
@@ -222,24 +232,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       const columnWidth = (contentWidth / numColumns).toFixed(2);
       return headers.map(() => `p{${columnWidth}cm}`).join(' | ');
     };
-    
-    /*let allSectionData = await getUserCVData(userInfo.user_id, template.data_section_ids.split(','));
-    
-    for (const section of sections) {
-      try {
-        console.log(`Fetching data for section: ${section.title}`);
-        let sectionData;
-        sectionData = allSectionData.filter((data) => data.data_section_id === section.data_section_id);
-  
-        if (!sectionData || sectionData.length === 0) {
-          console.log(`No data found for section ID: ${section.data_section_id}`);
-          continue;
-        }
-  
-        const parsedData = sectionData.map((data) => ({
-          ...data,
-          data_details: JSON.parse(data.data_details),
-        }));*/
 
     const retrievedSections = await getAllSections();
     const sectionIds = template.data_section_ids;

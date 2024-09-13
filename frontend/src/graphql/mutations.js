@@ -56,13 +56,14 @@ export const addUserMutation = (first_name, last_name, preferred_name,
     }
 `;
 
-export const addUserCVDataMutation = (user_id, data_section_id, data_details, editable) => `
+export const addUserCVDataMutation = (user_id, data_section_id, data_details, editable, cognito_user_id) => `
     mutation AddUserCVData {
         addUserCVData(
             user_id: "${user_id}"
             data_section_id: "${data_section_id}"
             data_details: ${data_details}
             editable: ${editable}
+            cognito_user_id: "${cognito_user_id}"
         )
     }
 `;
@@ -178,11 +179,12 @@ export const updateSectionMutation = (data_section_id, archive, attributes) => `
     }
 `;
 
-export const updateUserCVDataMutation = (user_cv_data_id, data_details) => `
+export const updateUserCVDataMutation = (user_cv_data_id, data_details, cognito_user_id) => `
     mutation UpdateUserCVData {
         updateUserCVData(
             user_cv_data_id: "${user_cv_data_id}"
-            data_details: ${data_details}
+            data_details: ${data_details},
+            cognito_user_id: "${cognito_user_id}"
         )
     }
 `;

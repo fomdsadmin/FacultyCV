@@ -4,9 +4,11 @@ import { Construct } from "constructs";
 import { DockerImageCode, DockerImageFunction } from 'aws-cdk-lib/aws-lambda';
 import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 
 export class CVGenStack extends Stack {
     public readonly cvS3Bucket: Bucket;
+    public readonly dynamoDBTable: Table;
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
@@ -24,6 +26,11 @@ export class CVGenStack extends Stack {
                 allowedOrigins: ["*"],
                 allowedHeaders: ["*"]
             }]
+        });
+
+        // DynamoDB to store a log of transactions across data sections
+        this.dynamoDBTable = new Table(this, 'cvLogTable', {
+            partitionKey: { name: 'logEntryId', type: AttributeType.STRING }
         });
 
         const cvGenLambda = new DockerImageFunction(this, 'cvGenFunction', {
