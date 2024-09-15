@@ -10,7 +10,7 @@ This document provides a more in-depth explanation of the system's architecture 
 - [CV Generation Flow (10-13)](#cv-generation-flow-10-13)
 - [Bulk Data Pipeline (14-16)](#bulk-data-pipeline-14-16)
 - [Patent Data Pipeline (17-21)](#patent-data-pipeline-17-21)
-- [Grant Data Pipeline (22-25)](#grant-data-pipeline-21-25)
+- [Grant Data Pipeline (22-25)](#grant-data-pipeline-22-25)
 - [Database Schema](#database-schema)
 
 ## Architecture Diagram
