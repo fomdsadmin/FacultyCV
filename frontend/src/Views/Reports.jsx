@@ -8,6 +8,7 @@ import PDFViewer from '../Components/PDFViewer.jsx';
 import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
 import { useNotification } from '../Contexts/NotificationContext.jsx';
 import { getUserId } from '../getAuthToken.js';
+import { TbSwipeUp } from 'react-icons/tb';
 
 const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
@@ -19,15 +20,18 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [downloadUrl, setDownloadUrl] = useState(null);
   const { setNotification } = useNotification();
+  const [switchingTemplates, setSwitchingTemplates] = useState(false);
 
 
   useEffect(() => {
     setUser(userInfo);
     const fetchData = async () => {
+      setLoading(true);
       setUser(userInfo);
       const templates = await getAllTemplates();
       console.log('Templates:', templates);
       setTemplates(templates);
+      setLoading(false);
     };
     fetchData();
   }, [userInfo]);
@@ -46,6 +50,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   ).sort((a, b) => a.title.localeCompare(b.title));
 
   const createLatexFile = async (template) => {
+    setSwitchingTemplates(true);
     const cvUpToDate = await cvIsUpToDate(await getUserId(), template.template_id);
     const key = `${template.template_id}/resume.tex`;
     if (!cvUpToDate) {
@@ -59,14 +64,14 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
       setNotification(true);
       setBuildingLatex(false);
-      setLoading(false);
+      setSwitchingTemplates(false);
       setDownloadUrl(url);
     }
     else {
       console.log("No new changes, fetching previously genertated CV");
       // if no new .tex was uploaded, this will not need to wait 
       const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
-      setLoading(false);
+      setSwitchingTemplates(false);
       setDownloadUrl(url);
     }
   }
@@ -517,74 +522,87 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           {/* Content Section */}
           <div className="flex-1 min-w-80 !overflow-auto !h-full custom-scrollbar mr-4">
             <h1 className="text-4xl ml-4 mt-4 font-bold my-3 text-zinc-600">Reports</h1>
-            <h2 className="text-2xl ml-4 font-bold my-3 text-zinc-600">Select a Template</h2>
-            {/* <button className='btn btn-primary' onClick={downloadLatexFile}>Download LaTeX</button> */}
-
-            <div className="w-full flex flex-col">
-   
-              <div className="w-full max-w-xs mb-4 ml-4"> 
-                <label className="input input-bordered flex items-center gap-2 w-full">
-                  <input
-                    type="text"
-                    className="grow"
-                    placeholder="Search Templates"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                  />
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    className="h-4 w-4 opacity-70"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </label>
+            {loading ? (
+              <div className="flex justify-center items-center h-full">
+                <span>Loading...</span>
               </div>
+            ) : (
+              <>
+                <h2 className="text-2xl ml-4 font-bold my-3 text-zinc-600">Select a Template</h2>
+                {/* <button className='btn btn-primary' onClick={downloadLatexFile}>Download LaTeX</button> */}
 
-              {/* Template List */}
-              <div className="w-full ml-2 max-w-lg overflow-auto h-auto mb-6 custom-scrollbar"> {/* Restricting width of the template list */}
-                {searchedTemplates.map((template, index) => (
-                  <Report
-                    key={index}
-                    title={template.title}
-                    onClick={() => handleTemplateChange(template)}
-                    isSelected={selectedTemplate && selectedTemplate.template_id === template.template_id}
-                  />
-                ))}
-              </div>
-            </div>
+                <div className="w-full flex flex-col">
+                  <div className="w-full max-w-xs mb-4 ml-4"> 
+                    <label className="input input-bordered flex items-center gap-2 w-full">
+                      <input
+                        type="text"
+                        className="grow"
+                        placeholder="Search Templates"
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                      />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                        className="h-4 w-4 opacity-70"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </label>
+                  </div>
+
+                  {/* Template List */}
+                  <div className="w-full ml-2 max-w-lg overflow-auto h-auto mb-6 custom-scrollbar"> {/* Restricting width of the template list */}
+                    {searchedTemplates.map((template, index) => (
+                      <Report
+                        key={index}
+                        title={template.title}
+                        onClick={() => handleTemplateChange(template)}
+                        isSelected={selectedTemplate && selectedTemplate.template_id === template.template_id}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* PDF Viewer Section */}
-          {selectedTemplate && (
+          {!loading && selectedTemplate && (
             <>
               {buildingLatex ? (
                 <div className='w-3/5 h-full relative'>
                   <span className='w-full' style={{ zIndex: 100, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>PDF generation in progress. You will be notified when this is done. Feel free to navigate away from this page.</span>
                 </div>
               ) : (
-                <div className='w-3/5 h-full'>
-                  <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
-                    <PDFViewer 
-                      url={downloadUrl}
-                    />
+                switchingTemplates ? (
+                  <div className="flex justify-center items-center w-full">
+                    <span>Loading...</span>
                   </div>
+                ) : (
+                  <div className='w-3/5 h-full'>
+                    <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
+                      <PDFViewer 
+                        url={downloadUrl}
+                      />
+                    </div>
 
-                  <div className='flex justify-center'>
-                    <button
-                      onClick={handleDownload}
-                      className={`mt-5 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
-                      disabled={buildingLatex}
-                    >
-                      {buildingLatex ? <span className="loader"></span> : 'Download'}
-                    </button>
+                    <div className='flex justify-center'>
+                      <button
+                        onClick={handleDownload}
+                        className={`mt-5 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
+                        disabled={buildingLatex}
+                      >
+                        {buildingLatex ? <span className="loader"></span> : 'Download'}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )
               )}
             </>
           )}

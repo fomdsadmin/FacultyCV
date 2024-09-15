@@ -19,4 +19,8 @@
   .pagination-controls button {
     margin: 0 5px;
   }
+
+  .react-pdf__Page__annotations .linkAnnotation {
+    border: none !important;
+  }
   
