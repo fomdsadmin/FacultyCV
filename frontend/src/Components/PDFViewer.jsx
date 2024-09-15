@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import '../CustomStyles/PDFViewer.css'; // Import the CSS file for styling
 
@@ -20,12 +20,16 @@ const PDFViewer = ({ url }) => {
     setPageNumber(prevPageNumber => Math.min(prevPageNumber + 1, numPages));
   };
 
+  useEffect(() => {
+    setPageNumber(1);
+  }, [url]);
+
   return (
     <div className="pdf-viewer-wrapper">
       <Document file={url} onLoadSuccess={onDocumentLoadSuccess}>
         <Page pageNumber={pageNumber} />
       </Document>
-      <div className="pagination-controls">
+      <div className="pagination-controls mt-14">
         <button onClick={goToPreviousPage} disabled={pageNumber <= 1}>
         ⮜
         </button>

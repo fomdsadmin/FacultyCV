@@ -34,6 +34,7 @@ const GenericSection = ({ user, section, onBack }) => {
     setFieldData([]);
     // Implement restore functionality here
     try {
+      console.log('Archiving entry:', entry);
       const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
       console.log('Archived entry ', result);
     }
