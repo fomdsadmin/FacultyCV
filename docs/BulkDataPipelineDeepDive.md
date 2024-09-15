@@ -1,6 +1,6 @@
 # Bulk Data Pipeline Deep Dive
 
-The goal of the Bulk Data Pipeline is to initially populate the database with users, university information, data sections and teaching data from the following 4 csv files:
+The goal of the Bulk Data Pipeline is to initially populate the database with users, university information, data sections and teaching data from the following 4 Comma-Separated-Value (CSV) files:
 
 1. institution_data.csv
 2. university_info.csv
@@ -10,71 +10,118 @@ The goal of the Bulk Data Pipeline is to initially populate the database with us
 ***
 ![Bulk Data Pipeline Diagram](../docs/architecture/FacultyCVBulkData.drawio.png)
 
-For the pipeline to run, currently a total of 6 Comma-Separated-Value (CSV) files need to be uploaded to the designated S3 bucket with the proper folder structure. Detailed on how to perform this part is outlined in the [User Guide to Grant Downloads](User%20Guide%20to%20Grant%20Downloads.pdf) or [Step 6 in the Deployment Guide](DeploymentGuide.md#step-6-upload-data-to-s3-for-the-grant-data-pipeline). Assuming the uploading process is done correctly, the entire pipeline will automatically run from start to end without needing further user intervention (unless there is an error).
+For the pipeline to run, currently a total of 4 CSV files need to be uploaded to the designated S3 bucket. Detailed on how to perform this part is outlined in [Step 4 in the Deployment Guide](DeploymentGuide.md#step-6-upload-data-to-s3-for-the-grant-data-pipeline). Assuming the uploading process is done correctly, the entire pipeline will automatically run from start to end without needing further user intervention (unless there is an error). These are the [sample csv files](../docs/sample_data/) you can refer to in order to make sure they follow the same format.
 
 This document will show exactly how that is achieved.
 
 ## 1. S3 Object Upload Event Notification
 
-`raw` folder structure:
+`user_data` folder structure:
 
 ```text
-raw/
-├── cihr/
-│   └── your-cihr-file.csv
-├── nserc/
-│   └── your-nserc-file.csv
-├── sshrc/
-│   ├── your-sshrc-file.csv
-│   └── sshrc_program_codes.csv
-├── cfi/
-│   └── your-cfi-file.csv
-└── rise/
-    └── your-rise-file.csv
+user_data/
+├── institution_data.csv
+├── university_info.csv
+├── data_sections.csv
+└── teaching_data.csv
 ```
 
 Amazon S3 Bucket has a functionality called Event Notification. Whenever a user Uploads/Delete/Copy a file inside a Bucket, they can set up an event notification that lets the bucket communicate with other cloud event services (SQS, SNS, Lambda). For this pipeline, S3 was set up a notification specifically for s3:ObjectCreated:PUT event, so that whenever the user uploaded the data, S3 will notify a Lambda function via Event Notification.
 
-## 2. Lambda Function mapping event to the correct Glue job
+## 2. Why do the files follow a naming convention?
 
-### 2.1 Why do the folders follow a naming convention?
+Lambda is the event receiver which stores the data from each CSV file into our database. There are multiple functions that will always listen to uploading events originating from the **user_data** folder. The function that is called depends on which file is uploaded which is why the naming convention is very important. For example the Lambda function storeBulkUsers is called when the file institution_data.csv is uploaded to the S3 bucket which stores all the preloaded bulk users into the database. 
 
-Lambda function is the event receiver and the "orchestrator" of the pipeline. The Function will always listen to uploading events originating from the **raw** folder first since it is the first folder to be created (uploaded by the user). The lambda then filters out what subfolders are contained inside **raw** then it always invokes the corresponding `clean-...`. For example, if the **raw** folder only contains 2 subfolders **cihr** and **nserc** along with the CSV files inside each, then the Lambda function will invoke the `clean-cihr` and `clean-nserc` Glue jobs. The Lambda function parses the exact name of the subfolder (case sensitive) to determine the Glue job to call, so if there is a subfolder called *new_grant_source* then it would also need a corresponding Glue job with the name `clean-new_grant_source` to clean the data. That is why a strict naming convention for subfolders at the initial upload was enforced.
+## 3. Store data
 
-### 2.2 Sequential invocations
 
-After the Lambda function invoked the `clean-...` Glue jobs, they will create a temporary file that will be stored in the same S3 Bucket under the `clean` folder, with the same subfolders structure (5 subfolders). S3 event notification is also configured for this folder, and Lambda will invoke the next Glue Job called `storeData` 5 times. In other words, the Lambda function listens to S3 notifications to orchestrate the Glue jobs in sequential order (clean -> store in database).
+Each CSV file has data that is inserted into a different table in our PostgreSQL database.
 
-## 3. Data Cleaning
+### 3.1 institution_data.csv
 
-Currently, there are 5 different grant datasets, each with different schemas (columns). Each CSV dataset needs to be processed differently, but ultimately they need to end up with the same schema as the grant_data table that was set up in the PostgreSQL database to store the processed grant data.
+The institution_data.csv contains data for bulk loading users into our application. Users will be matched to this data if it already exists based on their emails when they sign up. This way they will already have the information associated with their profile filled out. This data is inserted into the `users` table.
 
-![alt text](images/grant-data-s3-bucket-clean.png)
+![Update Schema](images/users-table.png)
 
-Thus, there are 5 different Glue jobs called `clean-cihr`, `clean-nserc`, `clean-sshrc`, `clean-cfi`and `clean-rise` to clean each corresponding grant CSV data, since again each raw dataset has a different encoding format and schemas. They are using a powerful Python tabular-data library called [Pandas](https://pandas.pydata.org/docs/index.html) to manipulate the data. The cleaning process involves stripping off special characters, reformatting datetime encoding, trimming white space and splitting each researcher's name into first name and last name. The results will then be stored in the same S3 bucket under the `clean` folder, with the same subfolder structure as `raw`. This step ensures that all 5 datasets will have the same schema and that the data in each column are formatted the same way for the next step.
+### 3.11 `users` table
 
-## 4. Store data
+| Column Name          | Description                                       | Source   |
+|----------------------|---------------------------------------------------|----------|
+| user_id              | The unique ID associated with each user           | Generated internally by the PostgreSQL Database Engine |
+| first_name           | The user's first name                             | CSV file |
+| preferred_name       | The name the user prefers to be called            | CSV file |
+| last_name            | The user's last name                              | CSV file |
+| email                | The user's email address                          | CSV file |
+| role                 | The role of the user within the organization      | CSV file |
+| bio                  | A brief biography of the user                     | CSV file |
+| rank                 | The rank of the user within the organization      | CSV file |
+| institution          | The institution with which the user is affiliated | CSV file |
+| primary_department   | The user's primary department                     | CSV file |
+| secondary_department | The user's secondary department                   | CSV file |
+| primary_faculty      | The user's primary faculty                        | CSV file |
+| secondary_faculty    | The user's secondary faculty                      | CSV file |
+| primary_affiliation  | The user's primary affiliation                    | CSV file |
+| secondary_affiliation| The user's secondary affiliation                  | CSV file |
+| campus               | The campus the user is located at                 | CSV file |
+| keywords             | Keywords associated with the user                 | CSV file |
+| institution_user_id  | Unique ID for the user within the institution     | CSV file |
+| scopus_id            | Unique ID for the user within Scopus              | CSV file |
+| orcid_id             | The user's ORCID ID                               | CSV file |
+| joined_timestamp     | The datetime when the user was added              | CSV file |
 
-The data is now processed and ready to be imported into the database under the `grants` table.
 
-### Relational Table Update in the PostgreSQL Database
+### 3.2 university_info.csv
 
-For this new implementation to work, a new `grants` table is created.
+The university_info.csv contains data about the institution such as faculties, departments, campuses and affiliations. In this csv the `type` column would be what type of data it is such as "Faculty" and the `value` column contains the actual data such as "Medicine". This data is used for options that Faculty can select on their profiles and is inserted into the `university_info` table.
 
-![Update Schema](images/grants-table.png)
+![Update Schema](images/university-info-table.png)
 
-### 4.1 `grants` table
+### 3.21 `university_info` table
 
-| Column Name | Description | Source |
-| ----------- | ----------- | ------ |
-| grant_id | the **unique ID** associated with each grant record | generated internally by the PostgreSQL Database Engine |
-| first_name | the researcher's first name | CSV files |
-| last_name | the researcher's last name | CSV files |
-| keywords | the keywords associated with that project | CSV files |
-| agency | the granting agency (currently only CIHR, NSERC, SSHRC, CFI or RISE)| CSV files |
-| department | the department of the researcher | CSV files |
-| program | the specific program that the researcher applied for and was awarded the grant | CSV files |
-| title | the title of a researcher's project | CSV files |
-| amount | the amount of grant awarded (in dollars) | CSV files |
-| year | the fiscal year | CSV files |
-| dates | the start date (effective date) of the grant - end date (expiry date) of the grant | CSV files |
+| Column Name       | Description                                       | Source   |
+|-------------------|---------------------------------------------------|----------|
+| university_info_id| The unique ID associated with each university info| Generated internally by the PostgreSQL Database Engine |
+| type              | The type of information                           | CSV file |
+| value             | The value corresponding to the type                | CSV file |
+
+
+### 3.3 data_sections.csv
+
+The data_sections.csv contains data about the sections that show up on Faculty CVs. The attributes of a section are stored as a JSON object to make it easier to insert new attributes to an existing section. This data is used to generate the Faculty CVs and is inserted into the `data_sections` table.
+
+![Update Schema](images/data-sections-table.png)
+
+### 3.31 `data_sections` table
+
+| Column Name      | Description                                   | Source   |
+|------------------|-----------------------------------------------|----------|
+| data_section_id  | The unique ID associated with each data section | Generated internally by the PostgreSQL Database Engine |
+| title            | The title of the data section                  | CSV file |
+| description      | A description of what the data section contains | CSV file |
+| data_type        | The type of data stored in the section          | CSV file |
+| archived         | Whether the data section is archived or not  | CSV file |
+| attributes       | JSON object containing attributes of the data section    | CSV file |
+
+
+### 3.4 teaching_data.csv
+
+The teaching_data.csv contains data about courses taught by Faculty members and will eventually end up in the Courses Taught section of a CV. The data will be matched to users based on the institution_user_id. This CSV is made from UBC's internal TTPS data and is inserted into the `teaching_data` table.
+
+![Update Schema](images/teaching-data-table.png)
+
+### 3.41 `teaching_data` table
+
+| Column Name         | Description                                      | Source    |
+| ------------------- | ------------------------------------------------ | --------- |
+| teaching_data_id    | the unique ID associated with each teaching record | Generated internally by the PostgreSQL Database Engine |
+| year                | the fiscal year                                   | CSV file |
+| session             | the academic session                              | CSV file |
+| course              | the course code                                   | CSV file |
+| description         | the course description                            | CSV file |
+| scheduled_hours     | the number of scheduled hours for the course      | CSV file |
+| class_size          | the size of the class                             | CSV file |
+| lectures            | the number of lectures                            | CSV file |
+| tutorials           | the number of tutorials                           | CSV file |
+| labs                | the number of lab sessions                        | CSV file |
+| other               | other teaching activities                         | CSV file |
+| institution_user_id | the unique ID of the institution user             | CSV file |

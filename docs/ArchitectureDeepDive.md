@@ -76,3 +76,21 @@ The architecture diagram exported as XML file from draw.io can be found [here](.
 The schema below illustrates the structure of each table and how they are related to each other:
 
 ![Database Schema](../docs/images/Faculty_CV_RDS_DB_Schema.png)
+
+**users**: Stores user information for faculty, assistants, admins, and department admins.
+___
+**data_sections**: Stores the section information including the attributes in a JSON object.
+___
+**user_cv_data**: Stores user CV data as a JSON object in data_details and other data information.
+___
+**teaching_data**: Stores TTPS data from csv uploaded to S3.
+___
+**grants**: Stores grant data from multiple external sources as well as the internal RISe data.
+___
+**patents**: Stores patent data fetched from the European Patent Office (EPO).
+___
+**university_info**: Stores university info in the following format: Faculty (type) and Medicine (value). This information is retrieved from a csv uploaded to S3.
+___
+**templates**: Stores templates for CVs.
+___
+**user_connections**: Stores the connections between Faculty and Assistants.
