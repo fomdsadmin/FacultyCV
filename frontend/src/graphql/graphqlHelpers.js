@@ -764,7 +764,8 @@ export const updateUserCVData = async (user_cv_data_id, data_details) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateUserCVDataArchive = async (user_cv_data_id, archive) => {
-    const results = await runGraphql(updateUserCVDataArchiveMutation(user_cv_data_id, archive));
+    const cognito_user_id = await getUserId();
+    const results = await runGraphql(updateUserCVDataArchiveMutation(user_cv_data_id, archive, cognito_user_id));
     return results['data']['updateUserCVDataArchive'];
 }
 

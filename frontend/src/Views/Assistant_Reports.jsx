@@ -23,7 +23,6 @@ const Assistant_Reports = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
 
 
   useEffect(() => {
-
     setUser(userInfo);
     const fetchData = async () => {
       setUser(userInfo);

@@ -190,11 +190,12 @@ export const updateUserCVDataMutation = (user_cv_data_id, data_details, cognito_
     }
 `;
 
-export const updateUserCVDataArchiveMutation = (user_cv_data_id, archive) => `
+export const updateUserCVDataArchiveMutation = (user_cv_data_id, archive, cognito_user_id) => `
     mutation UpdateUserCVData {
         updateUserCVData(
             user_cv_data_id: "${user_cv_data_id}"
             archive: ${archive}
+            cognito_user_id: "${cognito_user_id}"
         )
     }
 `;
