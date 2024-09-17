@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { signIn, signUp, confirmSignIn, confirmSignUp, resendSignUpCode, 
-  getCurrentUser, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
+  getCurrentUser, resetPassword, confirmResetPassword, 
+  signOut} from 'aws-amplify/auth';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
-import { addUser, updateUser, getExistingUser, addToUserGroup } from '../graphql/graphqlHelpers.js';
+import { addUser, updateUser, getExistingUser, addToUserGroup, getUser } from '../graphql/graphqlHelpers.js';
 import { useNavigate } from 'react-router-dom';
 
 const AuthPage = ({ getCognitoUser }) => {
@@ -108,7 +109,7 @@ const AuthPage = ({ getCognitoUser }) => {
       });
       console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
       if (user.isSignedIn) {
-        storeUserData(firstName, lastName, username, role, institution_user_id);
+        storeUserData(firstName, lastName, username, role, institution_user_id, newPassword);
       }
     } catch (error) {
       console.log('Error setting new password:', error);
@@ -131,7 +132,7 @@ const AuthPage = ({ getCognitoUser }) => {
       setLoading(false);
       console.log('User signed up:', user.isSignUpComplete, user.nextStep.signInStep);
       if (user.isSignUpComplete) {
-        storeUserData(firstName, lastName, username, role, institution_user_id);
+        storeUserData(firstName, lastName, username, role, institution_user_id, password);
       }
     } catch (error) {
       console.log('Error setting new password:', error);
@@ -202,7 +203,7 @@ const AuthPage = ({ getCognitoUser }) => {
     }
   };
 
-  const storeUserData = async (first_name, last_name, email, role, institution_user_id) => {
+  const storeUserData = async (first_name, last_name, email, role, institution_user_id, newPassword) => {
     setLoading(true);
     //sign in user
     try {
@@ -213,7 +214,7 @@ const AuthPage = ({ getCognitoUser }) => {
         console.log('Not signed in, signing in...', error);
         user = await signIn({
           username: username,
-          password: password
+          password: newPassword
         });
       }      
     } catch (error) {
@@ -233,6 +234,27 @@ const AuthPage = ({ getCognitoUser }) => {
       }
     } catch (error) {
       console.log('Error adding user to group:', error);
+      setLoading(false);
+      return;
+    }
+
+    // need new user session to refresh user group
+    try {
+      const result = await signOut();
+      console.log('Signing out:', result);
+    } catch (error) {
+      console.log('Error signing out:', error);
+      setLoading(false);
+      return;
+    }
+    try {
+      const user = await signIn({
+        username: username,
+        password: newPassword
+      });
+      console.log('User logged in:', user.isSignedIn, user.nextStep.signInStep);
+    } catch (error) {
+      console.log('Error logging in:', error);
       setLoading(false);
       return;
     }
@@ -256,7 +278,9 @@ const AuthPage = ({ getCognitoUser }) => {
     } catch (error) {
       try {
         const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
-        console.log(result);
+        const user = await getUser(email);
+        const result3 = await updateUser(user.user_id, first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+        console.log(result, result3);
       } catch (error) {
         console.log('Error adding user to database:', error);
         setLoading(false);
