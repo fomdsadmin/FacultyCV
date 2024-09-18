@@ -482,7 +482,10 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     }
   
     latex += `\\end{document}`;
-    return latex;
+    return latex.replace(/<sup>(.*?)<\/sup>/g, (match, p1) => {
+      // Replace with LaTeX superscript syntax
+      return `$^{${p1}}$`;
+    });
   };
   
 
