@@ -199,10 +199,8 @@ type Query {
 
 type Mutation {
     addToUserGroup(userName: String!, userGroup: String!): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
     
     removeFromUserGroup(userName: String!, userGroup: String!): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
     generatePDF(first_name: String!): String
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])

@@ -32,6 +32,8 @@ def lambda_handler(event, context):
     cognito_user_id = event['arguments']['cognito_user_id']
     # First get the timestamp of when the last PDF was generated
     last_modified_timestamp = get_last_modified_timestamp(os.environ['BUCKET_NAME'], f"{cognito_user_id}/{template_id}/resume.pdf")
+    if last_modified_timestamp is None:
+        return False
     # Then get the timestamp of last update from DynamoDB
     # First check the key cognito_user_id (for changes to the CV headers)
     dynamodb_item_user = get_dynamodb_item(cognito_user_id)
