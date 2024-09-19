@@ -14,7 +14,7 @@ As well as the data provided by UBC:
 ***
 ![Grant Data Pipeline Diagram](../docs/architecture/FacultyCVGrantData.drawio.png)
 
-For the pipeline to run, currently a total of 6 Comma-Separated-Value (CSV) files need to be uploaded to the designated S3 bucket with the proper folder structure. Detailed on how to perform this part is outlined in the [User Guide to Grant Downloads](Grant_Downloads_User_Guide.pdf) or [Step 6 in the Deployment Guide](DeploymentGuide.md#step-6-upload-data-to-s3-for-the-grant-data-pipeline). Assuming the uploading process is done correctly, the entire pipeline will automatically run from start to end without needing further user intervention (unless there is an error). These are the [sample csv files](sample_grants_data/) you can refer to in order to make sure they follow the same format.
+For the pipeline to run, currently a total of 6 Comma-Separated-Value (CSV) files need to be uploaded to the designated S3 bucket with the proper folder structure. Detailed on how to perform this part is outlined in the [User Guide to Grant Downloads](Grant_Downloads_User_Guide.pdf) or Step 5 in the [Deployment Guide](DeploymentGuide.md). Assuming the uploading process is done correctly, the entire pipeline will automatically run from start to end without needing further user intervention (unless there is an error). These are the [sample csv files](sample_grants_data/) you can refer to in order to make sure they follow the same format.
 
 This document will show exactly how that is achieved.
 

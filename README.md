@@ -1,4 +1,4 @@
-# FacultyCV
+# Faculty CV
 
 This prototype application centralizes academic outputs and automates the creation of standardized CVs. The system streamlines data collection from various internal and external sources, reducing the administrative burden on faculty and staff. By formatting data consistently and allowing assistants to access faculty profiles, it enhances operational efficiency.
 
@@ -7,6 +7,7 @@ This prototype application centralizes academic outputs and automates the creati
 | [High Level Architecture](#High-Level-Architecture) | High level overview illustrating component interactions |
 | [Deployment](#Deployment-Guide)                     | How to deploy the project                               |
 | [User Guide](#User-Guide)                           | The working solution                                    |
+| [API Guide](#API-Guide)                           | A guide to the GraphQL API                                    |
 | [Directories](#Directories)         | General project directory structure             |
 | [Changelog](#Changelog)                             | Any changes post publish                                |
 | [Credits](#Credits)                                 | Meet the team behind the solution                       |
@@ -25,6 +26,10 @@ To deploy this solution, please follow the steps laid out in the [Deployment Gui
 # User Guide
 
 For instructions on how to navigate the web app interface, refer to the [Web App User Guide](docs/UserGuide.md).
+
+# API Guide
+
+For details on the queries and mutations made for this GraphQL API, refer to the [API Guide](docs/APIGuide.md).
 
 # Directories
 
