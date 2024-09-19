@@ -240,10 +240,21 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     const retrievedSections = await getAllSections();
     const sectionIds = template.data_section_ids;
 
-    const parsedSections = retrievedSections.map((section) => ({
-      ...section,
-      attributes: JSON.parse(section.attributes),
-    }));
+    const parsedSections = retrievedSections.map((section) => {
+        let attributes;
+        try {
+            // Attempt to parse section.attributes
+            attributes = JSON.parse(section.attributes);
+        } catch (e) {
+            // If parsing fails, assume section.attributes is already a JSON object
+            attributes = section.attributes;
+        }
+    
+        return {
+            ...section,
+            attributes: attributes,
+        };
+    });
 
     let filteredSections = [];
 
@@ -272,10 +283,21 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       console.log('No data found for template: ', template.title);
     }
 
-    const parsedData = sectionData.map((data) => ({
-      ...data,
-      data_details: JSON.parse(data.data_details),
-    }));
+    const parsedData = sectionData.map((data) => {
+      let dataDetails;
+      try {
+          // Attempt to parse data.data_details
+          dataDetails = JSON.parse(data.data_details);
+      } catch (e) {
+          // If parsing fails, assume data.data_details is already a JSON object
+          dataDetails = data.data_details;
+      }
+
+      return {
+          ...data,
+          data_details: dataDetails,
+      };
+    });
 
     const currentYear = new Date().getFullYear().toString();
 
@@ -366,7 +388,14 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 
           latex += `\\subsection*{${escapeLatex(section.title)}}\\vspace{-1.0em}\n`;
   
-          let attributes = JSON.parse(section.attributes);
+          let attributes;
+          try {
+              // Attempt to parse section.attributes
+              attributes = JSON.parse(section.attributes);
+          } catch (e) {
+              // If parsing fails, assume section.attributes is already a JSON object
+              attributes = section.attributes;
+          }
           let headers = Object.keys(attributes).filter(header => header.toLowerCase() !== 'description');
   
           const columns = calculateColumnWidths(headers);
@@ -430,7 +459,14 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   
         // OTHER //
         } else {
-          let attributes = JSON.parse(section.attributes);
+          let attributes;
+          try {
+              // Attempt to parse section.attributes
+              attributes = JSON.parse(section.attributes);
+          } catch (e) {
+              // If parsing fails, assume section.attributes is already a JSON object
+              attributes = section.attributes;
+          }
           let headers = Object.keys(attributes);
 
           latex += `\\subsection*{${escapeLatex(section.title)}}\\vspace{-1.0em}\n`;
