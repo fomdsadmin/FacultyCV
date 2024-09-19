@@ -28,7 +28,6 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     try {
       // Get faculty member by email
       facultyMember = await getUser(email);
-      console.log('User found:', facultyMember);
     } catch (error) {
       console.error('Error finding user:', error);
       setError('No user exists. Please enter valid email');

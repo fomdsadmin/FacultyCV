@@ -52,17 +52,6 @@ def getUser(event):
     cognito_user_id = cognito_user_data[0]
     cognito_user_role = cognito_user_data[1]
 
-    # Check user_connections table
-    cursor.execute(f"""
-    SELECT status FROM user_connections 
-    WHERE assistant_user_id = '{cognito_user_id}' 
-    AND faculty_user_id = '{email_user_id}'
-    """)
-    connection_status = cursor.fetchone()
-
-    if (not connection_status or connection_status[0] != 'confirmed') and (email_user_id != cognito_user_id) and ("Admin" not in cognito_user_role):
-        return "Unauthorized"
-
     query = f"""
     SELECT * FROM users 
     WHERE email = '{email}'
@@ -73,6 +62,32 @@ def getUser(event):
 
     # Fetch the result
     result = cursor.fetchone()
+
+    if (email_user_id != cognito_user_id) and ("Admin" not in cognito_user_role) and ("Assistant" not in cognito_user_role):
+        return {
+            'user_id': '',
+            'first_name': '',
+            'last_name': '',
+            'preferred_name': '',
+            'email': result[4],
+            'role': result[5],
+            'bio': '',
+            'rank': '',
+            'institution': '',
+            'primary_department': '',
+            'secondary_department': '',
+            'primary_faculty': '',
+            'secondary_faculty': '',
+            'primary_affiliation': '',
+            'secondary_affiliation': '',
+            'campus': '',
+            'keywords': '',
+            'institution_user_id': '',
+            'scopus_id': '',
+            'orcid_id': '',
+            'joined_timestamp': ''
+        }
+
     if result is not None:
         user = {
             'user_id': result[0],

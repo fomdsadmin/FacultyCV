@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import PermanentEntry from './PermanentEntry';
-import GenericEntry from './GenericEntry';
+import PublicationsPermanentEntry from './PublicationsPermanentEntry';
+import PublicationsEntry from './PublicationsEntry';
 import EntryModal from './EntryModal';
 import PermanentEntryModal from './PermanentEntryModal';
 import PublicationsModal from './PublicationsModal';
@@ -173,20 +173,22 @@ const PublicationsSection = ({ user, section, onBack }) => {
           {fieldData.length > 0 ? (
             fieldData.map((entry, index) => (
               entry.editable ? (
-                <GenericEntry
+                <PublicationsEntry
                   key={index}
                   onEdit={() => handleEdit(entry)}
                   field1={entry.field1}
                   field2={entry.field2}
+                  data_details={entry.data_details}
                   onArchive={() => handleArchive(entry)}
                 />
               ) : (
-                <PermanentEntry
+                <PublicationsPermanentEntry
                   isArchived={false}
                   key={index}
                   onEdit={() => handleEdit(entry)}
                   field1={entry.field1}
                   field2={entry.field2}
+                  data_details={entry.data_details}
                   onArchive={() => handleArchive(entry)}
                 />
               )

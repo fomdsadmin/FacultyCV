@@ -130,7 +130,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
             .join(' ');
     };
 
-    const filteredKeys = Object.keys(formData).filter(key => !key.toLowerCase().includes('id') && !['startDateMonth', 'startDateYear', 'endDateMonth', 'endDateYear'].includes(key));
+    const filteredKeys = Object.keys(formData).filter(key => !key.toLowerCase().includes('id') && !['startDateMonth', 'startDateYear', 'endDateMonth', 'endDateYear'].includes(key)).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
