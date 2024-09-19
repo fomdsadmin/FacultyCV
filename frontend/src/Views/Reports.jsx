@@ -8,7 +8,6 @@ import PDFViewer from '../Components/PDFViewer.jsx';
 import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
 import { useNotification } from '../Contexts/NotificationContext.jsx';
 import { getUserId } from '../getAuthToken.js';
-import { TbSwipeUp } from 'react-icons/tb';
 
 const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
@@ -482,7 +481,10 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     }
   
     latex += `\\end{document}`;
-    return latex;
+    return latex.replace(/<sup>(.*?)<\/sup>/g, (match, p1) => {
+      // Replace with LaTeX superscript syntax
+      return `$^{${p1}}$`;
+    });
   };
   
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import '../CustomStyles/PDFViewer.css'; // Import the CSS file for styling
+import { FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -29,15 +30,15 @@ const PDFViewer = ({ url }) => {
       <Document file={url} onLoadSuccess={onDocumentLoadSuccess}>
         <Page pageNumber={pageNumber} />
       </Document>
-      <div className="pagination-controls mt-14">
+      <div className="pagination-controls mt-14 flex items-center" >
         <button onClick={goToPreviousPage} disabled={pageNumber <= 1}>
-        ⮜
+          <FaAngleLeft />
         </button>
-        <span>
+        <span >
           Page {pageNumber}/{numPages}
         </span>
         <button onClick={goToNextPage} disabled={pageNumber >= numPages}>
-        ⮞
+          <FaAngleRight />
         </button>
       </div>
     </div>
