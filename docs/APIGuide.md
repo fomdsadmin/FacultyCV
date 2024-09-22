@@ -419,6 +419,7 @@ Checks if the CV needs updating.
 
 ## Arguments:
 - "cognito_user_id": "string"
+- "user_id": "string"
 - "template_id": "string"
 
 ## Return Value:

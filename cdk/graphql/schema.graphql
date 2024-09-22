@@ -194,7 +194,7 @@ type Query {
     getNumberOfGeneratedCVs: Int!
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
-    cvIsUpToDate(cognito_user_id: String!, template_id: String!): Boolean
+    cvIsUpToDate(cognito_user_id: String!, user_id: String!, template_id: String!): Boolean
 }
 
 type Mutation {

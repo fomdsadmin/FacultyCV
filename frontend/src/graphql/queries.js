@@ -358,10 +358,11 @@ export const getNumberOfGeneratedCVsQuery = () => `
     }
 `;
 
-export const cvIsUpToDateQuery = (cognito_user_id, template_id) => `
+export const cvIsUpToDateQuery = (cognito_user_id, user_id, template_id) => `
     query CvIsUpToDate {
         cvIsUpToDate (
             cognito_user_id: "${cognito_user_id}"
+            user_id: "${user_id}",
             template_id: "${template_id}"
         )
     }

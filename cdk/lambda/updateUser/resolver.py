@@ -74,9 +74,9 @@ def updateUser(arguments):
         arguments['user_id']
     ))
 
-    # Update the key cognito_user_id/ to the current timestamp
+    # Update the key cognito_user_id/user_id to the current timestamp
     user_logs = {
-        'logEntryId': {'S': f"{arguments['cognito_user_id']}"},
+        'logEntryId': {'S': f"{arguments['cognito_user_id']}/{arguments['user_id']}"},
         'timestamp': {'N': f"{int(time.time())}"}
     }
     dynamodb.put_item(

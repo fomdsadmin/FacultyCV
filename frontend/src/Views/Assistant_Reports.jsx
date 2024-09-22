@@ -52,8 +52,8 @@ const Assistant_Reports = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
 
   const createLatexFile = async (template) => {
     setSwitchingTemplates(true);
-    const cvUpToDate = await cvIsUpToDate(await getUserId(), template.template_id);
-    const key = `${template.template_id}/resume.tex`;
+    const cvUpToDate = await cvIsUpToDate(await getUserId(), userInfo.user_id, template.template_id);
+    const key = `${userInfo.user_id}/${template.template_id}/resume.tex`;
     if (!cvUpToDate) {
       console.log("New changes! Generating a new CV...");
       setBuildingLatex(true);
