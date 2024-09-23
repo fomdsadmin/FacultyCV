@@ -41,9 +41,10 @@ def addUserCVData(arguments):
             if data_section_id in template[1]:
                 filtered_template_ids.append(template[0])
         for template_id in filtered_template_ids:
-            # Update the key cognito_user_id/template_id to the current timestamp
+            # Update the key cognito_user_id/user_id/template_id to the current timestamp
+            # The above key works for assistants and faculty
             user_logs = {
-                'logEntryId': {'S': f"{arguments['cognito_user_id']}/{template_id}"},
+                'logEntryId': {'S': f"{arguments['cognito_user_id']}/{arguments['user_id']}/{template_id}"},
                 'timestamp': {'N': f"{int(time.time())}"}
             }
             dynamodb.put_item(

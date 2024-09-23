@@ -466,12 +466,13 @@ export const getNumberOfGeneratedCVs = async () => {
  * Function to check if the CV needs updating
  * Arguments:
  * cognito_user_id
+ * user_id
  * template_id
  * Return value:
  * Boolean: true or false
  */
-export const  cvIsUpToDate = async (cognito_user_id, template_id) => {
-    const results = await runGraphql(cvIsUpToDateQuery(cognito_user_id, template_id));
+export const  cvIsUpToDate = async (cognito_user_id, user_id, template_id) => {
+    const results = await runGraphql(cvIsUpToDateQuery(cognito_user_id, user_id, template_id));
     return results['data']['cvIsUpToDate'];
 }
 
