@@ -1,13 +1,31 @@
 # Deployment Guide
 
 ## Table of Contents
+<!-- no toc -->
 - [Requirements](#requirements)
+   - [Accounts Requirements](#accounts-requirements)
+   - [Software Requirements](#software-requirements)
 - [Pre-Deployment](#pre-deployment)
+   - [Create GitHub Personal Access Token](#create-github-personal-access-token)
+   - [API Keys/Tokens](#api-keystokens)
 - [Deployment](#deployment)
-    - [Step 1: Clone The Repository](#step-1-clone-the-repository)
-    - [Step 2: Upload Secrets](#step-2-upload-secrets)
-    - [Step 3: CDK Deployment](#step-3-cdk-deployment)
-    - [Step 4: Upload Data](#step-4-upload-data)
+   - [Step 1: Fork \& Clone The Repository](#step-1-fork--clone-the-repository)
+     - [Install Dependencies](#install-dependencies)
+   - [Step 2: Upload Secrets](#step-2-upload-secrets)
+   - [Step 3: Backend Deployment](#step-3-backend-deployment)
+     - [1: Navigate to the cdk directory](#1-navigate-to-the-cdk-directory)
+     - [2: Upload the Elsevier API Key, Institution Token, Database Secret and OPS API Key](#2-upload-the-elsevier-api-key-institution-token-database-secret-and-ops-api-key)
+     - [3: CDK Deployment](#3-cdk-deployment)
+   - [Taking down the deployed stacks](#taking-down-the-deployed-stacks)
+   - [Step 4: Upload Data to S3 for the Bulk Data Pipeline](#step-4-upload-data-to-s3-for-the-bulk-data-pipeline)
+   - [Step 5: Upload Data to S3 for the Grant Data Pipeline](#step-5-upload-data-to-s3-for-the-grant-data-pipeline)
+   - [Step 6: Starting Patent Data Pipeline](#step-6-starting-patent-data-pipeline)
+- [Post-Deployment](#post-deployment)
+   - [Step 1: Build AWS Amplify App](#step-1-build-aws-amplify-app)
+   - [Step 2: Add Redirect](#step-2-add-redirect)
+   - [Step 3: Visit Web App](#step-3-visit-web-app)
+- [Creating a User](#creating-a-user)
+- [Activating User Self Sign up](#activating-user-self-sign-up)
 
 ## Requirements
 
@@ -282,43 +300,15 @@ raw/
 
 **NOTE**: You would have to run the steps above for first-time deployment. **The Patent Data Pipeline** is scheduled to run on every month on the 1st and 15th day (twice a month).
 
-### Step 7: Creating an Admin
-
-To set up an admin account on the app, you will need to do the following steps
-
-1. At the [AWS online console](https://console.aws.amazon.com/console/home), enter `Cognito` in the search bar.
-   ![alt text](images/webApp/webapp01.png)
-2. Click `User Pools` from the left hand sidebar and select the user pool that was created (contains the string `innovationdashbo`).
-   ![alt text](images/webApp/webapp02.png)
-3. Click the `Users` tab, then click `Create User`.
-   ![alt text](images/webApp/webapp03.png)
-4. For Invitation message, select `Send an email invitation`. Then fill in the user's email address in the Email address text field below. For Temporary password, select `Generate a password`. Then click `Create User`.
-   ![alt text](images/webApp/webapp04.png)
-5. The user will receive an email to the email address that was previously entered containing their temporary password.
-   ![alt text](images/webApp/webapp05.png)
-6. When the user enters their email and temporary password on the sign in page of the app, they will then be prompted to replace their temporary password by setting a new password.
-   ![alt text](images/webApp/webapp06.png)
-7. The new admin account has been created!
-
-**Note:**
-Faculty and Assistant accounts must be made through the application by activating user self sign up. Admins are able to make any users a Department Admin through the application. Department Admins can make other users in their department a Department Admin for their department as well. 
-
-#### Activating User Self Sign up
-
-1. Navigate back to same user pool in the previous step on the Cognito Console, click on `Sign-up experience`.
- ![alt text](images/deploymentGuide/cognito8.png)
-1. In order to active self sign up, the `Self-registration` option must be enabled. If it is not, simply click the `Edit` button and enable the feature. This allow users to create their own accounts.
- ![alt text](images/deploymentGuide/cognito9.png)
-
 ## Post-Deployment
 
 ### Step 1: Build AWS Amplify App
 
 Log in to AWS console, and navigate to **AWS Amplify**. You can do so by typing `Amplify` in the search bar at the top.
-![AWS Amplify Console](./images/amplify-console.jpeg)
+![AWS Amplify Console](images/amplify-console.jpeg)
 
 From `All apps`, click `faculty-cv-amplify` to go to the app settings. Note down the App ID.\
-![image](https://github.com/UBC-CIC/grant-program-analytics/assets/113638422/894e60a2-8c61-4749-a35f-d09080fcbc30)
+![image](images/amplify-app.png)
 
 
 You may run the following command to build the app. Please replace `<APP-ID>` with the app ID found in amplify and `<PROFILE-NAME>` with the appropriate AWS profile used earlier. 
@@ -328,12 +318,51 @@ aws amplify start-job --job-type RELEASE --app-id <APP-ID> --branch-name main --
 This will trigger the build. 
 When the build is completed, you will see the screen as shown in the below image.
 Please note down the URL highlighted in red, as this will be the URL of the web application.
-![image](https://github.com/UBC-CIC/grant-program-analytics/assets/113638422/7845c352-ed69-424a-917f-11040e2a567d)
-
-
+![image](images/amplify-link.png)
 
 ### Step 2: Add Redirect
 
+Click on `Hosting` in the left taskbar and click on `Rewrites and redirects`.
+
+![image](images/amplify-hosting.png)
+
+Here click on `Manage redirects` and then `Add Rewrite` to add a redirect with: 
+- Source Address:
+`</^[^.]+$|\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>`
+- Target Address: `/`
+- Type: `404 (Redirect)`
+
+![image](images/amplify-redirect.png)
+
+And then click `Save`.
+Refer to [AWS's Page on Single Page Apps](https://docs.aws.amazon.com/amplify/latest/userguide/redirects.html#redirects-for-single-page-web-apps-spa) for further information on why we did that.
 
 ### Step 3: Visit Web App
 Now you can navigate to the URL you created in step 1 to see your application in action.
+
+## Creating a User
+
+To set up a user account on the app, you will need to do the following steps:
+
+1. At the [AWS online console](https://console.aws.amazon.com/console/home), enter `Cognito` in the search bar.
+   ![alt text](images/webapp01.png)
+2. Click `User Pools` from the left hand sidebar and select the user pool `faculty-cv-user-pool`.
+   ![alt text](images/webapp02.png)
+3. Click the `Users` tab, then click `Create User`.
+   ![alt text](images/webapp03.png)
+4. For Invitation message, select `Send an email invitation`. Then fill in the user's email address in the Email address text field below and select the `Mark email address as verified`. For Temporary password, select `Generate a password`. Then click `Create User`.
+   ![alt text](images/webapp04.png)
+5. The user will receive an email to the email address that was previously entered containing their temporary password.
+   ![alt text](images/webapp05.png)
+6. When the user enters their email and temporary password on the sign in page of the app, they will then be prompted to replace their temporary password by setting a new password and choosing the role they want for the account.
+7. The new user account has been created!
+
+**Note:**
+The first Admin must be made manually through Cognito, but after that the Admin is able to make any user an Admin or Department Admin through the application once they have signed up if user self sign up is enabled. Department Admins can make other users in their department a Department Admin for their department as well. 
+
+## Activating User Self Sign up
+
+1. Navigate back to same user pool in the previous step on the Cognito Console, click on `Sign-up experience`.
+ ![alt text](images/cognito8.png)
+1. In order to activate self sign up, the `Self-registration` option must be enabled. If it is not, simply click the `Edit` button and enable the feature. This allow users to create their own accounts.
+ ![alt text](images/cognito9.png)

@@ -20,7 +20,7 @@ const ProfileLinkModal = ({ user, activeModal, setClose, setOrcidId, setScopusId
     let formattedOrcidMatches = [];
 
     try {
-      const elsevierMatches = await getElsevierAuthorMatches('Michael', 'Hayden', institution);
+      const elsevierMatches = await getElsevierAuthorMatches(user.first_name, user.last_name, institution);
       formattedElsevierMatches = elsevierMatches.map(match => ({
         last_name: match.last_name || '',
         first_name: match.first_name || '',

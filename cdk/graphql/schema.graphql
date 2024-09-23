@@ -150,7 +150,7 @@ type Query {
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
     
     getUserCVData(user_id: String!, data_section_id: String, data_section_id_list: [String]): [UserCVData]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+    @aws_auth(cognito_groups: ["Faculty", "Assistant", "Admin", "DepartmentAdmin"])
     
     getArchivedUserCVData(user_id: String!): [UserCVData]
     @aws_auth(cognito_groups: ["Faculty", "Assistant"])

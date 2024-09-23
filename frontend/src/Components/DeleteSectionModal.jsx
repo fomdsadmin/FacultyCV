@@ -9,17 +9,28 @@ const DeleteSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }
   async function deleteSection() {
     setDeletingSection(true);
     try {
-      const attributesString = JSON.stringify(section.attributes).replace(/"/g, '\\"')
-      const result = await updateSection(section.data_section_id, true, `"${attributesString}"`);
-      console.log('Data section archived:', result)
+        
+        // Check if section.attributes is a string and parse it if necessary
+        let attributes;
+        if (typeof section.attributes === 'string') {
+            attributes = JSON.parse(section.attributes);
+        } else {
+            attributes = section.attributes;
+        }
+        console.log('Attributes:', attributes)
+        const attributesString = JSON.stringify(attributes).replace(/"/g, '\\"');
+        console.log('Attributes string:', attributesString);
+        const result = await updateSection(section.data_section_id, true, `"${attributesString}"`);
+        console.log('Data section archived:', result);
     } catch (error) {
-      console.error('Error deleting section: ', error);
+        console.error('Error deleting section: ', error);
     }
     setDeletingSection(false);
     await getDataSections();
     setIsModalOpen(false);
     onBack();
-  }
+}
+
 
   return (
     <dialog className="modal-dialog" open>

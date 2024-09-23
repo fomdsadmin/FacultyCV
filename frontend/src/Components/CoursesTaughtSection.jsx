@@ -279,6 +279,7 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
                   onEdit={() => handleEdit(entry)}
                   field1={entry.field1}
                   field2={entry.field2}
+                  data_details={entry.data_details}
                   onArchive={() => handleArchive(entry)}
                 />
               ) : (
@@ -288,6 +289,7 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
                   onEdit={() => handleEdit(entry)}
                   field1={entry.field1}
                   field2={entry.field2}
+                  data_details={entry.data_details}
                   onArchive={() => handleArchive(entry)}
                 />
               )

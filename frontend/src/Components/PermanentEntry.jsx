@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaEye } from 'react-icons/fa';
 import { IoClose } from 'react-icons/io5';
 import { LuUndo2 } from "react-icons/lu";
@@ -12,7 +12,35 @@ const truncateText = (text, maxLength) => {
   return text;
 };
 
-const PermanentEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2 }) => {
+const capitalizeWords = (string) => {
+  return string.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+};
+
+const addSpaceAfterComma = (string) => {
+  return string.replace(/,/g, ', ');
+};
+
+const PermanentEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2, data_details }) => {
+  const [attributes, setAttributes] = useState([]);
+  
+  useEffect(() => {
+    console.log(data_details);
+    const newAttributes = Object.entries(data_details)
+    .filter(([key, value]) => value && value !== field1 && value !== field2 & !(Array.isArray(value) && value.length === 0) 
+    && key !== 'author_ids'
+    && key !== 'class_size_(per_year)'
+    && key !== 'labs_(per_year)'
+    && key !== 'lectures_(per_year)'
+    && key !== 'other_(per_year)'
+    && key !== 'scheduled_hours'
+    && key !== 'tutorials_(per_year)'
+    && key !== 'author_ids'
+    )
+    .map(([key, value]) => `${capitalizeWords(key)}: ${addSpaceAfterComma(String(value))}`)
+    .sort((a, b) => a.localeCompare(b));
+    setAttributes(newAttributes);
+  }, [data_details, field1, field2]);
+
   return (
     <div className="min-h-8 shadow-glow mx-4 my-2 px-4 py-4 flex items-center bg-white rounded-lg">
       <div className="flex-1 max-w-full">
@@ -26,6 +54,11 @@ const PermanentEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, fiel
             {truncateText(field2, MAX_CHAR_LENGTH)}
           </h2>
         )}
+        {attributes.map((attribute, index) => (
+          <p key={index} className="text-gray-600 break-words text-sm">
+            {truncateText(attribute, MAX_CHAR_LENGTH)}
+          </p>
+        ))}
       </div>
 
       <div className="flex items-center space-x-1">
