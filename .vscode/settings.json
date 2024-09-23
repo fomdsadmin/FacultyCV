@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./cdk/glue/extra-python-lib/custom_modules"
+    ],
+    "deepscan.enable": true
+}

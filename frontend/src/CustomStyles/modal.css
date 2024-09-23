@@ -1,0 +1,41 @@
+.modal-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 200px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+    scrollbar-width: thin; 
+    scrollbar-color: #D9D9D9 #ffffff;
+    width: 90%;
+    max-width: 600px;
+    max-height: 95vh;
+    overflow-y: auto;
+}
+
+@media (min-width: 640px) {
+    .modal-dialog {
+        width: 80%;
+    }
+}
+
+@media (min-width: 768px) {
+    .modal-dialog {
+        width: 70%;
+    }
+}
+
+@media (min-width: 1024px) {
+    .modal-dialog {
+        width: 60%;
+    }
+}
+
+@media (min-width: 1280px) {
+    .modal-dialog {
+        width: 50%;
+    }
+}
