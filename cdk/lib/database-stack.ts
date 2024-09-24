@@ -3,6 +3,7 @@ import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import { aws_rds as rds } from 'aws-cdk-lib';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { VpcStack } from './vpc-stack';
 import * as sm from 'aws-cdk-lib/aws-secretsmanager'
 
@@ -26,6 +27,14 @@ export class DatabaseStack extends Stack {
         parameters: {
           'rds.force_ssl': '0'
         }
+      });
+
+      // Create IAM role for RDS enhanced monitoring
+      const monitoringRole = new iam.Role(this, 'RDSMonitoringRole', {
+          assumedBy: new iam.ServicePrincipal('monitoring.rds.amazonaws.com'),
+          managedPolicies: [
+              iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonRDSEnhancedMonitoringRole')
+          ]
       });
 
       // Define the postgres database
@@ -55,7 +64,9 @@ export class DatabaseStack extends Stack {
         databaseName: 'facultyCV',
         publiclyAccessible: false,
         storageEncrypted: true, // storage encryption at rest
-        parameterGroup: parameterGroup
+        parameterGroup: parameterGroup,
+        monitoringInterval: cdk.Duration.minutes(1), // Set monitoring interval
+        monitoringRole: monitoringRole // Set monitoring role
       });
 
       this.dbInstance.connections.securityGroups.forEach(function (securityGroup) {
