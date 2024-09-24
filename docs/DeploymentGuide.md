@@ -145,8 +145,8 @@ cd cdk
 While in the `cdk` folder, run the following commands. Ensure you replace "INSTITUTION_TOKEN" in the first command with your own Elsevier institution token and you replace "API_KEY" in the second command with your own Elsevier API key.
 
 ```
-aws ssm put-parameter --name "/service/elsevier/api/user_name/instoken" --value "INSTITUTION_TOKEN" --type SecureString --overwrite
-aws ssm put-parameter --name "/service/elsevier/api/user_name/key" --value "API_KEY" --type SecureString --overwrite
+aws ssm put-parameter --name "/service/elsevier/api/user_name/instoken" --value "INSTITUTION_TOKEN" --type SecureString --overwrite --profile <YOUR-PROFILE-NAME>
+aws ssm put-parameter --name "/service/elsevier/api/user_name/key" --value "API_KEY" --type SecureString --overwrite --profile <YOUR-PROFILE-NAME>
 ```
 
 You would also have to supply a custom database username when deploying the solution to increase security. Run the following command and ensure you replace `DB-USERNAME` with the custom name of your choice.
@@ -155,7 +155,8 @@ You would also have to supply a custom database username when deploying the solu
 aws secretsmanager create-secret \
     --name facultyCV-dbUsername \
     --description "Custom username for PostgreSQL database" \
-    --secret-string "{\"username\":\"DB-USERNAME\"}"
+    --secret-string "{\"username\":\"DB-USERNAME\"}" \
+    --profile <YOUR-PROFILE-NAME>
 ```
 
 For example: you want to set the database username as "facultyCV"
@@ -164,7 +165,8 @@ For example: you want to set the database username as "facultyCV"
 aws secretsmanager create-secret \
     --name facultyCV-dbUsername \
     --description "Custom username for PostgreSQL database" \
-    --secret-string "{\"username\":\"facultyCV\"}"
+    --secret-string "{\"username\":\"facultyCV\"}" \
+    --profile <YOUR-PROFILE-NAME>
 ```
 
 Similar to Elsevier API, you would have to obtain a consumer key and consumer secret key to be able to use the OPSv3.2 API. Store the secrets in Secret Manager by doing the following, replacing `CONSUMER_KEY` and `CONSUMER_SECRET_KEY` with the appropriate values:
@@ -173,15 +175,16 @@ Similar to Elsevier API, you would have to obtain a consumer key and consumer se
 aws secretsmanager create-secret \
     --name "facultyCV/credentials/opsApi" \
     --description "API keys for OPS" \
-    --secret-string "{\"consumer_key\":\"CONSUMER_KEY\",\"consumer_secret_key\":\"CONSUMER_SECRET_KEY\"}"
+    --secret-string "{\"consumer_key\":\"CONSUMER_KEY\",\"consumer_secret_key\":\"CONSUMER_SECRET_KEY\"}" \
+    --profile <YOUR-PROFILE-NAME>
 ```
 
 #### 3: CDK Deployment
 
-Initialize the CDK stacks, replacing `<YOUR_AWS_ACCOUNT_ID>`, `<YOUR_ACCOUNT_REGION>` and `<YOUR-PROFILE-NAME>`. with the appropriate values. Note this CDK deployment was tested in the `us-west-2` region only.
+Initialize the CDK stacks, replacing `<YOUR_AWS_ACCOUNT_ID>`, `<YOUR_ACCOUNT_REGION>` and `<YOUR-PROFILE-NAME>`. with the appropriate values. **NOTE: Remember to have your Docker container running.**
 
 ```bash
-cdk synth --profile your-profile-name
+cdk synth --profile <YOUR-PROFILE-NAME>
 cdk bootstrap aws://<YOUR_AWS_ACCOUNT_ID>/<YOUR_ACCOUNT_REGION> --profile <YOUR-PROFILE-NAME>
 ```
 
@@ -235,11 +238,15 @@ Please delete the stacks in the opposite order of how they were deployed. The de
    ![alt text](images/s3_search.jpg)
 3. In the `Buckets` search bar enter `datafetchstack` and click on the name of the bucket (the actual name will varies a bit, but will always contains `datafetchstack`).
    ![alt text](images/data-fetch-bucket.png)
-4. Click on the `user_data` folder then click `Upload`.
+4. In this bucket you will need to make a new folder by clicking on the `create folder` button.
+   ![alt text](images/bulkdata_bucket.png)
+5. Name this folder `user_data` and click `save`.
+   ![alt text](images/bulkdata_create_folder.png)
+5. Click on the `user_data` folder then click `Upload`.
    ![alt text](images/data-fetch-folder.png)
-5. Click `Add Files` and select the `institution_data.csv`, `university_info.csv`, `data_sections.csv`, and `teaching_data.csv` files. Remember the names of these files must be exactly the same or the S3 trigger will not work. Click `Upload` to complete this process.
+6. Click `Add Files` and select the `institution_data.csv`, `university_info.csv`, `data_sections.csv`, and `teaching_data.csv` files. Remember the names of these files must be exactly the same or the S3 trigger will not work. Click `Upload` to complete this process.
    ![alt text](images/data-fetch-upload.png)
-6.  Once the upload is complete click `Close`
+7.  Once the upload is complete click `Close`
 
 ### Step 5: Upload Data to S3 for the Grant Data Pipeline
 
@@ -305,9 +312,11 @@ raw/
 ### Step 1: Build AWS Amplify App
 
 Log in to AWS console, and navigate to **AWS Amplify**. You can do so by typing `Amplify` in the search bar at the top.
-![AWS Amplify Console](images/amplify-console.jpeg)
 
-From `All apps`, click `faculty-cv-amplify` to go to the app settings. Note down the App ID.\
+From `All apps`, click `faculty-cv-amplify`. The first time you enter this console, you will need to follow a series of straightforward instructions to configure your GitHub app and give permission to Amplify to modify your repo.
+![AWS Amplify Console](images/amplify_github.png)
+
+After this go back to `All apps`, click `faculty-cv-amplify` to go to the app settings. Note down the App ID.\
 ![image](images/amplify-app.png)
 
 
