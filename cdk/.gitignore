@@ -1,7 +1,11 @@
 !jest.config.js
 *.d.ts
 node_modules
+*.swp
 
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+cdk.context.json
+package-lock.json
+yarn.lock
