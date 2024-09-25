@@ -84,7 +84,7 @@ Faculty members have access to various tools and features to manage their academ
   - **Scopus and ORCID IDs:** These identifiers are found in public databases and can be clicked on to verify the faculty member's identity.
 - **Manual Saving:** All changes made to the profile must be manually saved by clicking the save button to ensure updates are retained.
 
-![Screenshot 2024-08-30 133306](https://github.com/user-attachments/assets/8ed05999-a12c-40f8-9696-614de23cfb4f)
+![alt text](images/profile-page.png)
 
 #### Academic Work
 
@@ -111,7 +111,7 @@ Faculty members have access to various tools and features to manage their academ
   - **Full Control:** Assistants who are granted access have full control over the faculty profiles they manage.
   - **Invitations:** This is where invitations for assistant access will appear, and they can be accepted or declined.
   - **Deactivating Connections:** Active connections can be deactivated by clicking the red "x" next to the assistant's name.
-![Screenshot 2024-08-30 134427](https://github.com/user-attachments/assets/59f1a554-2cf6-4ba5-a3ee-03b9e8ab4645)
+![alt text](images/faculty-connections.png)
 #### Archive
 
 - **Archived Entries:** Any entry from any academic section that has been archived will appear here.
@@ -136,9 +136,10 @@ Assistants play a crucial role in supporting faculty members by managing their p
 - **Assistant Header:** Assistants will always see a header at the top of the page identifying their role, with an option to log out.
 - **Faculty Identification:** The left side menu will display the name of the faculty member they are working on behalf of, with an option to exit the faculty profile without logging out of the entire system.
 
-![Screenshot 2024-08-30 134610](https://github.com/user-attachments/assets/bd0f7fe7-273d-4fd9-b3e9-b9bd1fe0bc9e)
+![alt text](images/assistant-connections.png)
 
-![Screenshot 2024-08-30 134633](https://github.com/user-attachments/assets/93ed81e8-d281-4619-8190-988dcde4ce71)
+![alt text](images/assistant-faculty-profile.png)
+
 
 
 ### Admin Role
@@ -154,8 +155,7 @@ Admins are responsible for managing users, coordinating departmental activities,
     - For Faculty members, admins can add a new assistant who will have access to the faculty member's profile.
     - For Assistants, admins can add a new faculty connection that they can manage.
    
-![Screenshot 2024-08-30 134706](https://github.com/user-attachments/assets/ee4931b8-9e8d-48c9-8178-67b425485108)
-
+![alt text](images/admin-user.png)
 
 #### Analytics
 
@@ -213,8 +213,7 @@ Department Admins are responsible for managing users in their department, overse
     - For Faculty members, admins can add a new assistant who will have access to the faculty member's profile.
     - For Assistants, admins can add a new faculty connection that they can manage.
    
-![Screenshot 2024-08-30 134706](https://github.com/user-attachments/assets/ee4931b8-9e8d-48c9-8178-67b425485108)
-
+![alt text](images/admin-user.png)
 
 #### Analytics
 The Analytics page has the same view and functionalities as the Admin for now, which can be found [here](#analytics)
