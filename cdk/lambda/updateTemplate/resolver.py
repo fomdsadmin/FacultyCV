@@ -1,8 +1,11 @@
 import boto3
 import json
 import psycopg2
+import os
+import time
 
 sm_client = boto3.client('secretsmanager')
+dynamodb = boto3.client('dynamodb')
 
 def getCredentials():
     credentials = {}
@@ -14,6 +17,28 @@ def getCredentials():
     credentials['host'] = secrets['host']
     credentials['db'] = secrets['dbname']
     return credentials
+
+def updateDynamoDBKeys(template_id):
+    # First fetch all the keys that contain the template_id
+    response = dynamodb.scan(TableName=os.environ['TABLE_NAME'], FilterExpression='contains(#keyName, :substr)', ExpressionAttributeNames={'#keyName': 'logEntryId'}, ExpressionAttributeValues={':substr': {'S': template_id}})
+    items = response['Items']
+    all_items = []
+    for item in items:
+        all_items.append(item)
+    while 'LastEvaluatedKey' in response:
+        response = dynamodb.scan(TableName=os.environ['TABLE_NAME'], FilterExpression='contains(#keyName, :substr)', ExpressionAttributeNames={'#keyName': 'logEntryId'}, ExpressionAttributeValues={':substr': {'S': template_id}}, ExclusiveStartKey=response['LastEvaluatedKey'])
+        items = response.get('Items')
+        for item in items:
+            all_items.append(item)
+
+    # Then update each item with containing template_id to the current timestamp
+    for item in all_items:
+        key = item['logEntryId']['S']
+        user_logs = {
+            'logEntryId': {'S': key},
+            'timestamp': {'N': f"{int(time.time())}"}
+        }
+        dynamodb.put_item(TableName=os.environ['TABLE_NAME'], Item=user_logs)
 
 def updateTemplate(arguments):
     credentials = getCredentials()
@@ -43,6 +68,7 @@ def updateTemplate(arguments):
     cursor.close()
     connection.commit()
     connection.close()
+    updateDynamoDBKeys(arguments['template_id'])
     return "SUCCESS"
 
 def lambda_handler(event, context):

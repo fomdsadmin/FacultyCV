@@ -42,6 +42,8 @@ The architecture diagram exported as XML file from draw.io can be found [here](.
 ## CV Generation Flow (10-15)
 ![Architecture diagram](../docs/architecture/FacultyCVCVGen.png)
 
+#### Steps 10-15 are explored in more detail as part of the [CV Generation Deep Dive](/docs/CVGenerationDeepDive.md)
+
 10. The GraphQL resolvers that make updates to the the data that will be contained on a CV (e.g. updateUser, updateUserCVData) make logs to the DynamoDB table which indicate when the last update was made to the data corresponding to a particular user and CV template.
 11. The React app fetches the timestamp of the last update to data corresponding to a user and template.  
 12. If the last update timestamp is older than the CV on the S3 bucket, then the CV on the S3 bucket is up to date and a Lambda function fetches a pre-signed URL to the CV to allow download on the frontend. Otherwise, it needs to be regenerated and the React application generates a latex file for the CV and uploads it to the S3 bucket.
