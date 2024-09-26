@@ -16,13 +16,13 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
     try {
       if (newRole.startsWith('Admin-')) {
         const result = await addToUserGroup(userInfo.email, 'DepartmentAdmin');
-        console.log('Adding user to user group', result);
+        
       } else {
         const result = await addToUserGroup(userInfo.email, newRole);
-        console.log('Adding user to user group', result);
+        
       }
     } catch (error) {
-      console.log('Error adding user to group:', error);
+      
       return;
     }
 
@@ -30,13 +30,13 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
     try {
       if (userInfo.role.startsWith('Admin-')) {
         const result = await removeFromUserGroup(userInfo.email, 'DepartmentAdmin');
-        console.log('Adding user to user group', result);
+        
       } else {
         const result = await removeFromUserGroup(userInfo.email, userInfo.role);
-        console.log('Adding user to user group', result);
+        
       }
     } catch (error) {
-      console.log('Error adding user to group:', error);
+      
       return;
     }
 
@@ -60,7 +60,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
         userInfo.scopus_id,
         userInfo.orcid_id
       );
-      console.log('Updated user:', updatedUser);
+      
       fetchAllUsers();
       handleBack();
     } catch {

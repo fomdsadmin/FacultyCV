@@ -24,7 +24,7 @@ const PermanentEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, fiel
   const [attributes, setAttributes] = useState([]);
   
   useEffect(() => {
-    console.log(data_details);
+    
     const newAttributes = Object.entries(data_details)
     .filter(([key, value]) => value && value !== field1 && value !== field2 & !(Array.isArray(value) && value.length === 0) 
     && key !== 'author_ids'

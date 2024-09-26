@@ -25,7 +25,7 @@ const DepartmentAdminArchivedSections = ({ getCognitoUser, userInfo }) => {
 
       parsedSections.sort((a, b) => a.title.localeCompare(b.title));
 
-      console.log('Sections:', parsedSections);
+      
 
       setDataSections(parsedSections);
     } catch (error) {
@@ -53,11 +53,11 @@ const DepartmentAdminArchivedSections = ({ getCognitoUser, userInfo }) => {
     try {
       const attributesString = JSON.stringify(attributes).replace(/"/g, '\\"')
       const result = await updateSection(id, false, `"${attributesString}"`);
-      console.log('Data section restored:', result);
+      
     } catch (error) {
       console.error('Error restoring section:', error);
     }
-    console.log('Restore section:', id);
+    
     await getDataSections();
     setLoading(false);
   };

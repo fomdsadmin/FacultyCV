@@ -28,7 +28,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       setLoading(true);
       setUser(userInfo);
       const templates = await getAllTemplates();
-      console.log('Templates:', templates);
+      
       setTemplates(templates);
       setLoading(false);
     };
@@ -53,7 +53,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     const cvUpToDate = await cvIsUpToDate(await getUserId(), userInfo.user_id, template.template_id);
     const key = `${userInfo.user_id}/${template.template_id}/resume.tex`;
     if (!cvUpToDate) {
-      console.log("New changes! Generating a new CV...");
+      
       setBuildingLatex(true);
       let latex = await buildLatex(template);
       setLatex(latex);
@@ -67,7 +67,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       setDownloadUrl(url);
     }
     else {
-      console.log("No new changes, fetching previously genertated CV");
+      
       // if no new .tex was uploaded, this will not need to wait 
       const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
       setSwitchingTemplates(false);
@@ -266,21 +266,21 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       filteredSections = parsedSections;
     }
 
-    console.log('Filtered sections:', filteredSections);
+    
 
     let sectionData;
     try {
-      console.log('user id', userInfo.user_id);
+      
       const dataSectionIdsArray = template.data_section_ids.split(',');
-      console.log('template ids', dataSectionIdsArray);
+      
       sectionData = await getUserCVData(userInfo.user_id, dataSectionIdsArray);
-      console.log('Section data:', sectionData);
+      
     } catch (error) {
       console.error('Error fetching data for template', error);
     }
 
     if (!sectionData || sectionData.length === 0) {
-      console.log('No data found for template: ', template.title);
+      
     }
 
     const parsedData = sectionData.map((data) => {
@@ -363,7 +363,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           return getYear(b) - getYear(a);
         });
     
-        console.log(`Section ${section.title} data: ${sectionData}`);
+        
         // PATENTS //
         if (section.title.toLowerCase() === 'patents') {
           latex += `\\subsection*{${escapeLatex(section.title)}}\n`;

@@ -39,7 +39,7 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
     // Implement restore functionality here
     try {
       const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
-      console.log('Archived entry ', result);
+      
     }
     catch (error) {
       console.error('Error archiving entry:', error);
@@ -52,7 +52,7 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
     const newEntry = {fields: entry.data_details, data_id: entry.user_cv_data_id, editable: entry.editable};
     setIsNew(false);
     setSelectedEntry(newEntry);
-    console.log(newEntry);
+    
     setIsModalOpen(true);
   };
   
@@ -67,7 +67,7 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
         section.attributes = JSON.parse(section.attributes);
       }
       const emptyEntry = generateEmptyEntry(section.attributes);
-      console.log("emptyEntry", emptyEntry);
+      
       const newEntry = {fields: emptyEntry, data_id: null};
       setSelectedEntry(newEntry);
       setIsModalOpen(true);
@@ -76,22 +76,22 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
   async function fetchCourseData() {
     setRetrievingData(true);
     try {
-        console.log(user);
+        
         const retrievedData = await getTeachingDataMatches(user.user_institution_id);
-        console.log(retrievedData);
+        
 
         for (const dataObject of retrievedData) {
             let { data_details } = dataObject; // Extract the data_details property
-            console.log('data details', data_details);
+            
 
             // Parse the data_details string to a JSON object
             let dataDetailsObj = JSON.parse(data_details);
 
             // Convert the updated JSON object back to a string
             data_details = JSON.stringify(dataDetailsObj).replace(/"/g, '\\"'); // Escape special characters
-            console.log('Adding new entry:', `"${data_details}"`);
+            
             const result = await addUserCVData(user.user_id, section.data_section_id, `"${data_details}"`, false);
-            console.log(result);
+            
         }
     } catch (error) {
         console.error('Error fetching course data:', error);
@@ -108,18 +108,18 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
         data_details: JSON.parse(data.data_details),
       }));
   
-      console.log(parsedData);
+      
   
       const filteredData = parsedData.filter(entry => {
-        console.log(entry.data_details);
+        
         const [field1, field2] = rankFields(entry.data_details);
-        console.log(field1, field2);
+        
         return (
           (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
-      console.log("filtered data: " + JSON.stringify(filteredData));
+      
   
       const rankedData = filteredData.map(entry => {
         const [field1, field2] = rankFields(entry.data_details);
@@ -161,18 +161,18 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
         data_details: JSON.parse(data.data_details),
       }));
   
-      console.log(parsedData);
+      
   
       const filteredData = parsedData.filter(entry => {
-        console.log(entry.data_details);
+        
         const [field1, field2] = rankFields(entry.data_details);
-        console.log(field1, field2);
+        
         return (
           (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
-      console.log("filtered data: " + JSON.stringify(filteredData));
+      
   
       const rankedData = filteredData.map(entry => {
         const [field1, field2] = rankFields(entry.data_details);
@@ -207,7 +207,7 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
   async function fetchUser() {
     try {
       const result = await getUserInstitutionId(userInfo.email);
-      console.log(result);
+      
       setUser(result);
       fetchDataFirst(result);
     }

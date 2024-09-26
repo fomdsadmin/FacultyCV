@@ -29,7 +29,7 @@ const AssistantHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) =
         connection.faculty_email.toLowerCase().startsWith(searchTerm.toLowerCase())
       );
       
-      console.log('User connections', retrievedUserConnections);
+      
       setPendingConnections(filteredUserConnections.filter(connection => connection.status === 'pending'));
       setConfirmedConnections(filteredUserConnections.filter(connection => connection.status === 'confirmed'));
     } catch (error) {

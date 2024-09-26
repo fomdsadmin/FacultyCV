@@ -34,9 +34,9 @@ const GenericSection = ({ user, section, onBack }) => {
     setFieldData([]);
     // Implement restore functionality here
     try {
-      console.log('Archiving entry:', entry);
+      
       const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
-      console.log('Archived entry ', result);
+      
     }
     catch (error) {
       console.error('Error archiving entry:', error);
@@ -49,7 +49,7 @@ const GenericSection = ({ user, section, onBack }) => {
     const newEntry = {fields: entry.data_details, data_id: entry.user_cv_data_id};
     setIsNew(false);
     setSelectedEntry(newEntry);
-    console.log(newEntry);
+    
     setIsModalOpen(true);
   };
   
@@ -64,14 +64,14 @@ const GenericSection = ({ user, section, onBack }) => {
         section.attributes = JSON.parse(section.attributes);
       }
       const emptyEntry = generateEmptyEntry(section.attributes);
-      console.log("emptyEntry", emptyEntry);
+      
       const newEntry = {fields: emptyEntry, data_id: null};
       setSelectedEntry(newEntry);
       setIsModalOpen(true);
   };
   
   async function fetchData() {
-    console.log('Fetching data for section:', section.title);
+    
     try {
         const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
         // Parse the data_details field from a JSON string to a JSON object
@@ -80,17 +80,17 @@ const GenericSection = ({ user, section, onBack }) => {
             data_details: JSON.parse(data.data_details),
         }));
 
-        console.log(parsedData);
+        
 
         const filteredData = parsedData.filter(entry => {
             const [field1, field2] = rankFields(entry.data_details);
-            console.log(field1, field2);
+            
             return (
                 (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
             );
         });
-        console.log("filtered data: " + JSON.stringify(filteredData));
+        
 
         const rankedData = filteredData.map(entry => {
             const [field1, field2] = rankFields(entry.data_details);
@@ -129,7 +129,7 @@ const GenericSection = ({ user, section, onBack }) => {
             return 0; 
         });
 
-        console.log(rankedData);
+        
 
         setFieldData(rankedData);
 

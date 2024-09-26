@@ -18,7 +18,7 @@ const AssociatedConnection = ({ connection, getUser }) => {
     };
 
     useEffect(() => {
-        console.log("connection", connection);
+        
         const calculateFontSize = () => {
             const nameLength = `${connection.faculty_first_name} ${connection.faculty_last_name}`.length;
             if (nameLength > 20) {
@@ -38,7 +38,7 @@ const AssociatedConnection = ({ connection, getUser }) => {
             // check if there is an object in retrievedUserConnections with the connection.faculty_user_id and that object.status is confirmed
             const connectionExists = retrievedUserConnections.some((conn) => conn.faculty_user_id === connection.faculty_user_id && conn.status === "confirmed");
             if (connectionExists) {
-                console.log("Connection exists");
+                
                 getUser(connection.faculty_email);
                 navigate('/assistant/home');
             } else{

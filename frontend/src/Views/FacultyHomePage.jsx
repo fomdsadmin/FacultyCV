@@ -58,9 +58,9 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
       affiliations.sort();
       institutions.sort();
 
-      console.log(departments);
-      console.log(institutions);
-      console.log(affiliations);
+      
+      
+      
 
       setDepartments(departments);
       setFaculties(faculties);
