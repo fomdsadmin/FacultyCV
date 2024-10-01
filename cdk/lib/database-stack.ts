@@ -10,6 +10,7 @@ import * as sm from 'aws-cdk-lib/aws-secretsmanager'
 export class DatabaseStack extends Stack {
     public readonly dbInstance: rds.DatabaseInstance;
     public readonly secretPath: string;
+    public readonly rdsProxyEndpoint: string;
 
     constructor(scope: Construct, id: string, vpcStack: VpcStack, props?: StackProps) {
       super(scope, id, props);
@@ -72,5 +73,28 @@ export class DatabaseStack extends Stack {
       this.dbInstance.connections.securityGroups.forEach(function (securityGroup) {
         securityGroup.addIngressRule(ec2.Peer.ipv4('10.0.0.0/16'), ec2.Port.tcp(5432), 'Postgres Ingress');
       });
+
+      // RDS Proxy
+      const rdsProxyRole = new iam.Role(this, 'RDSProxyRole', {
+        assumedBy: new iam.ServicePrincipal('rds.amazonaws.com'),
+      });
+
+      rdsProxyRole.addToPolicy(
+        new iam.PolicyStatement({
+          resources: ['*'],
+          actions: ['rds-db:connect']
+        })
+      );
+
+      const rdsProxy = this.dbInstance.addProxy(id+'-proxy', {
+        secrets: [this.dbInstance.secret!],
+        vpc: vpcStack.vpc,
+        role: rdsProxyRole,
+        securityGroups: this.dbInstance.connections.securityGroups,
+        requireTLS: false,
+    });
+
+    this.dbInstance.grantConnect(rdsProxyRole);
+    this.rdsProxyEndpoint = rdsProxy.endpoint;
   }
 }
