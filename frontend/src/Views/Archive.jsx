@@ -49,9 +49,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
             (fieldB && fieldB.toLowerCase().includes(searchTermLower))
           );
         });
-
-        console.log(filtered);
-    
+            
         setFilteredEntries(filtered);
       } catch (error) {
         console.error('Error fetching data:', error);
