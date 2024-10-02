@@ -1,5 +1,6 @@
 import { Stack, StackProps, CfnParameter } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
 export class VpcStack extends Stack {
@@ -15,7 +16,9 @@ export class VpcStack extends Stack {
         //     default: '',
         // });
 
-        const existingVpcId: string = 'vpc-00cbe680ac7558171';
+        const existingVpcId: string = 'vpc-0515a0d6ee4abcd8e';
+
+        //const existingVpcId = cdk.aws_ssm.StringParameter.valueForStringParameter(this, 'existing-VPC-id');
 
         // Check if existing VPC ID is provided
         if (existingVpcId !== '') {
@@ -45,6 +48,12 @@ export class VpcStack extends Stack {
                 service: ec2.InterfaceVpcEndpointAwsService.GLUE,
                 subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
             });
+
+            // // Add gateway endpoint for S3
+            // this.vpc.addGatewayEndpoint('S3 Endpoint', {
+            //     service: ec2.GatewayVpcEndpointAwsService.S3,
+            //     subnets: [{ subnetType: ec2.SubnetType.PRIVATE_ISOLATED }],
+            // });
         } else {
             // Create new VPC
             const natGatewayProvider = ec2.NatProvider.gateway();
