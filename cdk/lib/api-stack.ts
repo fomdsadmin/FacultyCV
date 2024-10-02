@@ -329,7 +329,10 @@ export class ApiStack extends cdk.Stack {
       "getUser",
       ["getUser"],
       "Query",
-      {USER_POOL_ID: this.userPool.userPoolId},
+      {
+        USER_POOL_ID: this.userPool.userPoolId,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -338,7 +341,9 @@ export class ApiStack extends cdk.Stack {
       "getAllUsers",
       ["getAllUsers"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -347,7 +352,9 @@ export class ApiStack extends cdk.Stack {
       "getExistingUser",
       ["getExistingUser"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -365,7 +372,9 @@ export class ApiStack extends cdk.Stack {
       "addUser",
       ["addUser"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -375,7 +384,8 @@ export class ApiStack extends cdk.Stack {
       ["updateUser"],
       "Mutation",
       {
-        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
       [psycopgLayer]
@@ -385,7 +395,9 @@ export class ApiStack extends cdk.Stack {
       "getAllSections",
       ["getAllSections"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -394,7 +406,9 @@ export class ApiStack extends cdk.Stack {
       "getArchivedSections",
       ["getArchivedSections"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -403,7 +417,9 @@ export class ApiStack extends cdk.Stack {
       "addSection",
       ["addSection"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -412,7 +428,9 @@ export class ApiStack extends cdk.Stack {
       "updateSection",
       ["updateSection"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -422,7 +440,8 @@ export class ApiStack extends cdk.Stack {
       ["addUserCVData"],
       "Mutation",
       {
-        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
       [psycopgLayer]
@@ -432,7 +451,9 @@ export class ApiStack extends cdk.Stack {
       "getUserCVData",
       ["getUserCVData"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     )
@@ -441,7 +462,9 @@ export class ApiStack extends cdk.Stack {
       "getArchivedUserCVData",
       ["getArchivedUserCVData"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     )
@@ -451,7 +474,8 @@ export class ApiStack extends cdk.Stack {
       ["updateUserCVData"],
       "Mutation",
       {
-        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
       [psycopgLayer]
@@ -470,7 +494,9 @@ export class ApiStack extends cdk.Stack {
       "getAllUniversityInfo",
       ["getAllUniversityInfo"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -495,7 +521,8 @@ export class ApiStack extends cdk.Stack {
       "Query",
       {
         TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
-        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName 
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint 
       },
       resolverRole,
       [psycopgLayer]
@@ -516,7 +543,9 @@ export class ApiStack extends cdk.Stack {
       "addUniversityInfo",
       ["addUniversityInfo"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -525,7 +554,9 @@ export class ApiStack extends cdk.Stack {
       "updateUniversityInfo",
       ["updateUniversityInfo"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -534,7 +565,9 @@ export class ApiStack extends cdk.Stack {
       "linkScopusId",
       ["linkScopusId"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -552,7 +585,9 @@ export class ApiStack extends cdk.Stack {
       "linkOrcid",
       ["linkOrcid"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -561,7 +596,9 @@ export class ApiStack extends cdk.Stack {
       "getUserConnections",
       ["getUserConnections"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -570,7 +607,9 @@ export class ApiStack extends cdk.Stack {
       "addUserConnection",
       ["addUserConnection"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -579,7 +618,9 @@ export class ApiStack extends cdk.Stack {
       "updateUserConnection",
       ["updateUserConnection"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -588,7 +629,9 @@ export class ApiStack extends cdk.Stack {
       "deleteUserConnection",
       ["deleteUserConnection"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -597,7 +640,9 @@ export class ApiStack extends cdk.Stack {
       "getAllTemplates",
       ["getAllTemplates"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -606,7 +651,9 @@ export class ApiStack extends cdk.Stack {
       "addTemplate",
       ["addTemplate"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -616,7 +663,8 @@ export class ApiStack extends cdk.Stack {
       ["updateTemplate"],
       "Mutation",
       {
-        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
       [psycopgLayer]
@@ -626,7 +674,9 @@ export class ApiStack extends cdk.Stack {
       "deleteTemplate",
       ["deleteTemplate"],
       "Mutation",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -635,7 +685,9 @@ export class ApiStack extends cdk.Stack {
       "getTeachingDataMatches",
       ["getTeachingDataMatches"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -653,7 +705,9 @@ export class ApiStack extends cdk.Stack {
       "getSecureFundingMatches",
       ["getSecureFundingMatches"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -662,7 +716,9 @@ export class ApiStack extends cdk.Stack {
       "getRiseDataMatches",
       ["getRiseDataMatches"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -671,7 +727,9 @@ export class ApiStack extends cdk.Stack {
       "getPatentMatches",
       ["getPatentMatches"],
       "Query",
-      {},
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       resolverRole,
       [psycopgLayer]
     );
@@ -685,7 +743,9 @@ export class ApiStack extends cdk.Stack {
       handler: "handler.lambda_handler",
       architecture: Architecture.X86_64,
       timeout: cdk.Duration.minutes(1),
-      environment: {},
+      environment: {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       role: resolverRole,
       layers: [psycopgLayer],
       vpc: databaseStack.dbInstance.vpc // Same VPC as the database

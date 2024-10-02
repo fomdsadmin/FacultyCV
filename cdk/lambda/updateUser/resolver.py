@@ -7,6 +7,7 @@ import os
 
 sm_client = boto3.client('secretsmanager')
 dynamodb = boto3.client('dynamodb')
+DB_PROXY_ENDPOINT = os.environ['DB_PROXY_ENDPOINT']
 
 def getCredentials():
     credentials = {}
@@ -21,7 +22,7 @@ def getCredentials():
 
 def updateUser(arguments):
     credentials = getCredentials()
-    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
+    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=DB_PROXY_ENDPOINT, database=credentials['db'])
     print("Connected to database")
     cursor = connection.cursor()
 

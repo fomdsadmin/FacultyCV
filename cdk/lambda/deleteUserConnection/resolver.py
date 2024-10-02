@@ -1,8 +1,10 @@
 import boto3
 import json
 import psycopg2
+import os
 
 sm_client = boto3.client('secretsmanager')
+DB_PROXY_ENDPOINT = os.environ['DB_PROXY_ENDPOINT']
 
 def getCredentials():
     credentials = {}
@@ -17,7 +19,7 @@ def getCredentials():
 
 def deleteUserConnection(arguments):
     credentials = getCredentials()
-    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
+    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=DB_PROXY_ENDPOINT, database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
     cursor.execute("DELETE FROM user_connections WHERE user_connection_id = %s", (arguments['user_connection_id'],))
