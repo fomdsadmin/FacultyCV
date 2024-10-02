@@ -49,6 +49,8 @@ const Archive = ({ userInfo, getCognitoUser }) => {
             (fieldB && fieldB.toLowerCase().includes(searchTermLower))
           );
         });
+
+        console.log(filtered);
     
         setFilteredEntries(filtered);
       } catch (error) {
@@ -67,8 +69,6 @@ const Archive = ({ userInfo, getCognitoUser }) => {
           ...section,
           attributes: JSON.parse(section.attributes),
         }));
-    
-        
     
         // Add additional fields from parsedSections to parsedData if their data_section_ids match
         const updatedData = parsedData.map(data => {
@@ -162,6 +162,7 @@ const Archive = ({ userInfo, getCognitoUser }) => {
                       field1={entry.title}
                       field2={fieldA}
                       field3={fieldB}
+                      data_details={entry.data_details}
                       onRestore={() => handleRestore(entry)}
                     />
                   );
