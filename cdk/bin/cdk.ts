@@ -27,22 +27,22 @@ const apiStack = new ApiStack(app, 'ApiStack', databaseStack, cvGenStack,
    {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
-const amplifyStack = new AmplifyStack(app, 'AmplifyStack', apiStack,
-  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-);
+// const amplifyStack = new AmplifyStack(app, 'AmplifyStack', apiStack,
+//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+// );
 
-const dbFetchStack = new DbFetchStack(app, 'DbFetchStack', databaseStack, apiStack,
-  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-);
+// const dbFetchStack = new DbFetchStack(app, 'DbFetchStack', databaseStack, apiStack,
+//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+// );
 
-const dataFetchStack = new DataFetchStack(app, 'DataFetchStack', databaseStack, apiStack,
-  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-);
+// const dataFetchStack = new DataFetchStack(app, 'DataFetchStack', databaseStack, apiStack,
+//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+// );
 
-const grantDataStack = new GrantDataStack(app, 'GrantDataStack', vpcStack, databaseStack,
-  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-);
+// const grantDataStack = new GrantDataStack(app, 'GrantDataStack', vpcStack, databaseStack,
+//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+// );
 
-const patentDataStack = new PatentDataStack(app, 'PatentDataStack', grantDataStack, databaseStack,
-  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-);
+// const patentDataStack = new PatentDataStack(app, 'PatentDataStack', grantDataStack, databaseStack,
+//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+// );
