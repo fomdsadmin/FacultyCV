@@ -106,14 +106,14 @@ const PermanentEntryModal = ({ isNew, user, section, onClose, entryType, fields,
             : `${startDateMonth}, ${startDateYear} - ${endDateMonth}, ${endDateYear}`;
         const updatedFormData = dateFieldName ? { ...rest, [dateFieldName]: dates } : { ...rest };
         const formDataString = JSON.stringify(updatedFormData).replace(/"/g, '\\"');
-        console.log(`"${formDataString}"`);
+        
         try {
             if (isNew) {
                 const result = await addUserCVData(user.user_id, section.data_section_id, `"${formDataString}"`);
-                console.log(result);
+                
             } else {
                 const result = await updateUserCVData(user_cv_data_id, `"${formDataString}"`);
-                console.log(result);
+                
             }
         } catch (error) {
             console.error('Error submitting form:', error);

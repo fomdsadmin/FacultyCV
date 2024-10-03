@@ -44,7 +44,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     try {
       // Call the addUserConnection function with the necessary parameters
       const result = await addUserConnection(facultyMember.user_id, facultyMember.first_name, facultyMember.last_name, facultyMember.email, userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, 'pending');
-      console.log('Invite sent:', result);
+      
       if (result === 'connection already exists') {
         setError('Connection already exists');
         setSendingInvite(false);
@@ -80,7 +80,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     try {
       // Get member by email
       member = await getUser(email);
-      console.log('User found:', member);
+      
     } catch (error) {
       console.error('Error finding user:', error);
       setError('No user exists. Please enter valid email');
@@ -101,7 +101,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     }
 
     if (departmentAdmin) {
-      console.log(member);
+      
       if (userInfo.role==='Assistant' && member.primary_department !== department && member.secondary_department !== department) {
         setError('You can only form connections with faculty in your department');
         setSendingInvite(false);
@@ -118,7 +118,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
         result = await addUserConnection(member.user_id, member.first_name, member.last_name, member.email, userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, 'confirmed');
       }
       
-      console.log('Invite sent:', result);
+      
       if (result === 'connection already exists') {
         setError('Connection already exists');
         setSendingInvite(false);

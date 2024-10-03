@@ -44,7 +44,7 @@ const ManageDepartmentUser = ({ user, onBack, fetchAllUsers, department }) => {
         connection.assistant_email.toLowerCase().startsWith(searchTerm.toLowerCase())
       );
       
-      console.log('User connections', retrievedUserConnections);
+      
       setPendingConnections(filteredUserConnections.filter(connection => connection.status === 'pending'));
       setConfirmedConnections(filteredUserConnections.filter(connection => connection.status === 'confirmed'));
     } catch (error) {
@@ -62,8 +62,8 @@ const ManageDepartmentUser = ({ user, onBack, fetchAllUsers, department }) => {
   };
 
   const handleChangeRole = () => {
-    console.log('Change role');
-    console.log(user);
+    
+    
     setIsChangeRoleModalOpen(true);
   }
 

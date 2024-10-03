@@ -33,7 +33,7 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
   const [updatedField2, setUpdatedField2] = useState(field2);
   
   useEffect(() => {
-    console.log(data_details);
+    
     const newAttributes = Object.entries(data_details)
     .filter(([key, value]) => value && value !== field1 && value !== field2 && !(Array.isArray(value) && value.length === 0) 
       && key !== 'author_ids'
