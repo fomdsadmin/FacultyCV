@@ -22,7 +22,7 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
       getCognitoUser();
       navigate('/auth');
     } catch (error) {
-      console.log('Error logging out:', error);
+      
     } finally {
       setIsSigningOut(false);
     }

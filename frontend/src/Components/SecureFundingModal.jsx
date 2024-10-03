@@ -17,7 +17,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     try {
       // Switch to first name and last name
       const retrievedData = await getSecureFundingMatches(user.first_name, user.last_name);
-      console.log(retrievedData);
+      
   
       const allDataDetails = []; // Initialize an array to accumulate data_details
       const uniqueDataDetails = new Set(); // Initialize a set to track unique entries
@@ -49,7 +49,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     setInitialRender(false);
     try {
       const retrievedData = await getRiseDataMatches(user.first_name, user.last_name);
-      console.log(retrievedData);
+      
   
       const allDataDetails = []; // Initialize an array to accumulate data_details
       const uniqueDataDetails = new Set(); // Initialize a set to track unique entries
@@ -93,9 +93,9 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
         data.year = data.dates.split('-')[0];
         delete data.dates;  // Remove the old key
         const dataJSON = JSON.stringify(data).replace(/"/g, '\\"');
-        console.log('Adding new entry:', `"${dataJSON}"`);
+        
         const result = await addUserCVData(user.user_id, section.data_section_id, `"${dataJSON}"`, false);
-        console.log(result);
+        
       } catch (error) {
         console.error('Error adding new entry:', error);
       }

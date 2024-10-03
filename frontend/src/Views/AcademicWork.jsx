@@ -33,7 +33,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
     
     parsedSections.sort((a, b) => a.title.localeCompare(b.title));
 
-    console.log(parsedSections);
+    
     setDataSections(parsedSections);
     setLoading(false);
   }

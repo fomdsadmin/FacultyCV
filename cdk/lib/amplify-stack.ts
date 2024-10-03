@@ -41,7 +41,7 @@ export class AmplifyStack extends cdk.Stack {
       sourceCodeProvider: new GitHubSourceCodeProvider({
         owner: username,
         repository: 'FacultyCV',
-        oauthToken: cdk.SecretValue.secretsManager('github-access-token', {
+        oauthToken: cdk.SecretValue.secretsManager('github-access-token-facultyCV', {
           jsonField: 'github-token'
         })
       }),

@@ -31,7 +31,7 @@ const DepartmentAdminSections = ({ getCognitoUser, userInfo }) => {
 
     parsedSections.sort((a, b) => a.title.localeCompare(b.title));
 
-    console.log('Sections:', parsedSections);
+    
 
     setDataSections(parsedSections);
     setLoading(false);

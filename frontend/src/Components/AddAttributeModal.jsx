@@ -49,10 +49,10 @@ const AddAttributeModal = ({ setIsAddAttributeModalOpen, onBack, getDataSections
     const updatedAttributes = { ...existingAttributes, ...combinedAttributes };
 
     const attributesJSONString = JSON.stringify(updatedAttributes).replace(/"/g, '\\"');
-    console.log(`"${attributesJSONString}"`);
+    
     try {
       const result = await updateSection(section.data_section_id, false, `"${attributesJSONString}"`);
-      console.log('Created section:', result);
+      
     } catch (error) {
       console.error('Error creating section:', error);
     }
