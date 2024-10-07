@@ -69,8 +69,10 @@ export class DatabaseStack extends Stack {
         monitoringRole: monitoringRole // Set monitoring role
       });
 
+      const vpcCidrBlock = vpcStack.vpc.vpcCidrBlock;
+
       this.dbInstance.connections.securityGroups.forEach(function (securityGroup) {
-        securityGroup.addIngressRule(ec2.Peer.ipv4('10.0.0.0/16'), ec2.Port.tcp(5432), 'Postgres Ingress');
+        securityGroup.addIngressRule(ec2.Peer.ipv4(vpcCidrBlock), ec2.Port.tcp(5432), 'Postgres Ingress');
       });
   }
 }

@@ -314,367 +314,367 @@ export class ApiStack extends cdk.Stack {
       []
     );
 
-    // createResolver(
-    //   this.api,
-    //   "removeFromUserGroup",
-    //   ["removeFromUserGroup"],
-    //   "Mutation",
-    //   {USER_POOL_ID: this.userPool.userPoolId},
-    //   resolverRole,
-    //   []
-    // );
+    createResolver(
+      this.api,
+      "removeFromUserGroup",
+      ["removeFromUserGroup"],
+      "Mutation",
+      {USER_POOL_ID: this.userPool.userPoolId},
+      resolverRole,
+      []
+    );
 
-    // createResolver(
-    //   this.api,
-    //   "getUser",
-    //   ["getUser"],
-    //   "Query",
-    //   {USER_POOL_ID: this.userPool.userPoolId},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getAllUsers",
-    //   ["getAllUsers"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getExistingUser",
-    //   ["getExistingUser"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "pdfGenerator",
-    //   ["generatePDF"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [reportLabLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "addUser",
-    //   ["addUser"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "updateUser",
-    //   ["updateUser"],
-    //   "Mutation",
-    //   {
-    //     'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
-    //   },
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getAllSections",
-    //   ["getAllSections"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getArchivedSections",
-    //   ["getArchivedSections"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "addSection",
-    //   ["addSection"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "updateSection",
-    //   ["updateSection"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "addUserCVData",
-    //   ["addUserCVData"],
-    //   "Mutation",
-    //   {
-    //     'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
-    //   },
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getUserCVData",
-    //   ["getUserCVData"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // )
-    // createResolver(
-    //   this.api,
-    //   "getArchivedUserCVData",
-    //   ["getArchivedUserCVData"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // )
-    // createResolver(
-    //   this.api,
-    //   "updateUserCVData",
-    //   ["updateUserCVData"],
-    //   "Mutation",
-    //   {
-    //     'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
-    //   },
-    //   resolverRole,
-    //   [psycopgLayer]
-    // )
-    // createResolver(
-    //   this.api,
-    //   "getElsevierAuthorMatches",
-    //   ["getElsevierAuthorMatches"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [requestsLayer]
-    // )
-    // createResolver(
-    //   this.api,
-    //   "getAllUniversityInfo",
-    //   ["getAllUniversityInfo"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getPresignedUrl",
-    //   ["getPresignedUrl"],
-    //   "Query",
-    //   {
-    //     BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
-    //     USER_POOL_ISS: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPool.userPoolId}`,
-    //     CLIENT_ID: this.userPoolClient.userPoolClientId
-    //   },
-    //   resolverRole,
-    //   [awsJwtVerifyLayer],
-    //   Runtime.NODEJS_20_X
-    // );
-    // createResolver(
-    //   this.api,
-    //   "cvIsUpToDate",
-    //   ["cvIsUpToDate"],
-    //   "Query",
-    //   {
-    //     TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
-    //     BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName 
-    //   },
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getNumberOfGeneratedCVs",
-    //   ["getNumberOfGeneratedCVs"],
-    //   "Query",
-    //   {
-    //     BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName
-    //   },
-    //   resolverRole,
-    //   []
-    // );
-    // createResolver(
-    //   this.api,
-    //   "addUniversityInfo",
-    //   ["addUniversityInfo"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "updateUniversityInfo",
-    //   ["updateUniversityInfo"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "linkScopusId",
-    //   ["linkScopusId"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getOrcidAuthorMatches",
-    //   ["getOrcidAuthorMatches"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [requestsLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "linkOrcid",
-    //   ["linkOrcid"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getUserConnections",
-    //   ["getUserConnections"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "addUserConnection",
-    //   ["addUserConnection"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "updateUserConnection",
-    //   ["updateUserConnection"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "deleteUserConnection",
-    //   ["deleteUserConnection"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getAllTemplates",
-    //   ["getAllTemplates"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "addTemplate",
-    //   ["addTemplate"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "updateTemplate",
-    //   ["updateTemplate"],
-    //   "Mutation",
-    //   {
-    //     'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
-    //   },
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "deleteTemplate",
-    //   ["deleteTemplate"],
-    //   "Mutation",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getTeachingDataMatches",
-    //   ["getTeachingDataMatches"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getPublicationMatches",
-    //   ["getPublicationMatches"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [requestsLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getSecureFundingMatches",
-    //   ["getSecureFundingMatches"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getRiseDataMatches",
-    //   ["getRiseDataMatches"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
-    // createResolver(
-    //   this.api,
-    //   "getPatentMatches",
-    //   ["getPatentMatches"],
-    //   "Query",
-    //   {},
-    //   resolverRole,
-    //   [psycopgLayer]
-    // );
+    createResolver(
+      this.api,
+      "getUser",
+      ["getUser"],
+      "Query",
+      {USER_POOL_ID: this.userPool.userPoolId},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getAllUsers",
+      ["getAllUsers"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getExistingUser",
+      ["getExistingUser"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "pdfGenerator",
+      ["generatePDF"],
+      "Mutation",
+      {},
+      resolverRole,
+      [reportLabLayer]
+    );
+    createResolver(
+      this.api,
+      "addUser",
+      ["addUser"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateUser",
+      ["updateUser"],
+      "Mutation",
+      {
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+      },
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getAllSections",
+      ["getAllSections"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getArchivedSections",
+      ["getArchivedSections"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addSection",
+      ["addSection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateSection",
+      ["updateSection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addUserCVData",
+      ["addUserCVData"],
+      "Mutation",
+      {
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+      },
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getUserCVData",
+      ["getUserCVData"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    )
+    createResolver(
+      this.api,
+      "getArchivedUserCVData",
+      ["getArchivedUserCVData"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    )
+    createResolver(
+      this.api,
+      "updateUserCVData",
+      ["updateUserCVData"],
+      "Mutation",
+      {
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+      },
+      resolverRole,
+      [psycopgLayer]
+    )
+    createResolver(
+      this.api,
+      "getElsevierAuthorMatches",
+      ["getElsevierAuthorMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    )
+    createResolver(
+      this.api,
+      "getAllUniversityInfo",
+      ["getAllUniversityInfo"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getPresignedUrl",
+      ["getPresignedUrl"],
+      "Query",
+      {
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
+        USER_POOL_ISS: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPool.userPoolId}`,
+        CLIENT_ID: this.userPoolClient.userPoolClientId
+      },
+      resolverRole,
+      [awsJwtVerifyLayer],
+      Runtime.NODEJS_20_X
+    );
+    createResolver(
+      this.api,
+      "cvIsUpToDate",
+      ["cvIsUpToDate"],
+      "Query",
+      {
+        TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName 
+      },
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getNumberOfGeneratedCVs",
+      ["getNumberOfGeneratedCVs"],
+      "Query",
+      {
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName
+      },
+      resolverRole,
+      []
+    );
+    createResolver(
+      this.api,
+      "addUniversityInfo",
+      ["addUniversityInfo"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateUniversityInfo",
+      ["updateUniversityInfo"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "linkScopusId",
+      ["linkScopusId"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getOrcidAuthorMatches",
+      ["getOrcidAuthorMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    );
+    createResolver(
+      this.api,
+      "linkOrcid",
+      ["linkOrcid"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getUserConnections",
+      ["getUserConnections"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addUserConnection",
+      ["addUserConnection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateUserConnection",
+      ["updateUserConnection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "deleteUserConnection",
+      ["deleteUserConnection"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getAllTemplates",
+      ["getAllTemplates"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "addTemplate",
+      ["addTemplate"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "updateTemplate",
+      ["updateTemplate"],
+      "Mutation",
+      {
+        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName
+      },
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "deleteTemplate",
+      ["deleteTemplate"],
+      "Mutation",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getTeachingDataMatches",
+      ["getTeachingDataMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getPublicationMatches",
+      ["getPublicationMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    );
+    createResolver(
+      this.api,
+      "getSecureFundingMatches",
+      ["getSecureFundingMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getRiseDataMatches",
+      ["getRiseDataMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
+    createResolver(
+      this.api,
+      "getPatentMatches",
+      ["getPatentMatches"],
+      "Query",
+      {},
+      resolverRole,
+      [psycopgLayer]
+    );
 
     // Lambda function to delete archived rows
     const deleteArchivedDataLambda = new Function(this, "DeleteArchivedDataLambda", {
