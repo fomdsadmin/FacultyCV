@@ -32,7 +32,8 @@ const Assistant_AcademicWork = ({ getCognitoUser, userInfo, assistantUserInfo })
       attributes: JSON.parse(section.attributes),
     }));
 
-    
+    parsedSections.sort((a, b) => a.title.localeCompare(b.title));
+
     setDataSections(parsedSections);
     setLoading(false);
   }

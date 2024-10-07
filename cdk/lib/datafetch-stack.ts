@@ -84,6 +84,7 @@ export class DataFetchStack extends cdk.Stack {
         memorySize: 512,
         environment: {
           S3_BUCKET_NAME: s3Bucket.bucketName,
+          DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
         },
         vpc: databaseStack.dbInstance.vpc, // add to the same vpc as rds
         vpcSubnets: {
@@ -102,6 +103,7 @@ export class DataFetchStack extends cdk.Stack {
         memorySize: 512,
         environment: {
           S3_BUCKET_NAME: s3Bucket.bucketName,
+          DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
         },
         vpc: databaseStack.dbInstance.vpc, // add to the same vpc as rds
         vpcSubnets: {
@@ -120,6 +122,7 @@ export class DataFetchStack extends cdk.Stack {
       memorySize: 512,
       environment: {
         S3_BUCKET_NAME: s3Bucket.bucketName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       vpc: databaseStack.dbInstance.vpc,
       vpcSubnets: {
@@ -138,6 +141,7 @@ export class DataFetchStack extends cdk.Stack {
       memorySize: 512,
       environment: {
         S3_BUCKET_NAME: s3Bucket.bucketName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       vpc: databaseStack.dbInstance.vpc,
       vpcSubnets: {

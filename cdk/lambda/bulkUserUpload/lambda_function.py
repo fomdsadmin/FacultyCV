@@ -7,7 +7,7 @@ import json
 
 s3_client = boto3.client("s3")
 sm_client = boto3.client('secretsmanager')
-
+DB_PROXY_ENDPOINT = os.environ['DB_PROXY_ENDPOINT']
 
 '''
 This function retrieves the database credentials from AWS Secrets Manager using the secret ID 'facultyCV/credentials/dbCredentials'.
@@ -101,7 +101,7 @@ def lambda_handler(event, context):
                 values.append(row[key])
             values.append(first_name)
             values.append(last_name)
-            connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
+            connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=DB_PROXY_ENDPOINT, database=credentials['db'])
             cursor = connection.cursor()
             rows_written += writeRowToDB(values, connection, cursor)
     

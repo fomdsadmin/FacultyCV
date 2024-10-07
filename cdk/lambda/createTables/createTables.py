@@ -1,12 +1,14 @@
 import boto3
 import psycopg2
 import json
+import os
 
 # # TESTING PURPOSES
 # session = boto3.Session(profile_name='abhi')
 # sm_client = session.client('secretsmanager')
 
 sm_client = boto3.client('secretsmanager')
+DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 
 def getCredentials():
     credentials = {}
@@ -42,7 +44,7 @@ def createColumn(column_name, columnType, constraints, final_column):
 
 def lambda_handler(event, context):
     credentials = getCredentials()
-    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
+    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=DB_PROXY_ENDPOINT, database=credentials['db'])
     print("Connected to Database")
     cursor = connection.cursor()
 
