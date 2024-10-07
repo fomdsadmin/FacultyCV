@@ -90,7 +90,7 @@ export class DataFetchStack extends cdk.Stack {
         vpcSubnets: {
           subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
-        layers: [apiStack.getLayers()['psycopg2']]
+        layers: [apiStack.getLayers()['psycopg2'], apiStack.getLayers()['databaseConnect']]
     });
 
     const bulkTeachingDataUpload = new lambda.Function(this, 'facultyCV-bulkTeachingDataUpload', {
@@ -109,7 +109,7 @@ export class DataFetchStack extends cdk.Stack {
         vpcSubnets: {
           subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
-        layers: [apiStack.getLayers()['psycopg2']]
+        layers: [apiStack.getLayers()['psycopg2'], apiStack.getLayers()['databaseConnect']]
     });
 
     const bulkDataSectionsUpload = new lambda.Function(this, 'facultyCV-bulkDataSectionsUpload', {
@@ -128,7 +128,7 @@ export class DataFetchStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
       },
-      layers: [apiStack.getLayers()['psycopg2']]
+      layers: [apiStack.getLayers()['psycopg2'], apiStack.getLayers()['databaseConnect']]
     });
     
     const bulkUniversityInfoUpload = new lambda.Function(this, 'facultyCV-bulkUniversityInfoUpload', {
@@ -147,7 +147,7 @@ export class DataFetchStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
       },
-      layers: [apiStack.getLayers()['psycopg2']]
+      layers: [apiStack.getLayers()['psycopg2'], apiStack.getLayers()['databaseConnect']]
     });
 
     // Add event notifications for the buckets

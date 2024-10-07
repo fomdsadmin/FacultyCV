@@ -2,24 +2,10 @@ import boto3
 import psycopg2
 import json
 import os
-
-# # TESTING PURPOSES
-# session = boto3.Session(profile_name='abhi')
-# sm_client = session.client('secretsmanager')
+from databaseConnect import get_connection
 
 sm_client = boto3.client('secretsmanager')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
-
-def getCredentials():
-    credentials = {}
-
-    response = sm_client.get_secret_value(SecretId='facultyCV/credentials/dbCredentials')
-    secrets = json.loads(response['SecretString'])
-    credentials['username'] = secrets['username']
-    credentials['password'] = secrets['password']
-    credentials['host'] = secrets['host']
-    credentials['db'] = secrets['dbname']
-    return credentials
 
 '''
 Given a table name and a list of columns created using createColumn, returns a postgres query to create a table called table_name
@@ -43,8 +29,7 @@ def createColumn(column_name, columnType, constraints, final_column):
     return column
 
 def lambda_handler(event, context):
-    credentials = getCredentials()
-    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=DB_PROXY_ENDPOINT, database=credentials['db'])
+    connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
     print("Connected to Database")
     cursor = connection.cursor()
 

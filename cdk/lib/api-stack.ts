@@ -60,10 +60,17 @@ export class ApiStack extends cdk.Stack {
       description: "Lambda layer containing the aws-jwt-verify NodeJS library"
     })
 
+    const databaseConnectLayer = new LayerVersion(this, "databaseConnectLambdaLayer", {
+      code: Code.fromAsset("./layers/databaseConnect.zip"),
+      compatibleRuntimes: [Runtime.PYTHON_3_9],
+      description: "Lambda layer containing the database connection"
+    })
+
     this.layerList["psycopg2"] = psycopgLayer;
     this.layerList["reportlab"] = reportLabLayer;
     this.layerList["requests"] = requestsLayer;
     this.layerList["aws-jwt-verify"] = awsJwtVerifyLayer;
+    this.layerList["databaseConnect"] = databaseConnectLayer;
 
     // Auth
     this.userPool = new cognito.UserPool(this, "FacultyCVUserPool", {
@@ -334,7 +341,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -345,7 +352,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -356,7 +363,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -376,7 +383,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -388,7 +395,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -399,7 +406,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -410,7 +417,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -421,7 +428,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -432,7 +439,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -444,7 +451,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -455,7 +462,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     )
     createResolver(
       this.api,
@@ -466,7 +473,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     )
     createResolver(
       this.api,
@@ -478,7 +485,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     )
     createResolver(
       this.api,
@@ -498,7 +505,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -525,7 +532,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint 
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -547,7 +554,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -558,7 +565,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -569,7 +576,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -589,7 +596,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -600,7 +607,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -611,7 +618,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -622,7 +629,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -633,7 +640,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -644,7 +651,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -655,7 +662,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -667,7 +674,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -678,7 +685,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -689,7 +696,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -709,7 +716,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -720,7 +727,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
     createResolver(
       this.api,
@@ -731,7 +738,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       resolverRole,
-      [psycopgLayer]
+      [psycopgLayer, databaseConnectLayer]
     );
 
     // Lambda function to delete archived rows
@@ -747,7 +754,7 @@ export class ApiStack extends cdk.Stack {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
       role: resolverRole,
-      layers: [psycopgLayer],
+      layers: [psycopgLayer, databaseConnectLayer],
       vpc: databaseStack.dbInstance.vpc // Same VPC as the database
     });
 
