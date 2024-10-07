@@ -27,6 +27,9 @@ export class DbFetchStack extends cdk.Stack {
       functionName: 'facultyCV-createTables',
       runtime: lambda.Runtime.PYTHON_3_9,
       handler: 'createTables.lambda_handler',
+      environment: {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
       layers: [psycopgLambdaLayer],
       code: lambda.Code.fromAsset('lambda/createTables'),
       timeout: cdk.Duration.minutes(15),

@@ -1,8 +1,10 @@
 import boto3
 import json
 import psycopg2
+import os
 
 sm_client = boto3.client('secretsmanager')
+DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 
 def getCredentials():
     credentials = {}
@@ -17,7 +19,7 @@ def getCredentials():
 
 def updateUniversityInfo(arguments):
     credentials = getCredentials()
-    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
+    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=DB_PROXY_ENDPOINT, database=credentials['db'])
     print("Connected to database")
     cursor = connection.cursor()
 

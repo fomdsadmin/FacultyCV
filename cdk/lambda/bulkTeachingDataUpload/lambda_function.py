@@ -7,6 +7,7 @@ import json
 
 s3_client = boto3.client("s3")
 sm_client = boto3.client('secretsmanager')
+DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 
 
 '''
@@ -56,7 +57,7 @@ Requires no input
 '''
 def lambda_handler(event, context):
     credentials = getCredentials()
-    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=credentials['host'], database=credentials['db'])
+    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=DB_PROXY_ENDPOINT, database=credentials['db'])
     cursor = connection.cursor()
     rows_written = 0
     bucket_name = os.environ.get('S3_BUCKET_NAME')
