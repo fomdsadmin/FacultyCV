@@ -3,21 +3,11 @@ import json
 import psycopg2
 import os
 import time
+from databaseConnect import get_connection
 
 sm_client = boto3.client('secretsmanager')
 dynamodb = boto3.client('dynamodb')
 DB_PROXY_ENDPOINT = os.environ['DB_PROXY_ENDPOINT']
-
-def getCredentials():
-    credentials = {}
-
-    response = sm_client.get_secret_value(SecretId='facultyCV/credentials/dbCredentials')
-    secrets = json.loads(response['SecretString'])
-    credentials['username'] = secrets['username']
-    credentials['password'] = secrets['password']
-    credentials['host'] = secrets['host']
-    credentials['db'] = secrets['dbname']
-    return credentials
 
 def updateDynamoDBKeys(template_id):
     # First fetch all the keys that contain the template_id
@@ -42,8 +32,7 @@ def updateDynamoDBKeys(template_id):
         dynamodb.put_item(TableName=os.environ['TABLE_NAME'], Item=user_logs)
 
 def updateTemplate(arguments):
-    credentials = getCredentials()
-    connection = psycopg2.connect(user=credentials['username'], password=credentials['password'], host=DB_PROXY_ENDPOINT, database=credentials['db'])
+    connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
     print("Connected to database")
     cursor = connection.cursor()
 

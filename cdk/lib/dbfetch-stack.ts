@@ -20,7 +20,8 @@ export class DbFetchStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
-    const psycopgLambdaLayer = apiStack.getLayers()['psycopg2'];   
+    const psycopgLambdaLayer = apiStack.getLayers()['psycopg2'];
+    const databaseConnectLayer = apiStack.getLayers()['databaseConnect']   
 
     // Create the database tables (runs during deployment)
     const createTables = new triggers.TriggerFunction(this, 'facultyCV-createTables', {
@@ -30,7 +31,7 @@ export class DbFetchStack extends cdk.Stack {
       environment: {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
-      layers: [psycopgLambdaLayer],
+      layers: [psycopgLambdaLayer, databaseConnectLayer],
       code: lambda.Code.fromAsset('lambda/createTables'),
       timeout: cdk.Duration.minutes(15),
       memorySize: 512,
