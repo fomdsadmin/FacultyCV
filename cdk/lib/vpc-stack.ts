@@ -2,6 +2,7 @@ import { Stack, StackProps, CfnParameter } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import { Fn } from 'aws-cdk-lib';
 
 export class VpcStack extends Stack {
     public readonly vpc: ec2.Vpc;
@@ -9,31 +10,29 @@ export class VpcStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
-        // // Parameters for existing resources
-        // const existingVpcId = new CfnParameter(this, 'existingVpcId', {
-        //     type: 'String',
-        //     description: 'The ID of the existing VPC',
-        //     default: '',
-        // });
+        const existingVpcId: string = ''; //CHANGE IF DEPLOYING WITH EXISTING VPC
 
-        const existingVpcId: string = 'vpc-0515a0d6ee4abcd8e'; //MANUALLY CHANGE
-
-        //const existingVpcId = cdk.aws_ssm.StringParameter.valueForStringParameter(this, 'existing-VPC-id');
+        //const existingVpcId = cdk.aws_ssm.StringParameter.valueFromLookup(this, 'existing-VPC-id');
 
         // Check if existing VPC ID is provided
-        if (existingVpcId !== '') {
-            
-            // Use existing VPC
-            const getExistingVpc = ec2.Vpc.fromLookup(this, 'ImportVPC', {
-                vpcId: existingVpcId
-            }) as ec2.Vpc;
-            this.vpc = getExistingVpc;
+        if (existingVpcId != '') {
+            const publicSubnetCIDR = cdk.aws_ssm.StringParameter.valueFromLookup(this, 'public-subnet-cidr');
+
+            this.vpc = ec2.Vpc.fromVpcAttributes(this, 'VPC', {
+                vpcId: existingVpcId,
+                availabilityZones: ["ca-central-1a", "ca-central-1b", "ca-central-1d"],
+                privateSubnetIds: [Fn.importValue('PrivateSubnet1AID'), Fn.importValue('PrivateSubnet2AID'), Fn.importValue('PrivateSubnet3AID')],
+                privateSubnetRouteTableIds: [Fn.importValue('PrivateSubnet1ARouteTable'), Fn.importValue('PrivateSubnet2ARouteTable'), Fn.importValue('PrivateSubnet3ARouteTable')],
+                isolatedSubnetIds: [Fn.importValue('PrivateSubnet1AID'), Fn.importValue('PrivateSubnet2AID'), Fn.importValue('PrivateSubnet3AID')],
+                isolatedSubnetRouteTableIds: [Fn.importValue('PrivateSubnet1ARouteTable'), Fn.importValue('PrivateSubnet2ARouteTable'), Fn.importValue('PrivateSubnet3ARouteTable')],
+                vpcCidrBlock: Fn.importValue('VPCCIDR'),
+            }) as ec2.Vpc;            
 
             // Create a public subnet
             const publicSubnet = new ec2.Subnet(this, 'PublicSubnet', {
                 vpcId: this.vpc.vpcId,
                 availabilityZone: this.vpc.availabilityZones[0],
-                cidrBlock: '172.31.96.0/20', //MANUALLY CHANGE
+                cidrBlock: publicSubnetCIDR,
                 mapPublicIpOnLaunch: true,
             });
 
@@ -70,19 +69,19 @@ export class VpcStack extends Stack {
 
             // Update route table for private subnets
             new ec2.CfnRoute(this, `PrivateSubnetRoute1`, {
-                routeTableId: 'rtb-07d69755b7dd2310a', //MANUALLY CHANGE
+                routeTableId: this.vpc.privateSubnets[0].routeTable.routeTableId,
                 destinationCidrBlock: '0.0.0.0/0',
                 natGatewayId: natGateway.ref,
             });
 
             new ec2.CfnRoute(this, `PrivateSubnetRoute2`, {
-                routeTableId: 'rtb-05c671af07ddb1e3d', //MANUALLY CHANGE
+                routeTableId: this.vpc.privateSubnets[1].routeTable.routeTableId,
                 destinationCidrBlock: '0.0.0.0/0',
                 natGatewayId: natGateway.ref,
             });
 
             new ec2.CfnRoute(this, `PrivateSubnetRoute3`, {
-                routeTableId: 'rtb-015a7fae3d76f0d83', //MANUALLY CHANGE
+                routeTableId: this.vpc.privateSubnets[2].routeTable.routeTableId,
                 destinationCidrBlock: '0.0.0.0/0',
                 natGatewayId: natGateway.ref,
             });
