@@ -160,6 +160,7 @@ const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
                       field1={entry.title}
                       field2={fieldA}
                       field3={fieldB}
+                      data_details={entry.data_details}
                       onRestore={() => handleRestore(entry)}
                     />
                   );
