@@ -15,7 +15,8 @@
    - [Step 3: Backend Deployment](#step-3-backend-deployment)
      - [1: Navigate to the cdk directory](#1-navigate-to-the-cdk-directory)
      - [2: Upload the Elsevier API Key, Institution Token, Database Secret and OPS API Key](#2-upload-the-elsevier-api-key-institution-token-database-secret-and-ops-api-key)
-     - [3: CDK Deployment](#3-cdk-deployment)
+     - [3a: CDK Deployment in Hybrid Cloud Environment](#3a-cdk-deployment-in-hybrid-cloud-environment)
+     - [3b: CDK Deployment](#3b-cdk-deployment)
    - [Taking down the deployed stacks](#taking-down-the-deployed-stacks)
    - [Step 4: Upload Data to S3 for the Bulk Data Pipeline](#step-4-upload-data-to-s3-for-the-bulk-data-pipeline)
    - [Step 5: Upload Data to S3 for the Grant Data Pipeline](#step-5-upload-data-to-s3-for-the-grant-data-pipeline)
@@ -178,8 +179,9 @@ aws secretsmanager create-secret \
     --secret-string "{\"consumer_key\":\"CONSUMER_KEY\",\"consumer_secret_key\":\"CONSUMER_SECRET_KEY\"}" \
     --profile <YOUR-PROFILE-NAME>
 ```
+#### 3a: CDK Deployment in Hybrid Cloud Environment
 
-#### 3: CDK Deployment
+#### 3b: CDK Deployment
 
 Initialize the CDK stacks, replacing `<YOUR_AWS_ACCOUNT_ID>`, `<YOUR_ACCOUNT_REGION>` and `<YOUR-PROFILE-NAME>`. with the appropriate values. **NOTE: Remember to have your Docker container running.**
 

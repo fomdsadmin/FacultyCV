@@ -17,16 +17,34 @@ export class VpcStack extends Stack {
         // Check if existing VPC ID is provided
         if (existingVpcId != '') {
             const publicSubnetCIDR = cdk.aws_ssm.StringParameter.valueFromLookup(this, 'public-subnet-cidr');
+            //const AWSControlTowerStackSet = cdk.aws_ssm.StringParameter.valueFromLookup(this, 'ControlTowerStackSet');
+            const AWSControlTowerStackSet = ""; //CHANGE TO YOUR CONTROL TOWER STACK SET
 
             this.vpc = ec2.Vpc.fromVpcAttributes(this, 'VPC', {
                 vpcId: existingVpcId,
                 availabilityZones: ["ca-central-1a", "ca-central-1b", "ca-central-1d"],
-                privateSubnetIds: [Fn.importValue('PrivateSubnet1AID'), Fn.importValue('PrivateSubnet2AID'), Fn.importValue('PrivateSubnet3AID')],
-                privateSubnetRouteTableIds: [Fn.importValue('PrivateSubnet1ARouteTable'), Fn.importValue('PrivateSubnet2ARouteTable'), Fn.importValue('PrivateSubnet3ARouteTable')],
-                isolatedSubnetIds: [Fn.importValue('PrivateSubnet1AID'), Fn.importValue('PrivateSubnet2AID'), Fn.importValue('PrivateSubnet3AID')],
-                isolatedSubnetRouteTableIds: [Fn.importValue('PrivateSubnet1ARouteTable'), Fn.importValue('PrivateSubnet2ARouteTable'), Fn.importValue('PrivateSubnet3ARouteTable')],
-                vpcCidrBlock: Fn.importValue('VPCCIDR'),
-            }) as ec2.Vpc;            
+                privateSubnetIds: [
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet1AID`), 
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet2AID`), 
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet3AID`)
+                ],
+                privateSubnetRouteTableIds: [
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet1ARouteTable`), 
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet2ARouteTable`), 
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet3ARouteTable`)
+                ],
+                isolatedSubnetIds: [
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet1AID`), 
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet2AID`), 
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet3AID`)
+                ],
+                isolatedSubnetRouteTableIds: [
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet1ARouteTable`), 
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet2ARouteTable`), 
+                    Fn.importValue(`${AWSControlTowerStackSet}-PrivateSubnet3ARouteTable`)
+                ],
+                vpcCidrBlock: Fn.importValue(`${AWSControlTowerStackSet}-VPCCIDR`),
+            }) as ec2.Vpc;       
 
             // Create a public subnet
             const publicSubnet = new ec2.Subnet(this, 'PublicSubnet', {
