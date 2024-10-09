@@ -181,13 +181,49 @@ aws secretsmanager create-secret \
 ```
 #### 3a: CDK Deployment in Hybrid Cloud Environment
 
+The following set of instructions are only if you want to deploy this application in a **hybrid cloud environment**. If you do not have an existing VPC to deploy in you can skip to [3b: CDK Deployment](#3b-cdk-deployment).
+
+In order to deploy in a hybrid cloud environment, you will need to add your existing VPC id and the name of your AWSControlTowerStackSet to the code in the Vpc Stack as well as insert a public subnet CIDR parameter. The first step is to navigate to the `vpc-stack.ts` file which is located in `cdk/lib/vpc-stack.ts`. In this file replace the following lines:
+
+1. Replace **line 13** in the file with the id of your existing VPC which should be: 
+   
+   `const existingVpcId: string = ''; //CHANGE IF DEPLOYING WITH EXISTING VPC`
+   
+   This id can be found by navigating to the `VPC` dashboard in the [AWS online console](https://console.aws.amazon.com/console/home). In the VPC dashboard, navigate to `Your VPCs` and copy the id of your existing VPC.
+
+   ![alt text](images/ExistingVPCId.png)
+
+2. Replace **line 21** in the file with the name of your existing AWSControlTowerStackSet which should be:
+   
+   `const AWSControlTowerStackSet = ""; //CHANGE TO YOUR CONTROL TOWER STACK SET`
+
+   This name can be found by navigating to the `CloudFormation` dashboard in the [AWS online console](https://console.aws.amazon.com/console/home). In the CloudFormation dashboard, navigate to `Stacks`, scroll until you see a `Stack name` that starts with `StackSet-AWSControlTowerBP-VPC-ACCOUNT-FACTORY` and copy this name.
+
+   ![alt text](images/AWSControlTowerStack.png)
+
+3. Finally, upload the CIDR block of the public subnet that will be created in this existing VPC as a parameter. This CIDR block can be of your choice but must be **within your existing VPC** and **not overlap with an existing subnet in your VPC**. For more information visit [AWS CIDR Block documentation](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html).
+
+   For example, if your existing VPC's IPv4 CIDR is `172.31.0.0/16` and you have 3 existing private subnets with the IPv4 CIDRs of `172.31.32.0/20`, `172.31.64.0/20` and `172.31.80.0/20`, you can choose your public subnet CIDR to be `172.31.96.0/20`. This is within the CIDR range of the existing VPC and does not overlap with the CIDRs of the existing subnets.
+   
+   You can then run the following command and replace `<PUBLIC-SUBNET-CIDR>` with your chosen CIDR block:
+
+   ```
+   aws ssm put-parameter \
+      --name "public-subnet-cidr" \
+      --value "<PUBLIC-SUBNET-CIDR>" \
+      --type SecretString \
+      --profile <YOUR-PROFILE-NAME>
+   ```
+
+You can proceed with the rest of the deployment instructions and the Vpc Stack will automatically use your existing VPC instead of creating a new one.
+
 #### 3b: CDK Deployment
 
 Initialize the CDK stacks, replacing `<YOUR_AWS_ACCOUNT_ID>`, `<YOUR_ACCOUNT_REGION>` and `<YOUR-PROFILE-NAME>`. with the appropriate values. **NOTE: Remember to have your Docker container running.**
 
 ```bash
-cdk synth --profile <YOUR-PROFILE-NAME>
 cdk bootstrap aws://<YOUR_AWS_ACCOUNT_ID>/<YOUR_ACCOUNT_REGION> --profile <YOUR-PROFILE-NAME>
+cdk synth --profile <YOUR-PROFILE-NAME>
 ```
 
 Deploy the CDK stacks:
