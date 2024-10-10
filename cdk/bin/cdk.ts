@@ -10,6 +10,9 @@ import { DataFetchStack } from '../lib/datafetch-stack';
 import { CVGenStack } from '../lib/cvgen-stack';
 import { GrantDataStack } from '../lib/grantdata-stack';
 import { PatentDataStack } from '../lib/patentdata-stack';
+import { ResolverStack } from '../lib/resolver-stack';
+import { Resolver2Stack } from '../lib/resolver2-stack';
+import { Resolver3Stack } from '../lib/resolver3-stack';
 
 const app = new cdk.App();
 
@@ -25,6 +28,18 @@ const cvGenStack = new CVGenStack(app, 'CVGenStack', { env: { account: process.e
 
 const apiStack = new ApiStack(app, 'ApiStack', databaseStack, cvGenStack,
    {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+)
+
+const resolverStack = new ResolverStack(app, 'ResolverStack', apiStack, databaseStack, cvGenStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+)
+
+const resolver2Stack = new Resolver2Stack(app, 'Resolver2Stack', apiStack, databaseStack, cvGenStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+)
+
+const resolver3Stack = new Resolver3Stack(app, 'Resolver3Stack', apiStack, databaseStack, cvGenStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
 const amplifyStack = new AmplifyStack(app, 'AmplifyStack', apiStack,

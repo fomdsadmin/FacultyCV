@@ -25,9 +25,12 @@ export class ApiStack extends cdk.Stack {
   private readonly userPool: cognito.UserPool;
   private readonly userPoolClient: cognito.UserPoolClient;
   private readonly layerList: { [key: string]: LayerVersion };
+  private readonly resolverRole: Role;
   public getEndpointUrl = () => this.api.graphqlUrl;
   public getUserPoolId = () => this.userPool.userPoolId;
   public getUserPoolClientId = () => this.userPoolClient.userPoolClientId;
+  public getApi = () => this.api;
+  public getResolverRole = () => this.resolverRole;
   public addLayer = (name: string, layer: LayerVersion) =>
     (this.layerList[name] = layer);
   public getLayers = () => this.layerList;
@@ -130,63 +133,9 @@ export class ApiStack extends cdk.Stack {
     const departmentAdminGroup = new cognito.CfnUserPoolGroup(this, 'DepartmentAdminGroup', {
       groupName: 'DepartmentAdmin',
       userPoolId: this.userPool.userPoolId,
-  });
+    });
 
-    // GraphQL Resolvers
-    const assignResolver = (
-      api: appsync.GraphqlApi,
-      fieldName: string,
-      ds: appsync.LambdaDataSource,
-      typeName: string
-    ) => {
-      new appsync.Resolver(this, "FacultyCVResolver-" + fieldName, {
-        api: api,
-        dataSource: ds,
-        typeName: typeName,
-        fieldName: fieldName,
-      });
-      return;
-    };
-
-    const createResolver = (
-      api: appsync.GraphqlApi,
-      directory: string,
-      fieldNames: string[],
-      typeName: string,
-      env: { [key: string]: string },
-      role: Role,
-      layers: LayerVersion[],
-      runtime: Runtime = Runtime.PYTHON_3_9
-    ) => {
-      const resolver = new Function(this, `facultycv-${directory}-resolver`, {
-        functionName: `facultycv-${directory}-resolver`,
-        runtime: runtime,
-        memorySize: 512,
-        code: Code.fromAsset(`./lambda/${directory}`),
-        handler: "resolver.lambda_handler",
-        architecture: Architecture.X86_64,
-        timeout: cdk.Duration.minutes(1),
-        environment: env,
-        role: role,
-        layers: layers,
-        vpc: databaseStack.dbInstance.vpc // Same VPC as the database
-      });
-
-      const lambdaDataSource = new appsync.LambdaDataSource(
-        this,
-        `${directory}-data-source`,
-        {
-          api: api,
-          lambdaFunction: resolver,
-          name: `${directory}-data-source`,
-        }
-      );
-
-      fieldNames.forEach((field) =>
-        assignResolver(api, field, lambdaDataSource, typeName)
-      );
-    };
-
+    // AppSync API
     this.api = new appsync.GraphqlApi(this, "FacultyCVApi", {
       name: "faculty-cv-api",
       definition: appsync.Definition.fromFile("./graphql/schema.graphql"),
@@ -203,7 +152,8 @@ export class ApiStack extends cdk.Stack {
       },
     });
 
-    const resolverRole = new Role(this, "FacultyCVResolverRole", {
+    // AppSync API Role
+    this.resolverRole = new Role(this, "FacultyCVResolverRole", {
       assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
       roleName: "facultycv-resolver-role",
       managedPolicies: [
@@ -215,7 +165,7 @@ export class ApiStack extends cdk.Stack {
     });
 
     // Grant access to Secret Manager
-    resolverRole.addToPolicy(
+    this.resolverRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
@@ -229,7 +179,7 @@ export class ApiStack extends cdk.Stack {
     );
 
     // Grant access to EC2
-    resolverRole.addToPolicy(
+    this.resolverRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
@@ -244,7 +194,7 @@ export class ApiStack extends cdk.Stack {
     );
 
     // Grant access to log
-    resolverRole.addToPolicy(
+    this.resolverRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
@@ -258,7 +208,7 @@ export class ApiStack extends cdk.Stack {
     );
 
     // Grant permission to add users to an IAM group
-    resolverRole.addToPolicy(new iam.PolicyStatement({
+    this.resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
           "iam:AddUserToGroup",
@@ -270,7 +220,7 @@ export class ApiStack extends cdk.Stack {
     }));
 
     // Grant permission to add/remove users to a Cognito user group
-    resolverRole.addToPolicy(new iam.PolicyStatement({
+    this.resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
           "cognito-idp:AdminAddUserToGroup",
@@ -282,7 +232,7 @@ export class ApiStack extends cdk.Stack {
     }));
 
     // Grant permission to get user details from Cognito
-    resolverRole.addToPolicy(new iam.PolicyStatement({
+    this.resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
           "cognito-idp:AdminGetUser",
@@ -292,7 +242,7 @@ export class ApiStack extends cdk.Stack {
       ],
     }));
 
-    resolverRole.addToPolicy(new iam.PolicyStatement({
+    this.resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
         "s3:*Object",
@@ -301,7 +251,7 @@ export class ApiStack extends cdk.Stack {
       resources: [cvGenStack.cvS3Bucket.bucketArn + "/*", cvGenStack.cvS3Bucket.bucketArn]
     }));
 
-    resolverRole.addToPolicy(new iam.PolicyStatement({
+    this.resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
         "dynamodb:*"
@@ -310,436 +260,6 @@ export class ApiStack extends cdk.Stack {
         cvGenStack.dynamoDBTable.tableArn
       ]
     }));
-
-    createResolver(
-      this.api,
-      "addToUserGroup",
-      ["addToUserGroup"],
-      "Mutation",
-      {USER_POOL_ID: this.userPool.userPoolId},
-      resolverRole,
-      []
-    );
-
-    createResolver(
-      this.api,
-      "removeFromUserGroup",
-      ["removeFromUserGroup"],
-      "Mutation",
-      {USER_POOL_ID: this.userPool.userPoolId},
-      resolverRole,
-      []
-    );
-
-    createResolver(
-      this.api,
-      "getUser",
-      ["getUser"],
-      "Query",
-      {
-        USER_POOL_ID: this.userPool.userPoolId,
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getAllUsers",
-      ["getAllUsers"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getExistingUser",
-      ["getExistingUser"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "pdfGenerator",
-      ["generatePDF"],
-      "Mutation",
-      {},
-      resolverRole,
-      [reportLabLayer]
-    );
-    createResolver(
-      this.api,
-      "addUser",
-      ["addUser"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "updateUser",
-      ["updateUser"],
-      "Mutation",
-      {
-        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName,
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getAllSections",
-      ["getAllSections"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getArchivedSections",
-      ["getArchivedSections"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "addSection",
-      ["addSection"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "updateSection",
-      ["updateSection"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "addUserCVData",
-      ["addUserCVData"],
-      "Mutation",
-      {
-        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName,
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getUserCVData",
-      ["getUserCVData"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    )
-    createResolver(
-      this.api,
-      "getArchivedUserCVData",
-      ["getArchivedUserCVData"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    )
-    createResolver(
-      this.api,
-      "updateUserCVData",
-      ["updateUserCVData"],
-      "Mutation",
-      {
-        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName,
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    )
-    createResolver(
-      this.api,
-      "getElsevierAuthorMatches",
-      ["getElsevierAuthorMatches"],
-      "Query",
-      {},
-      resolverRole,
-      [requestsLayer]
-    )
-    createResolver(
-      this.api,
-      "getAllUniversityInfo",
-      ["getAllUniversityInfo"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getPresignedUrl",
-      ["getPresignedUrl"],
-      "Query",
-      {
-        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
-        USER_POOL_ISS: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPool.userPoolId}`,
-        CLIENT_ID: this.userPoolClient.userPoolClientId
-      },
-      resolverRole,
-      [awsJwtVerifyLayer],
-      Runtime.NODEJS_20_X
-    );
-    createResolver(
-      this.api,
-      "cvIsUpToDate",
-      ["cvIsUpToDate"],
-      "Query",
-      {
-        TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
-        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint 
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getNumberOfGeneratedCVs",
-      ["getNumberOfGeneratedCVs"],
-      "Query",
-      {
-        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName
-      },
-      resolverRole,
-      []
-    );
-    createResolver(
-      this.api,
-      "addUniversityInfo",
-      ["addUniversityInfo"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "updateUniversityInfo",
-      ["updateUniversityInfo"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "linkScopusId",
-      ["linkScopusId"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getOrcidAuthorMatches",
-      ["getOrcidAuthorMatches"],
-      "Query",
-      {},
-      resolverRole,
-      [requestsLayer]
-    );
-    createResolver(
-      this.api,
-      "linkOrcid",
-      ["linkOrcid"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getUserConnections",
-      ["getUserConnections"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "addUserConnection",
-      ["addUserConnection"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "updateUserConnection",
-      ["updateUserConnection"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "deleteUserConnection",
-      ["deleteUserConnection"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getAllTemplates",
-      ["getAllTemplates"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "addTemplate",
-      ["addTemplate"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "updateTemplate",
-      ["updateTemplate"],
-      "Mutation",
-      {
-        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName,
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "deleteTemplate",
-      ["deleteTemplate"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getTeachingDataMatches",
-      ["getTeachingDataMatches"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getPublicationMatches",
-      ["getPublicationMatches"],
-      "Query",
-      {},
-      resolverRole,
-      [requestsLayer]
-    );
-    createResolver(
-      this.api,
-      "getSecureFundingMatches",
-      ["getSecureFundingMatches"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getRiseDataMatches",
-      ["getRiseDataMatches"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    createResolver(
-      this.api,
-      "getPatentMatches",
-      ["getPatentMatches"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
 
     // Lambda function to delete archived rows
     const deleteArchivedDataLambda = new Function(this, "DeleteArchivedDataLambda", {
@@ -753,7 +273,7 @@ export class ApiStack extends cdk.Stack {
       environment: {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
-      role: resolverRole,
+      role: this.resolverRole,
       layers: [psycopgLayer, databaseConnectLayer],
       vpc: databaseStack.dbInstance.vpc // Same VPC as the database
     });
@@ -821,7 +341,6 @@ export class ApiStack extends cdk.Stack {
         },
     ]
     })
-
     const wafAssociation = new wafv2.CfnWebACLAssociation(this, 'waf-association', {
       resourceArn: this.api.arn,
       webAclArn: waf.attrArn

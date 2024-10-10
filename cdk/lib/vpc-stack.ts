@@ -10,15 +10,15 @@ export class VpcStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
-        const existingVpcId: string = ''; //CHANGE IF DEPLOYING WITH EXISTING VPC
+        const existingVpcId: string = 'vpc-0ac31fea61168e3a4'; //CHANGE IF DEPLOYING WITH EXISTING VPC
 
         //const existingVpcId = cdk.aws_ssm.StringParameter.valueFromLookup(this, 'existing-VPC-id');
 
         // Check if existing VPC ID is provided
         if (existingVpcId != '') {
-            const publicSubnetCIDR = cdk.aws_ssm.StringParameter.valueFromLookup(this, 'public-subnet-cidr');
+            //const publicSubnetCIDR = cdk.aws_ssm.StringParameter.valueFromLookup(this, 'public-subnet-cidr');
             //const AWSControlTowerStackSet = cdk.aws_ssm.StringParameter.valueFromLookup(this, 'ControlTowerStackSet');
-            const AWSControlTowerStackSet = ""; //CHANGE TO YOUR CONTROL TOWER STACK SET
+            const AWSControlTowerStackSet = "StackSet-AWSControlTowerBP-VPC-ACCOUNT-FACTORY-V1-dac47cf2-48cd-4136-9945-72c6e651f334"; //CHANGE TO YOUR CONTROL TOWER STACK SET
 
             this.vpc = ec2.Vpc.fromVpcAttributes(this, 'VPC', {
                 vpcId: existingVpcId,
@@ -50,7 +50,7 @@ export class VpcStack extends Stack {
             const publicSubnet = new ec2.Subnet(this, 'PublicSubnet', {
                 vpcId: this.vpc.vpcId,
                 availabilityZone: this.vpc.availabilityZones[0],
-                cidrBlock: publicSubnetCIDR,
+                cidrBlock: "172.31.96.0/20",
                 mapPublicIpOnLaunch: true,
             });
 
