@@ -181,27 +181,33 @@ aws secretsmanager create-secret \
 ```
 #### 3a: CDK Deployment in Hybrid Cloud Environment
 
-The following set of instructions are only if you want to deploy this application in a **hybrid cloud environment**. If you do not have an existing VPC to deploy in you can skip to [3b: CDK Deployment](#3b-cdk-deployment).
+The following set of instructions are only if you want to deploy this application in a **hybrid cloud environment**. If you do not want to do this you can skip to [3b: CDK Deployment](#3b-cdk-deployment).
 
-In order to deploy in a hybrid cloud environment, you will need to add your existing VPC id and the name of your AWSControlTowerStackSet to the code in the Vpc Stack. The first step is to navigate to the `vpc-stack.ts` file which is located in `cdk/lib/vpc-stack.ts`. In this file replace the following lines:
+In order to deploy in a hybrid cloud environment, you will need to have access to the **aws-controltower-VPC** and the name of your **AWSControlTowerStackSet**.
 
-1. Replace **line 13** in the file with the id of your existing VPC which should be: 
-   
-   `const existingVpcId: string = ''; //CHANGE IF DEPLOYING WITH EXISTING VPC`
-   
-   This id can be found by navigating to the `VPC` dashboard in the [AWS online console](https://console.aws.amazon.com/console/home). In the VPC dashboard, navigate to `Your VPCs` and copy the id of your existing VPC.
+#### Step-by-Step Instructions
 
-   ![alt text](images/ExistingVPCId.png)
+1. **Modify the VPC Stack:**
+   - Navigate to the `vpc-stack.ts` file located at `cdk/lib/vpc-stack.ts`.
+   - Replace **line 13** with your existing VPC ID:
+     ```typescript
+     const existingVpcId: string = 'your-vpc-id'; //CHANGE IF DEPLOYING WITH EXISTING VPC
+     ```
+     You can find your VPC ID by navigating to the **VPC dashboard** in the AWS Management Console and locating the VPC in the `Your VPCs` section.
 
-2. Replace **line 21** in the file with the name of your existing AWSControlTowerStackSet which should be:
-   
-   `const AWSControlTowerStackSet = ""; //CHANGE TO YOUR CONTROL TOWER STACK SET`
+     ![VPC ID Image](images/ExistingVPCId.png)
 
-   This name can be found by navigating to the `CloudFormation` dashboard in the [AWS online console](https://console.aws.amazon.com/console/home). In the CloudFormation dashboard, navigate to `Stacks`, scroll until you see a `Stack name` that starts with `StackSet-AWSControlTowerBP-VPC-ACCOUNT-FACTORY` and copy this name.
+2. **Update the AWS Control Tower Stack Set:**
+   - Replace **line 21** with your AWS Control Tower Stack Set name:
+     ```typescript
+     const AWSControlTowerStackSet = "your-stackset-name"; //CHANGE TO YOUR CONTROL TOWER STACK SET
+     ```
+     You can find this name by navigating to the **CloudFormation dashboard** in AWS, under `Stacks`. Look for a stack name that starts with `StackSet-AWSControlTowerBP-VPC-ACCOUNT-FACTORY`.
 
-   ![alt text](images/AWSControlTowerStack.png)
+     ![AWS Control Tower Stack Image](images/AWSControlTowerStack.png)
 
-You can proceed with the rest of the deployment instructions and the Vpc Stack will automatically use your existing VPC instead of creating a new one.
+
+You can proceed with the rest of the deployment instructions and the Vpc Stack will automatically use your existing VPC instead of creating a new one. For more detailed information about the hybrid cloud deployment you checkout the [Hybrid Cloud Deployment Guide](/docs/HybridCloudDeploymentGuide.md)
 
 #### 3b: CDK Deployment
 
@@ -248,10 +254,13 @@ Please delete the stacks in the opposite order of how they were deployed. The de
 3. DataFetchStack
 4. DbFetchStack
 5. AmplifyStack
-6. ApiStack
-7. CVGenStack
-8. DatabaseStack
-9. VpcStack
+6. Resolver3Stack
+7. Resolver2Stack
+8. ResolverStack
+9. ApiStack
+10. CVGenStack
+11. DatabaseStack
+12. VpcStack
 
 ![alt text](images/cloudformation-take-down.png)
 
