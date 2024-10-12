@@ -6,9 +6,11 @@ import { aws_rds as rds } from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { VpcStack } from './vpc-stack';
 import * as sm from 'aws-cdk-lib/aws-secretsmanager'
+import { DatabaseInstanceProps, DatabaseInstanceReadReplica, DatabaseInstanceReadReplicaProps } from 'aws-cdk-lib/aws-rds';
 
 export class DatabaseStack extends Stack {
     public readonly dbInstance: rds.DatabaseInstance;
+    public readonly dbReadReplica: rds.DatabaseInstanceReadReplica;
     public readonly secretPath: string;
     public readonly rdsProxyEndpoint: string;
 
@@ -38,41 +40,59 @@ export class DatabaseStack extends Stack {
           ]
       });
 
-      // Define the postgres database
-      this.dbInstance = new rds.DatabaseInstance(this, 'facultyCV', {
+      // Database and replica prop template
+      const dbPropsTemplate = {
         vpc: vpcStack.vpc,
         vpcSubnets: {
           subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
-        engine: rds.DatabaseInstanceEngine.postgres({
-          version: rds.PostgresEngineVersion.VER_16_3,
-        }),
         instanceType: ec2.InstanceType.of(
           ec2.InstanceClass.BURSTABLE3,
           ec2.InstanceSize.MEDIUM,
         ),
-        credentials: rds.Credentials.fromUsername(dbUsername.secretValueFromJson("username").unsafeUnwrap() , {
-          secretName: this.secretPath
-        }),
         multiAz: true,
         allocatedStorage: 100,
         maxAllocatedStorage: 115,
-        allowMajorVersionUpgrade: false,
         autoMinorVersionUpgrade: true,
-        backupRetention: cdk.Duration.days(7),
         deleteAutomatedBackups: true,
         deletionProtection: true,
-        databaseName: 'facultyCV',
         publiclyAccessible: false,
         storageEncrypted: true, // storage encryption at rest
         parameterGroup: parameterGroup,
         monitoringInterval: cdk.Duration.minutes(1), // Set monitoring interval
         monitoringRole: monitoringRole // Set monitoring role
-      });
+      }
+
+      const dbProps: DatabaseInstanceProps = {
+        ...dbPropsTemplate,
+        credentials: rds.Credentials.fromUsername(dbUsername.secretValueFromJson("username").unsafeUnwrap() , {
+          secretName: this.secretPath
+        }),
+        allowMajorVersionUpgrade: false,
+        engine: rds.DatabaseInstanceEngine.postgres({
+          version: rds.PostgresEngineVersion.VER_16_3,
+        }),
+        backupRetention: cdk.Duration.days(7),
+        databaseName: 'facultyCV'
+      }
+
+      // Define the postgres database
+      this.dbInstance = new rds.DatabaseInstance(this, 'facultyCV', dbProps);
+
+      const dbReplicaProps: DatabaseInstanceReadReplicaProps = {
+        ...dbPropsTemplate,
+        sourceDatabaseInstance: this.dbInstance
+      }
+
+      this.dbReadReplica = new DatabaseInstanceReadReplica(this, 'facultyCVReadReplica', dbReplicaProps);
 
       const vpcCidrBlock = vpcStack.vpc.vpcCidrBlock;
 
       this.dbInstance.connections.securityGroups.forEach(function (securityGroup) {
+        securityGroup.addIngressRule(ec2.Peer.ipv4(vpcCidrBlock), ec2.Port.tcp(5432), 'Postgres Ingress');
+      });
+
+      this.dbReadReplica.connections.securityGroups.forEach(function (securityGroup) {
         securityGroup.addIngressRule(ec2.Peer.ipv4(vpcCidrBlock), ec2.Port.tcp(5432), 'Postgres Ingress');
       });
 
