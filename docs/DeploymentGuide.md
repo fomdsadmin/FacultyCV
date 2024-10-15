@@ -40,7 +40,7 @@
 Before you deploy, you must have the following softwares installed on your device. Please install the correct version of each software according to your machine's operating system.
 
 - [AWS CLI](https://aws.amazon.com/cli/)
-- [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) *(v2.122.0 > required)*
+- [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) *(v2.149.0 > required)*
 - [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [node](https://nodejs.org/en/learn/getting-started/how-to-install-nodejs) *(v20.0.0 > required)*
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
