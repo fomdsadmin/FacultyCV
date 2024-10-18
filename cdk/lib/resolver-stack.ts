@@ -61,7 +61,7 @@ export class ResolverStack extends cdk.Stack {
         environment: env,
         role: role,
         layers: layers,
-        vpc: databaseStack.dbInstance.vpc // Same VPC as the database
+        vpc: databaseStack.dbCluster.vpc // Same VPC as the database
       });
 
       const lambdaDataSource = new appsync.LambdaDataSource(

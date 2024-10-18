@@ -6,18 +6,18 @@ import { aws_rds as rds } from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { VpcStack } from './vpc-stack';
 import * as sm from 'aws-cdk-lib/aws-secretsmanager'
-import { DatabaseInstanceProps, DatabaseInstanceReadReplica, DatabaseInstanceReadReplicaProps } from 'aws-cdk-lib/aws-rds';
+import { DatabaseCluster, DatabaseInstanceProps } from 'aws-cdk-lib/aws-rds';
 
 export class DatabaseStack extends Stack {
-    public readonly dbInstance: rds.DatabaseInstance;
-    public readonly dbReadReplica: rds.DatabaseInstanceReadReplica;
+    public readonly dbCluster: DatabaseCluster; 
     public readonly secretPath: string;
+    public readonly rdsProxyEndpointReader: string;
     public readonly rdsProxyEndpoint: string;
 
     constructor(scope: Construct, id: string, vpcStack: VpcStack, props?: StackProps) {
       super(scope, id, props);
 
-      this.secretPath = 'facultyCV/credentials/dbCredentials';
+      this.secretPath = 'facultyCV/credentials/databaseCredentials';
 
       // Database secret with customized username retrieve at deployment time
       const dbUsername = sm.Secret.fromSecretNameV2(this, 'facultyCV-dbUsername', 'facultyCV-dbUsername')
@@ -38,6 +38,14 @@ export class DatabaseStack extends Stack {
           managedPolicies: [
               iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonRDSEnhancedMonitoringRole')
           ]
+      });
+
+      const credentials = rds.Credentials.fromUsername(dbUsername.secretValueFromJson("username").unsafeUnwrap() , {
+        secretName: this.secretPath
+      });
+
+      const credentialsCluster = rds.Credentials.fromUsername(dbUsername.secretValueFromJson("username").unsafeUnwrap() , {
+        secretName: this.secretPath + 'Cluster'
       });
 
       // Database and replica prop template
@@ -65,9 +73,7 @@ export class DatabaseStack extends Stack {
 
       const dbProps: DatabaseInstanceProps = {
         ...dbPropsTemplate,
-        credentials: rds.Credentials.fromUsername(dbUsername.secretValueFromJson("username").unsafeUnwrap() , {
-          secretName: this.secretPath
-        }),
+        credentials: credentials,
         allowMajorVersionUpgrade: false,
         engine: rds.DatabaseInstanceEngine.postgres({
           version: rds.PostgresEngineVersion.VER_16_3,
@@ -76,23 +82,32 @@ export class DatabaseStack extends Stack {
         databaseName: 'facultyCV'
       }
 
-      // Define the postgres database
-      this.dbInstance = new rds.DatabaseInstance(this, 'facultyCV', dbProps);
-
-      const dbReplicaProps: DatabaseInstanceReadReplicaProps = {
-        ...dbPropsTemplate,
-        sourceDatabaseInstance: this.dbInstance
-      }
-
-      this.dbReadReplica = new DatabaseInstanceReadReplica(this, 'facultyCVReadReplica', dbReplicaProps);
+      // Aurora Postgres Cluster
+      this.dbCluster = new rds.DatabaseCluster(this, 'facultyCVDBCluster', {
+        engine: rds.DatabaseClusterEngine.auroraPostgres({ version: rds.AuroraPostgresEngineVersion.VER_16_2 }),
+        credentials: credentialsCluster,
+        vpc: vpcStack.vpc,
+        vpcSubnets: {
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+        },
+        writer: rds.ClusterInstance.provisioned('writer', {
+          instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MEDIUM)
+        }),
+        readers: [rds.ClusterInstance.provisioned('reader', {
+          instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MEDIUM)
+        })],
+        storageEncrypted: true,
+        parameters: {
+          'rds.force_ssl': '0'
+        },
+        monitoringInterval: cdk.Duration.minutes(1), // Set monitoring interval
+        monitoringRole: monitoringRole, // Set monitoring role
+        clusterIdentifier: 'FacultyCVCluster'
+      });
 
       const vpcCidrBlock = vpcStack.vpc.vpcCidrBlock;
 
-      this.dbInstance.connections.securityGroups.forEach(function (securityGroup) {
-        securityGroup.addIngressRule(ec2.Peer.ipv4(vpcCidrBlock), ec2.Port.tcp(5432), 'Postgres Ingress');
-      });
-
-      this.dbReadReplica.connections.securityGroups.forEach(function (securityGroup) {
+      this.dbCluster.connections.securityGroups.forEach(function (securityGroup) {
         securityGroup.addIngressRule(ec2.Peer.ipv4(vpcCidrBlock), ec2.Port.tcp(5432), 'Postgres Ingress');
       });
 
@@ -108,15 +123,15 @@ export class DatabaseStack extends Stack {
         })
       );
 
-      const rdsProxy = this.dbInstance.addProxy(id+'-proxy', {
-        secrets: [this.dbInstance.secret!],
+      const rdsProxyAurora = this.dbCluster.addProxy(id+'-proxy', {
+        secrets: [this.dbCluster.secret!],
         vpc: vpcStack.vpc,
         role: rdsProxyRole,
-        securityGroups: this.dbInstance.connections.securityGroups,
-        requireTLS: false,
-    });
+        securityGroups: this.dbCluster.connections.securityGroups,
+        requireTLS: false
+      });
 
-    this.dbInstance.grantConnect(rdsProxyRole);
-    this.rdsProxyEndpoint = rdsProxy.endpoint;
+    this.dbCluster.grantConnect(rdsProxyRole, dbUsername.secretValue.toString());
+    this.rdsProxyEndpoint = rdsProxyAurora.endpoint;
   }
 }

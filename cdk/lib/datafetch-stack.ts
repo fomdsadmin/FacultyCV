@@ -86,7 +86,7 @@ export class DataFetchStack extends cdk.Stack {
           S3_BUCKET_NAME: s3Bucket.bucketName,
           DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
         },
-        vpc: databaseStack.dbInstance.vpc, // add to the same vpc as rds
+        vpc: databaseStack.dbCluster.vpc, // add to the same vpc as rds
         vpcSubnets: {
           subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
@@ -105,7 +105,7 @@ export class DataFetchStack extends cdk.Stack {
           S3_BUCKET_NAME: s3Bucket.bucketName,
           DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
         },
-        vpc: databaseStack.dbInstance.vpc, // add to the same vpc as rds
+        vpc: databaseStack.dbCluster.vpc, // add to the same vpc as rds
         vpcSubnets: {
           subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
@@ -124,7 +124,7 @@ export class DataFetchStack extends cdk.Stack {
         S3_BUCKET_NAME: s3Bucket.bucketName,
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
-      vpc: databaseStack.dbInstance.vpc,
+      vpc: databaseStack.dbCluster.vpc,
       vpcSubnets: {
         subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
       },
@@ -143,7 +143,7 @@ export class DataFetchStack extends cdk.Stack {
         S3_BUCKET_NAME: s3Bucket.bucketName,
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
       },
-      vpc: databaseStack.dbInstance.vpc,
+      vpc: databaseStack.dbCluster.vpc,
       vpcSubnets: {
         subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
       },
