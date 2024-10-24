@@ -32,6 +32,10 @@ export class AmplifyStack extends cdk.Stack {
           cache:
             paths:
               - 'node_modules/**/*'
+          redirects:
+              - source: </^[^.]+$|.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>
+                target: /
+                status: 404
     `);
 
     const username = cdk.aws_ssm.StringParameter.valueForStringParameter(this, 'facultycv-owner-name');
@@ -54,7 +58,7 @@ export class AmplifyStack extends cdk.Stack {
       buildSpec: BuildSpec.fromObjectToYaml(amplifyYaml),
     });
 
-    amplifyApp.addBranch('amplify-cdk')
+    amplifyApp.addBranch('main')
 
   }
 }
