@@ -20,44 +20,44 @@ const vpcStack = new VpcStack(app, "VpcStack",
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 
-// const databaseStack = new DatabaseStack(app, 'DatabaseStack', vpcStack, 
-//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// );
+const databaseStack = new DatabaseStack(app, 'DatabaseStack', vpcStack, 
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
 
-// const cvGenStack = new CVGenStack(app, 'CVGenStack', { env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }});
+const cvGenStack = new CVGenStack(app, 'CVGenStack', { env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }});
 
-// const apiStack = new ApiStack(app, 'ApiStack', databaseStack, cvGenStack,
-//    {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// )
+const apiStack = new ApiStack(app, 'ApiStack', databaseStack, cvGenStack,
+   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+)
 
-// const resolverStack = new ResolverStack(app, 'ResolverStack', apiStack, databaseStack, cvGenStack,
-//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// )
+const resolverStack = new ResolverStack(app, 'ResolverStack', apiStack, databaseStack, cvGenStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+)
 
-// const resolver2Stack = new Resolver2Stack(app, 'Resolver2Stack', apiStack, databaseStack, cvGenStack,
-//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// )
+const resolver2Stack = new Resolver2Stack(app, 'Resolver2Stack', apiStack, databaseStack, cvGenStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+)
 
-// const resolver3Stack = new Resolver3Stack(app, 'Resolver3Stack', apiStack, databaseStack, cvGenStack,
-//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// )
+const resolver3Stack = new Resolver3Stack(app, 'Resolver3Stack', apiStack, databaseStack, cvGenStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+)
 
-// const amplifyStack = new AmplifyStack(app, 'AmplifyStack', apiStack,
-//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// );
+const amplifyStack = new AmplifyStack(app, 'AmplifyStack', apiStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
 
-// const dbFetchStack = new DbFetchStack(app, 'DbFetchStack', databaseStack, apiStack,
-//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// );
+const dbFetchStack = new DbFetchStack(app, 'DbFetchStack', databaseStack, apiStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
 
-// const dataFetchStack = new DataFetchStack(app, 'DataFetchStack', databaseStack, apiStack,
-//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// );
+const dataFetchStack = new DataFetchStack(app, 'DataFetchStack', databaseStack, apiStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
 
-// const grantDataStack = new GrantDataStack(app, 'GrantDataStack', vpcStack, databaseStack,
-//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// );
+const grantDataStack = new GrantDataStack(app, 'GrantDataStack', vpcStack, databaseStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
 
-// const patentDataStack = new PatentDataStack(app, 'PatentDataStack', grantDataStack, databaseStack,
-//   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-// );
+const patentDataStack = new PatentDataStack(app, 'PatentDataStack', grantDataStack, databaseStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
