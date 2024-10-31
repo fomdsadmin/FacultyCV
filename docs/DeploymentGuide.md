@@ -37,16 +37,16 @@
 
 ### Software Requirements
 
-Before you deploy, you must have the following softwares installed on your device. Please install the correct version of each software according to your machine's operating system.
+Before you deploy, you must have the following softwares installed on your device. Please install the correct version of each software according to your machine's operating system. As of October 31, 2024 this deployment has been verified with the following versions of softwares:
 
-- [AWS CLI](https://aws.amazon.com/cli/)
-- [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) *(v2.149.0 > required)*
-- [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-- [node](https://nodejs.org/en/learn/getting-started/how-to-install-nodejs) *(v20.0.0 > required)*
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [git](https://git-scm.com/downloads)
+- [AWS CLI](https://aws.amazon.com/cli/) *(v2.15.43)*
+- [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) *(v2.149.0)*
+- [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) *(v10.7.0)*
+- [node](https://nodejs.org/en/learn/getting-started/how-to-install-nodejs) *(v20.12.2)*
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) *(v26.0.0)*
+- [git](https://git-scm.com/downloads) *(v2.45.0.windows.1)*
 
-**Once you have downloaded docker desktop launch and setup the application. Once the application is setup leave it running.**
+**Once you have downloaded docker desktop launch and setup the application. Once the application is setup leave the engine running.**
 
 If you are on a Windows device, it is recommended to install the [Windows Subsystem For Linux](https://docs.microsoft.com/en-us/windows/wsl/install), which lets you run a Linux terminal on your Windows computer natively. Some of the steps will require its use. [Windows Terminal](https://apps.microsoft.com/store/detail/windows-terminal/9N0DX20HK701) is also recommended for using WSL.
 
