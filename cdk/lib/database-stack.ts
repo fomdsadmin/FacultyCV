@@ -22,16 +22,6 @@ export class DatabaseStack extends Stack {
       // Database secret with customized username retrieve at deployment time
       const dbUsername = sm.Secret.fromSecretNameV2(this, 'facultyCV-dbUsername', 'facultyCV-dbUsername')
 
-      const parameterGroup = new rds.ParameterGroup(this, "rdsParameterGroup", {
-        engine: rds.DatabaseInstanceEngine.postgres({
-          version: rds.PostgresEngineVersion.VER_16_3,
-        }),
-        description: "Empty parameter group", // Might need to change this later
-        parameters: {
-          'rds.force_ssl': '0'
-        }
-      });
-
       // Create IAM role for RDS enhanced monitoring
       const monitoringRole = new iam.Role(this, 'RDSMonitoringRole', {
           assumedBy: new iam.ServicePrincipal('monitoring.rds.amazonaws.com'),
@@ -40,47 +30,9 @@ export class DatabaseStack extends Stack {
           ]
       });
 
-      const credentials = rds.Credentials.fromUsername(dbUsername.secretValueFromJson("username").unsafeUnwrap() , {
-        secretName: this.secretPath
-      });
-
       const credentialsCluster = rds.Credentials.fromUsername(dbUsername.secretValueFromJson("username").unsafeUnwrap() , {
         secretName: this.secretPath + 'Cluster'
       });
-
-      // Database and replica prop template
-      const dbPropsTemplate = {
-        vpc: vpcStack.vpc,
-        vpcSubnets: {
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-        },
-        instanceType: ec2.InstanceType.of(
-          ec2.InstanceClass.BURSTABLE3,
-          ec2.InstanceSize.MEDIUM,
-        ),
-        multiAz: true,
-        allocatedStorage: 100,
-        maxAllocatedStorage: 115,
-        autoMinorVersionUpgrade: true,
-        deleteAutomatedBackups: true,
-        deletionProtection: true,
-        publiclyAccessible: false,
-        storageEncrypted: true, // storage encryption at rest
-        parameterGroup: parameterGroup,
-        monitoringInterval: cdk.Duration.minutes(1), // Set monitoring interval
-        monitoringRole: monitoringRole // Set monitoring role
-      }
-
-      const dbProps: DatabaseInstanceProps = {
-        ...dbPropsTemplate,
-        credentials: credentials,
-        allowMajorVersionUpgrade: false,
-        engine: rds.DatabaseInstanceEngine.postgres({
-          version: rds.PostgresEngineVersion.VER_16_3,
-        }),
-        backupRetention: cdk.Duration.days(7),
-        databaseName: 'facultyCV'
-      }
 
       // Aurora Postgres Cluster
       this.dbCluster = new rds.DatabaseCluster(this, 'facultyCVDBCluster', {
