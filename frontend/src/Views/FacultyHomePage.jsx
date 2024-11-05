@@ -395,6 +395,16 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
                     className="btn btn-sm btn-success text-white py-1 px-2 w-full"
                   >
                     Add Scopus ID
+                    </button>
+                    <button
+                    type="button"
+                    onClick={() => {
+                      setActiveModal('ManualScopus'); // Set to manual entry mode
+                      setModalOpen(true);
+                    }}
+                    className="btn btn-sm btn-secondary text-white py-1 px-2 w-full mt-2"
+                  >
+                    Add Scopus ID Manually
                   </button>
                 </div>
               </div>
@@ -418,6 +428,16 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
                 >
                   {orcidId ? `${orcidId}` : "Add ORCID ID"}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveModal('ManualOrcid'); // Set to manual ORCID entry mode
+                    setModalOpen(true);
+                  }}
+                  className="btn btn-sm btn-secondary text-white py-1 px-2 w-full mt-2"
+                >
+                  Add ORCID ID Manually
+               </button>
               </div>
             </div>
           </form>

@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getElsevierAuthorMatches, getOrcidAuthorMatches } from "../graphql/graphqlHelpers";
 
 const ProfileLinkModal = ({ user, activeModal, setClose, setOrcidId, setScopusId, institution }) => {
   const [loading, setLoading] = useState(false);
   const [authors, setAuthors] = useState([]);
   const [institutionError, setInstitutionError] = useState(false);
+  const [manualScopusId, setManualScopusId] = useState('');
+  const [manualOrcidId, setManualOrcidId] = useState(['', '', '', '']); 
+  const orcidRefs = [useRef(), useRef(), useRef(), useRef()]; 
 
   useEffect(() => {
-    fetchAuthorMatches();
-  }, []);
+    if (activeModal !== 'ManualScopus' && activeModal !== 'ManualOrcid') {
+      fetchAuthorMatches();
+    }
+  }, [activeModal]);
 
   const fetchAuthorMatches = async () => {
     if (!institution) {
@@ -60,7 +65,31 @@ const ProfileLinkModal = ({ user, activeModal, setClose, setOrcidId, setScopusId
     } else {
       setOrcidId(orcidIdToAdd);
     }
-    setClose(); 
+    setClose();
+  };
+
+  const handleManualScopusLink = () => {
+    setScopusId(manualScopusId);
+    setClose();
+  };
+
+  const handleManualOrcidLink = () => {
+    const fullOrcid = manualOrcidId.join('-');
+    setOrcidId(fullOrcid);
+    setClose();
+  };
+
+  const handleOrcidInputChange = (index, value) => {
+    if (value.length <= 4) {
+      const newOrcid = [...manualOrcidId];
+      newOrcid[index] = value;
+      setManualOrcidId(newOrcid);
+
+      // Move to the next input if 4 characters are entered
+      if (value.length === 4 && index < orcidRefs.length - 1) {
+        orcidRefs[index + 1].current.focus();
+      }
+    }
   };
 
   return (
@@ -75,7 +104,52 @@ const ProfileLinkModal = ({ user, activeModal, setClose, setOrcidId, setScopusId
           </button>
         </form>
 
-        {institutionError ? (
+        {activeModal === 'ManualScopus' ? (
+          <div className="manual-scopus-section">
+            <h2 className="font-bold text-2xl">Enter Scopus ID Manually</h2>
+            <input
+              type="text"
+              value={manualScopusId}
+              onChange={(e) => setManualScopusId(e.target.value)}
+              className="input input-bordered w-full mt-2"
+              placeholder="Enter Scopus ID"
+            />
+            <button
+              onClick={handleManualScopusLink}
+              className="btn btn-primary text-white mt-4"
+              disabled={!manualScopusId}
+            >
+              Add Scopus ID
+            </button>
+          </div>
+        ) : activeModal === 'ManualOrcid' ? (
+          <div className="manual-orcid-section">
+            <h2 className="font-bold text-2xl">Enter ORCID ID Manually</h2>
+            <div className="flex space-x-2 mt-2">
+              {manualOrcidId.map((segment, index) => (
+                <React.Fragment key={index}>
+                <input
+                  ref={orcidRefs[index]}
+                  type="text"
+                  value={segment}
+                  onChange={(e) => handleOrcidInputChange(index, e.target.value)}
+                  className="input input-bordered w-1/5 text-center"
+                  placeholder="____"
+                  maxLength={4}
+                />
+                {index < manualOrcidId.length - 1 && <span className="mx-1">-</span>}
+              </React.Fragment>
+              ))}
+            </div>
+            <button
+              onClick={handleManualOrcidLink}
+              className="btn btn-primary text-white mt-4"
+              disabled={manualOrcidId.some(segment => segment.length !== 4)}
+            >
+              Add ORCID ID
+            </button>
+          </div>
+        ) : institutionError ? (
           <div className="text-center mt-4">
             <p className="text-lg text-red-500">Please select and save an Institution for your profile</p>
           </div>
@@ -131,3 +205,22 @@ const ProfileLinkModal = ({ user, activeModal, setClose, setOrcidId, setScopusId
 };
 
 export default ProfileLinkModal;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
