@@ -131,7 +131,20 @@ export class DatabaseStack extends Stack {
         requireTLS: false
       });
 
-    this.dbCluster.grantConnect(rdsProxyRole, dbUsername.secretValue.toString());
+      const rdsProxyAuroroRead = new cdk.CfnResource(this, 'rdsProxyReadEndpoint', {
+        type: 'AWS::RDS::DBProxyEndpoint',
+        properties: {
+          'DBProxyEndpointName': rdsProxyAurora.dbProxyName + '-read',
+          'DBProxyName': rdsProxyAurora.dbProxyName,
+          'TargetRole': 'READ_ONLY',
+          'VpcSecurityGroupIds': this.dbCluster.connections.securityGroups.map(item => item.securityGroupId),
+          'VpcSubnetIds': vpcStack.vpc.selectSubnets({
+            subnetType: ec2.SubnetType.PRIVATE_ISOLATED
+          }).subnetIds
+        }
+      });
+
     this.rdsProxyEndpoint = rdsProxyAurora.endpoint;
+    this.rdsProxyEndpointReader = rdsProxyAuroroRead.getAtt('Endpoint').toString();
   }
 }

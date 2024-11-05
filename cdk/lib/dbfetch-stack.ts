@@ -35,7 +35,7 @@ export class DbFetchStack extends cdk.Stack {
       code: lambda.Code.fromAsset('lambda/createTables'),
       timeout: cdk.Duration.minutes(15),
       memorySize: 512,
-      vpc: databaseStack.dbInstance.vpc, // add to the same vpc as rds
+      vpc: databaseStack.dbCluster.vpc, // add to the same vpc as rds
     });
     createTables.role?.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName('SecretsManagerReadWrite')

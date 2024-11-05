@@ -63,7 +63,7 @@ export class ApiStack extends cdk.Stack {
       description: "Lambda layer containing the aws-jwt-verify NodeJS library"
     })
 
-    const databaseConnectLayer = new LayerVersion(this, "databaseConnectLambdaLayer", {
+    const databaseConnectLayer = new LayerVersion(this, "databaseConnectionLambdaLayer", {
       code: Code.fromAsset("./layers/databaseConnect.zip"),
       compatibleRuntimes: [Runtime.PYTHON_3_9],
       description: "Lambda layer containing the database connection"

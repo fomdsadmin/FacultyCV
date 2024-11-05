@@ -106,7 +106,7 @@ export class ResolverStack extends cdk.Stack {
       "Query",
       {
         USER_POOL_ID: apiStack.getUserPoolId(),
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -118,7 +118,7 @@ export class ResolverStack extends cdk.Stack {
       ["getAllUsers"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -130,7 +130,7 @@ export class ResolverStack extends cdk.Stack {
       ["getExistingUser"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -177,7 +177,7 @@ export class ResolverStack extends cdk.Stack {
       ["getAllSections"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -189,7 +189,7 @@ export class ResolverStack extends cdk.Stack {
       ["getArchivedSections"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]

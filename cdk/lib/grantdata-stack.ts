@@ -321,7 +321,7 @@ export class GrantDataStack extends Stack {
             physicalConnectionRequirements: {
             availabilityZone: vpcStack.availabilityZones[0],
             securityGroupIdList: [securityGroup.securityGroupId],
-            subnetId: databaseStack.dbInstance.vpc.isolatedSubnets[0].subnetId,
+            subnetId: databaseStack.dbCluster.vpc.isolatedSubnets[0].subnetId,
             },
         },
         }
