@@ -61,7 +61,7 @@ export class Resolver3Stack extends cdk.Stack {
         environment: env,
         role: role,
         layers: layers,
-        vpc: databaseStack.dbInstance.vpc // Same VPC as the database
+        vpc: databaseStack.dbCluster.vpc // Same VPC as the database
       });
 
       const lambdaDataSource = new appsync.LambdaDataSource(
@@ -85,7 +85,7 @@ export class Resolver3Stack extends cdk.Stack {
       ["getUserConnections"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -133,7 +133,7 @@ export class Resolver3Stack extends cdk.Stack {
       ["getAllTemplates"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -182,7 +182,7 @@ export class Resolver3Stack extends cdk.Stack {
       ["getTeachingDataMatches"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -204,7 +204,7 @@ export class Resolver3Stack extends cdk.Stack {
       ["getSecureFundingMatches"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -216,7 +216,7 @@ export class Resolver3Stack extends cdk.Stack {
       ["getRiseDataMatches"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -228,7 +228,7 @@ export class Resolver3Stack extends cdk.Stack {
       ["getPatentMatches"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]

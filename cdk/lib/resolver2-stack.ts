@@ -61,7 +61,7 @@ export class Resolver2Stack extends cdk.Stack {
         environment: env,
         role: role,
         layers: layers,
-        vpc: databaseStack.dbInstance.vpc // Same VPC as the database
+        vpc: databaseStack.dbCluster.vpc // Same VPC as the database
       });
 
       const lambdaDataSource = new appsync.LambdaDataSource(
@@ -85,7 +85,7 @@ export class Resolver2Stack extends cdk.Stack {
       ["getUserCVData"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -97,7 +97,7 @@ export class Resolver2Stack extends cdk.Stack {
       ["getArchivedUserCVData"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -132,7 +132,7 @@ export class Resolver2Stack extends cdk.Stack {
       ["getAllUniversityInfo"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
@@ -161,7 +161,7 @@ export class Resolver2Stack extends cdk.Stack {
       {
         TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
         BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint 
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]

@@ -63,7 +63,7 @@ export class ApiStack extends cdk.Stack {
       description: "Lambda layer containing the aws-jwt-verify NodeJS library"
     })
 
-    const databaseConnectLayer = new LayerVersion(this, "databaseConnectLambdaLayer", {
+    const databaseConnectLayer = new LayerVersion(this, "databaseConnectionLambdaLayer", {
       code: Code.fromAsset("./layers/databaseConnect.zip"),
       compatibleRuntimes: [Runtime.PYTHON_3_9],
       description: "Lambda layer containing the database connection"
@@ -275,7 +275,7 @@ export class ApiStack extends cdk.Stack {
       },
       role: this.resolverRole,
       layers: [psycopgLayer, databaseConnectLayer],
-      vpc: databaseStack.dbInstance.vpc // Same VPC as the database
+      vpc: databaseStack.dbCluster.vpc // Same VPC as the database
     });
 
     // Add permissions for the Lambda function to access the RDS database
@@ -284,7 +284,7 @@ export class ApiStack extends cdk.Stack {
         "rds-db:connect"
       ],
       effect: Effect.ALLOW,
-      resources: [databaseStack.dbInstance.instanceArn]
+      resources: [databaseStack.dbCluster.clusterArn]
     }));
 
     // Schedule the Lambda function to run daily
