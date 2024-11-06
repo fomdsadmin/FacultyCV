@@ -34,7 +34,7 @@ export class CVGenStack extends Stack {
         });
 
         const cvGenLambda = new DockerImageFunction(this, 'cvGenFunction', {
-            code: DockerImageCode.fromImageAsset('./'),
+            code: DockerImageCode.fromImageAsset('./cvGenerator/'),
             memorySize: 2048, // Extra memory needed for faster performance
             timeout: Duration.minutes(15),
             environment: {

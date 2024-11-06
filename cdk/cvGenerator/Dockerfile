@@ -9,7 +9,7 @@ RUN curl -L -o install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tln
 
 RUN yum install -y perl
 
-ADD cvGenerator/ ./cvGenerator/
+ADD ./ ./cvGenerator/
 
 RUN dos2unix ./cvGenerator/install.sh && ./cvGenerator/install.sh
 
