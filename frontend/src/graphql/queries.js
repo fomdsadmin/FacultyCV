@@ -352,11 +352,21 @@ export const getPresignedUrlQuery = (jwt, fileKey, type) => `
     }
 `;
 
-export const getNumberOfGeneratedCVsQuery = () => `
+export const getNumberOfGeneratedCVsQuery = (department) => {
+    if (!department)
+        return `
     query GetNumberOfGeneratedCVs {
         getNumberOfGeneratedCVs
     }
-`;
+    `;
+    else return `
+    query GetNumberOfGeneratedCVs {
+        getNumberOfGeneratedCVs (
+            department: "${department}"
+        )
+    }
+    `;
+}
 
 export const cvIsUpToDateQuery = (cognito_user_id, user_id, template_id) => `
     query CvIsUpToDate {

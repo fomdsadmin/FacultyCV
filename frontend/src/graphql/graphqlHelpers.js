@@ -457,8 +457,8 @@ export const getPresignedUrl = async (jwt, fileKey, type) => {
  * Return value:
  * Integer - the number of reports in the S3 bucket
  */
-export const getNumberOfGeneratedCVs = async () => {
-    const results = await runGraphql(getNumberOfGeneratedCVsQuery());
+export const getNumberOfGeneratedCVs = async (department) => {
+    const results = await runGraphql(getNumberOfGeneratedCVsQuery(department));
     return results['data']['getNumberOfGeneratedCVs'];
 }
 

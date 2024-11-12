@@ -191,7 +191,7 @@ type Query {
     getPresignedUrl(jwt: String!, key: String!, type: String): String
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
     
-    getNumberOfGeneratedCVs: Int!
+    getNumberOfGeneratedCVs(department: String): Int!
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
     cvIsUpToDate(cognito_user_id: String!, user_id: String!, template_id: String!): Boolean

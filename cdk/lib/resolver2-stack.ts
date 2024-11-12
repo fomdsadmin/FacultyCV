@@ -173,10 +173,11 @@ export class Resolver2Stack extends cdk.Stack {
       ["getNumberOfGeneratedCVs"],
       "Query",
       {
-        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
       },
       resolverRole,
-      []
+      [psycopgLayer, databaseConnectLayer]
     );
     
     createResolver(

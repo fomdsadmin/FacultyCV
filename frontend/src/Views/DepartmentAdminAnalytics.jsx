@@ -338,7 +338,7 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
                   <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
                   <AnalyticsCard title="Department Admin Users" value={departmentAdminUsers.length} />
                   <AnalyticsCard title="Admin Users" value={adminUsers.length} />
-                  <AnalyticsCard title="Total CVs Generated" value={totalCVsGenerated} />
+                  <AnalyticsCard title="Users who Generated CVs" value={totalCVsGenerated} />
                 </>
               )}
               {role === 'Faculty' && (
