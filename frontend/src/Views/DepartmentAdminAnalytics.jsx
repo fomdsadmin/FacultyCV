@@ -1,5 +1,4 @@
-import React from 'react'
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
 import AnalyticsCard from '../Components/AnalyticsCard.jsx';
@@ -7,34 +6,24 @@ import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, g
 import { formatDateToLongString } from '../utils/time.js';
 import { LineGraph } from '../Components/LineGraph.jsx';
 
-const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
+const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
   const [loading, setLoading] = useState(false);
   const [facultyUsers, setFacultyUsers] = useState([]);
   const [assistantUsers, setAssistantUsers] = useState([]);
-  const [adminUsers, setAdminUsers] = useState([]);
   const [facultyUserTimestamps, setFacultyUserTimestamps] = useState([]);
-  const [assistantUserTimestamps, setAssistantUserTimestamps] = useState([]);
-  const [adminUserTimestamps, setAdminUserTimestamps] = useState([]);
   const [allUserTimestamps, setAllUserTimestamps] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [role, setRole] = useState('All');
-  const [department, setDepartment] = useState('All');
   const [publications, setPublications] = useState([]);
   const [grants, setGrants] = useState([]);
   const [patents, setPatents] = useState([]);
   const [grantMoneyRaised, setGrantMoneyRaised] = useState([]);
-  const [facultyConnections, setFacultyConnections] = useState([]);
   const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
-  const [departmentAdminUsers, setDepartmentAdminUsers] = useState([]);
-  const [departmentAdminUserTimestamps, setDepartmentAdminUserTimestamps] = useState([]);
+  const [facultyConnections, setFacultyConnections] = useState([]);
 
 
-  // The time range in days that the graph shows
   const TIME_RANGE = 50;
 
   useEffect(() => {
     fetchUsers();
-    fetchUniversityInfo();
     fetchGeneratedCVs();
   }, []);
 
@@ -42,38 +31,15 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
     setLoading(true);
     try {
       const users = await getAllUsers();
-      const filteredFacultyUsers = users.filter(user => user.role === 'Faculty');
-      const filteredAssistantUsers = users.filter(user => user.role === 'Assistant');
-      const filteredAdminUsers = users.filter(user => user.role === 'Admin');
-      const filteredDepartmentAdminUsers = users.filter(user => user.role.startsWith('Admin-'));
-      const facutlyTimestamps = filteredFacultyUsers
+      const filteredFacultyUsers = users.filter(user => user.role === 'Faculty' && (user.primary_department === department || user.secondary_department === department));
+      const filteredAssistantUsers = users.filter(user => user.role === 'Assistant' && (user.primary_department === department || user.secondary_department === department));
+      const facultyTimestamps = filteredFacultyUsers
                                 .map(user => new Date(user.joined_timestamp))
                                 .sort((a, b) => a - b)
                                 .map(timestamp => {
                                   timestamp.setHours(0, 0, 0, 0);
                                   return timestamp;
                                 });
-      const departmentAdminTimestamps = filteredDepartmentAdminUsers
-                                .map(user => new Date(user.joined_timestamp))
-                                .sort((a, b) => a - b)
-                                .map(timestamp => {
-                                  timestamp.setHours(0, 0, 0, 0);
-                                  return timestamp;
-                                });
-      const adminTimestamps = filteredAdminUsers
-                              .map(user => new Date(user.joined_timestamp))
-                              .sort((a, b) => a - b)
-                              .map(timestamp => {
-                                timestamp.setHours(0, 0, 0, 0);
-                                return timestamp;
-                              });
-      const assistantTimestamps = filteredAssistantUsers
-                                  .map(user => new Date(user.joined_timestamp))
-                                  .sort((a, b) => a - b)
-                                  .map(timestamp => {
-                                    timestamp.setHours(0, 0, 0, 0);
-                                    return timestamp;
-                                  });
       const allTimestamps = users.map(user => new Date(user.joined_timestamp))
                             .sort((a, b) => a - b)
                             .map(timestamp => {
@@ -82,29 +48,13 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
                             });
       setFacultyUsers(filteredFacultyUsers);
       setAssistantUsers(filteredAssistantUsers);
-      setAdminUsers(filteredAdminUsers);
-      setDepartmentAdminUsers(filteredDepartmentAdminUsers);
-      setDepartmentAdminUserTimestamps(departmentAdminTimestamps);
+      setFacultyUserTimestamps(facultyTimestamps);
       setAllUserTimestamps(allTimestamps);
-      setFacultyUserTimestamps(facutlyTimestamps);
-      setAdminUserTimestamps(adminTimestamps);
-      setAssistantUserTimestamps(assistantTimestamps);
-      
-      fetchAllUserCVData(filteredFacultyUsers)
+
+      fetchAllUserCVData(filteredFacultyUsers);
       fetchFacultyConnections(filteredAssistantUsers);
     } catch (error) {
-      
-    }
-    setLoading(false);
-  }
-
-  async function fetchUniversityInfo() {
-    setLoading(true);
-    try {
-      const universityInfo = await getAllUniversityInfo();
-      setDepartments(universityInfo.filter(info => info.type === 'Department').map(info => info.value));
-    } catch (error) {
-      
+      console.error('Error fetching users:', error);
     }
     setLoading(false);
   }
@@ -112,69 +62,71 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
   async function fetchGeneratedCVs() {
     setLoading(true);
     try {
-      const generatedCVs = await getNumberOfGeneratedCVs();
+      const generatedCVs = await getNumberOfGeneratedCVs(department);
       setTotalCVsGenerated(generatedCVs);
     } catch (error) {
-      
+      console.error('Error fetching generated CVs:', error);
     }
     setLoading(false);
   }
 
+
   async function fetchAllUserCVData(users) {
-    
     setLoading(true);
     let dataSections = [];
     try {
       dataSections = await getAllSections();
     } catch (error) {
-      
+      console.error('Error fetching data sections:', error);
     }
-  
-    // Find the IDs for Publications, Secured Funding, and Patents
+
     const publicationSectionId = dataSections.find(section => section.title === 'Publications')?.data_section_id;
     const secureFundingSectionId = dataSections.find(section => section.title === 'Secure Funding')?.data_section_id;
     const patentSectionId = dataSections.find(section => section.title === 'Patents')?.data_section_id;
 
-    // Initialize arrays to hold the data
     let publicationsData = [];
     let grantsData = [];
     let patentsData = [];
-  
-    // Loop through faculty users and fetch their CV data
+
     for (const user of users) {
       try {
         const fetchedPublications = await getUserCVData(user.user_id, publicationSectionId);
         publicationsData = [...publicationsData, ...fetchedPublications];
       } catch (error) {
-        
+        console.error('Error fetching publications:', error);
       }
       try {
         const fetchedGrants = await getUserCVData(user.user_id, secureFundingSectionId);
         grantsData = [...grantsData, ...fetchedGrants];
       } catch (error) {
-        
+        console.error('Error fetching grants:', error);
       }
       try {
         const fetchedPatents = await getUserCVData(user.user_id, patentSectionId);
         patentsData = [...patentsData, ...fetchedPatents];
       } catch (error) {
-        
+        console.error('Error fetching patents:', error);
       }
     }
+
 
     let totalGrantMoneyRaised = [];
 
+
     for (const data of grantsData) {
       try {
-        const dataDetails = JSON.parse(data.data_details);
-        //add object with dataDetails as an int and data.user_id to totalGrantMoneyRaised
-        totalGrantMoneyRaised.push({amount: parseInt(dataDetails.amount), user_id: data.user_id});
+          const dataDetails = JSON.parse(data.data_details);
+          if (dataDetails.year) {
+              totalGrantMoneyRaised.push({ amount: parseInt(dataDetails.amount), user_id: data.user_id, years: parseInt(dataDetails.year) });
+          } else {
+              console.warn(`Missing dates field in grant data at index ${grantsData.indexOf(data)}`);
+          }
       } catch (error) {
-        
+          console.error('Error parsing grant data:', error);
       }
-    }
+  }
 
-    // Update state variables
+
     setPublications(publicationsData);
     setGrants(grantsData);
     setPatents(patentsData);
@@ -189,10 +141,9 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
     for (const user of users) {
       try {
         const newConnections = await getUserConnections(user.user_id, false);
-        
         connections = [...connections, ...newConnections];
       } catch (error) {
-        
+        console.error('Error fetching connections:', error);
       }
     }
     setFacultyConnections(connections);
@@ -200,182 +151,146 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo }) => {
   }
 
   const filteredPublications = publications.filter(publication => 
-    facultyUsers.some(user => user.user_id === publication.user_id && (user.primary_department === department || user.secondary_department === department))
+    facultyUsers.some(user => user.user_id === publication.user_id)
   );
-  
+
   const filteredGrants = grants.filter(grant => 
-    facultyUsers.some(user => user.user_id === grant.user_id && (user.primary_department === department || user.secondary_department === department))
+    facultyUsers.some(user => user.user_id === grant.user_id)
   );
-  
+
   const filteredPatents = patents.filter(patent => 
-    facultyUsers.some(user => user.user_id === patent.user_id && (user.primary_department === department || user.secondary_department === department))
+    facultyUsers.some(user => user.user_id === patent.user_id)
   );
 
   const totalGrantMoneyRaised = grantMoneyRaised.reduce((total, grant) => total + grant.amount, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-
-  const filteredGrantMoneyRaised = grantMoneyRaised
-    .filter(grant => facultyUsers.some(user => user.user_id === grant.user_id && (user.primary_department === department || user.secondary_department === department)))
-    .reduce((total, grant) => total + grant.amount, 0)
-    .toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
   const getGraphData = () => {
     const data = [];
     const endDate = new Date();
     endDate.setHours(0, 0, 0, 0);
-    let users = 0;
     const startDate = new Date(endDate);
     startDate.setHours(0, 0, 0, 0);
     startDate.setDate(startDate.getDate() - TIME_RANGE);
-    switch (role) {
-      case 'Faculty':
-        users = facultyUserTimestamps.filter(date => date < startDate).length;
-        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
-          const formattedDate = formatDateToLongString(date);
-          users += facultyUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
-          data.push({
+  
+    // Create a map to aggregate user counts by month
+    const monthlyDataMap = new Map();
+  
+    facultyUserTimestamps.forEach(timestamp => {
+      if (timestamp >= startDate && timestamp <= endDate) {
+        const monthKey = `${timestamp.getFullYear()}-${timestamp.getMonth()}`; // e.g., "2024-9" for Oct 2024
+        const formattedDate = timestamp.toLocaleString('default', { month: 'short', year: 'numeric' });
+  
+        if (monthlyDataMap.has(monthKey)) {
+          monthlyDataMap.get(monthKey).Users += 1;
+        } else {
+          monthlyDataMap.set(monthKey, {
             date: formattedDate,
-            Users: users
+            Users: 1
           });
         }
-        break;
-      case 'Assistant':
-        users = assistantUserTimestamps.filter(date => date < startDate).length;
-        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
-          const formattedDate = formatDateToLongString(date);
-          users += assistantUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
-          data.push({
-            date: formattedDate,
-            Users: users
-          });
-        }
-        break;
-      case 'Department Admin':
-        users = departmentAdminUserTimestamps.filter(date => date < startDate).length;
-        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
-          const formattedDate = formatDateToLongString(date);
-          users += departmentAdminUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
-          data.push({
-            date: formattedDate,
-            Users: users
-          });
-        }
-        break;
-      case 'Admin':
-        users = adminUserTimestamps.filter(date => date < startDate).length;
-        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
-          const formattedDate = formatDateToLongString(date);
-          users += adminUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
-          data.push({
-            date: formattedDate,
-            Users: users
-          });
-        }
-        break;
-      default:
-        users = allUserTimestamps.filter(date => date < startDate).length;
-        for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
-          const formattedDate = formatDateToLongString(date);
-          users += allUserTimestamps.filter(timestamp => timestamp.getTime() === date.getTime()).length;
-          data.push({
-            date: formattedDate,
-            Users: users
-          });
-        }
+      }
+    });
+  
+    // Add data points for each month even if there are no users
+    for (let date = new Date(startDate); date <= endDate; date.setMonth(date.getMonth() + 1)) {
+      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+      const formattedDate = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+  
+      if (!monthlyDataMap.has(monthKey)) {
+        monthlyDataMap.set(monthKey, {
+          date: formattedDate,
+          Users: 0 // No users for this month
+        });
+      }
     }
-    return data;  
-  }
+  
+    // Convert the map to an array for the graph
+    monthlyDataMap.forEach(value => {
+      data.push(value);
+    });
+  
+    // Sort data by date to ensure chronological order
+    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+    return data;
+  };
+
+  const getGrantMoneyGraphData = () => {
+    const data = [];
+
+    // Create a map to aggregate grant money by year
+    const yearlyDataMap = new Map();
+
+    grantMoneyRaised.forEach(grant => {
+        if (grant.amount && grant.years) {
+            const year = grant.years;
+            if (yearlyDataMap.has(year)) {
+                yearlyDataMap.get(year).GrantMoney += grant.amount;
+            } else {
+                yearlyDataMap.set(year, {
+                    date: year.toString(),
+                    GrantMoney: grant.amount
+                });
+            }
+        } else {
+            console.warn('Invalid year or amount in grant data:', grant);
+        }
+    });
+
+    // Convert the map to an array for the graph
+    yearlyDataMap.forEach(value => {
+        data.push(value);
+    });
+
+    data.sort((a, b) => parseInt(a.date) - parseInt(b.date));
+
+    console.log("Final data for graph:", data);
+    return data;
+};
+
+
+
   return (
     <PageContainer>
-      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
-        <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Analytics</h1>
-        <div className='m-4 flex space-x-4'>
-          <div className='w-1/4 bg-white shadow rounded-lg p-2 flex items-center'>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 pt-0.5">Role:</label>
-            <select
-              id="role"
-              name="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            >
-              <option value="All">All</option>
-              <option value="Faculty">Faculty</option>
-              <option value="Assistant">Assistant</option>
-              <option value="Department Admin">Department Admin</option>
-              <option value="Admin">Admin</option>
-            </select>
-          </div>
-  
-          <div className='w-1/4 bg-white shadow rounded-lg p-2 flex items-center'>
-            <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department:</label>
-            <select
-              id="department"
-              name="department"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              disabled={role !== 'Faculty'}
-              className={`block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${role !== 'Faculty' ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-            >
-              <option value="All">All</option>
-              {departments.map((dept, index) => (
-                <option key={index} value={dept}>{dept}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+    <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+    <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4">
+        <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Department Analytics for {department}</h1>
+        
         {loading ? (
-          <div className='flex items-center justify-center w-full mt-8'>
-            <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-          </div>
+            <div className="flex items-center justify-center w-full mt-8">
+                <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+            </div>
         ) : (
-          <div className='mt-8'>
-            <div className='m-4 max-w-3xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10'>
-              {role === 'All' && (
-                <>
-                  <AnalyticsCard title="Total Users" value={facultyUsers.length + assistantUsers.length + adminUsers.length} />
-                  <AnalyticsCard title="Faculty Users" value={facultyUsers.length} />
-                  <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
-                  <AnalyticsCard title="Department Admin Users" value={departmentAdminUsers.length} />
-                  <AnalyticsCard title="Admin Users" value={adminUsers.length} />
-                  <AnalyticsCard title="Users who Generated CVs" value={totalCVsGenerated} />
-                </>
-              )}
-              {role === 'Faculty' && (
-                <>
-                  <AnalyticsCard title="Faculty Users" value={facultyUsers.length} />
-                  <AnalyticsCard title="Publications" value={department === 'All' ? publications.length : filteredPublications.length} />
-                  <AnalyticsCard title="Grants" value={department === 'All' ? grants.length : filteredGrants.length} />
-                  <AnalyticsCard title="Patents" value={department === 'All' ? patents.length : filteredPatents.length} />
-                  <AnalyticsCard title="Grant Money Raised" value={department === 'All' ? totalGrantMoneyRaised : filteredGrantMoneyRaised} />
-                </>
-              )}
-              {role === 'Assistant' && (
-                <>
-                  <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
-                  <AnalyticsCard title="Faculty Connections" value={facultyConnections.length} />
-                </>
-              )}
-              {role === 'Department Admin' && (
-                <>
-                  <AnalyticsCard title="Department Admin Users" value={departmentAdminUsers.length} />
-                </>
-              )}
-              {role === 'Admin' && (
-                <>
-                  <AnalyticsCard title="Admin Users" value={adminUsers.length} />
-                </>
-              )}
+            <div className="mt-8">
+                <div className="m-4 max-w-3xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 auto-resize [grid-template-columns:repeat(auto-fill,_minmax(min-content,_max-content))]">
+                    <div className='auto-resize'> 
+                      <AnalyticsCard title="Faculty Users" value={facultyUsers.length} />
+                    </div>
+                    <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
+                    <AnalyticsCard title="Publications" value={filteredPublications.length} />
+                    <AnalyticsCard title="Grants" value={filteredGrants.length} />
+                    <AnalyticsCard title="Patents" value={filteredPatents.length} />
+                    <AnalyticsCard title="Users who Generated CVs" value={totalCVsGenerated} />
+                    <div className='auto-resize'> 
+                    <AnalyticsCard title="Grant Money Raised" value={totalGrantMoneyRaised} />
+                    </div>
+                </div>
+
+                {/* Line Graph for Number of Users Over Time */}
+                <div className="h-[300px] w-[75%] mt-8">
+                    <h2 className="text-left m-4 text-l font-bold text-zinc-600 pt-[8px] pb-[8px]">Number of Users Over Time</h2>
+                    <LineGraph data={getGraphData()} dataKey="Users" lineColor="#8884d8" />
+                </div>
+                <div className="h-[300px] w-[75%] mt-8">
+                    <h2 className="text-left m-4 text-l font-bold text-zinc-600 pt-[8px] pb-[8px]">Grant Money Raised Over Time</h2>
+                    <LineGraph data={getGrantMoneyGraphData()} dataKey="GrantMoney" lineColor="#82ca9d" />
+                </div>
             </div>
-            <div className='h-[300px] w-[75%]'>
-              <h2 className='text-left m-4 text-l font-bold text-zinc-600 pt-[8px] pb-[8px]'>Number of Users with time</h2>
-              <LineGraph data={getGraphData()} />
-            </div>
-          </div>
         )}
-      </main>
-    </PageContainer>
-  )  
+    </main>
+</PageContainer>
+
+  )
 }
 
-export default DepartmentAdminAnalytics
+export default DepartmentAdminAnalytics;
