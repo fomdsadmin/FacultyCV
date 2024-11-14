@@ -5,6 +5,8 @@ import AnalyticsCard from '../Components/AnalyticsCard.jsx';
 import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, getAllSections, getNumberOfGeneratedCVs } from '../graphql/graphqlHelpers.js';
 import { formatDateToLongString } from '../utils/time.js';
 import { LineGraph } from '../Components/LineGraph.jsx';
+import BarChartComponent from '../Components/BarChart.jsx';
+
 
 const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
   const [loading, setLoading] = useState(false);
@@ -248,6 +250,54 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
     return data;
 };
 
+  const getYearlyPublicationsGraphData = () => {
+    const data = [];
+
+    // Create a map to aggregate publications by year
+    const yearlyDataMap = new Map();
+
+    publications.forEach(publication => {
+      try {
+        const dataDetails = JSON.parse(publication.data_details);
+        if (dataDetails.year_published) {
+          const year = dataDetails.year_published.toString();
+          if (yearlyDataMap.has(year)) {
+            yearlyDataMap.get(year).Publications += 1;
+          } else {
+            yearlyDataMap.set(year, {
+              year: year,
+              Publications: 1,
+            });
+          }
+        } else {
+          console.warn('Missing year in publication data:', publication);
+        }
+      } catch (error) {
+        console.error('Error parsing publication data:', error);
+      }
+    });
+
+    // Convert the map to an array for the graph
+    yearlyDataMap.forEach(value => {
+      data.push(value);
+    });
+
+    // Sort data by year to ensure chronological order
+    data.sort((a, b) => parseInt(a.year) - parseInt(b.year));
+
+    console.log("Final data for yearly publications graph:", data);
+    return data;
+  };
+
+  
+  const GraphContainer = ({ title, children }) => (
+    <div className="graph-container h-[350px] w-[100%] mt-4 mb-8"> {/* Adjusted heights and margins */}
+      <h2 className="graph-title text-left text-l font-bold text-zinc-600 mb-2"> {/* Added `mb-2` for margin below the title */}
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
 
 
   return (
@@ -276,15 +326,29 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
                     </div>
                 </div>
 
-                {/* Line Graph for Number of Users Over Time */}
-                <div className="h-[300px] w-[75%] mt-8">
-                    <h2 className="text-left m-4 text-l font-bold text-zinc-600 pt-[8px] pb-[8px]">Number of Users Over Time</h2>
-                    <LineGraph data={getGraphData()} dataKey="Users" lineColor="#8884d8" />
-                </div>
-                <div className="h-[300px] w-[75%] mt-8">
-                    <h2 className="text-left m-4 text-l font-bold text-zinc-600 pt-[8px] pb-[8px]">Grant Money Raised Over Time</h2>
-                    <LineGraph data={getGrantMoneyGraphData()} dataKey="GrantMoney" lineColor="#82ca9d" />
-                </div>
+                    <div className="flex flex-col items-left">
+                    {/* Line Graph for Number of Users Over Time */}
+                    <GraphContainer title="Number of Users Over Time">
+                      <LineGraph data={getGraphData()} dataKey="Users" lineColor="#8884d8" />
+                    </GraphContainer>
+
+                    {/* Line Graph for Grant Money Raised Over Time */}
+                    <GraphContainer title="Grant Money Raised Over Time">
+                      <LineGraph data={getGrantMoneyGraphData()} dataKey="GrantMoney" lineColor="#82ca9d" />
+                    </GraphContainer>
+
+                   {/* Bar Chart for Yearly Publications */}
+                  <GraphContainer title="Yearly Publications">
+                    <div className="w-full">
+                      <BarChartComponent
+                        data={getYearlyPublicationsGraphData()}
+                        dataKey="Publications"
+                        xAxisKey="year"
+                        barColor="#8884d8"
+                      />
+                    </div>
+                  </GraphContainer>
+                  </div>
             </div>
         )}
     </main>
