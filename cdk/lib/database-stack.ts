@@ -17,6 +17,8 @@ export class DatabaseStack extends Stack {
     constructor(scope: Construct, id: string, vpcStack: VpcStack, props?: StackProps) {
       super(scope, id, props);
 
+      const resourcePrefix = this.node.tryGetContext('prefix');
+
       this.secretPath = 'facultyCV/credentials/databaseCredentials';
 
       // Database secret with customized username retrieve at deployment time

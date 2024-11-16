@@ -22,6 +22,8 @@ export class DataFetchStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
+    const resourcePrefix = this.node.tryGetContext('prefix');
+
     // Create the S3 Bucket
     const s3Bucket = new s3.Bucket(this, 'facultyCV-user-data-s3-bucket', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,

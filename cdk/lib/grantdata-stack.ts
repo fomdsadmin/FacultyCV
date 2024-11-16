@@ -27,6 +27,8 @@ export class GrantDataStack extends Stack {
   ) {
     super(scope, id, props);
 
+    const resourcePrefix = this.node.tryGetContext('prefix');
+
     // Create new Glue Role. DO NOT RENAME THE ROLE!!!
     const roleName = "AWSGlueServiceRole-ShellJob";
     const glueRole = new iam.Role(this, roleName, {

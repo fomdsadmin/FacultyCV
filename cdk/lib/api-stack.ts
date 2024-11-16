@@ -37,36 +37,43 @@ export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, databaseStack: DatabaseStack, cvGenStack: CVGenStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const resourcePrefix = this.node.tryGetContext('prefix');
+
     this.layerList = {};
 
     const reportLabLayer = new LayerVersion(this, "reportLabLambdaLayer", {
       code: Code.fromAsset("./layers/reportlab.zip"),
       compatibleRuntimes: [Runtime.PYTHON_3_9],
       description: "Lambda layer containing the reportlab Python library",
+      layerVersionName: `${resourcePrefix}-reportLabLayer`
     });
 
     const psycopgLayer = new LayerVersion(this, "psycopgLambdaLayer", {
       code: Code.fromAsset("./layers/psycopg2.zip"),
       compatibleRuntimes: [Runtime.PYTHON_3_9],
       description: "Lambda layer containing the psycopg2 Python library",
+      layerVersionName: `${resourcePrefix}-psycopgLayer`
     });
 
     const requestsLayer = new LayerVersion(this, "requestsLambdaLayer", {
       code: Code.fromAsset("./layers/requests.zip"),
       compatibleRuntimes: [Runtime.PYTHON_3_9],
-      description: "Lambda layer containing the requests Python library"
+      description: "Lambda layer containing the requests Python library",
+      layerVersionName: `${resourcePrefix}-requestLayer`
     });
 
     const awsJwtVerifyLayer = new LayerVersion(this, "awsJwtVerifyLambdaLayer", {
       code: Code.fromAsset("./layers/awsJwtVerify.zip"),
       compatibleRuntimes: [Runtime.NODEJS_20_X],
-      description: "Lambda layer containing the aws-jwt-verify NodeJS library"
+      description: "Lambda layer containing the aws-jwt-verify NodeJS library",
+      layerVersionName: `${resourcePrefix}-awsJwtVerifyLayer`
     })
 
     const databaseConnectLayer = new LayerVersion(this, "databaseConnectionLambdaLayer", {
       code: Code.fromAsset("./layers/databaseConnect.zip"),
       compatibleRuntimes: [Runtime.PYTHON_3_9],
-      description: "Lambda layer containing the database connection"
+      description: "Lambda layer containing the database connection",
+      layerVersionName: `${resourcePrefix}-databaseConnectLayer`
     })
 
     this.layerList["psycopg2"] = psycopgLayer;
@@ -77,7 +84,7 @@ export class ApiStack extends cdk.Stack {
 
     // Auth
     this.userPool = new cognito.UserPool(this, "FacultyCVUserPool", {
-      userPoolName: "faculty-cv-user-pool",
+      userPoolName: `${resourcePrefix}-user-pool`,
       signInAliases: { email: true },
       autoVerify: {
         email: true,
@@ -103,7 +110,7 @@ export class ApiStack extends cdk.Stack {
       this,
       "FacultyCVUserPoolClient",
       {
-        userPoolClientName: "faculty-cv-user-pool-client",
+        userPoolClientName: `${resourcePrefix}-user-pool-client`,
         userPool: this.userPool,
         supportedIdentityProviders: [
           cognito.UserPoolClientIdentityProvider.COGNITO,
@@ -137,7 +144,7 @@ export class ApiStack extends cdk.Stack {
 
     // AppSync API
     this.api = new appsync.GraphqlApi(this, "FacultyCVApi", {
-      name: "faculty-cv-api",
+      name: `${resourcePrefix}-api`,
       definition: appsync.Definition.fromFile("./graphql/schema.graphql"),
       authorizationConfig: {
         defaultAuthorization: {
@@ -155,7 +162,7 @@ export class ApiStack extends cdk.Stack {
     // AppSync API Role
     this.resolverRole = new Role(this, "FacultyCVResolverRole", {
       assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
-      roleName: "facultycv-resolver-role",
+      roleName: `${resourcePrefix}-resolver-role`,
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName("AwsAppSyncInvokeFullAccess"),
         ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess"),
@@ -203,7 +210,7 @@ export class ApiStack extends cdk.Stack {
           "logs:CreateLogStream",
           "logs:PutLogEvents",
         ],
-        resources: ["arn:aws:logs:*:*:*"],
+        resources: ["arn:aws:logs:*:*:*"]
       })
     );
 
@@ -263,7 +270,7 @@ export class ApiStack extends cdk.Stack {
 
     // Lambda function to delete archived rows
     const deleteArchivedDataLambda = new Function(this, "DeleteArchivedDataLambda", {
-      functionName: "deleteArchivedDataLambda",
+      functionName: `${resourcePrefix}-deleteArchivedDataLambda`,
       runtime: Runtime.PYTHON_3_9,
       memorySize: 512,
       code: Code.fromAsset("./lambda/deleteArchivedData"),
@@ -290,12 +297,14 @@ export class ApiStack extends cdk.Stack {
     // Schedule the Lambda function to run daily
     const rule = new events.Rule(this, "ScheduleRule", {
       schedule: events.Schedule.rate(cdk.Duration.days(1)),
+      ruleName: `${resourcePrefix}-scheduleRule`
     });
 
     rule.addTarget(new targets.LambdaFunction(deleteArchivedDataLambda));
 
     // Waf Firewall
     const waf = new wafv2.CfnWebACL(this, 'waf', {
+      name: `${resourcePrefix}-waf`,
       description: 'waf for Faculty CV',
       scope: 'REGIONAL',
       defaultAction: { allow: {} },

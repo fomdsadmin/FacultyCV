@@ -20,6 +20,8 @@ export class DbFetchStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
+    const resourcePrefix = this.node.tryGetContext('prefix');
+
     const psycopgLambdaLayer = apiStack.getLayers()['psycopg2'];
     const databaseConnectLayer = apiStack.getLayers()['databaseConnect']   
 

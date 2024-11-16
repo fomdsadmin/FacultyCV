@@ -17,6 +17,8 @@ export class ResolverStack extends cdk.Stack {
   constructor(scope: Construct, id: string, apiStack: ApiStack, databaseStack: DatabaseStack, cvGenStack: CVGenStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const resourcePrefix = this.node.tryGetContext('prefix');
+
     const psycopgLayer = apiStack.getLayers()['psycopg2'];
     const databaseConnectLayer = apiStack.getLayers()['databaseConnect']
     const reportLabLayer = apiStack.getLayers()['reportlab']

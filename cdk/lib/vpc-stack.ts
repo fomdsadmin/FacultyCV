@@ -10,6 +10,8 @@ export class VpcStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
+        const resourcePrefix = this.node.tryGetContext('prefix');
+
         const existingVpcId: string = ''; //CHANGE IF DEPLOYING WITH EXISTING VPC
 
         //const existingVpcId = cdk.aws_ssm.StringParameter.valueFromLookup(this, 'existing-VPC-id');
