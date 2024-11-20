@@ -17,7 +17,7 @@ export class DatabaseStack extends Stack {
     constructor(scope: Construct, id: string, vpcStack: VpcStack, props?: StackProps) {
       super(scope, id, props);
 
-      this.secretPath = 'facultyCV/credentials/databaseCredentials';
+      this.secretPath = 'facultyCV/credentials/databaseCredentialsCluster';
 
       // Database secret with customized username retrieve at deployment time
       const dbUsername = sm.Secret.fromSecretNameV2(this, 'facultyCV-dbUsername', 'facultyCV-dbUsername')
@@ -31,7 +31,7 @@ export class DatabaseStack extends Stack {
       });
 
       const credentialsCluster = rds.Credentials.fromUsername(dbUsername.secretValueFromJson("username").unsafeUnwrap() , {
-        secretName: this.secretPath + 'Cluster'
+        secretName: this.secretPath
       });
 
       // Aurora Postgres Cluster
