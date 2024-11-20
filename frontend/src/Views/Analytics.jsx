@@ -6,8 +6,9 @@ import AnalyticsCard from '../Components/AnalyticsCard.jsx';
 import { getAllUsers, getUserCVData, getAllUniversityInfo, getUserConnections, getAllSections, getNumberOfGeneratedCVs } from '../graphql/graphqlHelpers.js';
 import { formatDateToLongString } from '../utils/time.js';
 import { LineGraph } from '../Components/LineGraph.jsx';
+import BarChartComponent from '../Components/BarChart.jsx';
 
-const Analytics = ({ getCognitoUser, userInfo }) => {
+const Analytics = ({ getCognitoUser, userInfo}) => {
   const [loading, setLoading] = useState(false);
   const [facultyUsers, setFacultyUsers] = useState([]);
   const [assistantUsers, setAssistantUsers] = useState([]);
@@ -112,7 +113,7 @@ const Analytics = ({ getCognitoUser, userInfo }) => {
   async function fetchGeneratedCVs() {
     setLoading(true);
     try {
-      const generatedCVs = await getNumberOfGeneratedCVs();
+      const generatedCVs = await getNumberOfGeneratedCVs(department);
       setTotalCVsGenerated(generatedCVs);
     } catch (error) {
       
