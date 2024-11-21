@@ -27,12 +27,14 @@ export class CVGenStack extends Stack {
                 ],
                 allowedOrigins: ["*"],
                 allowedHeaders: ["*"]
-            }]
+            }],
+            bucketName: `${resourcePrefix}-${this.account}-cv-bucket`
         });
 
         // DynamoDB to store a log of transactions across data sections
         this.dynamoDBTable = new Table(this, 'cvLogTable', {
-            partitionKey: { name: 'logEntryId', type: AttributeType.STRING }
+            partitionKey: { name: 'logEntryId', type: AttributeType.STRING },
+            tableName: `${resourcePrefix}-${this.account}-CVLogTable`
         });
 
         const cvGenLambda = new DockerImageFunction(this, 'cvGenFunction', {
@@ -43,7 +45,8 @@ export class CVGenStack extends Stack {
                 "LUAOTFLOAD_TEXMFVAR": "/tmp/luatex-cache",
                 "TEXMFCONFIG": "/tmp/texmf-config",
                 "TEXMFVAR": "/tmp/texmf-var"
-            }
+            },
+            functionName: `${resourcePrefix}-cvGenLambdaFunction`
         });
 
         cvGenLambda.addToRolePolicy(new PolicyStatement({

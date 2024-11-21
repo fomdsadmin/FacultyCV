@@ -53,7 +53,7 @@ export class VpcStack extends Stack {
                 vpcId: this.vpc.vpcId,
                 availabilityZone: this.vpc.availabilityZones[0],
                 cidrBlock: "172.31.96.0/20",
-                mapPublicIpOnLaunch: true,
+                mapPublicIpOnLaunch: true
             });
 
             // Create an Internet Gateway and attach it to the VPC
@@ -65,19 +65,19 @@ export class VpcStack extends Stack {
 
             // Create a route table for the public subnet
             const publicRouteTable = new ec2.CfnRouteTable(this, 'PublicRouteTable', {
-                vpcId: this.vpc.vpcId,
+                vpcId: this.vpc.vpcId
             });
 
             // Associate the public subnet with the new route table
             new ec2.CfnSubnetRouteTableAssociation(this, 'PublicSubnetAssociation', {
                 subnetId: publicSubnet.subnetId,
-                routeTableId: publicRouteTable.ref,
+                routeTableId: publicRouteTable.ref
             });
 
             // Add a NAT Gateway in the public subnet
             const natGateway = new ec2.CfnNatGateway(this, 'NatGateway', {
                 subnetId: publicSubnet.subnetId,
-                allocationId: new ec2.CfnEIP(this, 'EIP', {}).attrAllocationId,
+                allocationId: new ec2.CfnEIP(this, 'EIP', {}).attrAllocationId
             });
 
             // Create a route to the Internet Gateway
@@ -151,6 +151,7 @@ export class VpcStack extends Stack {
                         service: ec2.GatewayVpcEndpointAwsService.S3,
                     },
                 },
+                vpcName: `${resourcePrefix}-VPC`
             });
 
             // Add endpoints to VPC

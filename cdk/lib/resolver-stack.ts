@@ -53,7 +53,7 @@ export class ResolverStack extends cdk.Stack {
       runtime: Runtime = Runtime.PYTHON_3_9
     ) => {
       const resolver = new Function(this, `facultycv-${directory}-resolver`, {
-        functionName: `facultycv-${directory}-resolver`,
+        functionName: `${resourcePrefix}-${directory}-resolver`,
         runtime: runtime,
         memorySize: 512,
         code: Code.fromAsset(`./lambda/${directory}`),

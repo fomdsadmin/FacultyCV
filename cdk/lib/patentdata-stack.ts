@@ -62,6 +62,7 @@ export class PatentDataStack extends Stack {
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
+      bucketName: `${resourcePrefix}-${this.account}-patent-data-s3-bucket`
     });
 
     // reuse Glue bucket from grant to store glue Script
@@ -98,7 +99,7 @@ export class PatentDataStack extends Stack {
     };
 
     // Glue Job: fetch EPO patent data from OPS API
-    const fetchEpoPatentsJobName = "facultyCV-fetchEpoPatents";
+    const fetchEpoPatentsJobName = `${resourcePrefix}-fetchEpoPatents`;
     const fetchEpoPatentsJob = new glue.CfnJob(this, fetchEpoPatentsJobName, {
       name: fetchEpoPatentsJobName,
       role: glueRole.roleArn,
@@ -123,7 +124,7 @@ export class PatentDataStack extends Stack {
     });
 
     // Glue Job: clean EPO patent data
-    const cleanEpoPatentsJobName = "facultyCV-cleanEpoPatents";
+    const cleanEpoPatentsJobName = `${resourcePrefix}-cleanEpoPatents`;
     const cleanEpoPatentsJob = new glue.CfnJob(this, cleanEpoPatentsJobName, {
       name: cleanEpoPatentsJobName,
       role: glueRole.roleArn,
@@ -148,7 +149,7 @@ export class PatentDataStack extends Stack {
     });
 
     // Glue Job: store EPO patent data
-    const storeEpoPatentsJobName = "facultyCV-storeEpoPatents";
+    const storeEpoPatentsJobName = `${resourcePrefix}-storeEpoPatents`;
     const storeEpoPatentsJob = new glue.CfnJob(this, storeEpoPatentsJobName, {
       name: storeEpoPatentsJobName,
       role: glueRole.roleArn,

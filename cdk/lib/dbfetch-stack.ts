@@ -27,7 +27,7 @@ export class DbFetchStack extends cdk.Stack {
 
     // Create the database tables (runs during deployment)
     const createTables = new triggers.TriggerFunction(this, 'facultyCV-createTables', {
-      functionName: 'facultyCV-createTables',
+      functionName: `${resourcePrefix}-createTables`,
       runtime: lambda.Runtime.PYTHON_3_9,
       handler: 'createTables.lambda_handler',
       environment: {
