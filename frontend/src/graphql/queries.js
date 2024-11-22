@@ -231,6 +231,32 @@ export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_na
     }
 `;
 
+
+export const getOrcidSectionsQuery = (orcidId, section) => `
+    query getOrcidSections {
+        getOrcidSections (
+            orcidId: "${orcidId}", section: "${section}"
+        ) {
+            bio,
+            keywords,
+            publications {
+                publication_id
+                title
+                cited_by
+                keywords
+                journal
+                link
+                doi
+                year_published
+                author_names
+                author_ids
+            },
+            other_data
+        }
+    }
+`;
+
+
 export const getUserConnectionsQuery = (user_id, isFaculty = true) => `
     query GetUserConnections {
         getUserConnections (

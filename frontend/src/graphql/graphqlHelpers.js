@@ -6,7 +6,7 @@ import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getU
     getSecureFundingMatchesQuery, getRiseDataMatchesQuery, getPatentMatchesQuery,
     getPresignedUrlQuery, getUserInstitutionIdQuery,
     getNumberOfGeneratedCVsQuery,
-    cvIsUpToDateQuery} from './queries';
+    cvIsUpToDateQuery, getOrcidSectionsQuery} from './queries';
 import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -284,6 +284,11 @@ export const getElsevierAuthorMatches = async (first_name, last_name, institutio
 export const getOrcidAuthorMatches = async (first_name, last_name, institution_name) => {
     const results = await runGraphql(getOrcidAuthorMatchesQuery(first_name, last_name, institution_name))
     return results['data']['getOrcidAuthorMatches'];
+};
+
+export const getOrcidSections = async(orcidId, section) => {
+    const results = await runGraphql(getOrcidSectionsQuery(orcidId, section));
+    return results['data']['getOrcidSections']
 };
 
 /*
