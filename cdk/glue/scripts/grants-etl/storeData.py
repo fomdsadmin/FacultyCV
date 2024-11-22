@@ -27,7 +27,7 @@ def getCredentials():
     credentials['username'] = secrets['username']
     credentials['password'] = secrets['password']
     credentials['host'] = secrets['host']
-    credentials['db'] = secrets['dbname']
+    credentials['db'] = secrets['dbClusterIdentifier']
     return credentials
 
 def storeData():
