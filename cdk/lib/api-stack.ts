@@ -37,7 +37,9 @@ export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, databaseStack: DatabaseStack, cvGenStack: CVGenStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const resourcePrefix = this.node.tryGetContext('prefix');
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
 
     this.layerList = {};
 

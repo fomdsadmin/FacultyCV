@@ -11,7 +11,9 @@ export class AmplifyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, apiStack: ApiStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const resourcePrefix = this.node.tryGetContext('prefix');
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
 
     // Amplify
     const amplifyYaml = yaml.parse(`

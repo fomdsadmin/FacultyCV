@@ -27,7 +27,9 @@ export class PatentDataStack extends Stack {
   ) {
     super(scope, id, props);
 
-    const resourcePrefix = this.node.tryGetContext('prefix');
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
 
     // Create new Glue Role. DO NOT RENAME THE ROLE!!!
     const roleName = "AWSGlueServiceRole-PatentData";
@@ -95,7 +97,8 @@ export class PatentDataStack extends Stack {
       "--EPO_INSTITUTION_NAME": epoInstitutionName.valueAsString,
       "--FILE_PATH": "",
       "--EQUIVALENT": "false",
-      "--additional-python-modules": "psycopg2-binary"
+      "--additional-python-modules": "psycopg2-binary",
+      "--RESOURCE_PREFIX": resourcePrefix
     };
 
     // Glue Job: fetch EPO patent data from OPS API

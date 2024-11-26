@@ -17,7 +17,9 @@ import { Resolver3Stack } from '../lib/resolver3-stack';
 
 const app = new cdk.App();
 
-const resourcePrefix = app.node.tryGetContext('prefix');
+let resourcePrefix = app.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
 
 const vpcStack = new VpcStack(app, `${resourcePrefix}-VpcStack`, 
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}

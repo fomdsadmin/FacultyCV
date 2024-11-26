@@ -96,7 +96,7 @@ def storePatentData():
         user=secret["username"],
         password=secret["password"],
         host=secret["host"],
-        dbname=secret["dbname"]
+        dbname='postgres'
     )
     cursor = connection.cursor()
     print("Successfully connected to database")

@@ -10,7 +10,9 @@ export class VpcStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
-        const resourcePrefix = this.node.tryGetContext('prefix');
+        let resourcePrefix = this.node.tryGetContext('prefix');
+        if (!resourcePrefix)
+            resourcePrefix = 'facultycv' // Default
 
         const existingVpcId: string = ''; //CHANGE IF DEPLOYING WITH EXISTING VPC
 

@@ -27,7 +27,9 @@ export class GrantDataStack extends Stack {
   ) {
     super(scope, id, props);
 
-    const resourcePrefix = this.node.tryGetContext('prefix');
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
 
     // Create new Glue Role. DO NOT RENAME THE ROLE!!!
     const roleName = "AWSGlueServiceRole-ShellJob";

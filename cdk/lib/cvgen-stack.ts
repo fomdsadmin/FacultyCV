@@ -12,7 +12,9 @@ export class CVGenStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
-        const resourcePrefix = this.node.tryGetContext('prefix');
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
 
         // S3 Bucket for storing CVs
         this.cvS3Bucket = new Bucket(this, 'cvS3Bucket', {

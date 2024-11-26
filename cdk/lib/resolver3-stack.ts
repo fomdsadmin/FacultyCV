@@ -17,7 +17,9 @@ export class Resolver3Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, apiStack: ApiStack, databaseStack: DatabaseStack, cvGenStack: CVGenStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const resourcePrefix = this.node.tryGetContext('prefix');
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
 
     const psycopgLayer = apiStack.getLayers()['psycopg2'];
     const databaseConnectLayer = apiStack.getLayers()['databaseConnect']
