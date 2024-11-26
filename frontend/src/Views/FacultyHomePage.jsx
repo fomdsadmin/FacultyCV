@@ -10,7 +10,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 
-const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {
+const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggleViewMode }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [affiliations, setAffilitations] = useState([]);
@@ -209,7 +209,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   
   return (
     <PageContainer>
-      <FacultyMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name}></FacultyMenu>
+      <FacultyMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} toggleViewMode={toggleViewMode} userInfo={userInfo}></FacultyMenu>
 
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4 relative'>
         

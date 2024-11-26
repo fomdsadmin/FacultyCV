@@ -4,7 +4,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
 
-const AdminMenu = ({ userName, getCognitoUser }) => {
+
+const AdminMenu = ({userName, getCognitoUser, toggleViewMode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -24,6 +25,16 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
     }
   };
 
+  const handleToggle = () => {
+    // toggleViewMode(); // Call the toggle function passed as a prop
+    if (typeof toggleViewMode === 'function') {
+      toggleViewMode();
+    } else {
+      console.error('toggleViewMode is not a function');
+    }
+  };
+
+
   useEffect(() => {
     let timer;
 
@@ -35,6 +46,10 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
 
     return () => clearTimeout(timer); 
   }, [isCollapsed]);
+
+
+  const isHomePage = location.pathname === '/home';
+
 
   return (
     <div
@@ -62,6 +77,20 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
           </Link>
         </li>
       </ul>
+
+
+
+      {/* Toggle Button */}
+     { isHomePage && (<div className="absolute bottom-16 left-0 w-full flex justify-center">
+        {!isCollapsed && showText && (
+          <button
+            className={`text-white btn py-1 px-4 w-44 min-h-0 h-12 leading-tight focus:outline-none bg-yellow-400`}
+            onClick={handleToggle} // Call the handleToggle function here
+          >
+            Switch to Faculty View
+          </button>
+        )}
+      </div>)}
 
       {/* Sign Out Button */}
       <div className="absolute bottom-3 left-0 w-full flex justify-center">

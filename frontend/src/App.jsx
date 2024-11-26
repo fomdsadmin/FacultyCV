@@ -61,6 +61,13 @@ function App() {
   const [assistantUserInfo, setAssistantUserInfo] = useState({});
   const [loading, setLoading] = useState(false);
   const [userGroup, setUserGroup] = useState(null);
+  const [viewMode, setViewMode] = useState('department-admin'); // 'department-admin' or 'faculty'
+
+
+  const toggleViewMode = () => {
+    setViewMode((prevMode) => (prevMode === 'department-admin' ? 'faculty' : 'department-admin'));
+  };
+
 
   async function getUserGroup() {
     try {
@@ -133,15 +140,26 @@ function App() {
       <Routes>
       <Route path="/home" element={user ? (
         Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser}/> :
-        Object.keys(userInfo).length !== 0 && userInfo.role.startsWith('Admin-') ? (
-          <DepartmentAdminHomePage
-            userInfo={userInfo}
-            getCognitoUser={getCognitoUser}
-            department={userInfo.role.split('-')[1]} // Extract the department from the role
-          />
+        Object.keys(userInfo).length !== 0 && userInfo.role.startsWith('Admin-') ?  (
+          viewMode === 'department-admin' ? (
+            <DepartmentAdminHomePage
+              userInfo={userInfo}
+              getCognitoUser={getCognitoUser}
+              department={userInfo.role.split('-')[1]} // Extract the department from the role
+              toggleViewMode={toggleViewMode} // Pass the toggle function
+            />
+          ) : (
+            <FacultyHomePage
+              userInfo={userInfo}
+              setUserInfo={setUserInfo}
+              getCognitoUser={getCognitoUser}
+              getUser={getUserInfo}
+              toggleViewMode={toggleViewMode} // Pass the toggle function
+            />
+          )
         ) :
         Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === 'Assistant' ? <AssistantHomePage userInfo={assistantUserInfo} setUserInfo={setAssistantUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
-        Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo}/> :
+        Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo} toggleViewMode={toggleViewMode}/> :
         <PageContainer>
           <div className='flex items-center justify-center w-full'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -162,7 +180,7 @@ function App() {
         <Route path="/templates" element={user ? <Templates userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/sections" element={user ? <Sections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/archived-sections" element={user ? <ArchivedSections userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
-        <Route path="/department-admin/analytics" element={user ? <DepartmentAdminAnalytics userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} />
+        <Route path="/department-admin/analytics" element={user ? <DepartmentAdminAnalytics userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} toggleViewMode={toggleViewMode}/> : <Navigate to="/auth" />} />
         <Route path="/department-admin/templates" element={user ? <DepartmentAdminTemplates userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} />
         {/* <Route path="/department-admin/sections" element={user ? <DepartmentAdminSections userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} />
         <Route path="/department-admin/archived-sections" element={user ? <DepartmentAdminArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} /> : <Navigate to="/auth" />} /> */}
