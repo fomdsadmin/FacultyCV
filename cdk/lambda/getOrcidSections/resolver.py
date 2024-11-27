@@ -135,6 +135,62 @@ def getOrcidSections(arguments):
                 'other_data': {}
                 }   
         
+        if section == "employment":
+            employment_records = data.get('affiliation-group', [])
+            employment_list=[]
+            for record in employment_records:
+                summaries = record.get('summaries', [])
+                for summary in summaries:
+                    employment_summary = summary.get('employment-summary', {})
+                    role_title = employment_summary.get('role-title', "N/A")
+                    org_name = employment_summary.get('organization', {}).get('name', "N/A")
+            
+                    # Handle department name and concatenate if provided
+                    dept_name = employment_summary.get('department-name', None)
+                    if dept_name:
+                        org_name = f"{dept_name}, {org_name}"
+                    org_address = employment_summary.get('organization', {}).get('address', {})
+                    location = f"{org_address.get('city', '')}, {org_address.get('region', '')}, {org_address.get('country', '')}".strip(", ")
+
+                    # Safely handle start_date
+                    start_date = employment_summary.get("start-date")
+                    if start_date is not None:
+                        start_year = start_date.get("year", {}).get("value", "N/A") if isinstance(start_date.get("year"), dict) else "N/A"
+                        start_month = start_date.get("month", {}).get("value", "N/A") if isinstance(start_date.get("month"), dict) else "N/A"
+                    else:
+                        start_year = "N/A"
+                        start_month = "N/A"
+
+                    # Safely handle end_date
+                    end_date = employment_summary.get("end-date")
+                    if end_date is not None:
+                        end_year = end_date.get("year", {}).get("value", "N/A") if isinstance(end_date.get("year"), dict) else "N/A"
+                        end_month = end_date.get("month", {}).get("value", "N/A") if isinstance(end_date.get("month"), dict) else "N/A"
+                    else:
+                        end_year = "present"
+                        end_month = "present"
+
+                    # Append organized data to the employment list
+                    employment_list.append({
+                        "Role Title": role_title,
+                        "Organization": org_name,
+                        "Start Year": start_year, 
+                        "Start Month": start_month,
+                        "End Year": end_year,
+                        "End Month": end_month,
+                    })
+
+            other_data={}
+            other_data["employment_list"]=employment_list
+
+            return {
+            'bio': "",
+            'keywords': "",
+            'publications': [],
+            'other_data': other_data
+            }
+
+        
         if section == "education":
             # Extract and structure education data
             education_list = []
@@ -143,13 +199,24 @@ def getOrcidSections(arguments):
                     education_summary = summary.get("education-summary", {})
                     role_title = education_summary.get("role-title", "N/A")
                     organization_name = education_summary.get("organization", {}).get("name", "N/A")
-                    start_date = education_summary.get("start-date", {})
-                    start_year = start_date.get("year", {}).get("value", "N/A")
-                    start_month = start_date.get("month", {}).get("value", "N/A")
-                    end_date = education_summary.get("end-date", {})
-                    end_year = end_date.get("year", {}).get("value", "N/A")
-                    end_month = end_date.get("month", {}).get("value", "N/A")
+                    # Safely handle start_date
+                    start_date = education_summary.get("start-date")
+                    if start_date is not None:
+                        start_year = start_date.get("year", {}).get("value", "N/A") if isinstance(start_date.get("year"), dict) else "N/A"
+                        start_month = start_date.get("month", {}).get("value", "N/A") if isinstance(start_date.get("month"), dict) else "N/A"
+                    else:
+                        start_year = "N/A"
+                        start_month = "N/A"
 
+                    # Safely handle end_date
+                    end_date = education_summary.get("end-date")
+                    if end_date is not None:
+                        end_year = end_date.get("year", {}).get("value", "N/A") if isinstance(end_date.get("year"), dict) else "N/A"
+                        end_month = end_date.get("month", {}).get("value", "N/A") if isinstance(end_date.get("month"), dict) else "N/A"
+                    else:
+                        end_year = "N/A"
+                        end_month = "N/A"
+                    
                     education_list.append({
                         "role_title": role_title,
                         "organization_name": organization_name,
@@ -158,11 +225,14 @@ def getOrcidSections(arguments):
                         "end_year": end_year,
                         "end_month": end_month,
                     })
+            other_data={}
+            other_data["education_list"]=education_list
+     
             return {
                 'bio': "",
                 'keywords': "",
                 'publications': [],
-                'other_data': {}
+                'other_data': other_data
                 }          
        
 def lambda_handler(event, context):
@@ -173,6 +243,3 @@ def lambda_handler(event, context):
     - 'section': The section to fetch
     """
     return getOrcidSections(event["arguments"])
-
-
-
