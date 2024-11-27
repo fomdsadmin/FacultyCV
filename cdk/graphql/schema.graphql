@@ -137,10 +137,10 @@ type Patent {
 }
 
 type OrcidSectionOutput {
-  bio: String!
-  keywords: String!
+  bio: String
+  keywords: String
   publications: [ Publication ]
-  other_data: AWSJSON!
+  other_data: AWSJSON
 }
 
 
