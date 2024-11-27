@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
-import { addUserCVData, getPublicationMatches } from '../graphql/graphqlHelpers';
+import { addUserCVData, getPublicationMatches, getUserCVData } from '../graphql/graphqlHelpers';
 import { useNavigate } from 'react-router-dom';
 
 const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
@@ -62,10 +62,20 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     setAddingData(true);
     setCount(1); // Reset count to 1 before starting
     
+    // First get a list of all publications that already exist in the DB
+    const existingPublications = await getUserCVData(user.user_id, section.data_section_id);
+    const existingData = existingPublications.map((pub) => pub.data_details);
+
     for (const publication of publications) {
+      if (existingData.includes(JSON.stringify(publication))) {
+        setCount(prevCount => prevCount + 1);
+        continue;
+      }
+
       publication.title = publication.title.replace(/"/g, '');
       publication.journal = publication.journal.replace(/"/g, '');
       const publicationJSON = JSON.stringify(publication).replace(/"/g, '\\"');
+
       // Handle adding new entry using data_details
       try {
         
