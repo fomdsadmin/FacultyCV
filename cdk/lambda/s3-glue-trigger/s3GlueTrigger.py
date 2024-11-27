@@ -2,6 +2,7 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 import re
+import os
 
 
 """
@@ -41,6 +42,8 @@ def lambda_handler(event, context):
     s3_client = boto3.client("s3")
     glue_client = boto3.client("glue")
 
+    RESOURCE_PREFIX = os.environ['RESOURCE_PREFIX']
+
     s3_event = event["Records"][0]["s3"]
     bucketName = s3_event["bucket"]["name"]
     response = ""
@@ -64,7 +67,7 @@ def lambda_handler(event, context):
 
         # sshrc is a special case because the cleaning process require two different files
         if "raw/sshrc/" in fileKey:
-            jobName = "facultyCV-clean-sshrc"
+            jobName = f"{RESOURCE_PREFIX}-clean-sshrc"
 
             # s3 api call to list the objects with the specified path (folder)
             objectList = s3_client.list_objects_v2(
@@ -131,7 +134,7 @@ def lambda_handler(event, context):
         # and the Glue job for cleaning is called clean-mygrant
         else:
             try:
-                jobName = "facultyCV-clean-" + file
+                jobName = f"{RESOURCE_PREFIX}-clean-" + file
                 response = glue_client.start_job_run(
                     JobName=jobName,
                     MaxCapacity=MAX_CAPACITY,
@@ -149,7 +152,7 @@ def lambda_handler(event, context):
     # Trigger when a clean file appears in the clean folder
     # Need MaximumConcurrentRuns = at least 4
     elif "clean/" in s3_event["object"]["key"]:
-        jobName = "facultyCV-storeData"
+        jobName = f"{RESOURCE_PREFIX}-storeData"
 
         fileKey = s3_event["object"]["key"]
 

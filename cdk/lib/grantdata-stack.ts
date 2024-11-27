@@ -109,6 +109,9 @@ export class GrantDataStack extends Stack {
         code: lambda.Code.fromAsset("lambda/s3-glue-trigger"),
         timeout: cdk.Duration.minutes(1),
         memorySize: 512,
+        environment: {
+            'RESOURCE_PREFIX': resourcePrefix
+        },
         vpc: vpcStack.vpc,
     });
     
