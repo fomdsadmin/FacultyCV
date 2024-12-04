@@ -72,7 +72,7 @@ N/A
 
 # Credits
 
-This application was architected and developed by Aayush Behl, Abhi Verma and Alethea Kramer, with project assistance by  Anjali Bentley and Victoria Li. A special thanks to the UBC Cloud Innovation Centre Technical and Project Management teams for their guidance and support.
+This application was architected and developed by [Abhi Verma](https://www.linkedin.com/in/abhi-verma13/), [Aayush Behl](https://www.linkedin.com/in/aayushbehl/) and [Alethea Kramer](https://www.linkedin.com/in/alethea-kramer/), with project assistance by Anjali Bentley and Victoria Li. A special thanks to the UBC Cloud Innovation Centre Technical and Project Management teams for their guidance and support.
 # License
 
 This project is distributed under the [MIT License](LICENSE).

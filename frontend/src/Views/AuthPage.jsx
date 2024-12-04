@@ -227,6 +227,7 @@ const AuthPage = ({ getCognitoUser }) => {
     try {
       if (role.startsWith('Admin-')) {
         const result = await addToUserGroup(email, 'DepartmentAdmin');
+        const result2 = await addToUserGroup(email, 'Faculty')
         
       } else {
         const result = await addToUserGroup(email, role);

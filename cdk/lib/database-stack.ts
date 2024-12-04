@@ -20,7 +20,6 @@ export class DatabaseStack extends Stack {
       let resourcePrefix = this.node.tryGetContext('prefix');
       if (!resourcePrefix)
         resourcePrefix = 'facultycv' // Default
-
       this.secretPath = 'facultyCV/credentials/databaseCredentialsCluster';
 
       // Database secret with customized username retrieve at deployment time

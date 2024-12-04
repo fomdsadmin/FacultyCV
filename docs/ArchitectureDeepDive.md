@@ -85,7 +85,7 @@ The architecture diagram exported as XML file from draw.io can be found [here](.
 ## Database Schema
 The schema below illustrates the structure of each table and how they are related to each other:
 
-![Database Schema](../docs/images/Faculty_CV_RDS_DB_Schema.png)
+![Database Schema](../docs/images/Faculty_CV_RDS_DBSchema.png)
 
 **users**: Stores user information for faculty, assistants, admins, and department admins.
 ___

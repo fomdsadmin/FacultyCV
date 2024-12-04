@@ -136,6 +136,15 @@ type Patent {
   data_details: AWSJSON! #JSON
 }
 
+type OrcidSectionOutput {
+  bio: String
+  keywords: String
+  publications: [ Publication ]
+  other_data: AWSJSON
+}
+
+
+
 type Query {
     getUser(email: String!): User
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
@@ -156,6 +165,9 @@ type Query {
     @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+    getOrcidSections(orcidId: String!, section: String!): OrcidSectionOutput
     @aws_auth(cognito_groups: ["Faculty", "Assistant"])
     
     getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!

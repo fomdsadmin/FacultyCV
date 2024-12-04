@@ -4,9 +4,13 @@ import FacultyMenu from '../Components/FacultyMenu.jsx';
 import '../CustomStyles/scrollbar.css';
 import { updateUser } from '../graphql/graphqlHelpers.js';
 import { getAllUniversityInfo } from '../graphql/graphqlHelpers.js';
-import ProfileLinkModal from '../Components/ProfileLinkModal.jsx'; // Import the modal
+import { getOrcidSections } from '../graphql/graphqlHelpers.js';
+import ProfileLinkModal from '../Components/ProfileLinkModal.jsx'; 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => {
+
+const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggleViewMode }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [affiliations, setAffilitations] = useState([]);
@@ -82,6 +86,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
     setModalOpen(true);
   };
 
+
   const handleClearScopusId = () => {
     setScopusId("");
     setChange(true);
@@ -105,11 +110,59 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
     setChange(true);
   };
 
+  // to escape problematic characters before constructing the GraphQL query
+  const sanitizeInput = (input) => {
+    return input.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+  };
+  
+  const getBio = async () => {
+    try {
+      const bio = await getOrcidSections(orcidId, "biography");
+      console.log(bio)
+      if (bio && bio.bio) {
+        setUserInfo((prevUserInfo) => ({
+          ...prevUserInfo,
+          bio:bio.bio,
+        }));
+        setChange(true);
+        toast.success('Bio imported successfully!', { autoClose: 3000 });
+      } else {
+        toast.error('Failed to fetch the bio from ORCID.', { autoClose: 3000 });
+      }
+    } 
+    catch (error) {
+      toast.error('An error occurred while fetching the bio.', { autoClose: 3000 });
+    }
+  };
+
+  const getKeywords = async () => {
+    try {
+      const keywords_output = await getOrcidSections(orcidId, "keywords");
+        if (keywords_output && keywords_output.keywords) {
+          setUserInfo((prevUserInfo) => ({
+            ...prevUserInfo,
+            keywords:keywords_output.keywords,
+          }));
+          setChange(true);
+          toast.success('Keywords imported successfully!', { autoClose: 3000 });
+        } 
+        else {
+          toast.error('Failed to fetch the keywords from ORCID.', { autoClose: 3000 });
+        }
+    } 
+    catch (error) {
+      toast.error('An error occurred while fetching the keywords.', { autoClose: 3000 });
+    }
+
+  };
+
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
 
     try {
+      const sanitizedBio = sanitizeInput(userInfo.bio || "");
       await updateUser(
         userInfo.user_id,
         userInfo.first_name,
@@ -117,7 +170,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
         userInfo.preferred_name,
         userInfo.email,
         userInfo.role,
-        userInfo.bio,
+        sanitizedBio,
         userInfo.rank,
         userInfo.institution,
         userInfo.primary_department,
@@ -127,7 +180,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
         userInfo.primary_affiliation,
         userInfo.secondary_affiliation,
         userInfo.campus,
-        '',
+        userInfo.keywords,
         userInfo.institution_user_id,
         scopusId,
         orcidId
@@ -156,8 +209,8 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
   
   return (
     <PageContainer>
-      <FacultyMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name}></FacultyMenu>
-      
+      <FacultyMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} toggleViewMode={toggleViewMode} userInfo={userInfo}></FacultyMenu>
+
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4 relative'>
         
         <div className="flex items-center justify-between mt-4 mb-4">
@@ -240,7 +293,56 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
                 className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
                 onChange={handleInputChange} 
               ></textarea>
-            </div>
+
+            <button
+              type="button"
+              className="btn btn-sm btn-primary text-white mt-2"
+              onClick={() => {
+                if (!orcidId) {
+                  // Show warning if ORCID is not entered
+                  toast.warning('Please enter ORCID ID before fetching bio.');
+                } else  {
+                  // Show fetching message and fetch bio if ORCID is valid
+                  toast.info('Fetching bio from ORCID. Please wait...');
+                  getBio();
+                }
+              }}
+            >
+              Import Bio from ORCID
+            </button>
+          </div>
+
+
+          <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Keywords</h2>
+          <div className="col-span-1 sm:col-span-2 md:col-span-4">
+            <textarea 
+              id="keywords" 
+              name="keywords" 
+              maxLength={1000} 
+              value={userInfo.keywords || ''} 
+              className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
+              placeholder="Add keywords separated by commas"
+              onChange={handleInputChange} 
+            ></textarea>
+
+            <button
+              type="button"
+              className="btn btn-sm btn-primary text-white mt-2"
+              onClick={() => {
+                if (!orcidId) {
+                  // Show warning if ORCID is not entered
+                  toast.warning('Please enter ORCID ID before fetching keywords.');
+                } else {
+                  // Show fetching message and fetch keywords if ORCID is valid
+                  toast.info('Fetching keywords from ORCID. Please wait...');
+                  getKeywords();
+                }
+              }}
+            >
+              Import Keywords from ORCID
+            </button>
+          </div>
+
 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Institution Information</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
@@ -443,6 +545,19 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser }) => 
           </form>
         )}
       </main>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
 
       {modalOpen && (
         <ProfileLinkModal 

@@ -227,11 +227,11 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
         if (grant.amount && grant.years) {
             const year = grant.years;
             if (yearlyDataMap.has(year)) {
-                yearlyDataMap.get(year).GrantMoney += grant.amount;
+                yearlyDataMap.get(year).GrantFunding += grant.amount;
             } else {
                 yearlyDataMap.set(year, {
                     date: year.toString(),
-                    GrantMoney: grant.amount
+                    GrantFunding: grant.amount
                 });
             }
         } else {
@@ -259,7 +259,9 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
     publications.forEach(publication => {
       try {
         const dataDetails = JSON.parse(publication.data_details);
-        if (dataDetails.year_published) {
+        const currentYear = new Date().getFullYear();
+        const fiveYearsago = currentYear-5 // to get publications only for last 5 years
+        if (dataDetails.year_published && (Number(dataDetails.year_published) > fiveYearsago && Number(dataDetails.year_published) <= currentYear) ) {
           const year = dataDetails.year_published.toString();
           if (yearlyDataMap.has(year)) {
             yearlyDataMap.get(year).Publications += 1;
@@ -269,9 +271,7 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
               Publications: 1,
             });
           }
-        } else {
-          console.warn('Missing year in publication data:', publication);
-        }
+        } 
       } catch (error) {
         console.error('Error parsing publication data:', error);
       }
@@ -291,8 +291,8 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
 
   
   const GraphContainer = ({ title, children }) => (
-    <div className="graph-container h-[350px] w-[100%] mt-4 mb-8"> {/* Adjusted heights and margins */}
-      <h2 className="graph-title text-left text-l font-bold text-zinc-600 mb-2"> {/* Added `mb-2` for margin below the title */}
+    <div className="graph-container h-[350px] w-[70%] mt-4 mb-8 pl-4"> 
+      <h2 className="graph-title text-left text-l font-bold text-zinc-600 mb-2"> 
         {title}
       </h2>
       {children}
@@ -312,47 +312,57 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
             </div>
         ) : (
             <div className="mt-8">
-                <div className="m-4 max-w-3xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 auto-resize [grid-template-columns:repeat(auto-fill,_minmax(min-content,_max-content))]">
-                    <div className='auto-resize'> 
-                      <AnalyticsCard title="Faculty Users" value={facultyUsers.length} />
+                {/* Wrapper for Analytics Cards and Line Graph */}
+                <div className="flex flex-col lg:flex-row lg:gap-10">
+                    {/* Analytics Cards Section */}
+                    <div className="lg:w-2/3 m-4 max-w-3xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 auto-resize">
+                        <AnalyticsCard title="Faculty Users" value={facultyUsers.length} />
+                        <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
+                        <AnalyticsCard title="Publications" value={filteredPublications.length} />
+                        <AnalyticsCard title="Grants" value={filteredGrants.length} />
+                        <AnalyticsCard title="Patents" value={filteredPatents.length} />
+                        <AnalyticsCard title="Users who Generated CVs" value={totalCVsGenerated} />
+                        <AnalyticsCard title="Grant Funding Secured" value={totalGrantMoneyRaised} />
                     </div>
-                    <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
-                    <AnalyticsCard title="Publications" value={filteredPublications.length} />
-                    <AnalyticsCard title="Grants" value={filteredGrants.length} />
-                    <AnalyticsCard title="Patents" value={filteredPatents.length} />
-                    <AnalyticsCard title="Users who Generated CVs" value={totalCVsGenerated} />
-                    <div className='auto-resize'> 
-                    <AnalyticsCard title="Grant Money Raised" value={totalGrantMoneyRaised} />
+
+                    {/* Number of Users Over Time Graph */}
+                    <div className="lg:w-3/4 flex flex-col mt-8 lg:mt-0">
+                        <GraphContainer title="Number of Users Over Time">
+                          <BarChartComponent
+                              data={getGraphData()}
+                              dataKey="Users"
+                              xAxisKey="date"
+                              barColor="#ff8042"
+                          />
+                        </GraphContainer>
                     </div>
                 </div>
 
-                    <div className="flex flex-col items-left">
-                    {/* Line Graph for Number of Users Over Time */}
-                    <GraphContainer title="Number of Users Over Time">
-                      <LineGraph data={getGraphData()} dataKey="Users" lineColor="#8884d8" />
+                {/* Additional Graphs below the first section */}
+                <div className="flex flex-col items-left mt-8">
+                    <GraphContainer title="Yearly Grant Funding Secured">
+                        <BarChartComponent
+                            data={getGrantMoneyGraphData()}
+                            dataKey="GrantFunding"
+                            xAxisKey="date"
+                            barColor="#82ca9d"
+                        />
                     </GraphContainer>
 
-                    {/* Line Graph for Grant Money Raised Over Time */}
-                    <GraphContainer title="Grant Money Raised Over Time">
-                      <LineGraph data={getGrantMoneyGraphData()} dataKey="GrantMoney" lineColor="#82ca9d" />
+                    <GraphContainer title="Yearly Publications for Last 5 Years">
+                        <BarChartComponent
+                            data={getYearlyPublicationsGraphData()}
+                            dataKey="Publications"
+                            xAxisKey="year"
+                            barColor="#8884d8"
+                        />
                     </GraphContainer>
-
-                   {/* Bar Chart for Yearly Publications */}
-                  <GraphContainer title="Yearly Publications">
-                    <div className="w-full">
-                      <BarChartComponent
-                        data={getYearlyPublicationsGraphData()}
-                        dataKey="Publications"
-                        xAxisKey="year"
-                        barColor="#8884d8"
-                      />
-                    </div>
-                  </GraphContainer>
-                  </div>
+                </div>
             </div>
         )}
     </main>
 </PageContainer>
+
 
   )
 }

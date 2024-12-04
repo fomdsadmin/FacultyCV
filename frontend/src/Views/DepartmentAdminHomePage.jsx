@@ -7,7 +7,7 @@ import ManageDepartmentUser from '../Components/ManageDepartmentUser.jsx';
 import UserCard from '../Components/UserCard.jsx';
 import { getAllUsers } from '../graphql/graphqlHelpers.js';
 
-const DepartmentAdminHomePage = ({ userInfo, getCognitoUser, department }) => {
+const DepartmentAdminHomePage = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
@@ -77,7 +77,12 @@ const DepartmentAdminHomePage = ({ userInfo, getCognitoUser, department }) => {
 
   return (
     <PageContainer>
-      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+      <DepartmentAdminMenu 
+      userInfo 
+      getCognitoUser={getCognitoUser} 
+      userName={userInfo.preferred_name || userInfo.first_name} 
+      toggleViewMode={toggleViewMode} // Pass toggleViewMode to the menu
+        viewMode="department-admin" />
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
         <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">{department} Users</h1>
         {loading ? (

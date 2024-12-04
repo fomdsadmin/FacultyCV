@@ -8,12 +8,13 @@ import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
 import { FaRegTrashAlt } from "react-icons/fa";
 
-const FacultyMenu = ({ userName, getCognitoUser }) => {
+const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showText, setShowText] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  // const isAdmin = userInfo.role.startsWith('Admin-'); // Check if the Faculty Member is also a dept admin
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -26,6 +27,10 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
     } finally {
       setIsSigningOut(false);
     }
+  };
+
+  const handleToggle = () => {
+    toggleViewMode(); // Switch view back to Department Admin
   };
 
   useEffect(() => {
@@ -78,6 +83,19 @@ const FacultyMenu = ({ userName, getCognitoUser }) => {
           </Link>
         </li>
       </ul>
+
+      {/* Toggle Button */}
+      {userInfo && userInfo.role && (userInfo.role.startsWith('Admin-')) && ( 
+      <div className="absolute bottom-16 left-0 w-full flex justify-center">
+        {!isCollapsed && showText && (
+          <button
+            className={`text-white btn py-1 px-4 w-44 min-h-0 h-12 leading-tight focus:outline-none bg-yellow-400`}
+            onClick={handleToggle} // Call the handleToggle function here
+          >
+            Switch to Admin View
+          </button>
+        )}
+      </div> ) }
 
       {/* Sign Out Button */}
       <div className="absolute bottom-3 left-0 w-full flex justify-center">
