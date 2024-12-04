@@ -17,11 +17,12 @@ from awsglue.utils import getResolvedOptions
 
 # define job parameters
 args = getResolvedOptions(
-    sys.argv, ["TEMP_BUCKET_NAME", "EPO_INSTITUTION_NAME", "FILE_PATH", "EQUIVALENT"])
+    sys.argv, ["TEMP_BUCKET_NAME", "EPO_INSTITUTION_NAME", "FILE_PATH", "EQUIVALENT", "RESOURCE_PREFIX"])
 TEMP_BUCKET_NAME = args["TEMP_BUCKET_NAME"]
 EPO_INSTITUTION_NAME = args["EPO_INSTITUTION_NAME"]
 FILE_PATH = args["FILE_PATH"]
 EQUIVALENT = args["EQUIVALENT"]
+RESOURCE_PREFIX = args["RESOURCE_PREFIX"]
 
 # clients
 glue_client = boto3.client("glue")
@@ -246,7 +247,7 @@ def main(argv):
         "--EQUIVALENT": EQUIVALENT
     }
     glue_client.start_job_run(
-        JobName="facultyCV-storeEpoPatents",
+        JobName=f"{RESOURCE_PREFIX}-storeEpoPatents",
         Arguments=arguments
     )
 

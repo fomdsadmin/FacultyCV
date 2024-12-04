@@ -12,6 +12,10 @@ export class CVGenStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
+
         // S3 Bucket for storing CVs
         this.cvS3Bucket = new Bucket(this, 'cvS3Bucket', {
             publicReadAccess: false,
@@ -25,12 +29,14 @@ export class CVGenStack extends Stack {
                 ],
                 allowedOrigins: ["*"],
                 allowedHeaders: ["*"]
-            }]
+            }],
+            bucketName: `${resourcePrefix}-${this.account}-cv-bucket`
         });
 
         // DynamoDB to store a log of transactions across data sections
         this.dynamoDBTable = new Table(this, 'cvLogTable', {
-            partitionKey: { name: 'logEntryId', type: AttributeType.STRING }
+            partitionKey: { name: 'logEntryId', type: AttributeType.STRING },
+            tableName: `${resourcePrefix}-${this.account}-CVLogTable`
         });
 
         const cvGenLambda = new DockerImageFunction(this, 'cvGenFunction', {
@@ -41,7 +47,8 @@ export class CVGenStack extends Stack {
                 "LUAOTFLOAD_TEXMFVAR": "/tmp/luatex-cache",
                 "TEXMFCONFIG": "/tmp/texmf-config",
                 "TEXMFVAR": "/tmp/texmf-var"
-            }
+            },
+            functionName: `${resourcePrefix}-cvGenLambdaFunction`
         });
 
         cvGenLambda.addToRolePolicy(new PolicyStatement({

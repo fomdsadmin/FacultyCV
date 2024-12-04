@@ -20,12 +20,16 @@ export class DbFetchStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
+
     const psycopgLambdaLayer = apiStack.getLayers()['psycopg2'];
     const databaseConnectLayer = apiStack.getLayers()['databaseConnect']   
 
     // Create the database tables (runs during deployment)
     const createTables = new triggers.TriggerFunction(this, 'facultyCV-createTables', {
-      functionName: 'facultyCV-createTables',
+      functionName: `${resourcePrefix}-createTables`,
       runtime: lambda.Runtime.PYTHON_3_9,
       handler: 'createTables.lambda_handler',
       environment: {

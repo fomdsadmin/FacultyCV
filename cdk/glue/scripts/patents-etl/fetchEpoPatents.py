@@ -15,12 +15,13 @@ from awsglue.utils import getResolvedOptions
 
 # define job parameters
 args = getResolvedOptions(
-    sys.argv, ["TEMP_BUCKET_NAME", "EPO_INSTITUTION_NAME", "API_SECRET_NAME"])
+    sys.argv, ["TEMP_BUCKET_NAME", "EPO_INSTITUTION_NAME", "API_SECRET_NAME", "RESOURCE_PREFIX"])
 TEMP_BUCKET_NAME = args["TEMP_BUCKET_NAME"]
 API_SECRET_NAME = args["API_SECRET_NAME"]
 EPO_INSTITUTION_NAME = args["EPO_INSTITUTION_NAME"]
 ACCESS_AUTH_URL = "https://ops.epo.org/3.2/auth/accesstoken"
 OPS_SEARCH_URL = "http://ops.epo.org/3.2/rest-services/published-data/search/biblio"
+RESOURCE_PREFIX = args["RESOURCE_PREFIX"]
 
 # get API credentials
 glue_client = boto3.client("glue")
@@ -322,10 +323,11 @@ def main(argv):
         # start downstream Glue Job
         arguments = {
             "--TEMP_BUCKET_NAME": TEMP_BUCKET_NAME,
-            "--FILE_PATH": FILE_PATH
+            "--FILE_PATH": FILE_PATH,
+            "--RESOURCE_PREFIX": RESOURCE_PREFIX
         }
         glue_client.start_job_run(
-            JobName="facultyCV-cleanEpoPatents",
+            JobName=f"{RESOURCE_PREFIX}-cleanEpoPatents",
             Arguments=arguments
         )
 

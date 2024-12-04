@@ -22,12 +22,12 @@ SECRET_NAME = args["SECRET_NAME"]
 def getCredentials():
     credentials = {}
 
-    response = sm_client.get_secret_value(SecretId='facultyCV/credentials/dbCredentials')
+    response = sm_client.get_secret_value(SecretId=SECRET_NAME)
     secrets = json.loads(response['SecretString'])
     credentials['username'] = secrets['username']
     credentials['password'] = secrets['password']
     credentials['host'] = secrets['host']
-    credentials['db'] = secrets['dbClusterIdentifier']
+    credentials['db'] = 'postgres'
     return credentials
 
 def storeData():

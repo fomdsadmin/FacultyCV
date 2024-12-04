@@ -211,7 +211,7 @@ You can proceed with the rest of the deployment instructions and the Vpc Stack w
 
 #### 3b: CDK Deployment
 
-Initialize the CDK stacks, replacing `<YOUR_AWS_ACCOUNT_ID>`, `<YOUR_ACCOUNT_REGION>` and `<YOUR-PROFILE-NAME>`. with the appropriate values. **NOTE: Remember to have your Docker container running.**
+Initialize the CDK stacks, replacing `<YOUR_AWS_ACCOUNT_ID>`, `<YOUR_ACCOUNT_REGION>` and `<YOUR-PROFILE-NAME>`. with the appropriate values. **NOTE: Remember to have your Docker daemon running.**
 
 ```bash
 cdk bootstrap aws://<YOUR_AWS_ACCOUNT_ID>/<YOUR_ACCOUNT_REGION> --profile <YOUR-PROFILE-NAME>
@@ -227,21 +227,21 @@ For example, it was determined that the EPO/Espacenet use "UNIV BRITISH COLUMBIA
 Thus you should do the following if you would like to deploy only the Patent Data Stack:
 
 ```
-cdk deploy PatentDataStack --parameters PatentDataStack:epoInstitutionName="UNIV BRITISH COLUMBIA,UNIVERSITY OF BRITISH COLUMBIA" --profile <YOUR-PROFILE-NAME>
+cdk deploy <PREFIX>-PatentDataStack --parameters <PREFIX>-PatentDataStack:epoInstitutionName="UNIV BRITISH COLUMBIA,UNIVERSITY OF BRITISH COLUMBIA" --profile <YOUR-PROFILE-NAME> --context prefix=<PREFIX>
 ```
 
-Note that the two name `"UNIV BRITISH COLUMBIA,UNIVERSITY OF BRITISH COLUMBIA"`  is separated by a comma, and there is **no space before or after the comma**.
+Note that the two name `"UNIV BRITISH COLUMBIA,UNIVERSITY OF BRITISH COLUMBIA"`  is separated by a comma, and there is **no space before or after the comma**. `<PREFIX>` should be replaced with a suitable all lowercase string that is appended to the beginning of all the project resources
 
 
-You may run the following command to deploy the stacks all at once. Again, replace `<YOUR-INSTITUTION-NAME>` with the name that represents your instiution on Espacenet/EPO and`<YOUR-PROFILE-NAME>` with the appropriate AWS profile used earlier.
+You may run the following command to deploy the stacks all at once. Again, replace `<YOUR-INSTITUTION-NAME>` with the name that represents your instiution on Espacenet/EPO,`<YOUR-PROFILE-NAME>` with the appropriate AWS profile used earlier, and `<PREFIX>` with a suitable all lowercase string that is appended to the beginning of all the project resources.
 
 ```
-cdk deploy --all --parameters PatentDataStack:epoInstitutionName="<YOUR-INSTITUTION-NAME>" --profile <YOUR-PROFILE-NAME>
+cdk deploy --all --parameters <PREFIX>-PatentDataStack:epoInstitutionName="<YOUR-INSTITUTION-NAME>" --profile <YOUR-PROFILE-NAME> --context prefix=<PREFIX>
 ```
 
 * Example:
    ```
-   cdk deploy --all --parameters PatentDataStack:epoInstitutionName="UNIV BRITISH COLUMBIA,UNIVERSITY OF BRITISH COLUMBIA" --profile <YOUR-PROFILE-NAME>
+   cdk deploy --all --parameters facultycv-PatentDataStack:epoInstitutionName="UNIV BRITISH COLUMBIA,UNIVERSITY OF BRITISH COLUMBIA" --profile <YOUR-PROFILE-NAME> --context prefix=facultycv
    ```
 
 #### Taking down the deployed stacks

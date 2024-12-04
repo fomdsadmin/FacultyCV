@@ -27,6 +27,10 @@ export class GrantDataStack extends Stack {
   ) {
     super(scope, id, props);
 
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
+
     // Create new Glue Role. DO NOT RENAME THE ROLE!!!
     const roleName = "AWSGlueServiceRole-ShellJob";
     const glueRole = new iam.Role(this, roleName, {
@@ -60,6 +64,7 @@ export class GrantDataStack extends Stack {
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
+      bucketName: `${resourcePrefix}-${this.account}-glue-s3-bucket`
     });
 
     // Create S3 bucket for the grant data
@@ -70,12 +75,13 @@ export class GrantDataStack extends Stack {
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
+      bucketName: `${resourcePrefix}-${this.account}-grant-data-s3-bucket`
     });
 
     // Create folder structure for the user to upload grant CSV files
     const createFolders = new triggers.TriggerFunction(this, "facultyCV-createFolders", {
       runtime: lambda.Runtime.PYTHON_3_11,
-      functionName: "facultyCV-createFolders",
+      functionName: `${resourcePrefix}-createFolders`,
       handler: "createGrantFolders.lambda_handler",
       code: lambda.Code.fromAsset("lambda/create-grant-folders"),
       timeout: cdk.Duration.minutes(1),
@@ -98,11 +104,14 @@ export class GrantDataStack extends Stack {
     // Lambda function to trigger Glue jobs
     const glueTrigger = new lambda.Function(this, "facultyCV-s3-glue-trigger", {
         runtime: lambda.Runtime.PYTHON_3_11,
-        functionName: "facultyCV-s3-glue-trigger",
+        functionName: `${resourcePrefix}-s3-glue-trigger`,
         handler: "s3GlueTrigger.lambda_handler",
         code: lambda.Code.fromAsset("lambda/s3-glue-trigger"),
         timeout: cdk.Duration.minutes(1),
         memorySize: 512,
+        environment: {
+            'RESOURCE_PREFIX': resourcePrefix
+        },
         vpc: vpcStack.vpc,
     });
     
@@ -292,7 +301,7 @@ export class GrantDataStack extends Stack {
         vpc: vpcStack.vpc,
         allowAllOutbound: true,
         description: "Self-referencing security group for Glue",
-        securityGroupName: "default-glue-security-group",
+        securityGroupName: `${resourcePrefix}-default-glue-security-group`,
     });
     // add self-referencing ingress rule
     securityGroup.addIngressRule(
@@ -342,7 +351,7 @@ export class GrantDataStack extends Stack {
     };
     
     // Glue Job: clean cihr data
-    const cleanCihrJobName = "facultyCV-clean-cihr";
+    const cleanCihrJobName = `${resourcePrefix}-clean-cihr`;
     const cleanCihrJob = new glue.CfnJob(this, cleanCihrJobName, {
         name: cleanCihrJobName,
         role: glueRole.roleArn,
@@ -367,7 +376,7 @@ export class GrantDataStack extends Stack {
     });
   
     // Glue Job: clean nserc data
-    const cleanNsercJobName = "facultyCV-clean-nserc";
+    const cleanNsercJobName = `${resourcePrefix}-clean-nserc`;
     const cleanNsercJob = new glue.CfnJob(this, cleanNsercJobName, {
     name: cleanNsercJobName,
     role: glueRole.roleArn,
@@ -392,7 +401,7 @@ export class GrantDataStack extends Stack {
     });
 
     // Glue Job: clean sshrc data
-    const cleanSshrcJobName = "facultyCV-clean-sshrc";
+    const cleanSshrcJobName = `${resourcePrefix}-clean-sshrc`;
     const cleanSshrcJob = new glue.CfnJob(this, cleanSshrcJobName, {
     name: cleanSshrcJobName,
     role: glueRole.roleArn,
@@ -417,7 +426,7 @@ export class GrantDataStack extends Stack {
     });
 
     // Glue Job: clean cfi data
-    const cleanCfiJobName = "facultyCV-clean-cfi";
+    const cleanCfiJobName = `${resourcePrefix}-clean-cfi`;
     const cleanCfiJob = new glue.CfnJob(this, cleanCfiJobName, {
     name: cleanCfiJobName,
     role: glueRole.roleArn,
@@ -442,7 +451,7 @@ export class GrantDataStack extends Stack {
     });
 
     // Glue Job: clean rise data
-    const cleanRiseJobName = "facultyCV-clean-rise";
+    const cleanRiseJobName = `${resourcePrefix}-clean-rise`;
     const cleanRiseJob = new glue.CfnJob(this, cleanRiseJobName, {
     name: cleanRiseJobName,
     role: glueRole.roleArn,
@@ -467,7 +476,7 @@ export class GrantDataStack extends Stack {
     });
 
     // Glue Job: store data into table in database
-    const storeDataJobName = "facultyCV-storeData";
+    const storeDataJobName = `${resourcePrefix}-storeData`;
     const storeDataJob = new glue.CfnJob(this, storeDataJobName, {
     name: storeDataJobName,
     role: glueRole.roleArn,
