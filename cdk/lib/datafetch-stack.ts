@@ -22,6 +22,10 @@ export class DataFetchStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
+
     // Create the S3 Bucket
     const s3Bucket = new s3.Bucket(this, 'facultyCV-user-data-s3-bucket', {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -30,13 +34,14 @@ export class DataFetchStack extends cdk.Stack {
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
+      bucketName: `${resourcePrefix}-${this.account}-user-data-s3-bucket`
     });
 
     /*
         Create the lambda roles
     */
     const bulkLoadRole = new Role(this, 'CleanBulkUserDataRole', {
-        roleName: 'CleanBulkUserDataRole',
+        roleName: `${resourcePrefix}-CleanBulkUserDataRole`,
         assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
         managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess")]
     });
@@ -75,7 +80,7 @@ export class DataFetchStack extends cdk.Stack {
     */
   
     const bulkUserUpload = new lambda.Function(this, 'facultyCV-bulkUserUpload', {
-        functionName: 'facultycv-bulkUserUpload',
+        functionName: `${resourcePrefix}-bulkUserUpload`,
         runtime: lambda.Runtime.PYTHON_3_9,
         handler: 'lambda_function.lambda_handler',
         code: lambda.Code.fromAsset('lambda/bulkUserUpload'),
@@ -94,7 +99,7 @@ export class DataFetchStack extends cdk.Stack {
     });
 
     const bulkTeachingDataUpload = new lambda.Function(this, 'facultyCV-bulkTeachingDataUpload', {
-        functionName: 'facultycv-bulkTeachingDataUpload',
+        functionName: `${resourcePrefix}-bulkTeachingDataUpload`,
         runtime: lambda.Runtime.PYTHON_3_9,
         handler: 'lambda_function.lambda_handler',
         code: lambda.Code.fromAsset('lambda/bulkTeachingDataUpload'),
@@ -113,7 +118,7 @@ export class DataFetchStack extends cdk.Stack {
     });
 
     const bulkDataSectionsUpload = new lambda.Function(this, 'facultyCV-bulkDataSectionsUpload', {
-      functionName: 'facultycv-bulkDataSectionsUpload',
+      functionName: `${resourcePrefix}-bulkDataSectionsUpload`,
       runtime: lambda.Runtime.PYTHON_3_9,
       handler: 'lambda_function.lambda_handler',
       code: lambda.Code.fromAsset('lambda/bulkDataSectionsUpload'),
@@ -132,7 +137,7 @@ export class DataFetchStack extends cdk.Stack {
     });
     
     const bulkUniversityInfoUpload = new lambda.Function(this, 'facultyCV-bulkUniversityInfoUpload', {
-      functionName: 'facultycv-bulkUniversityInfoUpload',
+      functionName: `${resourcePrefix}-bulkUniversityInfoUpload`,
       runtime: lambda.Runtime.PYTHON_3_9,
       handler: 'lambda_function.lambda_handler',
       code: lambda.Code.fromAsset('lambda/bulkUniversityInfoUpload'),

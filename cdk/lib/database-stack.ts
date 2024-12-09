@@ -17,6 +17,9 @@ export class DatabaseStack extends Stack {
     constructor(scope: Construct, id: string, vpcStack: VpcStack, props?: StackProps) {
       super(scope, id, props);
 
+      let resourcePrefix = this.node.tryGetContext('prefix');
+      if (!resourcePrefix)
+        resourcePrefix = 'facultycv' // Default
       this.secretPath = 'facultyCV/credentials/databaseCredentialsCluster';
 
       // Database secret with customized username retrieve at deployment time
@@ -27,7 +30,8 @@ export class DatabaseStack extends Stack {
           assumedBy: new iam.ServicePrincipal('monitoring.rds.amazonaws.com'),
           managedPolicies: [
               iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonRDSEnhancedMonitoringRole')
-          ]
+          ],
+          roleName: `${resourcePrefix}-RDSMonitoringRole`
       });
 
       const credentialsCluster = rds.Credentials.fromUsername(dbUsername.secretValueFromJson("username").unsafeUnwrap() , {
@@ -54,7 +58,7 @@ export class DatabaseStack extends Stack {
         },
         monitoringInterval: cdk.Duration.minutes(1), // Set monitoring interval
         monitoringRole: monitoringRole, // Set monitoring role
-        clusterIdentifier: 'FacultyCVCluster'
+        clusterIdentifier: `${resourcePrefix}-Cluster`
       });
 
       const vpcCidrBlock = vpcStack.vpc.vpcCidrBlock;
@@ -66,6 +70,7 @@ export class DatabaseStack extends Stack {
       // RDS Proxy
       const rdsProxyRole = new iam.Role(this, 'RDSProxyRole', {
         assumedBy: new iam.ServicePrincipal('rds.amazonaws.com'),
+        roleName: `${resourcePrefix}-RDSProxyRole`
       });
 
       rdsProxyRole.addToPolicy(
@@ -80,7 +85,8 @@ export class DatabaseStack extends Stack {
         vpc: vpcStack.vpc,
         role: rdsProxyRole,
         securityGroups: this.dbCluster.connections.securityGroups,
-        requireTLS: false
+        requireTLS: false,
+        dbProxyName: `${resourcePrefix}-${id}-proxy`
       });
 
       const rdsProxyAuroroRead = new cdk.CfnResource(this, 'rdsProxyReadEndpoint', {

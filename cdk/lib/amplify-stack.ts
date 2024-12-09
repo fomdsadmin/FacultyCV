@@ -11,6 +11,10 @@ export class AmplifyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, apiStack: ApiStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    let resourcePrefix = this.node.tryGetContext('prefix');
+    if (!resourcePrefix)
+      resourcePrefix = 'facultycv' // Default
+
     // Amplify
     const amplifyYaml = yaml.parse(`
     version: 1
@@ -41,7 +45,7 @@ export class AmplifyStack extends cdk.Stack {
     const username = cdk.aws_ssm.StringParameter.valueForStringParameter(this, 'facultycv-owner-name');
      
     const amplifyApp = new App(this, 'amplifyApp', {
-      appName: 'faculty-cv-amplify',
+      appName: `${resourcePrefix}-amplify`,
       sourceCodeProvider: new GitHubSourceCodeProvider({
         owner: username,
         repository: 'FacultyCV',
