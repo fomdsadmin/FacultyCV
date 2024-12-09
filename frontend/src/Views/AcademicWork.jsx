@@ -8,6 +8,7 @@ import GenericSection from '../Components/GenericSection.jsx';
 import CoursesTaughtSection from '../Components/CoursesTaughtSection.jsx';
 import SecureFundingSection from '../Components/SecureFundingSection.jsx';
 import PublicationsSection from '../Components/PublicationsSection.jsx';
+import EmploymentSection from '../Components/EmploymentSection.jsx';
 import PatentsSection from '../Components/PatentsSection.jsx';
 import { getAllSections } from '../graphql/graphqlHelpers.js';
 
@@ -109,6 +110,9 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
               </div>
             ) : (
               <div className='!overflow-auto !h-full custom-scrollbar'>
+                {activeSection.title === 'Prior Employment' && 
+                  <EmploymentSection user={userInfo} section={activeSection} onBack={handleBack}></EmploymentSection>
+                }              
                 {activeSection.title === 'Publications' && 
                   <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack}></PublicationsSection>
                 }
@@ -121,7 +125,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                 {activeSection.title === 'Courses Taught' && 
                   <CoursesTaughtSection userInfo={userInfo} section={activeSection} onBack={handleBack}></CoursesTaughtSection>
                 } 
-                {activeSection.title !== 'Publications' && activeSection.title !== 'Patents' && activeSection.title !== 'Courses Taught' && activeSection.title !== 'Secure Funding' &&
+                {activeSection.title !== 'Publications' && activeSection.title !== 'Prior Employment' && activeSection.title !== 'Patents' && activeSection.title !== 'Courses Taught' && activeSection.title !== 'Secure Funding' &&
                   <GenericSection user={userInfo} section={activeSection} onBack={handleBack}></GenericSection>
                 }
               </div>
