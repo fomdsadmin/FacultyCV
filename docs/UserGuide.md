@@ -223,8 +223,7 @@ The Analytics page has the same view and functionalities as the Admin for now, w
 The Templates page has the same view and functionalities as the Admin for now, which can be found [here](#templates)
 
 #### Toggle button Faculty <-> Admin view
-The toggle button functionality in the navigation panel for Department Admins allows them to switch to faculty view, where they can access the functionality available to Faculty members, which can be found [here](##Faculty Role)
-s
+The toggle button functionality in the navigation panel for Department Admins allows them to switch to faculty view, where they can access the functionality available to Faculty members, which can be found [here](#faculty-role)
 
 ## Common Features
 
