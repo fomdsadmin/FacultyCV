@@ -91,7 +91,7 @@ Faculty members have access to various tools and features to manage their academ
 - **Navigation:** Users can navigate through their academic work records using the search bar and can add or remove categories of academic work sections using filter buttons.
 ![Screenshot 2024-08-30 133919](https://github.com/user-attachments/assets/4dd87af6-19c6-4ab7-9825-a2738ca9bda4)
 - **Managing Sections:** Each section allows users to review, archive, and edit entries. 
-  - **External Data Sources:** Certain sections, like **Patents**, **Secure Funding**, **Publications**, and **Courses Taught**, use external datasets to fetch data.
+  - **External Data Sources:** Certain sections, like **Patents**, **Secure Funding**, **Publications**, **Education**, **Employment** and **Courses Taught**, use external datasets to fetch data.
   - **Pop-Up Explanations:** When fetching data from external sources, a pop-up will explain the sources and allow the user to add any relevant entries.
 ![Screenshot 2024-08-30 134048](https://github.com/user-attachments/assets/75588266-e142-4fc7-b676-b4ff7ee6a4e3)
 - **Entry Management:** Under each entry, users have options to archive, edit (if editable), or view the entry. Entries can also be searched within each section.
@@ -202,7 +202,7 @@ Admins are responsible for managing users, coordinating departmental activities,
 
 ### Department Admin Role
 
-Department Admins are responsible for managing users in their department, overseeing system-wide settings, and configuring report templates. Below is an overview of the common pages and functionalities available to department admins.
+Department Admins are responsible for managing users in their department, overseeing system-wide settings, and configuring report templates. Below is an overview of the common pages and functionalities available to department admins. Every Department admin is also a Faculty Member.
 
 #### Users
 
@@ -222,6 +222,9 @@ The Analytics page has the same view and functionalities as the Admin for now, w
 #### Templates
 The Templates page has the same view and functionalities as the Admin for now, which can be found [here](#templates)
 
+#### Toggle button Faculty <-> Admin view
+The toggle button functionality in the navigation panel for Department Admins allows them to switch to faculty view, where they can access the functionality available to Faculty members, which can be found [here](##Faculty Role)
+s
 
 ## Common Features
 
