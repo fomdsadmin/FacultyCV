@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { addUserCVData, getUserCVData, getOrcidSections } from '../graphql/graphqlHelpers';
+import { getMonthName } from '../utils/time';
+
 
 const EmploymentModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
   const [employmentData, setEmploymentData] = useState([]);
@@ -23,12 +25,13 @@ const EmploymentModal = ({ user, section, onClose, setRetrievingData, fetchData 
                 : response.other_data;
 
             const employmentList = otherData?.employment_list || [];
+            console.log(employmentList)
 
             // Transform fields into the required escaped JSON format
             const transformedData = employmentList.map((employment) => {
               const startDateMonth =
                employment["Start Month"] && employment["Start Month"] !== "N/A"
-                ? employment["Start Month"]
+                ? getMonthName(employment["Start Month"])
                 : ""; // Set to empty string if "N/A"
               const startDateYear =
                 employment["Start Year"] && employment["Start Year"] !== "N/A"
@@ -38,8 +41,8 @@ const EmploymentModal = ({ user, section, onClose, setRetrievingData, fetchData 
                   ? "" // If End Month is N/A but End Year exists
                   : employment["End Month"] === "present"
                   ? "Current"
-                  : employment["End Month"] && employment["End Month"] !== "N/A"
-                  ? employment["End Month"]
+                  : employment["End Month"] !== "N/A"
+                  ? getMonthName(employment["End Month"])
                   : ""; // Set to empty string if "N/A"
                 const endDateYear =  employment["End Year"] === "present" ? "Current" : employment["End Year"] || "";
 

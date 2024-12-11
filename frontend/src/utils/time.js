@@ -14,6 +14,22 @@ export function formatDateToLongString(date) {
   return `${day} ${month} ${year}`;
 }
 
+export function getMonthName(month) {
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  if (!isNaN(month)) {
+    const numericMonth = parseInt(month, 10); // Convert to number
+    if (numericMonth >= 1 && numericMonth <= 12) {
+      return monthNames[numericMonth - 1]; // Map to month name
+    }
+  }
+  return month; // Return original if it's already a valid month name
+}
+
 export const formatDateToMonthString = (date) => {
   const options = { year: 'numeric', month: 'short' };
   return date.toLocaleDateString('en-US', options);

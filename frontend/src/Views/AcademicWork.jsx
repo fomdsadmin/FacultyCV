@@ -9,6 +9,7 @@ import CoursesTaughtSection from '../Components/CoursesTaughtSection.jsx';
 import SecureFundingSection from '../Components/SecureFundingSection.jsx';
 import PublicationsSection from '../Components/PublicationsSection.jsx';
 import EmploymentSection from '../Components/EmploymentSection.jsx';
+import EducationSection from '../Components/EducationSection.jsx';
 import PatentsSection from '../Components/PatentsSection.jsx';
 import { getAllSections } from '../graphql/graphqlHelpers.js';
 
@@ -110,6 +111,9 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
               </div>
             ) : (
               <div className='!overflow-auto !h-full custom-scrollbar'>
+                {activeSection.title === 'Post-Secondary Education' && 
+                  <EducationSection user={userInfo} section={activeSection} onBack={handleBack}></EducationSection>
+                }
                 {activeSection.title === 'Prior Employment' && 
                   <EmploymentSection user={userInfo} section={activeSection} onBack={handleBack}></EmploymentSection>
                 }              
@@ -125,7 +129,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                 {activeSection.title === 'Courses Taught' && 
                   <CoursesTaughtSection userInfo={userInfo} section={activeSection} onBack={handleBack}></CoursesTaughtSection>
                 } 
-                {activeSection.title !== 'Publications' && activeSection.title !== 'Prior Employment' && activeSection.title !== 'Patents' && activeSection.title !== 'Courses Taught' && activeSection.title !== 'Secure Funding' &&
+                {activeSection.title !== 'Publications' && activeSection.title !== 'Prior Employment' && activeSection.title !== 'Post-Secondary Education' && activeSection.title !== 'Patents' && activeSection.title !== 'Courses Taught' && activeSection.title !== 'Secure Funding' &&
                   <GenericSection user={userInfo} section={activeSection} onBack={handleBack}></GenericSection>
                 }
               </div>
