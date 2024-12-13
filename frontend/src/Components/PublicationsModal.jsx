@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
-import { addUserCVData, getPublicationMatches, getUserCVData } from '../graphql/graphqlHelpers';
+import { addUserCVData, getPublicationMatches, getUserCVData, getOrcidSections } from '../graphql/graphqlHelpers';
 import { useNavigate } from 'react-router-dom';
 
 const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
-  const [allFetchedPublications, setAllFetchedPublications] = useState([]);
-  const [pageSize, setPageSize] = useState(25); // Number of publications to fetch per page
-  const [totalResults, setTotalResults] = useState('TBD');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [fetchingData, setFetchingData] = useState(true);
-  const [addingData, setAddingData] = useState(false);
-  const [initialRender, setInitialRender] = useState(true);
-  const [currentScopusId, setCurrentScopusId] = useState('');
+  const [allFetchedPublications, setAllFetchedPublications] = useState([]); 
+  const [pageSize, setPageSize] = useState(25); // Number of publications to fetch per page 
+  const [totalResults, setTotalResults] = useState('TBD'); 
+  const [currentPage, setCurrentPage] = useState(0); 
+  const [fetchingData, setFetchingData] = useState(true); 
+  const [addingData, setAddingData] = useState(false); 
+  const [initialRender, setInitialRender] = useState(true); 
+  const [currentScopusId, setCurrentScopusId] = useState(''); 
+
   const [count, setCount] = useState(1); // Initialize count in state
 
   const navigate = useNavigate();
@@ -22,32 +23,31 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     try {
       let publications = [];
 
-      // Split the scopus_id string into an array of IDs
+      // Fetch data from Scopus
       const scopusIds = user.scopus_id.split(',');
-
-      // Loop through each scopus ID
       for (let scopusId of scopusIds) {
-        setCurrentScopusId(scopusId.trim()); // Set currentScopusId before fetching data
+        setCurrentScopusId(scopusId.trim());
         let pageNumber = 0;
-        let totalPages = 1; // Initialize with 1 to enter the loop
-        let totalResults = 0;
+        let totalPages = 1;
 
-        // Fetch data for the current scopus ID
         while (pageNumber <= totalPages) {
           const retrievedData = await getPublicationMatches(scopusId.trim(), pageNumber, pageSize);
-          
-
-          // Add the publications from the current page to the array
           publications = [...publications, ...retrievedData.publications];
-
-          // Update totalPages, totalResults, and increment pageNumber
           totalPages = retrievedData.total_pages;
-          totalResults = retrievedData.total_results;
+          setTotalResults(retrievedData.total_results);
           pageNumber += 1;
-          setCurrentPage(pageNumber);
-          setTotalResults(totalResults);
         }
       }
+
+      // Fetch data from ORCID
+      const orcidResponse = await getOrcidSections(user.orcid_id, "publications");
+
+      const orcidPublications = Array.isArray(orcidResponse.publications) ? orcidResponse.publications : [];
+      publications = [...publications, ...orcidPublications];
+      
+
+      // Remove duplicates based on DOI (prefer Scopus if DOI matches)
+      publications = deduplicatePublications(publications);
 
       // Add publications to the state
       addPublicationsData(publications);
@@ -58,11 +58,54 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     setFetchingData(false);
   }
 
+
+function deduplicatePublications(publications) {
+  const seen = new Map();
+
+  function countNonNullProperties(publication) {
+      return Object.values(publication).reduce((count, value) => {
+          if (Array.isArray(value)) {
+              return count + value.filter((item) => item !== null && item !== "").length;
+          }
+          return count + (value !== null && value !== "" ? 1 : 0);
+      }, 0);
+  }
+
+  publications.forEach((publication) => {
+      const doi = publication.doi || "";
+      const title = publication.title || "";
+      const key = `${doi}|${title}`; // Unique key combining DOI and Title
+
+      // Check if any matching DOI or Title already exists
+      const existingKey = Array.from(seen.keys()).find((existingKey) => {
+          const [existingDoi, existingTitle] = existingKey.split("|");
+          return doi === existingDoi || title === existingTitle;
+      });
+
+      if (existingKey) {
+          const existingPublication = seen.get(existingKey);
+          const existingCount = countNonNullProperties(existingPublication);
+          const currentCount = countNonNullProperties(publication);
+
+          // Replace if the current publication has more non-null items
+          if (currentCount > existingCount) {
+              seen.delete(existingKey);
+              seen.set(key, publication);
+          }
+      } else {
+          // Add new publication if no matching DOI or Title exists
+          seen.set(key, publication);
+      }
+  });
+
+  return Array.from(seen.values());
+}
+
+
   async function addPublicationsData(publications) {
     setAddingData(true);
-    setCount(1); // Reset count to 1 before starting
-    
-    // First get a list of all publications that already exist in the DB
+    setCount(1); 
+
     const existingPublications = await getUserCVData(user.user_id, section.data_section_id);
     const existingData = existingPublications.map((pub) => pub.data_details);
 
@@ -76,11 +119,8 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
       publication.journal = publication.journal.replace(/"/g, '');
       const publicationJSON = JSON.stringify(publication).replace(/"/g, '\\"');
 
-      // Handle adding new entry using data_details
       try {
-        
         const result = await addUserCVData(user.user_id, section.data_section_id, `"${publicationJSON}"`, false);
-        
       } catch (error) {
         console.error('Error adding new entry:', error);
       }
@@ -93,6 +133,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
   const navigateHome = () => {
     navigate('/');
   }
+
 
   return (
     <dialog className="modal-dialog" open>
@@ -108,7 +149,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         user.scopus_id !== '' ? (
           <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
             <div className='text-center'>
-              The data is fetched from Elsevier using your Scopus ID(s).
+              The data is fetched from Elsevier and ORCID using your Scopus ID(s) and ORCID ID.
             </div>
             <button
               type="button"
@@ -121,7 +162,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         ) : (
           <div className='flex items-center justify-center w-full mt-5 mb-5'>
             <div className="block text-m mb-1 mt-6 mr-5 ml-5 text-zinc-600">
-              Please enter your Scopus ID in the Profile section to fetch publications.
+              Please enter your Scopus ID/ ORCID ID in the Profile section to fetch publications.
             </div>
             <button
               type="button"
@@ -136,6 +177,8 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
           <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
             Fetching data for Scopus ID - {currentScopusId}
+            <br />
+            Fetching data for ORCID ID - {user.orcid_id}
           </div>
           <div className="block text-m mb-1 text-zinc-600">
           Fetching {Math.min((currentPage + 1) * pageSize, totalResults)} out of {totalResults} publications...
