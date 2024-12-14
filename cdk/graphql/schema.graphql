@@ -207,6 +207,9 @@ type Query {
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
     cvIsUpToDate(cognito_user_id: String!, user_id: String!, template_id: String!): Boolean
+
+    getLatexConfiguration(): String!
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
 }
 
 type Mutation {

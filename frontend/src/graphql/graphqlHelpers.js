@@ -6,7 +6,8 @@ import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getU
     getSecureFundingMatchesQuery, getRiseDataMatchesQuery, getPatentMatchesQuery,
     getPresignedUrlQuery, getUserInstitutionIdQuery,
     getNumberOfGeneratedCVsQuery,
-    cvIsUpToDateQuery, getOrcidSectionsQuery} from './queries';
+    cvIsUpToDateQuery, getOrcidSectionsQuery,
+    getLatexConfigurationQuery} from './queries';
 import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
@@ -476,9 +477,19 @@ export const getNumberOfGeneratedCVs = async (department) => {
  * Return value:
  * Boolean: true or false
  */
-export const  cvIsUpToDate = async (cognito_user_id, user_id, template_id) => {
+export const cvIsUpToDate = async (cognito_user_id, user_id, template_id) => {
     const results = await runGraphql(cvIsUpToDateQuery(cognito_user_id, user_id, template_id));
     return results['data']['cvIsUpToDate'];
+}
+
+/**
+ * Function to get CV formatting configuration
+ * Return value:
+ * String: JSON string with CV configuration
+ */
+export const getLatexConfiguration = async () => {
+    const results = await runGraphql(getLatexConfigurationQuery());
+    return results['data']['getLatexConfiguration'];
 }
 
 // --- POST ---

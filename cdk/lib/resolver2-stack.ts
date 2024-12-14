@@ -194,6 +194,19 @@ export class Resolver2Stack extends cdk.Stack {
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
+
+    createResolver(
+      apiStack.getApi(),
+      "getLatexConfiguration",
+      ["getLatexConfiguration"],
+      "Query",
+      {
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName
+      },
+      resolverRole,
+      []
+    );
+
     
     createResolver(
       apiStack.getApi(),

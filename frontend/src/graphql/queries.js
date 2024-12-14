@@ -403,3 +403,9 @@ export const cvIsUpToDateQuery = (cognito_user_id, user_id, template_id) => `
         )
     }
 `;
+
+export const getLatexConfigurationQuery = () => `
+    query GetLatexConfiguration {
+        getLatexConfiguration
+    }
+`;
