@@ -16,8 +16,11 @@ def parse_publication(data):
         "journal": data.get('journal-title', {}).get('value', '') if data.get('journal-title') else '',
         "link": data.get('url', {}).get('value', '') if data.get('url') else '',
         "doi": next(
-            (id.get('external-id-value') for id in data.get('external-ids', {}).get('external-id', []) or []
-             if id.get('external-id-type') == 'doi'),
+            (
+                ext_id.get('external-id-value') 
+                for ext_id in data.get('external-ids', {}).get('external-id', []) or []
+                if isinstance(ext_id, dict) and ext_id.get('external-id-type') == 'doi'
+            ),
             None
         ),
         "year_published": data.get('publication-date', {}).get('year', {}).get('value', '') if data.get('publication-date') else '',
@@ -84,7 +87,6 @@ def getOrcidSections(arguments):
     if response.status_code == 200:
         data = response.json()
 
-
         if section == "biography":
             biography = data.get("biography")  # This may be None
             if biography and "content" in biography:
@@ -128,6 +130,7 @@ def getOrcidSections(arguments):
                 full_data = response.json()
                 each_publication = (parse_publication(full_data)) 
                 publications.append(each_publication)
+    
             return {
                 'bio': "",
                 'keywords': "",

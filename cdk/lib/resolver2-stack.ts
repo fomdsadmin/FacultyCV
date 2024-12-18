@@ -61,7 +61,7 @@ export class Resolver2Stack extends cdk.Stack {
         code: Code.fromAsset(`./lambda/${directory}`),
         handler: "resolver.lambda_handler",
         architecture: Architecture.X86_64,
-        timeout: cdk.Duration.minutes(1),
+        timeout: cdk.Duration.minutes(3),
         environment: env,
         role: role,
         layers: layers,
