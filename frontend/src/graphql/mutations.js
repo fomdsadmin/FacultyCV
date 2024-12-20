@@ -246,3 +246,13 @@ export const deleteTemplateMutation = (template_id) => `
         )
     }
 `;
+
+export const updateLatexConfigurationMutation = (vspace, margin, font) => `
+    mutation UpdateLatexConfiguration {
+        updateLatexConfiguration(
+            vspace: ${vspace},
+            margin: ${margin},
+            font: "${font}"
+        )
+    }
+`

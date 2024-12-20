@@ -6,13 +6,15 @@ import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getU
     getSecureFundingMatchesQuery, getRiseDataMatchesQuery, getPatentMatchesQuery,
     getPresignedUrlQuery, getUserInstitutionIdQuery,
     getNumberOfGeneratedCVsQuery,
-    cvIsUpToDateQuery, getOrcidSectionsQuery} from './queries';
+    cvIsUpToDateQuery, getOrcidSectionsQuery,
+    getLatexConfigurationQuery} from './queries';
 import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUserMutation, 
     addUniversityInfoMutation, updateUserCVDataMutation, updateUserMutation, 
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
     updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
     linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation,
-    addToUserGroupMutation, removeFromUserGroupMutation
+    addToUserGroupMutation, removeFromUserGroupMutation,
+    updateLatexConfigurationMutation
     } from './mutations';
 import { getUserId } from '../getAuthToken';
 
@@ -476,9 +478,19 @@ export const getNumberOfGeneratedCVs = async (department) => {
  * Return value:
  * Boolean: true or false
  */
-export const  cvIsUpToDate = async (cognito_user_id, user_id, template_id) => {
+export const cvIsUpToDate = async (cognito_user_id, user_id, template_id) => {
     const results = await runGraphql(cvIsUpToDateQuery(cognito_user_id, user_id, template_id));
     return results['data']['cvIsUpToDate'];
+}
+
+/**
+ * Function to get CV formatting configuration
+ * Return value:
+ * String: JSON string with CV configuration
+ */
+export const getLatexConfiguration = async () => {
+    const results = await runGraphql(getLatexConfigurationQuery());
+    return results['data']['getLatexConfiguration'];
 }
 
 // --- POST ---
@@ -817,6 +829,20 @@ export const updateUserConnection = async (user_connection_id, status) => {
  */
 export const updateTemplate = async (template_id, title, data_section_ids, start_year, end_year) => {
     const results = await runGraphql(updateTemplateMutation(template_id, title, data_section_ids, start_year, end_year));
+    return results['data']['updateTemplate'];
+}
+
+/**
+ * Function to update the configuration of the latex reports
+ * Arguments:
+ * vspace: Vertical spacing (in cm) between sections
+ * margin: Margins (in cm)
+ * font: Font name (TODO)
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateLatexConfiguration = async (vspace, margin, font) => {
+    const results = await runGraphql(updateLatexConfigurationMutation(vspace, margin, font));
     return results['data']['updateTemplate'];
 }
 

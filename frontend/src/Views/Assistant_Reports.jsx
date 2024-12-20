@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { cvIsUpToDate, getAllSections, getAllTemplates, getUserCVData } from '../graphql/graphqlHelpers.js';
+import { cvIsUpToDate, getAllSections, getAllTemplates, getLatexConfiguration, getUserCVData } from '../graphql/graphqlHelpers.js';
 import '../CustomStyles/scrollbar.css';
 import Report from '../Components/Report.jsx';
 import PDFViewer from '../Components/PDFViewer.jsx';
@@ -138,98 +138,100 @@ const Assistant_Reports = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
   };
   
   const buildLatex = async (template) => {
-    let latex = `
-      \\documentclass{article}
-      \\usepackage[utf8]{inputenc}
-      \\usepackage{textgreek}
-      \\usepackage[margin=0.5in]{geometry}
-      \\usepackage{array}
-      \\usepackage{booktabs}
-      \\usepackage{tabularx}
-      \\usepackage{longtable} 
-      \\usepackage{hyperref}
-      \\usepackage{fontspec}
-  
-      \\begin{document}
-      \\small
+    const latexConfiguration = JSON.parse(await getLatexConfiguration());
+        let latex = `
+          \\documentclass{article}
+          \\usepackage[utf8]{inputenc}
+          \\usepackage{textgreek}
+          \\usepackage[margin=${latexConfiguration.margin}cm]{geometry}
+          \\usepackage{array}
+          \\usepackage{booktabs}
+          \\usepackage{tabularx}
+          \\usepackage{longtable} 
+          \\usepackage{hyperref}
+          \\usepackage{fontspec}
       
-      \\begin{center}
-      \\textbf{\\Large University of British Columbia} \\\\
-      \\textbf{\\Large Curriculum Vitae for Faculty Members} \\\\
-      \\end{center}
-      
-      \\begin{flushleft}
-      \\begin{tabularx}{\\textwidth}{@{}lXr@{}}
-      \\textbf{INITIALS:} & ${escapeLatex(user.first_name.charAt(0) + user.last_name.charAt(0))} & \\textbf{Date:} ${escapeLatex(new Date().toLocaleDateString('en-CA'))} \\\\
-      \\end{tabularx}
-      \\end{flushleft}
-      
-      \\begin{flushleft}
-      \\begin{tabularx}{\\textwidth}{|p{3cm}|X|p{3cm}|X|}
-      \\hline
-      \\textbf{SURNAME:} & ${escapeLatex(user.last_name)} &
-      \\textbf{FIRST NAME:} & ${escapeLatex(user.first_name)} \\\\
-      \\hline
-      \\end{tabularx}
-      \\end{flushleft}
-      
-      \\vspace{-0.5cm}
-      
-      \\begin{flushleft}
-      \\begin{tabularx}{\\textwidth}{|p{4cm}|X|}
-      \\hline
-      \\textbf{DEPARTMENT:} & ${escapeLatex(user.primary_department)} \\\\
-      \\hline
-      \\end{tabularx}
-      \\end{flushleft}
-      
-      \\vspace{-0.5cm}
-      
-      \\begin{flushleft}
-        \\textbf{JOINT APPOINTMENTS:} \\\\
-        \\begin{tabularx}{\\textwidth}{|X|}
-        \\hline
-        ${escapeLatex(user.secondary_department) ? escapeLatex(user.secondary_department) : ''}
-        ${user.secondary_department && user.primary_faculty ? ', ' : ''}${user.primary_faculty ? escapeLatex(user.primary_faculty) : ''}
-        ${(user.secondary_department || user.primary_faculty) && user.secondary_faculty ? ', ' : ''}${user.secondary_faculty ? escapeLatex(user.secondary_faculty) : ''} \\\\
-        \\hline
-        \\end{tabularx}
-      \\end{flushleft}
-
-      
-      \\vspace{-0.5cm}
-      
-      \\begin{flushleft}
-      \\textbf{AFFILIATIONS:} \\\\
-      \\begin{tabularx}{\\textwidth}{|X|}
-      \\hline
-      ${escapeLatex(user.primary_affiliation) ? escapeLatex(user.primary_affiliation) : ''}
-      ${user.primary_affiliation && user.secondary_affiliation ? ', ' : ''}${user.secondary_affiliation ? escapeLatex(user.secondary_affiliation) : ''} \\\\
-      \\hline
-      \\end{tabularx}
-      \\end{flushleft}
-      
-      \\vspace{-0.5cm}
-      
-      \\begin{flushleft}
-      \\textbf{LOCATION(S):} \\\\
-      \\begin{tabularx}{\\textwidth}{|X|}
-      \\hline
-      ${escapeLatex(user.campus)} \\\\
-      \\hline
-      \\end{tabularx}
-      \\end{flushleft}
-      
-      \\vspace{-0.5cm}
-      
-      \\begin{flushleft}
-      \\begin{tabularx}{\\textwidth}{|p{5cm}|X|}
-      \\hline
-      \\textbf{PRESENT RANK:} & ${escapeLatex(user.rank)} \\\\
-      \\hline
-      \\end{tabularx}
-      \\end{flushleft}
-    `;
+          \\begin{document}
+          \\small
+          
+          \\begin{center}
+          \\textbf{\\Large University of British Columbia} \\\\
+          \\textbf{\\Large Curriculum Vitae for Faculty Members} \\\\
+          \\end{center}
+          
+          \\begin{flushleft}
+          \\begin{tabularx}{\\textwidth}{@{}lXr@{}}
+          \\textbf{INITIALS:} & ${escapeLatex(user.first_name.charAt(0) + user.last_name.charAt(0))} & \\textbf{Date:} ${escapeLatex(new Date().toLocaleDateString('en-CA'))} \\\\
+          \\end{tabularx}
+          \\end{flushleft}
+          
+          \\begin{flushleft}
+          \\begin{tabularx}{\\textwidth}{|p{3cm}|X|p{3cm}|X|}
+          \\hline
+          \\textbf{SURNAME:} & ${escapeLatex(user.last_name)} &
+          \\textbf{FIRST NAME:} & ${escapeLatex(user.first_name)} \\\\
+          \\hline
+          \\end{tabularx}
+          \\end{flushleft}
+          
+          \\vspace{${latexConfiguration.vspace}cm}
+          
+          \\begin{flushleft}
+          \\begin{tabularx}{\\textwidth}{|p{4cm}|X|}
+          \\hline
+          \\textbf{DEPARTMENT:} & ${escapeLatex(user.primary_department)} \\\\
+          \\hline
+          \\end{tabularx}
+          \\end{flushleft}
+          
+          \\vspace{${latexConfiguration.vspace}cm}
+          
+          \\begin{flushleft}
+            \\textbf{JOINT APPOINTMENTS:} \\\\
+            \\begin{tabularx}{\\textwidth}{|X|}
+            \\hline
+            ${escapeLatex(user.secondary_department) ? escapeLatex(user.secondary_department) : ''}
+            ${user.secondary_department && user.primary_faculty ? ', ' : ''}${user.primary_faculty ? escapeLatex(user.primary_faculty) : ''}
+            ${(user.secondary_department || user.primary_faculty) && user.secondary_faculty ? ', ' : ''}${user.secondary_faculty ? escapeLatex(user.secondary_faculty) : ''} \\\\
+            \\hline
+            \\end{tabularx}
+          \\end{flushleft}
+    
+          
+          \\vspace{${latexConfiguration.vspace}cm}
+          
+          \\begin{flushleft}
+          \\textbf{AFFILIATIONS:} \\\\
+          \\begin{tabularx}{\\textwidth}{|X|}
+          \\hline
+          ${escapeLatex(user.primary_affiliation) ? escapeLatex(user.primary_affiliation) : ''}
+          ${user.primary_affiliation && user.secondary_affiliation ? ', ' : ''}${user.secondary_affiliation ? escapeLatex(user.secondary_affiliation) : ''} \\\\
+          \\hline
+          \\end{tabularx}
+          \\end{flushleft}
+          
+          \\vspace{${latexConfiguration.vspace}cm}
+          
+          \\begin{flushleft}
+          \\textbf{LOCATION(S):} \\\\
+          \\begin{tabularx}{\\textwidth}{|X|}
+          \\hline
+          ${escapeLatex(user.campus)} \\\\
+          \\hline
+          \\end{tabularx}
+          \\end{flushleft}
+          
+          \\vspace{${latexConfiguration.vspace}cm}
+          
+          \\begin{flushleft}
+          \\begin{tabularx}{\\textwidth}{|p{5cm}|X|}
+          \\hline
+          \\textbf{PRESENT RANK:} & ${escapeLatex(user.rank)} \\\\
+          \\hline
+          \\end{tabularx}
+          \\end{flushleft}
+          \\vspace{${latexConfiguration.vspace}cm}
+        `;
   
     const calculateColumnWidths = (headers, totalWidth = 19, columnSpacing = 0.5) => {
       const numColumns = headers.length;

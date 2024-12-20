@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
-import { cvIsUpToDate, getAllSections, getAllTemplates, getUserCVData } from '../graphql/graphqlHelpers.js';
+import { cvIsUpToDate, getAllSections, getAllTemplates, getUserCVData, updateLatexConfiguration } from '../graphql/graphqlHelpers.js';
 import '../CustomStyles/scrollbar.css';
 import Report from '../Components/Report.jsx';
 import PDFViewer from '../Components/PDFViewer.jsx';
 import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
 import { useNotification } from '../Contexts/NotificationContext.jsx';
 import { getUserId } from '../getAuthToken.js';
+import { getLatexConfiguration } from '../graphql/graphqlHelpers.js';
 
 const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
@@ -20,7 +21,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [downloadUrl, setDownloadUrl] = useState(null);
   const { setNotification } = useNotification();
   const [switchingTemplates, setSwitchingTemplates] = useState(false);
-
 
   useEffect(() => {
     setUser(userInfo);
@@ -136,11 +136,12 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   };
   
   const buildLatex = async (template) => {
+    const latexConfiguration = JSON.parse(await getLatexConfiguration());
     let latex = `
       \\documentclass{article}
       \\usepackage[utf8]{inputenc}
       \\usepackage{textgreek}
-      \\usepackage[margin=0.5in]{geometry}
+      \\usepackage[margin=${latexConfiguration.margin}cm]{geometry}
       \\usepackage{array}
       \\usepackage{booktabs}
       \\usepackage{tabularx}
@@ -171,7 +172,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\end{tabularx}
       \\end{flushleft}
       
-      \\vspace{-0.5cm}
+      \\vspace{${latexConfiguration.vspace}cm}
       
       \\begin{flushleft}
       \\begin{tabularx}{\\textwidth}{|p{4cm}|X|}
@@ -181,7 +182,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\end{tabularx}
       \\end{flushleft}
       
-      \\vspace{-0.5cm}
+      \\vspace{${latexConfiguration.vspace}cm}
       
       \\begin{flushleft}
         \\textbf{JOINT APPOINTMENTS:} \\\\
@@ -195,7 +196,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\end{flushleft}
 
       
-      \\vspace{-0.5cm}
+      \\vspace{${latexConfiguration.vspace}cm}
       
       \\begin{flushleft}
       \\textbf{AFFILIATIONS:} \\\\
@@ -207,7 +208,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\end{tabularx}
       \\end{flushleft}
       
-      \\vspace{-0.5cm}
+      \\vspace{${latexConfiguration.vspace}cm}
       
       \\begin{flushleft}
       \\textbf{LOCATION(S):} \\\\
@@ -218,7 +219,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\end{tabularx}
       \\end{flushleft}
       
-      \\vspace{-0.5cm}
+      \\vspace{${latexConfiguration.vspace}cm}
       
       \\begin{flushleft}
       \\begin{tabularx}{\\textwidth}{|p{5cm}|X|}
@@ -227,6 +228,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       \\hline
       \\end{tabularx}
       \\end{flushleft}
+      \\vspace{${latexConfiguration.vspace}cm}
     `;
   
     const calculateColumnWidths = (headers, totalWidth = 19, columnSpacing = 0.5) => {
@@ -234,6 +236,8 @@ const Reports = ({ userInfo, getCognitoUser }) => {
       const totalSpacing = (numColumns - 1) * columnSpacing;
       const contentWidth = totalWidth - totalSpacing;
       const columnWidth = (contentWidth / numColumns).toFixed(2);
+      console.log(`Column width: ${columnWidth}`)
+      console.log(headers)
       return headers.map(() => `p{${columnWidth}cm}`).join(' | ');
     };
 
@@ -382,7 +386,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
               latex += `\n`;
             }
           });
-  
+          latex += `\\vspace{${latexConfiguration.vspace}cm}`;
         // COURSES TAUGHT //
         } else if (section.title.toLowerCase() === 'courses taught') {
 
@@ -398,7 +402,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           }
           let headers = Object.keys(attributes).filter(header => header.toLowerCase() !== 'description');
   
-          const columns = calculateColumnWidths(headers);
+          const columns = calculateColumnWidths(headers, 21.6 - (2*latexConfiguration.margin)); // 21.6cm - margin*2 where margin is in cm too
   
           latex += `\\begin{longtable}{| ${columns} |}\n`;
           latex += `\\hline\n`;
@@ -416,7 +420,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
           }
   
           latex += `\\end{longtable}\n\n`;
-  
+          latex += `\\vspace{${latexConfiguration.vspace}cm}`;
           // PUBLICATIONS //
           } else if (section.title.toLowerCase() === 'publications') {
             latex += `\\subsection*{${escapeLatex(section.title)}}\n`;
@@ -456,7 +460,8 @@ const Reports = ({ userInfo, getCognitoUser }) => {
                     latex += `\n`;
                 }
             });
-  
+            
+            latex += `\\vspace{${latexConfiguration.vspace}cm}`
         // OTHER //
         } else {
           let attributes;
@@ -489,7 +494,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
             }
           } else {
 
-            const columns = calculateColumnWidths(headers);
+            const columns = calculateColumnWidths(headers, 21.6 - (2*latexConfiguration.margin));
     
 
             latex += `\\begin{longtable}{| ${columns} |}\n`;
@@ -509,7 +514,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
 
         }
   
-          latex += `\\end{longtable}\n\n`;
+          latex += `\\end{longtable}\\vspace{${latexConfiguration.vspace}cm}`;
         }
       } catch (error) {
         console.error(`Error processing section ID: ${section.data_section_id}`, error);
