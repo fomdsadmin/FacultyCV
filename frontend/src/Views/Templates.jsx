@@ -6,6 +6,7 @@ import { getAllTemplates } from '../graphql/graphqlHelpers.js';
 import NewTemplate from '../Components/NewTemplate.jsx';
 import TemplateCard from '../Components/TemplateCard.jsx';
 import ManageTemplate from '../Components/ManageTemplate.jsx';
+import EditReportFormatting from '../Components/EditReportFormat.jsx';
 
 const Templates = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,6 +14,7 @@ const Templates = ({ getCognitoUser, userInfo }) => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openNewTemplate, setOpenNewTemplate] = useState(false);
+  const [editReportFormatting, setEditReportFormatting] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -55,9 +57,17 @@ const Templates = ({ getCognitoUser, userInfo }) => {
     setOpenNewTemplate(true);
   };
 
+  const handleEditReportFormatting = () => {
+    setEditReportFormatting(true);
+  }
+
   const handleBackFromNewTemplate = () => {
     setOpenNewTemplate(false);
   };
+
+  const handleBackFromEditReportFormatting = () => {
+    setEditReportFormatting(false);
+  }
 
   return (
     <PageContainer>
@@ -71,6 +81,8 @@ const Templates = ({ getCognitoUser, userInfo }) => {
           <>
             {openNewTemplate ? (
               <NewTemplate onBack={handleBackFromNewTemplate} fetchTemplates={fetchTemplates} />
+            ) : editReportFormatting ? (
+              <EditReportFormatting onBack={handleBackFromEditReportFormatting} />
             ) : activeTemplate === null ? (
               <div className='!overflow-auto !h-full custom-scrollbar'>
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Templates</h1>
@@ -79,6 +91,12 @@ const Templates = ({ getCognitoUser, userInfo }) => {
                   onClick={handleAddNewTemplate}
                 >
                   Add New Template
+                </button>
+                <button 
+                  className="btn btn-info text-white m-4" 
+                  onClick={handleEditReportFormatting}
+                >
+                  Edit Report Formatting
                 </button>
                 <div className='m-4 flex'>
                   <label className="input input-bordered flex items-center gap-2 flex-1">
