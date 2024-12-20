@@ -13,7 +13,8 @@ import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUs
     updateUniversityInfoMutation, linkScopusIdMutation, addUserConnectionMutation, 
     updateUserConnectionMutation, deleteUserConnectionMutation, updateUserCVDataArchiveMutation, 
     linkOrcidMutation, addTemplateMutation, updateTemplateMutation, deleteTemplateMutation,
-    addToUserGroupMutation, removeFromUserGroupMutation
+    addToUserGroupMutation, removeFromUserGroupMutation,
+    updateLatexConfigurationMutation
     } from './mutations';
 import { getUserId } from '../getAuthToken';
 
@@ -828,6 +829,20 @@ export const updateUserConnection = async (user_connection_id, status) => {
  */
 export const updateTemplate = async (template_id, title, data_section_ids, start_year, end_year) => {
     const results = await runGraphql(updateTemplateMutation(template_id, title, data_section_ids, start_year, end_year));
+    return results['data']['updateTemplate'];
+}
+
+/**
+ * Function to update the configuration of the latex reports
+ * Arguments:
+ * vspace: Vertical spacing (in cm) between sections
+ * margin: Margins (in cm)
+ * font: Font name (TODO)
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateLatexConfiguration = async (vspace, margin, font) => {
+    const results = await runGraphql(updateLatexConfigurationMutation(vspace, margin, font));
     return results['data']['updateTemplate'];
 }
 

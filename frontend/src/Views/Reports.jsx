@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
-import { cvIsUpToDate, getAllSections, getAllTemplates, getUserCVData } from '../graphql/graphqlHelpers.js';
+import { cvIsUpToDate, getAllSections, getAllTemplates, getUserCVData, updateLatexConfiguration } from '../graphql/graphqlHelpers.js';
 import '../CustomStyles/scrollbar.css';
 import Report from '../Components/Report.jsx';
 import PDFViewer from '../Components/PDFViewer.jsx';
 import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
 import { useNotification } from '../Contexts/NotificationContext.jsx';
 import { getUserId } from '../getAuthToken.js';
+import { getLatexConfiguration } from '../graphql/graphqlHelpers.js';
 
 const Reports = ({ userInfo, getCognitoUser }) => {
   const [user, setUser] = useState(userInfo);
@@ -20,12 +21,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [downloadUrl, setDownloadUrl] = useState(null);
   const { setNotification } = useNotification();
   const [switchingTemplates, setSwitchingTemplates] = useState(false);
-
-  const latexConfiguration = {
-    vspace: 2, // in cm
-    font: '',
-    margin: 1.5 // in cm
-  }
 
   useEffect(() => {
     setUser(userInfo);
@@ -141,6 +136,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   };
   
   const buildLatex = async (template) => {
+    const latexConfiguration = JSON.parse(await getLatexConfiguration());
     let latex = `
       \\documentclass{article}
       \\usepackage[utf8]{inputenc}

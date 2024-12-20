@@ -14,14 +14,12 @@ def lambda_handler(event, context):
         return config
     except Exception as e:
         # If config object does not exist
-        if e.response['Error']['Code'] == "404":
-            default_config = {
-                'vspace': 2,
-                'font': '',
-                'margin': 1.5
-            }
-            return json.dumps(default_config)
-        else: raise e
+        default_config = {
+            'vspace': -0.5,
+            'font': '',
+            'margin': 1.25
+        }
+        return json.dumps(default_config)
 
 
     

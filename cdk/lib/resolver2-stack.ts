@@ -207,6 +207,17 @@ export class Resolver2Stack extends cdk.Stack {
       []
     );
 
+    createResolver(
+      apiStack.getApi(),
+      "updateLatexConfiguration",
+      ["updateLatexConfiguration"],
+      "Mutation",
+      {
+        BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName
+      },
+      resolverRole,
+      []
+    );
     
     createResolver(
       apiStack.getApi(),
