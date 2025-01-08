@@ -91,7 +91,8 @@ Faculty members have access to various tools and features to manage their academ
 - **Navigation:** Users can navigate through their academic work records using the search bar and can add or remove categories of academic work sections using filter buttons.
 ![Screenshot 2024-08-30 133919](https://github.com/user-attachments/assets/4dd87af6-19c6-4ab7-9825-a2738ca9bda4)
 - **Managing Sections:** Each section allows users to review, archive, and edit entries. 
-  - **External Data Sources:** Certain sections, like **Patents**, **Secure Funding**, **Publications**, **Education**, **Employment** and **Courses Taught**, use external datasets to fetch data.
+  - **External Data Sources:** Certain sections, like **Patents**, **Secure Funding**, **Publications**, **Education**, **Employment** and **Courses Taught**, use external datasets (ORCID, Scopus, etc.) to fetch data.
+  ![Screenshot 2025-01-08 105019](https://github.com/user-attachments/assets/625636ac-0ed0-4793-93e0-a1fa6f766f5f)
   - **Pop-Up Explanations:** When fetching data from external sources, a pop-up will explain the sources and allow the user to add any relevant entries.
 ![Screenshot 2024-08-30 134048](https://github.com/user-attachments/assets/75588266-e142-4fc7-b676-b4ff7ee6a4e3)
 - **Entry Management:** Under each entry, users have options to archive, edit (if editable), or view the entry. Entries can also be searched within each section.
@@ -179,9 +180,10 @@ Admins are responsible for managing users, coordinating departmental activities,
   - **Template Structure:** A template specifies which academic work sections are included in a report, in what order they appear and the range of years from which they want the CV data.
   - **Managing Templates:** Existing templates can be adjusted to change the included sections, their order, the range of years or they can be deleted.
   - **Creating New Templates:** New templates automatically include all sections initially. Admins can toggle sections on or off with the x or check buttons, and reorder sections by drag-and-drop. Each new template should be named descriptively.
- 
 ![Screenshot 2024-08-30 134803](https://github.com/user-attachments/assets/c77781e7-d034-470e-88e1-60b15d109324)
 ![Screenshot 2024-08-30 134830](https://github.com/user-attachments/assets/8e48a6f2-fb91-40b7-9e0d-6f072458497a)
+  - **Report Formatting:** Allows generation of custom CV formats by editing the Vertical Spacing and Margin Size.
+![Screenshot 2025-01-08 095741](https://github.com/user-attachments/assets/7ad01464-f894-4ee6-80d5-0a1370119188) 
 
 
 #### Sections
@@ -216,7 +218,8 @@ Department Admins are responsible for managing users in their department, overse
 ![alt text](images/admin-user.png)
 
 #### Analytics
-The Analytics page has the same view and functionalities as the Admin for now, which can be found [here](#analytics)
+The Analytics page has the same metrics as the Admin, which can be found [here](#analytics) but the visualizations are for each department on specific data based on information across the whole faculty.
+![Screenshot 2024-11-15 125008](https://github.com/user-attachments/assets/f24a233a-2c8b-4964-a580-d89a6f2aeaef)
 
 
 #### Templates
