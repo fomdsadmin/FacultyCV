@@ -269,11 +269,11 @@ Please delete the stacks in the opposite order of how they were deployed. The de
 1. First ensure you have all the CSV files needed to be put into the S3 bucket. Examples of how these files should be formatted can be found here: [Example CSV Files](sample_data). 
 2. At the [AWS online console](https://console.aws.amazon.com/console/home), enter `S3` in the search bar.
    ![alt text](images/s3_search.jpg)
-3. In the `Buckets` search bar enter `datafetchstack` and click on the name of the bucket (the actual name will varies a bit, but will always contains `datafetchstack`).
-   ![alt text](images/data-fetch-bucket.png)
-4. In this bucket you will need to make a new folder by clicking on the `create folder` button.
+3. In the `Buckets` search bar enter `user-data` and click on the name of the bucket (the actual name will vary a bit).
+   ![Screenshot 2025-01-22 102604](https://github.com/user-attachments/assets/64d01526-f60d-4ca9-b9b9-dcac07c22197)
+5. In this bucket you will need to make a new folder by clicking on the `create folder` button.
    ![alt text](images/bulkdata_bucket.png)
-5. Name this folder `user_data` and click `save`.
+6. Name this folder `user_data` and click `save`.
    ![alt text](images/bulkdata_create_folder.png)
 5. Click on the `user_data` folder then click `Upload`.
    ![alt text](images/data-fetch-folder.png)
