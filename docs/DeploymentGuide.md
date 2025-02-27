@@ -153,7 +153,7 @@ aws ssm put-parameter --name "/service/elsevier/api/user_name/key" --value "API_
 Similar to Elsevier API, you would have to obtain your ORCID access token and store in the Secrets Manager:
 ```
 aws secretsmanager create-secret \
-    --name orcid-access-token \\
+    --name orcid-access-token \
     --secret-string "<YOUR-ORCID-ACCESS-TOKEN>" 
     --profile <YOUR-PROFILE-NAME>
 ```
