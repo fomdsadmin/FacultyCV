@@ -375,8 +375,7 @@ const AuthPage = ({ getCognitoUser }) => {
             <div>
               <div>
               <h1 className="text-4xl font-bold my-3 text-zinc-600">Sign in to manage your Faculty Activities</h1>
-             /* <p>Sign in below or <span className="text-zinc-600 font-bold underline underline-offset-2 cursor-pointer" onClick={() => setNewSignUp(true)}>create an account</span></p> */
-              </div>
+			 </div>
               <div className='flex flex-col items-center justify-center'>
                 <form onSubmit={handleLogin}>
                   <label className="block text-m mb-1 mt-6">Email</label>
