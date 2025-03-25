@@ -141,7 +141,7 @@ Navigate to the cdk directory in the repository using the following command.
 cd cdk
 ```
 
-#### 2: Upload the Elsevier API Key, Institution Token, Database Secret and OPS API Key
+#### 2: Upload the Elsevier API Key, ORCID access token, Institution Token, Database Secret and OPS API Key
 
 While in the `cdk` folder, run the following commands. Ensure you replace "INSTITUTION_TOKEN" in the first command with your own Elsevier institution token and you replace "API_KEY" in the second command with your own Elsevier API key.
 
@@ -149,6 +149,15 @@ While in the `cdk` folder, run the following commands. Ensure you replace "INSTI
 aws ssm put-parameter --name "/service/elsevier/api/user_name/instoken" --value "INSTITUTION_TOKEN" --type SecureString --overwrite --profile <YOUR-PROFILE-NAME>
 aws ssm put-parameter --name "/service/elsevier/api/user_name/key" --value "API_KEY" --type SecureString --overwrite --profile <YOUR-PROFILE-NAME>
 ```
+
+Similar to Elsevier API, you would have to obtain your ORCID access token and store in the Secrets Manager:
+```
+aws secretsmanager create-secret \
+    --name orcid-access-token \
+    --secret-string "<YOUR-ORCID-ACCESS-TOKEN>" 
+    --profile <YOUR-PROFILE-NAME>
+```
+
 
 You would also have to supply a custom database username when deploying the solution to increase security. Run the following command and ensure you replace `DB-USERNAME` with the custom name of your choice.
 
