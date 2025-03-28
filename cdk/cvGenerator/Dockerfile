@@ -11,7 +11,7 @@ RUN yum install -y perl
 
 ADD ./ ./cvGenerator/
 
-RUN dos2unix ./cvGenerator/install.sh && ./cvGenerator/install.sh
+RUN chmod +x ./cvGenerator/generator.py && chmod +x ./cvGenerator/install.sh && dos2unix ./cvGenerator/install.sh && ./cvGenerator/install.sh
 
 ENV PATH="$PATH:/latex/bin/x86_64-linux"
 
