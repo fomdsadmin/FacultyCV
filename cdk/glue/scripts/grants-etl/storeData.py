@@ -69,8 +69,15 @@ def storeData():
 
     # Check the first value in the Agency column to determine the table
     target_table = "grants"
-    if df_id['Agency'].iloc[0] == 'Rise':
-        target_table = "rise_data"
+     # Check the first value in the Agency column
+    agency = df_id['Agency'].iloc[0].strip().upper()
+    
+    # Define the agencies that should go to the "grants" table
+    grants_agencies = {"CFI", "CIHR", "NSERC"}
+
+    # Route to the appropriate table
+    if agency not in grants_agencies:
+    target_table = "rise_data"
 
     # Check for duplicate insertion
     query = f"SELECT first_name, last_name, keywords, agency, department, program, title, amount, dates FROM {target_table}"

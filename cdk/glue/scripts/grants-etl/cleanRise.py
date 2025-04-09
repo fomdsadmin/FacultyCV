@@ -95,7 +95,8 @@ def cleanRise(bucket, key_raw, key_clean):
     df["Department"] = df["Researcher Home Department"]
 
     # add Agency column with string Rise
-    df["Agency"] = "Rise"
+    # df["Agency"] = "Rise"
+    df["Agency"] = df["Sponsor Name"]
 
     # Program column
     df["Program"] = df["Program Name"]
