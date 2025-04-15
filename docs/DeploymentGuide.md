@@ -112,7 +112,45 @@ npm install
 ```
 
 ### Step 2: Upload Secrets
-You would have to supply your GitHub personal access token you created eariler when deploying the solution. Run the following command and ensure you replace `<YOUR-GITHUB-TOKEN>` and `<YOUR-PROFILE-NAME>` with your actual GitHub token and the appropriate AWS profile name.
+You would have to supply your GitHub personal access token you created eariler when deploying the solution. Run the following command and ensure you replace `<YOUR-GITHUB-TOKEN>` and `<YOUR-PROFILE-NAME>` with your actual GitHub token and the appropriate AWS profile name. Select the command corresponding to your operating system from the options below.
+
+<details>
+<summary>macOS</summary>
+
+```bash
+aws secretsmanager create-secret \
+    --name github-personal-access-token-facultyCV \
+    --secret-string '{"my-github-token": "<YOUR-GITHUB-TOKEN>"}' \
+    --profile <YOUR-PROFILE-NAME>
+```
+
+</details>
+
+<details>
+<summary>Windows CMD</summary>
+
+```cmd
+aws secretsmanager create-secret ^
+    --name github-personal-access-token-facultyCV ^
+    --secret-string "{\"my-github-token\": \"<YOUR-GITHUB-TOKEN>\"}" ^
+    --profile <YOUR-PROFILE-NAME>
+```
+
+</details>
+
+<details>
+<summary>PowerShell</summary>
+
+```powershell
+aws secretsmanager create-secret `
+    --name github-personal-access-token-facultyCV `
+    --secret-string '{"my-github-token": "<YOUR-GITHUB-TOKEN>"}' `
+    --profile <YOUR-PROFILE-NAME>
+```
+</details>
+
+&nbsp;
+
 ```
 aws secretsmanager create-secret \
     --name github-access-token-facultyCV \
@@ -122,13 +160,42 @@ aws secretsmanager create-secret \
 
 Moreover, you will need to upload your github username to Amazon SSM Parameter Store. You can do so by running the following command. Make sure you replace `<YOUR-GITHUB-USERNAME>` and `<YOUR-PROFILE-NAME>` with your actual username and the appropriate AWS profile name.
 
-```
+<details>
+<summary>macOS</summary>
+
+```bash
 aws ssm put-parameter \
     --name "facultycv-owner-name" \
     --value "<YOUR-GITHUB-USERNAME>" \
     --type String \
     --profile <YOUR-PROFILE-NAME>
 ```
+</details>
+
+<details>
+<summary>Windows CMD</summary>
+
+```cmd
+aws ssm put-parameter ^
+    --name "facultycv-owner-name" ^
+    --value "<YOUR-GITHUB-USERNAME>" ^
+    --type String ^
+    --profile <YOUR-PROFILE-NAME>
+```
+
+</details>
+
+<details>
+<summary>PowerShell</summary>
+
+```powershell
+aws ssm put-parameter `
+    --name "facultycv-owner-name" `
+    --value "<YOUR-GITHUB-USERNAME>" `
+    --type String `
+    --profile <YOUR-PROFILE-NAME>
+```
+</details>
 
 ### Step 3: Backend Deployment
 
