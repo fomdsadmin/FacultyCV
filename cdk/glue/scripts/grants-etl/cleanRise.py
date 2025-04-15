@@ -35,8 +35,8 @@ def fetchFromS3(bucket, key):
     # extract the raw data from the response Body
     raw_data_from_s3 = response["Body"]
 
-    # return io.StringIO(raw_data_from_s3.read().decode("utf-8"))
-    return io.StringIO(raw_data_from_s3.read().decode("utf-8-sig"))  # Handles BOM issues and extended chars
+    return io.StringIO(raw_data_from_s3.read().decode("utf-8"))
+
 
 """
 Put a Pandas DataFrame to the target S3 bucket & folder as a csv file
@@ -49,8 +49,7 @@ def putToS3(df, bucket, key):
     # create a buffer to write csv data to
     csv_buffer = io.StringIO()
     # avoid pandas saving an extra index column
-    #df.to_csv(csv_buffer, index=False)
-    df.to_csv(csv_buffer, index=False, encoding="utf-8")  # Preserve extended characters
+    df.to_csv(csv_buffer, index=False)
 
     # put buffered data into the clean S3 bucket
     s3_bucket_clean = boto3.resource('s3')
