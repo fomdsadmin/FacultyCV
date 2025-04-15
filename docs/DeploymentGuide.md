@@ -151,13 +151,6 @@ aws secretsmanager create-secret `
 
 &nbsp;
 
-```
-aws secretsmanager create-secret \
-    --name github-access-token-facultyCV \
-    --secret-string "{\"github-token\":\"<YOUR-GITHUB-TOKEN>\"}"\
-    --profile <YOUR-PROFILE-NAME>
-```
-
 Moreover, you will need to upload your github username to Amazon SSM Parameter Store. You can do so by running the following command. Make sure you replace `<YOUR-GITHUB-USERNAME>` and `<YOUR-PROFILE-NAME>` with your actual username and the appropriate AWS profile name.
 
 <details>
