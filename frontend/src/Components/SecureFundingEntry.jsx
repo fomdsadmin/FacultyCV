@@ -1,12 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FaPlusCircle, FaTimesCircle } from 'react-icons/fa';
 
-const SecureFundingEntry = ({ secureFundingData, onSelect }) => {
-  const [isAdded, setIsAdded] = useState(true);
-
+const SecureFundingEntry = ({ secureFundingData, onSelect, selected }) => {
   const handleToggle = () => {
-    setIsAdded(!isAdded);
-    onSelect(secureFundingData, !isAdded);
+    onSelect(secureFundingData, !selected);
   };
 
   return (
@@ -19,7 +16,7 @@ const SecureFundingEntry = ({ secureFundingData, onSelect }) => {
       </div>
       <div className="flex items-center">
         <button className="btn btn-xs btn-circle btn-ghost" onClick={handleToggle}>
-          {isAdded ? <FaTimesCircle className="h-6 w-6 text-red-500" /> : <FaPlusCircle className="h-6 w-6 text-green-500" />}
+          {selected ? <FaTimesCircle className="h-6 w-6 text-red-500" /> : <FaPlusCircle className="h-6 w-6 text-green-500" />}
         </button>
       </div>
     </div>

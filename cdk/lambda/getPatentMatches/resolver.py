@@ -14,12 +14,23 @@ def getPatentMatches(arguments):
 
     # Retrieve results with the same last name
     cursor.execute('SELECT * FROM patents WHERE last_name = %s', (arguments['last_name'],))
+    print(arguments['last_name'])
     results_same_last = cursor.fetchall()
+    cursor.execute('SELECT COUNT(*) FROM patents')
+    count = cursor.fetchall()
+    print(count)
+
 
     # Retrieve results with the same first name
     cursor.execute('SELECT * FROM patents WHERE first_name = %s', (arguments['first_name'],))
+    print(arguments['first_name'])
     results_same_first = cursor.fetchall()
-
+    print(results_same_first)
+    cursor.execute('SELECT * FROM patents')
+    column_names = [desc[0] for desc in cursor.description]
+    trying = cursor.fetchall()
+    print("Field Names:", column_names)
+    print(trying)
     cursor.close()
     connection.close()
 
