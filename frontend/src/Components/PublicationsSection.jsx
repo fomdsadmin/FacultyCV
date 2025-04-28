@@ -163,6 +163,15 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </label>
         </div>
       </div>
+      <div className="m-4 p-4 rounded-2xl border border-gray-300 shadow-sm bg-white flex items-center gap-3">
+  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2h-6a2 2 0 00-2 2v14z" />
+  </svg>
+  <span className="text-lg font-medium text-gray-700">
+    Total Publications: <span className="font-semibold text-blue-600">{fieldData.length}</span>
+  </span>
+</div>
+
       {loading ? (
         <div className='flex items-center justify-center w-full'>
           <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
