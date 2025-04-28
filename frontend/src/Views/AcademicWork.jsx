@@ -3,7 +3,6 @@ import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
 import WorkSection from '../Components/WorkSection';
 import '../CustomStyles/scrollbar.css';
-import Filters from '../Components/Filters.jsx';
 import GenericSection from '../Components/GenericSection.jsx';
 import CoursesTaughtSection from '../Components/CoursesTaughtSection.jsx';
 import SecureFundingSection from '../Components/SecureFundingSection.jsx';
@@ -15,10 +14,11 @@ import { getAllSections } from '../graphql/graphqlHelpers.js';
 
 const AcademicWork = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilters, setActiveFilters] = useState([]);
+  const [activeTab, setActiveTab] = useState(null);
   const [activeSection, setActiveSection] = useState(null);
   const [dataSections, setDataSections] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
+  const [showDesc, setShowDesc] = useState(null);
 
   useEffect(() => {
     getDataSections();
@@ -26,52 +26,98 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
 
   const getDataSections = async () => {
     const retrievedSections = await getAllSections();
-  
-    // Parse the attributes field from a JSON string to a JSON object
     const parsedSections = retrievedSections.map(section => ({
       ...section,
       attributes: JSON.parse(section.attributes),
     }));
-    
     parsedSections.sort((a, b) => a.title.localeCompare(b.title));
-
-    
     setDataSections(parsedSections);
     setLoading(false);
-  }
+  };
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
-  const filters = Array.from(new Set(dataSections.map(section => section.data_type)));
-
   const handleManageClick = (value) => {
-
     const section = dataSections.filter((section) => section.data_section_id == value);
-
     setActiveSection(section[0]);
-  }
-
-  const searchedSections = dataSections.filter(entry => {
-    const section = entry.title || '';
-    const category = entry.data_type || '';
-
-    const matchesSearch = section.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-      category.toLowerCase().startsWith(searchTerm.toLowerCase());
-
-    const matchesFilter = activeFilters.length === 0 || !activeFilters.includes(category);
-
-    return matchesSearch && matchesFilter;
-  });
+  };
 
   const handleBack = () => {
     setActiveSection(null);
   };
-  
+
+  const filters = Array.from(new Set(dataSections.map(section => section.data_type)));
+  const sectionDescriptions = {};
+  dataSections.forEach(section => {
+    sectionDescriptions[section.data_type] = section.description;
+  });
+
+  const searchedSections = dataSections.filter(entry => {
+    const section = entry.title || '';
+    const category = entry.data_type || '';
+    const matchesSearch = section.toLowerCase().startsWith(searchTerm.toLowerCase()) || category.toLowerCase().startsWith(searchTerm.toLowerCase());
+    const matchesFilter = !activeTab || category === activeTab;
+    return matchesSearch && matchesFilter;
+  });
+
+  const SectionTabs = ({ filters, activeFilter, onSelect, sectionDescriptions }) => {
+    return (
+      <>
+        <div className="flex flex-wrap gap-3 px-4 py-2 mb-6">
+          <button
+            className={`px-4 py-2 rounded-full transition-all duration-200 text-sm md:text-base shadow-sm ${
+              activeFilter === null ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
+            }`}
+            onClick={() => onSelect(null)}
+          >
+            All
+          </button>
+          {filters.map((filter) => (
+            <div key={filter} className="relative flex items-center gap-1">
+              <button
+                className={`px-4 py-2 rounded-full transition-all duration-200 text-sm md:text-base shadow-sm ${
+                  activeFilter === filter ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
+                }`}
+                onClick={() => onSelect(filter)}
+              >
+                {filter}
+              </button>
+              <button
+                className="text-gray-500 hover:text-blue-600 text-xs"
+                title="More info"
+                onClick={() => setShowDesc(filter)}
+              >
+                ⓘ
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {showDesc && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-xl shadow-lg max-w-lg w-full p-6 relative">
+              <button
+                className="absolute top-3 right-4 text-xl text-gray-500 hover:text-gray-800"
+                onClick={() => setShowDesc(null)}
+              >
+                ×
+              </button>
+              <h2 className="text-xl font-semibold mb-4">{showDesc}</h2>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                {sectionDescriptions[showDesc] || "No description available."}
+              </p>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <PageContainer>
-      <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser}></FacultyMenu>
+      <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser} />
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
         {loading ? (
           <div className='w-full h-full flex items-center justify-center'>
@@ -104,41 +150,30 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                     </svg>
                   </label>
                 </div>
-                <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters>
+                <SectionTabs filters={filters} activeFilter={activeTab} onSelect={setActiveTab} sectionDescriptions={sectionDescriptions} />
                 {searchedSections.map((section) => (
-                  <WorkSection onClick={handleManageClick} key={section.data_section_id} id={section.data_section_id} title={section.title} category={section.data_type}></WorkSection>
+                  <WorkSection onClick={handleManageClick} key={section.data_section_id} id={section.data_section_id} title={section.title} category={section.data_type} />
                 ))}
               </div>
             ) : (
               <div className='!overflow-auto !h-full custom-scrollbar'>
-                {activeSection.title === 'Post-Secondary Education' && 
-                  <EducationSection user={userInfo} section={activeSection} onBack={handleBack}></EducationSection>
-                }
-                {activeSection.title === 'Prior Employment' && 
-                  <EmploymentSection user={userInfo} section={activeSection} onBack={handleBack}></EmploymentSection>
-                }              
-                {activeSection.title === 'Publications' && 
-                  <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack}></PublicationsSection>
-                }
-                {activeSection.title === 'Patents' && 
-                  <PatentsSection user={userInfo} section={activeSection} onBack={handleBack}></PatentsSection>
-                }
-                {activeSection.title === 'Secure Funding' && 
-                  <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack}></SecureFundingSection>
-                }
-                {activeSection.title === 'Courses Taught' && 
-                  <CoursesTaughtSection userInfo={userInfo} section={activeSection} onBack={handleBack}></CoursesTaughtSection>
-                } 
-                {activeSection.title !== 'Publications' && activeSection.title !== 'Prior Employment' && activeSection.title !== 'Post-Secondary Education' && activeSection.title !== 'Patents' && activeSection.title !== 'Courses Taught' && activeSection.title !== 'Secure Funding' &&
-                  <GenericSection user={userInfo} section={activeSection} onBack={handleBack}></GenericSection>
-                }
+                {activeSection.title === 'Post-Secondary Education' && <EducationSection user={userInfo} section={activeSection} onBack={handleBack} />}
+                {activeSection.title === 'Prior Employment' && <EmploymentSection user={userInfo} section={activeSection} onBack={handleBack} />}
+                {activeSection.title === 'Publications' && <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack} />}
+                {activeSection.title === 'Patents' && <PatentsSection user={userInfo} section={activeSection} onBack={handleBack} />}
+                {activeSection.title === 'Secure Funding' && <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack} />}
+                {activeSection.title === 'Courses Taught' && <CoursesTaughtSection userInfo={userInfo} section={activeSection} onBack={handleBack} />}
+                {![
+                  'Publications', 'Prior Employment', 'Post-Secondary Education',
+                  'Patents', 'Courses Taught', 'Secure Funding'
+                ].includes(activeSection.title) && <GenericSection user={userInfo} section={activeSection} onBack={handleBack} />}
               </div>
             )}
           </>
         )}
       </main>
     </PageContainer>
-  );    
+  );
 };
 
 export default AcademicWork;

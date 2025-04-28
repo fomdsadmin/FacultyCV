@@ -18,38 +18,52 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
 
   const navigate = useNavigate();
 
+
   async function fetchPublicationsData() {
     setInitialRender(false);
     try {
       let publications = [];
-
-      // Fetch data from Scopus
-      const scopusIds = user.scopus_id.split(',');
-      for (let scopusId of scopusIds) {
-        setCurrentScopusId(scopusId.trim());
-        let pageNumber = 0;
-        let totalPages = 1;
-
-        while (pageNumber <= totalPages) {
-          const retrievedData = await getPublicationMatches(scopusId.trim(), pageNumber, pageSize);
-          publications = [...publications, ...retrievedData.publications];
-          totalPages = retrievedData.total_pages;
-          setTotalResults(retrievedData.total_results);
-          pageNumber += 1;
+  
+      //  Conditionally fetch from Scopus
+      const hasScopus = user.scopus_id && user.scopus_id.trim() !== '';
+      if (hasScopus) {
+        const scopusIds = user.scopus_id.split(',').map(id => id.trim()).filter(id => id !== '');
+        for (let scopusId of scopusIds) {
+          setCurrentScopusId(scopusId);
+          let pageNumber = 0;
+          let totalPages = 1;
+  
+          while (pageNumber <= totalPages) {
+            const retrievedData = await getPublicationMatches(scopusId, pageNumber, pageSize);
+            
+            // Important defensive check
+            if (!retrievedData || !retrievedData.publications) {
+              console.warn("Scopus returned invalid data, skipping...");
+              break;
+            }
+  
+            publications = [...publications, ...retrievedData.publications];
+            totalPages = retrievedData.total_pages ?? 0;
+            setTotalResults(retrievedData.total_results ?? 0);
+            pageNumber += 1;
+          }
         }
       }
-
-      // Fetch data from ORCID
-      const orcidResponse = await getOrcidSections(user.orcid_id, "publications");
-
-      const orcidPublications = Array.isArray(orcidResponse.publications) ? orcidResponse.publications : [];
-      publications = [...publications, ...orcidPublications];
-      
-
-      // Remove duplicates based on DOI (prefer Scopus if DOI matches)
+  
+      //  Always try ORCID if present
+      const hasOrcid = user.orcid_id && user.orcid_id.trim() !== '';
+      if (hasOrcid) {
+        const orcidResponse = await getOrcidSections(user.orcid_id, "publications");
+        const orcidPublications = Array.isArray(orcidResponse.publications) ? orcidResponse.publications : [];
+        publications = [...publications, ...orcidPublications];
+      }
+  
+      // Handle empty case
+      if (publications.length === 0) {
+        console.warn("No publications fetched from either source");
+      }
+  
       publications = deduplicatePublications(publications);
-
-      // Add publications to the state
       addPublicationsData(publications);
       setAllFetchedPublications(publications);
     } catch (error) {
@@ -57,8 +71,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     }
     setFetchingData(false);
   }
-
-
+  
 function deduplicatePublications(publications) {
   const seen = new Map();
 
@@ -146,7 +159,7 @@ function deduplicatePublications(publications) {
         ✕
       </button>
       {initialRender ? (
-        user.scopus_id !== '' ? (
+        user.scopus_id !== '' || user.orcid_id !== '' ? (
           <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
             <div className='text-center'>
               The data is fetched from Elsevier and ORCID using your Scopus ID(s) and ORCID ID.

@@ -16,7 +16,7 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
     setInitialRender(false);
     try {
       const retrievedData = await getPatentMatches(user.first_name, user.last_name);
-      
+      console.log(retrievedData);
   
       const allDataDetails = [];
       const uniqueDataDetails = new Set();
