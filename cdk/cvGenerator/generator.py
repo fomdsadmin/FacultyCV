@@ -102,7 +102,7 @@ def handler(event, context):
     convert_to_docx(local_file_path, local_file_path.replace('tex', 'docx'))
 
     upload_file_to_s3(local_file_path.replace('tex', 'pdf'), bucket_name, s3_file_key.replace('tex', 'pdf'))
-    upload_file_to_s3(local_file_path.replace('tex', 'docx'), bucket_name, s3_file_key.replace('tex', 'pdf'))
+    upload_file_to_s3(local_file_path.replace('tex', 'docx'), bucket_name, s3_file_key.replace('tex', 'docx'))
 
     return {
         'status': 'SUCCEEDED'
