@@ -654,32 +654,31 @@ const Reports = ({ userInfo, getCognitoUser }) => {
                     <span>Loading...</span>
                   </div>
                 ) : (
-                  <div className='w-3/5 h-full'>
-                    <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
-                      <PDFViewer 
-                        url={downloadUrl}
-                      />
-                    </div>
-
-                    <div className='flex justify-center'>
-                      <button
-                        onClick={handleDownload_pdf}
-                        className={`mt-5 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
-                        disabled={buildingLatex}
-                      >
-                        {buildingLatex ? <span className="loader"></span> : 'Download PDF'}
-                      </button>
-                    </div>
-                    <div className='flex justify-center'>
-                      <button
-                        onClick={handleDownload_docx}
-                        className={`mt-5 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
-                        disabled={buildingLatex}
-                      >
-                        {buildingLatex ? <span className="loader"></span> : 'Download DOCX'}
-                      </button>
-                    </div>
+                <div className='w-3/5 h-full'>
+                  <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
+                    <PDFViewer 
+                      url={downloadUrl}
+                    />
                   </div>
+
+                  <div className='flex justify-center space-x-4 mt-5'>
+                    <button
+                      onClick={handleDownload_pdf}
+                      className={`text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
+                      disabled={buildingLatex}
+                    >
+                      {buildingLatex ? <span className="loader"></span> : 'Download PDF'}
+                    </button>
+
+                    <button
+                      onClick={handleDownload_docx}
+                      className={`text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
+                      disabled={buildingLatex}
+                    >
+                      {buildingLatex ? <span className="loader"></span> : 'Download DOCX'}
+                    </button>
+                  </div>
+                </div>
                 )
               )}
             </>
