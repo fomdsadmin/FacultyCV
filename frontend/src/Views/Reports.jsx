@@ -19,6 +19,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [buildingLatex, setBuildingLatex] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [downloadUrl, setDownloadUrl] = useState(null);
+  const [downloadUrlDocx, setDownloadUrlDocx] = useState(null); // For DOCX
   const { setNotification } = useNotification();
   const [switchingTemplates, setSwitchingTemplates] = useState(false);
 
@@ -53,41 +54,28 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     const cvUpToDate = await cvIsUpToDate(await getUserId(), userInfo.user_id, template.template_id);
     const key = `${userInfo.user_id}/${template.template_id}/resume.tex`;
     if (!cvUpToDate) {
-      
       setBuildingLatex(true);
       let latex = await buildLatex(template);
       setLatex(latex);
       // Upload .tex to S3
       await uploadLatexToS3(latex, key);
-      // Wait till a url to the latest PDF is available
-      const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
+      // Wait till URLs for both PDF and DOCX are available
+      const pdfUrl = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
+      const docxUrl = await getDownloadUrl(key.replace('tex', 'docx'), 0);
       setNotification(true);
       setBuildingLatex(false);
       setSwitchingTemplates(false);
-      setDownloadUrl(url);
-    }
-    else {
-      
-      // if no new .tex was uploaded, this will not need to wait 
-      const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
+      setDownloadUrl(pdfUrl);
+      setDownloadUrlDocx(docxUrl);
+    } else {
+      // If no new .tex was uploaded, fetch both URLs
+      const pdfUrl = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
+      const docxUrl = await getDownloadUrl(key.replace('tex', 'docx'), 0);
       setSwitchingTemplates(false);
-      setDownloadUrl(url);
+      setDownloadUrl(pdfUrl);
+      setDownloadUrlDocx(docxUrl);
     }
-  }
-
-  const downloadLatexFile = () => {
-    try {
-        const blob = new Blob([latex], { type: 'text/plain;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'test.tex';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } catch (error) {
-        console.error('Error downloading LaTeX file:', error);
-    }
-};
+  };
 
 
   const escapeLatex = (text) => {
@@ -563,7 +551,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     }
   
     try {
-      const response = await fetch(downloadUrl, {
+      const response = await fetch(downloadUrlDocx, {
         mode: 'cors'
       });
       const blob = await response.blob();
