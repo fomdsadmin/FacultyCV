@@ -4,6 +4,7 @@ import subprocess
 import sys
 import os
 from pylatexenc.latexencode import unicode_to_latex
+from pdf2docx import Converter
 import time
 
 def download_file_from_s3(bucket_name, s3_file_key, local_file_path):
@@ -41,17 +42,16 @@ def runPdfLatex(file_name):
     except Exception as e:
         print(f"Error running pdflatex: {e}")
         
-def convert_to_docx(input_tex, output_docx):
-    try:
-        result = subprocess.run(
-            ["pandoc", input_tex, "-s", "-o", output_docx],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        print(f"DOCX file generated: {output_docx}")
-    except subprocess.CalledProcessError as e:
-        print("Pandoc conversion error:\n", e.stderr.decode())
+def convert_to_docx(input_pdf, output_docx):
+    pdf_file = input_pdf
+
+    # Specify the output DOCX file location
+    docx_file = output_docx
+
+    # Convert the PDF file to a DOCX file
+    cv = Converter(pdf_file)
+    cv.convert(docx_file)
+    cv.close()
 
 def upload_file_to_s3(file_name, bucket_name, s3_file_key):
     # Create a session using your AWS credentials
@@ -99,7 +99,7 @@ def handler(event, context):
     runPdfLatex(local_file_path)
     
     # Convert LaTeX to DOCX using pandoc
-    convert_to_docx(local_file_path, local_file_path.replace('tex', 'docx'))
+    convert_to_docx(local_file_path.replace('tex', 'pdf'), local_file_path.replace('tex', 'docx'))
 
     upload_file_to_s3(local_file_path.replace('tex', 'pdf'), bucket_name, s3_file_key.replace('tex', 'pdf'))
     upload_file_to_s3(local_file_path.replace('tex', 'docx'), bucket_name, s3_file_key.replace('tex', 'docx'))
