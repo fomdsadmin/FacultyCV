@@ -1,6 +1,8 @@
 # Last updates: 2025-05-08 (added this comment only)
 FROM amazonlinux:latest
 
+ENV PATH="$PATH:/latex/bin/x86_64-linux"
+
 # Install system packages and Python dependencies
 RUN yum update -y && \
     yum install -y \
@@ -19,24 +21,28 @@ RUN yum update -y && \
         wget \
         unzip \
         which \
-        poppler-utils
+        poppler-utils && \
+    yum clean all
 
 # Download and extract TeX Live installer
-RUN curl -L -o install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
+#RUN curl -L -o install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
 
 ADD ./ ./cvGenerator/
  
-RUN chmod +x ./cvGenerator/generator.py && \
-    chmod +x ./cvGenerator/install.sh && \
+RUN curl -L -o install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
     dos2unix ./cvGenerator/install.sh && \
-    ./cvGenerator/install.sh
+    chmod +x ./cvGenerator/install.sh && \
+    ./cvGenerator/install.sh && \
+    rm -f install-tl-unx.tar.gz && \
+    tlmgr update --self && \
+    tlmgr install booktabs textgreek etoolbox cbfonts-fd fontspec
 
-ENV PATH="$PATH:/latex/bin/x86_64-linux"
-
-# Latex packages
-RUN tlmgr update --self && tlmgr install booktabs textgreek etoolbox cbfonts-fd fontspec
-
-RUN pip3 install awslambdaric && pip3 install setuptools && pip3 install pylatexenc && pip3 install boto3 && pip3 install pdf2docx
+RUN pip3 install --no-cache-dir \
+    awslambdaric \
+    setuptools \
+    pylatexenc \
+    boto3 \
+    pdf2docx
 
 ENTRYPOINT ["python3", "-m", "awslambdaric"]
 
