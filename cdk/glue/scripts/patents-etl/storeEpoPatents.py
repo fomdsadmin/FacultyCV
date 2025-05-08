@@ -110,8 +110,21 @@ def storePatentData():
     df_database = pd.DataFrame(tableData, columns=columns_order)
 
     # combine both dataframe into one, then drop all duplicates column
-    df_insert = pd.concat([df_id, df_database], axis=0).drop_duplicates(
-        subset=["family_number", "publication_number", "publication_date"], keep=False)
+    # df_insert = pd.concat([df_id, df_database], axis=0).drop_duplicates(
+    #     subset=["family_number", "publication_number", "publication_date"], keep=False)
+    # filter only rows not in the database
+    df_insert = df_id.merge(
+        df_database,
+        on=["family_number", "publication_number", "publication_date"],
+        how='left',
+        indicator=True,
+        suffixes=('', '_db')  # so only _db gets appended, your original columns stay clean
+    )
+    df_insert = df_insert[df_insert['_merge'] == 'left_only']
+
+    # drop extra columns that came from df_database
+    df_insert = df_insert[df_id.columns]  # keep only the original input columns
+
 
     listOfValuesToInsert = list(df_insert.itertuples(index=False, name=None))
     print(f"inserting {str(len(listOfValuesToInsert))} new entries!")
