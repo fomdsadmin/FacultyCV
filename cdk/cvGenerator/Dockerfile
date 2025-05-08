@@ -1,3 +1,4 @@
+# Last updates: 2025-05-08 (added this comment only)
 FROM amazonlinux:latest
 
 # Install system packages and Python dependencies
@@ -40,3 +41,4 @@ RUN pip3 install awslambdaric && pip3 install setuptools && pip3 install pylatex
 ENTRYPOINT ["python3", "-m", "awslambdaric"]
 
 CMD ["cvGenerator/generator.handler"]
+
