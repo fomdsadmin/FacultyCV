@@ -22,18 +22,16 @@ RUN yum update -y && \
         unzip \
         which \
         poppler-utils && \
-    yum clean all
+        yum clean all
 
 # Download and extract TeX Live installer
-#RUN curl -L -o install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
+RUN curl -L -o install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
 
 ADD ./ ./cvGenerator/
  
-RUN curl -L -o install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
-    dos2unix ./cvGenerator/install.sh && \
-    chmod +x ./cvGenerator/install.sh && \
-    ./cvGenerator/install.sh && \
-    rm -f install-tl-unx.tar.gz && \
+RUN dos2unix /cvGenerator/install.sh && \
+    chmod +x /cvGenerator/install.sh && \
+    /cvGenerator/install.sh && \
     tlmgr update --self && \
     tlmgr install booktabs textgreek etoolbox cbfonts-fd fontspec
 
