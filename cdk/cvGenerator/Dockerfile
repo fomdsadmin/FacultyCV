@@ -22,7 +22,7 @@ RUN yum update -y && \
         unzip \
         which \
         poppler-utils && \
-        yum clean all
+    yum clean all
 
 # Download and extract TeX Live installer
 RUN curl -L -o install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
@@ -35,8 +35,8 @@ RUN dos2unix /cvGenerator/install.sh && \
     tlmgr update --self && \
     tlmgr install booktabs textgreek etoolbox cbfonts-fd fontspec
 
-RUN pip3 install --no-cache-dir \
-    awslambdaric \
+RUN pip3 install --no-cache-dir setuptools && \
+    pip3 install --no-cache-dir awslambdaric \
     setuptools \
     pylatexenc \
     boto3 \
