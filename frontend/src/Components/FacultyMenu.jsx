@@ -8,6 +8,7 @@ import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
 import { FaRegTrashAlt } from "react-icons/fa";
 import { LuLayoutDashboard } from "react-icons/lu";
+import { MdSupportAgent } from "react-icons/md";
 
 const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => {
   const location = useLocation();
@@ -90,6 +91,12 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
           <Link to='/archive'>
             <FaRegTrashAlt className="h-4 w-4" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/archive' ? 'font-bold' : ''}`}>Archive</p>}
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === '/support' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/support'>
+          <MdSupportAgent className="h-5 w-5" />
+            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/support' ? 'font-bold' : ''}`}>Support</p>}
           </Link>
         </li>
       </ul>

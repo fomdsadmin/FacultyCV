@@ -1,6 +1,7 @@
 import React from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
+import { Link } from 'react-router-dom';
 
 const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   return (
@@ -12,18 +13,28 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         toggleViewMode={toggleViewMode}
         userInfo={userInfo}
       />
-
+    
       {/* Main content */}
       <main className="ml-4 pr-5 w-full overflow-auto py-6 px-4">
-        {/* Header Section */}
-        <div className="mb-6">
-          <div className="text-xl font-semibold text-gray-800">
+      
+      <div className="flex justify-between items-start mb-10">
+        {/* Header Section (left) */}
+        <div>
+        <div className="text-xl font-semibold text-gray-800">
             Welcome Dr. {userInfo.last_name}
-          </div>
-          <div className="text-sm text-gray-500">
-            Last visit: 6 Nov 2025, 3:16PM (static) 
-          </div>
         </div>
+        <div className="text-sm text-gray-500">
+            Last visit: 6 Nov 2025, 3:16PM (static)
+        </div>
+        </div>
+
+        {/* Help Section (right corner) */}
+        <div>    
+        <Link to="/support">
+        <button className="btn btn-sm btn-success">Get Help</button>
+        </Link>
+        </div>
+      </div>
 
       {/* What is Fac360 + Updates side-by-side */}
 <div className="mb-10 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
