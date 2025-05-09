@@ -7,6 +7,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
 import { FaRegTrashAlt } from "react-icons/fa";
+import { LuLayoutDashboard } from "react-icons/lu";
 
 const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => {
   const location = useLocation();
@@ -51,7 +52,16 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
     >
+      
       <ul className="menu rounded-box flex-shrink-0">
+        
+       <li className={`mb-2 ${location.pathname === '/dashboard' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/dashboard'>
+          <LuLayoutDashboard className="h-5 w-5" />
+            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/dashboard' ? 'font-bold' : ''}`}>Dashboard</p>}
+          </Link>
+        </li>
+
         <li className={`mb-2 ${location.pathname === '/home' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/home'>
             <TbHome className="h-5 w-5" />

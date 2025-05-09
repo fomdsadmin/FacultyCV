@@ -5,6 +5,8 @@ import React, { useEffect, useState } from 'react';
 import { fetchUserAttributes, signOut, fetchAuthSession } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './Views/AuthPage';
+import Dashboard from './Views/dashboard';
+import HomePage from './Views/FacultyHomePage'; // adjust the path as needed
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Reports from './Views/Reports.jsx';
@@ -166,7 +168,9 @@ function App() {
           </div>
         </PageContainer>
         ) : <Navigate to="/auth" />} />
-        <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage getCognitoUser = {getCognitoUser} />} />
+        <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <AuthPage getCognitoUser={getCognitoUser} />} />
+        <Route path="/dashboard" element={user ? <Dashboard userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}/>
+        <Route path="/home" element={user ? <HomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/academic-work" element={user ? <AcademicWork userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/assistants" element={user ? <Assistants userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />

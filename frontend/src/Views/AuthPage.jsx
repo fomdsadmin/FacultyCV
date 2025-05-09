@@ -72,7 +72,7 @@ const AuthPage = ({ getCognitoUser }) => {
         }
       } else {
         getCognitoUser();
-        navigate('/home');
+        navigate('/dashboard');
       }
     } catch (error) {
       
@@ -289,7 +289,7 @@ const AuthPage = ({ getCognitoUser }) => {
     }
     getCognitoUser();
     
-    navigate('/home');
+    navigate('/dashboard');
   };
 
   async function handleResetPassword(event) {
