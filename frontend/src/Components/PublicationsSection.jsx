@@ -7,6 +7,7 @@ import PublicationsModal from './PublicationsModal';
 import { FaArrowLeft } from 'react-icons/fa';
 import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
+import { LuBrainCircuit } from 'react-icons/lu';
 
 const generateEmptyEntry = (attributes) => {
   const emptyEntry = {};
@@ -84,6 +85,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
         data_details: JSON.parse(data.data_details),
       }));
 
+      
       const filteredData = parsedData.filter(entry => {
         const [field1, field2] = rankFields(entry.data_details);
         return (
@@ -119,7 +121,79 @@ const PublicationsSection = ({ user, section, onBack }) => {
   const handleBack = () => {
     onBack();
   };
+   
+  const GenericEntry = ({ field1, field2, data_details, onEdit, onArchive }) => (
+    <div className="entry">
+      <h2>{field1}</h2>
+      <div className='m-2 flex'>
+      <button onClick={onArchive} className='ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight'>X</button>
+      </div>
+      <p>{field2}</p>
+      <div>{data_details}</div>
+    </div>
+  );
+  const PermanentEntry = ({ field1, field2, data_details, isArchived, onEdit, onArchive }) => (
+    <div className={`entry ${isArchived ? 'archived' : ''}`}>
+      <h2>{field1}</h2>
+      <div className='m-2 flex'>
+      <button onClick={onArchive} className='ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight'>X</button>
+      </div>
+      <p>{field2}</p>
+      <div>{data_details}</div>
+    </div>
+  );
+  
+  const renderDataDetails = (details) => {
+    console.log(details);
+    if (!details || typeof details !== 'object') return null;
+  
+    return (
+      <div className="bg-white rounded-lg shadow p-4">
+        <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
+        <p className="text-sm text-gray-700 mb-2"><span className="font-semibold">Year: </span>{details.year_published}</p>
+        
+        {details.author_names?.length > 0 && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Author Names:</span> {details.author_names.join(', ')}
+          </p>
+        )}
+  
+        {details.doi && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Doi:</span> {details.doi}
+          </p>
+        )}
 
+         {details.keywords?.length > 0 && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Keywords:</span>  {details.keywords.join(', ')}
+          </p>
+        )}
+
+         {details.journal && (
+                <p className="text-sm text-gray-700 mb-1">
+                  <span className="font-semibold">Journal:</span> {details.journal}
+                </p>
+          )}
+  
+        {details.link && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Link:</span>{' '}
+            <a href={details.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+              {details.link}
+            </a>
+          </p>
+        )}
+  
+        {details.publication_id && (
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Publication Id:</span> {details.publication_id}
+          </p>
+        )}
+      </div>
+    );
+  };
+  
   return (
     <div>
       <div>
@@ -158,6 +232,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
           <span className="text-lg font-medium text-gray-700">
             Total Publications: <span className="font-semibold text-blue-600">{fieldData.length}</span>
           </span>
+            <button className='text-white btn btn-success min-h-0 h-8 leading-tight flex items-center gap-2' disabled={retrievingData}><LuBrainCircuit className="w-5 h-5 text-white" />Top Research Keywords</button>
         </div>
         <div className="flex items-center gap-4">
           <select
@@ -168,6 +243,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
             <option value={10}>10 per page</option>
             <option value={20}>20 per page</option>
             <option value={50}>50 per page</option>
+            <option value={100}>100 per page</option>
+            <option value={1000}>All</option>
           </select>
           <button
             className="btn btn-outline btn-sm"
@@ -196,32 +273,25 @@ const PublicationsSection = ({ user, section, onBack }) => {
       ) : (
         <div>
           <div>
-            {paginatedData.length > 0 ? (
-              paginatedData.map((entry, index) => (
-                entry.editable ? (
-                  <GenericEntry
-                    key={index}
-                    onEdit={() => handleEdit(entry)}
-                    field1={entry.field1}
-                    field2={entry.field2}
-                    data_details={entry.data_details}
-                    onArchive={() => handleArchive(entry)}
-                  />
-                ) : (
-                  <PermanentEntry
-                    isArchived={false}
-                    key={index}
-                    onEdit={() => handleEdit(entry)}
-                    field1={entry.field1}
-                    field2={entry.field2}
-                    data_details={entry.data_details}
-                    onArchive={() => handleArchive(entry)}
-                  />
-                )
-              ))
-            ) : (
-              <p className="m-4">No data found</p>
-            )}
+              {paginatedData.map((entry, index) =>
+      entry.editable ? (
+        <GenericEntry
+          key={index}
+          onEdit={() => handleEdit(entry)}
+          data_details={renderDataDetails(entry.data_details)}
+          onArchive={() => handleArchive(entry)}
+        />
+      ) : (
+        <PermanentEntry
+          key={index}
+          isArchived={false}
+          onEdit={() => handleEdit(entry)}
+          data_details={renderDataDetails(entry.data_details)}
+          onArchive={() => handleArchive(entry)}
+        />
+      )
+    )}
+
           </div>
 
           {isModalOpen && selectedEntry && !isNew && (

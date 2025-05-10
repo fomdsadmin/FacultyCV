@@ -52,8 +52,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         className="rounded-md"
       ></iframe>
     </div>
-  </div>
-          
+  </div>    
     {/* Right: Faculty 360 - Updates */}
     <div> <h2 className="text-lg font-semibold mb-3">Notifications</h2> 
      <div className="bg-gray-50 p-4 rounded-lg shadow-sm border">
