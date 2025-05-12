@@ -19,7 +19,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   const [buildingLatex, setBuildingLatex] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [downloadUrl, setDownloadUrl] = useState(null);
-  const [downloadUrlDocx, setDownloadUrlDocx] = useState(null); // For DOCX
   const { setNotification } = useNotification();
   const [switchingTemplates, setSwitchingTemplates] = useState(false);
 
@@ -54,28 +53,41 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     const cvUpToDate = await cvIsUpToDate(await getUserId(), userInfo.user_id, template.template_id);
     const key = `${userInfo.user_id}/${template.template_id}/resume.tex`;
     if (!cvUpToDate) {
+      
       setBuildingLatex(true);
       let latex = await buildLatex(template);
       setLatex(latex);
       // Upload .tex to S3
       await uploadLatexToS3(latex, key);
-      // Wait till URLs for both PDF and DOCX are available
-      const pdfUrl = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
-      const docxUrl = await getDownloadUrl(key.replace('tex', 'docx'), 0);
+      // Wait till a url to the latest PDF is available
+      const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
       setNotification(true);
       setBuildingLatex(false);
       setSwitchingTemplates(false);
-      setDownloadUrl(pdfUrl);
-      setDownloadUrlDocx(docxUrl);
-    } else {
-      // If no new .tex was uploaded, fetch both URLs
-      const pdfUrl = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
-      const docxUrl = await getDownloadUrl(key.replace('tex', 'docx'), 0);
-      setSwitchingTemplates(false);
-      setDownloadUrl(pdfUrl);
-      setDownloadUrlDocx(docxUrl);
+      setDownloadUrl(url);
     }
-  };
+    else {
+      
+      // if no new .tex was uploaded, this will not need to wait 
+      const url = await getDownloadUrl(key.replace('tex', 'pdf'), 0);
+      setSwitchingTemplates(false);
+      setDownloadUrl(url);
+    }
+  }
+
+  const downloadLatexFile = () => {
+    try {
+        const blob = new Blob([latex], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'test.tex';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error('Error downloading LaTeX file:', error);
+    }
+};
 
 
   const escapeLatex = (text) => {
@@ -517,7 +529,7 @@ const Reports = ({ userInfo, getCognitoUser }) => {
   };
   
 
-  const handleDownload_pdf = async () => {
+  const handleDownload = async () => {
     if (!downloadUrl) {
       console.error("No download URL available");
       return;
@@ -543,32 +555,6 @@ const Reports = ({ userInfo, getCognitoUser }) => {
     }
   };
   
-
-  const handleDownload_docx = async () => {
-    if (!downloadUrl) {
-      console.error("No download URL available");
-      return;
-    }
-  
-    try {
-      const response = await fetch(downloadUrlDocx, {
-        mode: 'cors'
-      });
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-  
-      const element = document.createElement('a');
-      element.href = url;
-      element.download = `${selectedTemplate.title}_${user.last_name || 'unknown'}.docx`; 
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-  
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading the file:", error);
-    }
-  };
 
   return (
     <PageContainer className="custom-scrollbar">
@@ -642,31 +628,23 @@ const Reports = ({ userInfo, getCognitoUser }) => {
                     <span>Loading...</span>
                   </div>
                 ) : (
-                <div className='w-3/5 h-full'>
-                  <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
-                    <PDFViewer 
-                      url={downloadUrl}
-                    />
-                  </div>
+                  <div className='w-3/5 h-full'>
+                    <div className="flex-shrink-0 w-full h-90vh overflow-auto custom-scrollbar">
+                      <PDFViewer 
+                        url={downloadUrl}
+                      />
+                    </div>
 
-                  <div className='flex justify-center space-x-4 mt-5'>
-                    <button
-                      onClick={handleDownload_pdf}
-                      className={`text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
-                      disabled={buildingLatex}
-                    >
-                      {buildingLatex ? <span className="loader"></span> : 'Download PDF'}
-                    </button>
-
-                    <button
-                      onClick={handleDownload_docx}
-                      className={`text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
-                      disabled={buildingLatex}
-                    >
-                      {buildingLatex ? <span className="loader"></span> : 'Download DOCX'}
-                    </button>
+                    <div className='flex justify-center'>
+                      <button
+                        onClick={handleDownload}
+                        className={`mt-5 text-white btn ${buildingLatex ? 'btn-disabled' : 'btn-success'} min-h-0 h-6 leading-tight mb-1`}
+                        disabled={buildingLatex}
+                      >
+                        {buildingLatex ? <span className="loader"></span> : 'Download'}
+                      </button>
+                    </div>
                   </div>
-                </div>
                 )
               )}
             </>
