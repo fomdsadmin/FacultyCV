@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchUserAttributes, signOut, fetchAuthSession } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './Views/AuthPage';
-import Dashboard from './Views/dashboard';
+import Dashboard from './Views/dashboard.jsx';
 import HomePage from './Views/FacultyHomePage'; // adjust the path as needed
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
@@ -135,7 +135,6 @@ function App() {
       </PageContainer>
     ) 
   }
-
   return (
     <NotificationProvider>
       <Router>
