@@ -78,6 +78,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   async function fetchData() {
     try {
       const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
+      console.log(retrievedData);
       // Parse the data_details field from a JSON string to a JSON object
       const parsedData = retrievedData.map(data => ({
         ...data,
