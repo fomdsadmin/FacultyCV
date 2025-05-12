@@ -4,6 +4,7 @@ import subprocess
 import sys
 import os
 from pylatexenc.latexencode import unicode_to_latex
+from pdf2docx import Converter
 import time
 
 def download_file_from_s3(bucket_name, s3_file_key, local_file_path):
@@ -40,6 +41,17 @@ def runPdfLatex(file_name):
         subprocess.run(["lualatex", "-interaction=nonstopmode", file_name])
     except Exception as e:
         print(f"Error running pdflatex: {e}")
+        
+def convert_to_docx(input_pdf, output_docx):
+    pdf_file = input_pdf
+
+    # Specify the output DOCX file location
+    docx_file = output_docx
+
+    # Convert the PDF file to a DOCX file
+    cv = Converter(pdf_file)
+    cv.convert(docx_file)
+    cv.close()
 
 def upload_file_to_s3(file_name, bucket_name, s3_file_key):
     # Create a session using your AWS credentials
@@ -55,6 +67,7 @@ def upload_file_to_s3(file_name, bucket_name, s3_file_key):
     except botocore.exceptions.ClientError as e:
         print(f"Error uploading file: {e}")
 
+        
 
 def handler(event, context):
 
@@ -68,6 +81,11 @@ def handler(event, context):
     if os.path.exists('resume.pdf'):
         print("Old resume.pdf found, removing it!")
         os.remove('resume.pdf')
+        
+    # If the file resume.docx exists, delete it
+    if os.path.exists('resume.docx'):
+        print("Old resume.docx found, removing it!")
+        os.remove('resume.docx')
        
     download_file_from_s3(bucket_name, s3_file_key, local_file_path)
     start = time.time()
@@ -76,9 +94,15 @@ def handler(event, context):
     # upload_file_to_s3(local_file_path, bucket_name, s3_file_key.replace('tex', 'txt'))
     end = time.time()
     print(f"Sanitization took {end - start} seconds")
+    
+    # Run pdflatex to generate the PDF
     runPdfLatex(local_file_path)
+    
+    # Convert LaTeX to DOCX using pandoc
+    convert_to_docx(local_file_path.replace('tex', 'pdf'), local_file_path.replace('tex', 'docx'))
 
     upload_file_to_s3(local_file_path.replace('tex', 'pdf'), bucket_name, s3_file_key.replace('tex', 'pdf'))
+    upload_file_to_s3(local_file_path.replace('tex', 'docx'), bucket_name, s3_file_key.replace('tex', 'docx'))
 
     return {
         'status': 'SUCCEEDED'
