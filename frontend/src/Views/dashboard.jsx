@@ -82,10 +82,9 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           </div>
         </div>
        
-          {/* Fac360 video */}
-            {/* 📈 Publication Chart Section */}
-            <div className="mb-10">
-            <Dashboard userInfo={userInfo} />
+        {/* 📈 Publication Chart Section */}
+        <div className="mb-10">
+          <Dashboard userInfo={userInfo} />
         </div>
        
         {/* Training Resources */}

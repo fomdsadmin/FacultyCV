@@ -86,11 +86,8 @@ const Dashboard = ({ userInfo }) => {
             fundYearSums[year] = (fundYearSums[year] || 0) + amount;
           }
         });
-
-        console.log(fundYearSums);
-
         const sortedFundYears = Object.keys(fundYearSums).sort();
-
+        
         setFundingChartData({
           labels: sortedFundYears,
           datasets: [
