@@ -128,18 +128,6 @@ export class ResolverStack extends cdk.Stack {
       [psycopgLayer, databaseConnectLayer]
     );
 	
-	createResolver(
-      apiStack.getApi(),
-      "GetNotifications",
-      ["GetNotifications"],
-      "Query",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-    
     createResolver(
       apiStack.getApi(),
       "getExistingUser",
