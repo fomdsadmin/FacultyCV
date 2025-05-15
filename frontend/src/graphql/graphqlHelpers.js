@@ -1,6 +1,6 @@
 import { generateClient } from 'aws-amplify/api';
 import { getAllSectionsQuery, getArchivedSectionsQuery, getUserCVDataQuery, getUserQuery, getAllUsersQuery, 
-    getAllUniversityInfoQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, 
+    getAllUniversityInfoQuery,getAllNotificationsQuery, getElsevierAuthorMatchesQuery, getExistingUserQuery, 
     getUserConnectionsQuery, getArchivedUserCVDataQuery, getOrcidAuthorMatchesQuery, 
     getAllTemplatesQuery, getTeachingDataMatchesQuery, getPublicationMatchesQuery, 
     getSecureFundingMatchesQuery, getRiseDataMatchesQuery, getPatentMatchesQuery,
@@ -204,6 +204,7 @@ export const getUserCVData = async (user_id, data_section_ids) => {
     return results['data']['getUserCVData'];
 }
 
+
 /**
  * Function to get the archived user cv data given the user id
  * Arguments:
@@ -239,6 +240,11 @@ export const getAllUniversityInfo = async () => {
     const results = await runGraphql(getAllUniversityInfoQuery())
     return results['data']['getAllUniversityInfo'];
 }
+
+export const GetNotifications = async () => {
+  const results = await runGraphql(getAllNotificationsQuery());
+  return results['data']['GetNotifications'];
+};
 
 /**
  * Function to get potential matches for an author using the Elsevier API

@@ -198,6 +198,19 @@ export const getAllUniversityInfoQuery = () => `
     }
 `;
 
+export const getAllNotificationsQuery = () => `
+    query GetNotifications {
+        GetNotifications {
+            record_id
+            title
+            description
+            date
+            archive
+            information_complete
+        }
+    }
+`;
+
 export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution_name) => `
     query getElsevierAuthorMatches {
         getElsevierAuthorMatches (
