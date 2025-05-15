@@ -13,7 +13,7 @@ def getCredentials():
     credentials['redcap-api-key'] = secret_dict['token']      # Use the 'token' field
     return credentials
 
-def lambda_handler(event, context):
+def getNotifications():
     try:
         credentials = getCredentials()
         API_KEY = credentials['redcap-api-key']
@@ -23,6 +23,7 @@ def lambda_handler(event, context):
             'content': 'record',
             'format': 'json',
             'type': 'flat',
+            'returnFormat' : 'json',
             'filterLogic': '[archive] = ""'
         }
 
@@ -35,7 +36,8 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 200,
                 'headers': { 'Content-Type': 'application/json' },
-                'body': result
+                #'body': result
+                'body': json.loads(result)
             }
 
     except Exception as e:
@@ -43,3 +45,16 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'body': json.dumps({ 'error': str(e) })
         }
+def lambda_handler(event, context):
+    """
+    Lambda handler to fetch ORCID sections.
+    Expects the event to include an 'arguments' key with:
+    - 'orcidId': The ORCID ID
+    - 'section': The section to fetch
+    """
+    #return getNotifications()
+    response = getNotifications()
+    if response['statusCode'] == 200:
+        return response['body']  
+    else:
+        raise Exception(response['body'])
