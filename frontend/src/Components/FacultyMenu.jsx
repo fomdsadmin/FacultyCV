@@ -89,7 +89,7 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
         </li>
         <li className={`mb-6 ${location.pathname === '/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/archive'>
-            <FaRegTrashAlt className="h-4 w-4" />
+            <FaRegTrashAlt className="h-5 w-5" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/archive' ? 'font-bold' : ''}`}>Archive</p>}
           </Link>
         </li>
