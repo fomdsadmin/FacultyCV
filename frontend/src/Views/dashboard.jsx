@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
 import { Link } from 'react-router-dom';
 import Dashboard from './dashboard_charts.jsx'; // ← Import chart component
+import { GetNotifications } from '../graphql/graphqlHelpers';
 
 const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
+  const [notifications, setNotifications] = useState([]);
+    useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const result = await GetNotifications(); // your actual GraphQL call
+        setNotifications(result);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
   return (
     <PageContainer>
       {/* Sidebar */}
@@ -54,32 +69,21 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
           {/* Notifications */}
           <div>
-            <h2 className="text-lg font-semibold mb-3">System Notifications</h2>
-            <div className="bg-gray-50 p-4 rounded-lg shadow-sm border">
-              <details open className="mb-2">
-                <summary className="font-medium cursor-pointer">Oct 31, 2025 – New theme • FoM 50</summary>
-                <p className="text-sm mt-1 text-gray-700">
-                  As UBC FoM proudly celebrates 50 years of innovation, care, and community...
-                </p>
-              </details>
-              <details className="mb-2">
-                <summary className="font-medium cursor-pointer">Sept 17, 2025 – New Feature(s)</summary>
-                <p className="text-sm mt-1 text-gray-700">Some description about this feature.</p>
-              </details>
-              <details className="mb-2">
-                <summary className="font-medium cursor-pointer">Aug 12, 2025</summary>
-                <p className="text-sm mt-1 text-gray-700">Some description about this update.</p>
-              </details>
-              <details className="mb-2">
-                <summary className="font-medium cursor-pointer">July 15, 2025</summary>
-                <p className="text-sm mt-1 text-gray-700">Some description about this update.</p>
-              </details>
-              <details>
-                <summary className="font-medium cursor-pointer">June 05, 2025</summary>
-                <p className="text-sm mt-1 text-gray-700">Some description about this update.</p>
-              </details>
-            </div>
+          <h2 className="text-lg font-semibold mb-3">System Notifications</h2>
+          <div className="bg-gray-50 p-4 rounded-lg shadow-sm border max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <p className="text-gray-500">No new notifications.</p>
+            ) : (
+              notifications.map((note) => (
+                <details key={note.record_id} className="mb-2">
+                  <summary className="font-medium cursor-pointer">{note.title}</summary>
+                  <p className="text-sm mt-1 text-gray-700">{note.description}</p>
+                </details>
+              ))
+            )}
           </div>
+        </div>
+
         </div>
        
         {/* 📈 Publication Chart Section */}
