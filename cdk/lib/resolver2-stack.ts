@@ -139,8 +139,17 @@ export class Resolver2Stack extends cdk.Stack {
       resolverRole, 
       [requestsLayer] 
     );
+	
+    createResolver(
+      apiStack.getApi(),
+      "GetNotifications",
+      ["GetNotifications"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    );
     
-  
     createResolver(
       apiStack.getApi(),
       "getAllUniversityInfo",
