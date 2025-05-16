@@ -4,6 +4,7 @@ import FacultyMenu from '../Components/FacultyMenu.jsx';
 import { Link } from 'react-router-dom';
 
 const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
+    const sc3_link = "https://google.com";
   return (
     <PageContainer>
       {/* Sidebar */}
@@ -53,7 +54,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             <div className="bg-gray-50 p-4 rounded-lg shadow-sm border max-h-96 overflow-y-auto">
                 <p className="text-gray-500">
                     In accordance with <a
-                    href="https://google.com"
+                    href={sc3_link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
