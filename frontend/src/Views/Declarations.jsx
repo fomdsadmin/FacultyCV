@@ -4,7 +4,9 @@ import FacultyMenu from '../Components/FacultyMenu.jsx';
 import { Link } from 'react-router-dom';
 
 const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
-    const sc3_link = "https://google.com";
+    const sc3_link = "https://google.com"; // todo , link broken on APT website
+    const unicouncil_link = "https://universitycounsel.ubc.ca/subject-areas/coi/";
+    const orcs_link = "https://ors.ubc.ca/";
   return (
     <PageContainer>
       {/* Sidebar */}
@@ -63,7 +65,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                     you must maintain up-to-date Conflict of Interest and Conflict of Commitment declarations. 
                     For more information regarding Conflict of Interest and Commitment, please refer to the 
                     <a
-                    href="https://google.com"
+                    href={unicouncil_link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
@@ -71,7 +73,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                     > Office of the University Counsel </a>
                     and the 
                     <a
-                    href="https://google.com"
+                    href={orcs_link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
