@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import PageContainer from '../PageContainer.jsx';
-import FacultyMenu from '../../Components/FacultyMenu.jsx';
-import '../../CustomStyles/scrollbar.css';
-import { updateUser } from '../../graphql/graphqlHelpers.js';
-import { getAllUniversityInfo } from '../../graphql/graphqlHelpers.js';
-import { getOrcidSections } from '../../graphql/graphqlHelpers.js';
-import ProfileLinkModal from '../../Components/ProfileLinkModal.jsx';
+import PageContainer from './PageContainer.jsx';
+import FacultyMenu from '../Components/FacultyMenu.jsx';
+import '../CustomStyles/scrollbar.css';
+import { updateUser } from '../graphql/graphqlHelpers.js';
+import { getAllUniversityInfo } from '../graphql/graphqlHelpers.js';
+import { getOrcidSections } from '../graphql/graphqlHelpers.js';
+import ProfileLinkModal from '../Components/ProfileLinkModal.jsx';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getAllSections } from '../../graphql/graphqlHelpers.js';
-import GenericSection from '../../Components/GenericSection.jsx';
+import { getAllSections } from '../graphql/graphqlHelpers.js';
+import GenericSection from '../Components/GenericSection.jsx';
 
 const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggleViewMode }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
