@@ -41,7 +41,8 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
         ...s,
         attributes: JSON.parse(s.attributes),
       }));
-      const filtered = parsed.filter(s => s.title === "Leaves of Absence");
+      console.log(sections)
+      const filtered = parsed.filter(s => s.data_type === "Leaves of Absence" || s.data_type === "Employment" || s.data_type === "Education and Career");
 
       setAcademicSections(filtered);
     };
@@ -568,7 +569,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
 {/* Tabs Section */}
 <div className="ml-4 mt-12 pr-5">
 <div className="flex space-x-4 mb-4">
-  {[...academicSections, { title: 'Identifications' }].map((section) => (
+  {[...academicSections, { title: 'Linkages' }].map((section) => (
     <button
       key={section.title}
       className={`text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 ${
@@ -596,7 +597,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
       ) : null
     )}
 
-    {activeTab === 'Identifications' && (
+    {activeTab === 'Linkages' && (
       <div className="space-y-6">
         {/* Scopus Section */}
         <div className="p-4 border border-gray-200 rounded-md bg-gray-50 shadow-sm">
