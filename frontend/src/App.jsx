@@ -7,14 +7,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import AuthPage from './Views/AuthPage';
 import Dashboard from './Views/dashboard.jsx';
 import Support from './Views/support.jsx'; 
-import HomePage from './Views/FacultyHomePage'; // adjust the path as needed
+import HomePage from './Views/FacultyHomePage/FacultyHomePage.jsx'; // adjust the path as needed
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
 import { getPresignedUrl, getUser } from './graphql/graphqlHelpers.js';
 import PageContainer from './Views/PageContainer.jsx';
-import FacultyHomePage from './Views/FacultyHomePage.jsx';
+import FacultyHomePage from './Views/FacultyHomePage/FacultyHomePage.jsx';
 import AssistantHomePage from './Views/AssistantHomePage.jsx';
 import AdminHomePage from './Views/AdminHomePage.jsx';
 import Archive from './Views/Archive.jsx';
