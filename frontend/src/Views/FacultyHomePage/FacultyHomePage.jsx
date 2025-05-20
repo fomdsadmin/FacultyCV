@@ -5,7 +5,7 @@ import '../../CustomStyles/scrollbar.css';
 import { updateUser } from '../../graphql/graphqlHelpers.js';
 import { getAllUniversityInfo } from '../../graphql/graphqlHelpers.js';
 import { getOrcidSections } from '../../graphql/graphqlHelpers.js';
-import ProfileLinkModal from '../../Components/ProfileLinkModal.jsx'; 
+import ProfileLinkModal from '../../Components/ProfileLinkModal.jsx';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getAllSections } from '../../graphql/graphqlHelpers.js';
@@ -23,7 +23,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
   const [scopusId, setScopusId] = useState(userInfo.scopus_id || "");
   const [orcidId, setOrcidId] = useState(userInfo.orcid_id || "");
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState(null); 
+  const [activeModal, setActiveModal] = useState(null);
   const [change, setChange] = useState(false);
   const [showBioWarningDialog, setShowBioWarningDialog] = useState(false);
   const [showKeywordsWarningDialog, setShowKeywordsWarningDialog] = useState(false);
@@ -82,9 +82,9 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
       affiliations.sort();
       institutions.sort();
 
-      
-      
-      
+
+
+
 
       setDepartments(departments);
       setFaculties(faculties);
@@ -134,21 +134,21 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
   const sanitizeInput = (input) => {
     return input.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
   };
-  
+
   const getBio = async () => {
     try {
       const bio = await getOrcidSections(orcidId, "biography");
       if (bio && bio.bio) {
         setUserInfo((prevUserInfo) => ({
           ...prevUserInfo,
-          bio:bio.bio,
+          bio: bio.bio,
         }));
         setChange(true);
         toast.success('Bio imported successfully!', { autoClose: 3000 });
       } else {
         toast.error('Failed to fetch the bio from ORCID.', { autoClose: 3000 });
       }
-    } 
+    }
     catch (error) {
       toast.error('An error occurred while fetching the bio.', { autoClose: 3000 });
     }
@@ -157,18 +157,18 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
   const getKeywords = async () => {
     try {
       const keywords_output = await getOrcidSections(orcidId, "keywords");
-        if (keywords_output && keywords_output.keywords) {
-          setUserInfo((prevUserInfo) => ({
-            ...prevUserInfo,
-            keywords:keywords_output.keywords,
-          }));
-          setChange(true);
-          toast.success('Keywords imported successfully!', { autoClose: 3000 });
-        } 
-        else {
-          toast.error('Failed to fetch the keywords from ORCID.', { autoClose: 3000 });
-        }
-    } 
+      if (keywords_output && keywords_output.keywords) {
+        setUserInfo((prevUserInfo) => ({
+          ...prevUserInfo,
+          keywords: keywords_output.keywords,
+        }));
+        setChange(true);
+        toast.success('Keywords imported successfully!', { autoClose: 3000 });
+      }
+      else {
+        toast.error('Failed to fetch the keywords from ORCID.', { autoClose: 3000 });
+      }
+    }
     catch (error) {
       toast.error('An error occurred while fetching the keywords.', { autoClose: 3000 });
     }
@@ -225,20 +225,19 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
     }));
     setChange(true);
   };
-  
+
   return (
     <PageContainer>
       <FacultyMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} toggleViewMode={toggleViewMode} userInfo={userInfo}></FacultyMenu>
 
       <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4 relative'>
-        
+
         <div className="flex items-center justify-between mt-4 mb-4">
           <h1 className="text-4xl ml-4 font-bold text-zinc-600">Profile</h1>
           <button
             type="button"
-            className={`btn text-white py-1 px-2 w-1/5 min-h-0 h-8 leading-tight ${
-              change ? 'btn-success' : 'btn-disabled cursor-not-allowed bg-gray-400'
-            }`}
+            className={`btn text-white py-1 px-2 w-1/5 min-h-0 h-8 leading-tight ${change ? 'btn-success' : 'btn-disabled cursor-not-allowed bg-gray-400'
+              }`}
             disabled={!change || isSubmitting}
             onClick={change ? handleSubmit : null}
           >
@@ -252,64 +251,64 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
           </div>
         ) : (
           <form onSubmit={handleSubmit} className='ml-4'>
-            
+
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Contact</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
               <div>
                 <label className="block text-sm mb-1">First Name</label>
-                <input 
-                  id="firstName" 
-                  name="first_name" 
-                  type="text" 
-                  value={userInfo.first_name || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" 
-                  readOnly 
+                <input
+                  id="firstName"
+                  name="first_name"
+                  type="text"
+                  value={userInfo.first_name || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
+                  readOnly
                 />
               </div>
               <div>
                 <label className="block text-sm mb-1">Last Name</label>
-                <input 
-                  id="lastName" 
-                  name="last_name" 
-                  type="text" 
-                  value={userInfo.last_name || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" 
-                  readOnly 
+                <input
+                  id="lastName"
+                  name="last_name"
+                  type="text"
+                  value={userInfo.last_name || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
+                  readOnly
                 />
               </div>
               <div>
                 <label className="block text-sm mb-1">Preferred Name</label>
-                <input 
-                  id="preferredName" 
-                  name="preferred_name" 
-                  type="text" 
+                <input
+                  id="preferredName"
+                  name="preferred_name"
+                  type="text"
                   maxLength={100}
-                  value={userInfo.preferred_name || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                  value={userInfo.preferred_name || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 />
               </div>
               <div>
                 <label className="block text-sm mb-1">Email</label>
-                <input 
-                  id="email" 
-                  name="email" 
-                  type="text" 
-                  value={userInfo.email || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed" 
-                  readOnly 
+                <input
+                  id="email"
+                  name="email"
+                  type="text"
+                  value={userInfo.email || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
+                  readOnly
                 />
               </div>
             </div>
 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Bio</h2>
             <div className="col-span-1 sm:col-span-2 md:col-span-4">
-              <textarea   
-                id="bio" 
-                name="bio" 
+              <textarea
+                id="bio"
+                name="bio"
                 maxLength={3000}
-                value={userInfo.bio || ''} 
-                className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
+                value={userInfo.bio || ''}
+                className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                 onChange={(e) => {
                   setUserInfo(prevUserInfo => ({ ...prevUserInfo, bio: e.target.value }));
                   setChange(true);
@@ -335,118 +334,118 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
 
 
             {showBioWarningDialog && (
-        <dialog className="modal-dialog" open>
-          <button
-            type="button"
-            className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
-            onClick={() => setShowBioWarningDialog(false)}
-          >
-            ✕
-          </button>
-          <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
-            <p className="text-center text-lg font-bold text-zinc-600">
-              Importing bio from ORCID will overwrite your existing bio. Do you want to continue?
-            </p>
-            <div className="flex space-x-4 mt-4">
+              <dialog className="modal-dialog" open>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
+                  onClick={() => setShowBioWarningDialog(false)}
+                >
+                  ✕
+                </button>
+                <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
+                  <p className="text-center text-lg font-bold text-zinc-600">
+                    Importing bio from ORCID will overwrite your existing bio. Do you want to continue?
+                  </p>
+                  <div className="flex space-x-4 mt-4">
+                    <button
+                      type="button"
+                      className="btn btn-success text-white"
+                      onClick={() => {
+                        setShowBioWarningDialog(false);
+                        getBio();
+                      }}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary text-white"
+                      onClick={() => setShowBioWarningDialog(false)}
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              </dialog>
+            )}
+
+            <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Keywords</h2>
+            <div className="col-span-1 sm:col-span-2 md:col-span-4">
+              <textarea
+                id="keywords"
+                name="keywords"
+                maxLength={1000}
+                value={userInfo.keywords || ''}
+                className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                placeholder="Add keywords separated by commas"
+                onChange={(e) => {
+                  setUserInfo(prevUserInfo => ({ ...prevUserInfo, keywords: e.target.value }));
+                  setChange(true);
+                }}
+              ></textarea>
+
               <button
                 type="button"
-                className="btn btn-success text-white"
+                className="btn btn-sm btn-primary text-white mt-2"
                 onClick={() => {
-                  setShowBioWarningDialog(false);
-                  getBio();
+                  if (!orcidId) {
+                    // Show warning if ORCID is not entered
+                    toast.warning('Please enter ORCID ID before fetching keywords.');
+                  } else {
+                    setShowKeywordsWarningDialog(true);
+                  }
                 }}
               >
-                Yes
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary text-white"
-                onClick={() => setShowBioWarningDialog(false)}
-              >
-                No
+                Import Keywords from ORCID
               </button>
             </div>
-          </div>
-        </dialog>
-      )}
-
-          <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Keywords</h2>
-          <div className="col-span-1 sm:col-span-2 md:col-span-4">
-            <textarea 
-              id="keywords" 
-              name="keywords" 
-              maxLength={1000} 
-              value={userInfo.keywords || ''} 
-              className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-              placeholder="Add keywords separated by commas"
-              onChange={(e) => {
-                setUserInfo(prevUserInfo => ({ ...prevUserInfo, keywords: e.target.value }));
-                setChange(true);
-              }}
-            ></textarea>
-
-            <button
-              type="button"
-              className="btn btn-sm btn-primary text-white mt-2"
-              onClick={() => {
-                if (!orcidId) {
-                  // Show warning if ORCID is not entered
-                  toast.warning('Please enter ORCID ID before fetching keywords.');
-                } else {
-                  setShowKeywordsWarningDialog(true);
-                }
-              }}
-            >
-              Import Keywords from ORCID
-            </button>
-          </div>
-          {showKeywordsWarningDialog && (
-        <dialog className="modal-dialog" open>
-          <button
-            type="button"
-            className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
-            onClick={() => setShowKeywordsWarningDialog(false)}
-          >
-            ✕
-          </button>
-          <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
-            <p className="text-center text-lg font-bold text-zinc-600">
-              Importing keywords from ORCID will overwrite your existing keywords. Do you want to continue?
-            </p>
-            <div className="flex space-x-4 mt-4">
-              <button
-                type="button"
-                className="btn btn-success text-white"
-                onClick={() => {
-                  setShowKeywordsWarningDialog(false);
-                  getKeywords();
-                }}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary text-white"
-                onClick={() => setShowKeywordsWarningDialog(false)}
-              >
-                No
-              </button>
-            </div>
-          </div>
-        </dialog>
-      )}
+            {showKeywordsWarningDialog && (
+              <dialog className="modal-dialog" open>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
+                  onClick={() => setShowKeywordsWarningDialog(false)}
+                >
+                  ✕
+                </button>
+                <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
+                  <p className="text-center text-lg font-bold text-zinc-600">
+                    Importing keywords from ORCID will overwrite your existing keywords. Do you want to continue?
+                  </p>
+                  <div className="flex space-x-4 mt-4">
+                    <button
+                      type="button"
+                      className="btn btn-success text-white"
+                      onClick={() => {
+                        setShowKeywordsWarningDialog(false);
+                        getKeywords();
+                      }}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary text-white"
+                      onClick={() => setShowKeywordsWarningDialog(false)}
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              </dialog>
+            )}
 
 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Institution Information</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
               <div>
                 <label className="block text-sm mb-1">Institution Name</label>
-                <select 
-                  id="institution" 
-                  name="institution" 
-                  value={userInfo.institution || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                <select
+                  id="institution"
+                  name="institution"
+                  value={userInfo.institution || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 >
                   <option value="">-</option>
                   {institutions.map((institution, index) => <option key={index} value={institution}>{institution}</option>)}
@@ -454,12 +453,12 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
               </div>
               <div>
                 <label className="block text-sm mb-1">Primary Faculty</label>
-                <select 
-                  id="primaryFaculty" 
-                  name="primary_faculty" 
-                  value={userInfo.primary_faculty || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                <select
+                  id="primaryFaculty"
+                  name="primary_faculty"
+                  value={userInfo.primary_faculty || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 >
                   <option value="">-</option>
                   {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
@@ -467,12 +466,12 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
               </div>
               <div>
                 <label className="block text-sm mb-1">Secondary Faculty</label>
-                <select 
-                  id="secondaryFaculty" 
-                  name="secondary_faculty" 
-                  value={userInfo.secondary_faculty || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                <select
+                  id="secondaryFaculty"
+                  name="secondary_faculty"
+                  value={userInfo.secondary_faculty || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 >
                   <option value="">-</option>
                   {faculties.map((faculty, index) => <option key={index} value={faculty}>{faculty}</option>)}
@@ -480,12 +479,12 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
               </div>
               <div>
                 <label className="block text-sm mb-1">Primary Department</label>
-                <select 
-                  id="primaryDepartment" 
-                  name="primary_department" 
-                  value={userInfo.primary_department || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                <select
+                  id="primaryDepartment"
+                  name="primary_department"
+                  value={userInfo.primary_department || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 >
                   <option value="">-</option>
                   {departments.map((department, index) => <option key={index} value={department}>{department}</option>)}
@@ -493,12 +492,12 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
               </div>
               <div>
                 <label className="block text-sm mb-1">Secondary Department</label>
-                <select 
-                  id="secondaryDepartment" 
-                  name="secondary_department" 
-                  value={userInfo.secondary_department || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                <select
+                  id="secondaryDepartment"
+                  name="secondary_department"
+                  value={userInfo.secondary_department || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 >
                   <option value="">-</option>
                   {departments.map((department, index) => <option key={index} value={department}>{department}</option>)}
@@ -506,12 +505,12 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
               </div>
               <div>
                 <label className="block text-sm mb-1">Primary Affiliation</label>
-                <select 
-                  id="primaryAffiliation" 
-                  name="primary_affiliation" 
-                  value={userInfo.primary_affiliation || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                <select
+                  id="primaryAffiliation"
+                  name="primary_affiliation"
+                  value={userInfo.primary_affiliation || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 >
                   <option value="">-</option>
                   {affiliations.map((affiliation, index) => <option key={index} value={affiliation}>{affiliation}</option>)}
@@ -519,12 +518,12 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
               </div>
               <div>
                 <label className="block text-sm mb-1">Secondary Affiliation</label>
-                <select 
-                  id="secondaryAffiliation" 
-                  name="secondary_affiliation" 
-                  value={userInfo.secondary_affiliation || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                <select
+                  id="secondaryAffiliation"
+                  name="secondary_affiliation"
+                  value={userInfo.secondary_affiliation || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 >
                   <option value="">-</option>
                   {affiliations.map((affiliation, index) => <option key={index} value={affiliation}>{affiliation}</option>)}
@@ -532,12 +531,12 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
               </div>
               <div>
                 <label className="block text-sm mb-1">Campus</label>
-                <select 
-                  id="campus" 
-                  name="campus" 
-                  value={userInfo.campus || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                <select
+                  id="campus"
+                  name="campus"
+                  value={userInfo.campus || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 >
                   <option value="">-</option>
                   {campuses.map((campus, index) => <option key={index} value={campus}>{campus}</option>)}
@@ -545,12 +544,12 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
               </div>
               <div>
                 <label className="block text-sm mb-1">Current Rank</label>
-                <select 
-                  id="rank" 
-                  name="rank" 
-                  value={userInfo.rank || ''} 
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                  onChange={handleInputChange} 
+                <select
+                  id="rank"
+                  name="rank"
+                  value={userInfo.rank || ''}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  onChange={handleInputChange}
                 >
                   <option value="">-</option>
                   {ranks.map((rank, index) => <option key={index} value={rank}>{rank}</option>)}
@@ -558,12 +557,89 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
               </div>
             </div>
 
-            
+
           </form>
         )}
 
-{/* Tabs Section */}
+        {/* Tabs Section */}
+        <div className="ml-4 mt-12 pr-5">
+          <div className="flex space-x-4 mb-4">
+            {[...academicSections, { title: 'Linkages' }].map((section) => (
+              <button
+                key={section.title}
+                className={`text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 ${activeTab === section.title
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                onClick={() => setActiveTab(section.title)}
+              >
+                {section.title}
+              </button>
+            ))}
+          </div>
 
+
+          <div className="border border-gray-200 rounded-md bg-white p-4">
+            {academicSections.map(section =>
+              activeTab === section.title ? (
+                <GenericSection
+                  key={section.data_section_id}
+                  user={userInfo}
+                  section={section}
+                  onBack={() => { }}
+                />
+              ) : null
+            )}
+
+            {activeTab === 'Linkages' && (
+              <div className="space-y-6">
+                {/* Scopus Section */}
+                <div className="p-4 border border-gray-200 rounded-md bg-gray-50 shadow-sm">
+                  <h3 className="text-md font-semibold text-zinc-700 mb-2">Scopus ID(s)</h3>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {scopusId && scopusId.split(',').map((id, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => window.open(`https://www.scopus.com/authid/detail.uri?authorId=${id}`, '_blank')}
+                        className="btn btn-sm btn-secondary text-white"
+                      >
+                        {id}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <button onClick={handleScopusIdClick} className="btn btn-sm btn-success text-white">Add Scopus ID</button>
+                    <button onClick={() => { setActiveModal('ManualScopus'); setModalOpen(true); }} className="btn btn-sm btn-outline text-gray-700">Add Manually</button>
+                    {scopusId && (
+                      <button onClick={handleClearScopusId} className="btn btn-sm btn-warning text-white">Clear</button>
+                    )}
+                  </div>
+                </div>
+
+                {/* ORCID Section */}
+                <div className="p-4 border border-gray-200 rounded-md bg-gray-50 shadow-sm">
+                  <h3 className="text-md font-semibold text-zinc-700 mb-2">ORCID ID</h3>
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => orcidId ? window.open(`https://orcid.org/${orcidId}`, '_blank') : handleOrcidIdClick()}
+                      className={`btn btn-sm ${orcidId ? 'btn-secondary' : 'btn-success'} text-white`}
+                    >
+                      {orcidId || "Add ORCID ID"}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <button onClick={() => { setActiveModal('ManualOrcid'); setModalOpen(true); }} className="btn btn-sm btn-outline text-gray-700">Add Manually</button>
+                    {orcidId && (
+                      <button onClick={handleClearOrcidId} className="btn btn-sm btn-warning text-white">Clear</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </main>
 
       <ToastContainer
@@ -580,13 +656,13 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
       />
 
       {modalOpen && (
-        <ProfileLinkModal 
+        <ProfileLinkModal
           user={userInfo}
           activeModal={activeModal}
-          setClose={handleCloseModal} 
-          setOrcidId={handleOrcidLink} 
+          setClose={handleCloseModal}
+          setOrcidId={handleOrcidLink}
           setScopusId={handleScopusLink}
-          institution={userInfo.institution} 
+          institution={userInfo.institution}
         />
       )}
 
