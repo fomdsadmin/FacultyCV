@@ -1,12 +1,203 @@
-import React, { useState, useEffect } from 'react';
-import PageContainer from './PageContainer.jsx';
-import FacultyMenu from '../Components/FacultyMenu.jsx';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from "react";
+import PageContainer from "./PageContainer.jsx";
+import FacultyMenu from "../Components/FacultyMenu.jsx";
+import DeclarationForm from "../Components/DeclarationForm.jsx";
+import { getUserDeclarations } from "../graphql/graphqlHelpers";
+import { Link } from "react-router-dom";
+
+// Helper to map value to full label
+const DECLARATION_LABELS = {
+  coi: {
+    YES: "YES, my Conflict of Interest and Conflict of Commitment declarations are up to date.",
+    NO: "NO, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.",
+  },
+  fomMerit: {
+    YES: "I do wish to be awarded merit for my academic activities.",
+    NO: "I do NOT wish to be awarded merit for my academic activities.",
+  },
+  psa: {
+    YES: "I do wish to be considered for PSA.",
+    NO: "I do NOT wish to be considered for PSA.",
+  },
+  promotion: {
+    YES: "I do wish to be considered for promotion.",
+    NO: "I do NOT wish to be considered for promotion.",
+  },
+};
+
+// Dummy data in correct format (matches backend/Lambda format)
+const dummyDeclarations = [
+  {
+    year: 2025,
+    coi: "YES",
+    fomMerit: "NO",
+    psa: "YES",
+    promotion: "NO",
+    meritJustification: "Contributed to teaching and research.",
+    psaJustification: "Recognized for outstanding service.",
+    honorific: "Led a major research initiative.",
+  },
+  {
+    year: 2024,
+    coi: "YES",
+    fomMerit: "YES",
+    psa: "NO",
+    promotion: "NO",
+    meritJustification: "Improved curriculum.",
+    psaJustification: "",
+    honorific: "",
+  },
+];
+
+const fetchDeclarations = async (
+  first_name,
+  last_name,
+  reporting_year = null
+) => {
+  // Replace with your actual Lambda endpoint
+  try {
+    const result = await getUserDeclarations(
+      first_name,
+      last_name,
+      reporting_year
+    );
+    return await result.json();
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+  }
+  return [];
+};
 
 const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
-    const sc3_link = "https://google.com"; // todo , link broken on APT website
-    const unicouncil_link = "https://universitycounsel.ubc.ca/subject-areas/coi/";
-    const orcs_link = "https://ors.ubc.ca/";
+  const [declarations, setDeclarations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
+  // Find the biggest/latest year
+  const currentYear =
+    declarations.length > 0
+      ? Math.max(...declarations.map((d) => d.year))
+      : null;
+
+  // State for expanded declaration year
+  const [expandedYear, setExpandedYear] = useState(currentYear);
+
+  // Expand the current year by default on mount or when declarations change
+  useEffect(() => {
+    if (currentYear) setExpandedYear(currentYear);
+  }, [currentYear]);
+
+  // Fetch declarations from Lambda on mount or when user changes
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setFetchError(null);
+      try {
+        // Uncomment this to use Lambda:
+        // const data = await fetchDeclarations(
+        //   userInfo.first_name,
+        //   userInfo.last_name
+        // );
+        // setDeclarations(data);
+
+        // For now, use dummy data in correct format:
+        setDeclarations(dummyDeclarations);
+      } catch (err) {
+        setFetchError("Could not load declarations.");
+        setDeclarations([]);
+      }
+      setLoading(false);
+    };
+    if (userInfo?.first_name && userInfo?.last_name) {
+      fetchData();
+    }
+  }, [userInfo?.first_name, userInfo?.last_name]);
+
+  // State for showing the form (create or edit)
+  const [showForm, setShowForm] = useState(false);
+  // Optionally, track which year is being edited
+  const [editYear, setEditYear] = useState(null);
+
+  // Controlled state for select fields
+  const [coi, setCoi] = useState("");
+  const [fomMerit, setFomMerit] = useState("");
+  const [psa, setPsa] = useState("");
+  const [promotion, setPromotion] = useState("");
+  // Controlled state for textareas (optional, for future save logic)
+  const [meritJustification, setMeritJustification] = useState("");
+  const [psaJustification, setPsaJustification] = useState("");
+  const [honorific, setHonorific] = useState("");
+  const [year, setYear] = useState("");
+
+  // For scrolling to form
+  const formRef = useRef(null);
+
+  // Handler for edit button
+  const handleEdit = (year) => {
+    setEditYear(year);
+    setShowForm(true);
+    const data = declarations.find((d) => d.year === year);
+    setYear(year);
+    setCoi(data?.coi || "");
+    setFomMerit(data?.fomMerit || "");
+    setPsa(data?.psa || "");
+    setPromotion(data?.promotion || "");
+    setMeritJustification(data?.meritJustification || "");
+    setPsaJustification(data?.psaJustification || "");
+    setHonorific(data?.honorific || "");
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
+  // Handler for create new declaration
+  const handleCreate = () => {
+    setEditYear(null);
+    setShowForm(true);
+    setYear(""); // Reset year as well
+    setCoi("");
+    setFomMerit("");
+    setPsa("");
+    setPromotion("");
+    setMeritJustification("");
+    setPsaJustification("");
+    setHonorific("");
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
+  // Optionally, implement onSave logic
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditYear(null);
+    setYear(""); // Reset year as well
+    setCoi("");
+    setFomMerit("");
+    setPsa("");
+    setPromotion("");
+    setMeritJustification("");
+    setPsaJustification("");
+    setHonorific("");
+  };
+
+  // Handler for saving a new declaration (calls Lambda)
+  const handleSave = async () => {
+    // Implement your save logic here, e.g. POST to Lambda with all form fields
+    // After saving, re-fetch declarations
+    setShowForm(false);
+    setEditYear(null);
+    setYear("");
+    setCoi("");
+    setFomMerit("");
+    setPsa("");
+    setPromotion("");
+    setMeritJustification("");
+    setPsaJustification("");
+    setHonorific("");
+    // Optionally, re-fetch declarations here
+  };
+
   return (
     <PageContainer>
       {/* Sidebar */}
@@ -19,13 +210,10 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
       {/* Main content */}
       <main className="ml-4 pr-5 w-full overflow-auto py-6 px-4">
-
         {/* Header */}
-        <div className="flex justify-between items-start mb-10">
+        <div className="flex justify-between items-start mb-10 px-4">
           <div>
-            <div className="text-4xl font-bold text-zinc-600">
-              Declarations
-            </div>
+            <div className="text-4xl font-bold text-zinc-600">Declarations</div>
             <div className="text-sm text-gray-500">
               Last visit: 6 Nov 2025, 3:16PM (static)
             </div>
@@ -37,238 +225,190 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           </div>
         </div>
 
-        {/* Annual Activity Report*/}
-        <div className="mb-10 p-12 px-20 mx-12 rounded-lg grid grid-cols-1 gap-6 items-start bg-gray-100">
-          <div>
-            <h2 className="text-lg font-semibold mb-2">
-                <span className="text-red-500">* </span>
-                Reporting Year: </h2>
-            <select
-              className="select select-bordered w-40 mt-2 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-150"
-              defaultValue="DEFAULT"
-              // onChange={e => setSelectedYear(e.target.value)} // For future use
+        {/* Declarations List Dropdown */}
+        <div className="mb-12 px-4">
+          <div className="flex items-center justify-between mb-6">
+            <div className="text-xl font-bold">Previous Declarations</div>
+            <button
+              className="btn btn-primary bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+              onClick={handleCreate}
             >
-              <option value="DEFAULT"></option>
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-            </select>
+              Create New Declaration
+            </button>
           </div>
-
-          {/* Conflict of Interest and Commitment Declaration */}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">
-                <span className="text-red-500">* </span>
-                Conflict of Interest and Commitment Declaration</h2>
-            <div className="bg-gray-50 p-4 rounded-lg shadow-sm border max-h-96 overflow-y-auto">
-                <p className="text-gray-500">
-                    In accordance with <a
-                    href={sc3_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                    style={{ textDecorationThickness: '2px' }}
-                    >UBC Policy SC3</a>, 
-                    you must maintain up-to-date Conflict of Interest and Conflict of Commitment declarations. 
-                    For more information regarding Conflict of Interest and Commitment, please refer to the 
-                    <a
-                    href={unicouncil_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                    style={{ textDecorationThickness: '2px' }}
-                    > Office of the University Counsel </a>
-                    and the 
-                    <a
-                    href={orcs_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                    style={{ textDecorationThickness: '2px' }}
-                    > UBC Office of Research Services.</a>
-                </p>
-                <br />
-                <p className="text-gray-500">
-                    Please indicate whether your Conflict of Interest and Conflict of Commitment declarations are up to date.
-                </p>
-                <select
-                className="select select-bordered w-3/5 mt-5 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-150"
-                defaultValue="DEFAULT"
-                // onChange={e => setSelectedYear(e.target.value)} // For future use
-                >
-                <option value="DEFAULT"></option>
-                <option value="YES">Yes, my Conflict of Interest and Conflict of Commitment declarations are up to date.</option>
-                <option value="NO">No, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.</option>
-                </select>
-            </div>
+          <div className="space-y-6">
+            {loading ? (
+              <div className="rounded-2xl bg-zinc-100 shadow-xl border-2 border-zinc-300 px-10 py-10 flex items-center justify-center text-lg text-gray-500">
+                Loading...
+              </div>
+            ) : fetchError ? (
+              <div className="rounded-2xl bg-red-100 shadow-xl border-2 border-red-300 px-10 py-10 flex items-center justify-center text-lg text-red-500">
+                {fetchError}
+              </div>
+            ) : declarations.length === 0 ? (
+              <div className="rounded-2xl bg-zinc-100 shadow-xl border-2 border-zinc-300 px-10 py-10 flex items-center justify-center text-lg text-gray-500">
+                No declarations found.
+              </div>
+            ) : (
+              declarations
+                .sort((a, b) => b.year - a.year)
+                .map((decl) => (
+                  <div
+                    key={decl.year}
+                    className={`
+                      rounded-2xl 
+                      shadow-l 
+                      transition 
+                      w-full h-full
+                      ${
+                        expandedYear === decl.year ? "ring-2 ring-blue-400" : ""
+                      }
+                      ${
+                        decl.year === currentYear
+                          ? "border-2 border-blue-500 bg-gray-90"
+                          : "border-2 border-zinc-400 bg-zinc-200"
+                      }
+                    `}
+                    style={{ paddingTop: 0, paddingBottom: 0 }}
+                  >
+                    <button
+                      className="w-full h-full flex justify-between items-center px-8 py-4 text-left hover:bg-gray-100 transition rounded-2xl"
+                      onClick={() =>
+                        setExpandedYear(
+                          expandedYear === decl.year ? null : decl.year
+                        )
+                      }
+                    >
+                      <span className="font-bold text-zinc-700 text-2xl">
+                        {decl.year}
+                      </span>
+                      <div className="flex items-center gap-4">
+                        {/* Edit button: only for the latest year */}
+                        {decl.year === currentYear && (
+                          <button
+                            className="btn btn-md btn-outline text-blue-500 border-l border-blue-500 mr-2 
+                          hover:bg-blue-500 hover:text-white transition "
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(decl.year);
+                            }}
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {/* Drop down arrow */}
+                        <svg
+                          className={`w-7 h-7 transform transition-transform ${
+                            expandedYear === decl.year ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </button>
+                    {expandedYear === decl.year && (
+                      <div className="mx-8 mt-1 mb-4 px-12 py-2 text-gray-700 bg-gray-200 rounded-2xl">
+                        <div className="mb-3">
+                          <b>
+                            Conflict of Interest and Commitment Declaration:
+                          </b>
+                          <ul className="list-disc list-inside mt-1 indent-6">
+                            <li>
+                              {DECLARATION_LABELS.coi[decl.coi] || decl.coi}
+                            </li>
+                          </ul>
+                        </div>
+                        <div className="mb-3">
+                          <b>FOM Merit Declaration:</b>
+                          <ul className="list-disc list-inside mt-1 indent-6">
+                            <li>
+                              {DECLARATION_LABELS.fomMerit[decl.fomMerit] ||
+                                decl.fomMerit}
+                            </li>
+                            {decl.meritJustification && (
+                              <div className="mb-3">
+                                <li>
+                                  <b>Justification:</b>{" "}
+                                  {decl.meritJustification}
+                                </li>
+                              </div>
+                            )}
+                          </ul>
+                        </div>
+                        <div className="mb-3">
+                          <b>PSA Awards Declaration:</b>
+                          <ul className="list-disc list-inside mt-1 indent-6">
+                            <li>
+                              {DECLARATION_LABELS.psa[decl.psa] || decl.psa}
+                            </li>
+                            {decl.psaJustification && (
+                              <div className="mb-3">
+                                <li>
+                                  <b>Justification:</b> {decl.psaJustification}
+                                </li>
+                              </div>
+                            )}
+                          </ul>
+                        </div>
+                        <div className="mb-3">
+                          <b>Promotion Review Declaration:</b>
+                          <ul className="list-disc list-inside mt-1 indent-6">
+                            <li>
+                              {DECLARATION_LABELS.promotion[decl.promotion] ||
+                                decl.promotion}
+                            </li>
+                          </ul>
+                        </div>
+                        {decl.honorific && (
+                          <div className="mb-3">
+                            <b>Honorific Impact Report:</b>
+                            <ul className="list-disc list-inside mt-1 indent-6">
+                              <li>{decl.honorific}</li>
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+            )}
           </div>
-
-          {/* FOM Merit */}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">
-                 <span className="text-red-500">* </span>
-                FOM Merit
-            </h2>
-            <div className="bg-gray-50 p-4 rounded-lg shadow-sm border max-h-96 overflow-y-auto">
-                <p className="text-gray-500">
-                    All eligible members shall be considered for a <b>merit award</b> by their Department Head/School Director and a reasonable number of colleagues.
-                    <br />
-                    <br />
-                    <i>Note: If you request not to be awarded merit, you will still be considered for a Faculty of Medicine Outstanding Academic Performance (OAP) award.</i>
-                    <br />
-                    <br />
-                    Please indicate your request below:
-                </p>
-                <select
-                className="select select-bordered w-3/5 mt-5 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-150"
-                defaultValue="DEFAULT"
-                // onChange={e => setSelectedYear(e.target.value)} // For future use
-                >
-                <option value="DEFAULT"></option>
-                <option value="YES">I do wish to be awarded merit for my academic activities.</option>
-                <option value="NO">I do NOT wish to be awarded merit for my academic activities.</option>
-                </select>
-            </div>
-          </div>
-        
-          {/* Merit Justification*/}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">Merit Justification</h2>
-            <div className="bg-gray-50 p-6 rounded-lg shadow-sm border  overflow-y-auto">
-                <div className="bg-gray-100 p-6 rounded-lg shadow-sm border max-h-96 overflow-y-auto border-l-8 border-l-blue-500">
-                    <p className="text-gray-500">
-                        When requesting merit consideration, please provide a summary of your relevant achievements in the following areas:
-                        <br /> 
-                        1. Teaching activities and impact, 
-                        <br />
-                        2. Scholarly activities and accomplishments and 
-                        <br />
-                        3. Service contributions to the department, faculty, and broader community. 
-                        <br />
-                        <br />
-                        Your summary should highlight key contributions and achievements that support your merit consideration.
-                    </p>
-                </div>
-                {/* Textarea for merit justification */}
-                <textarea
-                  className="mt-6 w-full rounded-lg border-4 border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 p-3 resize-both min-h-[120px] transition-all duration-150"
-                  placeholder="Enter your merit justification here... (OPTIONAL)"
-                  rows={15}
-                />
-            </div>
-          </div>
-
-          {/* PSA Awards Declaration*/}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">
-                <span className="text-red-500">* </span>
-                PSA Awards
-            </h2>
-            <div className="bg-gray-50 p-16 rounded-lg shadow-sm border overflow-y-auto">
-                <p className="text-gray-500">
-                    Department Head/School Director reviews and makes recommendations for <b>PSA awards</b> based on the following factors:
-                    <br />
-                    <br />
-                    <ul className="list-disc list-inside">
-                        <li>
-                            Performance over a period of time which is worthy of recognition;
-                        </li>
-                        <li>
-                            The relationship of a faculty member’s salary to that of other faculty taking into consideration total years of service at UBC; and
-                        </li>
-                    
-                        <li>
-                            Market considerations.
-                        </li>
-                    </ul>
-                    <br />
-                    <br />
-                    Please indicate your request below:
-                </p>
-                <select
-                className="select select-bordered w-3/5 mt-5 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-150"
-                defaultValue="DEFAULT"
-                // onChange={e => setSelectedYear(e.target.value)} // For future use
-                >
-                <option value="DEFAULT"></option>
-                <option value="YES">I do wish to be considered for PSA.</option>
-                <option value="NO">I do NOT wish to be considered for PSA.</option>
-                </select>
-            </div>
-          </div>
-
-          {/* PSA Justification*/}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">PSA Justification:</h2>
-            <div className="bg-gray-50 p-10 rounded-lg shadow-sm border  overflow-y-auto">
-                {/* Textarea for PSA justification */}
-                <textarea
-                  className="mt-6 w-full rounded-lg border-4 border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 p-3 resize-both min-h-[100px] transition-all duration-150"
-                  placeholder="Enter your PSA justification here... (OPTIONAL)"
-                  rows={7}
-                />
-            </div>
-          </div>
-
-          {/* FOM Promotion Review */}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">
-                <span className="text-red-500">* </span>
-                FOM Promotion Review
-            </h2>
-            <div className="bg-gray-50 p-12 rounded-lg shadow-sm border max-h-96 overflow-y-auto">
-                <p className="text-gray-500">
-                    Please indicate whether you wish to be considered for review for promotion during the upcoming academic year 
-                    (July 1, 2023 – June 30, 2024) for an effective of July 1, 2024.
-                </p>
-                <select
-                className="select select-bordered w-3/5 mt-5 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-150"
-                defaultValue="DEFAULT"
-                // onChange={e => setSelectedYear(e.target.value)} // For future use
-                >
-                <option value="DEFAULT"></option>
-                <option value="YES">I do wish to be considered for promotion.</option>
-                <option value="NO">I do NOT wish to be considered for promotion.</option>
-                </select>
-                <p className="text-gray-500">
-                    <br />
-                    <b>Please note that all faculty are required to submit an annual activity report, 
-                        regardless of whether they wish to be considered for promotion.
-                    </b>
-                </p>
-            </div>
-          </div>
-
-            {/* FOM Honorific Impact Report */}
-          <div>
-            <h2 className="text-lg font-semibold mb-3">FOM Honorific Impact Report</h2>
-            <div className="bg-gray-50 p-12 rounded-lg shadow-sm border  overflow-y-auto">
-                <p className="text-gray-500">
-                    If you are the holder of a Faculty of Medicine Honorific (i.e., Chair, Professorship, Distinguished Scholar), please provide a summary 
-                    of the impact your activities have had on the advancement of medical research, education and community service in the recent calendar year.
-                    <br />
-                    <br />
-                    <br />
-                    Please complete the field below (approximately 100 words) explaining the impact your activities have made to education and/or research and/or 
-                    community service over the past year. Consider this your “elevator pitch” – provide the most impactful highlight(s) of the work being conducted 
-                    in the name of the honorific. This information will be used by the Development Office in its report to the stakeholder(s), and may be used more 
-                    broadly to bring additional awareness to the Faculty’s accomplishments.
-                </p>
-                {/* Textarea for Honorific Impact Report */}
-                <textarea
-                  className="mt-6 w-full rounded-lg border-4 border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 p-3 resize-y min-h-[100px] transition-all duration-150"
-                  placeholder="Enter your Honorific Impact Report here... (OPTIONAL)"
-                  rows={15}
-                />
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <button className="btn btn-primary mt-6 bg-blue-500 text-white w-1/5 hover:bg-blue-600">Add Record</button>
-          </div>
-
         </div>
-       
-       
+
+        {/* Declaration Form (Create/Edit) */}
+        {showForm && (
+          <DeclarationForm
+            editYear={editYear}
+            year={year}
+            setYear={setYear}
+            coi={coi}
+            setCoi={setCoi}
+            fomMerit={fomMerit}
+            setFomMerit={setFomMerit}
+            psa={psa}
+            setPsa={setPsa}
+            promotion={promotion}
+            setPromotion={setPromotion}
+            meritJustification={meritJustification}
+            setMeritJustification={setMeritJustification}
+            psaJustification={psaJustification}
+            setPsaJustification={setPsaJustification}
+            honorific={honorific}
+            setHonorific={setHonorific}
+            formRef={formRef}
+            onCancel={handleCancel}
+            onSave={handleSave}
+          />
+        )}
+
         {/* Footer */}
         <footer className="text-sm text-gray-400 mt-10">
           <div className="flex gap-2 mt-1"></div>

@@ -118,7 +118,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
   return (
     <PageContainer>
       <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser} />
-      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
+      <main className='pr-5 overflow-autow-full mb-4 bg-gray-100 p-8'>
         {loading ? (
           <div className='w-full h-full flex items-center justify-center'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -126,7 +126,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
         ) : (
           <>
             {activeSection === null ? (
-              <div className='!overflow-auto !h-full custom-scrollbar'>
+              <div className='!overflow-auto !h-full rounded-lg'>
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Academic Work</h1>
                 <div className='m-4 flex'>
                   <label className="input input-bordered flex items-center gap-2 flex-1">
