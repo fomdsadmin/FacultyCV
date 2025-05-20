@@ -1,3 +1,15 @@
+# This is for OpenAI 
+type LambdaAIResponse {
+	answer: [ResearchKeywordCategory]
+	response_time_seconds: Float
+	error: String
+}
+
+type ResearchKeywordCategory {
+	category: String
+	keywords: [String]
+}
+
 type User {
   user_id: String!
   first_name: String
@@ -153,6 +165,9 @@ type OrcidSectionOutput {
 }
 
 type Query {
+    GetAIResponse(user_input: String!): LambdaAIResponse
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
+    
     getUser(email: String!): User
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
     
