@@ -18,6 +18,15 @@ import { addSectionMutation, updateSectionMutation, addUserCVDataMutation, addUs
     } from './mutations';
 import { getUserId } from '../getAuthToken';
 
+const executeGraphql = async (query, variables) => {
+    const client = generateClient();
+    const results = await client.graphql({
+      query,
+      variables,
+    });
+    return results;
+  };
+
 const runGraphql = async (query) => {
     const client = generateClient();
     const results = await client.graphql({
@@ -119,7 +128,8 @@ export const getArchivedSections = async () => {
  *   }
  */
 export const getUser = async (email) => {
-    const results = await runGraphql(getUserQuery(email));
+    const results = await executeGraphql(getUserQuery, {email: email});
+    console.log(results)
     return results['data']['getUser'];
 }
 
