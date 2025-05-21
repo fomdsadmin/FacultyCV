@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { TbHome } from "react-icons/tb";
 import { HiOutlineAcademicCap } from "react-icons/hi2";
+import { HiOutlineDocumentText } from "react-icons/hi2"; // Declarations icon
 import { TiDownloadOutline } from "react-icons/ti";
 import { IoPersonAddOutline } from "react-icons/io5";
 import { Link, useLocation } from 'react-router-dom';
@@ -73,6 +74,12 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
           <Link to='/academic-work'>
             <HiOutlineAcademicCap className="h-5 w-5" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/academic-work' ? 'font-bold' : ''}`}>Academic Work</p>}
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === '/declarations' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/declarations'>
+            <HiOutlineDocumentText className="h-5 w-5" />
+            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/declarations' ? 'font-bold' : ''}`}>Declarations</p>}
           </Link>
         </li>
         <li className={`mb-2 ${location.pathname === '/reports' ? 'bg-gray-200 rounded-lg' : ''}`}>

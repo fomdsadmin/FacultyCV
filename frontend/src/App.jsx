@@ -10,6 +10,7 @@ import Support from './Views/support.jsx';
 import HomePage from './Views/FacultyHomePage'; // adjust the path as needed
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
+import Declarations from './Views/Declarations.jsx';
 import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
 import { getPresignedUrl, getUser } from './graphql/graphqlHelpers.js';
@@ -173,6 +174,7 @@ function App() {
         <Route path="/home" element={user ? <HomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/support" element={user ? <Support userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/academic-work" element={user ? <AcademicWork userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/declarations" element={user ? <Declarations userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/assistants" element={user ? <Assistants userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/archive" element={user ? <Archive userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
