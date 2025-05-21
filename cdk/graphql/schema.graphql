@@ -44,12 +44,12 @@ type DataSection {
 }
 
 type Notification {
-	record_id: ID!
-	title: String
-	description: String
-	date: AWSDate
-	archive: String
-	information_complete: String
+  record_id: ID!
+  title: String
+  description: String
+  date: AWSDate
+  archive: String
+  information_complete: String
 }
 
 type UserCVData {
@@ -78,7 +78,7 @@ type OrcidAuthorProfile {
   credit_name: String
   name_variants: String
   keywords: String
-  researcher_urls: [ String ]
+  researcher_urls: [String]
   orcid_id: String!
 }
 
@@ -120,19 +120,19 @@ type Publication {
   # type: String!
   title: String!
   cited_by: Int
-  keywords: [String],
-  journal: String,
-  link: String,
-  doi: String,
-  year_published: String,
+  keywords: [String]
+  journal: String
+  link: String
+  doi: String
+  year_published: String
   author_names: [String]!
   author_ids: [String]!
 }
 
 type PublicationMatches {
-  publications: [ Publication ],
-  total_results: Int!,
-  total_pages: Int!,
+  publications: [Publication]
+  total_results: Int!
+  total_pages: Int!
   current_page: Int!
 }
 
@@ -160,248 +160,284 @@ type Patent {
 type OrcidSectionOutput {
   bio: String
   keywords: String
-  publications: [ Publication ]
+  publications: [Publication]
   other_data: AWSJSON
 }
 
+type Declaration {
+  reporting_year: Int!
+  other_data: AWSJSON
+  created_on: AWSDateTime
+  created_by: String
+}
+
 type Query {
-    GetAIResponse(user_input: String!): LambdaAIResponse
+  GetAIResponse(user_input: String!): LambdaAIResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
     
-    getUser(email: String!): User
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-    
-    getExistingUser(institution_user_id: String!): User
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-    
-    getAllSections: [ DataSection ]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-    
-    getArchivedSections: [ DataSection ]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-    
-    getUserCVData(user_id: String!, data_section_id: String, data_section_id_list: [String]): [UserCVData]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant", "Admin", "DepartmentAdmin"])
-    
-    getArchivedUserCVData(user_id: String!): [UserCVData]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-    
-    getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ ElsevierAuthorProfile ]!
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-	
-	  GetNotifications: [Notification]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getUser(email: String!): User
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 
-    getOrcidSections(orcidId: String!, section: String!): OrcidSectionOutput
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-    
-    getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ OrcidAuthorProfile ]!
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-    
-    getAllUniversityInfo: [ UniversityInfo ]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-    
-    getUserConnections(faculty_user_id: String, assistant_user_id: String): [ UserConnection ]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-    
-    getAllTemplates: [ Template ]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-    
-    getTeachingDataMatches(institution_user_id: String!): [TeachingData]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-    
-    getPublicationMatches(scopus_id: String!, page_number: Int!, results_per_page: Int!): PublicationMatches
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-    
-    getSecureFundingMatches(first_name: String!, last_name: String!): [SecureFunding]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-    
-    getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-    
-    getAllUsers: [ User ]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-    
-    getPatentMatches(first_name: String!, last_name: String!): [Patent]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-    
-    getPresignedUrl(jwt: String!, key: String!, type: String): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-    
-    getNumberOfGeneratedCVs(department: String): Int!
+  getExistingUser(institution_user_id: String!): User
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  getAllSections: [DataSection]
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  getArchivedSections: [DataSection]
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
-    cvIsUpToDate(cognito_user_id: String!, user_id: String!, template_id: String!): Boolean
+  getUserCVData(
+    user_id: String!
+    data_section_id: String
+    data_section_id_list: [String]
+  ): [UserCVData]
+    @aws_auth(
+      cognito_groups: ["Faculty", "Assistant", "Admin", "DepartmentAdmin"]
+    )
 
-    getLatexConfiguration: String!
+  getArchivedUserCVData(user_id: String!): [UserCVData]
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getElsevierAuthorMatches(
+    first_name: String!
+    last_name: String!
+    institution_name: String
+  ): [ElsevierAuthorProfile]!
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  GetNotifications: [Notification]
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  getUserDeclarations(first_name: String!, last_name: String!): [Declaration!]!
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  getOrcidSections(orcidId: String!, section: String!): OrcidSectionOutput
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getOrcidAuthorMatches(
+    first_name: String!
+    last_name: String!
+    institution_name: String
+  ): [OrcidAuthorProfile]! @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getAllUniversityInfo: [UniversityInfo]
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  getUserConnections(
+    faculty_user_id: String
+    assistant_user_id: String
+  ): [UserConnection]
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  getAllTemplates: [Template]
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  getTeachingDataMatches(institution_user_id: String!): [TeachingData]
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getPublicationMatches(
+    scopus_id: String!
+    page_number: Int!
+    results_per_page: Int!
+  ): PublicationMatches @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getSecureFundingMatches(
+    first_name: String!
+    last_name: String!
+  ): [SecureFunding] @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getAllUsers: [User] @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+
+  getPatentMatches(first_name: String!, last_name: String!): [Patent]
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getPresignedUrl(jwt: String!, key: String!, type: String): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  getNumberOfGeneratedCVs(department: String): Int!
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+
+  cvIsUpToDate(
+    cognito_user_id: String!
+    user_id: String!
+    template_id: String!
+  ): Boolean
+
+  getLatexConfiguration: String!
     @aws_auth(cognito_groups: ["Faculty", "Assistant", "Admin"])
 }
 
 type Mutation {
-    addToUserGroup(userName: String!, userGroup: String!): String
-    
-    removeFromUserGroup(userName: String!, userGroup: String!): String
+  addToUserGroup(userName: String!, userGroup: String!): String
 
-    generatePDF(first_name: String!): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  removeFromUserGroup(userName: String!, userGroup: String!): String
 
-    addUser(
-      first_name: String!
-      last_name: String!
-      preferred_name: String
-      email: String!
-      role: String!
-      bio: String
-      rank: String
-      institution: String
-      primary_department: String
-      secondary_department: String
-      primary_faculty: String
-      secondary_faculty: String
-      primary_affiliation: String
-      secondary_affiliation: String
-      campus: String
-      keywords: String
-      institution_user_id: String
-      scopus_id: String
-      orcid_id: String
-    ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  generatePDF(first_name: String!): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 
-    updateUser(
-      first_name: String
-      last_name: String
-      preferred_name: String
-      email: String
-      role: String
-      bio: String
-      rank: String
-      institution: String
-      primary_department: String
-      secondary_department: String
-      primary_faculty: String
-      secondary_faculty: String
-      primary_affiliation: String
-      secondary_affiliation: String
-      campus: String
-      keywords: String
-      institution_user_id: String
-      scopus_id: String
-      orcid_id: String
-      user_id: String!
-      cognito_user_id: String
-    ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  addUser(
+    first_name: String!
+    last_name: String!
+    preferred_name: String
+    email: String!
+    role: String!
+    bio: String
+    rank: String
+    institution: String
+    primary_department: String
+    secondary_department: String
+    primary_faculty: String
+    secondary_faculty: String
+    primary_affiliation: String
+    secondary_affiliation: String
+    campus: String
+    keywords: String
+    institution_user_id: String
+    scopus_id: String
+    orcid_id: String
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 
-    addSection(
-      title: String!
-      description: String!
-      data_type: String
-      attributes: AWSJSON! # JSON
-    ): String
+  updateUser(
+    first_name: String
+    last_name: String
+    preferred_name: String
+    email: String
+    role: String
+    bio: String
+    rank: String
+    institution: String
+    primary_department: String
+    secondary_department: String
+    primary_faculty: String
+    secondary_faculty: String
+    primary_affiliation: String
+    secondary_affiliation: String
+    campus: String
+    keywords: String
+    institution_user_id: String
+    scopus_id: String
+    orcid_id: String
+    user_id: String!
+    cognito_user_id: String
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  addSection(
+    title: String!
+    description: String!
+    data_type: String
+    attributes: AWSJSON! # JSON
+  ): String @aws_auth(cognito_groups: ["Admin"])
+
+  updateSection(
+    data_section_id: String!
+    archive: Boolean
+    attributes: AWSJSON # JSON
+  ): String @aws_auth(cognito_groups: ["Admin"])
+
+  addUserCVData(
+    user_id: String!
+    data_section_id: String!
+    data_details: AWSJSON! # JSON
+    editable: Boolean!
+    cognito_user_id: String
+  ): String @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  updateUserCVData(
+    user_cv_data_id: String!
+    data_details: AWSJSON # JSON
+    archive: Boolean
+    archive_timestamp: String
+    cognito_user_id: String
+  ): String @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  addUniversityInfo(type: String!, value: String!): String
     @aws_auth(cognito_groups: ["Admin"])
 
-    updateSection(
-      data_section_id: String!
-      archive: Boolean
-      attributes: AWSJSON # JSON
-    ): String
-    @aws_auth(cognito_groups: ["Admin"])
+  addUserConnection(
+    faculty_user_id: String!
+    faculty_first_name: String!
+    faculty_last_name: String!
+    faculty_email: String!
+    assistant_user_id: String!
+    assistant_first_name: String!
+    assistant_last_name: String!
+    assistant_email: String!
+    status: String!
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 
-    addUserCVData(
-      user_id: String!
-      data_section_id: String!
-      data_details: AWSJSON! # JSON
-      editable: Boolean!
-      cognito_user_id: String
-    ): String
+  updateUserConnection(user_connection_id: String!, status: String!): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  deleteUserConnection(user_connection_id: String!): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  updateUniversityInfo(
+    university_info_id: String!
+    type: String
+    value: String
+  ): String @aws_auth(cognito_groups: ["Admin"])
+
+  linkScopusId(user_id: String!, scopus_id: String!, orcid_id: String): String
     @aws_auth(cognito_groups: ["Faculty", "Assistant"])
 
-    updateUserCVData(
-      user_cv_data_id: String!
-      data_details: AWSJSON # JSON
-      archive: Boolean
-      archive_timestamp: String
-      cognito_user_id: String
-    ): String
+  linkOrcid(user_id: String!, orcid_id: String!): String
     @aws_auth(cognito_groups: ["Faculty", "Assistant"])
 
-    addUniversityInfo(
-      type: String!
-      value: String!
-    ): String
-    @aws_auth(cognito_groups: ["Admin"])
+  addTemplate(
+    title: String!
+    data_section_ids: String!
+    start_year: String
+    end_year: String
+  ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
-    addUserConnection(
-      faculty_user_id: String!
-      faculty_first_name: String!
-      faculty_last_name: String!
-      faculty_email: String!
-      assistant_user_id: String!
-      assistant_first_name: String!
-      assistant_last_name: String!
-      assistant_email: String!
-      status: String!
-    ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  updateTemplate(
+    template_id: String!
+    title: String
+    data_section_ids: String
+    start_year: String
+    end_year: String
+  ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
-    updateUserConnection(
-      user_connection_id: String!
-      status: String!
-    ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-
-    deleteUserConnection(
-      user_connection_id: String!
-    ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-
-    updateUniversityInfo(
-      university_info_id: String!
-      type: String
-      value: String
-    ): String
-    @aws_auth(cognito_groups: ["Admin"])
-
-    linkScopusId(
-      user_id: String!,
-      scopus_id: String!,
-      orcid_id: String
-    ): String
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-    linkOrcid(
-      user_id: String!,
-      orcid_id: String!
-    ): String
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-    addTemplate(
-      title: String!
-      data_section_ids: String!
-      start_year: String
-      end_year: String
-    ): String
+  deleteTemplate(template_id: String!): String
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
-    updateTemplate(
-      template_id: String!
-      title: String
-      data_section_ids: String
-      start_year: String
-      end_year: String
-    ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-
-    deleteTemplate(
-      template_id: String!
-    ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-
-    updateLatexConfiguration(
-      vspace: Float,
-      margin: Float,
-      font: String
-    ): String
+  updateLatexConfiguration(vspace: Float, margin: Float, font: String): String
     @aws_auth(cognito_groups: ["Admin"])
 }
