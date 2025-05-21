@@ -10,6 +10,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getAllSections } from '../graphql/graphqlHelpers.js';
 import GenericSection from '../Components/GenericSection.jsx';
+import { Accordion } from '../Components/Accordion.jsx';
+import { AccordionItem } from '../Components/AccordionItem.jsx';
 
 const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggleViewMode }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,9 +39,28 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
         ...s,
         attributes: JSON.parse(s.attributes),
       }));
-      console.log(sections)
-      const filtered = parsed.filter(s => s.data_type === "Leaves of Absence" || s.data_type === "Employment" || s.data_type === "Education and Career");
-
+      const filtered = parsed.filter(s =>
+        s.title === "Leaves of Absence" ||
+        s.title === "Prior Employment" ||
+        s.title === "Present Employment" ||
+        s.title === "Post-Secondary Education" ||
+        s.title === "Dissertations" ||
+        s.title === "Continuing Education or Training" ||
+        s.title === "Continuing Medical Education" ||
+        s.title === "Professional Qualifications, Certifications and Licenses" ||
+        s.title === "Visiting Lecturer" ||
+        s.title === "Other Teaching" ||
+        s.title === "Continuing Education Activities" ||
+        s.title === "Memberships on University Committees" ||
+        s.title === "Memberships on Hospital Committees" ||
+        s.title === "Memberships on Community Societies" ||
+        s.title === "Memberships on Community Committees" ||
+        s.title === "Editorships" ||
+        s.title === "Reviewer" ||
+        s.title === "External Examiner" ||
+        s.title === "Consultant"
+      );
+      console.log(JSON.stringify(sections))
       setAcademicSections(filtered);
     };
     fetchSections();
@@ -225,6 +246,115 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
     }));
     setChange(true);
   };
+
+  function getCategoryForTitle(title) {
+    switch (title) {
+      // Affiliations
+      case "Memberships on University Committees":
+      case "Memberships on Hospital Committees":
+      case "Memberships on Community Societies":
+      case "Memberships on Community Committees":
+      case "Editorships":
+      case "Reviewer":
+      case "External Examiner":
+      case "Consultant":
+        return "Affiliations";
+
+      // Training
+      case "Continuing Education or Training":
+      case "Continuing Medical Education":
+      case "Professional Qualifications, Certifications and Licenses":
+      case "Continuing Education Activities":
+        return "Training";
+
+      // Employment
+      case "Prior Employment":
+      case "Present Employment":
+      case "Visiting Lecturer":
+      case "Other Teaching":
+        return "Employment";
+
+      // Leaves of Absence
+      case "Leaves of Absence":
+        return "Leaves of Absence";
+
+      // Education
+      case "Post-Secondary Education":
+      case "Dissertations":
+        return "Education";
+
+      // Default
+      default:
+        return "Uncategorized";
+    }
+  }
+
+  function getTitlesForCategory(category) {
+    switch (category) {
+      case "Affiliations":
+        return [
+          "Memberships on University Committees",
+          "Memberships on Hospital Committees",
+          "Memberships on Community Societies",
+          "Memberships on Community Committees",
+          "Editorships",
+          "Reviewer",
+          "External Examiner",
+          "Consultant"
+        ];
+
+      case "Training":
+        return [
+          "Continuing Education or Training",
+          "Continuing Medical Education",
+          "Professional Qualifications, Certifications and Licenses",
+          "Continuing Education Activities"
+        ];
+
+      case "Employment":
+        return [
+          "Prior Employment",
+          "Present Employment",
+          "Visiting Lecturer",
+          "Other Teaching"
+        ];
+
+      case "Leaves of Absence":
+        return ["Leaves of Absence"];
+
+      case "Education":
+        return [
+          "Post-Secondary Education",
+          "Dissertations"
+        ];
+
+      default:
+        return [];
+    }
+  }
+console.log(academicSections.filter((s) => (s.title === "Post-Secondary Education"))[0].data_section_id)
+  const getSection = (category) => {
+    console.log(category)
+    switch (category) {
+      case 'Education':
+        return <Accordion>
+          {getTitlesForCategory(activeTab).map((title, index) => (
+            <AccordionItem title={title}>
+              <GenericSection
+                  key={index}
+                  user={userInfo}
+                  section={academicSections.filter((s) => (s.title === title))[0]}
+                  onBack={() => { }}
+                />
+            </AccordionItem>
+          ))}
+        </Accordion>;
+      default:
+        return <></>;
+    }
+  }
+
+  const categories = ["Affiliations", "Training", "Employment", "Leaves of Absence", "Education"]
 
   return (
     <PageContainer>
@@ -564,32 +694,30 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
         {/* Tabs Section */}
         <div className="ml-4 mt-12 pr-5">
           <div className="flex space-x-4 mb-4">
-            {[...academicSections, { title: 'Linkages' }].map((section) => (
-              <button
-                key={section.title}
-                className={`text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 ${activeTab === section.title
-                  ? 'bg-blue-600 text-white shadow'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                onClick={() => setActiveTab(section.title)}
-              >
-                {section.title}
-              </button>
-            ))}
+            {
+              [{ title: 'Affiliations' }, { title: 'Training' }, { title: 'Employment' }, { title: 'Leaves of Absence' }, { title: 'Education' }, { title: 'Linkages' }].map((section) => (
+                <button
+                  key={section.title}
+                  className={`text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 ${activeTab === section.title
+                    ? 'bg-blue-600 text-white shadow'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  onClick={() => setActiveTab(section.title)}
+                >
+                  {section.title}
+                </button>
+              ))
+            }
+
           </div>
 
 
           <div className="border border-gray-200 rounded-md bg-white p-4">
-            {academicSections.map(section =>
-              activeTab === section.title ? (
-                <GenericSection
-                  key={section.data_section_id}
-                  user={userInfo}
-                  section={section}
-                  onBack={() => { }}
-                />
-              ) : null
+            {categories.map(category =>
+              getSection(category)
             )}
+            <div className="max-w-md mx-auto mt-10">
+            </div>
 
             {activeTab === 'Linkages' && (
               <div className="space-y-6">
