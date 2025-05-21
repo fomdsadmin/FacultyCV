@@ -691,7 +691,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
 
         {/* Tabs Section */}
         <div className="ml-4 mt-12 pr-5">
-          <div className="flex space-x-4 mb-4">
+          <div className="flex space-x-4 mb-4 overflow-x-auto max-w-[100%]">
             {
               [{ title: 'Affiliations' }, { title: 'Training' }, { title: 'Employment' }, { title: 'Leaves of Absence' }, { title: 'Education' }, { title: 'Linkages' }].map((section) => (
                 <button
