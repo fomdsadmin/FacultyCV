@@ -590,8 +590,6 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
             {categories.map((category, index) =>
               getSection(category, index)
             )}
-            <div className="max-w-md mx-auto mt-10">
-            </div>
 
             {activeTab === 'Affiliations' && <form onSubmit={handleSubmit} className='ml-4'>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
