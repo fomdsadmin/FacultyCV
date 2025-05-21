@@ -333,25 +333,23 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
     }
   }
 
-  const getSection = (category) => {
+  const getSection = (category, index) => {
     console.log(category)
-    switch (category) {
-      case 'Education':
-        return <Accordion>
-          {getTitlesForCategory(activeTab).map((title, index) => (
-            <AccordionItem title={title}>
-              <GenericSection
-                  key={index}
-                  user={userInfo}
-                  section={academicSections.filter((s) => (s.title === title))[0]}
-                  onBack={null}
-                />
-            </AccordionItem>
-          ))}
-        </Accordion>;
-      default:
-        return <></>;
-    }
+    return <>
+      {activeTab === category && <Accordion key={index}>
+        {getTitlesForCategory(category).map((title, innerIndex) => (
+          <AccordionItem key={index + "" + innerIndex} title={title}>
+            <GenericSection
+              key={innerIndex}
+              user={userInfo}
+              section={academicSections.filter((s) => (s.title === title))[0]}
+              onBack={null}
+            />
+          </AccordionItem>
+        ))}
+      </Accordion>
+      }
+    </>
   }
 
   const categories = ["Affiliations", "Training", "Employment", "Leaves of Absence", "Education"]
@@ -713,8 +711,8 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
 
 
           <div className="border border-gray-200 rounded-md bg-white p-4">
-            {categories.map(category =>
-              getSection(category)
+            {categories.map((category, index) =>
+              getSection(category, index)
             )}
             <div className="max-w-md mx-auto mt-10">
             </div>
