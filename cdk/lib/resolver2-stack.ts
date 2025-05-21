@@ -23,6 +23,7 @@ export class Resolver2Stack extends cdk.Stack {
 
     const psycopgLayer = apiStack.getLayers()['psycopg2'];
     const databaseConnectLayer = apiStack.getLayers()['databaseConnect']
+    const openaiLayer = apiStack.getLayers()['openai'];
     const reportLabLayer = apiStack.getLayers()['reportlab']
     const requestsLayer = apiStack.getLayers()['requests']
     const awsJwtVerifyLayer = apiStack.getLayers()['aws-jwt-verify']
@@ -33,13 +34,18 @@ export class Resolver2Stack extends cdk.Stack {
       api: appsync.GraphqlApi,
       fieldName: string,
       ds: appsync.LambdaDataSource,
-      typeName: string
+      typeName: string,
+      resolverCode?: string,
+      runtime?: appsync.FunctionRuntime
+
     ) => {
       new appsync.Resolver(this, "FacultyCVResolver-" + fieldName, {
         api: api,
         dataSource: ds,
         typeName: typeName,
         fieldName: fieldName,
+        code: resolverCode ? appsync.Code.fromInline(resolverCode) : undefined,
+        runtime: runtime,
       });
       return;
     };
@@ -52,7 +58,9 @@ export class Resolver2Stack extends cdk.Stack {
       env: { [key: string]: string },
       role: Role,
       layers: LayerVersion[],
-      runtime: Runtime = Runtime.PYTHON_3_9
+      runtime: Runtime = Runtime.PYTHON_3_9,
+      resolverCode?: string,
+      jsRuntime?: appsync.FunctionRuntime
     ) => {
       const resolver = new Function(this, `facultycv-${directory}-resolver`, {
         functionName: `${resourcePrefix}-${directory}-resolver`,
@@ -79,7 +87,7 @@ export class Resolver2Stack extends cdk.Stack {
       );
 
       fieldNames.forEach((field) =>
-        assignResolver(api, field, lambdaDataSource, typeName)
+        assignResolver(api, field, lambdaDataSource, typeName, resolverCode, jsRuntime)
       );
     };
     
@@ -148,6 +156,44 @@ export class Resolver2Stack extends cdk.Stack {
       {},
       resolverRole,
       [requestsLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "GetAIResponse",
+      ["GetAIResponse"],
+      "Query",
+      {},
+      resolverRole,
+      [openaiLayer],
+      Runtime.PYTHON_3_9,
+      // Resolver Code
+      `
+      import { util } from '@aws-appsync/utils';
+
+      export function request(ctx) {
+          return {
+              operation: 'Invoke',
+              payload: {
+                  fieldName: ctx.info.fieldName,
+                  parentTypeName: ctx.info.parentTypeName,
+                  user_input: ctx.args.user_input,
+                  variables: ctx.info.variables,
+                  selectionSetList: ctx.info.selectionSetList,
+                  selectionSetGraphQL: ctx.info.selectionSetGraphQL,
+              },
+          };
+      }
+
+      export function response(ctx) {
+          const { result, error } = ctx;
+          if (error) {
+              util.error(error.message, error.type, result);
+          }
+          return result;
+      }
+      `,
+      appsync.FunctionRuntime.JS_1_0_0
     );
     
     createResolver(
