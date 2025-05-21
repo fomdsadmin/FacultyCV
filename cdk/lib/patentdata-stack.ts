@@ -15,10 +15,10 @@ import { Effect, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { GrantDataStack } from "./grantdata-stack";
 
 export class PatentDataStack extends Stack {
-
-  public readonly ops_apikey: string;
-
-  constructor(
+  
+    public readonly ops_apikey: string;
+  
+    constructor(
     scope: Construct,
     id: string,
     grantDataStack: GrantDataStack,
@@ -82,7 +82,7 @@ export class PatentDataStack extends Stack {
     );
 
     // define a Glue Python Shell Job
-    this.ops_apikey = "facultyCV/credentials/opsApi"
+    this.ops_apikey  = "facultyCV/credentials/opsApi"
     const PYTHON_VER = "3.9";
     const GLUE_VER = "3.0";
     const MAX_RETRIES = 0; // no retries, only execute once
@@ -192,16 +192,16 @@ export class PatentDataStack extends Stack {
 
     // Create a CRON scheduler to start the pipeline
     const cfnTrigger = new glue.CfnTrigger(this, 'Patent-ETL-scheduler', {
-      actions: [{
-        jobName: fetchEpoPatentsJobName,
-        timeout: TIMEOUT
-      }],
-      type: 'SCHEDULED',
-      name: "Patent-ETL-scheduler",
-      description: "Scheduled run for Patent ETL pipeline",
-      startOnCreation: true,
-      schedule: "cron(0 7 1,15 * ? *)" // run at 7:00 AM UTC on the 1st and 15th of every month
-    });
+        actions: [{
+          jobName: fetchEpoPatentsJobName,
+          timeout: TIMEOUT
+        }],
+        type: 'SCHEDULED',
+        name: "Patent-ETL-scheduler",
+        description: "Scheduled run for Patent ETL pipeline",
+        startOnCreation: true,
+        schedule: "cron(0 7 1,15 * ? *)" // run at 7:00 AM UTC on the 1st and 15th of every month
+      });
 
     // Destroy Glue related resources when PatentDataStack is deleted
     fetchEpoPatentsJob.applyRemovalPolicy(RemovalPolicy.DESTROY);
