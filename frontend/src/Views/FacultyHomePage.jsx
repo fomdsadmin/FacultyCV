@@ -332,7 +332,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
         return [];
     }
   }
-console.log(academicSections.filter((s) => (s.title === "Post-Secondary Education"))[0].data_section_id)
+
   const getSection = (category) => {
     console.log(category)
     switch (category) {
@@ -344,7 +344,7 @@ console.log(academicSections.filter((s) => (s.title === "Post-Secondary Educatio
                   key={index}
                   user={userInfo}
                   section={academicSections.filter((s) => (s.title === title))[0]}
-                  onBack={() => { }}
+                  onBack={null}
                 />
             </AccordionItem>
           ))}
