@@ -77,12 +77,21 @@ export class ApiStack extends cdk.Stack {
       description: "Lambda layer containing the database connection",
       layerVersionName: `${resourcePrefix}-databaseConnectLayer`
     })
+   
+    // OpenaAI layer for lambda functions
+    const openailayer = new LayerVersion(this, "openaiLayer", {
+      code: Code.fromAsset("./layers/openai.zip"),
+      compatibleRuntimes: [Runtime.PYTHON_3_9],
+      description: "Lambda layer containing the openai Python library",
+      layerVersionName: `${resourcePrefix}-openaiLayer`
+    })
 
     this.layerList["psycopg2"] = psycopgLayer;
     this.layerList["reportlab"] = reportLabLayer;
     this.layerList["requests"] = requestsLayer;
     this.layerList["aws-jwt-verify"] = awsJwtVerifyLayer;
     this.layerList["databaseConnect"] = databaseConnectLayer;
+    this.layerList["openai"] = openailayer;
 
     // Auth
     this.userPool = new cognito.UserPool(this, "FacultyCVUserPool", {
