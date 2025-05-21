@@ -61,9 +61,10 @@ const fetchDeclarations = async (
       last_name,
       reporting_year
     );
+    console.log("Lambda result function fetchDeclarations:", result);
     return await result.json();
   } catch (error) {
-    console.error("Error fetching notifications:", error);
+    console.error("Error fetching declarations:", error);
   }
   return [];
 };
@@ -94,14 +95,14 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setFetchError(null);
       try {
         // Uncomment this to use Lambda:
-        // const data = await fetchDeclarations(
-        //   userInfo.first_name,
-        //   userInfo.last_name
-        // );
-        // setDeclarations(data);
+        const data = await fetchDeclarations(
+          userInfo.first_name,
+          userInfo.last_name
+        );
+        setDeclarations(data);
 
         // For now, use dummy data in correct format:
-        setDeclarations(dummyDeclarations);
+        // setDeclarations(dummyDeclarations);
       } catch (err) {
         setFetchError("Could not load declarations.");
         setDeclarations([]);
