@@ -1103,6 +1103,7 @@ export const deleteTemplate = async (template_id) => {
  *   { id, created_on }
  */
 export const addUserDeclaration = async (input) => {
+  console.log(input)
   const results = await runGraphql(addUserDeclarationMutation(input));
   return results["data"]["addUserDeclaration"];
 };
