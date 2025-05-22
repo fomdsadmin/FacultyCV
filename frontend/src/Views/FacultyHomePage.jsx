@@ -39,29 +39,29 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
         ...s,
         attributes: JSON.parse(s.attributes),
       }));
-      const filtered = parsed.filter(s =>
-        s.title === "Leaves of Absence" ||
-        s.title === "Prior Employment" ||
-        s.title === "Present Employment" ||
-        s.title === "Post-Secondary Education" ||
-        s.title === "Dissertations" ||
-        s.title === "Continuing Education or Training" ||
-        s.title === "Continuing Medical Education" ||
-        s.title === "Professional Qualifications, Certifications and Licenses" ||
-        s.title === "Visiting Lecturer" ||
-        s.title === "Other Teaching" ||
-        s.title === "Continuing Education Activities" ||
-        s.title === "Memberships on University Committees" ||
-        s.title === "Memberships on Hospital Committees" ||
-        s.title === "Memberships on Community Societies" ||
-        s.title === "Memberships on Community Committees" ||
-        s.title === "Editorships" ||
-        s.title === "Reviewer" ||
-        s.title === "External Examiner" ||
-        s.title === "Consultant"
-      );
-      console.log(JSON.stringify(sections))
-      setAcademicSections(filtered);
+      // const filtered = parsed.filter(s =>
+      //   s.title === "Leaves of Absence" ||
+      //   s.title === "Prior Employment" ||
+      //   s.title === "Present Employment" ||
+      //   s.title === "Post-Secondary Education" ||
+      //   s.title === "Dissertations" ||
+      //   s.title === "Continuing Education or Training" ||
+      //   s.title === "Continuing Medical Education" ||
+      //   s.title === "Professional Qualifications, Certifications and Licenses" ||
+      //   s.title === "Visiting Lecturer" ||
+      //   s.title === "Other Teaching" ||
+      //   s.title === "Continuing Education Activities" ||
+      //   s.title === "Memberships on University Committees" ||
+      //   s.title === "Memberships on Hospital Committees" ||
+      //   s.title === "Memberships on Community Societies" ||
+      //   s.title === "Memberships on Community Committees" ||
+      //   s.title === "Editorships" ||
+      //   s.title === "Reviewer" ||
+      //   s.title === "External Examiner" ||
+      //   s.title === "Consultant"
+      // );
+      console.log(sections.map((s) => s.title))
+      setAcademicSections(parsed);
     };
     fetchSections();
   }, []);
@@ -247,86 +247,52 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
     setChange(true);
   };
 
-  function getCategoryForTitle(title) {
-    switch (title) {
-      // Affiliations
-      case "Memberships on University Committees":
-      case "Memberships on Hospital Committees":
-      case "Memberships on Community Societies":
-      case "Memberships on Community Committees":
-      case "Editorships":
-      case "Reviewer":
-      case "External Examiner":
-      case "Consultant":
-        return "Affiliations";
-
-      // Training
-      case "Continuing Education or Training":
-      case "Continuing Medical Education":
-      case "Professional Qualifications, Certifications and Licenses":
-      case "Continuing Education Activities":
-        return "Training";
-
-      // Employment
-      case "Prior Employment":
-      case "Present Employment":
-      case "Visiting Lecturer":
-      case "Other Teaching":
-        return "Employment";
-
-      // Leaves of Absence
-      case "Leaves of Absence":
-        return "Leaves of Absence";
-
-      // Education
-      case "Post-Secondary Education":
-      case "Dissertations":
-        return "Education";
-
-      // Default
-      default:
-        return "Uncategorized";
-    }
-  }
-
   function getTitlesForCategory(category) {
     switch (category) {
-      case "Affiliations":
-        return [
-          "Memberships on University Committees",
-          "Memberships on Hospital Committees",
-          "Memberships on Community Societies",
-          "Memberships on Community Committees",
-          "Editorships",
-          "Reviewer",
-          "External Examiner",
-          "Consultant"
-        ];
-
-      case "Training":
-        return [
-          "Continuing Education or Training",
-          "Continuing Medical Education",
-          "Professional Qualifications, Certifications and Licenses",
-          "Continuing Education Activities"
-        ];
-
       case "Employment":
         return [
           "Prior Employment",
           "Present Employment",
-          "Visiting Lecturer",
-          "Other Teaching"
+          "Leaves of Absence"
         ];
 
-      case "Leaves of Absence":
-        return ["Leaves of Absence"];
+      case "Service":
+        return [
+          "Other University Service",
+          "Other Hospital Service",
+          "Other Service",
+        ]
+
+      case "Teaching":
+        return [
+          "Teaching Interests",
+          "Courses Taught",
+          "Other Teaching",
+          "Undergraduate Students Supervised",
+          "Graduate Students Supervised",
+          "Postgraduate Students Supervised",
+          "Students Supervised - Other",
+          "Continuing Education Activities",
+          "Continuing Education or Training",
+          "Continuing Medical Education",
+          "Visiting Lecturer"
+        ];
 
       case "Education":
         return [
           "Post-Secondary Education",
-          "Dissertations"
+          "Continuing Education or Training",
+          "Continuing Medical Education",
+          "Professional Qualifications, Certifications and Licenses"
         ];
+
+        case "Awards":
+          return [
+            "Teaching Awards",
+            "Service Awards",
+            "Research Awards",
+            "Other Awards"
+          ];
 
       default:
         return [];
@@ -352,7 +318,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
     </>
   }
 
-  const categories = ["Training", "Employment", "Leaves of Absence", "Education"]
+  const categories = ["Affiliations", "Employment", "Service", "Teaching", "Education", "Awards", "Linkages"]
 
   return (
     <PageContainer>
@@ -569,16 +535,16 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
         <div className="ml-4 mt-12 pr-5">
           <div className="flex space-x-4 mb-4 overflow-x-auto max-w-[100%]">
             {
-              [{ title: 'Affiliations' }, { title: 'Training' }, { title: 'Employment' }, { title: 'Leaves of Absence' }, { title: 'Education' }, { title: 'Linkages' }].map((section) => (
+              categories.map((title) => (
                 <button
-                  key={section.title}
-                  className={`text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 ${activeTab === section.title
+                  key={title}
+                  className={`text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 ${activeTab === title
                     ? 'bg-blue-600 text-white shadow'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
-                  onClick={() => setActiveTab(section.title)}
+                  onClick={() => setActiveTab(title)}
                 >
-                  {section.title}
+                  {title}
                 </button>
               ))
             }
