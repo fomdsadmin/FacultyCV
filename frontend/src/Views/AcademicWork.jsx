@@ -31,7 +31,16 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
       attributes: JSON.parse(section.attributes),
     }));
     parsedSections.sort((a, b) => a.title.localeCompare(b.title));
-    setDataSections(parsedSections);
+    setDataSections(parsedSections.filter((section) =>
+      section.data_type !== "Service to the Community" &&
+      section.data_type !== "Teaching" &&
+      section.data_type !== "Education and Career" &&
+      section.data_type !== "Leaves of Absence" &&
+      section.data_type !== "Service to the Hospital" &&
+      section.data_type !== "Service to the University" &&
+      section.data_type !== "Awards and Distinctions" &&
+      section.data_type !== "Employment"
+    ));
     setLoading(false);
   };
 
@@ -67,9 +76,8 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
       <>
         <div className="flex flex-wrap gap-3 px-4 py-2 mb-6">
           <button
-            className={`px-4 py-2 rounded-full transition-all duration-200 text-sm md:text-base shadow-sm ${
-              activeFilter === null ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
-            }`}
+            className={`px-4 py-2 rounded-full transition-all duration-200 text-sm md:text-base shadow-sm ${activeFilter === null ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
+              }`}
             onClick={() => onSelect(null)}
           >
             All
@@ -77,9 +85,8 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
           {filters.map((filter) => (
             <div key={filter} className="relative flex items-center gap-1">
               <button
-                className={`px-4 py-2 rounded-full transition-all duration-200 text-sm md:text-base shadow-sm ${
-                  activeFilter === filter ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
-                }`}
+                className={`px-4 py-2 rounded-full transition-all duration-200 text-sm md:text-base shadow-sm ${activeFilter === filter ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
+                  }`}
                 onClick={() => onSelect(filter)}
               >
                 {filter}
