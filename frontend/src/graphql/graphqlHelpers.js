@@ -47,6 +47,7 @@ import {
   addToUserGroupMutation,
   removeFromUserGroupMutation,
   updateLatexConfigurationMutation,
+  addUserDeclarationMutation,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -504,7 +505,7 @@ export const getRiseDataMatches = async (first_name, last_name) => {
  *  {
  *      secure_funding_id
  *      first_name,
- *      last_name,
+ *      last_name
  *      data_details: JSON string
  *  }, ...
  * ]
@@ -1090,4 +1091,18 @@ export const deleteUserConnection = async (user_connection_id) => {
 export const deleteTemplate = async (template_id) => {
   const results = await runGraphql(deleteTemplateMutation(template_id));
   return results["data"]["deleteTemplate"];
+};
+
+/**
+ * Function to add a user declaration
+ * Arguments:
+ *   input: {
+ *     first_name, last_name, reporting_year, created_by, other_data (object)
+ *   }
+ * Return value:
+ *   { id, created_on }
+ */
+export const addUserDeclaration = async (input) => {
+  const results = await runGraphql(addUserDeclarationMutation(input));
+  return results["data"]["addUserDeclaration"];
 };
