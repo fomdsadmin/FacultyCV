@@ -50,15 +50,22 @@ import {
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
-const executeGraphql = async (query, variables) => {
-    const client = generateClient();
-    const results = await client.graphql({
-      query,
-      variables,
-    });
-    return results;
-  };
+const executeGraphql = async (query, variables=null) => {
+  const client = generateClient();
+  let input = {
+    query
+  }
 
+  if (variables) {
+    input = {
+      query,
+      variables
+    }
+  }
+
+  const results = await client.graphql(input);
+  return results;
+};
 const runGraphql = async (query) => {
   const client = generateClient();
   const results = await client.graphql({
