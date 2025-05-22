@@ -1,4 +1,10 @@
-# This is for OpenAI
+# Get Bio from OpenAI
+type BioResponse {
+	answer: String
+	error: String
+}
+
+# This is for OpenAI 
 type LambdaAIResponse {
   answer: [ResearchKeywordCategory]
   response_time_seconds: Float
@@ -177,6 +183,8 @@ type InsertResponse {
 }
 
 type Query {
+  GetGenerateBio(username_input: String!): BioResponse
+      @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
   GetAIResponse(user_input: String!): LambdaAIResponse
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
