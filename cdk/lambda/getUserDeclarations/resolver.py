@@ -12,7 +12,7 @@ def getUserDeclarations(arguments):
     print("Connected to Database")
     cursor = connection.cursor()
     cursor.execute(
-        'SELECT reporting_year, other_data, created_on, created_by FROM declarations WHERE first_name = %s AND last_name = %s',
+        'SELECT reporting_year, other_data, created_by, created_on FROM declarations WHERE first_name = %s AND last_name = %s',
         (arguments['first_name'], arguments['last_name'])
     )
     results = cursor.fetchall()
@@ -24,25 +24,18 @@ def getUserDeclarations(arguments):
     for result in results:
         year = result[0]
         other_data = result[1]  # JSONB field
-        created_on = result[2]
-        created_by = result[3]
+        created_by = result[2]
+        created_on = result[3]
 
         match = {
-            'year': year,
-            'coi': other_data.get('conflict_of_interest'),
-            'fomMerit': other_data.get('fom_merit'),
-            'psa': other_data.get('psa_awards'),
-            'promotion': other_data.get('fom_promotion_review'),
-            'meritJustification': other_data.get('merit_justification'),
-            'psaJustification': other_data.get('psa_justification'),
-            'honorific': other_data.get('fom_honorific_impact_report'),
-            'created_on': created_on,
-            'created_by': created_by
+            'reporting_year': year,
+            'other_data': other_data,
+            'created_by':created_by,
+            'created_on': created_on.strftime("%Y-%m-%d %H:%M:%S.%f")
         }
         updated_at = other_data.get('updated_at')
         if updated_at is not None:
-            match['updated_at'] = updated_at
-
+            match['other_data'].append(updated_at)
         matches.append(match)
 
     return matches

@@ -25,44 +25,34 @@ const DECLARATION_LABELS = {
   },
 };
 
-// Dummy data in correct format (matches backend/Lambda format)
-const dummyDeclarations = [
-  {
-    year: 2025,
-    coi: "YES",
-    fomMerit: "NO",
-    psa: "YES",
-    promotion: "NO",
-    meritJustification: "Contributed to teaching and research.",
-    psaJustification: "Recognized for outstanding service.",
-    honorific: "Led a major research initiative.",
-  },
-  {
-    year: 2024,
-    coi: "YES",
-    fomMerit: "YES",
-    psa: "NO",
-    promotion: "NO",
-    meritJustification: "Improved curriculum.",
-    psaJustification: "",
-    honorific: "",
-  },
-];
+const normalizeDeclarations = (rawDeclarations) => {
+  return rawDeclarations.map((decl) => {
+    let other = {};
+    try {
+      other = JSON.parse(decl.other_data || "{}");
+    } catch (e) {
+      other = {};
+    }
+    return {
+      year: Number(decl.reporting_year),
+      coi: (other.conflict_of_interest || "").toUpperCase(),
+      fomMerit: (other.fom_merit || "").toUpperCase(),
+      psa: (other.psa_awards || "").toUpperCase(),
+      promotion: (other.fom_promotion_review || "").toUpperCase(),
+      meritJustification: other.merit_justification || "",
+      psaJustification: other.psa_justification || "",
+      honorific: other.fom_honorific_impact_report || "",
+      created_by: decl.created_by,
+      created_on: decl.created_on,
+    };
+  });
+};
 
-const fetchDeclarations = async (
-  first_name,
-  last_name,
-  reporting_year = null
-) => {
-  // Replace with your actual Lambda endpoint
+const fetchDeclarations = async (first_name, last_name) => {
   try {
-    const result = await getUserDeclarations(
-      first_name,
-      last_name,
-      reporting_year
-    );
-    console.log("Lambda result function fetchDeclarations:", result);
-    return await result.json();
+    const result = await getUserDeclarations(first_name, last_name);
+    // Normalize the API response to match the UI's expected format
+    return normalizeDeclarations(result);
   } catch (error) {
     console.error("Error fetching declarations:", error);
   }
@@ -99,6 +89,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           userInfo.first_name,
           userInfo.last_name
         );
+        // console.log(userInfo.first_name, userInfo.last_name);
         setDeclarations(data);
 
         // For now, use dummy data in correct format:

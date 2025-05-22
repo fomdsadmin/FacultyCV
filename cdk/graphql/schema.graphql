@@ -165,10 +165,10 @@ type OrcidSectionOutput {
 }
 
 type Declaration {
-  reporting_year: Int!
-  other_data: AWSJSON
-  created_on: AWSDateTime
-  created_by: String
+	reporting_year: String!
+	other_data: AWSJSON!
+	created_by: String!
+	created_on: String!
 }
 
 type Query {
@@ -217,7 +217,7 @@ type Query {
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )
 
-  getUserDeclarations(first_name: String!, last_name: String!): [Declaration!]!
+  getUserDeclarations(first_name: String!, last_name: String!): [Declaration!]
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )

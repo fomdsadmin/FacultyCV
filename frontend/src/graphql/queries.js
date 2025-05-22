@@ -211,9 +211,11 @@ export const getAllNotificationsQuery = () => `
     }
 `;
 
-export const getUserDeclarationsQuery = () => `
+export const getUserDeclarationsQuery = (first_name, last_name) => `
     query getUserDeclarations {
-        getUserDeclarations {
+        getUserDeclarations (
+            first_name: "${first_name}", last_name: "${last_name}"
+        ) {
             reporting_year
             other_data
             created_on
