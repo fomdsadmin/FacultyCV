@@ -305,6 +305,15 @@ type Mutation {
     other_data: AWSJSON!
   ): InsertResponse!
 
+  deleteUserDeclaration(
+    first_name: String!
+    last_name: String!
+    reporting_year: Int!
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
   addToUserGroup(userName: String!, userGroup: String!): String
 
   removeFromUserGroup(userName: String!, userGroup: String!): String

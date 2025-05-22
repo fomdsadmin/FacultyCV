@@ -12,6 +12,21 @@ export const addUserDeclarationMutation = (input) => `
     }
   }
 `;
+
+export const deleteUserDeclarationMutation = (
+  first_name,
+  last_name,
+  reporting_year
+) => `
+    mutation DeleteUserDeclaration {
+        deleteUserDeclaration(
+            first_name: "${first_name}",
+            last_name: "${last_name}",
+            reporting_year: ${reporting_year}
+        )
+    }
+`;
+
 export const addToUserGroupMutation = (userName, userGroup) => `
     mutation AddToUserGroup {
         addToUserGroup(
@@ -30,7 +45,12 @@ export const removeFromUserGroupMutation = (userName, userGroup) => `
     }
 `;
 
-export const addSectionMutation = (title, description, data_type, attributes) => `
+export const addSectionMutation = (
+  title,
+  description,
+  data_type,
+  attributes
+) => `
     mutation AddSection {
         addSection(
             title: "${title}",
@@ -41,11 +61,26 @@ export const addSectionMutation = (title, description, data_type, attributes) =>
     }
 `;
 
-
-
-export const addUserMutation = (first_name, last_name, preferred_name,
-    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id
+export const addUserMutation = (
+  first_name,
+  last_name,
+  preferred_name,
+  email,
+  role,
+  bio,
+  rank,
+  institution,
+  primary_department,
+  secondary_department,
+  primary_faculty,
+  secondary_faculty,
+  primary_affiliation,
+  secondary_affiliation,
+  campus,
+  keywords,
+  institution_user_id,
+  scopus_id,
+  orcid_id
 ) => `
     mutation AddUser {
         addUser(
@@ -72,7 +107,13 @@ export const addUserMutation = (first_name, last_name, preferred_name,
     }
 `;
 
-export const addUserCVDataMutation = (user_id, data_section_id, data_details, editable, cognito_user_id) => `
+export const addUserCVDataMutation = (
+  user_id,
+  data_section_id,
+  data_details,
+  editable,
+  cognito_user_id
+) => `
     mutation AddUserCVData {
         addUserCVData(
             user_id: "${user_id}"
@@ -94,9 +135,15 @@ export const addUniversityInfoMutation = (type, value) => `
 `;
 
 export const addUserConnectionMutation = (
-    faculty_user_id, faculty_first_name, faculty_last_name, faculty_email,
-    assistant_user_id, assistant_first_name, assistant_last_name, assistant_email,
-    status
+  faculty_user_id,
+  faculty_first_name,
+  faculty_last_name,
+  faculty_email,
+  assistant_user_id,
+  assistant_first_name,
+  assistant_last_name,
+  assistant_email,
+  status
 ) => `
     mutation AddUserConnection {
         addUserConnection(
@@ -113,7 +160,12 @@ export const addUserConnectionMutation = (
     }
 `;
 
-export const addTemplateMutation = (title, data_section_ids, start_year, end_year) => `
+export const addTemplateMutation = (
+  title,
+  data_section_ids,
+  start_year,
+  end_year
+) => `
     mutation AddTemplate {
         addTemplate(
             title: "${title}"
@@ -125,8 +177,8 @@ export const addTemplateMutation = (title, data_section_ids, start_year, end_yea
 `;
 
 export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
-    if(orcid_id) {
-        return `
+  if (orcid_id) {
+    return `
             mutation LinkScopusId {
                 linkScopusId(
                     user_id: "${user_id}",
@@ -135,8 +187,8 @@ export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
                 )
             }
         `;
-    } else {
-        return `
+  } else {
+    return `
             mutation LinkScopusId {
                 linkScopusId(
                     user_id: "${user_id}",
@@ -144,8 +196,8 @@ export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
                 )
             }
         `;
-    }
-}
+  }
+};
 
 export const linkOrcidMutation = (user_id, orcid_id) => `
     mutation LinkOrcid {
@@ -156,9 +208,29 @@ export const linkOrcidMutation = (user_id, orcid_id) => `
     }
 `;
 
-export const updateUserMutation = (user_id, first_name, last_name, preferred_name,
-    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id, cognito_user_id) => `
+export const updateUserMutation = (
+  user_id,
+  first_name,
+  last_name,
+  preferred_name,
+  email,
+  role,
+  bio,
+  rank,
+  institution,
+  primary_department,
+  secondary_department,
+  primary_faculty,
+  secondary_faculty,
+  primary_affiliation,
+  secondary_affiliation,
+  campus,
+  keywords,
+  institution_user_id,
+  scopus_id,
+  orcid_id,
+  cognito_user_id
+) => `
     mutation UpdateUser {
         updateUser(
             first_name: "${first_name}"
@@ -196,7 +268,11 @@ export const updateSectionMutation = (data_section_id, archive, attributes) => `
     }
 `;
 
-export const updateUserCVDataMutation = (user_cv_data_id, data_details, cognito_user_id) => `
+export const updateUserCVDataMutation = (
+  user_cv_data_id,
+  data_details,
+  cognito_user_id
+) => `
     mutation UpdateUserCVData {
         updateUserCVData(
             user_cv_data_id: "${user_cv_data_id}"
@@ -206,7 +282,11 @@ export const updateUserCVDataMutation = (user_cv_data_id, data_details, cognito_
     }
 `;
 
-export const updateUserCVDataArchiveMutation = (user_cv_data_id, archive, cognito_user_id) => `
+export const updateUserCVDataArchiveMutation = (
+  user_cv_data_id,
+  archive,
+  cognito_user_id
+) => `
     mutation UpdateUserCVData {
         updateUserCVData(
             user_cv_data_id: "${user_cv_data_id}"
@@ -216,7 +296,11 @@ export const updateUserCVDataArchiveMutation = (user_cv_data_id, archive, cognit
     }
 `;
 
-export const updateUniversityInfoMutation = (university_info_id, type, value) => `
+export const updateUniversityInfoMutation = (
+  university_info_id,
+  type,
+  value
+) => `
     mutation UpdateUniversityInfo {
         updateUniversityInfo(
             type: "${type}"
@@ -235,7 +319,13 @@ export const updateUserConnectionMutation = (user_connection_id, status) => `
     }
 `;
 
-export const updateTemplateMutation = (template_id, title, data_section_ids, start_year, end_year) => `
+export const updateTemplateMutation = (
+  template_id,
+  title,
+  data_section_ids,
+  start_year,
+  end_year
+) => `
     mutation UpdateTemplate {
         updateTemplate(
             template_id: "${template_id}"
@@ -271,4 +361,4 @@ export const updateLatexConfigurationMutation = (vspace, margin, font) => `
             font: "${font}"
         )
     }
-`
+`;

@@ -5,6 +5,7 @@ import DeclarationForm from "../Components/DeclarationForm.jsx";
 import {
   getUserDeclarations,
   addUserDeclaration,
+  deleteUserDeclaration,
 } from "../graphql/graphqlHelpers";
 import { Link } from "react-router-dom";
 import { FaRegCalendarAlt } from "react-icons/fa";
@@ -159,9 +160,24 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }, 100);
   };
 
-  const handleDelete = (year) => {
+  const handleDelete = async (year) => {
     // TODO: Implement delete functionality
-    alert("Delete functionality coming soon!");
+    try {
+      await deleteUserDeclaration(
+        userInfo.first_name,
+        userInfo.last_name,
+        year
+      );
+      // Optionally, re-fetch declarations to update the list
+      const data = await fetchDeclarations(
+        userInfo.first_name,
+        userInfo.last_name
+      );
+      setDeclarations(data);
+    } catch (error) {
+      alert("Failed to delete declaration.");
+      console.error("Error delete declaration:", error);
+    }
   };
 
   // Handler for create new declaration
