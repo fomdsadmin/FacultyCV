@@ -80,9 +80,19 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     { value: nextYear, label: nextYear.toString() },
   ];
 
+  // Only show years that don't already exist
+  const availableYears = [
+    { value: thisYear, label: thisYear.toString() },
+    { value: nextYear, label: nextYear.toString() },
+  ].filter(
+    (opt) => !declarations.some((d) => d.year === Number(opt.value))
+  );
+
   // Find current and next year declarations
   const currentYearDecl = declarations.find((d) => d.year === thisYear);
   const nextYearDecl = declarations.find((d) => d.year === nextYear);
+  const disableCreate =
+    !!currentYearDecl && !!nextYearDecl;
 
   // Fetch declarations from Lambda on mount or when user changes
   useEffect(() => {
@@ -260,6 +270,20 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }
   };
 
+  const yearOptionsForForm = React.useMemo(() => {
+    if (editYear) {
+      // In edit mode, show only the year being edited
+      return [
+        { value: editYear, label: editYear.toString() }
+      ];
+    }
+    // In create mode, show only available years
+    return [
+      { value: "", label: "Select year..." },
+      ...availableYears,
+    ];
+  }, [editYear, availableYears]);
+
   return (
     <PageContainer>
       {/* Sidebar */}
@@ -283,8 +307,14 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         <div className="mb-8 px-4">
           <div className="flex items-right justify-end mb-6">
             <button
-              className="btn btn-primary bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+              className={`
+                btn btn-primary px-6 py-2 rounded-lg shadow transition
+                ${disableCreate
+                  ? "bg-gray-300 text-gray-600 border border-gray-400 cursor-not-allowed opacity-90"
+                  : "bg-blue-600 text-white hover:bg-blue-700"}
+              `}
               onClick={handleCreate}
+              disabled={disableCreate}
             >
               Create New Declaration
             </button>
@@ -329,7 +359,9 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                       >
                         <div className="flex items-center gap-3 px-2">
                           <FaRegCalendarAlt className={`text-xl ${isCurrent ? "text-blue-500" : isNext ? "text-green-500" : "text-zinc-400"}`} />
-                          <span className={`font-bold text-lg ${isCurrent || isNext ? "text-blue-700" : "text-zinc-600"}`}>
+                          <span className={`font-bold text-lg ${
+  isCurrent ? "text-blue-700" : isNext ? "text-green-700" : "text-zinc-600"
+}`}>
                             {decl.year}
                           </span>
                           {isCurrent && (
@@ -431,7 +463,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             formRef={formRef}
             onCancel={handleCancel}
             onSave={handleSave}
-            yearOptions={yearOptions}
+            yearOptions={yearOptionsForForm}
             isEdit={!!editYear}
             validationErrors={validationErrors}
             setValidationErrors={setValidationErrors}   // <-- Add this line
