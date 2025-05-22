@@ -84,15 +84,12 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const availableYears = [
     { value: thisYear, label: thisYear.toString() },
     { value: nextYear, label: nextYear.toString() },
-  ].filter(
-    (opt) => !declarations.some((d) => d.year === Number(opt.value))
-  );
+  ].filter((opt) => !declarations.some((d) => d.year === Number(opt.value)));
 
   // Find current and next year declarations
   const currentYearDecl = declarations.find((d) => d.year === thisYear);
   const nextYearDecl = declarations.find((d) => d.year === nextYear);
-  const disableCreate =
-    !!currentYearDecl && !!nextYearDecl;
+  const disableCreate = !!currentYearDecl && !!nextYearDecl;
 
   // Fetch declarations from Lambda on mount or when user changes
   useEffect(() => {
@@ -162,6 +159,11 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }, 100);
   };
 
+  const handleDelete = (year) => {
+    // TODO: Implement delete functionality
+    alert("Delete functionality coming soon!");
+  };
+
   // Handler for create new declaration
   const handleCreate = () => {
     setEditYear(null);
@@ -209,11 +211,17 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     if (Object.keys(errors).length > 0) {
       // Scroll to the first error field
       setTimeout(() => {
-        const firstErrorKey = ["year", "coi", "fomMerit", "psa", "promotion"].find(
-          (key) => errors[key]
-        );
+        const firstErrorKey = [
+          "year",
+          "coi",
+          "fomMerit",
+          "psa",
+          "promotion",
+        ].find((key) => errors[key]);
         if (firstErrorKey) {
-          const el = document.getElementById(`declaration-field-${firstErrorKey}`);
+          const el = document.getElementById(
+            `declaration-field-${firstErrorKey}`
+          );
           if (el) {
             el.scrollIntoView({ behavior: "smooth", block: "center" });
             el.focus?.();
@@ -273,15 +281,10 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const yearOptionsForForm = React.useMemo(() => {
     if (editYear) {
       // In edit mode, show only the year being edited
-      return [
-        { value: editYear, label: editYear.toString() }
-      ];
+      return [{ value: editYear, label: editYear.toString() }];
     }
     // In create mode, show only available years
-    return [
-      { value: "", label: "Select year..." },
-      ...availableYears,
-    ];
+    return [{ value: "", label: "Select year..." }, ...availableYears];
   }, [editYear, availableYears]);
 
   return (
@@ -309,9 +312,11 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             <button
               className={`
                 btn btn-primary px-6 py-2 rounded-lg shadow transition
-                ${disableCreate
-                  ? "bg-gray-300 text-gray-600 border border-gray-400 cursor-not-allowed opacity-90"
-                  : "bg-blue-600 text-white hover:bg-blue-700"}
+                ${
+                  disableCreate
+                    ? "bg-gray-300 text-gray-600 border border-gray-400 cursor-not-allowed opacity-90"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }
               `}
               onClick={handleCreate}
               disabled={disableCreate}
@@ -336,7 +341,8 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
               declarations
                 .sort((a, b) => b.year - a.year)
                 .map((decl) => {
-                  const canEdit = decl.year === thisYear || decl.year === nextYear;
+                  const canEdit =
+                    decl.year === thisYear || decl.year === nextYear;
                   const isCurrent = decl.year === thisYear;
                   const isNext = decl.year === nextYear;
                   return (
@@ -345,8 +351,18 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                       className={`
                         flex flex-col rounded-xl shadow transition
                         w-full max-w-6xl mx-auto mb-2 border-l-8 px-2 py-2
-                        ${isCurrent ? "border-blue-500 bg-white" : isNext ? "border-green-500 bg-white" : "border-zinc-300 bg-zinc-50"}
-                        ${expandedYear === decl.year ? "ring-2 ring-blue-300" : ""}
+                        ${
+                          isCurrent
+                            ? "border-blue-500 bg-white"
+                            : isNext
+                            ? "border-green-500 bg-white"
+                            : "border-zinc-300 bg-zinc-50"
+                        }
+                        ${
+                          expandedYear === decl.year
+                            ? "ring-2 ring-blue-300"
+                            : ""
+                        }
                       `}
                     >
                       <button
@@ -358,39 +374,74 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                         }
                       >
                         <div className="flex items-center gap-3 px-2">
-                          <FaRegCalendarAlt className={`text-xl ${isCurrent ? "text-blue-500" : isNext ? "text-green-500" : "text-zinc-400"}`} />
-                          <span className={`font-bold text-lg ${
-  isCurrent ? "text-blue-700" : isNext ? "text-green-700" : "text-zinc-600"
-}`}>
+                          <FaRegCalendarAlt
+                            className={`text-xl ${
+                              isCurrent
+                                ? "text-blue-500"
+                                : isNext
+                                ? "text-green-500"
+                                : "text-zinc-400"
+                            }`}
+                          />
+                          <span
+                            className={`font-bold text-lg ${
+                              isCurrent
+                                ? "text-blue-700"
+                                : isNext
+                                ? "text-green-700"
+                                : "text-zinc-600"
+                            }`}
+                          >
                             {decl.year}
                           </span>
                           {isCurrent && (
-                            <span className="ml-2 px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700 font-semibold">Current</span>
+                            <span className="ml-2 px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700 font-semibold">
+                              Current
+                            </span>
                           )}
                           {isNext && (
-                            <span className="ml-2 px-2 py-0.5 text-xs rounded bg-green-100 text-green-700 font-semibold">Next</span>
+                            <span className="ml-2 px-2 py-0.5 text-xs rounded bg-green-100 text-green-700 font-semibold">
+                              Next
+                            </span>
                           )}
                         </div>
                         <div className="flex items-center gap-4">
                           {canEdit && (
-                            <button
-                              className="btn btn-s btn-outline text-blue-600 border-blue-400 hover:bg-blue-500 hover:text-white transition"
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleEdit(decl.year);
-                              }}
-                            >
-                              Edit
-                            </button>
+                            <>
+                              <button
+                                className="btn btn-s btn-outline text-blue-600 border-blue-400 hover:bg-blue-500 hover:text-white transition"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(decl.year);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="btn btn-s btn-outline text-red-600 border-red-400 hover:bg-red-500 hover:text-white transition ml-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(decl.year);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </>
                           )}
                           <svg
-                            className={`w-6 h-6 ml-2 transition-transform ${expandedYear === decl.year ? "rotate-180" : ""}`}
+                            className={`w-6 h-6 ml-2 transition-transform ${
+                              expandedYear === decl.year ? "rotate-180" : ""
+                            }`}
                             fill="none"
                             stroke="currentColor"
                             strokeWidth={2}
                             viewBox="0 0 24 24"
                           >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19 9l-7 7-7-7"
+                            />
                           </svg>
                         </div>
                       </button>
@@ -398,11 +449,16 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                         <div className="px-6 ml-10 pb-4 pt-2 text-gray-700 text-base">
                           <div className="mb-4">
                             <b>Conflict of Interest and Commitment:</b>
-                            <div className="ml-4">{DECLARATION_LABELS.coi[decl.coi] || decl.coi}</div>
+                            <div className="ml-4">
+                              {DECLARATION_LABELS.coi[decl.coi] || decl.coi}
+                            </div>
                           </div>
                           <div className="mb-4">
                             <b>FOM Merit:</b>
-                            <div className="ml-4">{DECLARATION_LABELS.fomMerit[decl.fomMerit] || decl.fomMerit}</div>
+                            <div className="ml-4">
+                              {DECLARATION_LABELS.fomMerit[decl.fomMerit] ||
+                                decl.fomMerit}
+                            </div>
                             {decl.meritJustification && (
                               <div className="ml-4 mt-1 text-mmt-1 text-m text-gray-500">
                                 <b>Justification:</b> {decl.meritJustification}
@@ -411,7 +467,9 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                           </div>
                           <div className="mb-4">
                             <b>PSA Awards:</b>
-                            <div className="ml-4">{DECLARATION_LABELS.psa[decl.psa] || decl.psa}</div>
+                            <div className="ml-4">
+                              {DECLARATION_LABELS.psa[decl.psa] || decl.psa}
+                            </div>
                             {decl.psaJustification && (
                               <div className="ml-4 mt-1 text-m text-gray-500">
                                 <b>Justification:</b> {decl.psaJustification}
@@ -420,16 +478,22 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                           </div>
                           <div className="mb-4">
                             <b>Promotion Review:</b>
-                            <div className="ml-4">{DECLARATION_LABELS.promotion[decl.promotion] || decl.promotion}</div>
+                            <div className="ml-4">
+                              {DECLARATION_LABELS.promotion[decl.promotion] ||
+                                decl.promotion}
+                            </div>
                           </div>
                           {decl.honorific && (
                             <div className="mb-4">
                               <b>Honorific Impact Report:</b>
-                              <div className="ml-4 text-m mt-1text-gray-600">{decl.honorific}</div>
+                              <div className="ml-4 text-m mt-1text-gray-600">
+                                {decl.honorific}
+                              </div>
                             </div>
                           )}
                           <div className="flex flex-colmt-4 text-xs text-gray-500 items-right justify-end">
-                            Created by: {decl.created_by} &nbsp;|&nbsp; {decl.created_on}
+                            Created by: {decl.created_by} &nbsp;|&nbsp;{" "}
+                            {decl.created_on}
                           </div>
                         </div>
                       )}
@@ -466,7 +530,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             yearOptions={yearOptionsForForm}
             isEdit={!!editYear}
             validationErrors={validationErrors}
-            setValidationErrors={setValidationErrors}   // <-- Add this line
+            setValidationErrors={setValidationErrors} // <-- Add this line
           />
         )}
 
