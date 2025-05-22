@@ -219,7 +219,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       last_name: userInfo.last_name,
       reporting_year: Number(editYear || year),
       created_by: userInfo.email || userInfo.first_name,
-      other_data: {
+      other_data: JSON.stringify({
         conflict_of_interest: coi.toLowerCase(),
         fom_merit: fomMerit.toLowerCase(),
         merit_justification: meritJustification || null,
@@ -228,7 +228,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         fom_promotion_review: promotion.toLowerCase(),
         fom_honorific_impact_report: honorific || null,
         updated_at: null,
-      },
+      }), // <-- convert to JSON string for AWSJSON
     };
 
     try {

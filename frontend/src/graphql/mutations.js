@@ -1,17 +1,3 @@
-function toGraphQLInput(obj) {
-    if (obj === null) return "null";
-    if (typeof obj === "string") return `"${obj.replace(/"/g, '\\"')}"`;
-    if (typeof obj === "number" || typeof obj === "boolean") return obj.toString();
-    if (Array.isArray(obj)) return `[${obj.map(toGraphQLInput).join(", ")}]`;
-    if (typeof obj === "object") {
-      return `{${Object.entries(obj)
-        .map(([k, v]) => `${k}: ${toGraphQLInput(v)}`)
-        .join(", ")}}`;
-    }
-    return "";
-  }
-
-
 export const addUserDeclarationMutation = (input) => `
   mutation AddUserDeclaration {
     addUserDeclaration(
@@ -19,7 +5,7 @@ export const addUserDeclarationMutation = (input) => `
       last_name: "${input.last_name}",
       reporting_year: ${input.reporting_year},
       created_by: "${input.created_by}",
-      other_data: ${toGraphQLInput(input.other_data)}
+      other_data: "${input.other_data.replace(/"/g, '\\"')}"
     ) {
       id
       created_on

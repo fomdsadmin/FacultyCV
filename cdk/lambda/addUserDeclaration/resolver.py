@@ -30,30 +30,26 @@ def addUserDeclaration(arguments):
         RETURNING id, created_on;
     '''
 
-    if existing_count == 0:
         # Insert the new entry
-        cursor.execute(insert_query, (
-            arguments['first_name'],
-            arguments['last_name'],
-            arguments['reporting_year'],
-            arguments['created_by'],
-            json.dumps(arguments['other_data'])  # Convert dict to JSON string
-            )
+    cursor.execute(insert_query, (
+        arguments['first_name'],
+        arguments['last_name'],
+        arguments['reporting_year'],
+        arguments['created_by'],
+        json.dumps(arguments['other_data'])  # Convert dict to JSON string
         )
+    )
 
-        inserted_id, created_on = cursor.fetchone()
-        # templates = cursor.fetchall()
-        connection.commit()
-        cursor.close()
-        connection.close()
-        return {
-        'id': inserted_id,
-        'created_on': created_on.strftime("%Y-%m-%d %H:%M:%S.%f")
-        }
-    else:
-        cursor.close()
-        connection.close()
-        return Exception("Entry already exists")
+    inserted_id, created_on = cursor.fetchone()
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return {
+    'id': inserted_id,
+    'created_on': created_on.strftime("%Y-%m-%d %H:%M:%S.%f")
+    }
+
 
 def lambda_handler(event, context):
     arguments = event['arguments']
