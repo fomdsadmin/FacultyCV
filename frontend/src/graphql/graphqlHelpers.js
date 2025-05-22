@@ -59,15 +59,6 @@ const executeGraphql = async (query, variables) => {
     return results;
   };
 
-const executeGraphql = async (query, variables) => {
-    const client = generateClient();
-    const results = await client.graphql({
-      query,
-      variables,
-    });
-    return results;
-  };
-
 const runGraphql = async (query) => {
   const client = generateClient();
   const results = await client.graphql({
