@@ -2,8 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import PageContainer from "./PageContainer.jsx";
 import FacultyMenu from "../Components/FacultyMenu.jsx";
 import DeclarationForm from "../Components/DeclarationForm.jsx";
-import { getUserDeclarations } from "../graphql/graphqlHelpers";
+import {
+  getUserDeclarations,
+  addUserDeclaration,
+} from "../graphql/graphqlHelpers";
 import { Link } from "react-router-dom";
+import { FaRegCalendarAlt } from "react-icons/fa";
 
 // Helper to map value to full label
 const DECLARATION_LABELS = {
@@ -63,6 +67,22 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [declarations, setDeclarations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  // Year logic
+  const thisYear = new Date().getFullYear();
+  const nextYear = thisYear + 1;
+
+  // For new declaration: dropdown options
+  const yearOptions = [
+    { value: "", label: "Select year..." },
+    { value: thisYear, label: thisYear.toString() },
+    { value: nextYear, label: nextYear.toString() },
+  ];
+
+  // Find current and next year declarations
+  const currentYearDecl = declarations.find((d) => d.year === thisYear);
+  const nextYearDecl = declarations.find((d) => d.year === nextYear);
 
   // Fetch declarations from Lambda on mount or when user changes
   useEffect(() => {
@@ -165,17 +185,79 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
   // Handler for saving a new declaration (calls Lambda)
   const handleSave = async () => {
-    setShowForm(false);
-    setEditYear(null);
-    setYear("");
-    setCoi("");
-    setFomMerit("");
-    setPsa("");
-    setPromotion("");
-    setMeritJustification("");
-    setPsaJustification("");
-    setHonorific("");
-    // Optionally, re-fetch declarations here
+    // Validation logic
+    const errors = {};
+    if (!editYear && (!year || year === ""))
+      errors.year = "Please select a reporting year.";
+    if (!coi) errors.coi = "Please select Yes or No.";
+    if (!fomMerit) errors.fomMerit = "Please select Yes or No.";
+    if (!psa) errors.psa = "Please select Yes or No.";
+    if (!promotion) errors.promotion = "Please select Yes or No.";
+
+    setValidationErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      // Scroll to the first error field
+      setTimeout(() => {
+        const firstErrorKey = ["year", "coi", "fomMerit", "psa", "promotion"].find(
+          (key) => errors[key]
+        );
+        if (firstErrorKey) {
+          const el = document.getElementById(`declaration-field-${firstErrorKey}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.focus?.();
+          }
+        }
+      }, 100);
+      return;
+    }
+
+    // Build the input object for the mutation
+    const input = {
+      first_name: userInfo.first_name,
+      last_name: userInfo.last_name,
+      reporting_year: Number(editYear || year),
+      created_by: userInfo.email || userInfo.first_name,
+      other_data: {
+        conflict_of_interest: coi.toLowerCase(),
+        fom_merit: fomMerit.toLowerCase(),
+        merit_justification: meritJustification || null,
+        psa_awards: psa.toLowerCase(),
+        psa_justification: psaJustification || null,
+        fom_promotion_review: promotion.toLowerCase(),
+        fom_honorific_impact_report: honorific || null,
+        updated_at: null,
+      },
+    };
+
+    try {
+      await addUserDeclaration(input);
+      setShowForm(false);
+      setEditYear(null);
+      setYear("");
+      setCoi("");
+      setFomMerit("");
+      setPsa("");
+      setPromotion("");
+      setMeritJustification("");
+      setPsaJustification("");
+      setHonorific("");
+      setValidationErrors({});
+      // Optionally, re-fetch declarations to update the list
+      const data = await fetchDeclarations(
+        userInfo.first_name,
+        userInfo.last_name
+      );
+      setDeclarations(data);
+    } catch (error) {
+      if (error.message && error.message.includes("Entry already exists")) {
+        alert("A declaration for this year already exists.");
+      } else {
+        alert("Failed to save declaration.");
+        console.error("Error saving declaration:", error);
+      }
+    }
   };
 
   return (
@@ -223,133 +305,105 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             ) : (
               declarations
                 .sort((a, b) => b.year - a.year)
-                .map((decl) => (
-                  <div
-                    key={decl.year}
-                    className={`
-                      rounded-2xl 
-                      shadow-l 
-                      transition 
-                      w-full h-full
-                      ${
-                        expandedYear === decl.year ? "ring-2 ring-blue-400" : ""
-                      }
-                      ${
-                        decl.year === currentYear
-                          ? "border-2 border-blue-500 bg-gray-90"
-                          : "border-2 border-zinc-400 bg-zinc-200"
-                      }
-                    `}
-                    style={{ paddingTop: 0, paddingBottom: 0 }}
-                  >
-                    <button
-                      className="w-full h-full flex justify-between items-center px-8 py-4 text-left hover:bg-gray-100 transition rounded-2xl"
-                      onClick={() =>
-                        setExpandedYear(
-                          expandedYear === decl.year ? null : decl.year
-                        )
-                      }
+                .map((decl) => {
+                  const canEdit = decl.year === thisYear || decl.year === nextYear;
+                  const isCurrent = decl.year === thisYear;
+                  const isNext = decl.year === nextYear;
+                  return (
+                    <div
+                      key={decl.year}
+                      className={`
+                        flex flex-col rounded-xl shadow transition
+                        w-full max-w-6xl mx-auto mb-2 border-l-8 px-2 py-2
+                        ${isCurrent ? "border-blue-500 bg-white" : isNext ? "border-green-500 bg-white" : "border-zinc-300 bg-zinc-50"}
+                        ${expandedYear === decl.year ? "ring-2 ring-blue-300" : ""}
+                      `}
                     >
-                      <span className="font-bold text-zinc-700 text-2xl">
-                        {decl.year}
-                      </span>
-                      <div className="flex items-center gap-4">
-                        {/* Edit button: only for the latest year */}
-                        {decl.year === currentYear && (
-                          <button
-                            className="btn btn-md btn-outline text-blue-500 border-l border-blue-500 mr-2 
-                          hover:bg-blue-500 hover:text-white transition "
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(decl.year);
-                            }}
+                      <button
+                        className="flex items-center justify-between px-6 py-3 text-left hover:bg-blue-50 transition rounded-t-xl"
+                        onClick={() =>
+                          setExpandedYear(
+                            expandedYear === decl.year ? null : decl.year
+                          )
+                        }
+                      >
+                        <div className="flex items-center gap-3 px-2">
+                          <FaRegCalendarAlt className={`text-xl ${isCurrent ? "text-blue-500" : isNext ? "text-green-500" : "text-zinc-400"}`} />
+                          <span className={`font-bold text-lg ${isCurrent || isNext ? "text-blue-700" : "text-zinc-600"}`}>
+                            {decl.year}
+                          </span>
+                          {isCurrent && (
+                            <span className="ml-2 px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700 font-semibold">Current</span>
+                          )}
+                          {isNext && (
+                            <span className="ml-2 px-2 py-0.5 text-xs rounded bg-green-100 text-green-700 font-semibold">Next</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4">
+                          {canEdit && (
+                            <button
+                              className="btn btn-s btn-outline text-blue-600 border-blue-400 hover:bg-blue-500 hover:text-white transition"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleEdit(decl.year);
+                              }}
+                            >
+                              Edit
+                            </button>
+                          )}
+                          <svg
+                            className={`w-6 h-6 ml-2 transition-transform ${expandedYear === decl.year ? "rotate-180" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            viewBox="0 0 24 24"
                           >
-                            Edit
-                          </button>
-                        )}
-                        {/* Drop down arrow */}
-                        <svg
-                          className={`w-7 h-7 transform transition-transform ${
-                            expandedYear === decl.year ? "rotate-180" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </div>
-                    </button>
-                    {expandedYear === decl.year && (
-                      <div className="mx-8 mt-1 mb-4 px-12 py-2 text-gray-700 bg-gray-200 rounded-2xl">
-                        <div className="mb-3">
-                          <b>
-                            Conflict of Interest and Commitment Declaration:
-                          </b>
-                          <ul className="list-disc list-inside mt-1 indent-6">
-                            <li>
-                              {DECLARATION_LABELS.coi[decl.coi] || decl.coi}
-                            </li>
-                          </ul>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
                         </div>
-                        <div className="mb-3">
-                          <b>FOM Merit Declaration:</b>
-                          <ul className="list-disc list-inside mt-1 indent-6">
-                            <li>
-                              {DECLARATION_LABELS.fomMerit[decl.fomMerit] ||
-                                decl.fomMerit}
-                            </li>
-                            {decl.meritJustification && (
-                              <div className="mb-3">
-                                <li>
-                                  <b>Justification:</b>{" "}
-                                  {decl.meritJustification}
-                                </li>
-                              </div>
-                            )}
-                          </ul>
-                        </div>
-                        <div className="mb-3">
-                          <b>PSA Awards Declaration:</b>
-                          <ul className="list-disc list-inside mt-1 indent-6">
-                            <li>
-                              {DECLARATION_LABELS.psa[decl.psa] || decl.psa}
-                            </li>
-                            {decl.psaJustification && (
-                              <div className="mb-3">
-                                <li>
-                                  <b>Justification:</b> {decl.psaJustification}
-                                </li>
-                              </div>
-                            )}
-                          </ul>
-                        </div>
-                        <div className="mb-3">
-                          <b>Promotion Review Declaration:</b>
-                          <ul className="list-disc list-inside mt-1 indent-6">
-                            <li>
-                              {DECLARATION_LABELS.promotion[decl.promotion] ||
-                                decl.promotion}
-                            </li>
-                          </ul>
-                        </div>
-                        {decl.honorific && (
-                          <div className="mb-3">
-                            <b>Honorific Impact Report:</b>
-                            <ul className="list-disc list-inside mt-1 indent-6">
-                              <li>{decl.honorific}</li>
-                            </ul>
+                      </button>
+                      {expandedYear === decl.year && (
+                        <div className="px-6 ml-10 pb-4 pt-2 text-gray-700 text-base">
+                          <div className="mb-4">
+                            <b>Conflict of Interest and Commitment:</b>
+                            <div className="ml-4">{DECLARATION_LABELS.coi[decl.coi] || decl.coi}</div>
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))
+                          <div className="mb-4">
+                            <b>FOM Merit:</b>
+                            <div className="ml-4">{DECLARATION_LABELS.fomMerit[decl.fomMerit] || decl.fomMerit}</div>
+                            {decl.meritJustification && (
+                              <div className="ml-4 mt-1 text-mmt-1 text-m text-gray-500">
+                                <b>Justification:</b> {decl.meritJustification}
+                              </div>
+                            )}
+                          </div>
+                          <div className="mb-4">
+                            <b>PSA Awards:</b>
+                            <div className="ml-4">{DECLARATION_LABELS.psa[decl.psa] || decl.psa}</div>
+                            {decl.psaJustification && (
+                              <div className="ml-4 mt-1 text-m text-gray-500">
+                                <b>Justification:</b> {decl.psaJustification}
+                              </div>
+                            )}
+                          </div>
+                          <div className="mb-4">
+                            <b>Promotion Review:</b>
+                            <div className="ml-4">{DECLARATION_LABELS.promotion[decl.promotion] || decl.promotion}</div>
+                          </div>
+                          {decl.honorific && (
+                            <div className="mb-4">
+                              <b>Honorific Impact Report:</b>
+                              <div className="ml-4 text-m mt-1text-gray-600">{decl.honorific}</div>
+                            </div>
+                          )}
+                          <div className="flex flex-colmt-4 text-xs text-gray-500 items-right justify-end">
+                            Created by: {decl.created_by} &nbsp;|&nbsp; {decl.created_on}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
             )}
           </div>
         </div>
@@ -377,6 +431,10 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             formRef={formRef}
             onCancel={handleCancel}
             onSave={handleSave}
+            yearOptions={yearOptions}
+            isEdit={!!editYear}
+            validationErrors={validationErrors}
+            setValidationErrors={setValidationErrors}   // <-- Add this line
           />
         )}
 

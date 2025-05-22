@@ -1,3 +1,31 @@
+function toGraphQLInput(obj) {
+    if (obj === null) return "null";
+    if (typeof obj === "string") return `"${obj.replace(/"/g, '\\"')}"`;
+    if (typeof obj === "number" || typeof obj === "boolean") return obj.toString();
+    if (Array.isArray(obj)) return `[${obj.map(toGraphQLInput).join(", ")}]`;
+    if (typeof obj === "object") {
+      return `{${Object.entries(obj)
+        .map(([k, v]) => `${k}: ${toGraphQLInput(v)}`)
+        .join(", ")}}`;
+    }
+    return "";
+  }
+
+
+export const addUserDeclarationMutation = (input) => `
+  mutation AddUserDeclaration {
+    addUserDeclaration(
+      first_name: "${input.first_name}",
+      last_name: "${input.last_name}",
+      reporting_year: ${input.reporting_year},
+      created_by: "${input.created_by}",
+      other_data: ${toGraphQLInput(input.other_data)}
+    ) {
+      id
+      created_on
+    }
+  }
+`;
 export const addToUserGroupMutation = (userName, userGroup) => `
     mutation AddToUserGroup {
         addToUserGroup(
@@ -26,6 +54,8 @@ export const addSectionMutation = (title, description, data_type, attributes) =>
         )
     }
 `;
+
+
 
 export const addUserMutation = (first_name, last_name, preferred_name,
     email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
