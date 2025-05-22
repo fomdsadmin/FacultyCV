@@ -64,36 +64,17 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
 
-  // Find the biggest/latest year
-  const currentYear =
-    declarations.length > 0
-      ? Math.max(...declarations.map((d) => d.year))
-      : null;
-
-  // State for expanded declaration year
-  const [expandedYear, setExpandedYear] = useState(currentYear);
-
-  // Expand the current year by default on mount or when declarations change
-  useEffect(() => {
-    if (currentYear) setExpandedYear(currentYear);
-  }, [currentYear]);
-
   // Fetch declarations from Lambda on mount or when user changes
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setFetchError(null);
       try {
-        // Uncomment this to use Lambda:
         const data = await fetchDeclarations(
           userInfo.first_name,
           userInfo.last_name
         );
-        // console.log(userInfo.first_name, userInfo.last_name);
         setDeclarations(data);
-
-        // For now, use dummy data in correct format:
-        // setDeclarations(dummyDeclarations);
       } catch (err) {
         setFetchError("Could not load declarations.");
         setDeclarations([]);
@@ -104,13 +85,25 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       fetchData();
     }
   }, [userInfo?.first_name, userInfo?.last_name]);
+  // Find the biggest/latest year
+  const currentYear =
+    declarations.length > 0
+      ? Math.max(...declarations.map((d) => d.year))
+      : null;
+
+  // Expand the current year by default on mount or when declarations change
+  useEffect(() => {
+    if (currentYear) setExpandedYear(currentYear);
+  }, [currentYear]);
+
+  const [expandedYear, setExpandedYear] = useState(currentYear);
 
   // State for showing the form (create or edit)
   const [showForm, setShowForm] = useState(false);
-  // Optionally, track which year is being edited
-  const [editYear, setEditYear] = useState(null);
+  const [editYear, setEditYear] = useState(null); // track which year is being edited
 
   // Controlled state for select fields
+  const formRef = useRef(null); // scroll to form
   const [coi, setCoi] = useState("");
   const [fomMerit, setFomMerit] = useState("");
   const [psa, setPsa] = useState("");
@@ -120,9 +113,6 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [psaJustification, setPsaJustification] = useState("");
   const [honorific, setHonorific] = useState("");
   const [year, setYear] = useState("");
-
-  // For scrolling to form
-  const formRef = useRef(null);
 
   // Handler for edit button
   const handleEdit = (year) => {
@@ -146,7 +136,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const handleCreate = () => {
     setEditYear(null);
     setShowForm(true);
-    setYear(""); // Reset year as well
+    setYear("");
     setCoi("");
     setFomMerit("");
     setPsa("");
@@ -159,11 +149,11 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }, 100);
   };
 
-  // Optionally, implement onSave logic
+  // Reset fields on cancel and close form
   const handleCancel = () => {
     setShowForm(false);
     setEditYear(null);
-    setYear(""); // Reset year as well
+    setYear("");
     setCoi("");
     setFomMerit("");
     setPsa("");
@@ -175,8 +165,6 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
   // Handler for saving a new declaration (calls Lambda)
   const handleSave = async () => {
-    // Implement your save logic here, e.g. POST to Lambda with all form fields
-    // After saving, re-fetch declarations
     setShowForm(false);
     setEditYear(null);
     setYear("");
@@ -201,26 +189,17 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       />
 
       {/* Main content */}
-      <main className="ml-4 pr-5 w-full overflow-auto py-6 px-4">
+      <main className="ml-4 pr-5 w-full overflow-auto mt-2 py-6 px-4">
         {/* Header */}
-        <div className="flex justify-between items-start mb-10 px-4">
+        <div className="flex justify-between items-start mb-0 px-4">
           <div>
             <div className="text-4xl font-bold text-zinc-600">Declarations</div>
-            <div className="text-sm text-gray-500">
-              Last visit: 6 Nov 2025, 3:16PM (static)
-            </div>
-          </div>
-          <div>
-            <Link to="/support">
-              <button className="btn btn-sm btn-success">Get Help</button>
-            </Link>
           </div>
         </div>
 
         {/* Declarations List Dropdown */}
-        <div className="mb-12 px-4">
-          <div className="flex items-center justify-between mb-6">
-            <div className="text-xl font-bold">Previous Declarations</div>
+        <div className="mb-8 px-4">
+          <div className="flex items-right justify-end mb-6">
             <button
               className="btn btn-primary bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
               onClick={handleCreate}
