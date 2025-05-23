@@ -52,6 +52,7 @@ const normalizeDeclarations = (rawDeclarations) => {
       honorific: other.fom_honorific_impact_report || "",
       created_by: decl.created_by,
       created_on: decl.created_on,
+      updated_at: other.updated_at || null, // <-- add this line
     };
   });
 };
@@ -76,13 +77,6 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   // Year logic
   const thisYear = new Date().getFullYear();
   const nextYear = thisYear + 1;
-
-  // For new declaration: dropdown options
-  const yearOptions = [
-    { value: "", label: "Select year..." },
-    { value: thisYear, label: thisYear.toString() },
-    { value: nextYear, label: nextYear.toString() },
-  ];
 
   // Only show years that don't already exist
   const availableYears = [
@@ -526,9 +520,19 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                               </div>
                             </div>
                           )}
-                          <div className="flex flex-colmt-4 text-xs text-gray-500 items-right justify-end">
-                            Created by: {decl.created_by} &nbsp;|&nbsp;{" "}
-                            {decl.created_on}
+                          <div className="flex flex-col text-xs text-gray-500 items-end justify-end">
+                            <div>
+                              Created by: {decl.created_by} &nbsp;|&nbsp;{" "}
+                              {decl.created_on
+                                ? decl.created_on.split(" ")[0]
+                                : ""}
+                            </div>
+                            {decl.updated_at && (
+                              <div className="mt-1 items-end">
+                                Updated &nbsp;:&nbsp;{" "}
+                                {decl.updated_at.split("T")[0]}
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
