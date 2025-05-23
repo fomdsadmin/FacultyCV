@@ -9,6 +9,8 @@ import {
 } from "../graphql/graphqlHelpers";
 import { Link } from "react-router-dom";
 import { FaRegCalendarAlt } from "react-icons/fa";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Helper to map value to full label
 const DECLARATION_LABELS = {
@@ -161,14 +163,16 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   };
 
   const handleDelete = async (year) => {
-    // TODO: Implement delete functionality
     try {
       await deleteUserDeclaration(
         userInfo.first_name,
         userInfo.last_name,
         year
       );
-      // Optionally, re-fetch declarations to update the list
+      toast.success("Declaration deleted successfully!", {
+        autoClose: 2000,
+        theme: "light",
+      }); // <-- Add this line
       const data = await fetchDeclarations(
         userInfo.first_name,
         userInfo.last_name
@@ -283,6 +287,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         userInfo.first_name,
         userInfo.last_name
       );
+      toast.success("Declaration added successfully!", { autoClose: 2000 }); // <-- Add this line
       setDeclarations(data);
     } catch (error) {
       if (error.message && error.message.includes("Entry already exists")) {
@@ -315,31 +320,30 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
       {/* Main content */}
       <main className="ml-4 pr-5 w-full overflow-auto mt-2 py-6 px-4">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-0 px-4">
-          <div>
-            <div className="text-4xl font-bold text-zinc-600">Declarations</div>
-          </div>
+        {/* Heading row */}
+        <div className="max-w-6xl mx-auto px-0 mb-2">
+          <div className="text-4xl font-bold text-zinc-600">Declarations</div>
+        </div>
+
+        {/* Button row */}
+        <div className="flex justify-end max-w-6xl mx-auto px-0 mb-4">
+          <button
+            className={`btn btn-primary px-6 py-2 rounded-lg shadow transition
+        ${
+          disableCreate
+            ? "bg-gray-300 text-gray-600 border border-gray-400 cursor-not-allowed opacity-90"
+            : "bg-blue-600 text-white hover:bg-blue-700"
+        }
+      `}
+            onClick={handleCreate}
+            disabled={disableCreate}
+          >
+            Create New Declaration
+          </button>
         </div>
 
         {/* Declarations List Dropdown */}
-        <div className="mb-8 px-4">
-          <div className="flex items-right justify-end mb-6">
-            <button
-              className={`
-                btn btn-primary px-6 py-2 rounded-lg shadow transition
-                ${
-                  disableCreate
-                    ? "bg-gray-300 text-gray-600 border border-gray-400 cursor-not-allowed opacity-90"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }
-              `}
-              onClick={handleCreate}
-              disabled={disableCreate}
-            >
-              Create New Declaration
-            </button>
-          </div>
+        <div className="mb-8 max-w-6xl mx-auto px-0">
           <div className="space-y-6">
             {loading ? (
               <div className="rounded-2xl bg-zinc-100 shadow-xl border-2 border-zinc-300 px-10 py-10 flex items-center justify-center text-lg text-gray-500">
@@ -519,6 +523,20 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             )}
           </div>
         </div>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={1000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          className="mt-6"
+        />
 
         {/* Declaration Form (Create/Edit) */}
         {showForm && (
