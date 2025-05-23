@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react"
 import { getAllUniversityInfo, getAllSections, getOrcidSections, updateUser } from "../../graphql/graphqlHelpers.js"
 import { toast } from "react-toastify"
+import { useApp } from "../../Contexts/AppContext.jsx"
 
 // Create the context
 const FacultyContext = createContext(null)
@@ -15,7 +16,9 @@ export const useFaculty = () => {
 }
 
 // Provider component
-export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognitoUser, toggleViewMode }) => {
+export const FacultyProvider = ({ children }) => {
+  // Get values from AppContext
+  const { userInfo: appUserInfo, setUserInfo: setAppUserInfo, getCognitoUser, getUserInfo, toggleViewMode } = useApp()
 
   const CATEGORIES = Object.freeze({
     AFFILIATIONS: "Affiliations",
@@ -24,11 +27,11 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
     TEACHING: "Teaching",
     EDUCATION: "Education",
     AWARDS: "Awards",
-    LINKAGES: "Linkages"
-  });
+    LINKAGES: "Linkages",
+  })
 
   // User state
-  const [userInfo, setUserInfo] = useState(initialUserInfo)
+  const [userInfo, setUserInfo] = useState(appUserInfo)
   const [change, setChange] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -50,8 +53,15 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
   const [activeModal, setActiveModal] = useState(null)
 
   // IDs state
-  const [scopusId, setScopusId] = useState(initialUserInfo.scopus_id || "")
-  const [orcidId, setOrcidId] = useState(initialUserInfo.orcid_id || "")
+  const [scopusId, setScopusId] = useState(appUserInfo.scopus_id || "")
+  const [orcidId, setOrcidId] = useState(appUserInfo.orcid_id || "")
+
+  // Update local state when app state changes
+  useEffect(() => {
+    setUserInfo(appUserInfo)
+    setScopusId(appUserInfo.scopus_id || "")
+    setOrcidId(appUserInfo.orcid_id || "")
+  }, [appUserInfo])
 
   // Fetch academic sections
   useEffect(() => {
@@ -146,7 +156,8 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
         scopusId,
         orcidId,
       )
-      getUser(userInfo.email)
+      // Update both local and app state
+      getUserInfo(userInfo.email)
       setIsSubmitting(false)
       setChange(false)
     } catch (error) {
@@ -155,7 +166,7 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
     }
   }
 
-  // Sanitize input (this should be removed because graphql should take any input if done correctly)
+  // Sanitize input
   const sanitizeInput = (input) => {
     return input.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")
   }
@@ -235,6 +246,11 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
     }
   }
 
+  // Sync changes to app context when needed
+  const updateAppUserInfo = () => {
+    setAppUserInfo(userInfo)
+  }
+
   // Provide all values and functions to children
   const value = {
     // User state
@@ -280,13 +296,14 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
     handleCloseModal,
     getBio,
     getKeywords,
+    updateAppUserInfo,
 
-    // External functions
+    // External functions from AppContext
     getCognitoUser,
     toggleViewMode,
 
     // Categories
-    CATEGORIES
+    CATEGORIES,
   }
 
   return <FacultyContext.Provider value={value}>{children}</FacultyContext.Provider>

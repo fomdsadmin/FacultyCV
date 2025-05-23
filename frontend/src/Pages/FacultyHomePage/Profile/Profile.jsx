@@ -4,8 +4,7 @@ import Contact from "./Contact/Contact"
 import Keywords from "./Keywords/Keywords"
 
 const Profile = () => {
-  const { activeTab } = useFaculty()
-
+  
   return (
     <form className="ml-4">
       <Contact />

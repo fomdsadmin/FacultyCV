@@ -1,4 +1,3 @@
-"use client"
 import PageContainer from "../../Views/PageContainer.jsx"
 import FacultyMenu from "../../Components/FacultyMenu.jsx"
 import "../../CustomStyles/scrollbar.css"
@@ -88,14 +87,10 @@ const FacultyHomePageContent = () => {
   )
 }
 
-const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggleViewMode }) => {
+const FacultyHomePage = () => {
+  // No longer need to receive props as they come from AppContext
   return (
-    <FacultyProvider
-      initialUserInfo={userInfo}
-      getUser={getUser}
-      getCognitoUser={getCognitoUser}
-      toggleViewMode={toggleViewMode}
-    >
+    <FacultyProvider>
       <FacultyHomePageContent />
     </FacultyProvider>
   )
