@@ -49,6 +49,7 @@ import {
   updateLatexConfigurationMutation,
   addUserDeclarationMutation,
   deleteUserDeclarationMutation,
+  updateUserDeclarationMutation,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -1082,17 +1083,6 @@ export const deleteUserConnection = async (user_connection_id) => {
   return results["data"]["deleteUserConnection"];
 };
 
-export const deleteUserDeclaration = async (
-  first_name,
-  last_name,
-  reporting_year
-) => {
-  const results = await runGraphql(
-    deleteUserDeclarationMutation(first_name, last_name, reporting_year)
-  );
-  return results["data"]["deleteUserDeclaration"];
-};
-
 /**
  * Function to delete templates
  * Arguments:
@@ -1118,4 +1108,20 @@ export const addUserDeclaration = async (input) => {
   console.log(input);
   const results = await runGraphql(addUserDeclarationMutation(input));
   return results["data"]["addUserDeclaration"];
+};
+
+export const updateUserDeclaration = async (input) => {
+  const results = await runGraphql(updateUserDeclarationMutation(input));
+  return results["data"]["updateUserDeclaration"];
+};
+
+export const deleteUserDeclaration = async (
+  first_name,
+  last_name,
+  reporting_year
+) => {
+  const results = await runGraphql(
+    deleteUserDeclarationMutation(first_name, last_name, reporting_year)
+  );
+  return results["data"]["deleteUserDeclaration"];
 };

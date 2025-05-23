@@ -139,6 +139,18 @@ export class Resolver3Stack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "updateUserDeclaration",
+      ["updateUserDeclaration"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "deleteUserDeclaration",
       ["deleteUserDeclaration"],
       "Mutation",
