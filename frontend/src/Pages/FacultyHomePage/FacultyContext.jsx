@@ -45,7 +45,7 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
   const [academicSections, setAcademicSections] = useState([])
 
   // UI state
-  const [activeTab, setActiveTab] = useState("Education and Career")
+  const [activeTab, setActiveTab] = useState(CATEGORIES.AFFILIATIONS)
   const [modalOpen, setModalOpen] = useState(false)
   const [activeModal, setActiveModal] = useState(null)
 

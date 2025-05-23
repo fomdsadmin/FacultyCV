@@ -1,15 +1,18 @@
-"use client"
+import { useFaculty } from "../FacultyContext"
+import Bio from "./Bio/Bio"
+import Contact from "./Contact/Contact"
+import Keywords from "./Keywords/Keywords"
 
-import Orcid from "./Linkages/Orcid/Orcid"
-import Scopus from "./Linkages/Scopus/Scopus"
+const Profile = () => {
+  const { activeTab } = useFaculty()
 
-const Linkages = () => {
   return (
-    <div className="space-y-6">
-      <Scopus />
-      <Orcid />
-    </div>
+    <form className="ml-4">
+      <Contact />
+      <Bio />
+      <Keywords />
+    </form>
   )
 }
 
-export default Linkages
+export default Profile
