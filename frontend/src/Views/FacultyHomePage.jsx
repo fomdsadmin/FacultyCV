@@ -39,28 +39,6 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
         ...s,
         attributes: JSON.parse(s.attributes),
       }));
-      // const filtered = parsed.filter(s =>
-      //   s.title === "Leaves of Absence" ||
-      //   s.title === "Prior Employment" ||
-      //   s.title === "Present Employment" ||
-      //   s.title === "Post-Secondary Education" ||
-      //   s.title === "Dissertations" ||
-      //   s.title === "Continuing Education or Training" ||
-      //   s.title === "Continuing Medical Education" ||
-      //   s.title === "Professional Qualifications, Certifications and Licenses" ||
-      //   s.title === "Visiting Lecturer" ||
-      //   s.title === "Other Teaching" ||
-      //   s.title === "Continuing Education Activities" ||
-      //   s.title === "Memberships on University Committees" ||
-      //   s.title === "Memberships on Hospital Committees" ||
-      //   s.title === "Memberships on Community Societies" ||
-      //   s.title === "Memberships on Community Committees" ||
-      //   s.title === "Editorships" ||
-      //   s.title === "Reviewer" ||
-      //   s.title === "External Examiner" ||
-      //   s.title === "Consultant"
-      // );
-      console.log(sections.map((s) => s.title))
       setAcademicSections(parsed);
     };
     fetchSections();
@@ -258,9 +236,17 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
 
       case "Service":
         return [
+          "Consultant",
+          "Editorships",
+          "External Examiner",
+          "Memberships on Community Committees",
+          "Memberships on Community Societies",
+          "Memberships on Hospital Committees",
+          "Memberships on University Committees",
           "Other University Service",
           "Other Hospital Service",
           "Other Service",
+          "Reviewer"
         ]
 
       case "Teaching":
@@ -270,6 +256,7 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
           "Other Teaching",
           "Undergraduate Students Supervised",
           "Graduate Students Supervised",
+          "Graduate Students Supervisory Committee",
           "Postgraduate Students Supervised",
           "Students Supervised - Other",
           "Continuing Education Activities",
@@ -283,7 +270,8 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
           "Post-Secondary Education",
           "Continuing Education or Training",
           "Continuing Medical Education",
-          "Professional Qualifications, Certifications and Licenses"
+          "Professional Qualifications, Certifications and Licenses",
+          "Dissertations"
         ];
 
         case "Awards":
@@ -291,7 +279,8 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
             "Teaching Awards",
             "Service Awards",
             "Research Awards",
-            "Other Awards"
+            "Other Awards",
+            "Scholarships"
           ];
 
       default:
