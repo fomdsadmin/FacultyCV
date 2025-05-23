@@ -27,6 +27,17 @@ export const deleteUserDeclarationMutation = (
     }
 `;
 
+export const updateUserDeclarationMutation = (input) => `
+    mutation UpdateUserDeclaration {
+        updateUserDeclaration(
+            first_name: "${input.first_name}",
+            last_name: "${input.last_name}",
+            reporting_year: ${input.reporting_year},
+            other_data: "${input.other_data.replace(/"/g, '\\"')}"
+        )
+    }
+`;
+
 export const addToUserGroupMutation = (userName, userGroup) => `
     mutation AddToUserGroup {
         addToUserGroup(

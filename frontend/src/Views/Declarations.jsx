@@ -6,6 +6,7 @@ import {
   getUserDeclarations,
   addUserDeclaration,
   deleteUserDeclaration,
+  updateUserDeclaration,
 } from "../graphql/graphqlHelpers";
 import { Link } from "react-router-dom";
 import { FaRegCalendarAlt } from "react-icons/fa";
@@ -266,11 +267,19 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         fom_promotion_review: promotion.toLowerCase(),
         fom_honorific_impact_report: honorific || null,
         updated_at: null,
-      }), // <-- convert to JSON string for AWSJSON
+      }),
     };
 
     try {
-      await addUserDeclaration(input);
+      if (editYear) {
+        // Edit mode: update
+        await updateUserDeclaration(input);
+        toast.success("Declaration updated successfully!", { autoClose: 2000 });
+      } else {
+        // Create mode: add
+        await addUserDeclaration(input);
+        toast.success("Declaration added successfully!", { autoClose: 2000 });
+      }
       setShowForm(false);
       setEditYear(null);
       setYear("");
@@ -282,15 +291,21 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setPsaJustification("");
       setHonorific("");
       setValidationErrors({});
-      // Optionally, re-fetch declarations to update the list
+      // Refresh declarations
       const data = await fetchDeclarations(
         userInfo.first_name,
         userInfo.last_name
       );
-      toast.success("Declaration added successfully!", { autoClose: 2000 }); // <-- Add this line
       setDeclarations(data);
     } catch (error) {
-      if (error.message && error.message.includes("Entry already exists")) {
+      if (editYear) {
+        alert("Failed to update declaration.");
+        console.error("Error updating declaration:", error);
+      } else if (
+        !editYear &&
+        error.message &&
+        error.message.includes("Entry already exists")
+      ) {
         alert("A declaration for this year already exists.");
       } else {
         alert("Failed to save declaration.");
