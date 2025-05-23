@@ -1,7 +1,7 @@
 import React from "react";
 import { FaRegCalendarAlt } from "react-icons/fa"; // Add at the top if using react-icons
 
-const sc3_link = "https://google.com"; // todo , link broken on APT website
+const sc3_link = "https://universitycounsel.ubc.ca/policies/coi-policy/";
 const unicouncil_link = "https://universitycounsel.ubc.ca/subject-areas/coi/";
 const orcs_link = "https://ors.ubc.ca/";
 
@@ -41,6 +41,11 @@ const DeclarationForm = ({
       });
     }
   };
+
+  const reportingYear = isEdit ? editYear : year;
+  const reportingYearNum = Number(reportingYear);
+  const nextYearNum = reportingYearNum ? reportingYearNum + 1 : null;
+  const hasSelectedYear = !!reportingYearNum;
 
   return (
     <div className="w-full flex justify-center">
@@ -328,9 +333,16 @@ const DeclarationForm = ({
           </h2>
           <div className="bg-gray-50 p-12 rounded-lg shadow-sm border max-h-96 overflow-y-auto">
             <p className="text-gray-500">
-              Please indicate whether you wish to be considered for review for
-              promotion during the upcoming academic year (July 1, 2023 – June
-              30, 2024) for an effective of July 1, 2024.
+              {hasSelectedYear ? (
+                <>
+                  Please indicate whether you wish to be considered for review
+                  for promotion during the upcoming academic year (July 1,{" "}
+                  {reportingYearNum} – June 30, {nextYearNum}) for an effective
+                  of July 1, {nextYearNum}.
+                </>
+              ) : (
+                <>Please select a year first.</>
+              )}
             </p>
             <select
               className={`select select-bordered w-3/5 mt-5 ${
@@ -342,6 +354,7 @@ const DeclarationForm = ({
                 clearError("promotion");
               }}
               required
+              disabled={!hasSelectedYear}
             >
               <option value=""></option>
               <option value="YES">
