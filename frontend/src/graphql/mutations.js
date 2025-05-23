@@ -1,3 +1,17 @@
+export const addUserDeclarationMutation = (input) => `
+  mutation AddUserDeclaration {
+    addUserDeclaration(
+      first_name: "${input.first_name}",
+      last_name: "${input.last_name}",
+      reporting_year: ${input.reporting_year},
+      created_by: "${input.created_by}",
+      other_data: "${input.other_data.replace(/"/g, '\\"')}"
+    ) {
+      id
+      created_on
+    }
+  }
+`;
 export const addToUserGroupMutation = (userName, userGroup) => `
     mutation AddToUserGroup {
         addToUserGroup(
@@ -26,6 +40,8 @@ export const addSectionMutation = (title, description, data_type, attributes) =>
         )
     }
 `;
+
+
 
 export const addUserMutation = (first_name, last_name, preferred_name,
     email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,

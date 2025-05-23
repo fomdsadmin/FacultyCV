@@ -6,14 +6,14 @@ type BioResponse {
 
 # This is for OpenAI 
 type LambdaAIResponse {
-	answer: [ResearchKeywordCategory]
-	response_time_seconds: Float
-	error: String
+  answer: [ResearchKeywordCategory]
+  response_time_seconds: Float
+  error: String
 }
 
 type ResearchKeywordCategory {
-	category: String
-	keywords: [String]
+  category: String
+  keywords: [String]
 }
 
 type User {
@@ -171,18 +171,25 @@ type OrcidSectionOutput {
 }
 
 type Declaration {
-	reporting_year: String!
-	other_data: AWSJSON!
-	created_by: String!
-	created_on: String!
+  reporting_year: String!
+  other_data: AWSJSON!
+  created_by: String!
+  created_on: String!
+}
+
+type InsertResponse {
+  id: Int!
+  created_on: String!
 }
 
 type Query {
   GetGenerateBio(username_input: String!): BioResponse
       @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
   GetAIResponse(user_input: String!): LambdaAIResponse
-		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
-    
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
   getUser(email: String!): User
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
@@ -298,6 +305,14 @@ type Query {
 }
 
 type Mutation {
+  addUserDeclaration(
+    first_name: String!
+    last_name: String!
+    reporting_year: Int!
+    created_by: String!
+    other_data: AWSJSON!
+  ): InsertResponse!
+
   addToUserGroup(userName: String!, userGroup: String!): String
 
   removeFromUserGroup(userName: String!, userGroup: String!): String

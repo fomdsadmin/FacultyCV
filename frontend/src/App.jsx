@@ -7,7 +7,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import AuthPage from './Views/AuthPage';
 import Dashboard from './Views/dashboard.jsx';
 import Support from './Views/support.jsx'; 
-import HomePage from './Views/FacultyHomePage'; // adjust the path as needed
+import HomePage from './Views/FacultyHomePage.jsx'; // adjust the path as needed
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Declarations from './Views/Declarations.jsx';
