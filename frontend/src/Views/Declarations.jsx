@@ -266,7 +266,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         psa_justification: psaJustification || null,
         fom_promotion_review: promotion.toLowerCase(),
         fom_honorific_impact_report: honorific || null,
-        updated_at: null,
+        updated_at: editYear ? new Date().toISOString() : null,
       }),
     };
 
