@@ -162,7 +162,7 @@ const AppContent = () => {
               )
             ) :
               Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === 'Assistant' ? <AssistantHomePage userInfo={assistantUserInfo} setUserInfo={setAssistantUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo} /> :
-                Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage userInfo={userInfo} setUserInfo={setUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo} toggleViewMode={toggleViewMode} /> :
+                Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage/> :
                   <PageContainer>
                     <div className='flex items-center justify-center w-full'>
                       <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>

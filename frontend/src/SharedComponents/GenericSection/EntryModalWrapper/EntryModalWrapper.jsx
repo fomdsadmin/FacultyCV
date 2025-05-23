@@ -1,8 +1,9 @@
+import { useApp } from "../../../Contexts/AppContext";
 import EntryModal from "../../EntryModal/EntryModal"
 import { useGenericSection } from "../GenericSectionContext"
 
 const EntryModalWrapper = () => {
-    const { isModalOpen, selectedEntry, isNew, user, section, fetchData, handleCloseModal } = useGenericSection()
+    const { isModalOpen, selectedEntry, isNew, section, fetchData, handleCloseModal } = useGenericSection();
 
     if (!isModalOpen || !selectedEntry) return null
 
@@ -10,7 +11,6 @@ const EntryModalWrapper = () => {
         return (
             <EntryModal
                 isNew={true}
-                user={user}
                 section={section}
                 fields={selectedEntry.fields}
                 user_cv_data_id={selectedEntry.data_id}
@@ -24,7 +24,6 @@ const EntryModalWrapper = () => {
     return (
         <EntryModal
             isNew={false}
-            user={user}
             section={section}
             fields={selectedEntry.fields}
             user_cv_data_id={selectedEntry.data_id}

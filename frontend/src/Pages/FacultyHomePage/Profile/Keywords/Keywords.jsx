@@ -3,9 +3,11 @@
 import { useState } from "react"
 import { toast } from "react-toastify"
 import { useFaculty } from "../../FacultyContext"
+import { useApp } from "../../../../Contexts/AppContext"
 
 const Keywords = () => {
-  const { userInfo, setUserInfo, orcidId, getKeywords, setChange } = useFaculty()
+  const { getKeywords, setChange } = useFaculty();
+  const { setUserInfo, userInfo} = useApp();
   const [showKeywordsWarningDialog, setShowKeywordsWarningDialog] = useState(false)
 
   return (
@@ -29,7 +31,7 @@ const Keywords = () => {
           type="button"
           className="btn btn-sm btn-primary text-white mt-2"
           onClick={() => {
-            if (!orcidId) {
+            if (!userInfo.orcid_id) {
               toast.warning("Please enter ORCID ID before fetching keywords.")
             } else {
               setShowKeywordsWarningDialog(true)

@@ -7,10 +7,10 @@ import "react-toastify/dist/ReactToastify.css"
 import { FacultyProvider, useFaculty } from "./FacultyContext.jsx"
 import Profile from "./Profile/Profile.jsx"
 import Tabs from "./Tabs/Tabs.jsx"
+import { useApp } from "../../Contexts/AppContext.jsx"
 
-const FacultyHomePageContent = () => {
+const FacultyHomePageContent = (user) => {
   const {
-    userInfo,
     loading,
     change,
     isSubmitting,
@@ -23,6 +23,8 @@ const FacultyHomePageContent = () => {
     getCognitoUser,
     toggleViewMode,
   } = useFaculty()
+
+  const { userInfo } = useApp();
 
   return (
     <PageContainer>

@@ -3,9 +3,11 @@
 import { useState } from "react"
 import { useFaculty } from "../../FacultyContext"
 import { toast } from "react-toastify"
+import { useApp } from "../../../../Contexts/AppContext"
 
 const Bio = () => {
-  const { userInfo, setUserInfo, orcidId, getBio, setChange } = useFaculty()
+  const { getBio, setChange } = useFaculty()
+  const { setUserInfo, userInfo} = useApp();
   const [showBioWarningDialog, setShowBioWarningDialog] = useState(false)
 
   return (
@@ -28,7 +30,7 @@ const Bio = () => {
           type="button"
           className="btn btn-sm btn-primary text-white mt-2"
           onClick={() => {
-            if (!orcidId) {
+            if (!userInfo.orcid_id) {
               toast.warning("Please enter ORCID ID before fetching bio.")
             } else {
               setShowBioWarningDialog(true)

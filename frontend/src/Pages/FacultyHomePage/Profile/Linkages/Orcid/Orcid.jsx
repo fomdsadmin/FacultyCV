@@ -1,7 +1,10 @@
+import { useApp } from "../../../../../Contexts/AppContext";
 import { useFaculty } from "../../../FacultyContext"
 
 const Orcid = () => {
-  const { orcidId, handleOrcidIdClick, handleClearOrcidId, setActiveModal, setModalOpen } = useFaculty()
+  const { handleOrcidIdClick, handleClearOrcidId, setActiveModal, setModalOpen } = useFaculty()
+  const { userInfo } = useApp();
+  const orcidId = userInfo.orcid_id;
 
   return (
     <div className="p-4 border border-gray-200 rounded-md bg-gray-50 shadow-sm">

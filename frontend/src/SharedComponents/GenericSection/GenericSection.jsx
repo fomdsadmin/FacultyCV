@@ -17,9 +17,9 @@ const GenericSectionContent = () => {
   )
 }
 
-const GenericSection = ({ user, section, onBack }) => {
+const GenericSection = ({ section, onBack }) => {
   return (
-    <GenericSectionProvider user={user} section={section} onBack={onBack}>
+    <GenericSectionProvider section={section} onBack={onBack}>
       <GenericSectionContent />
     </GenericSectionProvider>
   )

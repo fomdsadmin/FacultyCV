@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react"
 import { getUserCVData, updateUserCVDataArchive } from "../../graphql/graphqlHelpers"
 import { rankFields } from "../../utils/rankingUtils"
+import { useApp } from "../../Contexts/AppContext"
 
 // Create context
 const GenericSectionContext = createContext(null)
@@ -25,7 +26,7 @@ const generateEmptyEntry = (attributes) => {
 }
 
 // Provider component
-export const GenericSectionProvider = ({ children, user, section, onBack }) => {
+export const GenericSectionProvider = ({ children, section, onBack }) => {
     // State
     const [searchTerm, setSearchTerm] = useState("")
     const [fieldData, setFieldData] = useState([])
@@ -34,11 +35,13 @@ export const GenericSectionProvider = ({ children, user, section, onBack }) => {
     const [isNew, setIsNew] = useState(false)
     const [loading, setLoading] = useState(true)
 
+    const { userInfo } = useApp();
+
     // Fetch data function
     const fetchData = async () => {
         setLoading(true)
         try {
-            const retrievedData = await getUserCVData(user.user_id, section.data_section_id)
+            const retrievedData = await getUserCVData(userInfo.user_id, section.data_section_id)
             // Parse the data_details field from a JSON string to a JSON object
             const parsedData = retrievedData.map((data) => ({
                 ...data,
@@ -154,7 +157,6 @@ export const GenericSectionProvider = ({ children, user, section, onBack }) => {
 
         // Section data
         section,
-        user,
 
         // Functions
         fetchData,

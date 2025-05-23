@@ -18,7 +18,7 @@ export const useFaculty = () => {
 // Provider component
 export const FacultyProvider = ({ children }) => {
   // Get values from AppContext
-  const { userInfo: appUserInfo, setUserInfo: setAppUserInfo, getCognitoUser, getUserInfo, toggleViewMode } = useApp()
+  const { userInfo, setUserInfo, getCognitoUser, getUserInfo, toggleViewMode } = useApp();
 
   const CATEGORIES = Object.freeze({
     AFFILIATIONS: "Affiliations",
@@ -31,7 +31,6 @@ export const FacultyProvider = ({ children }) => {
   })
 
   // User state
-  const [userInfo, setUserInfo] = useState(appUserInfo)
   const [change, setChange] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -51,17 +50,6 @@ export const FacultyProvider = ({ children }) => {
   const [activeTab, setActiveTab] = useState(CATEGORIES.AFFILIATIONS)
   const [modalOpen, setModalOpen] = useState(false)
   const [activeModal, setActiveModal] = useState(null)
-
-  // IDs state
-  const [scopusId, setScopusId] = useState(appUserInfo.scopus_id || "")
-  const [orcidId, setOrcidId] = useState(appUserInfo.orcid_id || "")
-
-  // Update local state when app state changes
-  useEffect(() => {
-    setUserInfo(appUserInfo)
-    setScopusId(appUserInfo.scopus_id || "")
-    setOrcidId(appUserInfo.orcid_id || "")
-  }, [appUserInfo])
 
   // Fetch academic sections
   useEffect(() => {
@@ -153,8 +141,8 @@ export const FacultyProvider = ({ children }) => {
         userInfo.campus,
         userInfo.keywords,
         userInfo.institution_user_id,
-        scopusId,
-        orcidId,
+        userInfo.scopus_id,
+        userInfo.orcid_id,
       )
       // Update both local and app state
       getUserInfo(userInfo.email)
@@ -183,24 +171,19 @@ export const FacultyProvider = ({ children }) => {
   }
 
   const handleClearScopusId = () => {
-    setScopusId("")
     setChange(true)
   }
 
   const handleClearOrcidId = () => {
-    setOrcidId("")
     setChange(true)
   }
 
-  const handleScopusLink = (newScopusId) => {
-    const updatedScopusId = scopusId ? `${scopusId},${newScopusId}` : newScopusId
-    setScopusId(updatedScopusId)
+  const handleScopusLink = () => {
     setModalOpen(false)
     setChange(true)
   }
 
-  const handleOrcidLink = (newOrcidId) => {
-    setOrcidId(newOrcidId)
+  const handleOrcidLink = () => {
     setModalOpen(false)
     setChange(true)
   }
@@ -212,7 +195,7 @@ export const FacultyProvider = ({ children }) => {
   // ORCID data fetching
   const getBio = async () => {
     try {
-      const bio = await getOrcidSections(orcidId, "biography")
+      const bio = await getOrcidSections(userInfo.orcid_id, "biography")
       if (bio && bio.bio) {
         setUserInfo((prevUserInfo) => ({
           ...prevUserInfo,
@@ -230,7 +213,7 @@ export const FacultyProvider = ({ children }) => {
 
   const getKeywords = async () => {
     try {
-      const keywords_output = await getOrcidSections(orcidId, "keywords")
+      const keywords_output = await getOrcidSections(userInfo.orcid_id, "keywords")
       if (keywords_output && keywords_output.keywords) {
         setUserInfo((prevUserInfo) => ({
           ...prevUserInfo,
@@ -246,16 +229,9 @@ export const FacultyProvider = ({ children }) => {
     }
   }
 
-  // Sync changes to app context when needed
-  const updateAppUserInfo = () => {
-    setAppUserInfo(userInfo)
-  }
-
   // Provide all values and functions to children
   const value = {
     // User state
-    userInfo,
-    setUserInfo,
     change,
     setChange,
     isSubmitting,
@@ -283,8 +259,8 @@ export const FacultyProvider = ({ children }) => {
     setActiveModal,
 
     // IDs state
-    scopusId,
-    orcidId,
+    //scopusId,
+    //orcidId,
 
     // Functions
     handleScopusIdClick,
@@ -296,7 +272,7 @@ export const FacultyProvider = ({ children }) => {
     handleCloseModal,
     getBio,
     getKeywords,
-    updateAppUserInfo,
+    //updateAppUserInfo,
 
     // External functions from AppContext
     getCognitoUser,

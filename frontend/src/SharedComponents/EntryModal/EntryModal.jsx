@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import '../../CustomStyles/scrollbar.css';
 import '../../CustomStyles/modal.css';
 import { addUserCVData, updateUserCVData } from '../../graphql/graphqlHelpers';
+import { useApp } from '../../Contexts/AppContext';
 
-const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_data_id, fetchData }) => {
+const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_id, fetchData }) => {
     const [formData, setFormData] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [dateFieldName, setDateFieldName] = useState('');
     const [dateNeeded, setDateNeeded] = useState(false);
+
+    const { userInfo } = useApp();
 
     useEffect(() => {
         setFormData(fields);
@@ -109,7 +112,7 @@ const EntryModal = ({ isNew, user, section, onClose, entryType, fields, user_cv_
         
         try {
             if (isNew) {
-                const result = await addUserCVData(user.user_id, section.data_section_id, `"${formDataString}"`);
+                const result = await addUserCVData(userInfo.user_id, section.data_section_id, `"${formDataString}"`);
                 
             } else {
                 const result = await updateUserCVData(user_cv_data_id, `"${formDataString}"`);

@@ -1,7 +1,10 @@
+import { useApp } from "../../../../../Contexts/AppContext";
 import { useFaculty } from "../../../FacultyContext"
 
 const Scopus = () => {
-  const { scopusId, handleScopusIdClick, handleClearScopusId, setActiveModal, setModalOpen } = useFaculty()
+  const { handleScopusIdClick, handleClearScopusId, setActiveModal, setModalOpen } = useFaculty();
+  const { userInfo } = useApp();
+  const scopusId = userInfo.scopus_id;
 
   return (
     <div className="p-4 border border-gray-200 rounded-md bg-gray-50 shadow-sm">

@@ -8,7 +8,7 @@ import InstitutionInfo from "../Profile/InstitutionInfo/InstitutionInfo"
 import Linkages from "../Profile/Linkages/Linkages"
 
 const Tabs = () => {
-    const { activeTab, setActiveTab, userInfo, academicSections, CATEGORIES } = useFaculty()
+    const { activeTab, setActiveTab, academicSections, CATEGORIES } = useFaculty()
 
     const getTitlesForCategory = (category) => {
         switch (category) {
@@ -64,7 +64,6 @@ const Tabs = () => {
     }
 
     const getSection = (category, index) => {
-        console.log(activeTab, category)
         return (
             <>
                 {activeTab === category && (
@@ -73,7 +72,6 @@ const Tabs = () => {
                             <AccordionItem key={index + "" + innerIndex} title={title}>
                                 <GenericSection
                                     key={innerIndex}
-                                    user={userInfo}
                                     section={academicSections.filter((s) => s.title === title)[0]}
                                     onBack={null}
                                 />
