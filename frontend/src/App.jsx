@@ -15,7 +15,6 @@ import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
 import { getPresignedUrl, getUser } from './graphql/graphqlHelpers.js';
 import PageContainer from './Views/PageContainer.jsx';
-import FacultyHomePage from './Views/FacultyHomePage.jsx';
 import AssistantHomePage from './Views/AssistantHomePage.jsx';
 import AdminHomePage from './Views/AdminHomePage.jsx';
 import Archive from './Views/Archive.jsx';
@@ -38,6 +37,7 @@ import { NotificationProvider } from './Contexts/NotificationContext.jsx';
 import Notification from './Components/Notification.jsx';
 import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
 import { CookieStorage } from 'aws-amplify/utils';
+import FacultyHomePage from './Pages/FacultyHomePage/FacultyHomePage';
 
 Amplify.configure({
   API: {
@@ -60,6 +60,7 @@ Amplify.configure({
 cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
 
 function App() {
+  
   const [user, setUser] = useState(null);
   const [userInfo, setUserInfo] = useState({});
   const [assistantUserInfo, setAssistantUserInfo] = useState({});
