@@ -1,8 +1,8 @@
 import { useState } from "react"
-import { useFaculty } from "../../FacultyContext"
+import { useFaculty } from "../FacultyContext"
 import { toast } from "react-toastify"
-import { useApp } from "../../../../Contexts/AppContext"
-import ImportWarningDialog from "../ImportWarningDialog"
+import { useApp } from "../../../Contexts/AppContext"
+import ImportWarningDialog from "./ImportWarningDialog"
 
 const Bio = () => {
   const { getBio, setChange } = useFaculty()

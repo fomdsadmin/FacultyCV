@@ -4,7 +4,7 @@ import { Accordion } from "../../../SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "../../../SharedComponents/Accordion/AccordionItem"
 import GenericSection from "../../../SharedComponents/GenericSection/GenericSection"
 import { useFaculty } from "../FacultyContext"
-import InstitutionInfo from "../Profile/InstitutionInfo/InstitutionInfo"
+import InstitutionInfo from "../Profile/InstitutionInfo"
 import Linkages from "../Profile/Linkages/Linkages"
 
 const Tabs = () => {

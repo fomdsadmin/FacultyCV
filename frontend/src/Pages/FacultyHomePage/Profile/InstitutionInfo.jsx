@@ -1,5 +1,5 @@
-import { useApp } from "../../../../Contexts/AppContext";
-import { useFaculty } from "../../FacultyContext"
+import { useApp } from "../../../Contexts/AppContext";
+import { useFaculty } from "../FacultyContext"
 
 const InstitutionInfo = () => {
   const { handleInputChange, departments, faculties, affiliations, institutions, campuses, ranks } = useFaculty()

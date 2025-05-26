@@ -1,5 +1,5 @@
-import { useApp } from "../../../../Contexts/AppContext";
-import { useFaculty } from "../../FacultyContext"
+import { useApp } from "../../../Contexts/AppContext";
+import { useFaculty } from "../FacultyContext"
 
 const Contact = () => {
   const { handleInputChange } = useFaculty()
