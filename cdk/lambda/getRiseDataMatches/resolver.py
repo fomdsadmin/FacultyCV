@@ -43,7 +43,8 @@ def getRiseDataMatches(arguments):
                     'program': result[6],
                     'title': result[7],
                     'amount': result[8],
-                    'dates': result[9]
+                    'dates': result[9],
+                    'sponsor': result[10],
                 }
             })
 
