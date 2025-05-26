@@ -42,6 +42,7 @@ def storeData():
         'Last Name': str,
         'Department': str, 
         'Agency': str,
+        'Sponsor': str,
         'Program': str, 
         'Amount': int, 
         'Title': str,
@@ -55,7 +56,7 @@ def storeData():
     df_id = df_id.drop_duplicates()
 
     # rearrange columns order
-    columns_order = ['First Name', 'Last Name', 'Keywords', 'Agency', 'Department',
+    columns_order = ['First Name', 'Last Name', 'Keywords', 'Agency','Sponsor', 'Department',
                      'Program', 'Title', 'Amount', 'Dates']
     df_id = df_id[columns_order]
 
@@ -73,7 +74,7 @@ def storeData():
         target_table = "rise_data"
 
     # Check for duplicate insertion
-    query = f"SELECT first_name, last_name, keywords, agency, department, program, title, amount, dates FROM {target_table}"
+    query = f"SELECT first_name, last_name, keywords, agency,sponsor, department, program, title, amount, dates FROM {target_table}"
     cursor.execute(query)
     tableData = list(map(lambda tup: tuple("" if x == None else x for x in tup), cursor.fetchall()))
     
@@ -81,7 +82,7 @@ def storeData():
     listOfValuesToInsert = list(set(cleanData) - set(tableData))
 
     # Inserting to db
-    query = f"INSERT INTO {target_table} (first_name, last_name, keywords, agency, department, program, title, amount, dates) VALUES %s"
+    query = f"INSERT INTO {target_table} (first_name, last_name, keywords, agency,sponsor, department, program, title, amount, dates) VALUES %s"
     extras.execute_values(cursor, query, listOfValuesToInsert)
 
     connection.commit()

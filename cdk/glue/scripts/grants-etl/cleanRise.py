@@ -95,6 +95,8 @@ def cleanRise(bucket, key_raw, key_clean):
 
     # add Agency column with string Rise
     df["Agency"] = "Rise"
+    # add Sponsor column with string Rise
+    df["Sponsor"] = df["Sponsor Name"]
 
     # Program column
     df["Program"] = df["Program Name"]
@@ -117,7 +119,7 @@ def cleanRise(bucket, key_raw, key_clean):
     df = df.drop(columns=[
         "From Year", "Application Number", "Researcher Name", "PI Rank", 
         "Award Type", "Project Title", "Award Amount", "Sector", 
-        "Sponsor Type", "Sponsor Name", "Government", "Tri-Council Code", 
+        "Sponsor Type", "Sponsor Name","Government", "Tri-Council Code", 
         "Program Name", "CFI BCKDF", "Faculty", "Researcher Home Faculty", 
         "FoM Department", "Researcher Home Department", "FoM Research Institute", 
         "Institution Name", "FoM Research Centre Name "])
