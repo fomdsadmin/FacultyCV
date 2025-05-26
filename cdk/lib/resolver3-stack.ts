@@ -14,18 +14,24 @@ import { CVGenStack } from "./cvgen-stack";
 import { ApiStack } from "./api-stack";
 
 export class Resolver3Stack extends cdk.Stack {
-  constructor(scope: Construct, id: string, apiStack: ApiStack, databaseStack: DatabaseStack, cvGenStack: CVGenStack, props?: cdk.StackProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    apiStack: ApiStack,
+    databaseStack: DatabaseStack,
+    cvGenStack: CVGenStack,
+    props?: cdk.StackProps
+  ) {
     super(scope, id, props);
 
-    let resourcePrefix = this.node.tryGetContext('prefix');
-    if (!resourcePrefix)
-      resourcePrefix = 'facultycv' // Default
+    let resourcePrefix = this.node.tryGetContext("prefix");
+    if (!resourcePrefix) resourcePrefix = "facultycv"; // Default
 
-    const psycopgLayer = apiStack.getLayers()['psycopg2'];
-    const databaseConnectLayer = apiStack.getLayers()['databaseConnect']
-    const reportLabLayer = apiStack.getLayers()['reportlab']
-    const requestsLayer = apiStack.getLayers()['requests']
-    const awsJwtVerifyLayer = apiStack.getLayers()['aws-jwt-verify']
+    const psycopgLayer = apiStack.getLayers()["psycopg2"];
+    const databaseConnectLayer = apiStack.getLayers()["databaseConnect"];
+    const reportLabLayer = apiStack.getLayers()["reportlab"];
+    const requestsLayer = apiStack.getLayers()["requests"];
+    const awsJwtVerifyLayer = apiStack.getLayers()["aws-jwt-verify"];
     const resolverRole = apiStack.getResolverRole();
 
     // GraphQL Resolvers
@@ -65,7 +71,7 @@ export class Resolver3Stack extends cdk.Stack {
         environment: env,
         role: role,
         layers: layers,
-        vpc: databaseStack.dbCluster.vpc // Same VPC as the database
+        vpc: databaseStack.dbCluster.vpc, // Same VPC as the database
       });
 
       const lambdaDataSource = new appsync.LambdaDataSource(
@@ -82,116 +88,140 @@ export class Resolver3Stack extends cdk.Stack {
         assignResolver(api, field, lambdaDataSource, typeName)
       );
     };
-    
+
     createResolver(
       apiStack.getApi(),
       "getUserConnections",
       ["getUserConnections"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "addUserConnection",
       ["addUserConnection"],
       "Mutation",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "updateUserConnection",
       ["updateUserConnection"],
       "Mutation",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "deleteUserConnection",
       ["deleteUserConnection"],
       "Mutation",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
+    createResolver(
+      apiStack.getApi(),
+      "updateUserDeclaration",
+      ["updateUserDeclaration"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "deleteUserDeclaration",
+      ["deleteUserDeclaration"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
     createResolver(
       apiStack.getApi(),
       "getAllTemplates",
       ["getAllTemplates"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "addTemplate",
       ["addTemplate"],
       "Mutation",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "updateTemplate",
       ["updateTemplate"],
       "Mutation",
       {
-        'TABLE_NAME': cvGenStack.dynamoDBTable.tableName,
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "deleteTemplate",
       ["deleteTemplate"],
       "Mutation",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "getTeachingDataMatches",
       ["getTeachingDataMatches"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "getPublicationMatches",
@@ -201,42 +231,41 @@ export class Resolver3Stack extends cdk.Stack {
       resolverRole,
       [requestsLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "getSecureFundingMatches",
       ["getSecureFundingMatches"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "getRiseDataMatches",
       ["getRiseDataMatches"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
+
     createResolver(
       apiStack.getApi(),
       "getPatentMatches",
       ["getPatentMatches"],
       "Query",
       {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
       },
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-    
   }
 }

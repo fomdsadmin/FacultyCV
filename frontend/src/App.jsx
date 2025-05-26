@@ -10,6 +10,7 @@ import Support from './Views/support.jsx';
 import HomePage from './Views/FacultyHomePage.jsx'; // adjust the path as needed
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
+import Declarations from './Views/Declarations.jsx';
 import Reports from './Views/Reports.jsx';
 import Assistants from './Views/Assistants.jsx';
 import { getPresignedUrl, getUser } from './graphql/graphqlHelpers.js';

@@ -139,13 +139,13 @@ export const getArchivedSectionsQuery = () => `
 `;
 
 export const getUserCVDataQuery = (user_id, data_section_ids) => {
-    if (Array.isArray(data_section_ids)) {
-        let data_section_ids_string = "[";
-        data_section_ids.forEach((id) => {
-            data_section_ids_string += `"${id}",`;
-        });
-        data_section_ids_string = data_section_ids_string.slice(0, -1) + "]";
-        return `query GetUserCVData {
+  if (Array.isArray(data_section_ids)) {
+    let data_section_ids_string = "[";
+    data_section_ids.forEach((id) => {
+      data_section_ids_string += `"${id}",`;
+    });
+    data_section_ids_string = data_section_ids_string.slice(0, -1) + "]";
+    return `query GetUserCVData {
         getUserCVData (
             user_id: "${user_id}",
             data_section_id_list: ${data_section_ids_string}
@@ -156,8 +156,9 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
             data_details
             editable
         }
-    }`
-    } else return `query GetUserCVData {
+    }`;
+  } else
+    return `query GetUserCVData {
         getUserCVData (
             user_id: "${user_id}",
             data_section_id: "${data_section_ids}"
@@ -169,8 +170,7 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
             editable
         }
     }`;
-}
-
+};
 
 export const getArchivedUserCVDataQuery = (user_id) => `
     query GetArchivedUserCVData {
@@ -211,7 +211,24 @@ export const getAllNotificationsQuery = () => `
     }
 `;
 
-export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution_name) => `
+export const getUserDeclarationsQuery = (first_name, last_name) => `
+    query getUserDeclarations {
+        getUserDeclarations (
+            first_name: "${first_name}", last_name: "${last_name}"
+        ) {
+            reporting_year
+            other_data
+            created_on
+            created_by
+        }
+    }
+`;
+
+export const getElsevierAuthorMatchesQuery = (
+  first_name,
+  last_name,
+  institution_name
+) => `
     query getElsevierAuthorMatches {
         getElsevierAuthorMatches (
             first_name: "${first_name}", last_name: "${last_name}", institution_name: "${institution_name}"
@@ -227,8 +244,11 @@ export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution
     }
 `;
 
-
-export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_name) => `
+export const getOrcidAuthorMatchesQuery = (
+  first_name,
+  last_name,
+  institution_name
+) => `
     query getOrcidAuthorMatches {
         getOrcidAuthorMatches (
             first_name: "${first_name}", last_name: "${last_name}", institution_name: "${institution_name}"
@@ -243,7 +263,6 @@ export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_na
             }
     }
 `;
-
 
 export const getOrcidSectionsQuery = (orcidId, section) => `
     query getOrcidSections {
@@ -269,11 +288,10 @@ export const getOrcidSectionsQuery = (orcidId, section) => `
     }
 `;
 
-
 export const getUserConnectionsQuery = (user_id, isFaculty = true) => `
     query GetUserConnections {
         getUserConnections (
-            ${isFaculty ? 'faculty_user_id' : 'assistant_user_id'}: "${user_id}"
+            ${isFaculty ? "faculty_user_id" : "assistant_user_id"}: "${user_id}"
         ) {
             user_connection_id
             faculty_user_id
@@ -313,7 +331,11 @@ export const getTeachingDataMatchesQuery = (institution_user_id) => `
     }
 `;
 
-export const getPublicationMatchesQuery = (scopus_id, page_number, results_per_page) => `
+export const getPublicationMatchesQuery = (
+  scopus_id,
+  page_number,
+  results_per_page
+) => `
     query GetPublicationMatches {
         getPublicationMatches (
             scopus_id: "${scopus_id}",
@@ -392,20 +414,21 @@ export const getPresignedUrlQuery = (jwt, fileKey, type) => `
 `;
 
 export const getNumberOfGeneratedCVsQuery = (department) => {
-    if (!department)
-        return `
+  if (!department)
+    return `
     query GetNumberOfGeneratedCVs {
         getNumberOfGeneratedCVs
     }
     `;
-    else return `
+  else
+    return `
     query GetNumberOfGeneratedCVs {
         getNumberOfGeneratedCVs (
             department: "${department}"
         )
     }
     `;
-}
+};
 
 export const cvIsUpToDateQuery = (cognito_user_id, user_id, template_id) => `
     query CvIsUpToDate {
