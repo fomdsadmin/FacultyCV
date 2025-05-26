@@ -1,5 +1,5 @@
-import GenericEntry from "../../GenericEntry/GenericEntry"
-import { useGenericSection } from "../GenericSectionContext"
+import GenericEntry from "../GenericEntry"
+import { useGenericSection } from "./GenericSectionContext"
 
 const EntryList = () => {
     const { fieldData, handleEdit, handleArchive, loading } = useGenericSection()

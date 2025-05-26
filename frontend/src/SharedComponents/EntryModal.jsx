@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import '../../CustomStyles/scrollbar.css';
 import '../../CustomStyles/modal.css';
-import { addUserCVData, updateUserCVData } from '../../graphql/graphqlHelpers';
-import { useApp } from '../../Contexts/AppContext';
+import { addUserCVData, updateUserCVData } from '../graphql/graphqlHelpers';
+import { useApp } from '../Contexts/AppContext';
 
 const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_id, fetchData }) => {
     const [formData, setFormData] = useState({});

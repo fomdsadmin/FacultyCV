@@ -1,5 +1,5 @@
 import { FaArrowLeft } from "react-icons/fa"
-import { useGenericSection } from "../../GenericSectionContext"
+import { useGenericSection } from "../GenericSectionContext"
 
 const BackButton = () => {
     const { onBack } = useGenericSection()

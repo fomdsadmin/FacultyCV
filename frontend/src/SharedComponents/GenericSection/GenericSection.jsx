@@ -1,8 +1,8 @@
-import EntryList from "./EntryList/EntryList"
-import EntryModalWrapper from "./EntryModalWrapper/EntryModalWrapper"
+import EntryList from "./EntryList"
+import EntryModalWrapper from "./EntryModalWrapper"
 import { GenericSectionProvider } from "./GenericSectionContext"
-import SearchInput from "./SearchInput/SearchInput"
-import SectionDescription from "./SectionDescription/SectionDescription"
+import SearchInput from "./SearchInput"
+import SectionDescription from "./SectionDescription"
 import SectionHeader from "./SectionHeader/SectionHeader"
 
 const GenericSectionContent = () => {

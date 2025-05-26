@@ -1,4 +1,4 @@
-import { useGenericSection } from "../../GenericSectionContext"
+import { useGenericSection } from "../GenericSectionContext"
 
 const SectionTitle = () => {
     const { section } = useGenericSection()

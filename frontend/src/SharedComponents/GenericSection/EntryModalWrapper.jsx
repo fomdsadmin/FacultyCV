@@ -1,6 +1,6 @@
-import { useApp } from "../../../Contexts/AppContext";
-import EntryModal from "../../EntryModal/EntryModal"
-import { useGenericSection } from "../GenericSectionContext"
+import { useApp } from "../../Contexts/AppContext";
+import EntryModal from "../EntryModal"
+import { useGenericSection } from "./GenericSectionContext"
 
 const EntryModalWrapper = () => {
     const { isModalOpen, selectedEntry, isNew, section, fetchData, handleCloseModal } = useGenericSection();

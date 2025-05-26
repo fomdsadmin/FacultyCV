@@ -1,4 +1,4 @@
-import { useGenericSection } from "../GenericSectionContext"
+import { useGenericSection } from "./GenericSectionContext"
 
 const SearchInput = () => {
     const { searchTerm, setSearchTerm, section } = useGenericSection()

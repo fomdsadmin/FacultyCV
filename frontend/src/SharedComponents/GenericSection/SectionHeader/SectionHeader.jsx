@@ -1,6 +1,6 @@
-import BackButton from "./BackButton/BackButton"
-import NewButton from "./NewButton/NewButton"
-import SectionTitle from "./SectionTitle/SectionTitle"
+import BackButton from "./BackButton"
+import NewButton from "./NewButton"
+import SectionTitle from "./SectionTitle"
 
 const SectionHeader = () => {
     return (
