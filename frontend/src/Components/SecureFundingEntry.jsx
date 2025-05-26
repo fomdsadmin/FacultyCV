@@ -27,7 +27,7 @@ const SecureFundingEntry = ({ secureFundingData, onSelect, selected }) => {
         <span className="text-sm font-bold text-right">
           {""} | {secureFundingData.dates.split("-")[0]}
         </span>
-        <p className="text-sm break-words">{secureFundingData.title},</p>
+        <p className="text-sm break-words">{secureFundingData.title}</p>
         <p className="text-sm break-words">
           <b>Amount: </b> ${secureFundingData.amount}
         </p>
