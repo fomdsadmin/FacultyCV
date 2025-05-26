@@ -5,7 +5,7 @@ import { useApp } from "../../../Contexts/AppContext"
 import ImportWarningDialog from "./ImportWarningDialog"
 
 const Bio = () => {
-  const { getBio, setChange } = useFaculty()
+  const { getBio } = useFaculty()
   const { setUserInfo, userInfo } = useApp()
   const [showBioWarningDialog, setShowBioWarningDialog] = useState(false)
 
@@ -28,7 +28,6 @@ const Bio = () => {
 
   const handleBioChange = (e) => {
     setUserInfo((prevUserInfo) => ({ ...prevUserInfo, bio: e.target.value }))
-    setChange(true)
   }
 
   return (

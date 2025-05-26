@@ -1,5 +1,3 @@
-"use client"
-
 import { Accordion } from "../../../SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "../../../SharedComponents/Accordion/AccordionItem"
 import GenericSection from "../../../SharedComponents/GenericSection/GenericSection"
@@ -41,8 +39,6 @@ const Tabs = () => {
                     "Postgraduate Students Supervised",
                     "Students Supervised - Other",
                     "Continuing Education Activities",
-                    "Continuing Education or Training",
-                    "Continuing Medical Education",
                     "Visiting Lecturer",
                 ]
 

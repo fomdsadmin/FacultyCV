@@ -6,7 +6,7 @@ import { useFaculty } from "../FacultyContext"
 import { useApp } from "../../../Contexts/AppContext"
 import ImportWarningDialog from "./ImportWarningDialog"
 const Keywords = () => {
-  const { getKeywords, setChange } = useFaculty()
+  const { getKeywords } = useFaculty()
   const { setUserInfo, userInfo } = useApp()
   const [showKeywordsWarningDialog, setShowKeywordsWarningDialog] = useState(false)
 
@@ -29,7 +29,6 @@ const Keywords = () => {
 
   const handleKeywordsChange = (e) => {
     setUserInfo((prevUserInfo) => ({ ...prevUserInfo, keywords: e.target.value }))
-    setChange(true)
   }
 
   return (

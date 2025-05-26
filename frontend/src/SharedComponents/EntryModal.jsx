@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import '../../CustomStyles/scrollbar.css';
-import '../../CustomStyles/modal.css';
+import '../CustomStyles/scrollbar.css';
+import '../CustomStyles/modal.css';
 import { addUserCVData, updateUserCVData } from '../graphql/graphqlHelpers';
 import { useApp } from '../Contexts/AppContext';
 

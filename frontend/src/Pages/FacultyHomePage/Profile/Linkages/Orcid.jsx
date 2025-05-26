@@ -1,10 +1,17 @@
-import { useApp } from "../../../../../Contexts/AppContext";
-import { useFaculty } from "../../../FacultyContext"
+import { useApp } from "../../../../Contexts/AppContext";
+import { useFaculty } from "../../FacultyContext"
 
 const Orcid = () => {
-  const { handleOrcidIdClick, handleClearOrcidId, setActiveModal, setModalOpen } = useFaculty()
-  const { userInfo } = useApp();
+  const { handleOrcidIdClick, setActiveModal, setModalOpen } = useFaculty()
+  const { userInfo, setUserInfo } = useApp();
   const orcidId = userInfo.orcid_id;
+
+  const handleClearOrcidId = () => {
+    setUserInfo((prev) => ({
+      ...prev,
+      orcid_id: ""
+    }));
+  }
 
   return (
     <div className="p-4 border border-gray-200 rounded-md bg-gray-50 shadow-sm">

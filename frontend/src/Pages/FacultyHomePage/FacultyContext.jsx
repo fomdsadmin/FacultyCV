@@ -20,6 +20,9 @@ export const FacultyProvider = ({ children }) => {
   // Get values from AppContext
   const { userInfo, setUserInfo, getCognitoUser, getUserInfo, toggleViewMode } = useApp();
 
+  // Will be used to check if any user info has been saved
+  const [prevUserInfo, setPrevUserInfo] = useState(null);
+
   const CATEGORIES = Object.freeze({
     AFFILIATIONS: "Affiliations",
     EMPLOYMENT: "Employment",
@@ -50,6 +53,25 @@ export const FacultyProvider = ({ children }) => {
   const [activeTab, setActiveTab] = useState(CATEGORIES.AFFILIATIONS)
   const [modalOpen, setModalOpen] = useState(false)
   const [activeModal, setActiveModal] = useState(null)
+
+    // This effect will ensure prevUserInfo is set only once
+    useEffect(() => {
+      if (userInfo && !prevUserInfo) {
+        setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
+      }
+    }, [userInfo, prevUserInfo]);
+  
+    // Compares the previous userInfo and the userInfo displayed on frontend to determine if a change was made
+    useEffect(() => {
+      const userInfoToCompare = JSON.stringify(userInfo);
+      const prevUserInfoToCompare = JSON.stringify(prevUserInfo);
+
+      if (userInfoToCompare !== prevUserInfoToCompare && prevUserInfo) {
+        setChange(true);
+      } else {
+        setChange(false);
+      }
+    }, [userInfo, prevUserInfo])
 
   // Fetch academic sections
   useEffect(() => {
@@ -112,7 +134,6 @@ export const FacultyProvider = ({ children }) => {
       ...prevUserInfo,
       [name]: value,
     }))
-    setChange(true)
   }
 
   // Handle form submission
@@ -147,7 +168,7 @@ export const FacultyProvider = ({ children }) => {
       // Update both local and app state
       getUserInfo(userInfo.email)
       setIsSubmitting(false)
-      setChange(false)
+      setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
     } catch (error) {
       console.error("Error updating user:", error)
       setIsSubmitting(false)
@@ -170,22 +191,24 @@ export const FacultyProvider = ({ children }) => {
     setModalOpen(true)
   }
 
-  const handleClearScopusId = () => {
-    setChange(true)
+  const handleScopusLink = (newScopusId) => {
+    if (!newScopusId) {
+      return;
+    }
+    const updatedScopusId = userInfo.scopus_id ? `${userInfo.scopus_id},${newScopusId}` : newScopusId;
+    setUserInfo((prev) => ({
+      ...prev,
+      scopus_id: updatedScopusId,
+    }));
+    setModalOpen(false);
   }
 
-  const handleClearOrcidId = () => {
-    setChange(true)
-  }
-
-  const handleScopusLink = () => {
+  const handleOrcidLink = (newOrcidId) => {
+    setUserInfo((prev) => ({
+      ...prev,
+      orcid_id: newOrcidId,
+    }));
     setModalOpen(false)
-    setChange(true)
-  }
-
-  const handleOrcidLink = () => {
-    setModalOpen(false)
-    setChange(true)
   }
 
   const handleCloseModal = () => {
@@ -201,7 +224,6 @@ export const FacultyProvider = ({ children }) => {
           ...prevUserInfo,
           bio: bio.bio,
         }))
-        setChange(true)
         toast.success("Bio imported successfully!", { autoClose: 3000 })
       } else {
         toast.error("Failed to fetch the bio from ORCID.", { autoClose: 3000 })
@@ -219,7 +241,6 @@ export const FacultyProvider = ({ children }) => {
           ...prevUserInfo,
           keywords: keywords_output.keywords,
         }))
-        setChange(true)
         toast.success("Keywords imported successfully!", { autoClose: 3000 })
       } else {
         toast.error("Failed to fetch the keywords from ORCID.", { autoClose: 3000 })
@@ -233,7 +254,6 @@ export const FacultyProvider = ({ children }) => {
   const value = {
     // User state
     change,
-    setChange,
     isSubmitting,
     handleInputChange,
     handleSubmit,
@@ -265,8 +285,6 @@ export const FacultyProvider = ({ children }) => {
     // Functions
     handleScopusIdClick,
     handleOrcidIdClick,
-    handleClearScopusId,
-    handleClearOrcidId,
     handleScopusLink,
     handleOrcidLink,
     handleCloseModal,
