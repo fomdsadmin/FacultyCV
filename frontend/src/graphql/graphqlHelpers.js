@@ -27,7 +27,6 @@ import {
   getLatexConfigurationQuery,
 } from "./queries";
 import {
-  addSectionMutation,
   updateSectionMutation,
   addUserCVDataMutation,
   addUserMutation,
@@ -50,6 +49,7 @@ import {
   ADD_USER_DECLARATION,
   DELETE_USER_DECLARATION,
   UPDATE_USER_DECLARATION,
+  ADD_SECTION,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -649,8 +649,13 @@ export const addUserCVData = async (
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const addSection = async (title, description, data_type, attributes) => {
-  const results = await runGraphql(
-    addSectionMutation(title, description, data_type, attributes)
+  const results = await executeGraphql(
+    ADD_SECTION, {
+      title: title,
+      description: description,
+      data_type: data_type,
+      attributes: attributes
+    }
   );
   return results["data"]["addSection"];
 };

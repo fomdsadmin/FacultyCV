@@ -52,18 +52,13 @@ export const removeFromUserGroupMutation = (userName, userGroup) => `
     }
 `;
 
-export const addSectionMutation = (
-    title,
-    description,
-    data_type,
-    attributes
-) => `
-    mutation AddSection {
+export const ADD_SECTION = `
+    mutation AddSection($title: String!, $description: String!, $data_type: String, $attributes: AWSJSON!) {
         addSection(
-            title: "${title}",
-            description: "${description}",
-            data_type: "${data_type}",
-            attributes: ${attributes}
+            title: $title,
+            description: $description,
+            data_type: $data_type,
+            attributes: $attributes
         )
     }
 `;
