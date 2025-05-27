@@ -1,3 +1,5 @@
+import EducationSection from "../../../Components/EducationSection"
+import { useApp } from "../../../Contexts/AppContext"
 import { Accordion } from "../../../SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "../../../SharedComponents/Accordion/AccordionItem"
 import GenericSection from "../../../SharedComponents/GenericSection/GenericSection"
@@ -7,6 +9,7 @@ import Linkages from "../Profile/Linkages/Linkages"
 
 const Tabs = () => {
     const { activeTab, setActiveTab, academicSections, CATEGORIES } = useFaculty()
+    const { userInfo } = useApp();
 
     const getTitlesForCategory = (category) => {
         switch (category) {
@@ -59,7 +62,12 @@ const Tabs = () => {
         }
     }
 
-    const getSection = (category, index) => {
+    const getSection = (category, index=0) => {
+
+        const titles = getTitlesForCategory(category).filter((title) =>
+            title === "Courses Taught"
+        );
+
         return (
             <>
                 {activeTab === category && (
@@ -99,6 +107,8 @@ const Tabs = () => {
                 {activeTab === "Affiliations" && <InstitutionInfo />}
                 {activeTab === "Linkages" && <Linkages />}
             </div>
+            <EducationSection user={userInfo} section={academicSections.filter((s) => s.title === "Continuing Medical Education")[0]} onBack={null}></EducationSection>
+            <EducationSection user={userInfo} section={academicSections.filter((s) => s.title === "Post-Secondary Education")[0]} onBack={null}></EducationSection>
         </div>
     )
 }
