@@ -13,16 +13,12 @@ export const ADD_USER_DECLARATION = `
   }
 `;
 
-export const deleteUserDeclarationMutation = (
-  first_name,
-  last_name,
-  reporting_year
-) => `
-    mutation DeleteUserDeclaration {
+export const DELETE_USER_DECLARATION = `
+    mutation DeleteUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!) {
         deleteUserDeclaration(
-            first_name: "${first_name}",
-            last_name: "${last_name}",
-            reporting_year: ${reporting_year}
+            first_name: $first_name,
+            last_name: $last_name,
+            reporting_year: $reporting_year
         )
     }
 `;

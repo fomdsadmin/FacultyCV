@@ -47,13 +47,13 @@ import {
   addToUserGroupMutation,
   removeFromUserGroupMutation,
   updateLatexConfigurationMutation,
-  deleteUserDeclarationMutation,
   updateUserDeclarationMutation,
   ADD_USER_DECLARATION,
+  DELETE_USER_DECLARATION,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
-const executeGraphql = async (query, variables=null) => {
+const executeGraphql = async (query, variables = null) => {
   const client = generateClient();
   let input = {
     query
@@ -170,9 +170,9 @@ export const getArchivedSections = async () => {
  *   }
  */
 export const getUser = async (email) => {
-    const results = await executeGraphql(getUserQuery, {email: email});
-    console.log(results)
-    return results['data']['getUser'];
+  const results = await executeGraphql(getUserQuery, { email: email });
+  console.log(results)
+  return results['data']['getUser'];
 }
 
 /**
@@ -1144,8 +1144,11 @@ export const deleteUserDeclaration = async (
   last_name,
   reporting_year
 ) => {
-  const results = await runGraphql(
-    deleteUserDeclarationMutation(first_name, last_name, reporting_year)
+  const results = await executeGraphql(DELETE_USER_DECLARATION, {
+    first_name: first_name,
+    last_name: last_name,
+    reporting_year: reporting_year
+  }
   );
   return results["data"]["deleteUserDeclaration"];
 };
