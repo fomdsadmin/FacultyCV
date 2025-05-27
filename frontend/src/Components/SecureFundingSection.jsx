@@ -32,6 +32,15 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [retrievingData, setRetrievingData] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const totalPages = Math.ceil(fieldData.length / pageSize);
+  const paginatedData = fieldData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
@@ -147,6 +156,10 @@ const SecureFundingSection = ({ user, section, onBack }) => {
     fetchData();
   }, [searchTerm, section.data_section_id]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, pageSize]);
+
   const handleBack = () => {
     onBack();
   };
@@ -209,105 +222,162 @@ const SecureFundingSection = ({ user, section, onBack }) => {
           <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
         </div>
       ) : (
-        <div className="flex items-center justify-center w-full relative mx-auto">
-          <div>
-            {fieldData.length > 0 ? (
-              fieldData.map((entry, index) => {
-                // Omit the "agency" field and add "sponsor" field for view (PermanentEntry)
-                const { agency, ...filteredDetails } = entry.data_details;
+        <>
+          <div className="m-4 p-3 rounded-2xl border border-gray-300 shadow-sm bg-white flex flex-wrap justify-between items-center">
+            <div className="flex items-center gap-3">
+              <svg
+                className="w-6 h-6 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2h-6a2 2 0 00-2 2v14z"
+                />
+              </svg>
+              <span className="text-lg font-medium text-gray-700">
+                Total Grants:{" "}
+                <span className="font-semibold text-blue-600">
+                  {fieldData.length}
+                </span>
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <select
+                className="select select-sm select-bordered"
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+              >
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+                <option value={1000}>All</option>
+              </select>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center justify-center w-full relative mx-auto">
+            <div>
+              {paginatedData.length > 0 ? (
+                paginatedData.map((entry, index) => {
+                  // Omit the "agency" field and add "sponsor" field for view (PermanentEntry)
+                  const { agency, ...filteredDetails } = entry.data_details;
 
-                return entry.editable ? (
-                  <GenericEntry
-                    key={index}
-                    onEdit={() => handleEdit(entry)}
-                    field1={entry.field1}
-                    field2={entry.field2}
-                    data_details={filteredDetails} // For edit, just omit agency
-                    onArchive={() => handleArchive(entry)}
+                  return entry.editable ? (
+                    <GenericEntry
+                      key={index}
+                      onEdit={() => handleEdit(entry)}
+                      field1={entry.field1}
+                      field2={entry.field2}
+                      data_details={filteredDetails} // For edit, just omit agency
+                      onArchive={() => handleArchive(entry)}
+                    />
+                  ) : (
+                    <PermanentEntry
+                      isArchived={false}
+                      key={index}
+                      onEdit={() => handleEdit(entry)}
+                      field1={entry.field1}
+                      field2={entry.field2}
+                      data_details={filteredDetails} // For view, omit agency and add sponsor
+                      onArchive={() => handleArchive(entry)}
+                    />
+                  );
+                })
+              ) : (
+                <p className="m-4">No data found</p>
+              )}
+            </div>
+            {isModalOpen && selectedEntry && !isNew && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                {selectedEntry.editable ? (
+                  <EntryModal
+                    isNew={false}
+                    user={user}
+                    section={section}
+                    fields={selectedEntry.fields}
+                    user_cv_data_id={selectedEntry.data_id}
+                    entryType={section.title}
+                    fetchData={fetchData}
+                    onClose={handleCloseModal}
                   />
                 ) : (
-                  <PermanentEntry
-                    isArchived={false}
-                    key={index}
-                    onEdit={() => handleEdit(entry)}
-                    field1={entry.field1}
-                    field2={entry.field2}
-                    data_details={filteredDetails} // For view, omit agency and add sponsor
-                    onArchive={() => handleArchive(entry)}
+                  <PermanentEntryModal
+                    isNew={false}
+                    user={user}
+                    section={section}
+                    fields={selectedEntry.fields}
+                    user_cv_data_id={selectedEntry.data_id}
+                    entryType={section.title}
+                    fetchData={fetchData}
+                    onClose={handleCloseModal}
                   />
-                );
-              })
-            ) : (
-              <p className="m-4">No data found</p>
+                )}
+              </div>
+            )}
+
+            {isModalOpen && selectedEntry && isNew && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                {console.log("Selected Entry:", selectedEntry)}
+                {selectedEntry.editable ? (
+                  <EntryModal
+                    isNew={true}
+                    user={user}
+                    section={section}
+                    fields={selectedEntry.fields}
+                    user_cv_data_id={selectedEntry.data_id}
+                    entryType={section.title}
+                    fetchData={fetchData}
+                    onClose={handleCloseModal}
+                  />
+                ) : (
+                  <PermanentEntryModal
+                    isNew={true}
+                    user={user}
+                    section={section}
+                    fields={selectedEntry.fields}
+                    user_cv_data_id={selectedEntry.data_id}
+                    entryType={section.title}
+                    fetchData={fetchData}
+                    onClose={handleCloseModal}
+                  />
+                )}
+              </div>
+            )}
+
+            {retrievingData && (
+              <SecureFundingModal
+                user={user}
+                section={section}
+                onClose={handleCloseModal}
+                setRetrievingData={setRetrievingData}
+                fetchData={fetchData}
+              />
             )}
           </div>
-          {isModalOpen && selectedEntry && !isNew && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-              {selectedEntry.editable ? (
-                <EntryModal
-                  isNew={false}
-                  user={user}
-                  section={section}
-                  fields={selectedEntry.fields}
-                  user_cv_data_id={selectedEntry.data_id}
-                  entryType={section.title}
-                  fetchData={fetchData}
-                  onClose={handleCloseModal}
-                />
-              ) : (
-                <PermanentEntryModal
-                  isNew={false}
-                  user={user}
-                  section={section}
-                  fields={selectedEntry.fields}
-                  user_cv_data_id={selectedEntry.data_id}
-                  entryType={section.title}
-                  fetchData={fetchData}
-                  onClose={handleCloseModal}
-                />
-              )}
-            </div>
-          )}
-
-          {isModalOpen && selectedEntry && isNew && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-              {console.log("Selected Entry:", selectedEntry)}
-              {selectedEntry.editable ? (
-                <EntryModal
-                  isNew={true}
-                  user={user}
-                  section={section}
-                  fields={selectedEntry.fields}
-                  user_cv_data_id={selectedEntry.data_id}
-                  entryType={section.title}
-                  fetchData={fetchData}
-                  onClose={handleCloseModal}
-                />
-              ) : (
-                <PermanentEntryModal
-                  isNew={true}
-                  user={user}
-                  section={section}
-                  fields={selectedEntry.fields}
-                  user_cv_data_id={selectedEntry.data_id}
-                  entryType={section.title}
-                  fetchData={fetchData}
-                  onClose={handleCloseModal}
-                />
-              )}
-            </div>
-          )}
-
-          {retrievingData && (
-            <SecureFundingModal
-              user={user}
-              section={section}
-              onClose={handleCloseModal}
-              setRetrievingData={setRetrievingData}
-              fetchData={fetchData}
-            />
-          )}
-        </div>
+        </>
       )}
     </div>
   );
