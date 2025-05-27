@@ -70,11 +70,22 @@ const PermanentEntry = ({
             {truncateText(field2, MAX_CHAR_LENGTH)}
           </h2>
         )}
-        {attributes.map((attribute, index) => (
-          <p key={index} className="text-gray-600 break-words text-sm">
-            {truncateText(attribute, MAX_CHAR_LENGTH)}
-          </p>
-        ))}
+        {attributes.map((attribute, index) => {
+          // Split "Label: Value"
+          const [label, ...rest] = attribute.split(": ");
+          const value = rest.join(": ");
+          const isAmount = label.trim().toLowerCase() === "amount";
+          return (
+            <p key={index} className="text-gray-600 break-words text-sm">
+              <span className="font-bold">{label}:</span>{" "}
+              {isAmount ? (
+                <span>${truncateText(value, MAX_CHAR_LENGTH)}</span>
+              ) : (
+                truncateText(value, MAX_CHAR_LENGTH)
+              )}
+            </p>
+          );
+        })}
       </div>
 
       <div className="flex items-center space-x-1">
