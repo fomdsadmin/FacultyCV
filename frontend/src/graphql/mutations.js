@@ -1,11 +1,11 @@
-export const addUserDeclarationMutation = (input) => `
-  mutation AddUserDeclaration {
+export const ADD_USER_DECLARATION = `
+  mutation AddUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!, $created_by: String!, $other_data: AWSJSON!) {
     addUserDeclaration(
-      first_name: "${input.first_name}",
-      last_name: "${input.last_name}",
-      reporting_year: ${input.reporting_year},
-      created_by: "${input.created_by}",
-      other_data: "${input.other_data.replace(/"/g, '\\"')}"
+      first_name: $first_name,
+      last_name: $last_name,
+      reporting_year: $reporting_year,
+      created_by: $created_by,
+      other_data: $other_data
     ) {
       id
       created_on

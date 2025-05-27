@@ -47,9 +47,9 @@ import {
   addToUserGroupMutation,
   removeFromUserGroupMutation,
   updateLatexConfigurationMutation,
-  addUserDeclarationMutation,
   deleteUserDeclarationMutation,
   updateUserDeclarationMutation,
+  ADD_USER_DECLARATION,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -1121,9 +1121,16 @@ export const deleteTemplate = async (template_id) => {
  * Return value:
  *   { id, created_on }
  */
+
 export const addUserDeclaration = async (input) => {
   console.log(input);
-  const results = await runGraphql(addUserDeclarationMutation(input));
+  const results = await executeGraphql(ADD_USER_DECLARATION, {
+    first_name: input.first_name,
+    last_name: input.last_name,
+    reporting_year: input.reporting_year,
+    created_by: input.created_by,
+    other_data: input.other_data
+  });
   return results["data"]["addUserDeclaration"];
 };
 
