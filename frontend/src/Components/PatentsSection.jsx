@@ -84,8 +84,6 @@ const PatentsSection = ({ user, section, onBack }) => {
         data_details: JSON.parse(data.data_details),
       }));
 
-      
-
       const filteredData = parsedData.filter(entry => {
         const [field1, field2] = rankFields(entry.data_details);
         

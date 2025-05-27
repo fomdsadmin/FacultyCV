@@ -1,8 +1,8 @@
-export const getUserQuery = (email) => `
-    query GetUser {
-        getUser (
-            email: "${email}"
-        ) {
+export const getUserQuery = `
+    query GetUser($email: String!) {
+        getUser(
+            email: $email
+        ){
             user_id
             first_name
             last_name
@@ -22,10 +22,10 @@ export const getUserQuery = (email) => `
             keywords
             scopus_id
             orcid_id
-            joined_timestamp
+            joined_timestamp   
         }
     }
-`;
+`
 
 export const getUserInstitutionIdQuery = (email) => `
     query GetUser {

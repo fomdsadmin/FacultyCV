@@ -27,9 +27,7 @@ import {
   getLatexConfigurationQuery,
 } from "./queries";
 import {
-  addSectionMutation,
   updateSectionMutation,
-  addUserCVDataMutation,
   addUserMutation,
   addUniversityInfoMutation,
   updateUserCVDataMutation,
@@ -47,12 +45,30 @@ import {
   addToUserGroupMutation,
   removeFromUserGroupMutation,
   updateLatexConfigurationMutation,
-  addUserDeclarationMutation,
-  deleteUserDeclarationMutation,
-  updateUserDeclarationMutation,
+  ADD_USER_DECLARATION,
+  DELETE_USER_DECLARATION,
+  UPDATE_USER_DECLARATION,
+  ADD_SECTION,
+  ADD_USER_CV_DATA,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
+const executeGraphql = async (query, variables = null) => {
+  const client = generateClient();
+  let input = {
+    query
+  }
+
+  if (variables) {
+    input = {
+      query,
+      variables
+    }
+  }
+
+  const results = await client.graphql(input);
+  return results;
+};
 const runGraphql = async (query) => {
   const client = generateClient();
   const results = await client.graphql({
@@ -154,9 +170,10 @@ export const getArchivedSections = async () => {
  *   }
  */
 export const getUser = async (email) => {
-  const results = await runGraphql(getUserQuery(email));
-  return results["data"]["getUser"];
-};
+  const results = await executeGraphql(getUserQuery, { email: email });
+  console.log(results)
+  return results['data']['getUser'];
+}
 
 /**
  * Function to get user data with institution_user_id
@@ -238,6 +255,8 @@ export const getUserCVData = async (user_id, data_section_ids) => {
   const results = await runGraphql(
     getUserCVDataQuery(user_id, data_section_ids)
   );
+
+  console.log(results["data"]["getUserCVData"])
   return results["data"]["getUserCVData"];
 };
 
@@ -609,14 +628,15 @@ export const addUserCVData = async (
   editable = true
 ) => {
   const cognito_user_id = await getUserId();
-  const results = await runGraphql(
-    addUserCVDataMutation(
-      user_id,
-      data_section_id,
-      data_details,
-      editable,
-      cognito_user_id
-    )
+  console.log("data_details ", data_details)
+  const results = await executeGraphql(
+    ADD_USER_CV_DATA, {
+      user_id: user_id,
+      data_section_id: data_section_id,
+      data_details: data_details,
+      editable: editable,
+      cognito_user_id: cognito_user_id
+    }
   );
   return results["data"]["addUserCVData"];
 };
@@ -632,8 +652,13 @@ export const addUserCVData = async (
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const addSection = async (title, description, data_type, attributes) => {
-  const results = await runGraphql(
-    addSectionMutation(title, description, data_type, attributes)
+  const results = await executeGraphql(
+    ADD_SECTION, {
+      title: title,
+      description: description,
+      data_type: data_type,
+      attributes: attributes
+    }
   );
   return results["data"]["addSection"];
 };
@@ -1104,14 +1129,26 @@ export const deleteTemplate = async (template_id) => {
  * Return value:
  *   { id, created_on }
  */
+
 export const addUserDeclaration = async (input) => {
   console.log(input);
-  const results = await runGraphql(addUserDeclarationMutation(input));
+  const results = await executeGraphql(ADD_USER_DECLARATION, {
+    first_name: input.first_name,
+    last_name: input.last_name,
+    reporting_year: input.reporting_year,
+    created_by: input.created_by,
+    other_data: input.other_data
+  });
   return results["data"]["addUserDeclaration"];
 };
 
 export const updateUserDeclaration = async (input) => {
-  const results = await runGraphql(updateUserDeclarationMutation(input));
+  const results = await executeGraphql(UPDATE_USER_DECLARATION, {
+    first_name: input.first_name,
+    last_name: input.last_name,
+    reporting_year: input.reporting_year,
+    other_data: input.other_data
+  });
   return results["data"]["updateUserDeclaration"];
 };
 
@@ -1120,8 +1157,11 @@ export const deleteUserDeclaration = async (
   last_name,
   reporting_year
 ) => {
-  const results = await runGraphql(
-    deleteUserDeclarationMutation(first_name, last_name, reporting_year)
+  const results = await executeGraphql(DELETE_USER_DECLARATION, {
+    first_name: first_name,
+    last_name: last_name,
+    reporting_year: reporting_year
+  }
   );
   return results["data"]["deleteUserDeclaration"];
 };

@@ -108,14 +108,13 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
             ? `${startDateMonth}, ${startDateYear}`
             : `${startDateMonth}, ${startDateYear} - ${endDateMonth}, ${endDateYear}`;
         const updatedFormData = dateFieldName ? { ...rest, [dateFieldName]: dates } : { ...rest };
-        const formDataString = JSON.stringify(updatedFormData).replace(/"/g, '\\"');
         
         try {
             if (isNew) {
-                const result = await addUserCVData(userInfo.user_id, section.data_section_id, `"${formDataString}"`);
+                const result = await addUserCVData(userInfo.user_id, section.data_section_id, JSON.stringify(updatedFormData));
                 
             } else {
-                const result = await updateUserCVData(user_cv_data_id, `"${formDataString}"`);
+                const result = await updateUserCVData(user_cv_data_id, JSON.stringify(updatedFormData));
                 
             }
         } catch (error) {

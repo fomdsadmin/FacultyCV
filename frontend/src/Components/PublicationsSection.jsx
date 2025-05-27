@@ -186,6 +186,14 @@ const PublicationsSection = ({ user, section, onBack }) => {
     console.log(details);
     if (!details || typeof details !== "object") return null;
 
+    const authorList = Array.isArray(details.author_names)
+      ? details.author_names
+      : [details.author_names]
+
+    const keywordsList = Array.isArray(details.keywords)
+      ? details.keywords
+      : [details.keywords]
+
     return (
       <div className="bg-white rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
@@ -194,10 +202,10 @@ const PublicationsSection = ({ user, section, onBack }) => {
           {details.year_published}
         </p>
 
-        {details.author_names?.length > 0 && (
+        {authorList?.length > 0 && (
           <p className="text-sm text-gray-700 mb-1">
             <span className="font-semibold">Author Names:</span>{" "}
-            {details.author_names.join(", ")}
+            {authorList.join(", ")}
           </p>
         )}
 
@@ -207,10 +215,10 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </p>
         )}
 
-        {details.keywords?.length > 0 && (
+        {keywordsList?.length > 0 && (
           <p className="text-sm text-gray-700 mb-1">
             <span className="font-semibold">Keywords:</span>{" "}
-            {details.keywords.join(", ")}
+            {keywordsList.join(", ")}
           </p>
         )}
 
