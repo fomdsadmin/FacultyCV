@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { FaEye } from 'react-icons/fa';
-import { IoClose } from 'react-icons/io5';
+import React, { useState, useEffect } from "react";
+import { FaEye } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
 import { LuUndo2 } from "react-icons/lu";
 
 const MAX_CHAR_LENGTH = 220;
@@ -13,31 +13,47 @@ const truncateText = (text, maxLength) => {
 };
 
 const capitalizeWords = (string) => {
-  return string.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+  return string
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 const addSpaceAfterComma = (string) => {
-  return string.replace(/,/g, ', ');
+  return string.replace(/,/g, ", ");
 };
 
-const PermanentEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2, data_details }) => {
+const PermanentEntry = ({
+  isArchived,
+  onEdit,
+  onArchive,
+  onRestore,
+  field1,
+  field2,
+  data_details,
+}) => {
   const [attributes, setAttributes] = useState([]);
-  
+
   useEffect(() => {
-    
     const newAttributes = Object.entries(data_details)
-    .filter(([key, value]) => value && value !== field1 && value !== field2 & !(Array.isArray(value) && value.length === 0) 
-    && key !== 'author_ids'
-    && key !== 'class_size_(per_year)'
-    && key !== 'labs_(per_year)'
-    && key !== 'lectures_(per_year)'
-    && key !== 'other_(per_year)'
-    && key !== 'scheduled_hours'
-    && key !== 'tutorials_(per_year)'
-    && key !== 'author_ids'
-    )
-    .map(([key, value]) => `${capitalizeWords(key)}: ${addSpaceAfterComma(String(value))}`)
-    .sort((a, b) => a.localeCompare(b));
+      .filter(
+        ([key, value]) =>
+          value &&
+          value !== field1 &&
+          (value !== field2) & !(Array.isArray(value) && value.length === 0) &&
+          key !== "author_ids" &&
+          key !== "class_size_(per_year)" &&
+          key !== "labs_(per_year)" &&
+          key !== "lectures_(per_year)" &&
+          key !== "other_(per_year)" &&
+          key !== "scheduled_hours" &&
+          key !== "tutorials_(per_year)" &&
+          key !== "author_ids"
+      )
+      .map(
+        ([key, value]) =>
+          `${capitalizeWords(key)}: ${addSpaceAfterComma(String(value))}`
+      )
+      .sort((a, b) => a.localeCompare(b));
     setAttributes(newAttributes);
   }, [data_details, field1, field2]);
 
@@ -64,17 +80,20 @@ const PermanentEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, fiel
       <div className="flex items-center space-x-1">
         {!isArchived && (
           <>
-            <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onEdit()}>
-              <FaEye className="h-5 w-5" />
-            </button>
-            <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onArchive()}>
+            <button
+              className="btn btn-sm btn-circle btn-ghost"
+              onClick={() => onArchive()}
+            >
               <IoClose className="h-5 w-5" />
             </button>
           </>
         )}
 
         {isArchived && (
-          <button className="btn btn-xs btn-circle btn-ghost" onClick={onRestore}>
+          <button
+            className="btn btn-xs btn-circle btn-ghost"
+            onClick={onRestore}
+          >
             <LuUndo2 className="h-4 w-4" />
           </button>
         )}

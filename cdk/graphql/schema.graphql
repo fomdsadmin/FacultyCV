@@ -1,13 +1,13 @@
-# This is for OpenAI 
+# This is for OpenAI
 type LambdaAIResponse {
-	answer: [ResearchKeywordCategory]
-	response_time_seconds: Float
-	error: String
+  answer: [ResearchKeywordCategory]
+  response_time_seconds: Float
+  error: String
 }
 
 type ResearchKeywordCategory {
-	category: String
-	keywords: [String]
+  category: String
+  keywords: [String]
 }
 
 type User {
@@ -165,16 +165,23 @@ type OrcidSectionOutput {
 }
 
 type Declaration {
-	reporting_year: String!
-	other_data: AWSJSON!
-	created_by: String!
-	created_on: String!
+  reporting_year: String!
+  other_data: AWSJSON!
+  created_by: String!
+  created_on: String!
+}
+
+type InsertResponse {
+  id: Int!
+  created_on: String!
 }
 
 type Query {
   GetAIResponse(user_input: String!): LambdaAIResponse
-		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
-    
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
   getUser(email: String!): User
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
@@ -290,6 +297,33 @@ type Query {
 }
 
 type Mutation {
+  addUserDeclaration(
+    first_name: String!
+    last_name: String!
+    reporting_year: Int!
+    created_by: String!
+    other_data: AWSJSON!
+  ): InsertResponse!
+
+  deleteUserDeclaration(
+    first_name: String!
+    last_name: String!
+    reporting_year: Int!
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  updateUserDeclaration(
+    first_name: String!
+    last_name: String!
+    reporting_year: Int!
+    other_data: AWSJSON!
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
   addToUserGroup(userName: String!, userGroup: String!): String
 
   removeFromUserGroup(userName: String!, userGroup: String!): String

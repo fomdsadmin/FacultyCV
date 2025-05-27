@@ -33,9 +33,6 @@ def getUserDeclarations(arguments):
             'created_by':created_by,
             'created_on': created_on.strftime("%Y-%m-%d %H:%M:%S.%f")
         }
-        updated_at = other_data.get('updated_at')
-        if updated_at is not None:
-            match['other_data'].append(updated_at)
         matches.append(match)
 
     return matches

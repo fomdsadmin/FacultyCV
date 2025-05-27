@@ -2,8 +2,16 @@ import React, { useState, useRef, useEffect } from "react";
 import PageContainer from "./PageContainer.jsx";
 import FacultyMenu from "../Components/FacultyMenu.jsx";
 import DeclarationForm from "../Components/DeclarationForm.jsx";
-import { getUserDeclarations } from "../graphql/graphqlHelpers";
+import {
+  getUserDeclarations,
+  addUserDeclaration,
+  deleteUserDeclaration,
+  updateUserDeclaration,
+} from "../graphql/graphqlHelpers";
 import { Link } from "react-router-dom";
+import { FaRegCalendarAlt } from "react-icons/fa";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Helper to map value to full label
 const DECLARATION_LABELS = {
@@ -44,6 +52,7 @@ const normalizeDeclarations = (rawDeclarations) => {
       honorific: other.fom_honorific_impact_report || "",
       created_by: decl.created_by,
       created_on: decl.created_on,
+      updated_at: other.updated_at || null, // <-- add this line
     };
   });
 };
@@ -63,20 +72,22 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [declarations, setDeclarations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
 
-  // Find the biggest/latest year
-  const currentYear =
-    declarations.length > 0
-      ? Math.max(...declarations.map((d) => d.year))
-      : null;
+  // Year logic
+  const thisYear = new Date().getFullYear();
+  const nextYear = thisYear + 1;
 
-  // State for expanded declaration year
-  const [expandedYear, setExpandedYear] = useState(currentYear);
+  // Only show years that don't already exist
+  const availableYears = [
+    { value: thisYear, label: thisYear.toString() },
+    { value: nextYear, label: nextYear.toString() },
+  ].filter((opt) => !declarations.some((d) => d.year === Number(opt.value)));
 
-  // Expand the current year by default on mount or when declarations change
-  useEffect(() => {
-    if (currentYear) setExpandedYear(currentYear);
-  }, [currentYear]);
+  // Find current and next year declarations
+  const currentYearDecl = declarations.find((d) => d.year === thisYear);
+  const nextYearDecl = declarations.find((d) => d.year === nextYear);
+  const disableCreate = !!currentYearDecl && !!nextYearDecl;
 
   // Fetch declarations from Lambda on mount or when user changes
   useEffect(() => {
@@ -84,16 +95,11 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setLoading(true);
       setFetchError(null);
       try {
-        // Uncomment this to use Lambda:
         const data = await fetchDeclarations(
           userInfo.first_name,
           userInfo.last_name
         );
-        // console.log(userInfo.first_name, userInfo.last_name);
         setDeclarations(data);
-
-        // For now, use dummy data in correct format:
-        // setDeclarations(dummyDeclarations);
       } catch (err) {
         setFetchError("Could not load declarations.");
         setDeclarations([]);
@@ -104,13 +110,25 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       fetchData();
     }
   }, [userInfo?.first_name, userInfo?.last_name]);
+  // Find the biggest/latest year
+  const currentYear =
+    declarations.length > 0
+      ? Math.max(...declarations.map((d) => d.year))
+      : null;
+
+  // Expand the current year by default on mount or when declarations change
+  useEffect(() => {
+    if (currentYear) setExpandedYear(currentYear);
+  }, [currentYear]);
+
+  const [expandedYear, setExpandedYear] = useState(currentYear);
 
   // State for showing the form (create or edit)
   const [showForm, setShowForm] = useState(false);
-  // Optionally, track which year is being edited
-  const [editYear, setEditYear] = useState(null);
+  const [editYear, setEditYear] = useState(null); // track which year is being edited
 
   // Controlled state for select fields
+  const formRef = useRef(null); // scroll to form
   const [coi, setCoi] = useState("");
   const [fomMerit, setFomMerit] = useState("");
   const [psa, setPsa] = useState("");
@@ -120,9 +138,6 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [psaJustification, setPsaJustification] = useState("");
   const [honorific, setHonorific] = useState("");
   const [year, setYear] = useState("");
-
-  // For scrolling to form
-  const formRef = useRef(null);
 
   // Handler for edit button
   const handleEdit = (year) => {
@@ -142,11 +157,33 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }, 100);
   };
 
+  const handleDelete = async (year) => {
+    try {
+      await deleteUserDeclaration(
+        userInfo.first_name,
+        userInfo.last_name,
+        year
+      );
+      toast.success("Declaration deleted successfully!", {
+        autoClose: 2000,
+        theme: "light",
+      }); // <-- Add this line
+      const data = await fetchDeclarations(
+        userInfo.first_name,
+        userInfo.last_name
+      );
+      setDeclarations(data);
+    } catch (error) {
+      alert("Failed to delete declaration.");
+      console.error("Error delete declaration:", error);
+    }
+  };
+
   // Handler for create new declaration
   const handleCreate = () => {
     setEditYear(null);
     setShowForm(true);
-    setYear(""); // Reset year as well
+    setYear("");
     setCoi("");
     setFomMerit("");
     setPsa("");
@@ -159,11 +196,11 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }, 100);
   };
 
-  // Optionally, implement onSave logic
+  // Reset fields on cancel and close form
   const handleCancel = () => {
     setShowForm(false);
     setEditYear(null);
-    setYear(""); // Reset year as well
+    setYear("");
     setCoi("");
     setFomMerit("");
     setPsa("");
@@ -175,20 +212,110 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
   // Handler for saving a new declaration (calls Lambda)
   const handleSave = async () => {
-    // Implement your save logic here, e.g. POST to Lambda with all form fields
-    // After saving, re-fetch declarations
-    setShowForm(false);
-    setEditYear(null);
-    setYear("");
-    setCoi("");
-    setFomMerit("");
-    setPsa("");
-    setPromotion("");
-    setMeritJustification("");
-    setPsaJustification("");
-    setHonorific("");
-    // Optionally, re-fetch declarations here
+    // Validation logic
+    const errors = {};
+    if (!editYear && (!year || year === ""))
+      errors.year = "Please select a reporting year.";
+    if (!coi) errors.coi = "Please select Yes or No.";
+    if (!fomMerit) errors.fomMerit = "Please select Yes or No.";
+    if (!psa) errors.psa = "Please select Yes or No.";
+    if (!promotion) errors.promotion = "Please select Yes or No.";
+
+    setValidationErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      // Scroll to the first error field
+      setTimeout(() => {
+        const firstErrorKey = [
+          "year",
+          "coi",
+          "fomMerit",
+          "psa",
+          "promotion",
+        ].find((key) => errors[key]);
+        if (firstErrorKey) {
+          const el = document.getElementById(
+            `declaration-field-${firstErrorKey}`
+          );
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.focus?.();
+          }
+        }
+      }, 100);
+      return;
+    }
+
+    // Build the input object for the mutation
+    const input = {
+      first_name: userInfo.first_name,
+      last_name: userInfo.last_name,
+      reporting_year: Number(editYear || year),
+      created_by: userInfo.email || userInfo.first_name,
+      other_data: JSON.stringify({
+        conflict_of_interest: coi.toLowerCase(),
+        fom_merit: fomMerit.toLowerCase(),
+        merit_justification: meritJustification || null,
+        psa_awards: psa.toLowerCase(),
+        psa_justification: psaJustification || null,
+        fom_promotion_review: promotion.toLowerCase(),
+        fom_honorific_impact_report: honorific || null,
+        updated_at: editYear ? new Date().toISOString() : null,
+      }),
+    };
+
+    try {
+      if (editYear) {
+        // Edit mode: update
+        await updateUserDeclaration(input);
+        toast.success("Declaration updated successfully!", { autoClose: 2000 });
+      } else {
+        // Create mode: add
+        await addUserDeclaration(input);
+        toast.success("Declaration added successfully!", { autoClose: 2000 });
+      }
+      setShowForm(false);
+      setEditYear(null);
+      setYear("");
+      setCoi("");
+      setFomMerit("");
+      setPsa("");
+      setPromotion("");
+      setMeritJustification("");
+      setPsaJustification("");
+      setHonorific("");
+      setValidationErrors({});
+      // Refresh declarations
+      const data = await fetchDeclarations(
+        userInfo.first_name,
+        userInfo.last_name
+      );
+      setDeclarations(data);
+    } catch (error) {
+      if (editYear) {
+        alert("Failed to update declaration.");
+        console.error("Error updating declaration:", error);
+      } else if (
+        !editYear &&
+        error.message &&
+        error.message.includes("Entry already exists")
+      ) {
+        alert("A declaration for this year already exists.");
+      } else {
+        alert("Failed to save declaration.");
+        console.error("Error saving declaration:", error);
+      }
+    }
   };
+
+  const yearOptionsForForm = React.useMemo(() => {
+    if (editYear) {
+      // In edit mode, show only the year being edited
+      return [{ value: editYear, label: editYear.toString() }];
+    }
+    // In create mode, show only available years
+    return [{ value: "", label: "Select year..." }, ...availableYears];
+  }, [editYear, availableYears]);
 
   return (
     <PageContainer>
@@ -201,33 +328,31 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       />
 
       {/* Main content */}
-      <main className="ml-4 pr-5 w-full overflow-auto py-6 px-4">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-10 px-4">
-          <div>
-            <div className="text-4xl font-bold text-zinc-600">Declarations</div>
-            <div className="text-sm text-gray-500">
-              Last visit: 6 Nov 2025, 3:16PM (static)
-            </div>
-          </div>
-          <div>
-            <Link to="/support">
-              <button className="btn btn-sm btn-success">Get Help</button>
-            </Link>
-          </div>
+      <main className="ml-4 pr-5 w-full overflow-auto mt-2 py-6 px-4">
+        {/* Heading row */}
+        <div className="max-w-6xl mx-auto px-0 mb-2">
+          <div className="text-4xl font-bold text-zinc-600">Declarations</div>
+        </div>
+
+        {/* Button row */}
+        <div className="flex justify-end max-w-6xl mx-auto px-0 mb-4">
+          <button
+            className={`btn btn-primary px-6 py-2 rounded-lg shadow transition
+        ${
+          disableCreate
+            ? "bg-gray-300 text-gray-600 border border-gray-400 cursor-not-allowed opacity-90"
+            : "bg-blue-600 text-white hover:bg-blue-700"
+        }
+      `}
+            onClick={handleCreate}
+            disabled={disableCreate}
+          >
+            Create New Declaration
+          </button>
         </div>
 
         {/* Declarations List Dropdown */}
-        <div className="mb-12 px-4">
-          <div className="flex items-center justify-between mb-6">
-            <div className="text-xl font-bold">Previous Declarations</div>
-            <button
-              className="btn btn-primary bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
-              onClick={handleCreate}
-            >
-              Create New Declaration
-            </button>
-          </div>
+        <div className="mb-8 max-w-6xl mx-auto px-0">
           <div className="space-y-6">
             {loading ? (
               <div className="rounded-2xl bg-zinc-100 shadow-xl border-2 border-zinc-300 px-10 py-10 flex items-center justify-center text-lg text-gray-500">
@@ -244,136 +369,193 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             ) : (
               declarations
                 .sort((a, b) => b.year - a.year)
-                .map((decl) => (
-                  <div
-                    key={decl.year}
-                    className={`
-                      rounded-2xl 
-                      shadow-l 
-                      transition 
-                      w-full h-full
-                      ${
-                        expandedYear === decl.year ? "ring-2 ring-blue-400" : ""
-                      }
-                      ${
-                        decl.year === currentYear
-                          ? "border-2 border-blue-500 bg-gray-90"
-                          : "border-2 border-zinc-400 bg-zinc-200"
-                      }
-                    `}
-                    style={{ paddingTop: 0, paddingBottom: 0 }}
-                  >
-                    <button
-                      className="w-full h-full flex justify-between items-center px-8 py-4 text-left hover:bg-gray-100 transition rounded-2xl"
-                      onClick={() =>
-                        setExpandedYear(
-                          expandedYear === decl.year ? null : decl.year
-                        )
-                      }
+                .map((decl) => {
+                  const canEdit =
+                    decl.year === thisYear || decl.year === nextYear;
+                  const isCurrent = decl.year === thisYear;
+                  const isNext = decl.year === nextYear;
+                  return (
+                    <div
+                      key={decl.year}
+                      className={`
+                        flex flex-col rounded-xl shadow transition
+                        w-full max-w-6xl mx-auto mb-2 border-l-8 px-2 py-2
+                        ${
+                          isCurrent
+                            ? "border-blue-500 bg-white"
+                            : isNext
+                            ? "border-green-500 bg-white"
+                            : "border-zinc-300 bg-zinc-50"
+                        }
+                        ${
+                          expandedYear === decl.year
+                            ? "ring-2 ring-blue-300"
+                            : ""
+                        }
+                      `}
                     >
-                      <span className="font-bold text-zinc-700 text-2xl">
-                        {decl.year}
-                      </span>
-                      <div className="flex items-center gap-4">
-                        {/* Edit button: only for the latest year */}
-                        {decl.year === currentYear && (
-                          <button
-                            className="btn btn-md btn-outline text-blue-500 border-l border-blue-500 mr-2 
-                          hover:bg-blue-500 hover:text-white transition "
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(decl.year);
-                            }}
-                          >
-                            Edit
-                          </button>
-                        )}
-                        {/* Drop down arrow */}
-                        <svg
-                          className={`w-7 h-7 transform transition-transform ${
-                            expandedYear === decl.year ? "rotate-180" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 9l-7 7-7-7"
+                      <button
+                        className="flex items-center justify-between px-6 py-3 text-left hover:bg-blue-50 transition rounded-t-xl"
+                        onClick={() =>
+                          setExpandedYear(
+                            expandedYear === decl.year ? null : decl.year
+                          )
+                        }
+                      >
+                        <div className="flex items-center gap-3 px-2">
+                          <FaRegCalendarAlt
+                            className={`text-xl ${
+                              isCurrent
+                                ? "text-blue-500"
+                                : isNext
+                                ? "text-green-500"
+                                : "text-zinc-400"
+                            }`}
                           />
-                        </svg>
-                      </div>
-                    </button>
-                    {expandedYear === decl.year && (
-                      <div className="mx-8 mt-1 mb-4 px-12 py-2 text-gray-700 bg-gray-200 rounded-2xl">
-                        <div className="mb-3">
-                          <b>
-                            Conflict of Interest and Commitment Declaration:
-                          </b>
-                          <ul className="list-disc list-inside mt-1 indent-6">
-                            <li>
-                              {DECLARATION_LABELS.coi[decl.coi] || decl.coi}
-                            </li>
-                          </ul>
+                          <span
+                            className={`font-bold text-lg ${
+                              isCurrent
+                                ? "text-blue-700"
+                                : isNext
+                                ? "text-green-700"
+                                : "text-zinc-600"
+                            }`}
+                          >
+                            {decl.year}
+                          </span>
+                          {isCurrent && (
+                            <span className="ml-2 px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700 font-semibold">
+                              Current
+                            </span>
+                          )}
+                          {isNext && (
+                            <span className="ml-2 px-2 py-0.5 text-xs rounded bg-green-100 text-green-700 font-semibold">
+                              Next
+                            </span>
+                          )}
                         </div>
-                        <div className="mb-3">
-                          <b>FOM Merit Declaration:</b>
-                          <ul className="list-disc list-inside mt-1 indent-6">
-                            <li>
+                        <div className="flex items-center gap-4">
+                          {canEdit && (
+                            <>
+                              <button
+                                className="btn btn-s btn-outline text-blue-600 border-blue-400 hover:bg-blue-500 hover:text-white transition"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(decl.year);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="btn btn-s btn-outline text-red-600 border-red-400 hover:bg-red-500 hover:text-white transition ml-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(decl.year);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+                          <svg
+                            className={`w-6 h-6 ml-2 transition-transform ${
+                              expandedYear === decl.year ? "rotate-180" : ""
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </button>
+                      {expandedYear === decl.year && (
+                        <div className="px-6 ml-10 pb-4 pt-2 text-gray-700 text-base">
+                          <div className="mb-4">
+                            <b>Conflict of Interest and Commitment:</b>
+                            <div className="ml-4">
+                              {DECLARATION_LABELS.coi[decl.coi] || decl.coi}
+                            </div>
+                          </div>
+                          <div className="mb-4">
+                            <b>FOM Merit:</b>
+                            <div className="ml-4">
                               {DECLARATION_LABELS.fomMerit[decl.fomMerit] ||
                                 decl.fomMerit}
-                            </li>
+                            </div>
                             {decl.meritJustification && (
-                              <div className="mb-3">
-                                <li>
-                                  <b>Justification:</b>{" "}
-                                  {decl.meritJustification}
-                                </li>
+                              <div className="ml-4 mt-1 text-mmt-1 text-m text-gray-500">
+                                <b>Justification:</b> {decl.meritJustification}
                               </div>
                             )}
-                          </ul>
-                        </div>
-                        <div className="mb-3">
-                          <b>PSA Awards Declaration:</b>
-                          <ul className="list-disc list-inside mt-1 indent-6">
-                            <li>
+                          </div>
+                          <div className="mb-4">
+                            <b>PSA Awards:</b>
+                            <div className="ml-4">
                               {DECLARATION_LABELS.psa[decl.psa] || decl.psa}
-                            </li>
+                            </div>
                             {decl.psaJustification && (
-                              <div className="mb-3">
-                                <li>
-                                  <b>Justification:</b> {decl.psaJustification}
-                                </li>
+                              <div className="ml-4 mt-1 text-m text-gray-500">
+                                <b>Justification:</b> {decl.psaJustification}
                               </div>
                             )}
-                          </ul>
-                        </div>
-                        <div className="mb-3">
-                          <b>Promotion Review Declaration:</b>
-                          <ul className="list-disc list-inside mt-1 indent-6">
-                            <li>
+                          </div>
+                          <div className="mb-4">
+                            <b>Promotion Review:</b>
+                            <div className="ml-4">
                               {DECLARATION_LABELS.promotion[decl.promotion] ||
                                 decl.promotion}
-                            </li>
-                          </ul>
-                        </div>
-                        {decl.honorific && (
-                          <div className="mb-3">
-                            <b>Honorific Impact Report:</b>
-                            <ul className="list-disc list-inside mt-1 indent-6">
-                              <li>{decl.honorific}</li>
-                            </ul>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))
+                          {decl.honorific && (
+                            <div className="mb-4">
+                              <b>Honorific Impact Report:</b>
+                              <div className="ml-4 text-m mt-1text-gray-600">
+                                {decl.honorific}
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex flex-col text-xs text-gray-500 items-end justify-end">
+                            <div>
+                              Created by: {decl.created_by} &nbsp;|&nbsp;{" "}
+                              {decl.created_on
+                                ? decl.created_on.split(" ")[0]
+                                : ""}
+                            </div>
+                            {decl.updated_at && (
+                              <div className="mt-1 items-end">
+                                Updated &nbsp;:&nbsp;{" "}
+                                {decl.updated_at.split("T")[0]}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
             )}
           </div>
         </div>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={1000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          className="mt-6"
+        />
 
         {/* Declaration Form (Create/Edit) */}
         {showForm && (
@@ -398,6 +580,10 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             formRef={formRef}
             onCancel={handleCancel}
             onSave={handleSave}
+            yearOptions={yearOptionsForForm}
+            isEdit={!!editYear}
+            validationErrors={validationErrors}
+            setValidationErrors={setValidationErrors} // <-- Add this line
           />
         )}
 
