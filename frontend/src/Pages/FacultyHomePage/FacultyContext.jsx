@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react"
 import { getAllUniversityInfo, getAllSections, getOrcidSections, updateUser } from "../../graphql/graphqlHelpers.js"
 import { toast } from "react-toastify"
+import { useApp } from "../../Contexts/AppContext.jsx"
 
 // Create the context
 const FacultyContext = createContext(null)
@@ -15,7 +16,12 @@ export const useFaculty = () => {
 }
 
 // Provider component
-export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognitoUser, toggleViewMode }) => {
+export const FacultyProvider = ({ children }) => {
+  // Get values from AppContext
+  const { userInfo, setUserInfo, getCognitoUser, getUserInfo, toggleViewMode } = useApp();
+
+  // Will be used to check if any user info has been saved
+  const [prevUserInfo, setPrevUserInfo] = useState(null);
 
   const CATEGORIES = Object.freeze({
     AFFILIATIONS: "Affiliations",
@@ -24,11 +30,10 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
     TEACHING: "Teaching",
     EDUCATION: "Education",
     AWARDS: "Awards",
-    LINKAGES: "Linkages"
-  });
+    LINKAGES: "Linkages",
+  })
 
   // User state
-  const [userInfo, setUserInfo] = useState(initialUserInfo)
   const [change, setChange] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -49,9 +54,24 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
   const [modalOpen, setModalOpen] = useState(false)
   const [activeModal, setActiveModal] = useState(null)
 
-  // IDs state
-  const [scopusId, setScopusId] = useState(initialUserInfo.scopus_id || "")
-  const [orcidId, setOrcidId] = useState(initialUserInfo.orcid_id || "")
+    // This effect will ensure prevUserInfo is set only once
+    useEffect(() => {
+      if (userInfo && !prevUserInfo) {
+        setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
+      }
+    }, [userInfo, prevUserInfo]);
+  
+    // Compares the previous userInfo and the userInfo displayed on frontend to determine if a change was made
+    useEffect(() => {
+      const userInfoToCompare = JSON.stringify(userInfo);
+      const prevUserInfoToCompare = JSON.stringify(prevUserInfo);
+
+      if (userInfoToCompare !== prevUserInfoToCompare && prevUserInfo) {
+        setChange(true);
+      } else {
+        setChange(false);
+      }
+    }, [userInfo, prevUserInfo])
 
   // Fetch academic sections
   useEffect(() => {
@@ -114,7 +134,6 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
       ...prevUserInfo,
       [name]: value,
     }))
-    setChange(true)
   }
 
   // Handle form submission
@@ -143,19 +162,20 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
         userInfo.campus,
         userInfo.keywords,
         userInfo.institution_user_id,
-        scopusId,
-        orcidId,
+        userInfo.scopus_id,
+        userInfo.orcid_id,
       )
-      getUser(userInfo.email)
+      // Update both local and app state
+      getUserInfo(userInfo.email)
       setIsSubmitting(false)
-      setChange(false)
+      setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
     } catch (error) {
       console.error("Error updating user:", error)
       setIsSubmitting(false)
     }
   }
 
-  // Sanitize input (this should be removed because graphql should take any input if done correctly)
+  // Sanitize input
   const sanitizeInput = (input) => {
     return input.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")
   }
@@ -171,27 +191,24 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
     setModalOpen(true)
   }
 
-  const handleClearScopusId = () => {
-    setScopusId("")
-    setChange(true)
-  }
-
-  const handleClearOrcidId = () => {
-    setOrcidId("")
-    setChange(true)
-  }
-
   const handleScopusLink = (newScopusId) => {
-    const updatedScopusId = scopusId ? `${scopusId},${newScopusId}` : newScopusId
-    setScopusId(updatedScopusId)
-    setModalOpen(false)
-    setChange(true)
+    if (!newScopusId) {
+      return;
+    }
+    const updatedScopusId = userInfo.scopus_id ? `${userInfo.scopus_id},${newScopusId}` : newScopusId;
+    setUserInfo((prev) => ({
+      ...prev,
+      scopus_id: updatedScopusId,
+    }));
+    setModalOpen(false);
   }
 
   const handleOrcidLink = (newOrcidId) => {
-    setOrcidId(newOrcidId)
+    setUserInfo((prev) => ({
+      ...prev,
+      orcid_id: newOrcidId,
+    }));
     setModalOpen(false)
-    setChange(true)
   }
 
   const handleCloseModal = () => {
@@ -201,13 +218,12 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
   // ORCID data fetching
   const getBio = async () => {
     try {
-      const bio = await getOrcidSections(orcidId, "biography")
+      const bio = await getOrcidSections(userInfo.orcid_id, "biography")
       if (bio && bio.bio) {
         setUserInfo((prevUserInfo) => ({
           ...prevUserInfo,
           bio: bio.bio,
         }))
-        setChange(true)
         toast.success("Bio imported successfully!", { autoClose: 3000 })
       } else {
         toast.error("Failed to fetch the bio from ORCID.", { autoClose: 3000 })
@@ -219,13 +235,12 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
 
   const getKeywords = async () => {
     try {
-      const keywords_output = await getOrcidSections(orcidId, "keywords")
+      const keywords_output = await getOrcidSections(userInfo.orcid_id, "keywords")
       if (keywords_output && keywords_output.keywords) {
         setUserInfo((prevUserInfo) => ({
           ...prevUserInfo,
           keywords: keywords_output.keywords,
         }))
-        setChange(true)
         toast.success("Keywords imported successfully!", { autoClose: 3000 })
       } else {
         toast.error("Failed to fetch the keywords from ORCID.", { autoClose: 3000 })
@@ -238,10 +253,7 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
   // Provide all values and functions to children
   const value = {
     // User state
-    userInfo,
-    setUserInfo,
     change,
-    setChange,
     isSubmitting,
     handleInputChange,
     handleSubmit,
@@ -267,26 +279,25 @@ export const FacultyProvider = ({ children, initialUserInfo, getUser, getCognito
     setActiveModal,
 
     // IDs state
-    scopusId,
-    orcidId,
+    //scopusId,
+    //orcidId,
 
     // Functions
     handleScopusIdClick,
     handleOrcidIdClick,
-    handleClearScopusId,
-    handleClearOrcidId,
     handleScopusLink,
     handleOrcidLink,
     handleCloseModal,
     getBio,
     getKeywords,
+    //updateAppUserInfo,
 
-    // External functions
+    // External functions from AppContext
     getCognitoUser,
     toggleViewMode,
 
     // Categories
-    CATEGORIES
+    CATEGORIES,
   }
 
   return <FacultyContext.Provider value={value}>{children}</FacultyContext.Provider>

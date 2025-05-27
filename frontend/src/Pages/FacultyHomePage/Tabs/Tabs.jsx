@@ -1,14 +1,12 @@
-"use client"
-
-import GenericSection from "../../../Components/GenericSection"
 import { Accordion } from "../../../SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "../../../SharedComponents/Accordion/AccordionItem"
+import GenericSection from "../../../SharedComponents/GenericSection/GenericSection"
 import { useFaculty } from "../FacultyContext"
-import InstitutionInfo from "../Profile/InstitutionInfo/InstitutionInfo"
+import InstitutionInfo from "../Profile/InstitutionInfo"
 import Linkages from "../Profile/Linkages/Linkages"
 
 const Tabs = () => {
-    const { activeTab, setActiveTab, userInfo, academicSections, CATEGORIES } = useFaculty()
+    const { activeTab, setActiveTab, academicSections, CATEGORIES } = useFaculty()
 
     const getTitlesForCategory = (category) => {
         switch (category) {
@@ -41,8 +39,6 @@ const Tabs = () => {
                     "Postgraduate Students Supervised",
                     "Students Supervised - Other",
                     "Continuing Education Activities",
-                    "Continuing Education or Training",
-                    "Continuing Medical Education",
                     "Visiting Lecturer",
                 ]
 
@@ -64,7 +60,6 @@ const Tabs = () => {
     }
 
     const getSection = (category, index) => {
-        console.log(activeTab, category)
         return (
             <>
                 {activeTab === category && (
@@ -73,7 +68,6 @@ const Tabs = () => {
                             <AccordionItem key={index + "" + innerIndex} title={title}>
                                 <GenericSection
                                     key={innerIndex}
-                                    user={userInfo}
                                     section={academicSections.filter((s) => s.title === title)[0]}
                                     onBack={null}
                                 />
