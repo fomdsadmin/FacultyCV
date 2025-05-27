@@ -135,19 +135,19 @@ const PermanentEntryModal = ({
     const updatedFormData = dateFieldName
       ? { ...rest, [dateFieldName]: dates }
       : { ...rest };
-    const formDataString = JSON.stringify(updatedFormData).replace(/"/g, '\\"');
+    const formDataString = JSON.stringify(updatedFormData);
 
     try {
       if (isNew) {
         const result = await addUserCVData(
           user.user_id,
           section.data_section_id,
-          `"${formDataString}"`
+          formDataString
         );
       } else {
         const result = await updateUserCVData(
           user_cv_data_id,
-          `"${formDataString}"`
+          formDataString
         );
       }
     } catch (error) {

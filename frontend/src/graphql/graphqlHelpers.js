@@ -28,7 +28,6 @@ import {
 } from "./queries";
 import {
   updateSectionMutation,
-  addUserCVDataMutation,
   addUserMutation,
   addUniversityInfoMutation,
   updateUserCVDataMutation,
@@ -50,6 +49,7 @@ import {
   DELETE_USER_DECLARATION,
   UPDATE_USER_DECLARATION,
   ADD_SECTION,
+  ADD_USER_CV_DATA,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -255,6 +255,8 @@ export const getUserCVData = async (user_id, data_section_ids) => {
   const results = await runGraphql(
     getUserCVDataQuery(user_id, data_section_ids)
   );
+
+  console.log(results["data"]["getUserCVData"])
   return results["data"]["getUserCVData"];
 };
 
@@ -626,14 +628,15 @@ export const addUserCVData = async (
   editable = true
 ) => {
   const cognito_user_id = await getUserId();
-  const results = await runGraphql(
-    addUserCVDataMutation(
-      user_id,
-      data_section_id,
-      data_details,
-      editable,
-      cognito_user_id
-    )
+  console.log("data_details ", data_details)
+  const results = await executeGraphql(
+    ADD_USER_CV_DATA, {
+      user_id: user_id,
+      data_section_id: data_section_id,
+      data_details: data_details,
+      editable: editable,
+      cognito_user_id: cognito_user_id
+    }
   );
   return results["data"]["addUserCVData"];
 };

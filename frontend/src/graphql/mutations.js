@@ -109,20 +109,14 @@ export const addUserMutation = (
     }
 `;
 
-export const addUserCVDataMutation = (
-    user_id,
-    data_section_id,
-    data_details,
-    editable,
-    cognito_user_id
-) => `
-    mutation AddUserCVData {
+export const ADD_USER_CV_DATA = `
+    mutation AddUserCVData($user_id: String!, $data_section_id: String!, $data_details: AWSJSON!, $editable: Boolean!, $cognito_user_id: String) {
         addUserCVData(
-            user_id: "${user_id}"
-            data_section_id: "${data_section_id}"
-            data_details: ${data_details}
-            editable: ${editable}
-            cognito_user_id: "${cognito_user_id}"
+            user_id: $user_id,
+            data_section_id: $data_section_id,
+            data_details: $data_details,
+            editable: $editable,
+            cognito_user_id: $cognito_user_id
         )
     }
 `;
