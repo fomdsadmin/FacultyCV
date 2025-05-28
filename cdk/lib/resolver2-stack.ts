@@ -162,6 +162,26 @@ export class Resolver2Stack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "getTotalOrcidPublications",
+      ["getTotalOrcidPublications"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "getOrcidPublication",
+      ["getOrcidPublication"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "GetNotifications",
       ["GetNotifications"],
       "Query",
@@ -169,8 +189,8 @@ export class Resolver2Stack extends cdk.Stack {
       resolverRole,
       [requestsLayer]
     );
-	
-	createResolver(
+
+    createResolver(
       apiStack.getApi(),
       "getBioResponseData",
       ["getBioResponseData"],

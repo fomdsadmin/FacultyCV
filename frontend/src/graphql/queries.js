@@ -25,7 +25,7 @@ export const getUserQuery = `
             joined_timestamp   
         }
     }
-`
+`;
 
 export const getUserInstitutionIdQuery = (email) => `
     query GetUser {
@@ -268,6 +268,39 @@ export const getOrcidSectionsQuery = (orcidId, section) => `
     query getOrcidSections {
         getOrcidSections (
             orcidId: "${orcidId}", section: "${section}"
+        ) {
+            bio,
+            keywords,
+            publications {
+                publication_id
+                title
+                cited_by
+                keywords
+                journal
+                link
+                doi
+                year_published
+                author_names
+                author_ids
+            },
+            other_data
+        }
+    }
+`;
+
+export const getTotalOrcidPublicationsQuery = (orcid_id) => `
+    query GetTotalOrcidPublications {
+        getTotalOrcidPublications(orcid_id: "${orcid_id}") {
+            total_results
+            put_codes
+        }
+    }
+`;
+
+export const getOrcidPublicationQuery = (orcid_id, put_codes) => `
+    query getOrcidPublication {
+        getOrcidPublication (
+            orcid_id: "${orcid_id}", put_codes: "${put_codes}"
         ) {
             bio,
             keywords,
