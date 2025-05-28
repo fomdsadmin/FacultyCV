@@ -68,7 +68,7 @@ export const AppProvider = ({ children }) => {
             setUser(currentUser)
             await getUserInfo(currentUser)
             getUserGroup().then((group) => setUserGroup(group))
-            return <Navigate to="/home" />
+            return <Navigate to="/home" />;
         } catch (error) {
             console.error("Error getting Cognito user:", error)
             setUser(null)
@@ -76,7 +76,7 @@ export const AppProvider = ({ children }) => {
             setAssistantUserInfo({})
             signOut()
             setLoading(false)
-            return <Navigate to="/auth" />
+            return <Navigate to="/auth" />;
         }
     }
 

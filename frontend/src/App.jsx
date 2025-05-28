@@ -38,7 +38,7 @@ import Notification from './Components/Notification.jsx';
 import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
 import { CookieStorage } from 'aws-amplify/utils';
 import FacultyHomePage from './Pages/FacultyHomePage/FacultyHomePage';
-import { AppProvider } from './Contexts/AppContext';
+import { AppProvider, useApp } from './Contexts/AppContext';
 
 Amplify.configure({
   API: {
@@ -62,12 +62,14 @@ cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
 
 const AppContent = () => {
 
-  const [user, setUser] = useState(null);
-  const [userInfo, setUserInfo] = useState({});
-  const [assistantUserInfo, setAssistantUserInfo] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [userGroup, setUserGroup] = useState(null);
-  const [viewMode, setViewMode] = useState('department-admin'); // 'department-admin' or 'faculty'
+  //const [user, setUser] = useState(null);
+  //const [userInfo, setUserInfo] = useState({});
+  //const [assistantUserInfo, setAssistantUserInfo] = useState({});
+  //const [loading, setLoading] = useState(false);
+  //const [userGroup, setUserGroup] = useState(null);
+  //const [viewMode, setViewMode] = useState('department-admin'); // 'department-admin' or 'faculty'
+
+  const { getCognitoUser, setUserInfo, user, userInfo, assistantUserInfo, setAssistantUserInfo, loading, setLoading, viewMode, setViewMode } = useApp();
 
 
   const toggleViewMode = () => {
@@ -101,28 +103,6 @@ const AppContent = () => {
     } catch (error) {
       setLoading(false);
 
-    }
-  }
-
-  async function getCognitoUser() {
-    try {
-      setLoading(true);
-      const attributes = await fetchUserAttributes();
-      const currentUser = attributes.email;
-      setUser(currentUser);
-
-      await getUserInfo(currentUser);
-      getUserGroup().then((group) => setUserGroup(group));
-      <Navigate to="/home" />
-    }
-    catch (error) {
-      setUser(null);
-      setUserInfo({});
-      setAssistantUserInfo({});
-      signOut();
-
-      setLoading(false);
-      <Navigate to="/auth" />
     }
   }
 
