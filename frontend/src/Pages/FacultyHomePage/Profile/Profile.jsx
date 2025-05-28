@@ -1,4 +1,3 @@
-import { useFaculty } from "../FacultyContext"
 import Bio from "./Bio"
 import Contact from "./Contact"
 import Keywords from "./Keywords"
