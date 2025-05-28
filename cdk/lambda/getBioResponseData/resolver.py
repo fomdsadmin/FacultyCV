@@ -28,7 +28,7 @@ def getChatGPTResponse(prompt):
         chat_prompt = [
             {
                 "role": "system",
-                "content": "Please generate a short Bio around 100 words for the professor from UBC, Canada based on the Areas of Focus and Affiliations and Awards provided. The Bio should be in a professional tone and should not include any personal information."
+                "content": "Please generate a professional short bio (approximately 100 words) for a professor affiliated with the University of British Columbia (UBC), Canada, using the provided Areas of Focus, Affiliations, and Awards. The bio should maintain a formal tone and exclude any personal or sensitive information. If no relevant individual affiliated with UBC can be identified based on the given information, simply respond with: No UBC-affiliated individual found"
             },
             {
                 "role": "user",
