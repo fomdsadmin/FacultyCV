@@ -1,8 +1,10 @@
-import { useFaculty } from "../../FacultyContext"
+import { useApp } from "../../../Contexts/AppContext";
+import { useFaculty } from "../FacultyContext"
 
 const InstitutionInfo = () => {
-  const { userInfo, handleInputChange, departments, faculties, affiliations, institutions, campuses, ranks } =
-    useFaculty()
+  const { handleInputChange, departments, faculties, affiliations, institutions, campuses, ranks } = useFaculty()
+
+  const { userInfo} = useApp();
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">

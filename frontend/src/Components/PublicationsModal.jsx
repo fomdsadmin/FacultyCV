@@ -1,47 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import '../CustomStyles/scrollbar.css';
-import '../CustomStyles/modal.css';
-import { addUserCVData, getPublicationMatches, getUserCVData, getOrcidSections } from '../graphql/graphqlHelpers';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import "../CustomStyles/scrollbar.css";
+import "../CustomStyles/modal.css";
+import {
+  addUserCVData,
+  getPublicationMatches,
+  getUserCVData,
+  getOrcidSections,
+  getTotalOrcidPublications,
+  getOrcidPublication,
+} from "../graphql/graphqlHelpers";
+import { useNavigate } from "react-router-dom";
 
-const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
-  const [allFetchedPublications, setAllFetchedPublications] = useState([]); 
-  const [pageSize, setPageSize] = useState(25); // Number of publications to fetch per page 
-  const [totalResults, setTotalResults] = useState('TBD'); 
-  const [currentPage, setCurrentPage] = useState(0); 
-  const [fetchingData, setFetchingData] = useState(true); 
-  const [addingData, setAddingData] = useState(false); 
-  const [initialRender, setInitialRender] = useState(true); 
-  const [currentScopusId, setCurrentScopusId] = useState(''); 
+const PublicationsModal = ({
+  user,
+  section,
+  onClose,
+  setRetrievingData,
+  fetchData,
+}) => {
+  const [allFetchedPublications, setAllFetchedPublications] = useState([]);
+  const [pageSize, setPageSize] = useState(25); // Number of publications to fetch per page
+  const [totalResults, setTotalResults] = useState("TBD");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [fetchingData, setFetchingData] = useState(true);
+  const [addingData, setAddingData] = useState(false);
+  const [initialRender, setInitialRender] = useState(true);
+  const [currentScopusId, setCurrentScopusId] = useState("");
 
   const [count, setCount] = useState(1); // Initialize count in state
 
   const navigate = useNavigate();
 
-
   async function fetchPublicationsData() {
     setInitialRender(false);
     try {
       let publications = [];
-  
+
       //  Conditionally fetch from Scopus
-      const hasScopus = user.scopus_id && user.scopus_id.trim() !== '';
+      const hasScopus = user.scopus_id && user.scopus_id.trim() !== "";
       if (hasScopus) {
-        const scopusIds = user.scopus_id.split(',').map(id => id.trim()).filter(id => id !== '');
+        const scopusIds = user.scopus_id
+          .split(",")
+          .map((id) => id.trim())
+          .filter((id) => id !== "");
         for (let scopusId of scopusIds) {
           setCurrentScopusId(scopusId);
           let pageNumber = 0;
           let totalPages = 1;
-  
+
           while (pageNumber <= totalPages) {
-            const retrievedData = await getPublicationMatches(scopusId, pageNumber, pageSize);
-            
+            const retrievedData = await getPublicationMatches(
+              scopusId,
+              pageNumber,
+              pageSize
+            );
+
             // Important defensive check
             if (!retrievedData || !retrievedData.publications) {
               console.warn("Scopus returned invalid data, skipping...");
               break;
             }
-  
+
             publications = [...publications, ...retrievedData.publications];
             totalPages = retrievedData.total_pages ?? 0;
             setTotalResults(retrievedData.total_results ?? 0);
@@ -49,120 +68,150 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
           }
         }
       }
-  
+
       //  Always try ORCID if present
-      const hasOrcid = user.orcid_id && user.orcid_id.trim() !== '';
+      const hasOrcid = user.orcid_id && user.orcid_id.trim() !== "";
       if (hasOrcid) {
-        const orcidResponse = await getOrcidSections(user.orcid_id, "publications");
-        const orcidPublications = Array.isArray(orcidResponse.publications) ? orcidResponse.publications : [];
+        const totalOrcidPublications = await getTotalOrcidPublications(
+          user.orcid_id
+        );
+        console.log(
+          "Total ORCID Publications fetched:",
+          totalOrcidPublications
+        );
+        const putCodes = totalOrcidPublications.put_codes || [];
+        const batchSize = 25;
+        let orcidPublications = [];
+
+        for (let i = 0; i < putCodes.length; i += batchSize) {
+          const batch = putCodes.slice(i, i + batchSize);
+          // getOrcidPublication expects an array of put_codes
+          const result = await getOrcidPublication(user.orcid_id, batch);
+          if (result && Array.isArray(result.publications)) {
+            orcidPublications = [...orcidPublications, ...result.publications];
+          }
+        }
+
         publications = [...publications, ...orcidPublications];
+        setTotalResults(totalOrcidPublications.total_results ?? 0);
       }
-  
+
       // Handle empty case
       if (publications.length === 0) {
         console.warn("No publications fetched from either source");
       }
-  
+
       publications = deduplicatePublications(publications);
       addPublicationsData(publications);
       setAllFetchedPublications(publications);
     } catch (error) {
-      console.error('Error fetching publications data:', error);
+      console.error("Error fetching publications data:", error);
     }
     setFetchingData(false);
   }
-  
-function deduplicatePublications(publications) {
-  const seen = new Map();
 
-  function countNonNullProperties(publication) {
+  function deduplicatePublications(publications) {
+    const seen = new Map();
+
+    function countNonNullProperties(publication) {
       return Object.values(publication).reduce((count, value) => {
-          if (Array.isArray(value)) {
-              return count + value.filter((item) => item !== null && item !== "").length;
-          }
-          return count + (value !== null && value !== "" ? 1 : 0);
+        if (Array.isArray(value)) {
+          return (
+            count + value.filter((item) => item !== null && item !== "").length
+          );
+        }
+        return count + (value !== null && value !== "" ? 1 : 0);
       }, 0);
-  }
+    }
 
-  publications.forEach((publication) => {
+    publications.forEach((publication) => {
       const doi = publication.doi || "";
       const title = publication.title || "";
       const key = `${doi}|${title}`; // Unique key combining DOI and Title
 
       // Check if any matching DOI or Title already exists
       const existingKey = Array.from(seen.keys()).find((existingKey) => {
-          const [existingDoi, existingTitle] = existingKey.split("|");
-          return doi === existingDoi || title === existingTitle;
+        const [existingDoi, existingTitle] = existingKey.split("|");
+        return doi === existingDoi || title === existingTitle;
       });
 
       if (existingKey) {
-          const existingPublication = seen.get(existingKey);
-          const existingCount = countNonNullProperties(existingPublication);
-          const currentCount = countNonNullProperties(publication);
+        const existingPublication = seen.get(existingKey);
+        const existingCount = countNonNullProperties(existingPublication);
+        const currentCount = countNonNullProperties(publication);
 
-          // Replace if the current publication has more non-null items
-          if (currentCount > existingCount) {
-              seen.delete(existingKey);
-              seen.set(key, publication);
-          }
-      } else {
-          // Add new publication if no matching DOI or Title exists
+        // Replace if the current publication has more non-null items
+        if (currentCount > existingCount) {
+          seen.delete(existingKey);
           seen.set(key, publication);
+        }
+      } else {
+        // Add new publication if no matching DOI or Title exists
+        seen.set(key, publication);
       }
-  });
+    });
 
-  return Array.from(seen.values());
-}
-
+    return Array.from(seen.values());
+  }
 
   async function addPublicationsData(publications) {
     setAddingData(true);
-    setCount(1); 
+    setCount(1);
 
-    const existingPublications = await getUserCVData(user.user_id, section.data_section_id);
+    const existingPublications = await getUserCVData(
+      user.user_id,
+      section.data_section_id
+    );
     const existingData = existingPublications.map((pub) => pub.data_details);
 
     for (const publication of publications) {
       if (existingData.includes(JSON.stringify(publication))) {
-        setCount(prevCount => prevCount + 1);
+        setCount((prevCount) => prevCount + 1);
         continue;
       }
 
-      publication.title = publication.title.replace(/"/g, '');
-      publication.journal = publication.journal.replace(/"/g, '');
+      publication.title = publication.title.replace(/"/g, "");
+      publication.journal = publication.journal.replace(/"/g, "");
       const publicationJSON = JSON.stringify(publication).replace(/"/g, '\\"');
 
       try {
-        const result = await addUserCVData(user.user_id, section.data_section_id, `"${publicationJSON}"`, false);
+        const result = await addUserCVData(
+          user.user_id,
+          section.data_section_id,
+          `"${publicationJSON}"`,
+          false
+        );
       } catch (error) {
-        console.error('Error adding new entry:', error);
+        console.error("Error adding new entry:", error);
       }
-      setCount(prevCount => prevCount + 1);
+      setCount((prevCount) => prevCount + 1);
     }
     setAddingData(false);
     fetchData();
   }
 
   const navigateHome = () => {
-    navigate('/');
-  }
-
+    navigate("/");
+  };
 
   return (
     <dialog className="modal-dialog" open>
       <button
         type="button"
-        className={`btn btn-sm btn-circle btn-ghost absolute right-4 top-4 ${fetchingData && !initialRender ? 'cursor-not-allowed' : ''}`}
+        className={`btn btn-sm btn-circle btn-ghost absolute right-4 top-4 ${
+          fetchingData && !initialRender ? "cursor-not-allowed" : ""
+        }`}
         onClick={onClose}
         disabled={fetchingData && !initialRender}
       >
         ✕
       </button>
       {initialRender ? (
-        user.scopus_id !== '' || user.orcid_id !== '' ? (
-          <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
-            <div className='text-center'>
-              The data is fetched from Elsevier and ORCID using your Scopus ID(s) and ORCID ID.
+        user.scopus_id !== "" || user.orcid_id !== "" ? (
+          <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
+            <div className="text-center">
+              The data is fetched from Elsevier and ORCID using your Scopus
+              ID(s) and ORCID ID.
             </div>
             <button
               type="button"
@@ -173,9 +222,10 @@ function deduplicatePublications(publications) {
             </button>
           </div>
         ) : (
-          <div className='flex items-center justify-center w-full mt-5 mb-5'>
+          <div className="flex items-center justify-center w-full mt-5 mb-5">
             <div className="block text-m mb-1 mt-6 mr-5 ml-5 text-zinc-600">
-              Please enter your Scopus ID/ ORCID ID in the Profile section to fetch publications.
+              Please enter your Scopus ID/ ORCID ID in the Profile section to
+              fetch publications.
             </div>
             <button
               type="button"
@@ -187,26 +237,30 @@ function deduplicatePublications(publications) {
           </div>
         )
       ) : fetchingData ? (
-        <div className='flex flex-col items-center justify-center w-full mt-5 mb-5'>
+        <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
           <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
             Fetching data for Scopus ID - {currentScopusId}
             <br />
             Fetching data for ORCID ID - {user.orcid_id}
           </div>
           <div className="block text-m mb-1 text-zinc-600">
-          Fetching {Math.min((currentPage + 1) * pageSize, totalResults)} out of {totalResults} publications...
+            Fetching {Math.min((currentPage + 1) * pageSize, totalResults)} out
+            of {totalResults} publications...
           </div>
         </div>
       ) : (
-        <div className='flex items-center justify-center w-full mt-5 mb-5'>
+        <div className="flex items-center justify-center w-full mt-5 mb-5">
           <div className="block text-m mb-1 mt-6 text-zinc-600">
-            {addingData ? `Adding ${count} of ${allFetchedPublications.length} publications...` : (allFetchedPublications.length === 0 ? "No Publications Found" : "Publications Added!")}
+            {addingData
+              ? `Adding ${count} of ${allFetchedPublications.length} publications...`
+              : allFetchedPublications.length === 0
+              ? "No Publications Found"
+              : "Publications Added!"}
           </div>
         </div>
       )}
     </dialog>
   );
-  
 };
 
 export default PublicationsModal;

@@ -1,8 +1,17 @@
-export const getUserQuery = (email) => `
-    query GetUser {
-        getUser (
-            email: "${email}"
-        ) {
+export const GET_BIO_RESPONSE_DATA = `
+    query GetBioResponseData($username_input: String!) {
+        getBioResponseData(username_input: $username_input) {
+            answer
+            error
+        }
+    }
+`
+
+export const getUserQuery = `
+    query GetUser($email: String!) {
+        getUser(
+            email: $email
+        ){
             user_id
             first_name
             last_name
@@ -22,7 +31,7 @@ export const getUserQuery = (email) => `
             keywords
             scopus_id
             orcid_id
-            joined_timestamp
+            joined_timestamp   
         }
     }
 `;
@@ -139,13 +148,13 @@ export const getArchivedSectionsQuery = () => `
 `;
 
 export const getUserCVDataQuery = (user_id, data_section_ids) => {
-  if (Array.isArray(data_section_ids)) {
-    let data_section_ids_string = "[";
-    data_section_ids.forEach((id) => {
-      data_section_ids_string += `"${id}",`;
-    });
-    data_section_ids_string = data_section_ids_string.slice(0, -1) + "]";
-    return `query GetUserCVData {
+    if (Array.isArray(data_section_ids)) {
+        let data_section_ids_string = "[";
+        data_section_ids.forEach((id) => {
+            data_section_ids_string += `"${id}",`;
+        });
+        data_section_ids_string = data_section_ids_string.slice(0, -1) + "]";
+        return `query GetUserCVData {
         getUserCVData (
             user_id: "${user_id}",
             data_section_id_list: ${data_section_ids_string}
@@ -157,8 +166,8 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
             editable
         }
     }`;
-  } else
-    return `query GetUserCVData {
+    } else
+        return `query GetUserCVData {
         getUserCVData (
             user_id: "${user_id}",
             data_section_id: "${data_section_ids}"
@@ -225,9 +234,9 @@ export const getUserDeclarationsQuery = (first_name, last_name) => `
 `;
 
 export const getElsevierAuthorMatchesQuery = (
-  first_name,
-  last_name,
-  institution_name
+    first_name,
+    last_name,
+    institution_name
 ) => `
     query getElsevierAuthorMatches {
         getElsevierAuthorMatches (
@@ -245,9 +254,9 @@ export const getElsevierAuthorMatchesQuery = (
 `;
 
 export const getOrcidAuthorMatchesQuery = (
-  first_name,
-  last_name,
-  institution_name
+    first_name,
+    last_name,
+    institution_name
 ) => `
     query getOrcidAuthorMatches {
         getOrcidAuthorMatches (
@@ -268,6 +277,39 @@ export const getOrcidSectionsQuery = (orcidId, section) => `
     query getOrcidSections {
         getOrcidSections (
             orcidId: "${orcidId}", section: "${section}"
+        ) {
+            bio,
+            keywords,
+            publications {
+                publication_id
+                title
+                cited_by
+                keywords
+                journal
+                link
+                doi
+                year_published
+                author_names
+                author_ids
+            },
+            other_data
+        }
+    }
+`;
+
+export const getTotalOrcidPublicationsQuery = (orcid_id) => `
+    query GetTotalOrcidPublications {
+        getTotalOrcidPublications(orcid_id: "${orcid_id}") {
+            total_results
+            put_codes
+        }
+    }
+`;
+
+export const getOrcidPublicationQuery = (orcid_id, put_codes) => `
+    query getOrcidPublication {
+        getOrcidPublication (
+            orcid_id: "${orcid_id}", put_codes: "${put_codes}"
         ) {
             bio,
             keywords,
@@ -332,9 +374,9 @@ export const getTeachingDataMatchesQuery = (institution_user_id) => `
 `;
 
 export const getPublicationMatchesQuery = (
-  scopus_id,
-  page_number,
-  results_per_page
+    scopus_id,
+    page_number,
+    results_per_page
 ) => `
     query GetPublicationMatches {
         getPublicationMatches (
@@ -414,14 +456,14 @@ export const getPresignedUrlQuery = (jwt, fileKey, type) => `
 `;
 
 export const getNumberOfGeneratedCVsQuery = (department) => {
-  if (!department)
-    return `
+    if (!department)
+        return `
     query GetNumberOfGeneratedCVs {
         getNumberOfGeneratedCVs
     }
     `;
-  else
-    return `
+    else
+        return `
     query GetNumberOfGeneratedCVs {
         getNumberOfGeneratedCVs (
             department: "${department}"

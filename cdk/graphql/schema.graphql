@@ -1,10 +1,10 @@
 # Get Bio from OpenAI
 type BioResponse {
-	answer: String
-	error: String
+  answer: String
+  error: String
 }
 
-# This is for OpenAI 
+# This is for OpenAI
 type LambdaAIResponse {
   answer: [ResearchKeywordCategory]
   response_time_seconds: Float
@@ -170,6 +170,11 @@ type OrcidSectionOutput {
   other_data: AWSJSON
 }
 
+type TotalOrcidPublications {
+  total_results: Int!
+  put_codes: [Int]!
+}
+
 type Declaration {
   reporting_year: String!
   other_data: AWSJSON!
@@ -183,8 +188,10 @@ type InsertResponse {
 }
 
 type Query {
-  GetGenerateBio(username_input: String!): BioResponse
-      @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
+  getBioResponseData(username_input: String!): BioResponse
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
   GetAIResponse(user_input: String!): LambdaAIResponse
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
@@ -238,6 +245,12 @@ type Query {
     )
 
   getOrcidSections(orcidId: String!, section: String!): OrcidSectionOutput
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getTotalOrcidPublications(orcid_id: String!): TotalOrcidPublications
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  getOrcidPublication(orcid_id: String!, put_codes: [Int]!): OrcidSectionOutput
     @aws_auth(cognito_groups: ["Faculty", "Assistant"])
 
   getOrcidAuthorMatches(

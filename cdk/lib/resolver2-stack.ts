@@ -162,12 +162,70 @@ export class Resolver2Stack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "getTotalOrcidPublications",
+      ["getTotalOrcidPublications"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "getOrcidPublication",
+      ["getOrcidPublication"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "GetNotifications",
       ["GetNotifications"],
       "Query",
       {},
       resolverRole,
       [requestsLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "getBioResponseData",
+      ["getBioResponseData"],
+      "Query",
+      {},
+      resolverRole,
+      [openaiLayer],
+      Runtime.PYTHON_3_9,
+      // Resolver Code
+      `
+      import { util } from '@aws-appsync/utils';
+
+      export function request(ctx) {
+          return {
+              operation: 'Invoke',
+              payload: {
+                  fieldName: ctx.info.fieldName,
+                  parentTypeName: ctx.info.parentTypeName,
+                  user_input: ctx.args.username_input,
+                  variables: ctx.info.variables,
+                  selectionSetList: ctx.info.selectionSetList,
+                  selectionSetGraphQL: ctx.info.selectionSetGraphQL,
+              },
+          };
+      }
+
+      export function response(ctx) {
+          const { result, error } = ctx;
+          if (error) {
+              util.error(error.message, error.type, result);
+          }
+          return result;
+      }
+      `,
+      appsync.FunctionRuntime.JS_1_0_0
     );
 
     createResolver(

@@ -1,7 +1,9 @@
-import { useFaculty } from "../../FacultyContext"
+import { useApp } from "../../../Contexts/AppContext";
+import { useFaculty } from "../FacultyContext"
 
 const Contact = () => {
-  const { userInfo, handleInputChange } = useFaculty()
+  const { handleInputChange } = useFaculty()
+  const { userInfo} = useApp();
 
   return (
     <div>
@@ -36,7 +38,7 @@ const Contact = () => {
             name="preferred_name"
             type="text"
             maxLength={100}
-            value={userInfo.preferred_name || ""}
+            value={userInfo?.preferred_name || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300"
             onChange={handleInputChange}
           />
@@ -47,7 +49,7 @@ const Contact = () => {
             id="email"
             name="email"
             type="text"
-            value={userInfo.email || ""}
+            value={userInfo?.email || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
             readOnly
           />
