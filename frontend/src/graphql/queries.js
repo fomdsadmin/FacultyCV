@@ -309,7 +309,7 @@ export const getTotalOrcidPublicationsQuery = (orcid_id) => `
 export const getOrcidPublicationQuery = (orcid_id, put_codes) => `
     query getOrcidPublication {
         getOrcidPublication (
-            orcid_id: "${orcid_id}", put_codes: "${put_codes}"
+            orcid_id: "${orcid_id}", put_codes: [${put_codes.join(",")}]
         ) {
             bio,
             keywords,
