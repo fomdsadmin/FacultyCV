@@ -87,9 +87,17 @@ def getOrcidPublication(arguments):
             publications = []
             for put_code in put_codes:
                 url = f"{base_url}/{orcid_id}/work/{put_code}"
-                response = requests.get(url, headers=headers)
-                full_data = response.json()
-                each_publication = (parse_publication(full_data)) 
+                response2 = requests.get(url, headers=headers)
+                try:
+                    full_data = response2.json()
+                except Exception as e:
+                    continue  # Skip if JSON parsing fails
+                if not full_data:
+                    continue  # Skip if response is empty
+                try:
+                    each_publication = parse_publication(full_data)
+                except Exception as e:
+                    continue  # Skip if JSON parsing fails
                 publications.append(each_publication)
     
             return {
@@ -98,7 +106,16 @@ def getOrcidPublication(arguments):
                 'publications': publications,
                 'other_data': {}
                 }   
-        
+
+        # If we reach here, something went wrong
+    return {
+        'bio': "",
+        'keywords': "",
+        'publications': [],
+        'other_data': {},
+        'error': 'Failed to fetch publications or invalid request'
+    }
+
 def lambda_handler(event, context):
     """
     Lambda handler to fetch ORCID sections.

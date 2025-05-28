@@ -183,7 +183,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
   );
 
   const renderDataDetails = (details) => {
-    console.log(details);
+    // console.log(details);
     if (!details || typeof details !== "object") return null;
 
     const authorList = Array.isArray(details.author_names)

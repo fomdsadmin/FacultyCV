@@ -80,19 +80,27 @@ const PublicationsModal = ({
           totalOrcidPublications
         );
         const putCodes = totalOrcidPublications.put_codes || [];
-        const batchSize = 25;
+        const batchSize = 75;
         let orcidPublications = [];
 
         for (let i = 0; i < putCodes.length; i += batchSize) {
           const batch = putCodes.slice(i, i + batchSize);
-          // getOrcidPublication expects an array of put_codes
+          if (!batch.length || batch.some((code) => code == null)) {
+            console.error("Skipping invalid or empty batch:", batch);
+            continue;
+          }
           const result = await getOrcidPublication(user.orcid_id, batch);
           if (result && Array.isArray(result.publications)) {
             orcidPublications = [...orcidPublications, ...result.publications];
+            console.log(
+              "Fetched ORCID Publications for batch:",
+              orcidPublications
+            );
           }
         }
 
         publications = [...publications, ...orcidPublications];
+        totalOrcidPublications.total_results += totalResults || 0;
         setTotalResults(totalOrcidPublications.total_results ?? 0);
       }
 
@@ -163,22 +171,27 @@ const PublicationsModal = ({
       section.data_section_id
     );
     const existingData = existingPublications.map((pub) => pub.data_details);
+    console.log("Existing publications:", existingData);
 
     for (const publication of publications) {
-      if (existingData.includes(JSON.stringify(publication))) {
+      if (
+        existingData.includes(JSON.stringify(publication)) ||
+        existingData.includes(publication)
+      ) {
         setCount((prevCount) => prevCount + 1);
         continue;
       }
 
-      publication.title = publication.title.replace(/"/g, "");
-      publication.journal = publication.journal.replace(/"/g, "");
-      const publicationJSON = JSON.stringify(publication).replace(/"/g, '\\"');
+      publication.title = publication.title;
+      publication.journal = publication.journal;
+      const publicationJSON = JSON.stringify(publication);
+      // console.log("Adding publication:", publicationJSON);
 
       try {
         const result = await addUserCVData(
           user.user_id,
           section.data_section_id,
-          `"${publicationJSON}"`,
+          publicationJSON,
           false
         );
       } catch (error) {
