@@ -1,3 +1,9 @@
+# Get Bio from OpenAI
+type BioResponse {
+	answer: String
+	error: String
+}
+
 # This is for OpenAI
 type LambdaAIResponse {
   answer: [ResearchKeywordCategory]
@@ -177,6 +183,8 @@ type InsertResponse {
 }
 
 type Query {
+  getBioResponseData(username_input: String!): BioResponse
+      @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
   GetAIResponse(user_input: String!): LambdaAIResponse
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]

@@ -169,6 +169,16 @@ export class Resolver2Stack extends cdk.Stack {
       resolverRole,
       [requestsLayer]
     );
+	
+	createResolver(
+      apiStack.getApi(),
+      "getBioResponseData",
+      ["getBioResponseData"],
+      "Query",
+      {},
+      resolverRole,
+      [requestsLayer]
+    );
 
     createResolver(
       apiStack.getApi(),
