@@ -25,6 +25,7 @@ import {
   cvIsUpToDateQuery,
   getOrcidSectionsQuery,
   getLatexConfigurationQuery,
+  GET_BIO_RESPONSE_DATA,
 } from "./queries";
 import {
   updateSectionMutation,
@@ -631,12 +632,12 @@ export const addUserCVData = async (
   console.log("data_details ", data_details)
   const results = await executeGraphql(
     ADD_USER_CV_DATA, {
-      user_id: user_id,
-      data_section_id: data_section_id,
-      data_details: data_details,
-      editable: editable,
-      cognito_user_id: cognito_user_id
-    }
+    user_id: user_id,
+    data_section_id: data_section_id,
+    data_details: data_details,
+    editable: editable,
+    cognito_user_id: cognito_user_id
+  }
   );
   return results["data"]["addUserCVData"];
 };
@@ -654,11 +655,11 @@ export const addUserCVData = async (
 export const addSection = async (title, description, data_type, attributes) => {
   const results = await executeGraphql(
     ADD_SECTION, {
-      title: title,
-      description: description,
-      data_type: data_type,
-      attributes: attributes
-    }
+    title: title,
+    description: description,
+    data_type: data_type,
+    attributes: attributes
+  }
   );
   return results["data"]["addSection"];
 };
@@ -1165,3 +1166,10 @@ export const deleteUserDeclaration = async (
   );
   return results["data"]["deleteUserDeclaration"];
 };
+
+export const getBioResponseData = async (username_input) => {
+  const results = await executeGraphql(GET_BIO_RESPONSE_DATA, {
+    username_input: username_input,
+  });
+  return results["data"]["getBioResponseData"];
+}
