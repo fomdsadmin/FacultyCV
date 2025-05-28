@@ -188,11 +188,11 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
     const authorList = Array.isArray(details.author_names)
       ? details.author_names
-      : [details.author_names]
+      : [details.author_names];
 
     const keywordsList = Array.isArray(details.keywords)
       ? details.keywords
-      : [details.keywords]
+      : [details.keywords];
 
     return (
       <div className="bg-white rounded-lg shadow p-4">

@@ -1,4 +1,4 @@
-import { generateClient } from "aws-amplify/api";
+import { generateClient, put } from "aws-amplify/api";
 import {
   getAllSectionsQuery,
   getArchivedSectionsQuery,
@@ -24,6 +24,8 @@ import {
   getNumberOfGeneratedCVsQuery,
   cvIsUpToDateQuery,
   getOrcidSectionsQuery,
+  getTotalOrcidPublicationsQuery,
+  getOrcidPublicationQuery,
   getLatexConfigurationQuery,
   GET_BIO_RESPONSE_DATA,
 } from "./queries";
@@ -57,14 +59,14 @@ import { getUserId } from "../getAuthToken";
 const executeGraphql = async (query, variables = null) => {
   const client = generateClient();
   let input = {
-    query
-  }
+    query,
+  };
 
   if (variables) {
     input = {
       query,
-      variables
-    }
+      variables,
+    };
   }
 
   const results = await client.graphql(input);
@@ -172,9 +174,9 @@ export const getArchivedSections = async () => {
  */
 export const getUser = async (email) => {
   const results = await executeGraphql(getUserQuery, { email: email });
-  console.log(results)
-  return results['data']['getUser'];
-}
+  console.log(results);
+  return results["data"]["getUser"];
+};
 
 /**
  * Function to get user data with institution_user_id
@@ -257,7 +259,7 @@ export const getUserCVData = async (user_id, data_section_ids) => {
     getUserCVDataQuery(user_id, data_section_ids)
   );
 
-  console.log(results["data"]["getUserCVData"])
+  console.log(results["data"]["getUserCVData"]);
   return results["data"]["getUserCVData"];
 };
 
@@ -372,6 +374,18 @@ export const getOrcidAuthorMatches = async (
 export const getOrcidSections = async (orcidId, section) => {
   const results = await runGraphql(getOrcidSectionsQuery(orcidId, section));
   return results["data"]["getOrcidSections"];
+};
+
+export const getTotalOrcidPublications = async (orcid_id) => {
+  const results = await runGraphql(getTotalOrcidPublicationsQuery(orcid_id));
+  return results["data"]["getTotalOrcidPublications"];
+};
+
+export const getOrcidPublication = async (orcid_id, put_codes) => {
+  const results = await runGraphql(
+    getOrcidPublicationQuery(orcid_id, put_codes)
+  );
+  return results["data"]["getOrcidPublication"];
 };
 
 /*
@@ -629,16 +643,14 @@ export const addUserCVData = async (
   editable = true
 ) => {
   const cognito_user_id = await getUserId();
-  console.log("data_details ", data_details)
-  const results = await executeGraphql(
-    ADD_USER_CV_DATA, {
+  console.log("data_details ", data_details);
+  const results = await executeGraphql(ADD_USER_CV_DATA, {
     user_id: user_id,
     data_section_id: data_section_id,
     data_details: data_details,
     editable: editable,
-    cognito_user_id: cognito_user_id
-  }
-  );
+    cognito_user_id: cognito_user_id,
+  });
   return results["data"]["addUserCVData"];
 };
 
@@ -653,14 +665,12 @@ export const addUserCVData = async (
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const addSection = async (title, description, data_type, attributes) => {
-  const results = await executeGraphql(
-    ADD_SECTION, {
+  const results = await executeGraphql(ADD_SECTION, {
     title: title,
     description: description,
     data_type: data_type,
-    attributes: attributes
-  }
-  );
+    attributes: attributes,
+  });
   return results["data"]["addSection"];
 };
 
@@ -1138,7 +1148,7 @@ export const addUserDeclaration = async (input) => {
     last_name: input.last_name,
     reporting_year: input.reporting_year,
     created_by: input.created_by,
-    other_data: input.other_data
+    other_data: input.other_data,
   });
   return results["data"]["addUserDeclaration"];
 };
@@ -1148,7 +1158,7 @@ export const updateUserDeclaration = async (input) => {
     first_name: input.first_name,
     last_name: input.last_name,
     reporting_year: input.reporting_year,
-    other_data: input.other_data
+    other_data: input.other_data,
   });
   return results["data"]["updateUserDeclaration"];
 };
@@ -1161,9 +1171,8 @@ export const deleteUserDeclaration = async (
   const results = await executeGraphql(DELETE_USER_DECLARATION, {
     first_name: first_name,
     last_name: last_name,
-    reporting_year: reporting_year
-  }
-  );
+    reporting_year: reporting_year,
+  });
   return results["data"]["deleteUserDeclaration"];
 };
 
