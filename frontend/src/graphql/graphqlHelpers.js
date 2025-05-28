@@ -27,6 +27,7 @@ import {
   getTotalOrcidPublicationsQuery,
   getOrcidPublicationQuery,
   getLatexConfigurationQuery,
+  GET_BIO_RESPONSE_DATA,
 } from "./queries";
 import {
   updateSectionMutation,
@@ -1174,3 +1175,10 @@ export const deleteUserDeclaration = async (
   });
   return results["data"]["deleteUserDeclaration"];
 };
+
+export const getBioResponseData = async (username_input) => {
+  const results = await executeGraphql(GET_BIO_RESPONSE_DATA, {
+    username_input: username_input,
+  });
+  return results["data"]["getBioResponseData"];
+}
