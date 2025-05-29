@@ -4,6 +4,7 @@ import GenericSection from "../../../SharedComponents/GenericSection/GenericSect
 import { useFaculty } from "../FacultyContext"
 import InstitutionInfo from "../Profile/InstitutionInfo"
 import Linkages from "../Profile/Linkages/Linkages"
+import Profile from "../Profile/Profile"
 
 const Tabs = () => {
     const { activeTab, setActiveTab, academicSections, CATEGORIES } = useFaculty()
@@ -98,6 +99,7 @@ const Tabs = () => {
                 {Object.values(CATEGORIES).map((category, index) => getSection(category, index))}
                 {activeTab === "Affiliations" && <InstitutionInfo />}
                 {activeTab === "Linkages" && <Linkages />}
+                {activeTab === "Profile" && <Profile />}
             </div>
         </div>
     )

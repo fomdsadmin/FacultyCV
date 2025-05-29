@@ -37,7 +37,7 @@ const FacultyHomePageContent = (user) => {
 
       <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4 relative">
         <div className="flex items-center justify-between mt-4 mb-4">
-          <h1 className="text-4xl ml-4 font-bold text-zinc-600">Profile</h1>
+          <h1 className="text-4xl ml-4 font-bold text-zinc-600">Home</h1>
           <button
             type="button"
             className={`btn text-white py-1 px-2 w-1/5 min-h-0 h-8 leading-tight ${
@@ -56,7 +56,6 @@ const FacultyHomePageContent = (user) => {
           </div>
         ) : (
           <>
-            <Profile />
             <Tabs />
           </>
         )}
