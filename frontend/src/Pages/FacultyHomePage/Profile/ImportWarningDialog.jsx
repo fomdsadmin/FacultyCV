@@ -1,8 +1,10 @@
+import DialogStyling from "../../../SharedComponents/DialogStyling"
+
 const ImportWarningDialog = ({ isOpen, onClose, onConfirm, warning }) => {
   if (!isOpen) return <></>
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <DialogStyling>
       <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4 relative">
         <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>
           ✕
@@ -21,7 +23,7 @@ const ImportWarningDialog = ({ isOpen, onClose, onConfirm, warning }) => {
           </div>
         </div>
       </div>
-    </div>
+    </DialogStyling>
   )
 }
 

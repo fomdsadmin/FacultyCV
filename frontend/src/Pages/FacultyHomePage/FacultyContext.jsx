@@ -216,23 +216,6 @@ export const FacultyProvider = ({ children }) => {
     setModalOpen(false)
   }
 
-  const getKeywords = async () => {
-    try {
-      const keywords_output = await getOrcidSections(userInfo.orcid_id, "keywords")
-      if (keywords_output && keywords_output.keywords) {
-        setUserInfo((prevUserInfo) => ({
-          ...prevUserInfo,
-          keywords: keywords_output.keywords,
-        }))
-        toast.success("Keywords imported successfully!", { autoClose: 3000 })
-      } else {
-        toast.error("Failed to fetch the keywords from ORCID.", { autoClose: 3000 })
-      }
-    } catch (error) {
-      toast.error("An error occurred while fetching the keywords.", { autoClose: 3000 })
-    }
-  }
-
   // Provide all values and functions to children
   const value = {
     // User state
@@ -271,7 +254,6 @@ export const FacultyProvider = ({ children }) => {
     handleScopusLink,
     handleOrcidLink,
     handleCloseModal,
-    getKeywords,
     //updateAppUserInfo,
 
     // External functions from AppContext
