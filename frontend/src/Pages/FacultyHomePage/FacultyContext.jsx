@@ -216,24 +216,6 @@ export const FacultyProvider = ({ children }) => {
     setModalOpen(false)
   }
 
-  // ORCID data fetching
-  const getBio = async () => {
-    try {
-      const bio = await getOrcidSections(userInfo.orcid_id, "biography")
-      if (bio && bio.bio) {
-        setUserInfo((prevUserInfo) => ({
-          ...prevUserInfo,
-          bio: bio.bio,
-        }))
-        toast.success("Bio imported successfully!", { autoClose: 3000 })
-      } else {
-        toast.error("Failed to fetch the bio from ORCID.", { autoClose: 3000 })
-      }
-    } catch (error) {
-      toast.error("An error occurred while fetching the bio.", { autoClose: 3000 })
-    }
-  }
-
   const getKeywords = async () => {
     try {
       const keywords_output = await getOrcidSections(userInfo.orcid_id, "keywords")
@@ -289,7 +271,6 @@ export const FacultyProvider = ({ children }) => {
     handleScopusLink,
     handleOrcidLink,
     handleCloseModal,
-    getBio,
     getKeywords,
     //updateAppUserInfo,
 
