@@ -60,7 +60,7 @@ const EducationModal = ({ user, section, onClose, setRetrievingData, fetchData }
                   };
   
                   // Create escaped JSON string
-                  return JSON.stringify(dataObject).replace(/"/g, '\\"');
+                  return dataObject;
               });
   
               setEducationData(transformedData);
@@ -75,11 +75,9 @@ const EducationModal = ({ user, section, onClose, setRetrievingData, fetchData }
 
   async function addEducationData() {
     setAddingData(true);
-
     try {
       const existingEducation = await getUserCVData(user.user_id, section.data_section_id);
-      const existingData = existingEducation.map((entry) => JSON.stringify(entry.data_details));
-
+      const existingData = existingEducation.map((entry) => entry.data_details);
       for (const education of educationData) {
         if (existingData.includes(education)) {
           setCount((prevCount) => prevCount + 1);
@@ -87,7 +85,7 @@ const EducationModal = ({ user, section, onClose, setRetrievingData, fetchData }
         }
 
         try {
-          await addUserCVData(user.user_id, section.data_section_id, `"${education}"`, false);
+          await addUserCVData(user.user_id, section.data_section_id, JSON.stringify(education), false);
           setCount((prevCount) => prevCount + 1);
         } catch (error) {
           console.error('Error adding education entry:', error);
