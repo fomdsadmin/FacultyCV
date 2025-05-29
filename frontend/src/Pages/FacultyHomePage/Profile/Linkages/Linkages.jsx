@@ -1,5 +1,5 @@
-import Orcid from "./Orcid"
-import Scopus from "./Scopus"
+import Orcid from "./Orcid/Orcid"
+import Scopus from "./Scopus/Scopus"
 
 const Linkages = () => {
 

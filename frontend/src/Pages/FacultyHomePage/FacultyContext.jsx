@@ -55,6 +55,11 @@ export const FacultyProvider = ({ children }) => {
   const [modalOpen, setModalOpen] = useState(false)
   const [activeModal, setActiveModal] = useState(null)
 
+  useEffect(() => {
+    // get latest user info on render
+    getUserInfo(userInfo.email);
+  }, [])
+
     // This effect will ensure prevUserInfo is set only once
     useEffect(() => {
       if (userInfo && !prevUserInfo) {
@@ -166,7 +171,6 @@ export const FacultyProvider = ({ children }) => {
         userInfo.scopus_id,
         userInfo.orcid_id,
       )
-      // Update both local and app state
       getUserInfo(userInfo.email)
       setIsSubmitting(false)
       setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
