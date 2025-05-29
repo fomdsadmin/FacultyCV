@@ -278,7 +278,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-center w-full relative mx-auto">
+          <div className="relative flex max-w-5xl items-center justify-between ml-12 mt-8">
             <div>
               {paginatedData.length > 0 ? (
                 paginatedData.map((entry, index) => {
