@@ -2,7 +2,7 @@ import { useState } from "react"
 import { toast } from "react-toastify"
 import { useApp } from "../../../../Contexts/AppContext"
 import { getOrcidSections } from "../../../../graphql/graphqlHelpers"
-import ImportWarningDialog from "../ImportWarningDialog"
+import ImportWarningModal from "../ImportWarningModal"
 
 const OrcidKeywordsImportButton = () => {
   const { userInfo, setUserInfo } = useApp()
@@ -47,7 +47,7 @@ const OrcidKeywordsImportButton = () => {
       <button type="button" className="btn btn-sm btn-primary text-white mt-2" onClick={handleImportKeywords}>
         Import Keywords from ORCID
       </button>
-      <ImportWarningDialog
+      <ImportWarningModal
         isOpen={showKeywordsWarningDialog}
         onClose={handleCloseDialog}
         onConfirm={handleConfirmImport}

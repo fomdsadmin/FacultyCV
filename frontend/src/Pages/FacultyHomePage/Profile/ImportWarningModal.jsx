@@ -1,10 +1,10 @@
-import DialogStyling from "../../../SharedComponents/DialogStyling"
+import ModalStylingWrapper from "../../../SharedComponents/ModalStylingWrapper"
 
-const ImportWarningDialog = ({ isOpen, onClose, onConfirm, warning }) => {
+const ImportWarningModal = ({ isOpen, onClose, onConfirm, warning }) => {
   if (!isOpen) return <></>
 
   return (
-    <DialogStyling>
+    <ModalStylingWrapper>
       <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4 relative">
         <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>
           ✕
@@ -23,8 +23,8 @@ const ImportWarningDialog = ({ isOpen, onClose, onConfirm, warning }) => {
           </div>
         </div>
       </div>
-    </DialogStyling>
+    </ModalStylingWrapper>
   )
 }
 
-export default ImportWarningDialog
+export default ImportWarningModal

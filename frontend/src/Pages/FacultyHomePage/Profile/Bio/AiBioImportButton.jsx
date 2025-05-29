@@ -5,7 +5,7 @@ import { toast } from "react-toastify"
 import { FaRobot } from "react-icons/fa"
 import { useApp } from "../../../../Contexts/AppContext"
 import { getBioResponseData } from "../../../../graphql/graphqlHelpers"
-import ImportWarningDialog from "../ImportWarningDialog"
+import ImportWarningModal from "../ImportWarningModal"
 
 const AIBioImportButton = () => {
     const { userInfo, setUserInfo } = useApp()
@@ -41,7 +41,7 @@ const AIBioImportButton = () => {
                 <FaRobot />
                 Import Bio from AI
             </button>
-            <ImportWarningDialog
+            <ImportWarningModal
                 isOpen={showBioWarningDialogAi}
                 onClose={handleCloseDialog}
                 onConfirm={handleConfirmImportAi}

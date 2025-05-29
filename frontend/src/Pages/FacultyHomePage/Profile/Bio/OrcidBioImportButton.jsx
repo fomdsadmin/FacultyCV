@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useApp } from "../../../../Contexts/AppContext"
 import { toast } from "react-toastify"
 import { getOrcidSections } from "../../../../graphql/graphqlHelpers"
-import ImportWarningDialog from "../ImportWarningDialog"
+import ImportWarningModal from "../ImportWarningModal"
 
 const OrcidBioImportButton = () => {
     const { userInfo, setUserInfo } = useApp()
@@ -47,7 +47,7 @@ const OrcidBioImportButton = () => {
             <button type="button" className="btn btn-sm btn-primary text-white mt-2" onClick={handleImportBio}>
                 Import Bio from ORCID
             </button>
-            <ImportWarningDialog
+            <ImportWarningModal
                 isOpen={showBioWarningDialog}
                 onClose={handleCloseDialog}
                 onConfirm={handleConfirmImport}
