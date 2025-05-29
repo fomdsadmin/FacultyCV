@@ -24,6 +24,7 @@ export const FacultyProvider = ({ children }) => {
   const [prevUserInfo, setPrevUserInfo] = useState(null);
 
   const CATEGORIES = Object.freeze({
+    PROFILE: "Profile",
     AFFILIATIONS: "Affiliations",
     EMPLOYMENT: "Employment",
     SERVICE: "Service",
@@ -50,7 +51,7 @@ export const FacultyProvider = ({ children }) => {
   const [academicSections, setAcademicSections] = useState([])
 
   // UI state
-  const [activeTab, setActiveTab] = useState(CATEGORIES.AFFILIATIONS)
+  const [activeTab, setActiveTab] = useState(CATEGORIES.PROFILE)
   const [modalOpen, setModalOpen] = useState(false)
   const [activeModal, setActiveModal] = useState(null)
 
