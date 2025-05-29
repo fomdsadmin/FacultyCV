@@ -444,16 +444,17 @@ const PublicationsSection = ({ user, section, onBack }) => {
                 onClose={handleCloseModal}
               />
             ))}
-
-          {retrievingData && (
-            <PublicationsModal
-              user={user}
-              section={section}
-              onClose={handleCloseModal}
-              setRetrievingData={setRetrievingData}
-              fetchData={fetchData}
-            />
-          )}
+          <div className="">
+            {retrievingData && (
+              <PublicationsModal
+                user={user}
+                section={section}
+                onClose={handleCloseModal}
+                setRetrievingData={setRetrievingData}
+                fetchData={fetchData}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
