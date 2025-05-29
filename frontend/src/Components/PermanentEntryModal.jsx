@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import "../CustomStyles/scrollbar.css";
 import "../CustomStyles/modal.css";
 import { addUserCVData, updateUserCVData } from "../graphql/graphqlHelpers";
+import { useApp } from "../Contexts/AppContext"; // Import useApp context
 
 const PermanentEntryModal = ({
   isNew,
-  user,
   section,
   onClose,
   entryType,
@@ -19,8 +19,13 @@ const PermanentEntryModal = ({
   const [dateFieldName, setDateFieldName] = useState("");
   const [dateNeeded, setDateNeeded] = useState(false);
 
+  const { userInfo } = useApp(); // Get userInfo from context
+
   useEffect(() => {
+    // Initialize formData with all fields
     setFormData(fields);
+
+    // Handle specific year fields if they exist
     if ("year_published" in fields) {
       setFormData((prevState) => ({
         ...prevState,
@@ -33,31 +38,38 @@ const PermanentEntryModal = ({
         year: fields.year,
       }));
     }
+
+    // Handle 'dates' field for start and end dates
     if ("dates" in fields) {
       setDateNeeded(true);
       const dateField = "dates";
       setDateFieldName(dateField);
+
+      // Split the date string into start and end parts
       const [start, end] = fields[dateField].includes(" - ")
         ? fields[dateField].split(" - ")
         : isNew
-        ? [fields[dateField], ""]
-        : [fields[dateField], "None"];
+          ? [fields[dateField], ""]
+          : [fields[dateField], "None"];
+
       const [startDateMonth, startDateYear] = start.split(", ");
+
+      // Set initial state for end dates based on parsed 'end' value
       if (end === "Current") {
         setFormData((prevState) => ({
           ...prevState,
           startDateMonth,
           startDateYear,
-          endDateMonth: "Current",
-          endDateYear: "",
+          endDateMonth: "Current", // Set both month and year to 'Current'
+          endDateYear: "Current",
         }));
       } else if (end === "None") {
         setFormData((prevState) => ({
           ...prevState,
           startDateMonth,
           startDateYear,
-          endDateMonth: "None",
-          endDateYear: "",
+          endDateMonth: "None", // Set both month and year to 'None'
+          endDateYear: "None",
         }));
       } else {
         const [endDateMonth, endDateYear] = end.split(", ");
@@ -70,38 +82,55 @@ const PermanentEntryModal = ({
         }));
       }
     }
-  }, [fields]);
+  }, [fields, isNew]); // Added isNew to dependencies as it's used in parsing
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
+    setFormData((prevState) => {
+      let newState = { ...prevState, [name]: value };
 
-  const handleEndDateChange = (e) => {
-    const { name, value } = e.target;
-    if (value === "Current" || value === "None") {
-      setFormData((prevState) => ({
-        ...prevState,
-        [name]: value,
-        endDateMonth: value,
-        endDateYear: "",
-      }));
-    } else {
-      setFormData((prevState) => ({
-        ...prevState,
-        [name]: value,
-      }));
-    }
+      // Special handling for end date fields to keep them synchronized
+      if (name === "endDateMonth" || name === "endDateYear") {
+        const currentMonth = newState.endDateMonth;
+        const currentYear = newState.endDateYear;
+
+        if (name === "endDateMonth") {
+          if (value === "Current") {
+            newState.endDateYear = "Current"; // If month is 'Current', year must be 'Current'
+          } else if (value === "None") {
+            newState.endDateYear = "None"; // If month is 'None', year must be 'None'
+          } else {
+            // If month is a real month, and year was 'Current'/'None', clear year
+            if (currentYear === "Current" || currentYear === "None") {
+              newState.endDateYear = "";
+            }
+          }
+        } else if (name === "endDateYear") {
+          if (value === "Current") {
+            newState.endDateMonth = "Current"; // If year is 'Current', month must be 'Current'
+          } else if (value === "None") {
+            newState.endDateMonth = "None"; // If year is 'None', month must be 'None'
+          } else {
+            // If year is a real year, and month was 'Current'/'None', clear month
+            if (currentMonth === "Current" || currentMonth === "None") {
+              newState.endDateMonth = "";
+            }
+          }
+        }
+      }
+      return newState;
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if ("year_published" in formData && !formData.year_published) {
+    // Validate year_published or year fields
+    if (
+      ("year_published" in formData && !formData.year_published) ||
+      ("year" in formData && !formData.year)
+    ) {
       setError("Please select the year.");
       return;
     }
@@ -113,25 +142,39 @@ const PermanentEntryModal = ({
       endDateYear,
       ...rest
     } = formData;
-    if (
-      dateNeeded &&
-      (!startDateMonth ||
-        !startDateYear ||
-        (!endDateMonth &&
-          endDateMonth !== "Current" &&
-          endDateMonth !== "None") ||
-        (!endDateYear && endDateMonth !== "Current" && endDateMonth !== "None"))
-    ) {
-      setError("Please select a start date and an end date.");
+
+    // Validate date fields if 'dates' is required
+    if (dateNeeded) {
+      if (!startDateMonth || !startDateYear) {
+        setError("Please select a start date.");
+        return;
+      }
+
+      const isEndDateSpecial = endDateMonth === "Current" || endDateMonth === "None";
+
+      // If end date is not 'Current' or 'None', then both month and year must be selected
+      if (!isEndDateSpecial && (!endDateMonth || !endDateYear)) {
+        setError('Please select a valid end date (month and year) or "Current".');
+        return;
+      }
+    }
+
+    if (endDateMonth === "None" || endDateYear === "None") {
+      setError('Please select a valid end date (month and year) or "Current".');
       return;
     }
+
     setIsSubmitting(true);
+
+    // Construct the 'dates' string based on the selected values
     const dates =
       endDateMonth === "Current"
         ? `${startDateMonth}, ${startDateYear} - ${endDateMonth}`
         : endDateMonth === "None"
-        ? `${startDateMonth}, ${startDateYear}`
-        : `${startDateMonth}, ${startDateYear} - ${endDateMonth}, ${endDateYear}`;
+          ? `${startDateMonth}, ${startDateYear}`
+          : `${startDateMonth}, ${startDateYear} - ${endDateMonth}, ${endDateYear}`;
+
+    // Create the updated form data, including the constructed 'dates' string if applicable
     const updatedFormData = dateFieldName
       ? { ...rest, [dateFieldName]: dates }
       : { ...rest };
@@ -139,25 +182,26 @@ const PermanentEntryModal = ({
 
     try {
       if (isNew) {
-        const result = await addUserCVData(
-          user.user_id,
+        // Add new CV data
+        await addUserCVData(
+          userInfo.user_id, // Use userInfo from context
           section.data_section_id,
           formDataString
         );
       } else {
-        const result = await updateUserCVData(
-          user_cv_data_id,
-          formDataString
-        );
+        // Update existing CV data
+        await updateUserCVData(user_cv_data_id, formDataString);
       }
     } catch (error) {
       console.error("Error submitting form:", error);
+      setError("Failed to save data. Please try again."); // User-friendly error message
     }
     setIsSubmitting(false);
-    onClose();
-    fetchData();
+    onClose(); // Close the modal after submission
+    fetchData(); // Refresh data in the parent component
   };
 
+  // Helper function to format field keys for display
   const formatKey = (key) => {
     return key
       .split("_")
@@ -165,6 +209,7 @@ const PermanentEntryModal = ({
       .join(" ");
   };
 
+  // Filter and sort keys for rendering inputs, excluding internal date states and IDs
   const filteredKeys = Object.keys(formData)
     .filter(
       (key) =>
@@ -178,6 +223,7 @@ const PermanentEntryModal = ({
     )
     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
+  // Arrays for month and year dropdown options
   const months = [
     "January",
     "February",
@@ -198,10 +244,10 @@ const PermanentEntryModal = ({
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-xl max-w-xl w-full mx-auto px-12 py-8 relative">
+    <dialog className="modal-dialog" open> {/* Changed to <dialog> */}
       <form method="dialog" onSubmit={handleSubmit}>
         <h3 className="font-bold mb-3 text-lg">
-          {isNew ? "Add" : "View"} {entryType}
+          {isNew ? "Add" : "Edit"} {entryType} {/* Changed "View" to "Edit" */}
         </h3>
         <button
           type="button"
@@ -213,6 +259,7 @@ const PermanentEntryModal = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {filteredKeys.map((key) =>
             key === "dates" ? (
+              // Render date selectors for 'dates' field
               <div key={key} className="mb-1">
                 <label className="block text-sm capitalize">Start Date</label>
                 <div className="flex space-x-2">
@@ -220,7 +267,6 @@ const PermanentEntryModal = ({
                     name="startDateMonth"
                     value={formData.startDateMonth || ""}
                     onChange={handleChange}
-                    disabled={!isNew}
                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                   >
                     <option value="">Month</option>
@@ -234,7 +280,6 @@ const PermanentEntryModal = ({
                     name="startDateYear"
                     value={formData.startDateYear || ""}
                     onChange={handleChange}
-                    disabled={!isNew}
                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                   >
                     <option value="">Year</option>
@@ -251,23 +296,13 @@ const PermanentEntryModal = ({
                 <div className="flex space-x-2">
                   <select
                     name="endDateMonth"
-                    value={
-                      formData.endDateYear === "Current" ||
-                      formData.endDateYear === "None"
-                        ? formData.endDateYear
-                        : formData.endDateMonth || ""
-                    }
-                    onChange={handleEndDateChange}
+                    value={formData.endDateMonth || ""} // Corrected value
+                    onChange={handleChange} // Unified handleChange
                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-                    disabled={
-                      !isNew ||
-                      formData.endDateYear === "Current" ||
-                      formData.endDateYear === "None"
-                    }
                   >
+                    <option value="">Month</option> {/* Default empty option */}
                     <option value="Current">Current</option>
                     <option value="None">None</option>
-                    <option value="">Month</option>
                     {months.map((month) => (
                       <option key={month} value={month}>
                         {month}
@@ -276,23 +311,13 @@ const PermanentEntryModal = ({
                   </select>
                   <select
                     name="endDateYear"
-                    value={
-                      formData.endDateMonth === "Current" ||
-                      formData.endDateMonth === "None"
-                        ? formData.endDateMonth
-                        : formData.endDateYear || ""
-                    }
-                    onChange={handleChange}
+                    value={formData.endDateYear || ""} // Corrected value
+                    onChange={handleChange} // Unified handleChange
                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-                    disabled={
-                      !isNew ||
-                      formData.endDateMonth === "Current" ||
-                      formData.endDateMonth === "None"
-                    }
                   >
+                    <option value="">Year</option> {/* Default empty option */}
                     <option value="Current">Current</option>
                     <option value="None">None</option>
-                    <option value="">Year</option>
                     {years.map((year) => (
                       <option key={year} value={year}>
                         {year}
@@ -310,7 +335,6 @@ const PermanentEntryModal = ({
                   name={key}
                   value={formData[key] || ""}
                   onChange={handleChange}
-                  disabled={!isNew}
                   className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                 >
                   <option value="">Select Year</option>
@@ -320,6 +344,16 @@ const PermanentEntryModal = ({
                     </option>
                   ))}
                 </select>
+              </div>
+            ) : key === "details" ? ( // Added details textarea for consistency
+              <div key={key} className="mb-1">
+                <label className="block text-sm capitalize">{formatKey(key)}</label>
+                <textarea
+                  name={key}
+                  value={formData[key] || ''}
+                  onChange={handleChange}
+                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                />
               </div>
             ) : (
               <div key={key} className="mb-1">
@@ -331,7 +365,7 @@ const PermanentEntryModal = ({
                   name={key}
                   value={formData[key] || ""}
                   onChange={handleChange}
-                  disabled={!isNew}
+                  maxLength={500}
                   className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                 />
               </div>
@@ -339,19 +373,18 @@ const PermanentEntryModal = ({
           )}
         </div>
         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        {isNew && (
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="btn btn-success text-white mt-3 py-1 px-2 w-1/5 min-h-0 h-8 leading-tight"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Saving..." : "Save"}
-            </button>
-          </div>
-        )}
+        {/* Save button is always present */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="btn btn-success text-white mt-3 py-1 px-2 w-1/5 min-h-0 h-8 leading-tight"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Saving..." : "Save"}
+          </button>
+        </div>
       </form>
-    </div>
+    </dialog>
   );
 };
 
