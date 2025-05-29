@@ -1,3 +1,7 @@
+import CoursesTaughtSection from "../../../Components/CoursesTaughtSection"
+import EducationSection from "../../../Components/EducationSection"
+import EmploymentSection from "../../../Components/EmploymentSection"
+import { useApp } from "../../../Contexts/AppContext"
 import { Accordion } from "../../../SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "../../../SharedComponents/Accordion/AccordionItem"
 import GenericSection from "../../../SharedComponents/GenericSection/GenericSection"
@@ -7,6 +11,8 @@ import Linkages from "../Profile/Linkages/Linkages"
 
 const Tabs = () => {
     const { activeTab, setActiveTab, academicSections, CATEGORIES } = useFaculty()
+
+    const { userInfo } = useApp();
 
     const getTitlesForCategory = (category) => {
         switch (category) {
@@ -64,15 +70,30 @@ const Tabs = () => {
             <>
                 {activeTab === category && (
                     <Accordion key={index}>
-                        {getTitlesForCategory(category).map((title, innerIndex) => (
-                            <AccordionItem key={index + "" + innerIndex} title={title}>
-                                <GenericSection
-                                    key={innerIndex}
-                                    section={academicSections.filter((s) => s.title === title)[0]}
-                                    onBack={null}
-                                />
-                            </AccordionItem>
-                        ))}
+                        {getTitlesForCategory(category)
+                            .filter((title) =>
+                                title !== "Courses Taught" &&
+                                title !== "Post-Secondary Education" &&
+                                title !== "Prior Employment" 
+                            )
+                            .map((title, innerIndex) => (
+                                <AccordionItem key={index + "" + innerIndex} title={title}>
+                                    <GenericSection
+                                        key={innerIndex}
+                                        section={academicSections.filter((s) => s.title === title)[0]}
+                                        onBack={null}
+                                    />
+                                </AccordionItem>
+                            ))}
+                        {activeTab === "Education" && <AccordionItem key="Courses Taught" title={"Courses Taught"}>
+                            <CoursesTaughtSection userInfo={userInfo} section={academicSections.filter((s) => s.title === "Courses Taught")[0]} onBack={undefined}></CoursesTaughtSection>
+                        </AccordionItem>}
+                        {activeTab === "Education" && <AccordionItem key="Post-Secondary Education" title={"Post-Secondary Education"}>
+                            <EducationSection user={userInfo} section={academicSections.filter((s) => s.title === "Post-Secondary Education")[0]} onBack={undefined}></EducationSection>
+                        </AccordionItem>}
+                        {activeTab === "Employment" && <AccordionItem key="Prior Employment" title={"Prior Employment"}>
+                            <EmploymentSection user={userInfo} section={academicSections.filter((s) => s.title === "Prior Employment")[0]} onBack={undefined}></EmploymentSection>
+                        </AccordionItem>}
                     </Accordion>
                 )}
             </>

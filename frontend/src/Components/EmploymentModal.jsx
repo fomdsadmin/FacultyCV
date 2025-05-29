@@ -59,8 +59,7 @@ const EmploymentModal = ({ user, section, onClose, setRetrievingData, fetchData 
                     "dates": dates,
                 };
 
-                // Create escaped JSON string
-                return JSON.stringify(dataObject).replace(/"/g, '\\"');
+                return dataObject;
             });
 
             setEmploymentData(transformedData);
@@ -92,7 +91,7 @@ const EmploymentModal = ({ user, section, onClose, setRetrievingData, fetchData 
 
             // Add the new data to the database
             try {
-                await addUserCVData(user.user_id, section.data_section_id, `"${employment}"`, false);
+                await addUserCVData(user.user_id, section.data_section_id, JSON.stringify(employment), false);
                 setCount((prevCount) => prevCount + 1);
             } catch (error) {
                 console.error('Error adding employment entry:', error);

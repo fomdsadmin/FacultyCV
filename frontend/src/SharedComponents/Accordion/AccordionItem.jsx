@@ -14,9 +14,8 @@ export function AccordionItem({ title, children }) {
       </button>
 
       <div
-        className={`transition-all overflow-hidden px-4 ${
-          isOpen ? 'max-h-screen py-2' : 'max-h-0'
-        }`}
+        className={`transition-all duration-300 overflow-hidden px-4 ${isOpen ? 'max-h-[9999px] py-2' : 'max-h-0 py-0'
+          }`}
       >
         {isOpen && <div className="pt-1">{children}</div>}
       </div>

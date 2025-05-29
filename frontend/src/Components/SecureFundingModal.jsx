@@ -97,10 +97,7 @@ const SecureFundingModal = ({
       try {
         data.year = data.dates.split("-")[0];
         delete data.dates;
-        const escapedDataJSON = JSON.stringify(data)
-          .replace(/\\/g, "\\\\")
-          .replace(/"/g, '\\"');
-        const graphqlReadyJSON = `"${escapedDataJSON}"`;
+        const graphqlReadyJSON = JSON.stringify(data);
         await addUserCVData(
           user.user_id,
           section.data_section_id,

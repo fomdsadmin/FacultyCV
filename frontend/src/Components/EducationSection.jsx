@@ -7,7 +7,7 @@ import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelper
 import { rankFields } from '../utils/rankingUtils';
 
 
-const EducationSection = ({ user, section, onBack }) => {
+const EducationSection = ({ user, section, onBack = null }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [fieldData, setFieldData] = useState([]);
   const [selectedEntry, setSelectedEntry] = useState(null);
@@ -74,35 +74,35 @@ const EducationSection = ({ user, section, onBack }) => {
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
-  
+
       const filteredData = parsedData.filter(entry => {
         const [field1, field2] = rankFields(entry.data_details);
-  
+
         return (
           (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
-  
+
       const rankedData = filteredData.map(entry => {
         const [field1, field2] = rankFields(entry.data_details);
-  
+
         const findKeyForField = (field) => {
           return Object.keys(entry.data_details).find(key => entry.data_details[key] === field);
         };
-  
+
         const key1 = findKeyForField(field1);
         const key2 = findKeyForField(field2);
-  
+
         return { ...entry, field1, field2, key1, key2 };
       });
-  
+
       rankedData.sort((a, b) => {
         const isDateOrYear = (key) => key && (key.toLowerCase().includes('dates') || key.toLowerCase().includes('year'));
-  
+
         const dateA = isDateOrYear(a.key1) ? extractYear(a.field1) : isDateOrYear(a.key2) ? extractYear(a.field2) : null;
         const dateB = isDateOrYear(b.key1) ? extractYear(b.field1) : isDateOrYear(b.key2) ? extractYear(b.field2) : null;
-  
+
         if (dateA !== null && dateB !== null) {
           return dateB - dateA;
         } else if (dateA !== null) {
@@ -112,15 +112,15 @@ const EducationSection = ({ user, section, onBack }) => {
         }
         return 0;
       });
-  
+
       setFieldData(rankedData); // Ensure only filtered and ranked data is set
     } catch (error) {
       console.error('Error fetching data:', error);
     }
     setLoading(false);
   }
-  
-    
+
+
 
   useEffect(() => {
     fetchData();
@@ -133,9 +133,9 @@ const EducationSection = ({ user, section, onBack }) => {
   return (
     <div>
       <div>
-        <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5'>
+        {onBack && <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5'>
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
-        </button>
+        </button>}
         <div className='m-4 flex'>
           <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
           <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight' disabled={retrievingData}>New</button>

@@ -16,7 +16,7 @@ const generateEmptyEntry = (attributes) => {
   return emptyEntry;
 };
 
-const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
+const CoursesTaughtSection = ({ userInfo, section, onBack = null }) => {
   const [user, setUser] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -30,7 +30,7 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
   const [retrievingData, setRetrievingData] = useState(false);
 
   const handleSearchChange = (event) => {
-      setSearchTerm(event.target.value);
+    setSearchTerm(event.target.value);
   };
 
   const handleArchive = async (entry) => {
@@ -39,7 +39,7 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
     // Implement restore functionality here
     try {
       const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
-      
+
     }
     catch (error) {
       console.error('Error archiving entry:', error);
@@ -49,56 +49,56 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
   };
 
   const handleEdit = (entry) => {
-    const newEntry = {fields: entry.data_details, data_id: entry.user_cv_data_id, editable: entry.editable};
+    const newEntry = { fields: entry.data_details, data_id: entry.user_cv_data_id, editable: entry.editable };
     setIsNew(false);
     setSelectedEntry(newEntry);
-    
+
     setIsModalOpen(true);
   };
-  
+
   const handleCloseModal = () => {
-      setSelectedEntry(null);
-      setIsModalOpen(false);
+    setSelectedEntry(null);
+    setIsModalOpen(false);
   };
 
   const handleNew = () => {
-      setIsNew(true);
-      if (typeof section.attributes === 'string') {
-        section.attributes = JSON.parse(section.attributes);
-      }
-      const emptyEntry = generateEmptyEntry(section.attributes);
-      
-      const newEntry = {fields: emptyEntry, data_id: null};
-      setSelectedEntry(newEntry);
-      setIsModalOpen(true);
+    setIsNew(true);
+    if (typeof section.attributes === 'string') {
+      section.attributes = JSON.parse(section.attributes);
+    }
+    const emptyEntry = generateEmptyEntry(section.attributes);
+
+    const newEntry = { fields: emptyEntry, data_id: null };
+    setSelectedEntry(newEntry);
+    setIsModalOpen(true);
   };
 
   async function fetchCourseData() {
     setRetrievingData(true);
     try {
-        
-        const retrievedData = await getTeachingDataMatches(user.user_institution_id);
-        
 
-        for (const dataObject of retrievedData) {
-            let { data_details } = dataObject; // Extract the data_details property
-            
+      const retrievedData = await getTeachingDataMatches(user.user_institution_id);
 
-            // Parse the data_details string to a JSON object
-            let dataDetailsObj = JSON.parse(data_details);
 
-            // Convert the updated JSON object back to a string
-            data_details = JSON.stringify(dataDetailsObj).replace(/"/g, '\\"'); // Escape special characters
-            
-            const result = await addUserCVData(user.user_id, section.data_section_id, `"${data_details}"`, false);
-            
-        }
+      for (const dataObject of retrievedData) {
+        let { data_details } = dataObject; // Extract the data_details property
+
+
+        // Parse the data_details string to a JSON object
+        let dataDetailsObj = JSON.parse(data_details);
+
+        // Convert the updated JSON object back to a string
+        data_details = JSON.stringify(dataDetailsObj); // Escape special characters
+
+        const result = await addUserCVData(user.user_id, section.data_section_id, data_details, false);
+
+      }
     } catch (error) {
-        console.error('Error fetching course data:', error);
+      console.error('Error fetching course data:', error);
     }
     fetchData();
-}
-  
+  }
+
   async function fetchData() {
     try {
       const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
@@ -107,44 +107,44 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
-  
-      
-  
+
+
+
       const filteredData = parsedData.filter(entry => {
-        
+
         const [field1, field2] = rankFields(entry.data_details);
-        
+
         return (
           (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
-      
-  
+
+
       const rankedData = filteredData.map(entry => {
         const [field1, field2] = rankFields(entry.data_details);
         return { ...entry, field1, field2 };
       });
-  
+
       // Sorting logic
       rankedData.sort((a, b) => {
         const isYear = (str) => /\b\d{4}\b/.test(str); // Regex to match YYYY
         const yearA = isYear(a.field1) ? parseInt(a.field1) : isYear(a.field2) ? parseInt(a.field2) : null;
         const yearB = isYear(b.field1) ? parseInt(b.field1) : isYear(b.field2) ? parseInt(b.field2) : null;
-  
+
         if (yearA && yearB) {
-          return yearB - yearA; 
+          return yearB - yearA;
         } else if (yearA) {
-          return -1; 
+          return -1;
         } else if (yearB) {
-          return 1; 
+          return 1;
         } else {
-          return 0; 
+          return 0;
         }
       });
-  
+
       setFieldData(rankedData);
-  
+
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -160,54 +160,54 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
-  
-      
-  
+
+
+
       const filteredData = parsedData.filter(entry => {
-        
+
         const [field1, field2] = rankFields(entry.data_details);
-        
+
         return (
           (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
-      
-  
+
+
       const rankedData = filteredData.map(entry => {
         const [field1, field2] = rankFields(entry.data_details);
         return { ...entry, field1, field2 };
       });
-  
+
       // Sorting logic
       rankedData.sort((a, b) => {
         const isYear = (str) => /\b\d{4}\b/.test(str); // Regex to match YYYY
         const yearA = isYear(a.field1) ? parseInt(a.field1) : isYear(a.field2) ? parseInt(a.field2) : null;
         const yearB = isYear(b.field1) ? parseInt(b.field1) : isYear(b.field2) ? parseInt(b.field2) : null;
-  
+
         if (yearA && yearB) {
-          return yearB - yearA; 
+          return yearB - yearA;
         } else if (yearA) {
-          return -1; 
+          return -1;
         } else if (yearB) {
-          return 1; 
+          return 1;
         } else {
-          return 0; 
+          return 0;
         }
       });
-  
+
       setFieldData(rankedData);
-  
+
     } catch (error) {
       console.error('Error fetching data:', error);
     }
     setLoading(false);
   }
-  
+
   async function fetchUser() {
     try {
       const result = await getUserInstitutionId(userInfo.email);
-      
+
       setUser(result);
       fetchDataFirst(result);
     }
@@ -230,9 +230,9 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
   return (
     <div>
       <div>
-        <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5'>
+        {onBack && <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5'>
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
-        </button>
+        </button>}
         <div className='m-4 flex'>
           <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
           <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight' disabled={retrievingData}>New</button>
@@ -243,24 +243,24 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
         <div className='m-4 flex'>{section.description}</div>
         <div className='m-4 flex'>
           <label className="input input-bordered flex items-center gap-2 flex-1">
-          <input
+            <input
               type="text"
               className="grow"
               placeholder={`Search ${section.title}`}
               value={searchTerm}
               onChange={handleSearchChange}
-          />
-          <svg
+            />
+            <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 16 16"
               fill="currentColor"
               className="h-4 w-4 opacity-70"
-          >
+            >
               <path
-              fillRule="evenodd"
-              d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-              clipRule="evenodd" />
-          </svg>
+                fillRule="evenodd"
+                d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                clipRule="evenodd" />
+            </svg>
           </label>
         </div>
       </div>
@@ -271,83 +271,83 @@ const CoursesTaughtSection = ({ userInfo, section, onBack }) => {
       ) : (
         <div>
           <div>
-          {fieldData.length > 0 ? (
-            fieldData.map((entry, index) => (
-              entry.editable ? (
-                <GenericEntry
-                  key={index}
-                  onEdit={() => handleEdit(entry)}
-                  field1={entry.field1}
-                  field2={entry.field2}
-                  data_details={entry.data_details}
-                  onArchive={() => handleArchive(entry)}
-                />
-              ) : (
-                <PermanentEntry
-                  isArchived={false}
-                  key={index}
-                  onEdit={() => handleEdit(entry)}
-                  field1={entry.field1}
-                  field2={entry.field2}
-                  data_details={entry.data_details}
-                  onArchive={() => handleArchive(entry)}
-                />
-              )
-            ))
-          ) : (
+            {fieldData.length > 0 ? (
+              fieldData.map((entry, index) => (
+                entry.editable ? (
+                  <GenericEntry
+                    key={index}
+                    onEdit={() => handleEdit(entry)}
+                    field1={entry.field1}
+                    field2={entry.field2}
+                    data_details={entry.data_details}
+                    onArchive={() => handleArchive(entry)}
+                  />
+                ) : (
+                  <PermanentEntry
+                    isArchived={false}
+                    key={index}
+                    onEdit={() => handleEdit(entry)}
+                    field1={entry.field1}
+                    field2={entry.field2}
+                    data_details={entry.data_details}
+                    onArchive={() => handleArchive(entry)}
+                  />
+                )
+              ))
+            ) : (
               <p className="m-4">No data found</p>
-          )}
+            )}
           </div>
           {isModalOpen && selectedEntry && !isNew && (
             selectedEntry.editable ? (
-                <EntryModal
-                    isNew={false}
-                    user={user}
-                    section={section}
-                    fields={selectedEntry.fields}
-                    user_cv_data_id={selectedEntry.data_id}
-                    entryType={section.title}
-                    fetchData={fetchData}
-                    onClose={handleCloseModal}
-                />
+              <EntryModal
+                isNew={false}
+                user={user}
+                section={section}
+                fields={selectedEntry.fields}
+                user_cv_data_id={selectedEntry.data_id}
+                entryType={section.title}
+                fetchData={fetchData}
+                onClose={handleCloseModal}
+              />
             ) : (
-                <PermanentEntryModal
-                    isNew={false}
-                    user={user}
-                    section={section}
-                    fields={selectedEntry.fields}
-                    user_cv_data_id={selectedEntry.data_id}
-                    entryType={section.title}
-                    fetchData={fetchData}
-                    onClose={handleCloseModal}
-                />
+              <PermanentEntryModal
+                isNew={false}
+                user={user}
+                section={section}
+                fields={selectedEntry.fields}
+                user_cv_data_id={selectedEntry.data_id}
+                entryType={section.title}
+                fetchData={fetchData}
+                onClose={handleCloseModal}
+              />
             )
           )}
 
           {isModalOpen && selectedEntry && isNew && (
-              selectedEntry.editable ? (
-                  <EntryModal
-                      isNew={true}
-                      user={user}
-                      section={section}
-                      fields={selectedEntry.fields}
-                      user_cv_data_id={selectedEntry.data_id}
-                      entryType={section.title}
-                      fetchData={fetchData}
-                      onClose={handleCloseModal}
-                  />
-              ) : (
-                  <PermanentEntryModal
-                      isNew={true}
-                      user={user}
-                      section={section}
-                      fields={selectedEntry.fields}
-                      user_cv_data_id={selectedEntry.data_id}
-                      entryType={section.title}
-                      fetchData={fetchData}
-                      onClose={handleCloseModal}
-                  />
-              )
+            selectedEntry.editable ? (
+              <EntryModal
+                isNew={true}
+                user={user}
+                section={section}
+                fields={selectedEntry.fields}
+                user_cv_data_id={selectedEntry.data_id}
+                entryType={section.title}
+                fetchData={fetchData}
+                onClose={handleCloseModal}
+              />
+            ) : (
+              <PermanentEntryModal
+                isNew={true}
+                user={user}
+                section={section}
+                fields={selectedEntry.fields}
+                user_cv_data_id={selectedEntry.data_id}
+                entryType={section.title}
+                fetchData={fetchData}
+                onClose={handleCloseModal}
+              />
+            )
           )}
         </div>
       )}
