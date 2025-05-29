@@ -32,6 +32,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [sortDescending, setSortDescending] = useState(true);
 
   const totalPages = Math.ceil(fieldData.length / pageSize);
   const paginatedData = fieldData.slice(
@@ -252,6 +253,10 @@ const PublicationsSection = ({ user, section, onBack }) => {
     );
   };
 
+  const sortedData = sortDescending
+    ? paginatedData
+    : [...paginatedData].reverse();
+
   return (
     <div>
       <div>
@@ -307,6 +312,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
       </div>
 
       <div className="m-4 p-4 rounded-2xl border border-gray-300 shadow-sm bg-white flex flex-wrap justify-between items-center">
+        {/* Left controls */}
         <div className="flex items-center gap-3">
           <svg
             className="w-6 h-6 text-blue-600"
@@ -327,10 +333,49 @@ const PublicationsSection = ({ user, section, onBack }) => {
               {fieldData.length}
             </span>
           </span>
-          {/* <button className='text-white btn btn-success min-h-0 h-8 leading-tight flex items-center gap-2'
-            disabled={retrievingData}><LuBrainCircuit className="w-5 h-5 text-white" />Top Research Keywords</button> */}
         </div>
-        <div className="flex items-center gap-4">
+        {/* Right controls */}
+        <div className="flex items-center gap-2">
+          {/* Sort control */}
+          <span className="text-gray-700 text-sm font-medium">Sort:</span>
+          <button
+            className="flex items-center px-3 py-1 border rounded hover:bg-gray-100"
+            onClick={() => setSortDescending((prev) => !prev)}
+            title="Sort by Year"
+            type="button"
+          >
+            <span className="mr-1 text-sm">Year</span>
+            {sortDescending ? (
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 15l7-7 7 7"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            )}
+          </button>
+          {/* Page size dropdown */}
           <select
             className="select select-sm select-bordered"
             value={pageSize}
@@ -342,6 +387,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
             <option value={100}>100 per page</option>
             <option value={1000}>All</option>
           </select>
+          {/* Pagination controls */}
           <button
             className="btn btn-outline btn-sm"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
@@ -371,7 +417,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
       ) : (
         <div>
           <div>
-            {paginatedData.map((entry, index) =>
+            {sortedData.map((entry, index) =>
               entry.editable ? (
                 <GenericEntry
                   key={index}
