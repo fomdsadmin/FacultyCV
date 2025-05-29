@@ -1,3 +1,4 @@
+import { useState } from "react"
 import CoursesTaughtSection from "../../../Components/CoursesTaughtSection"
 import EducationSection from "../../../Components/EducationSection"
 import EmploymentSection from "../../../Components/EmploymentSection"
@@ -11,7 +12,20 @@ import Linkages from "../Profile/Linkages/Linkages"
 import Profile from "../Profile/Profile"
 
 const Tabs = () => {
-    const { activeTab, setActiveTab, academicSections, CATEGORIES } = useFaculty()
+    const { academicSections } = useFaculty()
+
+    const CATEGORIES = Object.freeze({
+        PROFILE: "Profile",
+        AFFILIATIONS: "Affiliations",
+        EMPLOYMENT: "Employment",
+        SERVICE: "Service",
+        TEACHING: "Teaching",
+        EDUCATION: "Education",
+        AWARDS: "Awards",
+        LINKAGES: "Linkages",
+      })
+
+    const [activeTab, setActiveTab] = useState(CATEGORIES.PROFILE)
 
     const { userInfo } = useApp();
 
