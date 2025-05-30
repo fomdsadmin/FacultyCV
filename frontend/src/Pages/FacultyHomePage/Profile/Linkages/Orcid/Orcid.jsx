@@ -43,22 +43,33 @@ const Orcid = () => {
     }
   }
 
+  const handleAddOrcidIdButtonClick = () => {
+    handleAddOrcidClick();
+  }
+
   return (
     <>
       <div className="p-4 border border-gray-200 rounded-md bg-gray-50 shadow-sm">
         <h3 className="text-md font-semibold text-zinc-700 mb-2">ORCID ID</h3>
 
         <div className="flex flex-wrap gap-3 mb-3">
-          <button
+          {orcidId && <button
             type="button"
             onClick={handleOrcidButtonClick}
-            className={`btn btn-sm ${orcidId ? "btn-secondary" : "btn-success"} text-white`}
+            className={`btn btn-sm btn-secondary text-white`}
           >
-            {orcidId || "Add ORCID ID"}
-          </button>
+            {orcidId}
+          </button>}
         </div>
 
         <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={handleAddOrcidIdButtonClick}
+            className={`btn btn-sm btn-success text-white`}
+          >
+            {"Add ORCID ID"}
+          </button>
           <button onClick={handleManualOrcidClick} className="btn btn-sm btn-outline text-gray-700">
             Add Manually
           </button>

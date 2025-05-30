@@ -3,6 +3,11 @@
 import React, { useState, useRef } from "react"
 import { useApp } from "../../../../../Contexts/AppContext"
 import ModalStylingWrapper from "../../../../../SharedComponents/ModalStylingWrapper"
+import { toast } from "react-toastify";
+
+function isAllNumbers(str) {
+    return /^\d+$/.test(str);
+}
 
 const ManualOrcidModal = ({ isOpen, onClose }) => {
     const { setUserInfo } = useApp()
@@ -23,6 +28,15 @@ const ManualOrcidModal = ({ isOpen, onClose }) => {
     }
 
     const handleManualOrcidLink = () => {
+
+        const isNumeric = manualOrcidId.every((idSegment) => isAllNumbers(idSegment));
+
+        if (!isNumeric) {
+            toast.warning("Orcid only contains numeric values!", { autoClose: 3000 });
+            setManualOrcidId(["", "", "", ""])
+            return;
+        }
+
         const fullOrcid = manualOrcidId.join("-")
         setUserInfo((prev) => ({
             ...prev,
