@@ -46,11 +46,10 @@ def getOrcidPublication(arguments):
     Fetch a specific section of the ORCID record based on arguments.
     Arguments should include:
     - 'orcid_d': The ORCID ID
-    - 'put_codes': List of <= 25 put-codes to fetch publications
+    - 'put_codes': List of 100 put-codes to fetch publications
     """
     orcid_id = arguments.get("orcid_id")
     put_codes = arguments.get("put_codes")
-    section = "publications"
 
     # Validate inputs
     if not orcid_id or not put_codes:
@@ -68,41 +67,39 @@ def getOrcidPublication(arguments):
         "Accept": "application/json"
     }
 
-    # Handle the response             
-    if section == "publications":
-        # Extract and structure publication data
-        publications = []
-        for put_code in put_codes:
-            url = f"{base_url}/{orcid_id}/work/{put_code}"
-            response2 = requests.get(url, headers=headers)
-            try:
-                full_data = response2.json()
-            except Exception as e:
-                continue  # Skip if JSON parsing fails
-            if not full_data:
-                continue  # Skip if response is empty
-            try:
-                each_publication = parse_publication(full_data)
-            except Exception as e:
-                print(e)
-                print("Put code: ", put_code)
-                continue  # Skip if JSON parsing fails
-            publications.append(each_publication)
-    
-        return {
-            'bio': "",
-            'keywords': "",
-            'publications': publications,
-            'other_data': {}
-            }   
+    # Join put codes with commas
+    put_codes_str = ",".join(str(code) for code in put_codes)
+    url = f"{base_url}/{orcid_id}/works/{put_codes_str}"
 
-    # If we reach here, something went wrong
+    response = requests.get(url, headers=headers)
+    publications = []
+
+    try:
+        full_data = response.json()
+        for data in full_data.get('bulk', []):
+            work = data.get('work')
+            if work:
+                try:
+                    each_publication = parse_publication(work)
+                    publications.append(each_publication)
+                except Exception as e:
+                    print(e)
+                    print("Work: ", work)
+    except Exception as e:
+        print(e)
+        return {
+            'bio': "err",
+            'keywords': "",
+            'publications': [],
+            'other_data': {},
+            'error': 'Failed to parse publications'
+        }
+
     return {
         'bio': "",
         'keywords': "",
-        'publications': [],
-        'other_data': {},
-        'error': 'Failed to fetch publications or invalid request'
+        'publications': publications,
+        'other_data': {}
     }
 
 def lambda_handler(event, context):
