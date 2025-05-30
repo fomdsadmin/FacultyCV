@@ -36,19 +36,34 @@ def storeData():
 
     s3_client = boto3.resource('s3')
     response = s3_client.Object(BUCKET_NAME, FILENAME_CLEAN).get()
-    
-    data_types = {
-        'First Name': str,
-        'Last Name': str,
-        'Department': str, 
-        'Agency': str,
-        'Sponsor': str,
-        'Program': str, 
-        'Amount': int, 
-        'Title': str,
-        'Keywords': str, 
-        'Dates': str, 
-    }
+
+    parts = FILENAME_CLEAN.split('/')
+    filename = parts[1]
+    if filename == 'rise':
+        data_types = {
+            'First Name': str,
+            'Last Name': str,
+            'Department': str, 
+            'Agency': str,
+            'Sponsor': str,
+            'Program': str, 
+            'Amount': int, 
+            'Title': str,
+            'Keywords': str, 
+            'Dates': str, 
+        }
+    else: 
+        data_types = {
+            'First Name': str,
+            'Last Name': str,
+            'Department': str, 
+            'Agency': str,
+            'Program': str, 
+            'Amount': str, 
+            'Title': str,
+            'Keywords': str, 
+            'Dates': str, 
+        }
     
     df_id = pd.read_csv(io.StringIO(response["Body"].read().decode(
         "utf-8")), header=0, keep_default_na=False, dtype=data_types)
@@ -56,9 +71,15 @@ def storeData():
     df_id = df_id.drop_duplicates()
 
     # rearrange columns order
-    columns_order = ['First Name', 'Last Name', 'Keywords', 'Agency','Sponsor', 'Department',
-                     'Program', 'Title', 'Amount', 'Dates']
+    if filename == 'rise':
+        columns_order = ['First Name', 'Last Name', 'Keywords', 'Agency', 'Sponsor', 'Department','Program', 'Title', 'Amount', 'Dates']
+    else:
+        columns_order = ['First Name', 'Last Name', 'Keywords', 'Agency', 'Department','Program', 'Title', 'Amount', 'Dates']
+                
     df_id = df_id[columns_order]
+    
+    if filename != 'rise':
+        df_id["Amount"] = df_id["Amount"].replace(r"^\s*$", "0", regex=True).astype(int)
 
     # convert the entire DataFrame into a list of tuples (rows)
     cleanData = list(df_id.itertuples(index=False, name=None))
@@ -74,15 +95,22 @@ def storeData():
         target_table = "rise_data"
 
     # Check for duplicate insertion
-    query = f"SELECT first_name, last_name, keywords, agency,sponsor, department, program, title, amount, dates FROM {target_table}"
+    if df_id['Agency'].iloc[0] == 'Rise':
+        query = f"SELECT first_name, last_name, keywords, agency, sponsor, department, program, title, amount, dates FROM {target_table}"
+    else:
+        query = f"SELECT first_name, last_name, keywords, agency, department, program, title, amount, dates FROM {target_table}"
+        
     cursor.execute(query)
     tableData = list(map(lambda tup: tuple("" if x == None else x for x in tup), cursor.fetchall()))
     
     # The difference between the two sets is the data that are unique and can be inserted into the database
     listOfValuesToInsert = list(set(cleanData) - set(tableData))
-
+    
     # Inserting to db
-    query = f"INSERT INTO {target_table} (first_name, last_name, keywords, agency,sponsor, department, program, title, amount, dates) VALUES %s"
+    if df_id['Agency'].iloc[0] == 'Rise':
+        query = f"INSERT INTO {target_table} (first_name, last_name, keywords, agency, sponsor, department, program, title, amount, dates) VALUES %s"
+    else:
+        query = f"INSERT INTO {target_table} (first_name, last_name, keywords, agency, department, program, title, amount, dates) VALUES %s"
     extras.execute_values(cursor, query, listOfValuesToInsert)
 
     connection.commit()

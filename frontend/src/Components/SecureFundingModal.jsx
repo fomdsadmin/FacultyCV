@@ -31,6 +31,7 @@ const SecureFundingModal = ({
         user.first_name,
         user.last_name
       );
+      console.log("Retrieved secure funding data:", retrievedData);
       const allDataDetails = [];
       const uniqueDataDetails = new Set();
 
@@ -73,6 +74,7 @@ const SecureFundingModal = ({
         }
       }
 
+      console.log("Retrieved RISE data:", allDataDetails);
       setAllSecureFundingData(allDataDetails);
       setSelectedSecureFundingData(allDataDetails);
     } catch (error) {
