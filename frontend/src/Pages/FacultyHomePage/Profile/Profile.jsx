@@ -1,6 +1,6 @@
-import Bio from "./Bio"
+import Bio from "./Bio/Bio"
 import Contact from "./Contact"
-import Keywords from "./Keywords"
+import Keywords from "./Keywords/Keywords"
 
 const Profile = () => {
 
