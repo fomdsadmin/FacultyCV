@@ -68,32 +68,28 @@ def getOrcidPublication(arguments):
     }
 
     # Join put codes with commas
-    put_codes_str = ",".join(str(code) for code in put_codes)
-    url = f"{base_url}/{orcid_id}/works/{put_codes_str}"
-
-    response = requests.get(url, headers=headers)
     publications = []
+    batch_size = 100 # API endpoint /works only supports a max of 100 in one request. 
+    for i in range(0, len(put_codes), batch_size):
+        batch = put_codes[i:i+batch_size]
+        put_codes_str = ",".join(str(code) for code in batch)
+        url = f"{base_url}/{orcid_id}/works/{put_codes_str}"
 
-    try:
-        full_data = response.json()
-        for data in full_data.get('bulk', []):
-            work = data.get('work')
-            if work:
-                try:
-                    each_publication = parse_publication(work)
-                    publications.append(each_publication)
-                except Exception as e:
-                    print(e)
-                    print("Work: ", work)
-    except Exception as e:
-        print(e)
-        return {
-            'bio': "err",
-            'keywords': "",
-            'publications': [],
-            'other_data': {},
-            'error': 'Failed to parse publications'
-        }
+        response = requests.get(url, headers=headers)
+        try:
+            full_data = response.json()
+            for data in full_data.get('bulk', []):
+                work = data.get('work')
+                if work:
+                    try:
+                        each_publication = parse_publication(work)
+                        publications.append(each_publication)
+                    except Exception as e:
+                        print(e)
+                        print("Work: ", work)
+        except Exception as e:
+            print(e)
+            continue
 
     return {
         'bio': "",
