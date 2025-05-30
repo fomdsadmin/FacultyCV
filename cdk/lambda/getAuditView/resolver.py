@@ -39,7 +39,7 @@ def getAuditView(arguments):
             'session_id': result[9],
             'assistant': result[10],
             'profile_record': result[11],
-            'role': result[12]
+            'logged_user_role': result[12]
         })  
     return audit_view_records
 
