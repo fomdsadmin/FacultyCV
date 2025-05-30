@@ -80,7 +80,7 @@ const PublicationsModal = ({
       );
       console.log("Total ORCID Publications fetched:", totalOrcidPublications);
       const putCodes = totalOrcidPublications.put_codes || [];
-      const batchSize = 100;
+      const batchSize = 250;
       let orcidPublications = [];
 
       for (let i = 0; i < putCodes.length; i += batchSize) {
