@@ -87,10 +87,9 @@ def cleanNserc(bucket, key_raw, key_clean):
     df["Agency"] = "NSERC"
 
     # remove comma and convert Amount to integer
-    df["Amount($)"] = df["Amount($)"].str.replace(",", "")
-    df["Amount($)"] = pd.to_numeric(df["Amount($)"])
-    df["Amount"] = df["Amount($)"]
-
+    df["Amount($)"] = df["Amount($)"].astype(str).str.replace(",", "")
+    df["Amount($)"] = df["Amount($)"].str.replace(r"^\s*$", "0", regex=True)
+    df["Amount"] = pd.to_numeric(df["Amount($)"], errors='coerce').fillna(0).astype(int)
     # add Keywords column
     df["Keywords"] = np.nan
 
