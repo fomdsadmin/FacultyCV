@@ -3,21 +3,28 @@
 import { useState } from "react"
 import { useApp } from "../../../../../Contexts/AppContext"
 import ModalStylingWrapper from "../../../../../SharedComponents/ModalStylingWrapper"
+import { toast } from "react-toastify";
+
+function isAllNumbers(str) {
+    return /^\d+$/.test(str);
+}
 
 const ManualScopusModal = ({ isOpen, onClose }) => {
-    const { userInfo, setUserInfo } = useApp()
+    const { setUserInfo } = useApp()
     const [manualScopusId, setManualScopusId] = useState("")
 
     const handleManualScopusLink = () => {
         if (!manualScopusId.trim()) return
 
-        const updatedScopusId = userInfo.scopus_id
-            ? `${userInfo.scopus_id},${manualScopusId.trim()}`
-            : manualScopusId.trim()
+        if (!isAllNumbers(manualScopusId.trim())) {
+            toast.success("Scopus ID must be a numeric value", { autoClose: 3000 })
+            setManualScopusId("");
+            return;
+        }
 
         setUserInfo((prev) => ({
             ...prev,
-            scopus_id: updatedScopusId,
+            scopus_id: manualScopusId.trim()
         }))
 
         setManualScopusId("")

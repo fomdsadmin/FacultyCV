@@ -64,11 +64,9 @@ const AddScopusModal = ({ isOpen, onClose }) => {
     const handleScopusLink = (scopusId) => {
         if (!scopusId) return
 
-        const updatedScopusId = userInfo.scopus_id ? `${userInfo.scopus_id},${scopusId}` : scopusId
-
         setUserInfo((prev) => ({
             ...prev,
-            scopus_id: updatedScopusId,
+            scopus_id: scopusId,
         }))
 
         onClose()
