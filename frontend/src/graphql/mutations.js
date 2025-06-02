@@ -121,6 +121,22 @@ export const ADD_USER_CV_DATA = `
     }
 `;
 
+export const ADD_BATCHED_USER_CV_DATA = `
+    mutation AddBatchedUserCVData(
+        $user_id: String!,
+        $data_section_id: String!,
+        $data_details_list: [AWSJSON!],
+        $editable: Boolean!,
+    ) {
+        addBatchedUserCVData(
+            user_id: $user_id,
+            data_section_id: $data_section_id,
+            data_details_list: $data_details_list,
+            editable: $editable,
+        )
+    }
+`;
+
 export const addUniversityInfoMutation = (type, value) => `
     mutation AddUniversityInfo {
         addUniversityInfo(

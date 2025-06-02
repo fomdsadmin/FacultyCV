@@ -49,6 +49,7 @@ import {
   removeFromUserGroupMutation,
   updateLatexConfigurationMutation,
   ADD_USER_DECLARATION,
+  ADD_BATCHED_USER_CV_DATA,
   DELETE_USER_DECLARATION,
   UPDATE_USER_DECLARATION,
   ADD_SECTION,
@@ -643,7 +644,7 @@ export const addUserCVData = async (
   editable = true
 ) => {
   const cognito_user_id = await getUserId();
-  console.log("data_details ", data_details);
+  // console.log("data_details ", data_details);
   const results = await executeGraphql(ADD_USER_CV_DATA, {
     user_id: user_id,
     data_section_id: data_section_id,
@@ -652,6 +653,21 @@ export const addUserCVData = async (
     cognito_user_id: cognito_user_id,
   });
   return results["data"]["addUserCVData"];
+};
+
+export const addBatchedUserCVData = async (
+  user_id,
+  data_section_id,
+  data_details_list,
+  editable = true
+) => {
+  const results = await executeGraphql(ADD_BATCHED_USER_CV_DATA, {
+    user_id: user_id,
+    data_section_id: data_section_id,
+    data_details_list: data_details_list,
+    editable: editable,
+  });
+  return results["data"]["addBatchedUserCVData"];
 };
 
 /**
