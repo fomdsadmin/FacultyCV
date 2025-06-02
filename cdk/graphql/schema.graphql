@@ -325,6 +325,7 @@ type Mutation {
     created_by: String!
     other_data: AWSJSON!
   ): InsertResponse!
+    @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
 
   deleteUserDeclaration(
     first_name: String!
@@ -426,6 +427,13 @@ type Mutation {
     editable: Boolean!
     cognito_user_id: String
   ): String @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+
+  addBatchedUserCVData(
+    user_id: String!
+    data_section_id: String!
+    data_details_list: [AWSJSON!] # JSON
+    editable: Boolean!
+  ): String @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
 
   updateUserCVData(
     user_cv_data_id: String!
