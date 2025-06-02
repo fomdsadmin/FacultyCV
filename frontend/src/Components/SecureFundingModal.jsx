@@ -115,10 +115,20 @@ const SecureFundingModal = ({
     fetchData();
   }
 
+  // Dynamically set modal height based on number of entries
+  let modalHeightClass = "h-4/5";
+  if (initialRender || fetchingData) {
+    modalHeightClass = "h-1/2";
+  } else if (allSecureFundingData.length <= 2) {
+    modalHeightClass = "h-[55vh]";
+  } else if (allSecureFundingData.length <= 6) {
+    modalHeightClass = "h-4/5";
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <dialog
-        className="modal-dialog relative bg-white rounded-xl shadow-xl max-w-3xl w-full p-0"
+        className={`modal ${modalHeightClass} max-h-4/5 relative bg-white rounded-xl shadow-xl max-w-4xl w-full p-0 overflow-y-auto`}
         open
         style={{ margin: 0, padding: 0 }}
       >
@@ -180,7 +190,7 @@ const SecureFundingModal = ({
                 <div className="text-center text-gray-500">No data found</div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between bg-gray-100 mt-8 mx-4 p-4 rounded-xl shadow mb-4">
+                  <div className="flex items-center justify-between bg-gray-100 mt-4 mx-auto p-4 rounded-xl shadow mb-4 max-w-3xl w-full">
                     <div className="flex items-center gap-2">
                       <span className="text-xl font-semibold text-gray-700">
                         Matched Grants
@@ -189,14 +199,28 @@ const SecureFundingModal = ({
                         {selectedSecureFundingData.length} selected
                       </span>
                     </div>
-                    <button
-                      className="px-3 py-1 text-sm font-medium text-red-600 bg-red-100 hover:bg-red-200 rounded-full transition"
-                      onClick={() => setSelectedSecureFundingData([])}
-                    >
-                      Deselect All
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="px-3 py-1 text-sm font-medium text-red-600 bg-red-100 hover:bg-red-200 rounded-full transition"
+                        onClick={() => setSelectedSecureFundingData([])}
+                      >
+                        Deselect All
+                      </button>
+                      {allSecureFundingData.length > 0 && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary px-6 py-2 text-white rounded-lg shadow hover:shadow-md transition"
+                          onClick={addSecureFundingData}
+                          disabled={addingData}
+                        >
+                          {addingData
+                            ? "Adding secure funding data..."
+                            : "Add Secure Funding Data"}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-4 rounded-xl">
+                  <div className="space-y-4 rounded-xl mb-6">
                     {allSecureFundingData.map((secureFundingData, index) => (
                       <SecureFundingEntry
                         key={index}
@@ -211,18 +235,6 @@ const SecureFundingModal = ({
                 </>
               )}
             </div>
-            {allSecureFundingData.length > 0 && (
-              <button
-                type="button"
-                className="btn btn-secondary mt-6 px-6 py-2 text-white rounded-lg shadow hover:shadow-md transition"
-                onClick={addSecureFundingData}
-                disabled={addingData}
-              >
-                {addingData
-                  ? "Adding secure funding data..."
-                  : "Add Secure Funding Data"}
-              </button>
-            )}
           </div>
         )}
       </dialog>

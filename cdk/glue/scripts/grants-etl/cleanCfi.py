@@ -102,7 +102,8 @@ def cleanCfi(bucket, key_raw, key_clean):
     # Amount column
     df["CFI Contribution"] = df["CFI Contribution"].str.replace(",", "")
     df["CFI Contribution"] = df["CFI Contribution"].str.replace("$", "", regex=False)
-    df["Amount"] = pd.to_numeric(df["CFI Contribution"]).astype(int)
+    df["CFI Contribution"] = df["CFI Contribution"].replace(r"^\s*$", "0", regex=True)
+    df["Amount"] = df["CFI Contribution"].astype(float).fillna(0).astype(int)
 
     # Title column
     df["Title"] = df["Project title"]
