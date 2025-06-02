@@ -96,14 +96,14 @@ const SecureFundingModal = ({
 
   async function addSecureFundingData() {
     setAddingData(true);
-    const batchSize = 50;
+    const batchSize = 25;
     const batches = [];
     // Prepare data: add year, remove dates
     const preparedData = selectedSecureFundingData.map((data) => {
       const newData = { ...data };
       newData.year = newData.dates?.split("-")[0];
       delete newData.dates;
-      return newData;
+      return newData; // <-- Stringify each object!
     });
 
     // Split into batches
@@ -113,6 +113,7 @@ const SecureFundingModal = ({
 
     try {
       for (const batch of batches) {
+        console.log("Adding batch:", batch);
         await addBatchedUserCVData(
           user.user_id,
           section.data_section_id,
