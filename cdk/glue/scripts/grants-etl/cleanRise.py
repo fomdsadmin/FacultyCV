@@ -104,7 +104,8 @@ def cleanRise(bucket, key_raw, key_clean):
     # Amount column
     df["Award Amount"] = df["Award Amount"].str.replace(",", "")
     df["Award Amount"] = df["Award Amount"].str.replace("$", "", regex=False)
-    df["Amount"] = pd.to_numeric(df["Award Amount"]).astype(int)
+    df["Award Amount"] = df["Award Amount"].replace(r"^\s*$", "0", regex=True)
+    df["Amount"] = df["Award Amount"].astype(float).fillna(0).astype(int)
 
     # Title column
     df["Title"] = df["Project Title"]

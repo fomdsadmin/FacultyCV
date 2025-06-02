@@ -89,7 +89,8 @@ def cleanNserc(bucket, key_raw, key_clean):
     # remove comma and convert Amount to integer
     df["Amount($)"] = df["Amount($)"].astype(str).str.replace(",", "")
     df["Amount($)"] = df["Amount($)"].str.replace(r"^\s*$", "0", regex=True)
-    df["Amount"] = pd.to_numeric(df["Amount($)"], errors='coerce').fillna(0).astype(int)
+    df["Amount($)"] = df["Amount($)"].replace(r"^\s*$", "0", regex=True)
+    df["Amount"] = df["Amount($)"].astype(float).fillna(0).astype(int)
     # add Keywords column
     df["Keywords"] = np.nan
 
