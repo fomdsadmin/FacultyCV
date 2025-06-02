@@ -2,6 +2,8 @@ import { Amplify } from 'aws-amplify';
 import './App.css';
 import '@aws-amplify/ui-react/styles.css';
 import React, { useEffect, useState } from 'react';
+import Header from './Components/Headers.jsx';
+import Footer from './Components/Footer.jsx';
 import { fetchUserAttributes, signOut, fetchAuthSession } from 'aws-amplify/auth';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './Views/AuthPage';
@@ -121,6 +123,7 @@ const AppContent = () => {
   }
   return (
     <Router>
+       {user && <Header />}
       <Routes>
         <Route path="/home" element={user ? (
           Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> :
@@ -155,7 +158,7 @@ const AppContent = () => {
         <Route path="/home" element={user ? <HomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/support" element={user ? <Support userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/academic-work" element={user ? <AcademicWork userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
-		<Route path="/declarations" element={user ? <Declarations userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+		    <Route path="/declarations" element={user ? <Declarations userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/assistants" element={user ? <Assistants userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/archive" element={user ? <Archive userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
@@ -175,6 +178,7 @@ const AppContent = () => {
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      {user && <Footer />}
     </Router>
 
   );
