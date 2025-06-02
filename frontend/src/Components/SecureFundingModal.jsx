@@ -209,7 +209,7 @@ const SecureFundingModal = ({
                       {allSecureFundingData.length > 0 && (
                         <button
                           type="button"
-                          className="btn btn-secondary px-6 py-2 text-white rounded-lg shadow hover:shadow-md transition"
+                          className="btn btn-secondary px-6 py-2 ml-2 text-white rounded-lg shadow hover:shadow-md transition"
                           onClick={addSecureFundingData}
                           disabled={addingData}
                         >

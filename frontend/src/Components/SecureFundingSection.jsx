@@ -291,7 +291,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                       onEdit={() => handleEdit(entry)}
                       field1={entry.field1}
                       field2={entry.field2}
-                      data_details={filteredDetails} // For edit, just omit agency
+                      data_details={entry.data_details} // For edit, just omit agency
                       onArchive={() => handleArchive(entry)}
                     />
                   ) : (
@@ -301,7 +301,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                       onEdit={() => handleEdit(entry)}
                       field1={entry.field1}
                       field2={entry.field2}
-                      data_details={filteredDetails} // For view, omit agency and add sponsor
+                      data_details={entry.data_details} // For view, omit agency and add sponsor
                       onArchive={() => handleArchive(entry)}
                     />
                   );
