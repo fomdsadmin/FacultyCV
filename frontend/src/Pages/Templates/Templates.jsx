@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PageContainer from '../../Views/PageContainer.jsx';
 import AdminMenu from '../../Components/AdminMenu.jsx';
 import { getAllTemplates } from '../../graphql/graphqlHelpers.js';
-import NewTemplate from './NewTemplate.jsx';
+import NewTemplate from '../NewTemplate/NewTemplate.jsx';
 import TemplateCard from '../../Components/TemplateCard.jsx';
 import ManageTemplate from '../../Components/ManageTemplate.jsx';
 import EditReportFormatting from '../../Components/EditReportFormat.jsx';

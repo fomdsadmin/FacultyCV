@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
 import { getAllTemplates } from '../graphql/graphqlHelpers.js';
-import NewTemplate from '../Pages/Templates/NewTemplate.jsx';
+import NewTemplate from '../Pages/NewTemplate/NewTemplate.jsx';
 import TemplateCard from '../Components/TemplateCard.jsx';
 import ManageTemplate from '../Components/ManageTemplate.jsx';
 
