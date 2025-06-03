@@ -1,12 +1,11 @@
-import React from 'react'
 import { useState, useEffect } from 'react';
-import PageContainer from './PageContainer.jsx';
-import AdminMenu from '../Components/AdminMenu.jsx';
-import { getAllTemplates } from '../graphql/graphqlHelpers.js';
-import NewTemplate from '../Components/NewTemplate.jsx';
-import TemplateCard from '../Components/TemplateCard.jsx';
-import ManageTemplate from '../Components/ManageTemplate.jsx';
-import EditReportFormatting from '../Components/EditReportFormat.jsx';
+import PageContainer from '../../Views/PageContainer.jsx';
+import AdminMenu from '../../Components/AdminMenu.jsx';
+import { getAllTemplates } from '../../graphql/graphqlHelpers.js';
+import NewTemplate from './NewTemplate.jsx';
+import TemplateCard from '../../Components/TemplateCard.jsx';
+import ManageTemplate from '../../Components/ManageTemplate.jsx';
+import EditReportFormatting from '../../Components/EditReportFormat.jsx';
 
 const Templates = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState('');

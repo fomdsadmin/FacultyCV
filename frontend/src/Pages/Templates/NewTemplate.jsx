@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaArrowLeft, FaTimesCircle, FaPlusCircle } from 'react-icons/fa';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { addTemplate, getAllSections } from '../graphql/graphqlHelpers';
+import { addTemplate, getAllSections } from '../../graphql/graphqlHelpers';
 
 const NewTemplate = ({ onBack, fetchTemplates }) => {
   const [addingTemplate, setAddingTemplate] = useState(false);

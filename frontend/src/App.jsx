@@ -26,7 +26,7 @@ import Assistant_Reports from './Views/Assistant_Reports.jsx';
 //import Assistant_Assistants from './Views/Assistant_Assistants.jsx';
 import Assistant_AcademicWork from './Views/Assistant_AcademicWork.jsx';
 import Analytics from './Views/Analytics.jsx';
-import Templates from './Views/Templates.jsx';
+import Templates from './Pages/Templates/Templates.jsx';
 import Sections from './Views/Sections.jsx';
 import ArchivedSections from './Views/ArchivedSections.jsx';
 import DepartmentAdminHomePage from './Views/DepartmentAdminHomePage.jsx';
