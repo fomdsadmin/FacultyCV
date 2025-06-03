@@ -14,9 +14,29 @@ export const useTemplate = () => {
 }
 
 export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
+
+  const initialData = [
+    {
+      id: "list-1",
+      title: "List One",
+      items: [
+        { id: "item-1", content: "Item 1" },
+        { id: "item-2", content: "Item 2" },
+      ],
+    },
+    {
+      id: "list-2",
+      title: "List Two",
+      items: [
+        { id: "item-3", content: "Item 3" },
+      ],
+    },
+  ];
+
   const [addingTemplate, setAddingTemplate] = useState(false)
   const [title, setTitle] = useState("")
   const [sections, setSections] = useState([])
+  const [groups, setGroups] = useState(initialData);
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
   const [startYear, setStartYear] = useState("")
@@ -115,6 +135,7 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
     errorMessage,
     startYear,
     endYear,
+    groups,
     // Setters
     setTitle,
     setStartYear,

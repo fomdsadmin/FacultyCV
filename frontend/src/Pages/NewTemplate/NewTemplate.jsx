@@ -5,6 +5,7 @@ import CreateTemplateButton from "./CreateTemplateButton"
 import YearSelector from "./YearSelector"
 import SelectionButtons from "./SelectionButton"
 import DraggableSectionList from "./DraggableSectionList"
+import TemplateOrganizer from "./TemplateOrganizer/TemplateOrganizer"
 
 const NewTemplateContent = () => {
   const { loading, errorMessage, title, setTitle, onBack, reorderSections } = useTemplate()
@@ -49,7 +50,7 @@ const NewTemplateContent = () => {
             </h2>
 
             <SelectionButtons />
-
+            <TemplateOrganizer />
             <DragDropContext onDragEnd={(result) => { reorderSections(result) }}>
               <DraggableSectionList />
             </DragDropContext>
