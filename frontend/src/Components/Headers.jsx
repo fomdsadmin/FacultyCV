@@ -8,7 +8,7 @@ const Header = () => {
         alt="UBC Faculty of Medicine Logo"
         className="h-12 object-contain"
       />
-      <h1 className="text-2xl font-semibold text-gray-800">Faculty Activity Reporting - Faculty360</h1>
+      <h1 className="text-2xl font-semibold text-gray-800">Faculty Activity Reporting (Faculty360)</h1>
     </header>
   );
 };
