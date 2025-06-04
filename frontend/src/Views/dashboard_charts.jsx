@@ -54,7 +54,7 @@ const Dashboard = ({ userInfo }) => {
 
         const wordCloudData = Object.entries(keywordCounts)
           .map(([text, value]) => ({ text, value }))
-          .filter(item => item.value);
+          .filter(item => item.value > 1);
         setKeywordData(wordCloudData);
 
         const pubYearCounts = {};

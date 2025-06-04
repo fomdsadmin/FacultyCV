@@ -221,7 +221,7 @@ export class ResolverStack extends cdk.Stack {
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-
+	
     createResolver(
       apiStack.getApi(),
       "addUserCVData",
