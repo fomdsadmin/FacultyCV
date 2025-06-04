@@ -659,7 +659,7 @@ export const addBatchedUserCVData = async (
   user_id,
   data_section_id,
   data_details_list,
-  editable = true
+  editable = false
 ) => {
   const results = await executeGraphql(ADD_BATCHED_USER_CV_DATA, {
     user_id: user_id,

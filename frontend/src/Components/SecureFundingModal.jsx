@@ -117,7 +117,7 @@ const SecureFundingModal = ({
         await addBatchedUserCVData(
           user.user_id,
           section.data_section_id,
-          batch,
+          JSON.stringify(batch),
           false
         );
       }

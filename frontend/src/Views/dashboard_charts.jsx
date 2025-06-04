@@ -23,6 +23,7 @@ const Dashboard = ({ userInfo }) => {
   const [totalPublications, setTotalPublications] = useState(0);
   const [keywordData, setKeywordData] = useState(userInfo);
   const wordCloudCanvasRef = useRef(null);
+  
 
   const formatCAD = value =>
     new Intl.NumberFormat('en-CA', {
