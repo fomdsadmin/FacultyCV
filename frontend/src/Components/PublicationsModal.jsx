@@ -188,7 +188,6 @@ const PublicationsModal = ({
       publication.title = publication.title;
       publication.journal = publication.journal;
       const publicationJSON = JSON.stringify(publication);
-      console.log("Adding new publication:", publicationJSON);
 
       try {
         const result = await addUserCVData(
