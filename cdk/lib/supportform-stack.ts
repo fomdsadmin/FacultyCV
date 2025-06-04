@@ -48,21 +48,44 @@ export class SupportFormStack extends Stack {
       role: send_email_role
     });
 
+    // Create an IAM role for API Gateway to write logs to CloudWatch
+    const apiCloudwatchRole = new iam.Role(this, 'ApiGatewayCloudWatchRole', {
+      roleName: `${resourcePrefix}-api-cloudwatch-role`,
+      assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonAPIGatewayPushToCloudWatchLogs')
+      ]
+    });
 
-    // Use the user pool from the passed ApiStack.ts
-    const cognito_userPoolId = apiStack.getUserPoolId();
-    const userPool = UserPool.fromUserPoolId(this, 'UserPool', cognito_userPoolId);
+    const gatewayAccount = new apigateway.CfnAccount(this, 'ApiGatewayAccount', {
+      cloudWatchRoleArn: apiCloudwatchRole.roleArn
+    })
 
 
-    // Create an API Gateway REST API with CORS support
+    // Create an API Gateway REST API with CORS support and enable CloudWatch metrics and logging + rate limiting
     const api = new apigateway.RestApi(this, 'SupportFormSendEmailAPI', {
       restApiName: `${resourcePrefix}-SupportFormSendEmailService`,
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: ['POST'],
+      },
+      deployOptions: {
+      stageName: 'prod',
+      metricsEnabled: true,              // Enable CloudWatch metrics
+      loggingLevel: apigateway.MethodLoggingLevel.INFO,  // INFO or ERROR
+      dataTraceEnabled: true,            // Full request/response logs
+      throttlingRateLimit: 20,
+      throttlingBurstLimit: 5,
       }
     });
 
+    // Add dependency on the API Gateway account to ensure it is created before the deployment stage
+    api.deploymentStage.node.addDependency(gatewayAccount);
+
+
+    // Use the user pool from the passed ApiStack.ts
+    const cognito_userPoolId = apiStack.getUserPoolId();
+    const userPool = UserPool.fromUserPoolId(this, 'UserPool', cognito_userPoolId);
 
     // Create a /send-email path in the API
     const emailResource = api.root.addResource('send-email');
