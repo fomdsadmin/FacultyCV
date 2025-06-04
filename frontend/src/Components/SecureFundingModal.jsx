@@ -96,33 +96,22 @@ const SecureFundingModal = ({
 
   async function addSecureFundingData() {
     setAddingData(true);
-    const batchSize = 25;
-    const batches = [];
-    // Prepare data: add year, remove dates
-    const preparedData = selectedSecureFundingData.map((data) => {
-      const newData = { ...data };
-      newData.year = newData.dates?.split("-")[0];
-      delete newData.dates;
-      return newData; // <-- Stringify each object!
-    });
 
     // Split into batches
-    for (let i = 0; i < preparedData.length; i += batchSize) {
-      batches.push(preparedData.slice(i, i + batchSize));
-    }
-
-    try {
-      for (const batch of batches) {
-        console.log("Adding batch:", batch);
-        await addBatchedUserCVData(
+    for (const data of selectedSecureFundingData) {
+      try {
+        data.year = data.dates.split("-")[0];
+        delete data.dates;
+        const graphqlReadyJSON = JSON.stringify(data);
+        await addUserCVData(
           user.user_id,
           section.data_section_id,
-          JSON.stringify(batch),
+          graphqlReadyJSON,
           false
         );
+      } catch (error) {
+        console.error("Error adding new entry:", error);
       }
-    } catch (error) {
-      console.error("Error adding batched entries:", error);
     }
     setRetrievingData(false);
     setAddingData(false);
