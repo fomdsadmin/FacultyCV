@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import { getUserCVData } from '../graphql/graphqlHelpers';
 import { Line } from 'react-chartjs-2';
 import {
@@ -11,15 +11,18 @@ import {
   Legend,
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { WordCloudController, WordElement } from 'chartjs-chart-wordcloud';
 
 // Register chart.js components and plugins
-ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, ChartDataLabels);
+ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, ChartDataLabels,WordCloudController,WordElement);
 
 const Dashboard = ({ userInfo }) => {
   const [user, setUser] = useState(userInfo);
   const [publicationChartData, setPublicationChartData] = useState(null);
   const [fundingChartData, setFundingChartData] = useState(null);
   const [totalPublications, setTotalPublications] = useState(0);
+  const [keywordData, setKeywordData] = useState(userInfo);
+  const wordCloudCanvasRef = useRef(null);
 
   const formatCAD = value =>
     new Intl.NumberFormat('en-CA', {
@@ -39,6 +42,20 @@ const Dashboard = ({ userInfo }) => {
           ...d,
           data_details: JSON.parse(d.data_details),
         }));
+
+        const keywordCounts = {};
+        parsedPubs.forEach(item => {
+          const keywords = item.data_details?.keywords || [];
+          keywords.forEach(kw => {
+            const lower = kw.toLowerCase();
+            keywordCounts[lower] = (keywordCounts[lower] || 0) + 1;
+          });
+        });
+
+        const wordCloudData = Object.entries(keywordCounts)
+        .map(([text, value]) => ({ text, value }))
+        .filter(item => item.value > 1); // Filter out keywords with count <= 1
+        setKeywordData(wordCloudData);
 
         const pubYearCounts = {};
         let pubTotal = 0;
@@ -114,6 +131,46 @@ const Dashboard = ({ userInfo }) => {
       fetchData();
     }
   }, [userInfo, user?.user_id]);
+
+        useEffect(() => {
+        if (!wordCloudCanvasRef.current || keywordData.length === 0) return;
+        const maxValue = Math.max(...keywordData.map((d) => d.value));
+        console.log('Max value:', maxValue); // Log the maximum value for debugging
+        const chart = new ChartJS(wordCloudCanvasRef.current, {
+          type: 'wordCloud',
+          data: {
+            labels: keywordData.map((d) => d.text), // Extract text for labels
+            datasets: [{
+              label: 'Keywords',
+              data: keywordData.map((d) => 3 + d.value * 3),
+            }],
+          },
+        options: {
+      plugins: {
+        tooltip: {
+          enabled: false, 
+        },
+        datalabels: {
+          display: false, 
+        },
+      },
+      elements: {
+      word: {
+      color: (ctx) => {
+        const label = ctx.element?.text;
+        const wordObj = keywordData.find(d => d.text === label);
+        const isMax = wordObj && wordObj.value === maxValue;
+        return isMax ? '#facc15' : '#000000'; // Use a different color for the max value
+      }, 
+         padding: 10,
+         rotation: () => (Math.random() > 0.5 ? 0 : 90),
+        },
+      },
+    },
+  });
+
+        return () => chart.destroy();
+      }, [keywordData]);
 
   const chartOptions = {
     responsive: true,
@@ -191,7 +248,46 @@ const Dashboard = ({ userInfo }) => {
           </div>
         )}
       </div>
+
+      {keywordData.length > 0 && (
+      <div className="flex-1 min-w-0">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold mb-2">Keywords From Publications</h3>
+
+          <div className="flex flex-wrap gap-2">
+            {(() => {
+              const maxValue = Math.max(...keywordData.map(k => k.value || 0));
+              return keywordData.map((item, index) => {
+                const isMax = item.value === maxValue && maxValue > 0;
+                return (
+                  <span
+                    key={index}
+                    className={`px-2 py-1 text-sm rounded-full ${
+                      isMax
+                        ? 'bg-yellow-400 text-black font-bold' // highlighted
+                        : 'bg-gray-200 text-gray-800'
+                    }`}
+                  >
+                    {item.text} {item.value !== 0 && `(${item.value})`}
+                  </span>
+                );
+              });
+            })()}
+          </div>
+        </div>
+      </div>
+    )}
+
+
+      {keywordData.length > 0 && (
+        <div className="flex-1 min-w-0">
+          <div style={{ width: '100%', height: '500px' }}>
+          <canvas ref={wordCloudCanvasRef}  style={{ width: '100%', height: '100%' }}></canvas>
+          </div>
+        </div>
+      )}
     </div>
+    
   );
 };
 
