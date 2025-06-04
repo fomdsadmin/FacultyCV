@@ -14,6 +14,7 @@ import { PatentDataStack } from '../lib/patentdata-stack';
 import { ResolverStack } from '../lib/resolver-stack';
 import { Resolver2Stack } from '../lib/resolver2-stack';
 import { Resolver3Stack } from '../lib/resolver3-stack';
+import { SupportFormStack } from '../lib/supportform-stack';
 
 const app = new cdk.App();
 
@@ -67,5 +68,8 @@ const patentDataStack = new PatentDataStack(app, `${resourcePrefix}-PatentDataSt
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 
+const supportFormStack = new SupportFormStack(app, `${resourcePrefix}-SupportFormStack`, apiStack, {
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
+});
 
 Tags.of(app).add("app", "Faculty-CV");
