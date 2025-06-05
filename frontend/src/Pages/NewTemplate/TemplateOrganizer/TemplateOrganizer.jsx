@@ -4,12 +4,21 @@ import DroppableGroup from "./DroppableGroupList/DroppableGroup";
 import { useTemplate } from "../TemplateContext";
 
 export default function TemplateOrganizer() {
-  
-  const { groups, setGroups } = useTemplate();
+
+  const { groups, setGroups, HIDDEN_GROUP_ID } = useTemplate();
 
   const onDragEnd = (result) => {
     const { source, destination, type } = result;
     if (!destination) return;
+
+    // Find the default group index
+    const hiddenGroupIndex = groups.findIndex(group => group.id === HIDDEN_GROUP_ID);
+
+    // If default group is not at the bottom of the page, don't allow any group reordering (makes no sense to allow default group to be reordered)
+    console.log(result)
+    if (destination.index >= hiddenGroupIndex && result.source.droppableId === "all-groups") {
+      return;
+    }
 
     if (type === "column") {
       const newGroups = Array.from(groups);
@@ -19,31 +28,31 @@ export default function TemplateOrganizer() {
     } else {
       const sourceGroupIndex = groups.findIndex((l) => l.id === source.droppableId);
       const destGroupIndex = groups.findIndex((l) => l.id === destination.droppableId);
-      const sourceList = groups[sourceGroupIndex];
-      const destList = groups[destGroupIndex];
+      const sourceGroup = groups[sourceGroupIndex];
+      const destGroup = groups[destGroupIndex];
 
-      const sourceSections = Array.from(sourceList.sections);
-      const [movedSection] = sourceSections.splice(source.index, 1);
+      const sourcePreparedSections = Array.from(sourceGroup.prepared_sections);
+      const [movedPreparedSection] = sourcePreparedSections.splice(source.index, 1);
 
       if (source.droppableId === destination.droppableId) {
-        sourceSections.splice(destination.index, 0, movedSection);
+        sourcePreparedSections.splice(destination.index, 0, movedPreparedSection);
         const updatedLists = [...groups];
-        updatedLists[sourceGroupIndex] = { ...sourceList, sections: sourceSections };
+        updatedLists[sourceGroupIndex] = { ...sourceGroup, prepared_sections: sourcePreparedSections };
         setGroups(updatedLists);
       } else {
-        const destSections = Array.from(destList.sections);
-        destSections.splice(destination.index, 0, movedSection);
-        const updatedLists = [...groups];
-        updatedLists[sourceGroupIndex] = { ...sourceList, sections: sourceSections };
-        updatedLists[destGroupIndex] = { ...destList, sections: destSections };
-        setGroups(updatedLists);
+        const destPreparedSections = Array.from(destGroup.prepared_sections);
+        destPreparedSections.splice(destination.index, 0, movedPreparedSection);
+        const updatedGroups = [...groups];
+        updatedGroups[sourceGroupIndex] = { ...sourceGroup, prepared_sections: sourcePreparedSections };
+        updatedGroups[destGroupIndex] = { ...destGroup, prepared_sections: destPreparedSections };
+        setGroups(updatedGroups);
       }
     }
   };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <DroppableGroup groups={groups}/>
+      <DroppableGroup groups={groups} />
     </DragDropContext>
   );
 }
