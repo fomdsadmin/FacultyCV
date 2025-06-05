@@ -194,13 +194,13 @@ type AuditViewRecord {
   logged_user_first_name: String!
   logged_user_last_name: String!
   ip: String
-  browser_name: String
   browser_version: String
   page: String
   session_id: String!
   assistant: Boolean!
   profile_record: String!
   logged_user_role: String!
+  logged_user_email: String!
 }
 
 type Query {
@@ -339,7 +339,6 @@ type Query {
 
 input AuditViewInput {
   ip: String,
-  browser_name: String
   browser_version: String
   page: String
   session_id: String!
