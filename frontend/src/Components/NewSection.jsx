@@ -49,10 +49,10 @@ const NewSection = ({ onBack, getDataSections, sections }) => {
       return acc;
     }, {});
 
-    const attributesJSONString = JSON.stringify(combinedAttributes).replace(/"/g, '\\"');
+    const attributesJSONString = JSON.stringify(combinedAttributes);
     
     try {
-      const result = await addSection(title, description, dataType, `"${attributesJSONString}"`);
+      const result = await addSection(title, description, dataType, attributesJSONString);
       
     } catch (error) {
       console.error('Error creating section:', error);

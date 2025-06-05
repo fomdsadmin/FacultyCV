@@ -9,7 +9,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import AuthPage from './Views/AuthPage';
 import Dashboard from './Views/dashboard.jsx';
 import Support from './Views/support.jsx';
-import HomePage from './Views/FacultyHomePage.jsx'; // adjust the path as needed
 import NotFound from './Views/NotFound';
 import AcademicWork from './Views/AcademicWork';
 import Declarations from './Views/Declarations.jsx';
@@ -155,7 +154,7 @@ const AppContent = () => {
         ) : <Navigate to="/auth" />} />
         <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <AuthPage getCognitoUser={getCognitoUser} />} />
         <Route path="/dashboard" element={user ? <Dashboard userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
-        <Route path="/home" element={user ? <HomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
+        <Route path="/home" element={user ? <FacultyHomePage/> : <Navigate to="/auth" />} />
         <Route path="/support" element={user ? <Support userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/academic-work" element={user ? <AcademicWork userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
 		    <Route path="/declarations" element={user ? <Declarations userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />

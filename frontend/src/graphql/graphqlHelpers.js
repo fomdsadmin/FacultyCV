@@ -30,7 +30,6 @@ import {
   GET_BIO_RESPONSE_DATA,
 } from "./queries";
 import {
-  updateSectionMutation,
   addUserMutation,
   addUniversityInfoMutation,
   updateUserCVDataMutation,
@@ -54,6 +53,7 @@ import {
   UPDATE_USER_DECLARATION,
   ADD_SECTION,
   ADD_USER_CV_DATA,
+  UPDATE_SECTION,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -994,8 +994,9 @@ export const updateUser = async (
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateSection = async (data_section_id, archive, attributes) => {
-  const results = await runGraphql(
-    updateSectionMutation(data_section_id, archive, attributes)
+  const results = await executeGraphql(UPDATE_SECTION, {
+    data_section_id, archive, attributes
+  }
   );
   return results["data"]["updateSection"];
 };
