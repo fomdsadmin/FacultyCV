@@ -24,6 +24,7 @@ const Dashboard = ({ userInfo }) => {
   const [keywordData, setKeywordData] = useState(userInfo);
   const wordCloudCanvasRef = useRef(null);
   const [totalGrants, setTotalGrants] = useState(0);
+  const [showAllKeywords, setShowAllKeywords] = useState(false);
 
   const formatCAD = (value) =>
     new Intl.NumberFormat("en-CA", {
@@ -224,89 +225,107 @@ const Dashboard = ({ userInfo }) => {
   };
 
   return (
-    <div className="p-4">
-      {user && (
-        <div className="text-lg font-medium text-gray-700 mb-6">
-          Total Published Papers:{" "}
-          <span className="font-bold">{totalPublications}</span>
-        </div>
-      )}
+    <div>
+      <div className="p-2 rounded-lg shadow-md bg-zinc-50">
+        <div className="flex flex-col md:flex-row gap-6 mb-10 mt-8">
+          {/* Publications Chart */}
+          {publicationChartData && (
+            <div className="flex-1 min-w-0 flex flex-col items-center">
+              <h3 className="text-lg font-semibold mb-4 text-center">
+                Publications Over Time
+              </h3>
+              <div className="h-64 w-full">
+                <Line data={publicationChartData} options={chartOptions} />
+              </div>
+              <div className="text-md font-medium text-gray-700 text-center">
+                Total Published Papers:{" "}
+                <span className="font-bold">{totalPublications}</span>
+              </div>
+            </div>
+          )}
 
-      <div className="flex flex-col gap-6 mb-10">
-        {/* Publications Chart */}
-        {publicationChartData && (
-          <div className="min-w-0">
-            <h3 className="text-lg font-semibold mb-2">
-              Publications Over Time
-            </h3>
-            <div className="bg-zinc-100 rounded-xl shadow p-6 h-96 w-full flex items-center">
-              <Line data={publicationChartData} options={chartOptions} />
+          {/* Funding Chart */}
+          {fundingChartData && (
+            <div className="flex-1 min-w-0 flex flex-col items-center">
+              <h3 className="text-lg font-semibold mb-4 text-center">
+                Research Funding Over Time
+              </h3>
+              <div className="h-64 w-full">
+                <Line data={fundingChartData} options={chartOptions} />
+              </div>
+              <div className="text-md font-medium text-gray-700 text-center">
+                Total Grants: <span className="font-bold">{totalGrants}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Keywords Section */}
+      <h3 className="text-lg font-semibold mb-2 mt-10">
+        Keywords From Publications
+      </h3>
+      <div className="flex flex-col gap-6 p-2 rounded-lg shadow-md bg-zinc-50">
+        {keywordData.length > 0 && (
+          <div className="flex-1 min-w-0 p-4">
+            <div className="">
+              <div className="flex flex-wrap gap-3">
+                {(() => {
+                  const sortedKeywords = [...keywordData].sort(
+                    (a, b) => b.value - a.value
+                  );
+                  const maxValue = Math.max(
+                    ...sortedKeywords.map((k) => k.value || 0)
+                  );
+                  const displayKeywords = showAllKeywords
+                    ? sortedKeywords
+                    : sortedKeywords.slice(0, 10);
+
+                  const keywordElements = displayKeywords.map((item, index) => {
+                    const isMax = item.value === maxValue && maxValue > 0;
+                    return (
+                      <span
+                        key={index}
+                        className={`py-2 px-3 text-sm rounded-full ${
+                          isMax
+                            ? "bg-yellow-400 text-black font-bold" // highlighted
+                            : "bg-gray-200 text-gray-800"
+                        }`}
+                      >
+                        {item.text} {item.value !== 0 && `(${item.value})`}
+                      </span>
+                    );
+                  });
+
+                  if (sortedKeywords.length > 10) {
+                    keywordElements.push(
+                      <button
+                        key="show-all-btn"
+                        onClick={() => setShowAllKeywords(!showAllKeywords)}
+                        className="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition"
+                      >
+                        {showAllKeywords ? "Show Top 10" : "Show All"}
+                      </button>
+                    );
+                  }
+
+                  return keywordElements;
+                })()}
+              </div>
             </div>
           </div>
         )}
 
-        {user && (
-          <div className="text-lg font-medium text-gray-700 mt-8">
-            Total Grants: <span className="font-bold">{totalGrants}</span>
-          </div>
-        )}
-
-        {/* Funding Chart */}
-        {fundingChartData && (
-          <div className="min-w-0">
-            <h3 className="text-lg font-semibold mb-2">
-              Research Funding Over Time
-            </h3>
-            <div className="bg-zinc-100 rounded-xl shadow p-6 h-96 w-full flex items-center">
-              <Line data={fundingChartData} options={chartOptions} />
+        {keywordData.length > 0 && (
+          <div className="flex-1 min-w-0 mb-4 mt-[-3vh]">
+            <div style={{ width: "100%", height: "500px" }}>
+              <canvas
+                ref={wordCloudCanvasRef}
+                style={{ width: "100%", height: "100%" }}
+              ></canvas>
             </div>
           </div>
         )}
       </div>
-
-      {keywordData.length > 0 && (
-        <div className="flex-1 min-w-0">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-2">
-              Keywords From Publications
-            </h3>
-
-            <div className="flex flex-wrap gap-2">
-              {(() => {
-                const maxValue = Math.max(
-                  ...keywordData.map((k) => k.value || 0)
-                );
-                return keywordData.map((item, index) => {
-                  const isMax = item.value === maxValue && maxValue > 0;
-                  return (
-                    <span
-                      key={index}
-                      className={`px-2 py-1 text-sm rounded-full ${
-                        isMax
-                          ? "bg-yellow-400 text-black font-bold" // highlighted
-                          : "bg-gray-200 text-gray-800"
-                      }`}
-                    >
-                      {item.text} {item.value !== 0 && `(${item.value})`}
-                    </span>
-                  );
-                });
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {keywordData.length > 0 && (
-        <div className="flex-1 min-w-0">
-          <div style={{ width: "100%", height: "500px" }}>
-            <canvas
-              ref={wordCloudCanvasRef}
-              style={{ width: "100%", height: "100%" }}
-            ></canvas>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
