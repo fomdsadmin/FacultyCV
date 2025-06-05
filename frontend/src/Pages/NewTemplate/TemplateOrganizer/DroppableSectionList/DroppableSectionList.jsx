@@ -7,10 +7,10 @@ const DroppableSectionList = ({ group }) => {
             <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className="bg-white p-2 rounded min-h-[50px]"
+                className="bg-white p-2 rounded min-h-[50px] w-full"
             >
-                {group.items.map((item, itemIndex) => (
-                    <DraggableSection key={item.id} draggableId={item.id} sectionIndex={itemIndex} section={item}></DraggableSection>
+                {group.sections.map((section, sectionIndex) => (
+                    <DraggableSection key={section.data_section_id} draggableId={section.data_section_id} sectionIndex={sectionIndex} section={section}></DraggableSection>
                 ))}
                 {provided.placeholder}
             </div>
