@@ -49,13 +49,13 @@ def getAuditView(arguments, identity=None):
             'logged_user_first_name': result[3],
             'logged_user_last_name': result[4],
             'ip': result[5],
-            'browser_name': result[6],
-            'browser_version': result[7],
-            'page': result[8],
-            'session_id': result[9],
-            'assistant': result[10],
-            'profile_record': result[11],
-            'logged_user_role': result[12]
+            'browser_version': result[6],
+            'page': result[7],
+            'session_id': result[8],
+            'assistant': result[9],
+            'profile_record': result[10],
+            'logged_user_role': result[11]
+            'logged_user_email': result[12]
         })  
     return audit_view_records
 

@@ -11,10 +11,10 @@ def addAuditView(arguments, identity=None):
     logged_user_id = identity.get('sub') if identity else None
     logged_user_first_name = identity.get('given_name') if identity else None
     logged_user_last_name = identity.get('family_name') if identity else None
+    logged_user_email = identity.get('email') if identity else None
     logged_user_role = identity.get('groups', [None])[0] if identity and 'groups' in identity else None
     
     ip = arguments.get('ip')
-    browser_name = arguments.get('browser_name')
     browser_version = arguments.get('browser_version')
     page = arguments.get('page')
     session_id = arguments.get('session_id')
@@ -33,16 +33,16 @@ def addAuditView(arguments, identity=None):
         """
         INSERT INTO audit_view (
             logged_user_id, logged_user_first_name, logged_user_last_name, ip,
-            browser_name, browser_version, page, session_id, assistant,
-            profile_record, logged_user_role
+            browser_version, page, session_id, assistant,
+            profile_record, logged_user_role, logged_user_email
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING log_view_id, NOW(), logged_user_id, logged_user_first_name, logged_user_last_name, ip,
-                browser_name, browser_version, page, session_id, assistant, profile_record, logged_user_role
+                , browser_version, page, session_id, assistant, profile_record, logged_user_role,logged_user_email
         """,
         (
             logged_user_id, logged_user_first_name, logged_user_last_name, ip,
-            browser_name, browser_version, page, session_id, assistant,
-            profile_record, logged_user_role
+            , browser_version, page, session_id, assistant,
+            profile_record, logged_user_role, logged_user_email
         )
     )
     result = cursor.fetchone()
@@ -58,13 +58,13 @@ def addAuditView(arguments, identity=None):
         'logged_user_first_name': result[3],
         'logged_user_last_name': result[4],
         'ip': result[5],
-        'browser_name': result[6],
-        'browser_version': result[7],
-        'page': result[8],
-        'session_id': result[9],
-        'assistant': result[10],
-        'profile_record': result[11],
-        'logged_user_role': result[12]
+        'browser_version': result[6],
+        'page': result[7],
+        'session_id': result[8],
+        'assistant': result[9],
+        'profile_record': result[10],
+        'logged_user_role': result[11],
+        'logged_user_email': result[12]
     }
 
 def lambda_handler(event, context):
