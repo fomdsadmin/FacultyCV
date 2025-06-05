@@ -18,9 +18,9 @@ const DeleteSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }
             attributes = section.attributes;
         }
         
-        const attributesString = JSON.stringify(attributes).replace(/"/g, '\\"');
+        const attributesString = JSON.stringify(attributes);
         
-        const result = await updateSection(section.data_section_id, true, `"${attributesString}"`);
+        const result = await updateSection(section.data_section_id, true, attributesString);
         
     } catch (error) {
         console.error('Error deleting section: ', error);

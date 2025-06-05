@@ -270,15 +270,15 @@ export const updateUserMutation = (
     }
 `;
 
-export const updateSectionMutation = (data_section_id, archive, attributes) => `
-    mutation UpdateSection {
+export const UPDATE_SECTION = `
+    mutation UpdateSection($data_section_id: String!, $archive: Boolean, $attributes: AWSJSON) {
         updateSection(
-            data_section_id: "${data_section_id}"
-            archive: ${archive}
-            attributes: ${attributes}
+            data_section_id: $data_section_id
+            archive: $archive
+            attributes: $attributes
         )
     }
-`;
+`
 
 export const updateUserCVDataMutation = (
     user_cv_data_id,
