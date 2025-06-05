@@ -91,7 +91,8 @@ def cleanCihr(bucket, key_raw, key_clean):
     # remove comma and convert Amount to integer
     df["CIHR_Contribution"] = df["CIHR_Contribution"].str.replace(",", "")
     df["CIHR_Contribution"] = df["CIHR_Contribution"].str.replace("$", "", regex=False)
-    df["Amount"] = pd.to_numeric(df["CIHR_Contribution"]).astype(int)
+    df["CIHR_Contribution"] = df["CIHR_Contribution"].replace(r"^\s*$", "0", regex=True)
+    df["Amount"] = df["CIHR_Contribution"].astype(float).fillna(0).astype(int)
 
     # add Keywords column
     df["Keywords"] = np.nan

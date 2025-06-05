@@ -95,6 +95,8 @@ def cleanRise(bucket, key_raw, key_clean):
 
     # add Agency column with string Rise
     df["Agency"] = "Rise"
+    # add Sponsor column with string Rise
+    df["Sponsor"] = df["Sponsor Name"]
 
     # Program column
     df["Program"] = df["Program Name"]
@@ -102,7 +104,8 @@ def cleanRise(bucket, key_raw, key_clean):
     # Amount column
     df["Award Amount"] = df["Award Amount"].str.replace(",", "")
     df["Award Amount"] = df["Award Amount"].str.replace("$", "", regex=False)
-    df["Amount"] = pd.to_numeric(df["Award Amount"]).astype(int)
+    df["Award Amount"] = df["Award Amount"].replace(r"^\s*$", "0", regex=True)
+    df["Amount"] = df["Award Amount"].astype(float).fillna(0).astype(int)
 
     # Title column
     df["Title"] = df["Project Title"]
@@ -117,7 +120,7 @@ def cleanRise(bucket, key_raw, key_clean):
     df = df.drop(columns=[
         "From Year", "Application Number", "Researcher Name", "PI Rank", 
         "Award Type", "Project Title", "Award Amount", "Sector", 
-        "Sponsor Type", "Sponsor Name", "Government", "Tri-Council Code", 
+        "Sponsor Type", "Sponsor Name","Government", "Tri-Council Code", 
         "Program Name", "CFI BCKDF", "Faculty", "Researcher Home Faculty", 
         "FoM Department", "Researcher Home Department", "FoM Research Institute", 
         "Institution Name", "FoM Research Centre Name "])

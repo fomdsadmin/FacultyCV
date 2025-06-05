@@ -26,15 +26,19 @@ const PDFViewer = ({ url }) => {
   }, [url]);
 
   return (
-    <div className="pdf-viewer-wrapper">
+    <div className="pdf-viewer-wrapper flex items-center justify-center overflow-auto w-full h-full">
       <Document file={url} onLoadSuccess={onDocumentLoadSuccess}>
-        <Page pageNumber={pageNumber} />
+        <Page
+          pageNumber={pageNumber}
+          className="mx-auto"
+          style={{ maxHeight: "auto", width: "auto", objectFit: "contain" }}
+        />
       </Document>
-      <div className="pagination-controls mt-14 flex items-center" >
+      <div className="pagination-controls mt-20 mr-6 rounded-lg text-sm flex items-center justify-center">
         <button onClick={goToPreviousPage} disabled={pageNumber <= 1}>
           <FaAngleLeft />
         </button>
-        <span >
+        <span className="mx-4">
           Page {pageNumber}/{numPages}
         </span>
         <button onClick={goToNextPage} disabled={pageNumber >= numPages}>

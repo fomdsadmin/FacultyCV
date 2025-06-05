@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { TbHome } from "react-icons/tb";
 import { HiOutlineAcademicCap } from "react-icons/hi2";
+import { HiOutlineDocumentText } from "react-icons/hi2"; // Declarations icon
 import { TiDownloadOutline } from "react-icons/ti";
 import { IoPersonAddOutline } from "react-icons/io5";
 import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
 import { FaRegTrashAlt } from "react-icons/fa";
+import { LuLayoutDashboard } from "react-icons/lu";
+import { MdSupportAgent } from "react-icons/md";
 
 const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => {
   const location = useLocation();
@@ -51,7 +54,16 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
     >
+      
       <ul className="menu rounded-box flex-shrink-0">
+        
+       <li className={`mb-2 ${location.pathname === '/dashboard' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/dashboard'>
+          <LuLayoutDashboard className="h-5 w-5" />
+            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/dashboard' ? 'font-bold' : ''}`}>Dashboard</p>}
+          </Link>
+        </li>
+
         <li className={`mb-2 ${location.pathname === '/home' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/home'>
             <TbHome className="h-5 w-5" />
@@ -62,6 +74,12 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
           <Link to='/academic-work'>
             <HiOutlineAcademicCap className="h-5 w-5" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/academic-work' ? 'font-bold' : ''}`}>Academic Work</p>}
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === '/declarations' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/declarations'>
+            <HiOutlineDocumentText className="h-5 w-5" />
+            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/declarations' ? 'font-bold' : ''}`}>Declarations</p>}
           </Link>
         </li>
         <li className={`mb-2 ${location.pathname === '/reports' ? 'bg-gray-200 rounded-lg' : ''}`}>
@@ -78,8 +96,14 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
         </li>
         <li className={`mb-6 ${location.pathname === '/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/archive'>
-            <FaRegTrashAlt className="h-4 w-4" />
+            <FaRegTrashAlt className="h-5 w-5" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/archive' ? 'font-bold' : ''}`}>Archive</p>}
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === '/support' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/support'>
+          <MdSupportAgent className="h-5 w-5" />
+            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/support' ? 'font-bold' : ''}`}>Support</p>}
           </Link>
         </li>
       </ul>
@@ -98,7 +122,7 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
       </div> ) }
 
       {/* Sign Out Button */}
-      <div className="absolute bottom-3 left-0 w-full flex justify-center">
+      <div className="left-0 w-full flex justify-center">
         {!isCollapsed && showText && (
           <button 
             className="text-white btn btn-warning py-1 px-4 w-44 min-h-0 h-8 leading-tight focus:outline-none hover:bg-warning-dark"

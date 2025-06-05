@@ -1,8 +1,17 @@
-export const getUserQuery = (email) => `
-    query GetUser {
-        getUser (
-            email: "${email}"
-        ) {
+export const GET_BIO_RESPONSE_DATA = `
+    query GetBioResponseData($username_input: String!) {
+        getBioResponseData(username_input: $username_input) {
+            answer
+            error
+        }
+    }
+`
+
+export const getUserQuery = `
+    query GetUser($email: String!) {
+        getUser(
+            email: $email
+        ){
             user_id
             first_name
             last_name
@@ -22,7 +31,7 @@ export const getUserQuery = (email) => `
             keywords
             scopus_id
             orcid_id
-            joined_timestamp
+            joined_timestamp   
         }
     }
 `;
@@ -156,8 +165,9 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
             data_details
             editable
         }
-    }`
-    } else return `query GetUserCVData {
+    }`;
+    } else
+        return `query GetUserCVData {
         getUserCVData (
             user_id: "${user_id}",
             data_section_id: "${data_section_ids}"
@@ -169,8 +179,7 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
             editable
         }
     }`;
-}
-
+};
 
 export const getArchivedUserCVDataQuery = (user_id) => `
     query GetArchivedUserCVData {
@@ -198,7 +207,37 @@ export const getAllUniversityInfoQuery = () => `
     }
 `;
 
-export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution_name) => `
+export const getAllNotificationsQuery = () => `
+    query GetNotifications {
+        GetNotifications {
+            record_id
+            title
+            description
+            date
+            archive
+            information_complete
+        }
+    }
+`;
+
+export const getUserDeclarationsQuery = (first_name, last_name) => `
+    query getUserDeclarations {
+        getUserDeclarations (
+            first_name: "${first_name}", last_name: "${last_name}"
+        ) {
+            reporting_year
+            other_data
+            created_on
+            created_by
+        }
+    }
+`;
+
+export const getElsevierAuthorMatchesQuery = (
+    first_name,
+    last_name,
+    institution_name
+) => `
     query getElsevierAuthorMatches {
         getElsevierAuthorMatches (
             first_name: "${first_name}", last_name: "${last_name}", institution_name: "${institution_name}"
@@ -214,8 +253,11 @@ export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution
     }
 `;
 
-
-export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_name) => `
+export const getOrcidAuthorMatchesQuery = (
+    first_name,
+    last_name,
+    institution_name
+) => `
     query getOrcidAuthorMatches {
         getOrcidAuthorMatches (
             first_name: "${first_name}", last_name: "${last_name}", institution_name: "${institution_name}"
@@ -230,7 +272,6 @@ export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_na
             }
     }
 `;
-
 
 export const getOrcidSectionsQuery = (orcidId, section) => `
     query getOrcidSections {
@@ -256,11 +297,43 @@ export const getOrcidSectionsQuery = (orcidId, section) => `
     }
 `;
 
+export const getTotalOrcidPublicationsQuery = (orcid_id) => `
+    query GetTotalOrcidPublications {
+        getTotalOrcidPublications(orcid_id: "${orcid_id}") {
+            total_results
+            put_codes
+        }
+    }
+`;
+
+export const getOrcidPublicationQuery = (orcid_id, put_codes) => `
+    query getOrcidPublication {
+        getOrcidPublication (
+            orcid_id: "${orcid_id}", put_codes: [${put_codes.join(",")}]
+        ) {
+            bio,
+            keywords,
+            publications {
+                publication_id
+                title
+                cited_by
+                keywords
+                journal
+                link
+                doi
+                year_published
+                author_names
+                author_ids
+            },
+            other_data
+        }
+    }
+`;
 
 export const getUserConnectionsQuery = (user_id, isFaculty = true) => `
     query GetUserConnections {
         getUserConnections (
-            ${isFaculty ? 'faculty_user_id' : 'assistant_user_id'}: "${user_id}"
+            ${isFaculty ? "faculty_user_id" : "assistant_user_id"}: "${user_id}"
         ) {
             user_connection_id
             faculty_user_id
@@ -300,7 +373,11 @@ export const getTeachingDataMatchesQuery = (institution_user_id) => `
     }
 `;
 
-export const getPublicationMatchesQuery = (scopus_id, page_number, results_per_page) => `
+export const getPublicationMatchesQuery = (
+    scopus_id,
+    page_number,
+    results_per_page
+) => `
     query GetPublicationMatches {
         getPublicationMatches (
             scopus_id: "${scopus_id}",
@@ -385,14 +462,15 @@ export const getNumberOfGeneratedCVsQuery = (department) => {
         getNumberOfGeneratedCVs
     }
     `;
-    else return `
+    else
+        return `
     query GetNumberOfGeneratedCVs {
         getNumberOfGeneratedCVs (
             department: "${department}"
         )
     }
     `;
-}
+};
 
 export const cvIsUpToDateQuery = (cognito_user_id, user_id, template_id) => `
     query CvIsUpToDate {

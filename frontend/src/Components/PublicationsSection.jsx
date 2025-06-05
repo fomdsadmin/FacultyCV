@@ -1,24 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import PermanentEntry from './PermanentEntry';
-import GenericEntry from './GenericEntry';
-import EntryModal from './EntryModal';
-import PermanentEntryModal from './PermanentEntryModal';
-import PublicationsModal from './PublicationsModal';
-import { FaArrowLeft } from 'react-icons/fa';
-import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelpers';
-import { rankFields } from '../utils/rankingUtils';
+import React, { useState, useEffect } from "react";
+import PermanentEntry from "./PermanentEntry";
+import GenericEntry from "./GenericEntry";
+import EntryModal from "./EntryModal";
+import PermanentEntryModal from "./PermanentEntryModal";
+import PublicationsModal from "./PublicationsModal";
+import { FaArrowLeft } from "react-icons/fa";
+import {
+  getUserCVData,
+  updateUserCVDataArchive,
+} from "../graphql/graphqlHelpers";
+import { rankFields } from "../utils/rankingUtils";
+import { LuBrainCircuit } from "react-icons/lu";
 
 const generateEmptyEntry = (attributes) => {
   const emptyEntry = {};
   for (const key of Object.keys(attributes)) {
-    const newKey = key.toLowerCase().replace(/ /g, '_');
-    emptyEntry[newKey] = '';
+    const newKey = key.toLowerCase().replace(/ /g, "_");
+    emptyEntry[newKey] = "";
   }
   return emptyEntry;
 };
 
 const PublicationsSection = ({ user, section, onBack }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [fieldData, setFieldData] = useState([]);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,9 +32,13 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [sortDescending, setSortDescending] = useState(true);
 
   const totalPages = Math.ceil(fieldData.length / pageSize);
-  const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedData = fieldData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   useEffect(() => {
     setCurrentPage(1);
@@ -46,14 +54,18 @@ const PublicationsSection = ({ user, section, onBack }) => {
     try {
       await updateUserCVDataArchive(entry.user_cv_data_id, true);
     } catch (error) {
-      console.error('Error archiving entry:', error);
+      console.error("Error archiving entry:", error);
     }
     await fetchData();
     setLoading(false);
   };
 
   const handleEdit = (entry) => {
-    const newEntry = { fields: entry.data_details, data_id: entry.user_cv_data_id, editable: entry.editable };
+    const newEntry = {
+      fields: entry.data_details,
+      data_id: entry.user_cv_data_id,
+      editable: entry.editable,
+    };
     setIsNew(false);
     setSelectedEntry(newEntry);
     setIsModalOpen(true);
@@ -67,7 +79,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
   const handleNew = () => {
     setIsNew(true);
-    if (typeof section.attributes === 'string') {
+    if (typeof section.attributes === "string") {
       section.attributes = JSON.parse(section.attributes);
     }
     const emptyEntry = generateEmptyEntry(section.attributes);
@@ -78,21 +90,28 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
   async function fetchData() {
     try {
-      const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
-      const parsedData = retrievedData.map(data => ({
+      const retrievedData = await getUserCVData(
+        user.user_id,
+        section.data_section_id
+      );
+      const parsedData = retrievedData.map((data) => ({
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
 
-      const filteredData = parsedData.filter(entry => {
+      const filteredData = parsedData.filter((entry) => {
         const [field1, field2] = rankFields(entry.data_details);
         return (
-          (field1 && typeof field1 === 'string' && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 && typeof field2 === 'string' && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+          (field1 &&
+            typeof field1 === "string" &&
+            field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (field2 &&
+            typeof field2 === "string" &&
+            field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
 
-      const rankedData = filteredData.map(entry => {
+      const rankedData = filteredData.map((entry) => {
         const [field1, field2] = rankFields(entry.data_details);
         return { ...entry, field1, field2 };
       });
@@ -105,7 +124,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
       setFieldData(rankedData);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     }
     setLoading(false);
   }
@@ -120,21 +139,154 @@ const PublicationsSection = ({ user, section, onBack }) => {
     onBack();
   };
 
+  const GenericEntry = ({
+    field1,
+    field2,
+    data_details,
+    onEdit,
+    onArchive,
+  }) => (
+    <div className="entry">
+      <h2>{field1}</h2>
+      <div className="m-2 flex">
+        <button
+          onClick={onArchive}
+          className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight"
+        >
+          X
+        </button>
+      </div>
+      <p>{field2}</p>
+      <div>{data_details}</div>
+    </div>
+  );
+  const PermanentEntry = ({
+    field1,
+    field2,
+    data_details,
+    isArchived,
+    onEdit,
+    onArchive,
+  }) => (
+    <div className={`entry ${isArchived ? "archived" : ""}`}>
+      <h2>{field1}</h2>
+      <div className="m-2 flex">
+        <button
+          onClick={onArchive}
+          className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight"
+        >
+          X
+        </button>
+      </div>
+      <p>{field2}</p>
+      <div>{data_details}</div>
+    </div>
+  );
+
+  const renderDataDetails = (details) => {
+    // console.log(details);
+    if (!details || typeof details !== "object") return null;
+
+    const authorList = Array.isArray(details.author_names)
+      ? details.author_names
+      : [details.author_names];
+
+    const keywordsList = Array.isArray(details.keywords)
+      ? details.keywords
+      : [details.keywords];
+
+    return (
+      <div className="bg-white rounded-lg shadow p-4">
+        <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
+        <p className="text-sm text-gray-700 mb-2">
+          <span className="font-semibold">Year: </span>
+          {details.year_published}
+        </p>
+
+        {authorList?.length > 0 && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Author Names:</span>{" "}
+            {authorList.join(", ")}
+          </p>
+        )}
+
+        {details.doi && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Doi:</span> {details.doi}
+          </p>
+        )}
+
+        {keywordsList?.length > 0 && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Keywords:</span>{" "}
+            {keywordsList.join(", ")}
+          </p>
+        )}
+
+        {details.journal && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Journal:</span> {details.journal}
+          </p>
+        )}
+
+        {details.link && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Link:</span>{" "}
+            <a
+              href={details.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              {details.link}
+            </a>
+          </p>
+        )}
+
+        {details.publication_id && (
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Publication Id:</span>{" "}
+            {details.publication_id}
+          </p>
+        )}
+      </div>
+    );
+  };
+
+  const sortedData = sortDescending
+    ? paginatedData
+    : [...paginatedData].reverse();
+
   return (
     <div>
       <div>
-        <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5'>
+        <button
+          onClick={handleBack}
+          className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5"
+        >
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
-        <div className='m-4 flex'>
-          <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
-          <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight' disabled={retrievingData}>New</button>
-          <button onClick={() => setRetrievingData(true)} className='ml-2 text-white btn btn-info min-h-0 h-8 leading-tight' disabled={retrievingData}>
-            {retrievingData ? 'Retrieving...' : 'Retrieve Data'}
+        <div className="m-4 flex">
+          <h2 className="text-left text-4xl font-bold text-zinc-600">
+            {section.title}
+          </h2>
+          <button
+            onClick={handleNew}
+            className="ml-auto text-white btn btn-success min-h-0 h-8 leading-tight"
+            disabled={retrievingData}
+          >
+            New
+          </button>
+          <button
+            onClick={() => setRetrievingData(true)}
+            className="ml-2 text-white btn btn-info min-h-0 h-8 leading-tight"
+            disabled={retrievingData}
+          >
+            {retrievingData ? "Retrieving..." : "Retrieve Data"}
           </button>
         </div>
-        <div className='m-4 flex'>{section.description}</div>
-        <div className='m-4 flex'>
+        <div className="m-4 flex">{section.description}</div>
+        <div className="m-4 flex">
           <label className="input input-bordered flex items-center gap-2 flex-1">
             <input
               type="text"
@@ -143,23 +295,87 @@ const PublicationsSection = ({ user, section, onBack }) => {
               value={searchTerm}
               onChange={handleSearchChange}
             />
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4 opacity-70">
-              <path fillRule="evenodd" d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" clipRule="evenodd" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              className="h-4 w-4 opacity-70"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                clipRule="evenodd"
+              />
             </svg>
           </label>
         </div>
       </div>
 
       <div className="m-4 p-4 rounded-2xl border border-gray-300 shadow-sm bg-white flex flex-wrap justify-between items-center">
+        {/* Left controls */}
         <div className="flex items-center gap-3">
-          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2h-6a2 2 0 00-2 2v14z" />
+          <svg
+            className="w-6 h-6 text-blue-600"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2h-6a2 2 0 00-2 2v14z"
+            />
           </svg>
           <span className="text-lg font-medium text-gray-700">
-            Total Publications: <span className="font-semibold text-blue-600">{fieldData.length}</span>
+            Total Publications:{" "}
+            <span className="font-semibold text-blue-600">
+              {fieldData.length}
+            </span>
           </span>
         </div>
-        <div className="flex items-center gap-4">
+        {/* Right controls */}
+        <div className="flex items-center gap-2">
+          {/* Sort control */}
+          <span className="text-gray-700 text-sm font-medium">Sort:</span>
+          <button
+            className="flex items-center px-3 py-1 border rounded hover:bg-gray-100"
+            onClick={() => setSortDescending((prev) => !prev)}
+            title="Sort by Year"
+            type="button"
+          >
+            <span className="mr-1 text-sm">Year</span>
+            {sortDescending ? (
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 15l7-7 7 7"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            )}
+          </button>
+          {/* Page size dropdown */}
           <select
             className="select select-sm select-bordered"
             value={pageSize}
@@ -168,10 +384,13 @@ const PublicationsSection = ({ user, section, onBack }) => {
             <option value={10}>10 per page</option>
             <option value={20}>20 per page</option>
             <option value={50}>50 per page</option>
+            <option value={100}>100 per page</option>
+            <option value={1000}>All</option>
           </select>
+          {/* Pagination controls */}
           <button
             className="btn btn-outline btn-sm"
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
             Previous
@@ -181,7 +400,9 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </span>
           <button
             className="btn btn-outline btn-sm"
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
             disabled={currentPage === totalPages}
           >
             Next
@@ -190,42 +411,36 @@ const PublicationsSection = ({ user, section, onBack }) => {
       </div>
 
       {loading ? (
-        <div className='flex items-center justify-center w-full'>
+        <div className="flex items-center justify-center w-full">
           <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
         </div>
       ) : (
         <div>
           <div>
-            {paginatedData.length > 0 ? (
-              paginatedData.map((entry, index) => (
-                entry.editable ? (
-                  <GenericEntry
-                    key={index}
-                    onEdit={() => handleEdit(entry)}
-                    field1={entry.field1}
-                    field2={entry.field2}
-                    data_details={entry.data_details}
-                    onArchive={() => handleArchive(entry)}
-                  />
-                ) : (
-                  <PermanentEntry
-                    isArchived={false}
-                    key={index}
-                    onEdit={() => handleEdit(entry)}
-                    field1={entry.field1}
-                    field2={entry.field2}
-                    data_details={entry.data_details}
-                    onArchive={() => handleArchive(entry)}
-                  />
-                )
-              ))
-            ) : (
-              <p className="m-4">No data found</p>
+            {sortedData.map((entry, index) =>
+              entry.editable ? (
+                <GenericEntry
+                  key={index}
+                  onEdit={() => handleEdit(entry)}
+                  data_details={renderDataDetails(entry.data_details)}
+                  onArchive={() => handleArchive(entry)}
+                />
+              ) : (
+                <PermanentEntry
+                  key={index}
+                  isArchived={false}
+                  onEdit={() => handleEdit(entry)}
+                  data_details={renderDataDetails(entry.data_details)}
+                  onArchive={() => handleArchive(entry)}
+                />
+              )
             )}
           </div>
 
-          {isModalOpen && selectedEntry && !isNew && (
-            selectedEntry.editable ? (
+          {isModalOpen &&
+            selectedEntry &&
+            !isNew &&
+            (selectedEntry.editable ? (
               <EntryModal
                 isNew={false}
                 user={user}
@@ -247,11 +462,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
                 fetchData={fetchData}
                 onClose={handleCloseModal}
               />
-            )
-          )}
+            ))}
 
-          {isModalOpen && selectedEntry && isNew && (
-            selectedEntry.editable ? (
+          {isModalOpen &&
+            selectedEntry &&
+            isNew &&
+            (selectedEntry.editable ? (
               <EntryModal
                 isNew={true}
                 user={user}
@@ -273,18 +489,18 @@ const PublicationsSection = ({ user, section, onBack }) => {
                 fetchData={fetchData}
                 onClose={handleCloseModal}
               />
-            )
-          )}
-
-          {retrievingData && (
-            <PublicationsModal
-              user={user}
-              section={section}
-              onClose={handleCloseModal}
-              setRetrievingData={setRetrievingData}
-              fetchData={fetchData}
-            />
-          )}
+            ))}
+          <div className="">
+            {retrievingData && (
+              <PublicationsModal
+                user={user}
+                section={section}
+                onClose={handleCloseModal}
+                setRetrievingData={setRetrievingData}
+                fetchData={fetchData}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>

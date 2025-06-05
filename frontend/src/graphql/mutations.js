@@ -1,3 +1,39 @@
+export const ADD_USER_DECLARATION = `
+  mutation AddUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!, $created_by: String!, $other_data: AWSJSON!) {
+    addUserDeclaration(
+      first_name: $first_name,
+      last_name: $last_name,
+      reporting_year: $reporting_year,
+      created_by: $created_by,
+      other_data: $other_data
+    ) {
+      id
+      created_on
+    }
+  }
+`;
+
+export const DELETE_USER_DECLARATION = `
+    mutation DeleteUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!) {
+        deleteUserDeclaration(
+            first_name: $first_name,
+            last_name: $last_name,
+            reporting_year: $reporting_year
+        )
+    }
+`;
+
+export const UPDATE_USER_DECLARATION = `
+    mutation UpdateUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!, $other_data: AWSJSON!) {
+        updateUserDeclaration(
+            first_name: $first_name,
+            last_name: $last_name,
+            reporting_year: $reporting_year
+            other_data: $other_data
+        )
+    }
+`;
+
 export const addToUserGroupMutation = (userName, userGroup) => `
     mutation AddToUserGroup {
         addToUserGroup(
@@ -16,20 +52,37 @@ export const removeFromUserGroupMutation = (userName, userGroup) => `
     }
 `;
 
-export const addSectionMutation = (title, description, data_type, attributes) => `
-    mutation AddSection {
+export const ADD_SECTION = `
+    mutation AddSection($title: String!, $description: String!, $data_type: String, $attributes: AWSJSON!) {
         addSection(
-            title: "${title}",
-            description: "${description}",
-            data_type: "${data_type}",
-            attributes: ${attributes}
+            title: $title,
+            description: $description,
+            data_type: $data_type,
+            attributes: $attributes
         )
     }
 `;
 
-export const addUserMutation = (first_name, last_name, preferred_name,
-    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id
+export const addUserMutation = (
+    first_name,
+    last_name,
+    preferred_name,
+    email,
+    role,
+    bio,
+    rank,
+    institution,
+    primary_department,
+    secondary_department,
+    primary_faculty,
+    secondary_faculty,
+    primary_affiliation,
+    secondary_affiliation,
+    campus,
+    keywords,
+    institution_user_id,
+    scopus_id,
+    orcid_id
 ) => `
     mutation AddUser {
         addUser(
@@ -56,14 +109,30 @@ export const addUserMutation = (first_name, last_name, preferred_name,
     }
 `;
 
-export const addUserCVDataMutation = (user_id, data_section_id, data_details, editable, cognito_user_id) => `
-    mutation AddUserCVData {
+export const ADD_USER_CV_DATA = `
+    mutation AddUserCVData($user_id: String!, $data_section_id: String!, $data_details: AWSJSON!, $editable: Boolean!, $cognito_user_id: String) {
         addUserCVData(
-            user_id: "${user_id}"
-            data_section_id: "${data_section_id}"
-            data_details: ${data_details}
-            editable: ${editable}
-            cognito_user_id: "${cognito_user_id}"
+            user_id: $user_id,
+            data_section_id: $data_section_id,
+            data_details: $data_details,
+            editable: $editable,
+            cognito_user_id: $cognito_user_id
+        )
+    }
+`;
+
+export const ADD_BATCHED_USER_CV_DATA = `
+    mutation AddBatchedUserCVData(
+        $user_id: String!,
+        $data_section_id: String!,
+        $data_details_list: [AWSJSON!],
+        $editable: Boolean!,
+    ) {
+        addBatchedUserCVData(
+            user_id: $user_id,
+            data_section_id: $data_section_id,
+            data_details_list: $data_details_list,
+            editable: $editable,
         )
     }
 `;
@@ -78,8 +147,14 @@ export const addUniversityInfoMutation = (type, value) => `
 `;
 
 export const addUserConnectionMutation = (
-    faculty_user_id, faculty_first_name, faculty_last_name, faculty_email,
-    assistant_user_id, assistant_first_name, assistant_last_name, assistant_email,
+    faculty_user_id,
+    faculty_first_name,
+    faculty_last_name,
+    faculty_email,
+    assistant_user_id,
+    assistant_first_name,
+    assistant_last_name,
+    assistant_email,
     status
 ) => `
     mutation AddUserConnection {
@@ -97,7 +172,12 @@ export const addUserConnectionMutation = (
     }
 `;
 
-export const addTemplateMutation = (title, data_section_ids, start_year, end_year) => `
+export const addTemplateMutation = (
+    title,
+    data_section_ids,
+    start_year,
+    end_year
+) => `
     mutation AddTemplate {
         addTemplate(
             title: "${title}"
@@ -109,7 +189,7 @@ export const addTemplateMutation = (title, data_section_ids, start_year, end_yea
 `;
 
 export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
-    if(orcid_id) {
+    if (orcid_id) {
         return `
             mutation LinkScopusId {
                 linkScopusId(
@@ -129,7 +209,7 @@ export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
             }
         `;
     }
-}
+};
 
 export const linkOrcidMutation = (user_id, orcid_id) => `
     mutation LinkOrcid {
@@ -140,9 +220,29 @@ export const linkOrcidMutation = (user_id, orcid_id) => `
     }
 `;
 
-export const updateUserMutation = (user_id, first_name, last_name, preferred_name,
-    email, role, bio, rank, institution, primary_department, secondary_department, primary_faculty,
-    secondary_faculty, primary_affiliation, secondary_affiliation, campus, keywords, institution_user_id, scopus_id, orcid_id, cognito_user_id) => `
+export const updateUserMutation = (
+    user_id,
+    first_name,
+    last_name,
+    preferred_name,
+    email,
+    role,
+    bio,
+    rank,
+    institution,
+    primary_department,
+    secondary_department,
+    primary_faculty,
+    secondary_faculty,
+    primary_affiliation,
+    secondary_affiliation,
+    campus,
+    keywords,
+    institution_user_id,
+    scopus_id,
+    orcid_id,
+    cognito_user_id
+) => `
     mutation UpdateUser {
         updateUser(
             first_name: "${first_name}"
@@ -180,7 +280,11 @@ export const updateSectionMutation = (data_section_id, archive, attributes) => `
     }
 `;
 
-export const updateUserCVDataMutation = (user_cv_data_id, data_details, cognito_user_id) => `
+export const updateUserCVDataMutation = (
+    user_cv_data_id,
+    data_details,
+    cognito_user_id
+) => `
     mutation UpdateUserCVData {
         updateUserCVData(
             user_cv_data_id: "${user_cv_data_id}"
@@ -190,7 +294,11 @@ export const updateUserCVDataMutation = (user_cv_data_id, data_details, cognito_
     }
 `;
 
-export const updateUserCVDataArchiveMutation = (user_cv_data_id, archive, cognito_user_id) => `
+export const updateUserCVDataArchiveMutation = (
+    user_cv_data_id,
+    archive,
+    cognito_user_id
+) => `
     mutation UpdateUserCVData {
         updateUserCVData(
             user_cv_data_id: "${user_cv_data_id}"
@@ -200,7 +308,11 @@ export const updateUserCVDataArchiveMutation = (user_cv_data_id, archive, cognit
     }
 `;
 
-export const updateUniversityInfoMutation = (university_info_id, type, value) => `
+export const updateUniversityInfoMutation = (
+    university_info_id,
+    type,
+    value
+) => `
     mutation UpdateUniversityInfo {
         updateUniversityInfo(
             type: "${type}"
@@ -219,7 +331,13 @@ export const updateUserConnectionMutation = (user_connection_id, status) => `
     }
 `;
 
-export const updateTemplateMutation = (template_id, title, data_section_ids, start_year, end_year) => `
+export const updateTemplateMutation = (
+    template_id,
+    title,
+    data_section_ids,
+    start_year,
+    end_year
+) => `
     mutation UpdateTemplate {
         updateTemplate(
             template_id: "${template_id}"
@@ -255,4 +373,4 @@ export const updateLatexConfigurationMutation = (vspace, margin, font) => `
             font: "${font}"
         )
     }
-`
+`;
