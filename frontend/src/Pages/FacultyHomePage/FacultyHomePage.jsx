@@ -1,7 +1,6 @@
 import PageContainer from "../../Views/PageContainer.jsx"
 import FacultyMenu from "../../Components/FacultyMenu.jsx"
 import "../../CustomStyles/scrollbar.css"
-import { ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { FacultyProvider, useFaculty } from "./FacultyContext.jsx"
 import Tabs from "./Tabs/Tabs.jsx"
@@ -39,19 +38,6 @@ const FacultyHomePageContent = (user) => {
           <Tabs />
         )}
       </main>
-
-      <ToastContainer
-        position="top-right"
-        autoClose={1000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
     </PageContainer>
   )
 }
