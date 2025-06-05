@@ -338,6 +338,7 @@ type Query {
 }
 
 input AuditViewInput {
+  ip: String,
   browser_name: String
   browser_version: String
   page: String
