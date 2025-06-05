@@ -332,7 +332,7 @@ type Query {
   getLatexConfiguration: String!
     @aws_auth(cognito_groups: ["Faculty", "Assistant", "Admin"])
 
-  getAuditView(logged_user_id: Int!): [AuditViewRecord]
+  getAuditView(logged_user_id: Int): [AuditViewRecord]
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
 }
@@ -523,4 +523,8 @@ type Mutation {
 
   updateLatexConfiguration(vspace: Float, margin: Float, font: String): String
     @aws_auth(cognito_groups: ["Admin"])
+
+  addAuditView(input: AuditViewInput!): AuditViewRecord
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  
 }
