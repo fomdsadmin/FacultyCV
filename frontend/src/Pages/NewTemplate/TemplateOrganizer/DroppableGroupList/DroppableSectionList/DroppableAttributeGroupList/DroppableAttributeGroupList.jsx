@@ -1,0 +1,35 @@
+import { Droppable } from "react-beautiful-dnd"
+import DraggableAttributeGroupList from "./DraggableAttributeGroupList"
+
+const DroppableAttributeGroupList = ({ attributeGroups, dataSectionId }) => {
+
+    console.log(dataSectionId)
+
+    return (
+        <Droppable 
+            droppableId={`attribute-groups-${dataSectionId}`} 
+            direction="horizontal" 
+            type={`attribute-group-${dataSectionId}`}
+        >
+            {(provided) => (
+                <div
+                    className="flex flex-row gap-4 p-4"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                >
+                    {attributeGroups.map((attributeGroup, attributeGroupIndex) => (
+                        <DraggableAttributeGroupList 
+                            key={attributeGroup.id}
+                            attributeGroup={attributeGroup} 
+                            attributeGroupIndex={attributeGroupIndex}
+                            draggableId={`${dataSectionId}-${attributeGroup.id}`}
+                        />
+                    ))}
+                    {provided.placeholder}
+                </div>
+            )}
+        </Droppable>
+    );
+}
+
+export default DroppableAttributeGroupList
