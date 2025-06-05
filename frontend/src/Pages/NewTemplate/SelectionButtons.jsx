@@ -1,7 +1,7 @@
 import { useTemplate } from "./TemplateContext"
 
 const SelectionButtons = () => {
-    const { selectAllSections, deselectAllSections } = useTemplate()
+    const { selectAllSections, deselectAllSections } = useTemplate();
 
     const handleSelectAll = () => {
         selectAllSections()
