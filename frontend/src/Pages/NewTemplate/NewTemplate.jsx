@@ -1,11 +1,10 @@
 import { FaArrowLeft } from "react-icons/fa"
-import { DragDropContext } from "react-beautiful-dnd"
 import { TemplateProvider, useTemplate } from "./TemplateContext"
 import CreateTemplateButton from "./CreateTemplateButton"
 import YearSelector from "./YearSelector"
-import SelectionButtons from "./SelectionButton"
-import DraggableSectionList from "./DraggableSectionList"
+import SelectionButtons from "./SelectionButtons"
 import TemplateOrganizer from "./TemplateOrganizer/TemplateOrganizer"
+import AddGroupButton from "./AddGroupButton/AddGroupButton"
 
 const NewTemplateContent = () => {
   const { loading, errorMessage, title, setTitle, onBack, reorderSections } = useTemplate()
@@ -49,11 +48,11 @@ const NewTemplateContent = () => {
               Drag and drop sections in the order you want them to appear on the CV.
             </h2>
 
-            <SelectionButtons />
+            <div className="flex justify-end mb-4 space-x-2">
+              <SelectionButtons />
+              <AddGroupButton />
+            </div>
             <TemplateOrganizer />
-            <DragDropContext onDragEnd={(result) => { reorderSections(result) }}>
-              <DraggableSectionList />
-            </DragDropContext>
           </>
         )}
       </div>
