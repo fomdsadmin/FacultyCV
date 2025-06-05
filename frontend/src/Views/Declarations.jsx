@@ -33,7 +33,7 @@ const DECLARATION_LABELS = {
   },
 };
 
-const normalizeDeclarations = (rawDeclarations) => {
+export const normalizeDeclarations = (rawDeclarations) => {
   return rawDeclarations.map((decl) => {
     let other = {};
     try {
@@ -572,12 +572,6 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             setValidationErrors={setValidationErrors} // <-- Add this line
           />
         )}
-
-        {/* Footer */}
-        <footer className="text-sm text-gray-400 mt-10">
-          <div className="flex gap-2 mt-1"></div>
-          <div>Version 2.0.0</div>
-        </footer>
       </main>
     </PageContainer>
   );

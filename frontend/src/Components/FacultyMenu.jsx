@@ -122,7 +122,7 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
       </div> ) }
 
       {/* Sign Out Button */}
-      <div className="absolute bottom-3 left-0 w-full flex justify-center">
+      <div className="left-0 w-full flex justify-center">
         {!isCollapsed && showText && (
           <button 
             className="text-white btn btn-warning py-1 px-4 w-44 min-h-0 h-8 leading-tight focus:outline-none hover:bg-warning-dark"

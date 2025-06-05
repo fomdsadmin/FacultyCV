@@ -75,7 +75,7 @@ const ContactForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           content: base64
         }];
       }
-      const response = await fetch("https://tlrus3v3pa.execute-api.ca-central-1.amazonaws.com/prod", {
+      const response = await fetch("https://5h3jq97juf.execute-api.ca-central-1.amazonaws.com/prod/send-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

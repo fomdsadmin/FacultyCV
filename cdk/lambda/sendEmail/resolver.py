@@ -1,6 +1,11 @@
 import json
 import boto3
+from datetime import datetime
+import base64
 import html
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 
 def getCredentials():
     sm_client = boto3.client('secretsmanager')
@@ -14,91 +19,97 @@ def getCredentials():
     except Exception as e:
         raise Exception(f"Failed to retrieve credentials: {str(e)}")
 
-def format_html_body(user_name, user_email, body_text, image_data_urls=None):
-    # Escape text
-    safe_text = html.escape(body_text)
-    html_text = safe_text.replace('\n', '<br>')
-    
-    images_html = ""
-    if image_data_urls:
-        for idx, image_data_url in enumerate(image_data_urls):
-            images_html += f'<br><img src="{image_data_url}" alt="User Image {idx+1}" style="max-width:100%; height:auto; margin-top:15px;">'
-    
+def send_raw_email(from_email, to_email, subject, body_text, body_html, attachments, reply_to=None):
+    msg = MIMEMultipart("mixed")
+    msg['Subject'] = subject
+    msg['From'] = from_email
+    msg['To'] = to_email
+    if reply_to:
+        msg.add_header('Reply-To', reply_to)
+
+    alt_part = MIMEMultipart("alternative")
+    alt_part.attach(MIMEText(body_text, 'plain', 'utf-8'))
+    alt_part.attach(MIMEText(body_html, 'html', 'utf-8'))
+    msg.attach(alt_part)
+
+    for att in attachments:
+        name = att.get("name")
+        base64_data = att.get("content", "")
+        file_bytes = base64.b64decode(base64_data)
+        mime_type = att.get("type", "application/octet-stream")
+        maintype, subtype = mime_type.split("/", 1)
+        part = MIMEApplication(file_bytes, _subtype=subtype)
+        part.add_header('Content-Disposition', 'attachment', filename=name)
+        msg.attach(part)
+
+    ses = boto3.client('ses', region_name='ca-central-1')
+    response = ses.send_raw_email(
+        Source=from_email,
+        Destinations=[to_email],
+        RawMessage={'Data': msg.as_string()}
+    )
+    return response
+
+def format_html_body(user_name, user_email, user_subject, user_problemType, message):
+    safe_text = html.escape(message).replace("\n", "<br>")
     return f"""
     <html>
-      <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
-        <p>Username: {user_name}</p>
-        <p>User email: {user_email}</p>
-        <p></p>
-        <p>{html_text}</p>
-        <p> Image attachments:</p>
-        <p></p>
-        {images_html} 
+      <body style="font-family: Arial, sans-serif; color: #333;">
+        <p><strong>Name:</strong> {html.escape(user_name)}</p>
+        <p><strong>Email:</strong> {html.escape(user_email)}</p>
+        <p><strong>Problem Type:</strong> {html.escape(user_problemType)}</p>
+        <p><strong>Message:</strong><br>{safe_text}</p>
       </body>
     </html>
     """
-    
-def send_email(user_name, user_email, from_email, to_email, subject, body, image_data_urls=None, reply_to=None):
-    ses_client = boto3.client('ses', region_name='ca-central-1')
-    html_body = format_html_body(user_name, user_email, body, image_data_urls)
 
-    params = {
-        'Source': from_email,
-        'Destination': {'ToAddresses': [to_email]},
-        'Message': {
-            'Subject': {'Data': subject, 'Charset': 'UTF-8'},
-            'Body': {
-                'Text': {'Data': body, 'Charset': 'UTF-8'},
-                'Html': {'Data': html_body, 'Charset': 'UTF-8'}
-            }
-        }
-    }
-
-    if reply_to:
-        params['ReplyToAddresses'] = [reply_to]
-
-    response = ses_client.send_email(**params)
-    return response
-
+# CORS headers to include in every response
+CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Allow-Methods': 'OPTIONS,POST'
+}
 
 def lambda_handler(event, context):
-    credential_info = getCredentials()
-    if not credential_info:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': 'Failed to retrieve email configuration'})
-        }
+    creds = getCredentials()
+    from_email = creds['source_email']
+    to_email = creds['destination_email']
+    print(event)
 
-    source_email = credential_info['source_email']
-    destination_email = credential_info['destination_email']
-    
     try:
-        user_email = event.get('email')
-        user_name = event.get('name')
-        user_message = event.get('message')
-        image_data_urls = event.get('images', [])
+        body = json.loads(event['body'])
 
-        if not user_email or not user_name:
+        user_name = body.get('name')
+        user_email = body.get('email')
+        user_message = body.get('message')
+        user_subject = body.get('subject')
+        user_problem_type = body.get('problemType')
+        attachments = body.get('attachments', [])
+
+        if not user_name or not user_email:
             return {
                 'statusCode': 400,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': 'Missing name or email'})
             }
 
-        # Send to your inbox
-        send_email(
-            user_name=user_name,
-            user_email=user_email,
-            from_email=source_email,
-            to_email=destination_email,
-            subject=f"Ticket submitted from {user_name}",
-            body=user_message,
-            image_data_urls=image_data_urls,
+        html_body = format_html_body(user_name, user_email, user_subject, user_problem_type, user_message)
+        today_str = datetime.today().strftime("%B %d, %Y")
+
+        send_raw_email(
+            from_email=from_email,
+            to_email=to_email,
+            subject=f"Faculty 360 Query: From {user_name} - Date {today_str}",
+            body_text=user_message,
+            body_html=html_body,
+            attachments=attachments,
             reply_to=user_email
         )
 
         return {
             'statusCode': 200,
-            'body': json.dumps({'message': 'Message sent successfully'})
+            'headers': CORS_HEADERS,
+            'body': json.dumps({'message': 'Message sent with attachments'})
         }
 
     except Exception as e:

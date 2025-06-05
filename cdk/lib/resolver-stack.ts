@@ -221,7 +221,19 @@ export class ResolverStack extends cdk.Stack {
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-
+	
+	createResolver(
+      apiStack.getApi(),
+      "addBatchedUserCVData",
+      ["addBatchedUserCVData"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+	
     createResolver(
       apiStack.getApi(),
       "addUserCVData",

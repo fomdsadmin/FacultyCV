@@ -12,6 +12,7 @@
     "@testing-library/user-event": "^13.5.0",
     "aws-amplify": "^6.6.2",
     "chart.js": "^4.4.9",
+    "chartjs-chart-wordcloud": "^4.4.4",
     "chartjs-plugin-datalabels": "^2.2.0",
     "dotenv": "^16.4.5",
     "pdfjs-dist": "^2.12.313",

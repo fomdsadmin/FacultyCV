@@ -520,7 +520,7 @@ export const getSecureFundingMatches = async (first_name, last_name) => {
  *  {
  *      rise_data_id
  *      first_name,
- *      last_name,
+ *      last_name
  *      data_details: JSON string
  *  }, ...
  * ]
@@ -655,18 +655,8 @@ export const addUserCVData = async (
   return results["data"]["addUserCVData"];
 };
 
-export const addBatchedUserCVData = async (
-  user_id,
-  data_section_id,
-  data_details_list,
-  editable = true
-) => {
-  const results = await executeGraphql(ADD_BATCHED_USER_CV_DATA, {
-    user_id: user_id,
-    data_section_id: data_section_id,
-    data_details_list: data_details_list,
-    editable: editable,
-  });
+export const addBatchedUserCVData = async (input) => {
+  const results = await executeGraphql(ADD_BATCHED_USER_CV_DATA, input);
   return results["data"]["addBatchedUserCVData"];
 };
 

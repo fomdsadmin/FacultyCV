@@ -254,18 +254,6 @@ export class Resolver2Stack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
-      "addBatchedUserCVData",
-      ["addBatchedUserCVData"],
-      "Mutation",
-      {
-        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
-      },
-      resolverRole,
-      [psycopgLayer, databaseConnectLayer]
-    );
-
-    createResolver(
-      apiStack.getApi(),
       "GetAIResponse",
       ["GetAIResponse"],
       "Query",

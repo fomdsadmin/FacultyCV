@@ -451,7 +451,7 @@ type Mutation {
   addBatchedUserCVData(
     user_id: String!
     data_section_id: String!
-    data_details_list: [AWSJSON!] # JSON
+    data_details_list: [AWSJSON!]
     editable: Boolean!
   ): String @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
 
