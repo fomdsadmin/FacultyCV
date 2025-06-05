@@ -51,8 +51,8 @@ const ArchivedSections = ({ getCognitoUser, userInfo }) => {
   const restoreSection = async (id, attributes) => {
     setLoading(true);
     try {
-      const attributesString = JSON.stringify(attributes).replace(/"/g, '\\"')
-      const result = await updateSection(id, false, `"${attributesString}"`);
+      const attributesString = JSON.stringify(attributes)
+      const result = await updateSection(id, false, attributesString);
       
     } catch (error) {
       console.error('Error restoring section:', error);
