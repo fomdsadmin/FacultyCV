@@ -6,7 +6,7 @@ import { updateUser } from '../graphql/graphqlHelpers.js';
 import { getAllUniversityInfo } from '../graphql/graphqlHelpers.js';
 import { getOrcidSections } from '../graphql/graphqlHelpers.js';
 import ProfileLinkModal from '../Components/ProfileLinkModal.jsx';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getAllSections } from '../graphql/graphqlHelpers.js';
 import GenericSection from '../Components/GenericSection.jsx';
@@ -719,19 +719,6 @@ const FacultyHomePage = ({ userInfo, setUserInfo, getCognitoUser, getUser, toggl
           </div>
         </div>
       </main>
-
-      <ToastContainer
-        position="top-right"
-        autoClose={1000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
 
       {modalOpen && (
         <ProfileLinkModal
