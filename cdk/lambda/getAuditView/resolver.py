@@ -42,21 +42,23 @@ def getAuditView(arguments, identity=None):
 
     audit_view_records = []
     for result in results:
-        audit_view_records.append({
-            'log_view_id': result[0],
-            'ts': str(result[1]),
-            'logged_user_id': result[2],
-            'logged_user_first_name': result[3],
-            'logged_user_last_name': result[4],
-            'ip': result[5],
-            'browser_version': result[6],
-            'page': result[7],
-            'session_id': result[8],
-            'assistant': result[9],
-            'profile_record': result[10],
-            'logged_user_role': result[11]
-            'logged_user_email': result[12]
-        })  
+        audit_view_records.append(
+            {
+                'log_view_id': result[0],
+                'ts': str(result[1]),
+                'logged_user_id': result[2],
+                'logged_user_first_name': result[3],
+                'logged_user_last_name': result[4],
+                'ip': result[5],
+                'browser_version': result[6],
+                'page': result[7],
+                'session_id': result[8],
+                'assistant': result[9],
+                'profile_record': result[10],
+                'logged_user_role': result[11],
+                'logged_user_email': result[12],
+        }
+            )  
     return audit_view_records
 
 def lambda_handler(event, context):

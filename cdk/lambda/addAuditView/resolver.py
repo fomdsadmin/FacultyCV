@@ -37,11 +37,11 @@ def addAuditView(arguments, identity=None):
             profile_record, logged_user_role, logged_user_email
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING log_view_id, NOW(), logged_user_id, logged_user_first_name, logged_user_last_name, ip,
-                , browser_version, page, session_id, assistant, profile_record, logged_user_role,logged_user_email
+        browser_version, page, session_id, assistant, profile_record, logged_user_role, logged_user_email
         """,
         (
             logged_user_id, logged_user_first_name, logged_user_last_name, ip,
-            , browser_version, page, session_id, assistant,
+            browser_version, page, session_id, assistant,
             profile_record, logged_user_role, logged_user_email
         )
     )
