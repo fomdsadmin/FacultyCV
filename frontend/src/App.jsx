@@ -41,6 +41,7 @@ import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
 import { CookieStorage } from 'aws-amplify/utils';
 import FacultyHomePage from './Pages/FacultyHomePage/FacultyHomePage';
 import { AppProvider, useApp } from './Contexts/AppContext';
+import { ToastContainer } from 'react-toastify';
 
 Amplify.configure({
   API: {
@@ -123,7 +124,19 @@ const AppContent = () => {
   }
   return (
     <Router>
-       {user && <Header />}
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      {user && <Header />}
       <Routes>
         <Route path="/home" element={user ? (
           Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> :
@@ -146,7 +159,7 @@ const AppContent = () => {
               )
             ) :
               Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === 'Assistant' ? <AssistantHomePage userInfo={assistantUserInfo} setUserInfo={setAssistantUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo} /> :
-                Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage/> :
+                Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage /> :
                   <PageContainer>
                     <div className='flex items-center justify-center w-full'>
                       <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -158,7 +171,7 @@ const AppContent = () => {
         <Route path="/home" element={user ? <HomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/support" element={user ? <Support userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/academic-work" element={user ? <AcademicWork userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
-		    <Route path="/declarations" element={user ? <Declarations userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/declarations" element={user ? <Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/assistants" element={user ? <Assistants userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/archive" element={user ? <Archive userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
