@@ -440,5 +440,17 @@ export class Resolver2Stack extends cdk.Stack {
       [psycopgLayer, databaseConnectLayer]
     );
 
+    createResolver(
+      apiStack.getApi(),
+      "addAuditView",           
+      ["addAuditView"],         
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
   }
 }

@@ -138,7 +138,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
         userName={userInfo.preferred_name || userInfo.first_name}
         getCognitoUser={getCognitoUser}
       />
-      <main className="flex flex-col items-center w-full max-w-7xl min-h-screen mb-2 p-6 mx-auto">
+      <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[3vw] lg:px-[4vw] xl:px-[5vw] 2xl:px-[8vw] flex flex-col items-center w-full max-w-7xl min-h-screen mb-2 py-6 mx-auto">
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="block text-m mb-1 mt-6 text-zinc-600">

@@ -24,22 +24,24 @@ const FacultyHomePageContent = (user) => {
         userInfo={userInfo}
       />
 
-      <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4 relative">
-        <div className="flex items-center justify-between mt-4 mb-4">
-          <h1 className="text-4xl ml-4 font-bold text-zinc-600">Home</h1>
+      <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] 2xl:px-[10vw] overflow-auto custom-scrollbar w-full mb-4 relative">
+        <div className="flex items-center justify-between mt-6">
+          <h1 className="text-4xl font-bold text-zinc-600">Home</h1>
           <SaveButton />
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center w-full">
-            <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+            <div className="block text-m mb-1 mt-6 text-zinc-600">
+              Loading...
+            </div>
           </div>
         ) : (
           <Tabs />
         )}
       </main>
     </PageContainer>
-  )
+  );
 }
 
 const FacultyHomePage = () => {

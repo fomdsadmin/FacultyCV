@@ -328,7 +328,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       />
 
       {/* Main content */}
-      <main className="ml-4 pr-5 w-full overflow-auto mt-2 py-6 px-4">
+      <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] 2xl:px-[10vw] w-full overflow-auto mt-2 py-6">
         {/* Heading row */}
         <div className="max-w-6xl mx-auto px-0 mb-2">
           <div className="text-4xl font-bold text-zinc-600">Declarations</div>

@@ -188,19 +188,19 @@ type InsertResponse {
 }
 
 type AuditViewRecord {
-  log_view_id: Int
-  ts: String
-  logged_user_id: Int
-  logged_user_first_name: String
-  logged_user_last_name: String
+  log_view_id: Int!
+  ts: String!
+  logged_user_id: Int!
+  logged_user_first_name: String!
+  logged_user_last_name: String!
   ip: String
-  browser_name: String
   browser_version: String
   page: String
-  session_id: String
-  assistant: Boolean
-  profile_record: String
-  logged_user_role: String
+  session_id: String!
+  assistant: Boolean!
+  profile_record: String!
+  logged_user_role: String!
+  logged_user_email: String!
 }
 
 type Query {
@@ -332,9 +332,18 @@ type Query {
   getLatexConfiguration: String!
     @aws_auth(cognito_groups: ["Faculty", "Assistant", "Admin"])
 
-  getAuditView(logged_user_id: Int!): [AuditViewRecord]
+  getAuditView(logged_user_id: Int): [AuditViewRecord]
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 
+}
+
+input AuditViewInput {
+  ip: String,
+  browser_version: String
+  page: String
+  session_id: String!
+  assistant: Boolean!
+  profile_record: String
 }
 
 type Mutation {
@@ -523,4 +532,10 @@ type Mutation {
 
   updateLatexConfiguration(vspace: Float, margin: Float, font: String): String
     @aws_auth(cognito_groups: ["Admin"])
+
+ addAuditView(
+    input: AuditViewInput!
+): AuditViewRecord
+@aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  
 }
