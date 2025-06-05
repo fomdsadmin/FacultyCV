@@ -7,7 +7,7 @@ import TemplateOrganizer from "./TemplateOrganizer/TemplateOrganizer"
 import AddGroupButton from "./AddGroupButton/AddGroupButton"
 
 const NewTemplateContent = () => {
-  const { loading, errorMessage, title, setTitle, onBack, reorderSections } = useTemplate()
+  const { loading, errorMessage, title, setTitle, onBack } = useTemplate()
 
   return (
     <div className="">
