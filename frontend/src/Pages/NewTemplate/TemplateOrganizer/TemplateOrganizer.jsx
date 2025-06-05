@@ -5,38 +5,38 @@ import { useTemplate } from "../TemplateContext";
 
 export default function TemplateOrganizer() {
   
-  const { groups } = useTemplate();
+  const { groups, setGroups } = useTemplate();
 
   const onDragEnd = (result) => {
     const { source, destination, type } = result;
     if (!destination) return;
 
     if (type === "column") {
-      const newLists = Array.from(lists);
-      const [moved] = newLists.splice(source.index, 1);
-      newLists.splice(destination.index, 0, moved);
-      setLists(newLists);
+      const newGroups = Array.from(groups);
+      const [moved] = newGroups.splice(source.index, 1);
+      newGroups.splice(destination.index, 0, moved);
+      setGroups(newGroups);
     } else {
-      const sourceListIndex = lists.findIndex((l) => l.id === source.droppableId);
-      const destListIndex = lists.findIndex((l) => l.id === destination.droppableId);
-      const sourceList = lists[sourceListIndex];
-      const destList = lists[destListIndex];
+      const sourceGroupIndex = groups.findIndex((l) => l.id === source.droppableId);
+      const destGroupIndex = groups.findIndex((l) => l.id === destination.droppableId);
+      const sourceList = groups[sourceGroupIndex];
+      const destList = groups[destGroupIndex];
 
-      const sourceItems = Array.from(sourceList.items);
-      const [movedItem] = sourceItems.splice(source.index, 1);
+      const sourceSections = Array.from(sourceList.sections);
+      const [movedSection] = sourceSections.splice(source.index, 1);
 
       if (source.droppableId === destination.droppableId) {
-        sourceItems.splice(destination.index, 0, movedItem);
-        const updatedLists = [...lists];
-        updatedLists[sourceListIndex] = { ...sourceList, items: sourceItems };
-        setLists(updatedLists);
+        sourceSections.splice(destination.index, 0, movedSection);
+        const updatedLists = [...groups];
+        updatedLists[sourceGroupIndex] = { ...sourceList, sections: sourceSections };
+        setGroups(updatedLists);
       } else {
-        const destItems = Array.from(destList.items);
-        destItems.splice(destination.index, 0, movedItem);
-        const updatedLists = [...lists];
-        updatedLists[sourceListIndex] = { ...sourceList, items: sourceItems };
-        updatedLists[destListIndex] = { ...destList, items: destItems };
-        setLists(updatedLists);
+        const destSections = Array.from(destList.sections);
+        destSections.splice(destination.index, 0, movedSection);
+        const updatedLists = [...groups];
+        updatedLists[sourceGroupIndex] = { ...sourceList, sections: sourceSections };
+        updatedLists[destGroupIndex] = { ...destList, sections: destSections };
+        setGroups(updatedLists);
       }
     }
   };
