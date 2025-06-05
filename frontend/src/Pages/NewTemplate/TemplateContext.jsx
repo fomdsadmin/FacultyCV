@@ -15,28 +15,12 @@ export const useTemplate = () => {
 
 export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
 
-  const initialData = [
-    {
-      id: "list-1",
-      title: "List One",
-      items: [
-        { id: "item-1", content: "Item 1" },
-        { id: "item-2", content: "Item 2" },
-      ],
-    },
-    {
-      id: "list-2",
-      title: "List Two",
-      items: [
-        { id: "item-3", content: "Item 3" },
-      ],
-    },
-  ];
+  const DEFAULT_GROUP_ID = "Default (Sections here will not be shown)";
 
   const [addingTemplate, setAddingTemplate] = useState(false)
   const [title, setTitle] = useState("")
   const [sections, setSections] = useState([])
-  const [groups, setGroups] = useState(initialData);
+  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState("")
   const [startYear, setStartYear] = useState("")
@@ -45,6 +29,28 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
   useEffect(() => {
     fetchSections()
   }, [])
+
+  useEffect(() => {
+    console.log(sections[0])
+
+    const initialData = [
+      {
+        id: DEFAULT_GROUP_ID,
+        title: DEFAULT_GROUP_ID,
+        sections: [
+          ...sections
+        ],
+      }
+    ];
+
+    setGroups(initialData);
+  }, [sections])
+
+  const getGroupIdContainingSectionId = (sectionId) => {
+    return groups.find(group =>
+      group.sections.some(section => section.data_section_id === sectionId)
+    ).id;
+  };
 
   const fetchSections = async () => {
     const fetchedSections = await getAllSections()
@@ -127,6 +133,8 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
   }
 
   const value = {
+    //Constants
+    DEFAULT_GROUP_ID,
     // State
     addingTemplate,
     title,
@@ -141,6 +149,7 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
     setStartYear,
     setEndYear,
     setErrorMessage,
+    setGroups,
     // Actions
     createTemplate,
     toggleSection,
@@ -148,6 +157,8 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
     deselectAllSections,
     reorderSections,
     onBack,
+    // Helpers
+    getGroupIdContainingSectionId
   }
 
   return <TemplateContext.Provider value={value}>{children}</TemplateContext.Provider>
