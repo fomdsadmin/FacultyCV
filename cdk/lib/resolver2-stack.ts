@@ -442,8 +442,8 @@ export class Resolver2Stack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
-      "addAuditView",           // This should match your mutation name
-      ["addAuditView"],         // This should match your function handler
+      "addAuditView",           
+      ["addAuditView"],         
       "Mutation",
       {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,

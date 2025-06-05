@@ -6,11 +6,13 @@ from databaseConnect import get_connection
 sm_client = boto3.client('secretsmanager')
 DB_PROXY_ENDPOINT = os.environ['DB_PROXY_ENDPOINT']
 
-def addAuditView(arguments):
-    # Extract fields from arguments
-    logged_user_id = arguments.get('logged_user_id')
-    logged_user_first_name = arguments.get('logged_user_first_name')
-    logged_user_last_name = arguments.get('logged_user_last_name')
+def addAuditView(arguments, identity=None):
+    # Extract fields from arguments from cognito identity
+    logged_user_id = identity.get('sub') if identity else None
+    logged_user_first_name = identity.get('given_name') if identity else None
+    logged_user_last_name = identity.get('family_name') if identity else None
+    logged_user_role = identity.get('groups', [None])[0] if identity and 'groups' in identity else None
+    
     ip = arguments.get('ip')
     browser_name = arguments.get('browser_name')
     browser_version = arguments.get('browser_version')
@@ -18,7 +20,6 @@ def addAuditView(arguments):
     session_id = arguments.get('session_id')
     assistant = arguments.get('assistant')
     profile_record = arguments.get('profile_record')
-    logged_user_role = arguments.get('logged_user_role')
 
     # Validate required fields
     if logged_user_id is None or logged_user_first_name is None or logged_user_last_name is None:
@@ -67,4 +68,4 @@ def addAuditView(arguments):
     }
 
 def lambda_handler(event, context):
-    return addAuditView(event['arguments'])
+    return addAuditView(event['arguments'],event.get('identity'))
