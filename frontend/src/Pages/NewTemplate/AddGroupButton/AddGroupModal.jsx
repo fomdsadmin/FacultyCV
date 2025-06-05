@@ -23,7 +23,7 @@ const AddGroupModal = ({ onClose }) => {
             {
                 id: groupName,
                 title: groupName,
-                sections: []
+                prepared_sections: []
             },
             ...prev
         ]))
