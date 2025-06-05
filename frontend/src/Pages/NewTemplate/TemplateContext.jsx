@@ -15,7 +15,10 @@ export const useTemplate = () => {
 
 export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
 
-  const DEFAULT_GROUP_ID = "Default (Sections here will not be shown)";
+  const HIDDEN_GROUP_ID = "Hidden (Sections here will not be shown)";
+
+  const SHOWN_ATTRIBUTE_GROUP_ID = "Shown (Attributes here will be shown)"
+  const HIDDEN_ATTRIBUTE_GROUP_ID = "Hidden (Attributes here will be hidden)"
 
   const [addingTemplate, setAddingTemplate] = useState(false)
   const [title, setTitle] = useState("")
@@ -31,24 +34,39 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
   }, [])
 
   useEffect(() => {
-    console.log(sections[0])
-
     const initialData = [
       {
-        id: DEFAULT_GROUP_ID,
-        title: DEFAULT_GROUP_ID,
-        sections: [
-          ...sections
-        ],
+        id: HIDDEN_GROUP_ID,
+        title: HIDDEN_GROUP_ID,
+        prepared_sections: sections.map((section) => ({
+          ...section,
+          attribute_groups: [
+            {
+              id: HIDDEN_ATTRIBUTE_GROUP_ID,
+              title: HIDDEN_ATTRIBUTE_GROUP_ID,
+              attributes: [],
+            },
+            {
+              id: SHOWN_ATTRIBUTE_GROUP_ID,
+              title: SHOWN_ATTRIBUTE_GROUP_ID,
+              attributes: Object.keys(JSON.parse(section.attributes)),
+            },
+          ],
+          attribute_rename_map: {}, // For the backend, shows what columns to rename
+          show_row_count: false
+        })),
       }
     ];
+
+    console.log(initialData)
+
 
     setGroups(initialData);
   }, [sections])
 
-  const getGroupIdContainingSectionId = (sectionId) => {
+  const getGroupIdContainingPreparedSectionId = (preparedSectionId) => {
     return groups.find(group =>
-      group.sections.some(section => section.data_section_id === sectionId)
+      group.prepared_sections.some(preparedSection => preparedSection.data_section_id === preparedSectionId)
     ).id;
   };
 
@@ -134,7 +152,9 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
 
   const value = {
     //Constants
-    DEFAULT_GROUP_ID,
+    HIDDEN_GROUP_ID,
+    SHOWN_ATTRIBUTE_GROUP_ID,
+    HIDDEN_ATTRIBUTE_GROUP_ID,
     // State
     addingTemplate,
     title,
@@ -158,7 +178,7 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
     reorderSections,
     onBack,
     // Helpers
-    getGroupIdContainingSectionId
+    getGroupIdContainingPreparedSectionId
   }
 
   return <TemplateContext.Provider value={value}>{children}</TemplateContext.Provider>
