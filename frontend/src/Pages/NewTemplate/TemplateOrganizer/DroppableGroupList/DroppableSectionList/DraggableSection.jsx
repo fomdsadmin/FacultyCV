@@ -1,4 +1,3 @@
-import { useTemplate } from "Pages/NewTemplate/TemplateContext"
 import { Draggable } from "react-beautiful-dnd"
 import { FaGripVertical } from "react-icons/fa"
 import DroppableAttributeGroupList from "./DroppableAttributeGroupList/DroppableAttributeGroupList"
@@ -8,10 +7,6 @@ import AddAttributeGroupButton from "./AddAttributeGroupButton/AddAttributeGroup
 import RemoveSectionButton from "./RemoveSectionButton/RemoveSectionButton"
 
 const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, isInHiddenGroup }) => {
-
-    const { getGroupIdContainingPreparedSectionId } = useTemplate();
-
-    const currentGroupId = getGroupIdContainingPreparedSectionId(preparedSection.data_section_id);
 
     return <Draggable
         draggableId={draggableId}
@@ -33,7 +28,7 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                         </div>
                     </div>
                     <div className="flex items-center gap-2 pr-4">
-                        <AddAttributeGroupButton groupId={currentGroupId} dataSectionId={preparedSection.data_section_id} />
+                        <AddAttributeGroupButton dataSectionId={preparedSection.data_section_id} />
                         <RemoveSectionButton preparedSection={preparedSection} />
                     </div>
                 </div>

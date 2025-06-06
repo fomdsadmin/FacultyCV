@@ -1,9 +1,13 @@
 import { useState } from "react";
+import { useTemplate } from "Pages/NewTemplate/TemplateContext";
 import AddAttributeGroupModal from "./AddAttributeGroupModal";
 
-const AddAttributeGroupButton = ({ groupId, dataSectionId }) => {
+const AddAttributeGroupButton = ({ dataSectionId }) => {
 
+    const { getGroupIdContainingPreparedSectionId } = useTemplate();
     const [showAddAttributeGroupModal, setShowAddAttributeGroupModal] = useState(false);
+
+    const groupId = getGroupIdContainingPreparedSectionId(dataSectionId);
 
     const openAddAttributeGroupModal = (e) => {
         e.stopPropagation();
