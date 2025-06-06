@@ -1,7 +1,8 @@
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
 import { Draggable } from "react-beautiful-dnd"
+import DroppableAttributeList from "./DroppableAttributeList/DroppableAttributeList";
 
-const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, draggableId}) => {
+const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, draggableId, dataSectionId}) => {
 
     const { HIDDEN_GROUP_ID } = useTemplate();
 
@@ -17,10 +18,11 @@ const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, drag
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                 >
-                    <div className="flex items-center justify-between justify-center w-full pl-3 pr-4 pt-3">
+                    <div className="flex flex-col w-full pl-3 pr-4 pt-3">
                         <h2 className="font-bold mb-2" {...provided.dragHandleProps}>
                             {attributeGroup.title}
                         </h2>
+                        <DroppableAttributeList attributes={attributeGroup.attributes} attributeGroupId={attributeGroup.id} dataSectionId={dataSectionId}/>
                     </div>
                 </div>
             )}

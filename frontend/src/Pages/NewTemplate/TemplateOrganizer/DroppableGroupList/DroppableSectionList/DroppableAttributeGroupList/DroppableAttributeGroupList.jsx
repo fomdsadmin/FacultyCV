@@ -23,6 +23,7 @@ const DroppableAttributeGroupList = ({ attributeGroups, dataSectionId }) => {
                             attributeGroup={attributeGroup} 
                             attributeGroupIndex={attributeGroupIndex}
                             draggableId={`${dataSectionId}-${attributeGroup.id}`}
+                            dataSectionId={dataSectionId}
                         />
                     ))}
                     {provided.placeholder}
