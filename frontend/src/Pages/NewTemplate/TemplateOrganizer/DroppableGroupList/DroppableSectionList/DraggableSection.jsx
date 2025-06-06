@@ -4,13 +4,16 @@ import { FaTimesCircle, FaGripVertical } from "react-icons/fa"
 import DroppableAttributeGroupList from "./DroppableAttributeGroupList/DroppableAttributeGroupList"
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
+import AddAttributeGroupButton from "./AddAttributeGroupButton/AddAttributeGroupButton"
 
 const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, isInHiddenGroup }) => {
 
-    const { getGroupIdContainingPreparedSectionId, HIDDEN_GROUP_ID, groups, setGroups } = useTemplate()
+    const { getGroupIdContainingPreparedSectionId, HIDDEN_GROUP_ID, groups, setGroups } = useTemplate();
+
+    const currentGroupId = getGroupIdContainingPreparedSectionId(preparedSection.data_section_id);
 
     const handleRemoveSection = () => {
-        const indexOfGroupToModify = groups.findIndex((group) => group.id === getGroupIdContainingPreparedSectionId(preparedSection.data_section_id));
+        const indexOfGroupToModify = groups.findIndex((group) => group.id === currentGroupId);
         const group = groups[indexOfGroupToModify];
         const updatedPreparedSections = group.prepared_sections.filter(s => s.data_section_id !== preparedSection.data_section_id);
         const updatedGroups = [...groups];
@@ -49,17 +52,20 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                             <p className="text-sm text-gray-600">{preparedSection.data_type}</p>
                         </div>
                     </div>
-                    {getGroupIdContainingPreparedSectionId(preparedSection.data_section_id) !== HIDDEN_GROUP_ID && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveSection();
-                            }}
-                            className="btn btn-xs btn-circle btn-ghost"
-                        >
-                            <FaTimesCircle className="h-6 w-6 text-red-500" />
-                        </button>
-                    )}
+                    <div className="flex items-center gap-2 pr-4">
+                        <AddAttributeGroupButton groupId={currentGroupId} dataSectionId={preparedSection.data_section_id}/>
+                        {getGroupIdContainingPreparedSectionId(preparedSection.data_section_id) !== HIDDEN_GROUP_ID && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveSection();
+                                }}
+                                className="btn btn-xs btn-circle btn-ghost"
+                            >
+                                <FaTimesCircle className="h-6 w-6 text-red-500" />
+                            </button>
+                        )}
+                    </div>
                 </div>
             );
 

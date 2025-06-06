@@ -2,7 +2,6 @@ import { Draggable } from "react-beautiful-dnd";
 
 const DraggableAttributeList = ({draggableId, attributeIndex, attribute}) => {
 
-
     return (
         <Draggable
             draggableId={draggableId}
@@ -10,15 +9,14 @@ const DraggableAttributeList = ({draggableId, attributeIndex, attribute}) => {
             isDragDisabled={false}>
             {(provided) => (
                 <div
-                    className="mb-2 p-2 border rounded flex flex-row justify-between items-start shadow-glow"
+                    className="mb-1 px-2 py-1 border rounded-full flex items-center justify-center text-center shadow-sm cursor-grab active:cursor-grabbing hover:bg-gray-50 transition-colors"
                     ref={provided.innerRef}
                     {...provided.draggableProps}
+                    {...provided.dragHandleProps}
                 >
-                    <div className="flex items-center justify-between justify-center w-full pl-3 pr-4 pt-3">
-                        <h2 className="font-bold mb-2" {...provided.dragHandleProps}>
-                            {attribute}
-                        </h2>
-                    </div>
+                    <span className="text-xs font-medium text-gray-700">
+                        {attribute}
+                    </span>
                 </div>
             )}
         </Draggable>

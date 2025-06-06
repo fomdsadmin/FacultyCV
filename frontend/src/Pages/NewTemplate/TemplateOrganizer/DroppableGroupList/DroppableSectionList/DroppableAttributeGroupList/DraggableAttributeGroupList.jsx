@@ -1,8 +1,11 @@
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
 import { Draggable } from "react-beautiful-dnd"
 import DroppableAttributeList from "./DroppableAttributeList/DroppableAttributeList";
+import { Accordion } from "SharedComponents/Accordion/Accordion"
+import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
+import { FaGripVertical } from "react-icons/fa";
 
-const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, draggableId, dataSectionId}) => {
+const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, draggableId, dataSectionId }) => {
 
     const { HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplate();
 
@@ -13,20 +16,41 @@ const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, drag
             draggableId={draggableId}
             index={attributeGroupIndex}
             isDragDisabled={isHiddenAttributeGroup}>
-            {(provided) => (
-                <div
-                    className="mb-2 p-2 border rounded flex flex-row justify-between items-start shadow-glow"
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                >
-                    <div className="flex flex-col w-full pl-3 pr-4 pt-3">
-                        <h2 className="font-bold mb-2" {...provided.dragHandleProps}>
-                            {attributeGroup.title}
-                        </h2>
-                        <DroppableAttributeList attributes={attributeGroup.attributes} attributeGroupId={attributeGroup.id} dataSectionId={dataSectionId}/>
+            {(provided) => {
+                const accordionTitle = (
+                    <div className="flex justify-between items-center w-full">
+                        <div className="flex items-center gap-2">
+                            {!isHiddenAttributeGroup && (
+                                <div
+                                    {...provided.dragHandleProps}
+                                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
+                                >
+                                    <FaGripVertical className="h-4 w-4 text-gray-500" />
+                                </div>
+                            )}
+                            <h4 className="font-bold text-md">{attributeGroup.title}</h4>
+                        </div>
                     </div>
-                </div>
-            )}
+                );
+
+                return (
+                    <div
+                        className="mb-2 border rounded shadow-glow"
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                    >
+                        <Accordion>
+                            <AccordionItem title={accordionTitle}>
+                                <DroppableAttributeList
+                                    attributes={attributeGroup.attributes}
+                                    attributeGroupId={attributeGroup.id}
+                                    dataSectionId={dataSectionId}
+                                />
+                            </AccordionItem>
+                        </Accordion>
+                    </div>
+                );
+            }}
         </Draggable>
     );
 }
