@@ -26,18 +26,18 @@ const DraggableGroup = ({ group, groupIndex }) => {
         setGroups(updatedGroups);
     }
 
-    const isDefaultGroup = group.id === HIDDEN_GROUP_ID
+    const isHiddenGroup = group.id === HIDDEN_GROUP_ID
 
     return (
         <Draggable
             draggableId={group.id}
             index={groupIndex}
-            isDragDisabled={isDefaultGroup}>
+            isDragDisabled={isHiddenGroup}>
             {(provided) => {
                 const accordionTitle = (
                     <div className="flex justify-between items-center w-full">
                         <div className="flex items-center gap-2">
-                            {!isDefaultGroup && (
+                            {!isHiddenGroup && (
                                 <div 
                                     {...provided.dragHandleProps}
                                     className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
@@ -68,8 +68,8 @@ const DraggableGroup = ({ group, groupIndex }) => {
                         {...provided.draggableProps}
                     >
                         <Accordion>
-                            <AccordionItem title={accordionTitle} hideIsOpenIcon={true}>
-                                <DroppableSectionList group={group} />
+                            <AccordionItem title={accordionTitle} hideIsOpenIcon={true && !isHiddenGroup}>
+                                <DroppableSectionList group={group} isInHiddenGroup={isHiddenGroup} />
                             </AccordionItem>
                         </Accordion>
                     </div>

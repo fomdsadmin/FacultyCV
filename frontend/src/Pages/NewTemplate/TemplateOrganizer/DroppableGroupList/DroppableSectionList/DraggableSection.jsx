@@ -5,7 +5,7 @@ import DroppableAttributeGroupList from "./DroppableAttributeGroupList/Droppable
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 
-const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection }) => {
+const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, isInHiddenGroup }) => {
 
     const { getGroupIdContainingPreparedSectionId, HIDDEN_GROUP_ID, groups, setGroups } = useTemplate()
 
@@ -38,7 +38,7 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection }
             const accordionTitle = (
                 <div className="flex justify-between items-center w-full">
                     <div className="flex items-center gap-2">
-                        <div 
+                        <div
                             {...provided.dragHandleProps}
                             className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
                         >
@@ -50,11 +50,11 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection }
                         </div>
                     </div>
                     {getGroupIdContainingPreparedSectionId(preparedSection.data_section_id) !== HIDDEN_GROUP_ID && (
-                        <button 
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleRemoveSection();
-                            }} 
+                            }}
                             className="btn btn-xs btn-circle btn-ghost"
                         >
                             <FaTimesCircle className="h-6 w-6 text-red-500" />
@@ -70,9 +70,9 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection }
                     className="mb-2 border rounded shadow-glow w-full"
                 >
                     <Accordion>
-                        <AccordionItem title={accordionTitle} hideIsOpenIcon={true}>
-                            <DroppableAttributeGroupList 
-                                attributeGroups={preparedSection.attribute_groups} 
+                        <AccordionItem title={accordionTitle} hideIsOpenIcon={true && !isInHiddenGroup}>
+                            <DroppableAttributeGroupList
+                                attributeGroups={preparedSection.attribute_groups}
                                 dataSectionId={preparedSection.data_section_id}
                             />
                         </AccordionItem>
