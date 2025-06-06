@@ -4,7 +4,7 @@ import { FaSort } from "react-icons/fa";
 import SortingModal from "./SortingModal";
 
 const SortingButton = ({ preparedSection }) => {
-    const { groups, setGroups, getGroupIdContainingPreparedSectionId, HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplate();
+    const { setGroups, getGroupIdContainingPreparedSectionId, HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedAttribute, setSelectedAttribute] = useState("");
 

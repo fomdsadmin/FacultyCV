@@ -18,14 +18,6 @@ const SortingModal = ({
 
     return (
         <ModalStylingWrapper useDefaultBox={true}>
-            <button 
-                type="button" 
-                className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" 
-                onClick={onClose}
-            >
-                ✕
-            </button>
-            
             <h3 className="text-lg font-semibold mb-4">
                 Sort Settings for "{sectionTitle}"
             </h3>
