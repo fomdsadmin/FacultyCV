@@ -168,7 +168,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                 </div>
               )}
               {/* Grants Section */}
-              <div className="relative w-full h-full flex flex-col bg-zinc-50 border-l-8  rounded-xl shadow-md px-4 py-4 mb-6">
+              {/* <div className="relative w-full h-full flex flex-col bg-zinc-50 border-l-8  rounded-xl shadow-md px-4 py-4 mb-6">
                 <div className="flex items-start gap-4">
                   <svg
                     className="w-6 h-6 text-green-600 mt-1"
@@ -186,10 +186,10 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                   <div className="flex-1 xl:pr-24">
                     <div className="text-md font-bold text-green-800 mb-2">
                       Grants
-                    </div>
+                    </div> */}
 
-                    {/* Rise Grants */}
-                    <div className="mb-2 p-3 bg-white rounded-lg border">
+              {/* Rise Grants */}
+              {/* <div className="mb-2 p-3 bg-white rounded-lg border">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
                         <div className="flex items-center gap-2 mb-2 sm:mb-0">
                           <span className="text-sm font-semibold ">
@@ -197,8 +197,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                           </span>
                         </div>
                         <div className="text-sm">
-                          <span className="bg-green-100 text-green-800 font-semibold px-2 py-1 rounded text-xs">
-                            {/* Replace with actual count */}5 Active
+                          <span className="bg-green-100 text-green-800 font-semibold px-2 py-1 rounded text-xs">5 Active
                           </span>
                         </div>
                       </div>
@@ -206,10 +205,10 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                         <span className="font-medium">Last synced:</span> Dec 3,
                         2024 at 9:45 AM
                       </div>
-                    </div>
+                    </div> */}
 
-                    {/* External Grants */}
-                    <div className="mb-2 p-3 bg-white rounded-lg border">
+              {/* External Grants */}
+              {/* <div className="mb-2 p-3 bg-white rounded-lg border">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
                         <div className="flex items-center gap-2 mb-2 sm:mb-0">
                           <span className="text-sm font-semibold ">
@@ -218,7 +217,6 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                         </div>
                         <div className="text-sm">
                           <span className="bg-blue-100 text-blue-800 font-semibold px-2 py-1 rounded text-xs">
-                            {/* Replace with actual count */}
                             12 Total
                           </span>
                         </div>
@@ -228,18 +226,19 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                         30, 2024 at 1:20 PM
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
-                  {/* Button positioned differently for mobile vs desktop */}
-                  <div className="mt-4 flex justify-start lg:absolute lg:top-3 lg:right-3 lg:mt-0">
+              {/* Button positioned differently for mobile vs desktop */}
+              {/* <div className="mt-4 flex justify-start lg:absolute lg:top-3 lg:right-3 lg:mt-0">
                     <Link to="/academic-work">
                       <button className="btn btn-xs bg-green-600 hover:bg-green-700 text-white border-green-600">
                         View All
                       </button>
                     </Link>
-                  </div>
+                  </div> 
                 </div>
               </div>
+              */}
 
               {/* ORCID and Scopus Connection Status */}
               <div className="relative w-full h-full flex flex-col bg-zinc-50 border-l-8 border-gr-500 rounded-xl shadow-md px-4 py-4 mb-6">
