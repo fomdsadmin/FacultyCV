@@ -5,6 +5,7 @@ import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 import AddAttributeGroupButton from "./AddAttributeGroupButton/AddAttributeGroupButton"
 import RemoveSectionButton from "./RemoveSectionButton/RemoveSectionButton"
+import SortingDropdown from "./SortingButton/SortingButton"
 
 const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, isInHiddenGroup }) => {
 
@@ -42,6 +43,7 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                 >
                     <Accordion>
                         <AccordionItem title={accordionTitle} hideIsOpenIcon={true && !isInHiddenGroup}>
+                        <SortingDropdown preparedSection={preparedSection}/>
                             <DroppableAttributeGroupList
                                 attributeGroups={preparedSection.attribute_groups}
                                 dataSectionId={preparedSection.data_section_id}

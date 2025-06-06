@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import DroppableGroup from "./DroppableGroupList/DroppableGroup";
 import { useTemplate } from "../TemplateContext";
+import { toast } from "react-toastify";
 
 export default function TemplateOrganizer() {
 
@@ -116,7 +117,6 @@ export default function TemplateOrganizer() {
       source,
       destination
     });
-    console.log('Current groups structure:', groups);
 
     const updatedGroups = groups.map(group => ({
       ...group,
@@ -157,20 +157,35 @@ export default function TemplateOrganizer() {
 
           if (sourceAttributeGroupIndex === -1 || destAttributeGroupIndex === -1) {
             console.log('Could not find attribute groups');
-            console.log('Available attribute groups:', section.attribute_groups.map(attributeGroup => ({
-              id: attributeGroup?.id,
-              title: attributeGroup?.title
-            })));
             return section;
           }
 
-          const updatedAttributeGroups = [...section.attribute_groups];
-          const sourceAttributeGroup = updatedAttributeGroups[sourceAttributeGroupIndex];
-          const destAttributeGroup = updatedAttributeGroups[destAttributeGroupIndex];
+          const sourceAttributeGroup = section.attribute_groups[sourceAttributeGroupIndex];
+          const destAttributeGroup = section.attribute_groups[destAttributeGroupIndex];
 
           if (!sourceAttributeGroup || !sourceAttributeGroup.attributes) {
             console.log('Source attribute group missing or has no attributes:', sourceAttributeGroup);
             return section;
+          }
+
+          // Check if destination is the hidden attribute group
+          const isMovingToHidden = destAttributeGroup.id === HIDDEN_ATTRIBUTE_GROUP_ID;
+          
+          if (isMovingToHidden) {
+            // Count total visible attributes (attributes not in hidden group)
+            const totalVisibleAttributes = section.attribute_groups.reduce((count, group) => {
+              if (group.id !== HIDDEN_ATTRIBUTE_GROUP_ID && group.attributes) {
+                return count + group.attributes.length;
+              }
+              return count;
+            }, 0);
+
+            // If there's only 1 visible attribute left, prevent moving it to hidden
+            if (totalVisibleAttributes <= 1) {
+              console.log('Cannot move the last visible attribute to hidden group');
+              toast.warning('At least one attribute must be displayed!', {autoClose: 3000})
+              return section;
+            }
           }
 
           // Get the moved attribute
@@ -178,6 +193,8 @@ export default function TemplateOrganizer() {
           const [movedAttribute] = sourceAttributes.splice(source.index, 1);
 
           console.log('Moving attribute:', movedAttribute);
+
+          const updatedAttributeGroups = [...section.attribute_groups];
 
           if (sourceAttributeGroupId === destAttributeGroupId) {
             // Moving within same attribute group

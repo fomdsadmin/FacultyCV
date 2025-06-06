@@ -40,6 +40,11 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
         title: HIDDEN_GROUP_ID,
         prepared_sections: sections.map((section) => ({
           ...section,
+          sort: {
+            numerically: false, // if not it will be sorted alphabetically
+            ascending: true,
+          },
+          count_rows: false,
           attribute_groups: [
             {
               id: HIDDEN_ATTRIBUTE_GROUP_ID,
@@ -57,9 +62,6 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
         })),
       }
     ];
-
-    console.log(initialData)
-
 
     setGroups(initialData);
   }, [sections])
