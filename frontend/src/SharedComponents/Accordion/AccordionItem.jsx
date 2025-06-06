@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function AccordionItem({ title, children }) {
+export function AccordionItem({ title, children, hideIsOpenIcon=false }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -10,7 +10,7 @@ export function AccordionItem({ title, children }) {
         className="w-full px-4 py-2 text-left bg-gray-100 hover:bg-gray-200 font-medium flex justify-between items-center"
       >
         {title}
-        <span>{isOpen ? '-' : '+'}</span>
+        {!hideIsOpenIcon && <span>{isOpen ? '-' : '+'}</span>}
       </button>
 
       <div

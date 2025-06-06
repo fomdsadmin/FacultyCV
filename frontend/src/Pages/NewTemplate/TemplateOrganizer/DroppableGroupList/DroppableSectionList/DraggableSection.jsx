@@ -1,7 +1,9 @@
 import { useTemplate } from "Pages/NewTemplate/TemplateContext"
 import { Draggable } from "react-beautiful-dnd"
-import { FaTimesCircle } from "react-icons/fa"
+import { FaTimesCircle, FaGripVertical } from "react-icons/fa"
 import DroppableAttributeGroupList from "./DroppableAttributeGroupList/DroppableAttributeGroupList"
+import { Accordion } from "SharedComponents/Accordion/Accordion"
+import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 
 const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection }) => {
 
@@ -32,27 +34,52 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection }
         draggableId={draggableId}
         index={preparedSectionIndex}
     >
-        {(provided) => (
-            <div
-                ref={provided.innerRef}
-                {...provided.draggableProps}
-                {...provided.dragHandleProps}
-                className="mb-2 p-2 border rounded shadow-glow w-full"
-            >
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h3 className="text-lg font-semibold">{preparedSection.title}</h3>
-                        <p className="text-sm text-gray-600">{preparedSection.data_type}</p>
+        {(provided) => {
+            const accordionTitle = (
+                <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center gap-2">
+                        <div 
+                            {...provided.dragHandleProps}
+                            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
+                        >
+                            <FaGripVertical className="h-4 w-4 text-gray-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold">{preparedSection.title}</h3>
+                            <p className="text-sm text-gray-600">{preparedSection.data_type}</p>
+                        </div>
                     </div>
                     {getGroupIdContainingPreparedSectionId(preparedSection.data_section_id) !== HIDDEN_GROUP_ID && (
-                        <button onClick={handleRemoveSection} className="btn btn-xs btn-circle btn-ghost">
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveSection();
+                            }} 
+                            className="btn btn-xs btn-circle btn-ghost"
+                        >
                             <FaTimesCircle className="h-6 w-6 text-red-500" />
                         </button>
                     )}
                 </div>
-                <DroppableAttributeGroupList attributeGroups={preparedSection.attribute_groups} dataSectionId={preparedSection.data_section_id}></DroppableAttributeGroupList>
-            </div>
-        )}
+            );
+
+            return (
+                <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    className="mb-2 border rounded shadow-glow w-full"
+                >
+                    <Accordion>
+                        <AccordionItem title={accordionTitle} hideIsOpenIcon={true}>
+                            <DroppableAttributeGroupList 
+                                attributeGroups={preparedSection.attribute_groups} 
+                                dataSectionId={preparedSection.data_section_id}
+                            />
+                        </AccordionItem>
+                    </Accordion>
+                </div>
+            );
+        }}
     </Draggable>
 }
 
