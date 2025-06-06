@@ -75,14 +75,21 @@ const ContactForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           content: base64
         }];
       }
-      const response = await fetch("https://5h3jq97juf.execute-api.ca-central-1.amazonaws.com/prod/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
+        // Determine the correct base URL based on the hostname
+    const baseUrl = window.location.hostname.startsWith("dev.")
+      ? "https://5h3jq97juf.execute-api.ca-central-1.amazonaws.com/prod"
+      : "https://0uex067hed.execute-api.ca-central-1.amazonaws.com/prod";
+
+    // Make the POST request to /send-email with Authorization header and payload
+    const response = await fetch(`${baseUrl}/send-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`, // Assumes idToken is defined
+      },
+      body: JSON.stringify(payload), // Assumes payload is defined
+    });
+
 
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
