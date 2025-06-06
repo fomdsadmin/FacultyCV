@@ -1,6 +1,7 @@
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
 import { Draggable } from "react-beautiful-dnd"
 import DroppableAttributeList from "./DroppableAttributeList/DroppableAttributeList";
+import RemoveAttributeGroupButton from "./RemoveAttributeGroupButton";
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 import { FaGripVertical } from "react-icons/fa";
@@ -30,6 +31,10 @@ const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, drag
                             )}
                             <h4 className="font-bold text-md">{attributeGroup.title}</h4>
                         </div>
+                        <RemoveAttributeGroupButton 
+                            attributeGroup={attributeGroup} 
+                            dataSectionId={dataSectionId} 
+                        />
                     </div>
                 );
 

@@ -4,9 +4,9 @@ import DroppableAttributeGroupList from "./DroppableAttributeGroupList/Droppable
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 import AddAttributeGroupButton from "./AddAttributeGroupButton/AddAttributeGroupButton"
-import RemoveSectionButton from "./RemoveSectionButton/RemoveSectionButton"
+import RemoveSectionButton from "./RemoveSectionButton"
 import SortingButton from "./SortingButton/SortingButton"
-import RowCountCheckbox from "./RowCountCheckbox/RowCountCheckbox"
+import RowCountCheckbox from "./RowCountCheckbox"
 
 const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, isInHiddenGroup }) => {
 
