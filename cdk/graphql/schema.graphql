@@ -201,6 +201,7 @@ type AuditViewRecord {
   profile_record: String!
   logged_user_role: String!
   logged_user_email: String!
+  logged_user_action: String!
 }
 
 type Query {
@@ -333,17 +334,21 @@ type Query {
     @aws_auth(cognito_groups: ["Faculty", "Assistant", "Admin"])
 
   getAuditView(logged_user_id: Int): [AuditViewRecord]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+    @aws_auth(cognito_groups: ["Admin"])
 
 }
 
 input AuditViewInput {
-  ip: String,
+  logged_user_first_name: String!
+  logged_user_last_name: String!
+  ip: String
   browser_version: String
   page: String
   session_id: String!
   assistant: Boolean!
-  profile_record: String
+  profile_record: String!
+  logged_user_role: String!
+  logged_user_action: String!
 }
 
 type Mutation {

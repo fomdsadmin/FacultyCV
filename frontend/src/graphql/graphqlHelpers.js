@@ -933,8 +933,10 @@ export const linkPublication = async (user_id, data_details) => {
  *   session_id
  *   ip
  *   browser_version
+ *   assistant
  *   logged_user_role
  *   logged_user_email
+ *   logged_user_action
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */

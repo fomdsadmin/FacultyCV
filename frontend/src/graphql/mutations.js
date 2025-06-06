@@ -390,7 +390,8 @@ export const addAuditViewMutation = `
         assistant
         profile_record
         logged_user_role,
-        logged_user_email
+        logged_user_email,
+        logged_user_action
         }
     }
 `;
