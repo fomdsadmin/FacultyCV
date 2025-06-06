@@ -152,7 +152,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('program', 'varchar', '', False))
     columns.append(createColumn('title', 'varchar', '', False))
     columns.append(createColumn('amount', 'int', '', False))
-    columns.append(createColumn('dates', 'varchar', '', True))
+    columns.append(createColumn('dates', 'varchar', '', False))
+    columns.append(createColumn('sponsor', 'varchar', '', True)) # New column for rise sponsor
     query = createQuery('rise_data', columns)
     cursor.execute(query)
 
@@ -179,6 +180,36 @@ def lambda_handler(event, context):
     columns.append(createColumn('kind_code', 'varchar', '', False))
     columns.append(createColumn('classification', 'varchar', '', True))
     query = createQuery('patents', columns)
+    cursor.execute(query)
+    
+    # Create Declarations Table
+    columns = []
+    columns.append(createColumn('id', 'serial', 'PRIMARY KEY', False))
+    columns.append(createColumn('first_name', 'text', 'NOT NULL', False))
+    columns.append(createColumn('last_name', 'text', 'NOT NULL', False))
+    columns.append(createColumn('reporting_year', 'int', 'NOT NULL', False))
+    columns.append(createColumn('created_by', 'text', 'NOT NULL', False))
+    columns.append(createColumn('created_on', 'timestamp', 'DEFAULT CURRENT_TIMESTAMP', False))
+    columns.append(createColumn('other_data', 'jsonb', 'NOT NULL', True))
+    query = createQuery('declarations', columns)
+    cursor.execute(query)
+    
+    # Create Audit View Table
+    columns = []
+    columns.append(createColumn('log_view_id', 'serial', 'PRIMARY KEY', False))
+    columns.append(createColumn('ts', 'timestamp', 'NOT NULL', False))
+    columns.append(createColumn('logged_user_id', 'integer', 'NOT NULL', False))
+    columns.append(createColumn('logged_user_first_name', 'text', 'NOT NULL', False))
+    columns.append(createColumn('logged_user_last_name', 'text', 'NOT NULL', False))
+    columns.append(createColumn('ip', 'inet', '', False))
+    columns.append(createColumn('browser_version', 'text', 'NOT NULL', False))
+    columns.append(createColumn('page', 'text', '', False))
+    columns.append(createColumn('session_id', 'text', 'NOT NULL', False))
+    columns.append(createColumn('assistant', 'boolean', 'NOT NULL', False))
+    columns.append(createColumn('profile_record', 'text', '', False))
+    columns.append(createColumn('logged_user_role', 'text', '', False))
+    columns.append(createColumn('logged_user_email', 'text', 'NOT NULL', True))
+    query = createQuery('audit_view', columns)
     cursor.execute(query)
     
     cursor.close()

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef} from 'react';
-import { getUserCVData } from '../graphql/graphqlHelpers';
+import { getAllSections, getUserCVData } from '../graphql/graphqlHelpers';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -25,7 +25,7 @@ const Dashboard = ({ userInfo }) => {
   const wordCloudCanvasRef = useRef(null);
   const [totalGrants, setTotalGrants] = useState(0);
   const [showAllKeywords, setShowAllKeywords] = useState(false);
-
+  
   const formatCAD = (value) =>
     new Intl.NumberFormat("en-CA", {
       style: "currency",
@@ -38,9 +38,23 @@ const Dashboard = ({ userInfo }) => {
 
     const fetchData = async () => {
       try {
-        const pubSectionId = "1c23b9a0-b6b5-40b8-a4aa-f822d0567f09";
-        const pubData = await getUserCVData(user.user_id, pubSectionId);
-        const parsedPubs = pubData.map((d) => ({
+            let dataSections = [];
+        try {
+          dataSections = await getAllSections();
+        } catch (error) {
+          
+        }
+      
+      const section1 = 'Publications';
+      const section2 = 'Secure Funding';
+
+      const publicationSectionId = dataSections.find(section => section.title === section1)?.data_section_id;
+      const secureFundingSectionId = dataSections.find(section => section.title === section2)?.data_section_id;
+
+      const pubSectionId = publicationSectionId;
+        
+      const pubData = await getUserCVData(user.user_id, pubSectionId);
+      const parsedPubs = pubData.map((d) => ({
           ...d,
           data_details: JSON.parse(d.data_details),
         }));
@@ -90,7 +104,7 @@ const Dashboard = ({ userInfo }) => {
           ],
         });
 
-        const fundSectionId = "26939d15-7ef9-46f6-9b49-22cf95074e88";
+        const fundSectionId = secureFundingSectionId;
         const fundData = await getUserCVData(user.user_id, fundSectionId);
         const parsedFunds = fundData.map((d) => ({
           ...d,

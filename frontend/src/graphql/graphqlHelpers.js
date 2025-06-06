@@ -28,6 +28,7 @@ import {
   getOrcidPublicationQuery,
   getLatexConfigurationQuery,
   GET_BIO_RESPONSE_DATA,
+  getAuditViewQuery,
 } from "./queries";
 import {
   addUserMutation,
@@ -54,6 +55,7 @@ import {
   ADD_SECTION,
   ADD_USER_CV_DATA,
   UPDATE_SECTION,
+  addAuditViewMutation,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -605,6 +607,19 @@ export const getLatexConfiguration = async () => {
   return results["data"]["getLatexConfiguration"];
 };
 
+/** * Function to get the user id of the currently logged in user
+ * Return value: JavaScript array of audit log records
+ */
+export const getAuditViewData = async (logged_user_id) => {
+  let results;
+  if (logged_user_id !== undefined && logged_user_id !== null) {
+    results = await runGraphql(getAuditViewQuery(logged_user_id));
+  } else {
+    results = await runGraphql(getAuditViewQuery());
+  }
+  return results["data"]["getAuditView"];
+};
+
 // --- POST ---
 
 /**
@@ -908,6 +923,26 @@ export const linkPublication = async (user_id, data_details) => {
   }
 };
 
+/**
+ * Function to add audit view log
+ * Arguments:
+ *   logged_user_id
+ *   logged_user_first_name
+ *   logged_user_last_name
+ *   page
+ *   session_id
+ *   ip
+ *   browser_version
+ *   logged_user_role
+ *   logged_user_email
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const addAuditView = async (input) => {
+  const results = await executeGraphql(addAuditViewMutation, { input });
+  return results["data"]["addAuditView"];
+};
+
 // --- UPDATE ---
 
 /**
@@ -1189,3 +1224,5 @@ export const getBioResponseData = async (username_input) => {
   });
   return results["data"]["getBioResponseData"];
 }
+
+
