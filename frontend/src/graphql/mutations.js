@@ -374,3 +374,23 @@ export const updateLatexConfigurationMutation = (vspace, margin, font) => `
         )
     }
 `;
+
+export const addAuditViewMutation = `
+    mutation AddAuditView($input: AuditViewInput!) {
+        addAuditView(input: $input) {
+        log_view_id
+        ts
+        logged_user_id
+        logged_user_first_name
+        logged_user_last_name
+        ip
+        browser_version
+        page
+        session_id
+        assistant
+        profile_record
+        logged_user_role,
+        logged_user_email
+        }
+    }
+`;

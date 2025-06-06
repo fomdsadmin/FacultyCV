@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaUsers, FaChartLine, FaFileAlt, FaThList, FaTrashAlt } from "react-icons/fa";
+import { FaUsers, FaChartLine, FaFileAlt, FaThList, FaTrashAlt, FaRegClipboard } from "react-icons/fa";
 import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'aws-amplify/auth';
 import { useNavigate } from 'react-router-dom';
@@ -71,6 +71,12 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
           <Link to='/archived-sections'>
           <FaTrashAlt className="h-4 w-4" />
           {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/archived-sections' ? 'font-bold' : ''}`}>Archived Sections</p>}
+          </Link>
+        </li>
+        <li className={`mb-6 ${location.pathname === '/audit' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/audit'>
+            <FaRegClipboard className="h-4 w-4" />
+            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/audit' ? 'font-bold' : ''}`}>Audit</p>}
           </Link>
         </li>
       </ul>

@@ -233,6 +233,51 @@ export const getUserDeclarationsQuery = (first_name, last_name) => `
     }
 `;
 
+export const getAuditViewQuery = (logged_user_id) => {
+    if (logged_user_id !== undefined && logged_user_id !== null) {
+        return `
+            query getAuditView {
+                getAuditView(logged_user_id: ${logged_user_id}) {
+                    log_view_id
+                    ts
+                    logged_user_id
+                    logged_user_first_name
+                    logged_user_last_name
+                    ip
+                    browser_version
+                    page
+                    session_id
+                    assistant
+                    profile_record
+                    logged_user_role,
+                    logged_user_email
+                }
+            }
+        `;
+    } else {
+        return `
+            query getAuditView {
+                getAuditView {
+                    log_view_id
+                    ts
+                    logged_user_id
+                    logged_user_first_name
+                    logged_user_last_name
+                    ip
+                    browser_version
+                    page
+                    session_id
+                    assistant
+                    profile_record
+                    logged_user_role,
+                    logged_user_email
+                }
+            }
+        `;
+    }
+};
+
+
 export const getElsevierAuthorMatchesQuery = (
     first_name,
     last_name,
