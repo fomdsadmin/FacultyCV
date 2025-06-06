@@ -187,21 +187,35 @@ type InsertResponse {
   created_on: String!
 }
 
+input AuditViewInput {
+	logged_user_first_name: String!
+	logged_user_last_name: String!
+	ip: String
+	browser_version: String
+	page: String
+	session_id: String
+	assistant: Boolean
+	profile_record: String
+	logged_user_role: String
+	logged_user_email: String
+	logged_user_action: String
+}
+
 type AuditViewRecord {
-  log_view_id: Int!
-  ts: String!
-  logged_user_id: Int!
-  logged_user_first_name: String!
-  logged_user_last_name: String!
-  ip: String
-  browser_version: String
-  page: String
-  session_id: String!
-  assistant: Boolean!
-  profile_record: String!
-  logged_user_role: String!
-  logged_user_email: String!
-  logged_user_action: String!
+	log_view_id: Int!
+	ts: String!
+	logged_user_id: String!
+	logged_user_first_name: String!
+	logged_user_last_name: String!
+	ip: String
+	browser_version: String
+	page: String
+	session_id: String
+	assistant: Boolean
+	profile_record: String
+	logged_user_role: String
+	logged_user_email: String
+	logged_user_action: String
 }
 
 type Query {
@@ -338,18 +352,7 @@ type Query {
 
 }
 
-input AuditViewInput {
-  logged_user_first_name: String!
-  logged_user_last_name: String!
-  ip: String
-  browser_version: String
-  page: String
-  session_id: String!
-  assistant: Boolean!
-  profile_record: String!
-  logged_user_role: String!
-  logged_user_action: String!
-}
+
 
 type Mutation {
   addUserDeclaration(

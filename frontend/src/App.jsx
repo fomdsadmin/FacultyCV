@@ -125,7 +125,7 @@ const AppContent = () => {
   return (
     <Router>
       {user && <Header />}
-      <PageViewLogger />
+      {user && <PageViewLogger userInfo={userInfo} />}
       <Routes>
         <Route path="/home" element={user ? (
           Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> :
