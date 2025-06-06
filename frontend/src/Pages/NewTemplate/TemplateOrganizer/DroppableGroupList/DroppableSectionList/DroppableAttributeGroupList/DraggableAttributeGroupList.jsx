@@ -4,14 +4,15 @@ import DroppableAttributeList from "./DroppableAttributeList/DroppableAttributeL
 
 const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, draggableId, dataSectionId}) => {
 
-    const { HIDDEN_GROUP_ID } = useTemplate();
+    const { HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplate();
 
+    const isHiddenAttributeGroup = HIDDEN_ATTRIBUTE_GROUP_ID === attributeGroup.id;
 
     return (
         <Draggable
             draggableId={draggableId}
             index={attributeGroupIndex}
-            isDragDisabled={false}>
+            isDragDisabled={isHiddenAttributeGroup}>
             {(provided) => (
                 <div
                     className="mb-2 p-2 border rounded flex flex-row justify-between items-start shadow-glow"

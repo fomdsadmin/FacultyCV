@@ -66,6 +66,23 @@ export default function TemplateOrganizer() {
             return section;
           }
 
+          // Find the hidden attribute group index
+          const hiddenAttributeGroupIndex = section.attribute_groups.findIndex(
+            attributeGroup => attributeGroup.id === HIDDEN_ATTRIBUTE_GROUP_ID
+          );
+
+          // Prevent moving the hidden attribute group or moving other groups to position 0
+          if (source.index === hiddenAttributeGroupIndex || destination.index === 0) {
+            console.log('Cannot move hidden attribute group or move items to position 0');
+            return section;
+          }
+
+          // Prevent moving items to the hidden attribute group position
+          if (destination.index <= hiddenAttributeGroupIndex) {
+            console.log('Cannot move items to or before the hidden attribute group position');
+            return section;
+          }
+
           const sourceAttributeGroups = Array.from(section.attribute_groups);
           const [movedAttributeGroup] = sourceAttributeGroups.splice(source.index, 1);
           sourceAttributeGroups.splice(destination.index, 0, movedAttributeGroup);
