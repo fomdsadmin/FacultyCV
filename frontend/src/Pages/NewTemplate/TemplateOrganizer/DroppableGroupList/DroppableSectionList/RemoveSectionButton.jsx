@@ -1,6 +1,6 @@
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
 import { FaTimesCircle } from "react-icons/fa";
-import { useSectionData } from "../../../hooks/useSectionData";
+import { useSectionData } from "../../hooks/useSectionData";
 
 const RemoveSectionButton = ({ preparedSection }) => {
     const { HIDDEN_GROUP_ID, groups, setGroups } = useTemplate();
