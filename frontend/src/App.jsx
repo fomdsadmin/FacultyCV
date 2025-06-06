@@ -29,7 +29,7 @@ import Templates from './Views/Templates.jsx';
 import Sections from './Views/Sections.jsx';
 import AuditPage from './Views/AuditPage.jsx';
 import ArchivedSections from './Views/ArchivedSections.jsx';
-import PageViewLogger from './Components/AuditLogger/PageViewLogger.jsx';
+//import PageViewLogger from './Components/AuditLogger/PageViewLogger.jsx';
 import DepartmentAdminHomePage from './Views/DepartmentAdminHomePage.jsx';
 import DepartmentAdminAnalytics from './Views/DepartmentAdminAnalytics.jsx';
 import DepartmentAdminTemplates from './Views/DepartmentAdminTemplates.jsx';
@@ -125,7 +125,6 @@ const AppContent = () => {
   return (
     <Router>
       {user && <Header />}
-      <PageViewLogger />
       <Routes>
         <Route path="/home" element={user ? (
           Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> :
