@@ -21,7 +21,6 @@ const PublicationsModal = ({
   fetchData,
 }) => {
   const [allFetchedPublications, setAllFetchedPublications] = useState([]);
-  const [pageSize, setPageSize] = useState(25); // Number of publications to fetch per page
   const [totalResults, setTotalResults] = useState("TBD");
   const [currentPage, setCurrentPage] = useState(0);
   const [fetchingData, setFetchingData] = useState(true);
@@ -47,29 +46,75 @@ const PublicationsModal = ({
         .split(",")
         .map((id) => id.trim())
         .filter((id) => id !== "");
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken?.toString();
+      if (!idToken) throw new Error("Auth Error: No ID token found.");
+
+      const baseUrl = window.location.hostname.startsWith("dev.")
+        ? "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev"
+        : "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev";
+
       for (let scopusId of scopusIds) {
         setCurrentScopusId(scopusId);
         let pageNumber = 0;
         let totalPages = 1;
-
+        const pageSize = 25; // Define a page size for fetching publications
         while (pageNumber <= totalPages) {
-          const retrievedData = await getPublicationMatches(
-            scopusId,
-            pageNumber,
-            pageSize
-          );
+          try {
+            const payload = {
+              arguments: {
+                scopus_id: scopusId,
+                page_number: pageNumber,
+                results_per_page: pageSize,
+              },
+            };
 
-          // Important defensive check
-          if (!retrievedData || !retrievedData.publications) {
-            console.warn("Scopus returned invalid data, skipping...");
-            break;
+            const response = await fetch(
+              `${baseUrl}/getBatchedScopusPublications`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify(payload),
+              }
+            );
+
+            if (!response.ok)
+              throw new Error(`Server error: ${response.status}`);
+            else {
+              const responseData = await response.json();
+              console.log(
+                "Fetched",
+                responseData,
+                " Publications from Scopus successfully | 200 OK"
+              );
+
+              publications = [...publications, ...responseData.publications];
+              totalPages = responseData.total_pages ?? 0;
+              setTotalResults(responseData.total_results ?? 0);
+              pageNumber += 1;
+            }
+          } catch (error) {
+            console.error("Error fetching Scopus publications:", error);
           }
-
-          publications = [...publications, ...retrievedData.publications];
-          totalPages = retrievedData.total_pages ?? 0;
-          setTotalResults(retrievedData.total_results ?? 0);
-          pageNumber += 1;
         }
+        // const retrievedData = await getPublicationMatches(
+        //   scopusId,
+        //   pageNumber,
+        //   pageSize
+        // );
+
+        // // Important defensive check
+        // if (!retrievedData || !retrievedData.publications) {
+        //   console.warn("Scopus returned invalid data, skipping...");
+        //   break;
+        // }
+
+        // publications = [...publications, ...retrievedData.publications];
+        // totalPages = retrievedData.total_pages ?? 0;
+        // setTotalResults(retrievedData.total_results ?? 0);
       }
     }
     console.log("Total Scopus Publications fetched:", publications.length);
