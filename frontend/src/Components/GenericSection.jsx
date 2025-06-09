@@ -155,18 +155,27 @@ const GenericSection = ({ user, section, onBack }) => {
 
   return (
     <div>
-      {
-        onBack &&
-        <button onClick={handleBack} className='text-zinc-800 btn btn-ghost min-h-0 h-8 mt-5 leading-tight mr-4'>
+      {onBack && (
+        <button
+          onClick={handleBack}
+          className="text-zinc-800 btn btn-ghost min-h-0 h-8 mt-5 leading-tight mr-4"
+        >
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
-      }
-      <div className='m-4 flex items-center'>
-        <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
-        <button onClick={handleNew} className='ml-auto text-white btn btn-success min-h-0 h-8 leading-tight'>New</button>
+      )}
+      <div className="m-4 flex items-center">
+        <h2 className="text-left text-4xl font-bold text-zinc-600">
+          {section.title}
+        </h2>
+        <button
+          onClick={handleNew}
+          className="ml-auto text-white btn btn-success min-h-0 h-8 leading-tight"
+        >
+          New
+        </button>
       </div>
-      <div className='m-4 flex'>{section.description}</div>
-      <div className='m-4 flex'>
+      <div className="m-4 flex">{section.description}</div>
+      <div className="m-4 flex">
         <label className="input input-bordered flex items-center gap-2 flex-1">
           <input
             type="text"
@@ -184,12 +193,13 @@ const GenericSection = ({ user, section, onBack }) => {
             <path
               fillRule="evenodd"
               d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-              clipRule="evenodd" />
+              clipRule="evenodd"
+            />
           </svg>
         </label>
       </div>
       {loading ? (
-        <div className='flex items-center justify-center w-full'>
+        <div className="flex items-center justify-center w-full">
           <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
         </div>
       ) : (
