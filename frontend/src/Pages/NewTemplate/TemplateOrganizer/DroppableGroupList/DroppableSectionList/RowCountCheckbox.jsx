@@ -1,7 +1,8 @@
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
+import { useTemplateOrganizer } from "../../TemplateOrganizerContext";
 
 const RowCountCheckbox = ({ preparedSection }) => {
-    const { setGroups, getGroupIdContainingPreparedSectionId } = useTemplate();
+    const { setGroups, getGroupIdContainingPreparedSectionId } = useTemplateOrganizer();
 
     const handleToggleRowCount = (e) => {
         const isChecked = e.target.checked;

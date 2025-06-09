@@ -1,11 +1,12 @@
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
+import { useTemplateOrganizer } from "Pages/NewTemplate/TemplateOrganizer/TemplateOrganizerContext";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import ModalStylingWrapper from "SharedComponents/ModalStylingWrapper";
 
 const AddAttributeGroupModal = ({ onClose, dataSectionId, groupId }) => {
 
-    const { setGroups, groups } = useTemplate();
+    const { setGroups, groups } = useTemplateOrganizer();
 
     const [attributeGroupName, setAttributeGroupName] = useState("");
 
@@ -20,7 +21,7 @@ const AddAttributeGroupModal = ({ onClose, dataSectionId, groupId }) => {
         const targetSection = targetGroup?.prepared_sections?.find(
             (preparedSection) => preparedSection.data_section_id === dataSectionId
         );
-        
+
         // Check if attribute group name already exists in this section
         const existingAttributeGroupNames = targetSection.attribute_groups?.map(
             (attributeGroup) => attributeGroup.id
