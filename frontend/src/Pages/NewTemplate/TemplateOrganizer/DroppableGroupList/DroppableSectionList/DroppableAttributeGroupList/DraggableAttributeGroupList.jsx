@@ -5,10 +5,11 @@ import RemoveAttributeGroupButton from "./RemoveAttributeGroupButton";
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 import { FaGripVertical } from "react-icons/fa";
+import { useTemplateOrganizer } from "Pages/NewTemplate/TemplateOrganizer/TemplateOrganizerContext";
 
 const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, draggableId, dataSectionId }) => {
 
-    const { HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplate();
+    const { HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplateOrganizer();
 
     const isHiddenAttributeGroup = HIDDEN_ATTRIBUTE_GROUP_ID === attributeGroup.id;
 

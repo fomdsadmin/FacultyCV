@@ -84,38 +84,9 @@ export const TemplateProvider = ({ children, onBack }) => {
     setLoading(false)
   }
 
-  const toggleSection = (index) => {
-    const newSections = [...sections]
-    newSections[index].showMinus = !newSections[index].showMinus
-    setSections(newSections)
-  }
-
-  const selectAllSections = () => {
-    const newSections = sections.map((section) => ({
-      ...section,
-      showMinus: true,
-    }))
-    setSections(newSections)
-  }
-
-  const deselectAllSections = () => {
-    const newSections = sections.map((section) => ({
-      ...section,
-      showMinus: false,
-    }))
-    setSections(newSections)
-  }
-
-  const reorderSections = (result) => {
-    if (!result.destination) return
-    const newSections = Array.from(sections)
-    const [movedSection] = newSections.splice(result.source.index, 1)
-    newSections.splice(result.destination.index, 0, movedSection)
-    setSections(newSections)
-  }
-
   const value = {
     //Constants
+    onBack,
     HIDDEN_GROUP_ID,
     SHOWN_ATTRIBUTE_GROUP_ID,
     HIDDEN_ATTRIBUTE_GROUP_ID,
@@ -131,12 +102,6 @@ export const TemplateProvider = ({ children, onBack }) => {
     setStartYear,
     setEndYear,
     setGroups,
-    // Actions
-    toggleSection,
-    selectAllSections,
-    deselectAllSections,
-    reorderSections,
-    onBack,
     // Helpers
     getGroupIdContainingPreparedSectionId
   }

@@ -1,11 +1,13 @@
 import { DragDropContext } from "react-beautiful-dnd";
 import DroppableGroup from "./DroppableGroupList/DroppableGroup";
-import { useTemplate } from "../TemplateContext";
+import { TemplateOrganizerProvider } from "./TemplateOrganizerContext";
 import { toast } from "react-toastify";
 
-export default function TemplateOrganizer() {
+export default function TemplateOrganizer({ groups, setGroups }) {
 
-  const { groups, setGroups, HIDDEN_GROUP_ID, HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplate();
+  // Constants (hardcoded)
+  const HIDDEN_GROUP_ID = "Hidden (Sections here will not be shown)";
+  const HIDDEN_ATTRIBUTE_GROUP_ID = "Hidden (Attributes here will be hidden)";
 
   // Helper function to handle group reordering
   const handleGroupReorder = (source, destination) => {
@@ -26,11 +28,13 @@ export default function TemplateOrganizer() {
     const [movedPreparedSection] = sourcePreparedSections.splice(source.index, 1);
 
     if (source.droppableId === destination.droppableId) {
+      // Moving within the same group
       sourcePreparedSections.splice(destination.index, 0, movedPreparedSection);
       const updatedLists = [...groups];
       updatedLists[sourceGroupIndex] = { ...sourceGroup, prepared_sections: sourcePreparedSections };
       setGroups(updatedLists);
     } else {
+      // Moving to different group
       const destPreparedSections = Array.from(destGroup.prepared_sections);
       destPreparedSections.splice(destination.index, 0, movedPreparedSection);
       const updatedGroups = [...groups];
@@ -264,7 +268,9 @@ export default function TemplateOrganizer() {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <DroppableGroup groups={groups} />
+      <TemplateOrganizerProvider groups={groups} setGroups={setGroups}>
+        <DroppableGroup groups={groups} />
+      </TemplateOrganizerProvider>
     </DragDropContext>
   );
 }

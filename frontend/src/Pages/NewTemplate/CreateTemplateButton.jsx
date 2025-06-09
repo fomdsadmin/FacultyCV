@@ -33,6 +33,7 @@ const CreateTemplateButton = () => {
 
         // Remove the hidden group from groups
         const clean_groups = groups.filter(group => group.id !== HIDDEN_GROUP_ID)
+        console.log(HIDDEN_GROUP_ID)
 
         // Build template structure from groups data
         const templateStructure = JSON.stringify(clean_groups)

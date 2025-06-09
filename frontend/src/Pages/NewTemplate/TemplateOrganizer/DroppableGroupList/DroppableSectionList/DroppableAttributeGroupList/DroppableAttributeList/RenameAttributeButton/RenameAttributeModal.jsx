@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
 import ModalStylingWrapper from "SharedComponents/ModalStylingWrapper";
 import { toast } from "react-toastify";
+import { useTemplateOrganizer } from "Pages/NewTemplate/TemplateOrganizer/TemplateOrganizerContext";
 
 const RenameAttributeModal = ({ isOpen, attribute, dataSectionId, onClose }) => {
-    const { groups, setGroups, getGroupIdContainingPreparedSectionId } = useTemplate();
+    const { groups, setGroups, getGroupIdContainingPreparedSectionId } = useTemplateOrganizer();
     const [newName, setNewName] = useState("");
 
     // Get current renamed value from attribute_rename_map

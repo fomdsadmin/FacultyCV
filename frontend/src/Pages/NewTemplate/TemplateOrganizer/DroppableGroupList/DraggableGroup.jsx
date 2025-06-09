@@ -4,10 +4,11 @@ import { FaTimesCircle, FaGripVertical } from "react-icons/fa";
 import DroppableSectionList from "./DroppableSectionList/DroppableSectionList";
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
+import { useTemplateOrganizer } from "../TemplateOrganizerContext";
 
 const DraggableGroup = ({ group, groupIndex }) => {
 
-    const { HIDDEN_GROUP_ID, groups, setGroups } = useTemplate();
+    const { HIDDEN_GROUP_ID, groups, setGroups } = useTemplateOrganizer();
 
     const onRemoveGroup = () => {
         var updatedGroups = [...groups];

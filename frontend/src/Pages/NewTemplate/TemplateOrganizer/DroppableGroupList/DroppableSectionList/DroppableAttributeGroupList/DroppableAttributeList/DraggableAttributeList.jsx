@@ -4,12 +4,13 @@ import RenameAttributeButton from "./RenameAttributeButton/RenameAttributeButton
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
 import { useSectionData } from "Pages/NewTemplate/TemplateOrganizer/hooks/useSectionData";
 import { useEffect, useState } from "react";
+import { useTemplateOrganizer } from "Pages/NewTemplate/TemplateOrganizer/TemplateOrganizerContext";
 
 const DraggableAttributeList = ({ draggableId, attributeIndex, attribute, dataSectionId }) => {
 
     const [alternativeName, setAlternativeName] = useState(null);
 
-    const { groups } = useTemplate();
+    const { groups } = useTemplateOrganizer();
     const { groupId } = useSectionData(dataSectionId);
 
     // Get current renamed value from attribute_rename_map

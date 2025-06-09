@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
 import { FaSort } from "react-icons/fa";
 import SortingModal from "./SortingModal";
+import { useTemplateOrganizer } from "Pages/NewTemplate/TemplateOrganizer/TemplateOrganizerContext";
 
 const SortingButton = ({ preparedSection }) => {
-    const { setGroups, getGroupIdContainingPreparedSectionId, HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplate();
+    const { setGroups, getGroupIdContainingPreparedSectionId, HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplateOrganizer();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedAttribute, setSelectedAttribute] = useState("");
 

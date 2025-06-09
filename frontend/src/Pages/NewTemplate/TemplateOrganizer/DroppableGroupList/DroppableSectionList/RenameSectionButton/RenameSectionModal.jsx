@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
 import ModalStylingWrapper from "SharedComponents/ModalStylingWrapper";
 import { toast } from "react-toastify";
+import { useTemplateOrganizer } from "Pages/NewTemplate/TemplateOrganizer/TemplateOrganizerContext";
 
 const RenameSectionModal = ({ isOpen, preparedSection, onClose }) => {
-    const { groups, setGroups, getGroupIdContainingPreparedSectionId } = useTemplate();
+    const { groups, setGroups, getGroupIdContainingPreparedSectionId } = useTemplateOrganizer();
     const [newTitle, setNewTitle] = useState("");
 
     // Get current renamed value from renamed_section_title

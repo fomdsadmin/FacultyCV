@@ -1,8 +1,9 @@
 import { useTemplate } from "Pages/NewTemplate/TemplateContext";
+import { useTemplateOrganizer } from "Pages/NewTemplate/TemplateOrganizer/TemplateOrganizerContext";
 import { FaTimesCircle } from "react-icons/fa";
 
 const RemoveAttributeGroupButton = ({ attributeGroup, dataSectionId }) => {
-    const { setGroups, getGroupIdContainingPreparedSectionId, HIDDEN_ATTRIBUTE_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } = useTemplate();
+    const { setGroups, getGroupIdContainingPreparedSectionId, HIDDEN_ATTRIBUTE_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } = useTemplateOrganizer();
 
     const handleRemoveAttributeGroup = (e) => {
         e.stopPropagation();

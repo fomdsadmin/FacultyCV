@@ -7,7 +7,7 @@ import TemplateOrganizer from "./TemplateOrganizer/TemplateOrganizer"
 import AddGroupButton from "./AddGroupButton/AddGroupButton"
 
 const NewTemplateContent = () => {
-  const { loading, title, setTitle, onBack } = useTemplate()
+  const { loading, title, setTitle, onBack, groups, setGroups } = useTemplate()
 
   return (
     <div className="">
@@ -50,7 +50,7 @@ const NewTemplateContent = () => {
               <SelectionButtons />
               <AddGroupButton />
             </div>
-            <TemplateOrganizer />
+            <TemplateOrganizer groups={groups} setGroups={setGroups} />
           </>
         )}
       </div>
