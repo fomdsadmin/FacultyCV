@@ -8,12 +8,12 @@ const DroppableAttributeList = ({ attributes, attributeGroupId, dataSectionId })
     return (
         <Droppable 
             droppableId={`attributes-${dataSectionId}-${attributeGroupId}`} 
-            direction="horizontal" 
+            direction="vertical" 
             type={`attributes-${dataSectionId}`}
         >
             {(provided) => (
                 <div
-                    className="flex flex-row gap-4 p-4"
+                    className="flex flex-col gap-4 p-4"
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                 >
