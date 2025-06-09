@@ -230,7 +230,7 @@ const PublicationsModal = ({
         }
 
         // Now fetch in batches
-        const maxBatchSize = 250;
+        const maxBatchSize = 300;
         for (
           let startIndex = 0;
           startIndex < allPutCodes.length;
