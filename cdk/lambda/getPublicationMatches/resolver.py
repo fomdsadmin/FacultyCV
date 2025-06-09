@@ -33,6 +33,7 @@ def getPublicationMatches(scopus_id, page_number, results_per_page):
     rjson = response.json()
     publications = []
     if 'search-results' not in rjson:
+        print("Did not recieve any publications from API")
         return publications
     total_results = int(rjson['search-results']['opensearch:totalResults'])
     results = rjson['search-results']['entry']
