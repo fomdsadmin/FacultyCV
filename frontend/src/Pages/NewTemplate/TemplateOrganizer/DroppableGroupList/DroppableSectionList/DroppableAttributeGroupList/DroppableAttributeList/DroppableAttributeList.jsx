@@ -13,7 +13,7 @@ const DroppableAttributeList = ({ attributes, attributeGroupId, dataSectionId })
         >
             {(provided) => (
                 <div
-                    className="flex flex-col gap-4 p-4"
+                    className="flex flex-col gap-2 p-4"
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                 >
@@ -23,6 +23,7 @@ const DroppableAttributeList = ({ attributes, attributeGroupId, dataSectionId })
                             attribute={attribute} 
                             attributeIndex={attributeIndex}
                             draggableId={`${attributeGroupId}-${attribute}-${dataSectionId}`}
+                            dataSectionId={dataSectionId}
                         />
                     ))}
                     {provided.placeholder}
