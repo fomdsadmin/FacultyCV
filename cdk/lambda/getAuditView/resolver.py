@@ -57,6 +57,7 @@ def getAuditView(arguments, identity=None):
                 'profile_record': result[10],
                 'logged_user_role': result[11],
                 'logged_user_email': result[12],
+                'logged_user_action': result[13]
         }
             )  
     return audit_view_records

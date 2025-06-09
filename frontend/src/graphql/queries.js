@@ -250,7 +250,8 @@ export const getAuditViewQuery = (logged_user_id) => {
                     assistant
                     profile_record
                     logged_user_role,
-                    logged_user_email
+                    logged_user_email,
+                    logged_user_action
                 }
             }
         `;
@@ -270,7 +271,8 @@ export const getAuditViewQuery = (logged_user_id) => {
                     assistant
                     profile_record
                     logged_user_role,
-                    logged_user_email
+                    logged_user_email,
+                    logged_user_action
                 }
             }
         `;
