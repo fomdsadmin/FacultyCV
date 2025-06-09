@@ -8,8 +8,10 @@ import {
   getOrcidSections,
   getTotalOrcidPublications,
   getOrcidPublication,
+  getAllSections,
 } from "../graphql/graphqlHelpers";
 import { useNavigate } from "react-router-dom";
+import { fetchAuthSession } from "aws-amplify/auth";
 
 const PublicationsModal = ({
   user,
@@ -70,38 +72,70 @@ const PublicationsModal = ({
         }
       }
     }
+    console.log("Total Scopus Publications fetched:", publications.length);
 
     // ORCID
     const hasOrcid = user.orcid_id && user.orcid_id.trim() !== "";
     if (hasOrcid) {
       setFetchStage("orcid");
-      const totalOrcidPublications = await getTotalOrcidPublications(
-        user.orcid_id
-      );
-      console.log("Total ORCID Publications fetched:", totalOrcidPublications);
-      const putCodes = totalOrcidPublications.put_codes || [];
-      const batchSize = 250;
-      let orcidPublications = [];
+      const putCodes = [];
 
-      for (let i = 0; i < putCodes.length; i += batchSize) {
-        const batch = putCodes.slice(i, i + batchSize);
-        if (!batch.length || batch.some((code) => code == null)) {
-          console.error("Skipping invalid or empty batch:", batch);
-          continue;
-        }
-        const result = await getOrcidPublication(user.orcid_id, batch);
-        if (result && Array.isArray(result.publications)) {
-          orcidPublications = [...orcidPublications, ...result.publications];
+      // const batchSize = 250;
+      // let orcidPublications = [];
+      // for (let i = 0; i < putCodes.length; i += batchSize) {
+      //   const batch = putCodes.slice(i, i + batchSize);
+      //   if (!batch.length || batch.some((code) => code == null)) {
+      //     console.error("Skipping invalid or empty batch:", batch);
+      //     continue;
+      //   }
+      //   const result = await getOrcidPublication(user.orcid_id, batch);
+      //   if (result && Array.isArray(result.publications)) {
+      //     orcidPublications = [...orcidPublications, ...result.publications];
+      //     console.log(
+      //       "Fetched ORCID Publications for batch:",
+      //       orcidPublications
+      //     );
+      //   }
+      // }
+
+      try {
+        const session = await fetchAuthSession();
+        const idToken = session.tokens?.idToken?.toString();
+        if (!idToken) throw new Error("Auth Error: No ID token found.");
+
+        const payload = {
+          arguments: {
+            orcid_id: user.orcid_id,
+            put_codes: putCodes,
+          },
+        };
+        const baseUrl = window.location.hostname.startsWith("dev.")
+          ? "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev"
+          : "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev";
+
+        const response = await fetch(`${baseUrl}/getBatchedOrcidPublications`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        else {
+          const responseData = await response.json();
           console.log(
-            "Fetched ORCID Publications for batch:",
-            orcidPublications
+            "Fetched",
+            responseData.publications.length,
+            " Publications from ORCID successfully | 200 OK"
           );
-        }
-      }
 
-      publications = [...publications, ...orcidPublications];
-      totalOrcidPublications.total_results += totalResults || 0;
-      setTotalResults(totalOrcidPublications.total_results ?? 0);
+          publications = [...publications, ...responseData.publications];
+        }
+      } catch (error) {
+        console.error("Error fetching orcid publications:", error);
+      }
     }
 
     // Handle empty case
@@ -114,7 +148,7 @@ const PublicationsModal = ({
     publications = deduplicatePublications(publications);
 
     // Adding
-    setAllFetchedPublications(publications); // <-- set before adding!
+    setAllFetchedPublications(publications);
     setFetchStage("add");
     await addPublicationsData(publications);
 
@@ -169,38 +203,60 @@ const PublicationsModal = ({
     setAddingData(true);
     setCount(1);
 
-    const existingPublications = await getUserCVData(
-      user.user_id,
-      section.data_section_id
-    );
-    const existingData = existingPublications.map((pub) => pub.data_details);
-    console.log("Existing publications:", existingData);
+    try {
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken?.toString();
+      if (!idToken) throw new Error("Auth Error: No ID token found.");
 
-    for (const publication of publications) {
-      if (
-        existingData.includes(JSON.stringify(publication)) ||
-        existingData.includes(publication)
-      ) {
-        setCount((prevCount) => prevCount + 1);
-        continue;
-      }
+      let dataSections = [];
+      dataSections = await getAllSections();
+      const publicationsSectionId = dataSections.find(
+        (section) => section.title === "Publications"
+      )?.data_section_id;
 
-      publication.title = publication.title;
-      publication.journal = publication.journal;
-      const publicationJSON = JSON.stringify(publication);
+      const payload = {
+        arguments: {
+          data_details_list: publications,
+          user_id: user.user_id,
+          data_section_id: publicationsSectionId,
+          editable: "false",
+        },
+      };
+      const baseUrl = window.location.hostname.startsWith("dev.")
+        ? "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev"
+        : "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev";
 
-      try {
-        const result = await addUserCVData(
-          user.user_id,
-          section.data_section_id,
-          publicationJSON,
-          false
+      const response = await fetch(`${baseUrl}/addBatchedData`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      else {
+        console.log(
+          "Added ",
+          payload.arguments.data_details_list.length,
+          " Publications Successfully | 200 OK"
         );
-      } catch (error) {
-        console.error("Error adding new entry:", error);
       }
-      setCount((prevCount) => prevCount + 1);
+    } catch (error) {
+      console.error("Error adding publications:", error);
     }
+    // try {
+    //   const result = await addUserCVData(
+    //     user.user_id,
+    //     section.data_section_id,
+    //     publicationJSON,
+    //     false
+    //   );
+    // } catch (error) {
+    //   console.error("Error adding new entry:", error);
+    // }
+    console.log("Saved ", publications.length, " publications successfully");
     setAddingData(false);
     fetchData();
   }
@@ -342,7 +398,7 @@ const PublicationsModal = ({
             {fetchStage === "add" && (
               <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
                 {addingData
-                  ? `Adding ${count} of ${allFetchedPublications.length} publications...`
+                  ? `Adding ${allFetchedPublications.length} publications...`
                   : allFetchedPublications.length === 0
                   ? "No Publications Found"
                   : "Publications Added!"}
@@ -353,7 +409,7 @@ const PublicationsModal = ({
           <div className="flex items-center justify-center w-full mt-5 mb-5">
             <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
               {addingData
-                ? `Adding ${count} of ${allFetchedPublications.length} publications...`
+                ? `Adding ${allFetchedPublications.length} publications...`
                 : allFetchedPublications.length === 0
                 ? "No Publications Found"
                 : "Publications Added!"}

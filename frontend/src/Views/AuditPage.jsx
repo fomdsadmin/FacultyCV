@@ -8,7 +8,6 @@ import { getAuditViewData } from '../graphql/graphqlHelpers.js';
 const AuditPage = ({ getCognitoUser, userInfo }) => {
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
-    const [activeTab, setActiveTab] = useState('pageView'); // 'pageView' or 'actionView'
 
 
     const [emailFilter, setEmailFilter] = useState('');
@@ -30,8 +29,6 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         setLoading(false);
     }
 
-
-
     const pageViewColumns = [
         "log_view_id",
         "ts",
@@ -43,26 +40,21 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         "assistant",
         "profile_record",
         "page",
+        "logged_user_action",
         "session_id",
         "ip",
         "browser_version",
     ];
-
-
-    const actionViewColumns = pageViewColumns; // Temporary, just for now
-
 
     const pageViewData = auditViewData.filter(log => {
         const matchesPage = log.page;
         const matchesEmail = log.logged_user_email?.toLowerCase().includes(emailFilter.toLowerCase());
         const matchesFirstName = log.logged_user_first_name?.toLowerCase().includes(firstNameFilter.toLowerCase());
         const matchesLastName = log.logged_user_last_name?.toLowerCase().includes(lastNameFilter.toLowerCase());
+        
         return matchesPage && matchesEmail && matchesFirstName && matchesLastName;
     });
     
-
-    const actionData = auditViewData.filter(log => log.profile_record); // or any other filter logic
-
 
     return (
         <PageContainer>
@@ -107,23 +99,6 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
 
                 </div>
 
-
-                {/* Tabs */}
-                <div className="flex gap-2 mb-4">
-                    <button
-                        className={`px-4 py-2 rounded ${activeTab === 'pageView' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                        onClick={() => setActiveTab('pageView')}
-                    >
-                        Page View
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded ${activeTab === 'actionView' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                        onClick={() => setActiveTab('actionView')}
-                    >
-                        Action View
-                    </button>
-                </div>
-
                 {loading ? (
                     <div>Loading...</div>
                 ) : (
@@ -131,15 +106,15 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                         <table className="min-w-full border text-xs">
                             <thead>
                                 <tr>
-                                    {(activeTab === 'pageView' ? pageViewColumns : actionViewColumns).map(col => (
+                                    {pageViewColumns.map(col => (
                                         <th key={col} className="border px-2 py-1">{col}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {(activeTab === 'pageView' ? pageViewData : actionData).map((log, idx) => (
+                                {pageViewData.map((log, idx) => (
                                     <tr key={log.log_view_id || idx}>
-                                        {(activeTab === 'pageView' ? pageViewColumns : actionViewColumns).map(col => (
+                                        {pageViewColumns.map(col => (
                                             <td key={col} className="border px-2 py-1">
                                                 {typeof log[col] === "boolean" ? String(log[col]) : log[col]}
                                             </td>

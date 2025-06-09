@@ -138,6 +138,7 @@ const AppContent = () => {
         theme="light"
       />
       {user && <Header />}
+      {user && <PageViewLogger userInfo={userInfo} />}
       <Routes>
         <Route path="/home" element={user ? (
           Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> :

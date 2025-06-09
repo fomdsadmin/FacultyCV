@@ -46,14 +46,15 @@ def getOrcidPublication(arguments):
     Fetch a specific section of the ORCID record based on arguments.
     Arguments should include:
     - 'orcid_d': The ORCID ID
-    - 'put_codes': List of 100 put-codes to fetch publications
+    - 'put_codes': List of put-codes to fetch publications
     """
+    
     orcid_id = arguments.get("orcid_id")
-    put_codes = arguments.get("put_codes")
+    put_codes = arguments.get("put_codes", [])
 
     # Validate inputs
-    if not orcid_id or not put_codes:
-        return {"error": "Missing required parameters: orcidId or put_codes"}
+    if not orcid_id:
+        return {"error": "Missing required parameters: orcid_id"}
 
     # Fetch the access token dynamically from Secrets Manager
     access_token = get_secret()
@@ -66,6 +67,19 @@ def getOrcidPublication(arguments):
         "Authorization": f"Bearer {access_token}",
         "Accept": "application/json"
     }
+
+    url = f"{base_url}/{arguments['orcid_id']}/works"
+
+    response = requests.get(url, headers=headers)
+    put_codes = []
+    if response.status_code == 200:
+        data = response.json()
+        for group in data.get('group', []):
+            work_summaries = group.get('work-summary', [])
+            for summary in work_summaries:
+                put_code = summary.get('put-code')
+                if put_code:
+                    put_codes.append(put_code)
 
     # Join put codes with commas
     publications = []

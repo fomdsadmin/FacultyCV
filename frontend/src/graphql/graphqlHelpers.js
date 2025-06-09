@@ -262,7 +262,7 @@ export const getUserCVData = async (user_id, data_section_ids) => {
     getUserCVDataQuery(user_id, data_section_ids)
   );
 
-  console.log(results["data"]["getUserCVData"]);
+  // console.log(results["data"]["getUserCVData"]);
   return results["data"]["getUserCVData"];
 };
 
@@ -617,6 +617,7 @@ export const getAuditViewData = async (logged_user_id) => {
   } else {
     results = await runGraphql(getAuditViewQuery());
   }
+  // console.log("Get Audit View Data: ", results);
   return results["data"]["getAuditView"];
 };
 
@@ -933,13 +934,17 @@ export const linkPublication = async (user_id, data_details) => {
  *   session_id
  *   ip
  *   browser_version
+ *   assistant
  *   logged_user_role
  *   logged_user_email
+ *   logged_user_action
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const addAuditView = async (input) => {
+  // console.log("Add Audit View Input: ", input);
   const results = await executeGraphql(addAuditViewMutation, { input });
+  // console.log("hellow Add Audit View Results: ", results);
   return results["data"]["addAuditView"];
 };
 
