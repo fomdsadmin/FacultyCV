@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import DroppableGroup from "./DroppableGroupList/DroppableGroup";
 import { useTemplate } from "../TemplateContext";

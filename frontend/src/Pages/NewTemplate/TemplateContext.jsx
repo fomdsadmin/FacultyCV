@@ -56,6 +56,7 @@ export const TemplateProvider = ({ children, onBack }) => {
             },
           ],
           attribute_rename_map: {}, // For the backend, shows what columns to rename
+          renamed_section_title: null,
           show_row_count: false
         })),
       }

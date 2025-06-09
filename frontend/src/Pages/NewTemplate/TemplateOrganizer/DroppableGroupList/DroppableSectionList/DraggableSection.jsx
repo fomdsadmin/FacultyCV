@@ -4,8 +4,9 @@ import DroppableAttributeGroupList from "./DroppableAttributeGroupList/Droppable
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 import AddAttributeGroupButton from "./AddAttributeGroupButton/AddAttributeGroupButton"
-import RemoveSectionButton from "./RemoveSectionButton"
 import SortingButton from "./SortingButton/SortingButton"
+import RenameSectionButton from "./RenameSectionButton/RenameSectionButton"
+import RemoveSectionButton from "./RemoveSectionButton"
 import RowCountCheckbox from "./RowCountCheckbox"
 
 const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, isInHiddenGroup }) => {
@@ -24,8 +25,16 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                         >
                             <FaGripVertical className="h-4 w-4 text-gray-500" />
                         </div>
+                        <RenameSectionButton preparedSection={preparedSection} />
                         <div>
-                            <h3 className="text-lg font-semibold">{preparedSection.title}</h3>
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                {preparedSection.title}
+                                {preparedSection.renamed_section_title && (
+                                    <span className="text-sm text-gray-600">
+                                        → <span className="font-mono bg-gray-100 px-2 py-1 rounded">{preparedSection.renamed_section_title}</span>
+                                    </span>
+                                )}
+                            </h3>
                             <p className="text-sm text-gray-600">{preparedSection.data_type}</p>
                         </div>
                     </div>
