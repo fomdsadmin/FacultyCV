@@ -11,7 +11,7 @@ def getAllTemplates(arguments):
     connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT template_id, title, data_section_ids, start_year, end_year FROM templates')
+    cursor.execute('SELECT template_id, title, template_structure, start_year, end_year FROM templates')
     results = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -20,7 +20,7 @@ def getAllTemplates(arguments):
         templates.append({
             'template_id': result[0],
             'title': result[1],
-            'data_section_ids': result[2],
+            'template_structure': result[2],
             'start_year': result[3],
             'end_year': result[4]
         })

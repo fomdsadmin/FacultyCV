@@ -40,7 +40,7 @@ def updateTemplate(arguments):
     query = """
     UPDATE templates SET 
         title = %s,
-        data_section_ids = %s,
+        template_structure = %s,
         start_year = %s,
         end_year = %s
     WHERE template_id = %s
@@ -49,7 +49,7 @@ def updateTemplate(arguments):
     # Execute the query with the provided arguments
     cursor.execute(query, (
         arguments['title'] if 'title' in arguments else '',
-        arguments['data_section_ids'] if 'data_section_ids' in arguments else '',
+        arguments['template_structure'] if 'template_structure' in arguments else '{}',
         arguments['start_year'] if 'start_year' in arguments else '',
         arguments['end_year'] if 'end_year' in arguments else '',
         arguments['template_id']

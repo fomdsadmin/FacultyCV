@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect } from "react"
-import { addTemplate, getAllSections } from "../../graphql/graphqlHelpers"
+import { getAllSections } from "../../graphql/graphqlHelpers"
 
 const TemplateContext = createContext(null)
 
@@ -13,19 +13,17 @@ export const useTemplate = () => {
   return context
 }
 
-export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
+export const TemplateProvider = ({ children, onBack }) => {
 
   const HIDDEN_GROUP_ID = "Hidden (Sections here will not be shown)";
 
   const SHOWN_ATTRIBUTE_GROUP_ID = "Shown (Attributes here will be shown)"
   const HIDDEN_ATTRIBUTE_GROUP_ID = "Hidden (Attributes here will be hidden)"
 
-  const [addingTemplate, setAddingTemplate] = useState(false)
   const [title, setTitle] = useState("")
   const [sections, setSections] = useState([])
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState("")
   const [startYear, setStartYear] = useState("")
   const [endYear, setEndYear] = useState("")
 
@@ -85,43 +83,6 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
     setLoading(false)
   }
 
-  const createTemplate = async () => {
-    if (!title.trim()) {
-      setErrorMessage("Template title cannot be blank.")
-      return
-    }
-
-    if (!startYear || !endYear) {
-      setErrorMessage("You must choose a start and end year.")
-      return
-    }
-
-    if (endYear !== "Current" && Number.parseInt(endYear) <= Number.parseInt(startYear)) {
-      setErrorMessage("End year must be after start year.")
-      return
-    }
-
-    const selectedSectionIds = sections.filter((section) => section.showMinus).map((section) => section.data_section_id)
-
-    if (selectedSectionIds.length === 0) {
-      setErrorMessage("At least one section must be selected.")
-      return
-    }
-
-    const selectedSectionIdsString = selectedSectionIds.join(",")
-
-    setAddingTemplate(true)
-    try {
-      await addTemplate(title, selectedSectionIdsString, startYear, endYear)
-      await fetchTemplates()
-      onBack()
-    } catch (error) {
-      console.error("Error creating template:", error)
-      setErrorMessage("Failed to create template. Please try again.")
-    }
-    setAddingTemplate(false)
-  }
-
   const toggleSection = (index) => {
     const newSections = [...sections]
     newSections[index].showMinus = !newSections[index].showMinus
@@ -158,11 +119,9 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
     SHOWN_ATTRIBUTE_GROUP_ID,
     HIDDEN_ATTRIBUTE_GROUP_ID,
     // State
-    addingTemplate,
     title,
     sections,
     loading,
-    errorMessage,
     startYear,
     endYear,
     groups,
@@ -170,10 +129,8 @@ export const TemplateProvider = ({ children, onBack, fetchTemplates }) => {
     setTitle,
     setStartYear,
     setEndYear,
-    setErrorMessage,
     setGroups,
     // Actions
-    createTemplate,
     toggleSection,
     selectAllSections,
     deselectAllSections,

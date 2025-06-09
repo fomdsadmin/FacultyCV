@@ -7,7 +7,7 @@ import TemplateOrganizer from "./TemplateOrganizer/TemplateOrganizer"
 import AddGroupButton from "./AddGroupButton/AddGroupButton"
 
 const NewTemplateContent = () => {
-  const { loading, errorMessage, title, setTitle, onBack } = useTemplate()
+  const { loading, title, setTitle, onBack } = useTemplate()
 
   return (
     <div className="">
@@ -22,8 +22,6 @@ const NewTemplateContent = () => {
           </div>
         ) : (
           <>
-            {errorMessage && <div className="text-red-500 text-sm mb-4">{errorMessage}</div>}
-
             <div className="flex justify-end mb-4">
               <CreateTemplateButton />
             </div>
