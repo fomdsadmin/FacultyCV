@@ -7,6 +7,7 @@ import GenericSection from "../Components/GenericSection.jsx";
 import SecureFundingSection from "../Components/SecureFundingSection.jsx";
 import PublicationsSection from "../Components/PublicationsSection.jsx";
 import PatentsSection from "../Components/PatentsSection.jsx";
+import InvitedPresentationSection from "../Components/InvitedPresentationSection.jsx";
 import { getAllSections } from "../graphql/graphqlHelpers.js";
 
 const AcademicWork = ({ getCognitoUser, userInfo }) => {
@@ -215,9 +216,19 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                     onBack={handleBack}
                   />
                 )}
-                {!["Publications", "Patents", "Secure Funding"].includes(
-                  activeSection.title
-                ) && (
+                {activeSection.title === "Invited Presentations" && (
+                  <InvitedPresentationSection
+                    user={userInfo}
+                    section={activeSection}
+                    onBack={handleBack}
+                  />
+                )}
+                {![
+                  "Publications",
+                  "Patents",
+                  "Secure Funding",
+                  "Invited Presentations",
+                ].includes(activeSection.title) && (
                   <GenericSection
                     user={userInfo}
                     section={activeSection}
