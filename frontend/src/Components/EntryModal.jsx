@@ -200,93 +200,119 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
 
   return (
     <ModalStylingWrapper>
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4 relative">
+      <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto mx-4 relative">
         <form method="dialog" onSubmit={handleSubmit}>
-          <h3 className="font-bold mb-3 text-lg">{isNew ? "Add" : "Edit"} {entryType}</h3>
-          <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" onClick={onClose}>✕</button>
+          <h3 className="font-bold mb-3 text-lg">
+            {isNew ? "Add" : "Edit"} {entryType}
+          </h3>
+          <button
+            type="button"
+            className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
+            onClick={onClose}
+          >
+            ✕
+          </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {filteredKeys.map((key) => (
-              key === 'dates' ? (
+            {filteredKeys.map((key) =>
+              key === "dates" ? (
                 // Render date selectors for 'dates' field
                 <div key={key} className="mb-1">
                   <label className="block text-sm capitalize">Start Date</label>
                   <div className="flex space-x-2">
                     <select
                       name="startDateMonth"
-                      value={formData.startDateMonth || ''}
+                      value={formData.startDateMonth || ""}
                       onChange={handleChange}
                       className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                     >
                       <option value="">Month</option>
-                      {months.map(month => (
-                        <option key={month} value={month}>{month}</option>
+                      {months.map((month) => (
+                        <option key={month} value={month}>
+                          {month}
+                        </option>
                       ))}
                     </select>
                     <select
                       name="startDateYear"
-                      value={formData.startDateYear || ''}
+                      value={formData.startDateYear || ""}
                       onChange={handleChange}
                       className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                     >
                       <option value="">Year</option>
-                      {years.map(year => (
-                        <option key={year} value={year}>{year}</option>
+                      {years.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
                       ))}
                     </select>
                   </div>
-                  <label className="block text-sm capitalize mt-2">End Date</label>
+                  <label className="block text-sm capitalize mt-2">
+                    End Date
+                  </label>
                   <div className="flex space-x-2">
                     <select
                       name="endDateMonth"
-                      value={formData.endDateMonth || ''} // Corrected value
+                      value={formData.endDateMonth || ""} // Corrected value
                       onChange={handleChange} // Use unified handleChange
                       className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                     >
-                      <option value="">Month</option> {/* Default empty option */}
+                      <option value="">Month</option>{" "}
+                      {/* Default empty option */}
                       <option value="Current">Current</option>
                       <option value="None">None</option>
-                      {months.map(month => (
-                        <option key={month} value={month}>{month}</option>
+                      {months.map((month) => (
+                        <option key={month} value={month}>
+                          {month}
+                        </option>
                       ))}
                     </select>
                     <select
                       name="endDateYear"
-                      value={formData.endDateYear || ''} // Corrected value
+                      value={formData.endDateYear || ""} // Corrected value
                       onChange={handleChange} // Use unified handleChange
                       className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                     >
-                      <option value="">Year</option> {/* Default empty option */}
+                      <option value="">Year</option>{" "}
+                      {/* Default empty option */}
                       <option value="Current">Current</option>
                       <option value="None">None</option>
-                      {years.map(year => (
-                        <option key={year} value={year}>{year}</option>
+                      {years.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
-              ) : key === 'year_published' || key === 'year' ? (
+              ) : key === "year_published" || key === "year" ? (
                 // Render year selector for 'year_published' or 'year' fields
                 <div key={key} className="mb-1">
-                  <label className="block text-sm capitalize">{formatKey(key)}</label>
+                  <label className="block text-sm capitalize">
+                    {formatKey(key)}
+                  </label>
                   <select
                     name={key}
-                    value={formData[key] || ''}
+                    value={formData[key] || ""}
                     onChange={handleChange}
                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                   >
                     <option value="">Select Year</option>
-                    {years.map(year => (
-                      <option key={year} value={year}>{year}</option>
+                    {years.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
                     ))}
                   </select>
                 </div>
-              ) : key === 'details' ? (
+              ) : key === "details" ? (
                 // Render textarea for 'details' field
                 <div key={key} className="mb-1">
-                  <label className="block text-sm capitalize">{formatKey(key)}</label>
+                  <label className="block text-sm capitalize">
+                    {formatKey(key)}
+                  </label>
                   <textarea
                     name={key}
-                    value={formData[key] || ''}
+                    value={formData[key] || ""}
                     onChange={handleChange}
                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                   />
@@ -294,23 +320,29 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
               ) : (
                 // Render text input for other fields
                 <div key={key} className="mb-1">
-                  <label className="block text-sm capitalize">{formatKey(key)}</label>
+                  <label className="block text-sm capitalize">
+                    {formatKey(key)}
+                  </label>
                   <input
                     type="text"
                     name={key}
-                    value={formData[key] || ''}
+                    value={formData[key] || ""}
                     onChange={handleChange}
                     maxLength={500}
                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                   />
                 </div>
               )
-            ))}
+            )}
           </div>
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <div className="flex justify-end">
-            <button type="submit" className="btn btn-success text-white mt-3 py-1 px-2 w-1/5 min-h-0 h-8 leading-tight" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Save'}
+            <button
+              type="submit"
+              className="btn btn-success text-white mt-3 py-1 px-2 w-1/5 min-h-0 h-8 leading-tight"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save"}
             </button>
           </div>
         </form>

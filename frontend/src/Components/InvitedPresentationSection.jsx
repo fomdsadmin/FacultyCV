@@ -8,6 +8,7 @@ import {
 } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import InvitedPresentationModal from "./InvitedPresentationModal";
+import InvitedPresentationEntry from "./InvitedPresentationEntry";
 
 const generateEmptyEntry = (attributes) => {
   const emptyEntry = {};
@@ -225,7 +226,7 @@ const InvitedPresentationSection = ({ user, section, onBack }) => {
           <div>
             {fieldData.length > 0 ? (
               fieldData.map((entry, index) => (
-                <GenericEntry
+                <InvitedPresentationEntry
                   isArchived={false}
                   key={index}
                   onEdit={() => handleEdit(entry)}
