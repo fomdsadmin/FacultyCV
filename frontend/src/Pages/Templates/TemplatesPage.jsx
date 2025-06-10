@@ -6,22 +6,16 @@ import TemplateCard from '../../Components/TemplateCard.jsx';
 import EditReportFormatting from '../../Components/EditReportFormat.jsx';
 import EditTemplatePage from 'Pages/TemplatePages/EditTemplatePage/EditTemplatePage.jsx';
 import { TemplatePageProvider, useTemplatePageContext } from './TemplatePageContext.jsx';
+import { useApp } from 'Contexts/AppContext.jsx';
 
-const TemplatesContent = ({ getCognitoUser, userInfo }) => {
-  const { templates, activeTemplate, handleManageClick, handleBack } = useTemplatePageContext();
+const TemplatesPageContent = () => {
+  const { getCognitoUser, userInfo} = useApp();
+  const { templates, activeTemplate, handleManageClick, handleBack,loading } = useTemplatePageContext();
   
   // Local state only
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
   const [openNewTemplate, setOpenNewTemplate] = useState(false);
   const [editReportFormatting, setEditReportFormatting] = useState(false);
-
-  useEffect(() => {
-    // Set loading to false once templates are loaded
-    if (templates.length > 0) {
-      setLoading(false);
-    }
-  }, [templates]);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -106,7 +100,7 @@ const TemplatesContent = ({ getCognitoUser, userInfo }) => {
               </div>
             ) : (
               <div className='!h-full custom-scrollbar'>
-                <EditTemplatePage template={activeTemplate} onBack={handleBack} />
+                <EditTemplatePage onBack={handleBack} />
               </div>
             )}
           </>
@@ -116,12 +110,12 @@ const TemplatesContent = ({ getCognitoUser, userInfo }) => {
   )
 }
 
-const Templates = ({ getCognitoUser, userInfo }) => {
+const TemplatesPage = () => {
   return (
     <TemplatePageProvider>
-      <TemplatesContent getCognitoUser={getCognitoUser} userInfo={userInfo} />
+      <TemplatesPageContent />
     </TemplatePageProvider>
   )
 }
 
-export default Templates;
+export default TemplatesPage;

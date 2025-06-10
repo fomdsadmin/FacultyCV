@@ -25,7 +25,7 @@ import Assistant_Reports from './Views/Assistant_Reports.jsx';
 //import Assistant_Assistants from './Views/Assistant_Assistants.jsx';
 import Assistant_AcademicWork from './Views/Assistant_AcademicWork.jsx';
 import Analytics from './Views/Analytics.jsx';
-import Templates from './Pages/Templates/Templates.jsx';
+import TemplatesPage from './Pages/Templates/TemplatesPage.jsx';
 import Sections from './Views/Sections.jsx';
 import AuditPage from './Views/AuditPage.jsx';
 import ArchivedSections from './Views/ArchivedSections.jsx';
@@ -184,7 +184,7 @@ const AppContent = () => {
         <Route path="/assistant/archive" element={user ? <Assistant_Archive assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/analytics" element={user ? <Analytics userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/audit" element={user ? <AuditPage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
-        <Route path="/templates" element={user ? <Templates userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
+        <Route path="/templates" element={user ? <TemplatesPage /> : <Navigate to="/auth" />} />
         <Route path="/sections" element={user ? <Sections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/archived-sections" element={user ? <ArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/department-admin/analytics" element={user ? <DepartmentAdminAnalytics userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} toggleViewMode={toggleViewMode} /> : <Navigate to="/auth" />} />

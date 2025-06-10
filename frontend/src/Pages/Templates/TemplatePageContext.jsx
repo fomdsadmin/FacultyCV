@@ -14,10 +14,13 @@ export const useTemplatePageContext = () => {
 export const TemplatePageProvider = ({ children }) => {
   const [templates, setTemplates] = useState([]);
   const [activeTemplate, setActiveTemplate] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchTemplates = async () => {
     setTemplates([]);
+    setLoading(true);
     const retrievedTemplates = await getAllTemplates();
+    setLoading(false);
     setTemplates(retrievedTemplates);
   };
 
@@ -40,7 +43,8 @@ export const TemplatePageProvider = ({ children }) => {
       activeTemplate,
       fetchTemplates,
       handleManageClick,
-      handleBack
+      handleBack,
+      loading
     }}>
       {children}
     </TemplatePageContext.Provider>
