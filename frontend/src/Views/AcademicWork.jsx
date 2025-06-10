@@ -9,6 +9,7 @@ import PublicationsSection from "../Components/PublicationsSection.jsx";
 import PatentsSection from "../Components/PatentsSection.jsx";
 import InvitedPresentationSection from "../Components/InvitedPresentationSection.jsx";
 import { getAllSections } from "../graphql/graphqlHelpers.js";
+import EntryModal from "../Components/EntryModal.jsx";
 
 const AcademicWork = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -228,6 +229,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                   "Patents",
                   "Secure Funding",
                   "Invited Presentations",
+                  ,
                 ].includes(activeSection.title) && (
                   <GenericSection
                     user={userInfo}

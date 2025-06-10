@@ -212,7 +212,8 @@ const InvitedPresentationModal = ({
       <div className="bg-white rounded-lg shadow-lg p-6 px-12 max-w-3xl w-full mx-2 relative overflow-y-auto max-h-[90vh]">
         <form method="dialog" onSubmit={handleSubmit}>
           <h1 className="font-bold mb-5 text-2xl">
-            {isNew ? "Add a new" : "Edit"} {"Presentation"}
+            {isNew ? "Add a new " : "Edit "}
+            Record
           </h1>
           <button
             type="button"
@@ -221,228 +222,244 @@ const InvitedPresentationModal = ({
           >
             ✕
           </button>
+
           <div className="grid grid-cols-2 gap-x-6 gap-y-4">
             {/* Physician Dropdown */}
-            <div className="mb-1">
-              <label className="block text-sm font-semibold">Physician</label>
-              <select
-                name="physician"
-                value={formData.physician || ""}
-                onChange={handleChange}
-                className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
-              >
-                <option value="">Select Physician</option>
-                {physicians.map((physician) => (
-                  <option key={physician} value={physician}>
-                    {physician}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Start Date Fields */}
-            <div className="mb-1">
-              <label className="block text-sm font-semibold">Start Date</label>
-              <div className="flex space-x-2">
+            {typeof formData.physician !== "undefined" && (
+              <div className="mb-1">
+                <label className="block text-sm font-semibold">Physician</label>
                 <select
-                  name="start_month"
-                  value={formData.start_month || ""}
-                  onChange={handleChange}
-                  className="w-full rounded text-sm px-3 mt-1 py-2 border border-gray-300"
-                >
-                  <option value="">Month</option>
-                  {months.map((month) => (
-                    <option key={month} value={month}>
-                      {month}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  name="start_year"
-                  value={formData.start_year || ""}
-                  onChange={handleChange}
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-                >
-                  <option value="">Year</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Scale Dropdown with Helper Text */}
-            <div className="mb-1">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-semibold">Scale</label>
-              </div>
-              <select
-                name="scale"
-                value={formData.scale || ""}
-                onChange={handleChange}
-                className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
-              >
-                <option value="">Select Scale</option>
-                {scales.map((scale) => (
-                  <option key={scale} value={scale}>
-                    {scale}
-                  </option>
-                ))}
-              </select>
-              <span className="text-xs text-gray-500">
-                (Local, National, International, etc.)
-              </span>
-            </div>
-
-            {/* End Date Fields */}
-            <div className="mb-1">
-              <label className="block text-sm font-semibold">End Date</label>
-              <div className="flex space-x-2">
-                <select
-                  name="end_month"
-                  value={isCurrent ? "Current" : formData.end_month || ""}
+                  name="physician"
+                  value={formData.physician || ""}
                   onChange={handleChange}
                   className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
-                  disabled={isCurrent}
                 >
-                  <option value="">Month</option>
-                  <option value="Current">Current</option>
-                  <option value="None">None</option>
-                  {months.map((month) => (
-                    <option key={month} value={month}>
-                      {month}
+                  <option value="">Select Physician</option>
+                  {physicians.map((physician) => (
+                    <option key={physician} value={physician}>
+                      {physician}
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+
+            {/* Start Date Fields */}
+            {typeof formData.start_month !== "undefined" &&
+              typeof formData.start_year !== "undefined" && (
+                <div className="mb-1">
+                  <label className="block text-sm font-semibold">
+                    Start Date
+                  </label>
+                  <div className="flex space-x-2">
+                    <select
+                      name="start_month"
+                      value={formData.start_month || ""}
+                      onChange={handleChange}
+                      className="w-full rounded text-sm px-3 mt-1 py-2 border border-gray-300"
+                    >
+                      <option value="">Month</option>
+                      {months.map((month) => (
+                        <option key={month} value={month}>
+                          {month}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      name="start_year"
+                      value={formData.start_year || ""}
+                      onChange={handleChange}
+                      className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                    >
+                      <option value="">Year</option>
+                      {years.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+            {/* Scale Dropdown */}
+            {typeof formData.scale !== "undefined" && (
+              <div className="mb-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-semibold">Scale</label>
+                </div>
                 <select
-                  name="end_year"
-                  value={isCurrent ? "Current" : formData.end_year || ""}
+                  name="scale"
+                  value={formData.scale || ""}
                   onChange={handleChange}
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-                  disabled={isCurrent}
+                  className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
                 >
-                  <option value="">Year</option>
-                  <option value="Current">Current</option>
-                  <option value="None">None</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
+                  <option value="">Select Scale</option>
+                  {scales.map((scale) => (
+                    <option key={scale} value={scale}>
+                      {scale}
                     </option>
                   ))}
                 </select>
+                <span className="text-xs text-gray-500">
+                  (Local, National, International, etc.)
+                </span>
               </div>
-              <div className="flex items-center mt-2">
-                <input
-                  type="checkbox"
-                  id="isCurrent"
-                  checked={isCurrent}
-                  onChange={handleCurrentChange}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                />
-                <label htmlFor="isCurrent" className="ml-2 text-sm">
-                  Current
-                </label>
-              </div>
-            </div>
+            )}
 
-            {/* Type Dropdown with Other Text Field */}
-            <div className="mb-1">
-              <label className="block text-sm font-semibold">Type</label>
-              <select
-                name="type"
-                value={formData.type || ""}
-                onChange={handleChange}
-                className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
-              >
-                <option value="">Select Type</option>
-                {presentationTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-
-              {/* Other Type Text Field */}
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="other"
-                  value={formData.other || ""}
-                  onChange={handleChange}
-                  placeholder="Other"
-                  disabled={!typeIsOther}
-                  className={`w-full rounded text-sm px-3 py-2 border border-gray-300 ${
-                    !typeIsOther ? "bg-gray-100 cursor-not-allowed" : ""
-                  }`}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Details Text Box */}
-          <div className="mt-4 mb-1">
-            <label className="block text-sm font-semibold">Details</label>
-            <textarea
-              name="details"
-              value={formData.details || ""}
-              onChange={handleChange}
-              placeholder="Enter presentation details (e.g Title, etc.) here"
-              rows={4}
-              className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
-            />
-          </div>
-
-          {/* Note Checkbox */}
-          <div className="mb-1 mt-2">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="showNote"
-                name="showNote"
-                checked={showNote}
-                onChange={handleChange}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-              />
-              <label htmlFor="showNote" className="ml-2 text-sm">
-                Add a note to this presentation
-              </label>
-            </div>
-
-            {/* Note Text Field - Only shows when showNote is checked */}
-            {showNote && (
-              <div className="mt-2 mb-3">
-                <textarea
-                  name="note"
-                  value={formData.note || ""}
-                  onChange={handleChange}
-                  placeholder="Enter your note here"
-                  rows={2}
-                  className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-                />
-                {/* Highlight Checkbox - Now appears after the Note section */}
-                <div className="mb-1 mt-2">
-                  <div className="flex justify-end items-center">
+            {/* End Date Fields */}
+            {typeof formData.end_month !== "undefined" &&
+              typeof formData.end_year !== "undefined" && (
+                <div className="mb-1">
+                  <label className="block text-sm font-semibold">
+                    End Date
+                  </label>
+                  <div className="flex space-x-2">
+                    <select
+                      name="end_month"
+                      value={isCurrent ? "Current" : formData.end_month || ""}
+                      onChange={handleChange}
+                      className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
+                      disabled={isCurrent}
+                    >
+                      <option value="">Month</option>
+                      {months.map((month) => (
+                        <option key={month} value={month}>
+                          {month}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      name="end_year"
+                      value={isCurrent ? "Current" : formData.end_year || ""}
+                      onChange={handleChange}
+                      className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                      disabled={isCurrent}
+                    >
+                      <option value="">Year</option>
+                      {years.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center mt-2">
                     <input
                       type="checkbox"
-                      id="highlight"
-                      name="highlight"
-                      checked={formData.highlight || false}
-                      onChange={handleChange}
+                      id="isCurrent"
+                      checked={isCurrent}
+                      onChange={handleCurrentChange}
                       className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                     />
-                    <label
-                      htmlFor="highlight"
-                      className="ml-2 text-sm font-semibold"
-                    >
-                      Highlight note
+                    <label htmlFor="isCurrent" className="ml-2 text-sm">
+                      Current
                     </label>
                   </div>
+                </div>
+              )}
+
+            {/* Type Dropdown with Other Text Field */}
+            {typeof formData.type !== "undefined" && (
+              <div className="mb-1">
+                <label className="block text-sm font-semibold">Type</label>
+                <select
+                  name="type"
+                  value={formData.type || ""}
+                  onChange={handleChange}
+                  className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
+                >
+                  <option value="">Select Type</option>
+                  {presentationTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Other Type Text Field */}
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    name="other"
+                    value={formData.other || ""}
+                    onChange={handleChange}
+                    placeholder="Other"
+                    disabled={!typeIsOther}
+                    className={`w-full rounded text-sm px-3 py-2 border border-gray-300 ${
+                      !typeIsOther ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
+                  />
                 </div>
               </div>
             )}
           </div>
+
+          {/* Details Text Box */}
+          {typeof formData.details !== "undefined" && (
+            <div className="mt-4 mb-1">
+              <label className="block text-sm font-semibold">Details</label>
+              <textarea
+                name="details"
+                value={formData.details || ""}
+                onChange={handleChange}
+                placeholder="Enter presentation details (e.g Title, etc.) here"
+                rows={4}
+                className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
+              />
+            </div>
+          )}
+
+          {/* Note Checkbox */}
+          {(typeof formData.note !== "undefined" || showNote) && (
+            <div className="mb-1 mt-2">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="showNote"
+                  name="showNote"
+                  checked={showNote}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                />
+                <label htmlFor="showNote" className="ml-2 text-sm">
+                  Add a note to this presentation
+                </label>
+              </div>
+              {/* Note Text Field - Only shows when showNote is checked */}
+              {showNote && (
+                <div className="mt-2 mb-3">
+                  <textarea
+                    name="note"
+                    value={formData.note || ""}
+                    onChange={handleChange}
+                    placeholder="Enter your note here"
+                    rows={2}
+                    className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  />
+                  {/* Highlight Checkbox - Now appears after the Note section */}
+                  <div className="mb-1 mt-2">
+                    <div className="flex justify-end items-center">
+                      <input
+                        type="checkbox"
+                        id="highlight"
+                        name="highlight"
+                        checked={formData.highlight || false}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="highlight"
+                        className="ml-2 text-sm font-semibold"
+                      >
+                        Highlight note
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}

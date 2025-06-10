@@ -213,6 +213,8 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
             ✕
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {console.log("Filtered Keys:", filteredKeys)}{" "}
+            {/* Debugging line to check filtered keys */}
             {filteredKeys.map((key) =>
               key === "dates" ? (
                 // Render date selectors for 'dates' field
@@ -306,7 +308,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
                 </div>
               ) : key === "details" ? (
                 // Render textarea for 'details' field
-                <div key={key} className="mb-1">
+                <div key={key} className="mb-1 col-span-2">
                   <label className="block text-sm capitalize">
                     {formatKey(key)}
                   </label>

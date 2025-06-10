@@ -105,14 +105,18 @@ const InvitedPresentationEntry = ({
             {data_details.start_month && data_details.start_year ? " " : ""}
             {data_details.start_year}
             {" – "}
-            {data_details.end_month === "Current" && data_details.end_year === "Current"
-              ? "Current"
-              : (
-                <>
-                  {data_details.end_month}
-                  {data_details.end_month && data_details.end_year ? " " : ""}
-                  {data_details.end_year}
-                </>
+            {data_details.end_month === "Current" &&
+            data_details.end_year === "Current" ? (
+              "Current"
+            ) : data_details.end_month === "None" &&
+              data_details.end_year === "None" ? (
+              "None"
+            ) : (
+              <>
+                {data_details.end_month}
+                {data_details.end_month && data_details.end_year ? " " : ""}
+                {data_details.end_year}
+              </>
             )}
           </h1>
         )}
