@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { addTemplate } from "../../../../graphql/graphqlHelpers"
+import { addTemplate, updateTemplate } from "../../../../graphql/graphqlHelpers"
 import { toast } from "react-toastify"
 import { useTemplateModifier } from "./TemplateModifierContext"
+import { useTemplatePageContext } from "Pages/Templates/TemplatePageContext"
 
-const SaveTemplateButton = () => {
+const SaveTemplateButton = ({templateId = null}) => {
     const {
         title,
         startYear,
@@ -13,7 +14,9 @@ const SaveTemplateButton = () => {
         groups,
         HIDDEN_GROUP_ID,
         onBack
-    } = useTemplateModifier()
+    } = useTemplateModifier();
+
+    const { fetchTemplates } = useTemplatePageContext();
 
     const [addingTemplate, setAddingTemplate] = useState(false)
 
@@ -33,12 +36,17 @@ const SaveTemplateButton = () => {
 
         setAddingTemplate(true)
         try {
-            await addTemplate(title, templateStructure, startYear, endYear)
-            toast.success("Template created successfully!", { autoClose: 3000 })
+            if (!templateId) {
+                await addTemplate(title, templateStructure, startYear, endYear)
+            } else {
+                await updateTemplate(templateId, title, templateStructure, startYear, endYear);
+            }
+            toast.success("Template saved successfully!", { autoClose: 3000 })
+            fetchTemplates();
             onBack()
         } catch (error) {
-            console.error("Error creating template:", error)
-            toast.error("Failed to create template. Please try again.", { autoClose: 3000 })
+            console.error("Error saving template:", error)
+            toast.error("Failed to save template. Please try again.", { autoClose: 3000 })
         }
         setAddingTemplate(false)
     }

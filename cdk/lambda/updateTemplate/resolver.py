@@ -47,9 +47,12 @@ def updateTemplate(arguments):
     """
 
     # Execute the query with the provided arguments
+
+    template_structure = json.dumps(arguments['template_structure'])
+
     cursor.execute(query, (
         arguments['title'] if 'title' in arguments else '',
-        arguments['template_structure'] if 'template_structure' in arguments else '{}',
+        template_structure if 'template_structure' in arguments else '{}',
         arguments['start_year'] if 'start_year' in arguments else '',
         arguments['end_year'] if 'end_year' in arguments else '',
         arguments['template_id']
@@ -58,7 +61,7 @@ def updateTemplate(arguments):
     cursor.close()
     connection.commit()
     connection.close()
-    updateDynamoDBKeys(arguments['template_id'])
+    # updateDynamoDBKeys(arguments['template_id'])
     return "SUCCESS"
 
 def lambda_handler(event, context):

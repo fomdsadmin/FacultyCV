@@ -1,56 +1,37 @@
 import { useState, useEffect } from 'react';
 import PageContainer from '../../Views/PageContainer.jsx';
 import AdminMenu from '../../Components/AdminMenu.jsx';
-import { getAllTemplates } from '../../graphql/graphqlHelpers.js';
-import NewTemplatePage from '../TemplatePages/NewTemplatePage/NewTemplatePage.jsx';
+import NewTemplatePage from '../TemplatePages/NewTemplatePage.jsx';
 import TemplateCard from '../../Components/TemplateCard.jsx';
-import ManageTemplate from '../../Components/ManageTemplate.jsx';
 import EditReportFormatting from '../../Components/EditReportFormat.jsx';
+import EditTemplatePage from 'Pages/TemplatePages/EditTemplatePage/EditTemplatePage.jsx';
+import { TemplatePageProvider, useTemplatePageContext } from './TemplatePageContext.jsx';
 
-const Templates = ({ getCognitoUser, userInfo }) => {
+const TemplatesContent = ({ getCognitoUser, userInfo }) => {
+  const { templates, activeTemplate, handleManageClick, handleBack } = useTemplatePageContext();
+  
+  // Local state only
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTemplate, setActiveTemplate] = useState(null);
-  const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openNewTemplate, setOpenNewTemplate] = useState(false);
   const [editReportFormatting, setEditReportFormatting] = useState(false);
 
   useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const fetchTemplates = async () => {
-    setLoading(true);
-    setTemplates([]);
-    const retrievedTemplates = await getAllTemplates();
-
-    
-
-    setTemplates(retrievedTemplates);
-    setLoading(false);
-  };
+    // Set loading to false once templates are loaded
+    if (templates.length > 0) {
+      setLoading(false);
+    }
+  }, [templates]);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
-
-  const handleManageClick = (value) => {
-    const template = templates.filter((template) => template.template_id == value);
-    setActiveTemplate(template[0]);
-  };
-
   const searchedTemplates = templates.filter(template => {
     const title = template.title || '';
-
     const matchesSearch = title.toLowerCase().startsWith(searchTerm.toLowerCase());
-
     return matchesSearch;
   }).sort((a, b) => { return a.title.localeCompare(b.title) });
-
-  const handleBack = () => {
-    setActiveTemplate(null);
-  };
 
   const handleAddNewTemplate = () => {
     setOpenNewTemplate(true);
@@ -79,7 +60,7 @@ const Templates = ({ getCognitoUser, userInfo }) => {
         ) : (
           <>
             {openNewTemplate ? (
-              <NewTemplatePage onBack={handleBackFromNewTemplate} fetchTemplates={fetchTemplates} />
+              <NewTemplatePage onBack={handleBackFromNewTemplate} />
             ) : editReportFormatting ? (
               <EditReportFormatting onBack={handleBackFromEditReportFormatting} />
             ) : activeTemplate === null ? (
@@ -125,13 +106,21 @@ const Templates = ({ getCognitoUser, userInfo }) => {
               </div>
             ) : (
               <div className='!h-full custom-scrollbar'>
-                <ManageTemplate template={activeTemplate} onBack={handleBack} fetchTemplates={fetchTemplates}></ManageTemplate>
+                <EditTemplatePage template={activeTemplate} onBack={handleBack} />
               </div>
             )}
           </>
         )}
       </main>
     </PageContainer>
+  )
+}
+
+const Templates = ({ getCognitoUser, userInfo }) => {
+  return (
+    <TemplatePageProvider>
+      <TemplatesContent getCognitoUser={getCognitoUser} userInfo={userInfo} />
+    </TemplatePageProvider>
   )
 }
 

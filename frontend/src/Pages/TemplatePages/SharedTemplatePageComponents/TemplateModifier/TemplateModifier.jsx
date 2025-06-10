@@ -14,15 +14,8 @@ const TemplateModifier = ({
     startDate,
     setStartDate,
     onBack,
-    loading,
+    templateId = null
 }) => {
-    if (loading) {
-        return (
-            <div className="w-full h-full flex items-center justify-center">
-                <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-            </div>
-        )
-    }
 
     return <>
         <TemplateModifierProvider
@@ -37,7 +30,7 @@ const TemplateModifier = ({
             onBack={onBack}
         >
             <div className="flex justify-end mb-4">
-                <SaveTemplateButton></SaveTemplateButton>
+                <SaveTemplateButton templateId={templateId}></SaveTemplateButton>
             </div>
 
             <div className="mb-4">

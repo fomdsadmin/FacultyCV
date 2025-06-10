@@ -1,10 +1,10 @@
 import { FaArrowLeft } from "react-icons/fa"
 import { useState, useEffect } from "react"
-import { getAllSections } from "../../../graphql/graphqlHelpers"
-import TemplateModifier from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifier";
-import { HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
+import { getAllSections } from "../../graphql/graphqlHelpers"
+import TemplateModifier from "./SharedTemplatePageComponents/TemplateModifier/TemplateModifier";
+import { HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "./SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 
-const NewTemplatePage = ({ onBack, fetchTemplates }) => {
+const NewTemplatePage = ({ onBack }) => {
   const [title, setTitle] = useState("")
   const [sections, setSections] = useState([])
   const [groups, setGroups] = useState([]);
@@ -69,19 +69,23 @@ const NewTemplatePage = ({ onBack, fetchTemplates }) => {
       <div className="mt-5 leading-tight mr-4 ml-4">
         <h2 className="text-2xl font-bold mb-6">New Template</h2>
         
-        <TemplateModifier
-          groups={groups}
-          setGroup={setGroups}
-          title={title}
-          setTitle={setTitle}
-          endDate={endYear}
-          setEndDate={setEndYear}
-          startDate={startYear}
-          setStartDate={setStartYear}
-          loading={loading}
-          onBack={onBack}
-          fetchTemplates={fetchTemplates}
-        />
+        {loading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+          </div>
+        ) : (
+          <TemplateModifier
+            groups={groups}
+            setGroup={setGroups}
+            title={title}
+            setTitle={setTitle}
+            endDate={endYear}
+            setEndDate={setEndYear}
+            startDate={startYear}
+            setStartDate={setStartYear}
+            onBack={onBack}
+          />
+        )}
       </div>
     </div>
   )
