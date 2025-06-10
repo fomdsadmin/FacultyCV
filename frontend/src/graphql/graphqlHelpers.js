@@ -54,6 +54,7 @@ import {
   UPDATE_USER_DECLARATION,
   ADD_SECTION,
   ADD_USER_CV_DATA,
+  UPDATE_USER_CV_DATA,
   UPDATE_SECTION,
   addAuditViewMutation,
 } from "./mutations";
@@ -1035,9 +1036,10 @@ export const updateUser = async (
  */
 export const updateSection = async (data_section_id, archive, attributes) => {
   const results = await executeGraphql(UPDATE_SECTION, {
-    data_section_id, archive, attributes
-  }
-  );
+    data_section_id,
+    archive,
+    attributes,
+  });
   return results["data"]["updateSection"];
 };
 
@@ -1051,9 +1053,11 @@ export const updateSection = async (data_section_id, archive, attributes) => {
  */
 export const updateUserCVData = async (user_cv_data_id, data_details) => {
   const cognito_user_id = await getUserId();
-  const results = await runGraphql(
-    updateUserCVDataMutation(user_cv_data_id, data_details, cognito_user_id)
-  );
+  const results = await executeGraphql(UPDATE_USER_CV_DATA, {
+    user_cv_data_id: user_cv_data_id,
+    data_details: data_details,
+    cognito_user_id: cognito_user_id,
+  });
   return results["data"]["updateUserCVData"];
 };
 

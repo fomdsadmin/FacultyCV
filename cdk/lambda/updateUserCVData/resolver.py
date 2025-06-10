@@ -29,29 +29,29 @@ def updateUserCVData(arguments):
             cursor.execute("UPDATE user_cv_data SET archive = %s, archive_timestamp = %s WHERE user_cv_data_id = %s", 
                            (archive, archive_timestamp, arguments['user_cv_data_id']))
     # Fetch all templates which have the data_section_id
-    cursor.execute('SELECT data_section_id FROM user_cv_data WHERE user_cv_data_id = %s', (arguments['user_cv_data_id'],))
-    data_section_id = cursor.fetchone()
-    data_section_id = data_section_id[0]
-    cursor.execute('SELECT template_id, data_section_ids FROM templates')
-    templates = cursor.fetchall()
-    # Get all template ids which have the data_section_id
-    filtered_template_ids = []
-    for template in templates:
-        if data_section_id in template[1]:
-            filtered_template_ids.append(template[0])
-    cursor.execute('SELECT user_id FROM user_cv_data WHERE user_cv_data_id = %s', (arguments['user_cv_data_id'], ))
-    user_id = cursor.fetchone()[0]
-    for template_id in filtered_template_ids:
-        # Update the key cognito_user_id/user_id/template_id to the current timestamp
-        user_logs = {
-            'logEntryId': {'S': f"{arguments['cognito_user_id']}/{user_id}/{template_id}"},
-            'timestamp': {'N': f"{int(time.time())}"}
-        }
-        dynamodb.put_item(
-            TableName=os.environ['TABLE_NAME'],
-            Item=user_logs
-        )
-    print("Updated user logs")
+    # cursor.execute('SELECT data_section_id FROM user_cv_data WHERE user_cv_data_id = %s', (arguments['user_cv_data_id'],))
+    # data_section_id = cursor.fetchone()
+    # data_section_id = data_section_id[0]
+    # cursor.execute('SELECT template_id, data_section_ids FROM templates')
+    # templates = cursor.fetchall()
+    # # Get all template ids which have the data_section_id
+    # filtered_template_ids = []
+    # for template in templates:
+    #     if data_section_id in template[1]:
+    #         filtered_template_ids.append(template[0])
+    # cursor.execute('SELECT user_id FROM user_cv_data WHERE user_cv_data_id = %s', (arguments['user_cv_data_id'], ))
+    # user_id = cursor.fetchone()[0]
+    # for template_id in filtered_template_ids:
+    #     # Update the key cognito_user_id/user_id/template_id to the current timestamp
+    #     user_logs = {
+    #         'logEntryId': {'S': f"{arguments['cognito_user_id']}/{user_id}/{template_id}"},
+    #         'timestamp': {'N': f"{int(time.time())}"}
+    #     }
+    #     dynamodb.put_item(
+    #         TableName=os.environ['TABLE_NAME'],
+    #         Item=user_logs
+    #     )
+    # print("Updated user logs")
     cursor.close()
     connection.commit()
     connection.close()

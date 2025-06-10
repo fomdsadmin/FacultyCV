@@ -18,26 +18,24 @@ const InvitedPresentationModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [typeIsOther, setTypeIsOther] = useState(false);
+  const [showNote, setShowNote] = useState(false);
+  const [isCurrent, setIsCurrent] = useState(false);
 
   const { userInfo } = useApp();
 
   useEffect(() => {
-    // Initialize formData with provided fields
     const initialData = { ...fields };
-    console.log("Initial Fields:", initialData);
 
-    // Set Type dropdown and check if it's "Other"
-    if (initialData.type === "Other") {
-      setTypeIsOther(true);
-    }
+    // Enable "Other" field if type is "Other" (case-insensitive)
+    setTypeIsOther(
+      initialData.type && initialData.type.toLowerCase() === "other"
+    );
 
-    // Initialize highlight and note checkboxes (convert string to boolean)
-    initialData.highlight =
-      initialData.highlight === "true" ||
-      initialData.highlight === true ||
-      false;
-    initialData.note =
-      initialData.note === "true" || initialData.note === true || false;
+    setShowNote(!!initialData.note);
+
+    setIsCurrent(
+      initialData.end_month === "Current" && initialData.end_year === "Current"
+    );
 
     setFormData(initialData);
   }, [fields]);
@@ -45,24 +43,58 @@ const InvitedPresentationModal = ({
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    // Handle checkbox fields
-    if (type === "checkbox") {
+    if (name === "showNote") {
+      setShowNote(checked);
+      if (!checked) {
+        setFormData((prevState) => ({
+          ...prevState,
+          note: "",
+        }));
+      }
+      return;
+    }
+
+    if (type === "checkbox" && name === "highlight") {
       setFormData((prevState) => ({
         ...prevState,
-        [name]: checked,
+        highlight: checked,
       }));
       return;
     }
 
-    // Handle special case for Type dropdown
     if (name === "type") {
-      setTypeIsOther(value === "other");
+      setTypeIsOther(value === "Other");
+      setFormData((prevState) => ({
+        ...prevState,
+        type: value,
+        // Reset "other" field if not "Other"
+        other: value === "Other" ? prevState.other : "",
+      }));
+      return;
     }
 
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
+  };
+
+  const handleCurrentChange = (e) => {
+    const checked = e.target.checked;
+    setIsCurrent(checked);
+    if (checked) {
+      setFormData((prev) => ({
+        ...prev,
+        end_month: "Current",
+        end_year: "Current",
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        end_month: "",
+        end_year: "",
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -72,16 +104,6 @@ const InvitedPresentationModal = ({
     // Validate required fields
     if (!formData.physician) {
       setError("Please select a physician.");
-      return;
-    }
-
-    if (!formData.type) {
-      setError("Please select a presentation type.");
-      return;
-    }
-
-    if (formData.type === "other" && !formData.other) {
-      setError("Please specify the other presentation type.");
       return;
     }
 
@@ -96,23 +118,41 @@ const InvitedPresentationModal = ({
       return;
     }
 
-    // Validate note field if Note is checked
-    if (formData.note && !formData.noteText) {
+    if (!formData.end_month || !formData.end_year) {
+      setError("Please select an end date.");
+      return;
+    }
+    if (!formData.type) {
+      setError("Please select a presentation type.");
+      return;
+    }
+
+    if (formData.type === "other" && !formData.other) {
+      setError("Please specify the other presentation type.");
+      return;
+    }
+
+    // Validate note field if note is shown
+    if (showNote && (!formData.note || formData.note.trim() === "")) {
       setError("Please add a note or uncheck the Add note option.");
       return;
     }
 
     setIsSubmitting(true);
 
-    // Create the updated form data with booleans converted to strings
-    const updatedFormData = {
+    // Prepare data for saving
+    let updatedFormData = {
       ...formData,
-      highlight: formData.highlight.toString(),
-      note: formData.note.toString(),
+      highlight: formData.highlight ? "true" : "false",
+      // Only include note if showNote is true, otherwise remove it
+      ...(showNote ? {} : { note: "" }),
     };
+    if (isCurrent) {
+      updatedFormData.end_month = "Current";
+      updatedFormData.end_year = "Current";
+    }
 
-    console.log("Updated Form Data:", updatedFormData);
-
+    // console.log(updatedFormData);
     try {
       if (isNew) {
         await addUserCVData(
@@ -121,6 +161,7 @@ const InvitedPresentationModal = ({
           JSON.stringify(updatedFormData)
         );
       } else {
+        console.log(updatedFormData, user_cv_data_id);
         await updateUserCVData(
           user_cv_data_id,
           JSON.stringify(updatedFormData)
@@ -238,7 +279,7 @@ const InvitedPresentationModal = ({
                 <label className="block text-sm font-semibold">Scale</label>
               </div>
               <select
-                name="Scale"
+                name="scale"
                 value={formData.scale || ""}
                 onChange={handleChange}
                 className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
@@ -261,9 +302,10 @@ const InvitedPresentationModal = ({
               <div className="flex space-x-2">
                 <select
                   name="end_month"
-                  value={formData.end_month || ""}
+                  value={isCurrent ? "Current" : formData.end_month || ""}
                   onChange={handleChange}
                   className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
+                  disabled={isCurrent}
                 >
                   <option value="">Month</option>
                   <option value="Current">Current</option>
@@ -276,9 +318,10 @@ const InvitedPresentationModal = ({
                 </select>
                 <select
                   name="end_year"
-                  value={formData.end_year || ""}
+                  value={isCurrent ? "Current" : formData.end_year || ""}
                   onChange={handleChange}
                   className="w-full rounded text-sm px-3 py-2 border border-gray-300"
+                  disabled={isCurrent}
                 >
                   <option value="">Year</option>
                   <option value="Current">Current</option>
@@ -289,6 +332,18 @@ const InvitedPresentationModal = ({
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="flex items-center mt-2">
+                <input
+                  type="checkbox"
+                  id="isCurrent"
+                  checked={isCurrent}
+                  onChange={handleCurrentChange}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                />
+                <label htmlFor="isCurrent" className="ml-2 text-sm">
+                  Current
+                </label>
               </div>
             </div>
 
@@ -333,7 +388,7 @@ const InvitedPresentationModal = ({
               name="details"
               value={formData.details || ""}
               onChange={handleChange}
-              placeholder="Enter presentation details here"
+              placeholder="Enter presentation details (e.g Title, etc.) here"
               rows={4}
               className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
             />
@@ -344,23 +399,23 @@ const InvitedPresentationModal = ({
             <div className="flex items-center">
               <input
                 type="checkbox"
-                id="note"
-                name="note"
-                checked={formData.note || false}
+                id="showNote"
+                name="showNote"
+                checked={showNote}
                 onChange={handleChange}
                 className="h-4 w-4 text-blue-600 border-gray-300 rounded"
               />
-              <label htmlFor="note" className="ml-2 text-sm">
+              <label htmlFor="showNote" className="ml-2 text-sm">
                 Add a note to this presentation
               </label>
             </div>
 
-            {/* Note Text Field - Only shows when Note is checked */}
-            {formData.note && (
+            {/* Note Text Field - Only shows when showNote is checked */}
+            {showNote && (
               <div className="mt-2 mb-3">
                 <textarea
-                  name="NoteText"
-                  value={formData.noteText || ""}
+                  name="note"
+                  value={formData.note || ""}
                   onChange={handleChange}
                   placeholder="Enter your note here"
                   rows={2}
@@ -372,7 +427,7 @@ const InvitedPresentationModal = ({
                     <input
                       type="checkbox"
                       id="highlight"
-                      name="Highlight"
+                      name="highlight"
                       checked={formData.highlight || false}
                       onChange={handleChange}
                       className="h-4 w-4 text-blue-600 border-gray-300 rounded"
@@ -396,7 +451,7 @@ const InvitedPresentationModal = ({
               className="btn btn-success text-white mt-3 py-1 px-2 w-1/5 min-h-0 h-8 leading-tight"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Saving..." : "Save"}
+              {isNew ? "Save" : "Update"}
             </button>
           </div>
         </form>
