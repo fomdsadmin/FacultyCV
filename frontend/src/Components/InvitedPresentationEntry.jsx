@@ -176,12 +176,12 @@ const InvitedPresentationEntry = ({
         {data_details.note && (
           <div
             className={
-              data_details.highlight === "true"
+              data_details.highlight && data_details.highlight === "true"
                 ? "my-1 p-1 text-sm rounded bg-blue-50 border-l-4 border-blue-300 text-zinc-900 font-medium"
                 : "my-1 p-1 text-sm rounded bg-gray-100 border-l-4 border-gray-400 text-gray-900 font-medium"
             }
           >
-            {data_details.highlight === "true" ? (
+            {data_details.highlight && data_details.highlight === "true" ? (
               <>
                 <span className="font-semibold text-sm">Note:</span>{" "}
                 {truncateText(data_details.note, MAX_CHAR_LENGTH)}
