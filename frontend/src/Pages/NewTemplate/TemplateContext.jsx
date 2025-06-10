@@ -37,7 +37,9 @@ export const TemplateProvider = ({ children, onBack }) => {
         id: HIDDEN_GROUP_ID,
         title: HIDDEN_GROUP_ID,
         prepared_sections: sections.map((section) => ({
-          ...section,
+          data_section_id: section.data_section_id,
+          data_type: section.data_type,
+          title: section.title,
           sort: {
             numerically: false, // if not it will be sorted alphabetically
             ascending: true,
@@ -61,7 +63,7 @@ export const TemplateProvider = ({ children, onBack }) => {
         })),
       }
     ];
-
+    console.log(initialData)
     setGroups(initialData);
   }, [sections])
 
@@ -73,14 +75,10 @@ export const TemplateProvider = ({ children, onBack }) => {
 
   const fetchSections = async () => {
     const fetchedSections = await getAllSections()
-    const sectionsWithToggle = fetchedSections
-      .map((section) => ({
-        ...section,
-        showMinus: true,
-      }))
+    const sortedSections = fetchedSections
       .sort((a, b) => a.title.localeCompare(b.title))
 
-    setSections(sectionsWithToggle)
+    setSections(sortedSections)
     setLoading(false)
   }
 
