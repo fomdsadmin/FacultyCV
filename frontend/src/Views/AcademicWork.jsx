@@ -10,6 +10,7 @@ import PatentsSection from "../Components/PatentsSection.jsx";
 import InvitedPresentationSection from "../Components/InvitedPresentationSection.jsx";
 import { getAllSections } from "../graphql/graphqlHelpers.js";
 import EntryModal from "../Components/EntryModal.jsx";
+import AreasOfSpecialInterestSection from "../Components/AreasOfSpecialInterestSection.jsx";
 
 const AcademicWork = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -224,12 +225,20 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                     onBack={handleBack}
                   />
                 )}
+                {activeSection.title ===
+                  "Areas of Special Interest and Accomplishments" && (
+                  <AreasOfSpecialInterestSection
+                    user={userInfo}
+                    section={activeSection}
+                    onBack={handleBack}
+                  />
+                )}
                 {![
                   "Publications",
                   "Patents",
                   "Secure Funding",
                   "Invited Presentations",
-                  ,
+                  "Areas of Special Interest and Accomplishments",
                 ].includes(activeSection.title) && (
                   <GenericSection
                     user={userInfo}

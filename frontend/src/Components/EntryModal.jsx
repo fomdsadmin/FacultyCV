@@ -322,7 +322,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
                   />
                 </div>
               ) : (
-                // Render text input for other fields
+                // Render remaining text input for other fields
                 <div key={key} className="mb-1">
                   <label className="block text-sm capitalize">
                     {formatKey(key)}

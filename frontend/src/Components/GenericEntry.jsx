@@ -105,11 +105,17 @@ const GenericEntry = ({
             {truncateText(updatedField2, MAX_CHAR_LENGTH)}
           </h2>
         )}
-        {attributes.map((attribute, index) => (
-          <p key={index} className="text-gray-600 break-words text-sm">
-            {truncateText(attribute, MAX_CHAR_LENGTH)}
-          </p>
-        ))}
+        {attributes.map((attribute, index) => {
+          // Split "Label: Value"
+          const [label, ...rest] = attribute.split(": ");
+          const value = rest.join(": ");
+          return (
+            <p key={index} className="text-gray-600 break-words text-sm">
+              <span className="font-bold">{label}:</span>{" "}
+              {truncateText(value, MAX_CHAR_LENGTH)}
+            </p>
+          );
+        })}
       </div>
 
       <div className="flex items-center space-x-1">

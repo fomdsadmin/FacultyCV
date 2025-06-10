@@ -5,7 +5,7 @@ import { addUserCVData, updateUserCVData } from "../graphql/graphqlHelpers";
 import { useApp } from "../Contexts/AppContext";
 import ModalStylingWrapper from "../SharedComponents/ModalStylingWrapper";
 
-const InvitedPresentationModal = ({
+const AreasOfSpecialInterestModal = ({
   isNew,
   section,
   onClose,
@@ -19,6 +19,7 @@ const InvitedPresentationModal = ({
   const [error, setError] = useState("");
   const [typeIsOther, setTypeIsOther] = useState(false);
   const [showNote, setShowNote] = useState(false);
+  const [isCurrent, setIsCurrent] = useState(false);
 
   // New state for EntryModal-style date fields
   const [startDateMonth, setStartDateMonth] = useState("");
@@ -44,19 +45,23 @@ const InvitedPresentationModal = ({
       if (end === "Current") {
         setEndDateMonth("Current");
         setEndDateYear("Current");
+        setIsCurrent(true);
       } else if (end === "None" || !end) {
         setEndDateMonth("None");
         setEndDateYear("None");
+        setIsCurrent(false);
       } else {
         const [eMonth, eYear] = end.split(", ");
         setEndDateMonth(eMonth || "");
         setEndDateYear(eYear || "");
+        setIsCurrent(false);
       }
     } else {
       setStartDateMonth("");
       setStartDateYear("");
       setEndDateMonth("");
       setEndDateYear("");
+      setIsCurrent(false);
     }
 
     setTypeIsOther(
@@ -75,20 +80,26 @@ const InvitedPresentationModal = ({
       setEndDateMonth(value);
       if (value === "Current") {
         setEndDateYear("Current");
+        setIsCurrent(true);
       } else if (value === "None") {
         setEndDateYear("None");
+        setIsCurrent(false);
       } else if (endDateYear === "Current" || endDateYear === "None") {
         setEndDateYear("");
+        setIsCurrent(false);
       }
     }
     if (name === "endDateYear") {
       setEndDateYear(value);
       if (value === "Current") {
         setEndDateMonth("Current");
+        setIsCurrent(true);
       } else if (value === "None") {
         setEndDateMonth("None");
+        setIsCurrent(false);
       } else if (endDateMonth === "Current" || endDateMonth === "None") {
         setEndDateMonth("");
+        setIsCurrent(false);
       }
     }
   };
@@ -132,19 +143,34 @@ const InvitedPresentationModal = ({
     }));
   };
 
+  const handleCurrentChange = (e) => {
+    const checked = e.target.checked;
+    setIsCurrent(checked);
+    if (checked) {
+      setFormData((prev) => ({
+        ...prev,
+        end_month: "Current",
+        end_year: "Current",
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        end_month: "",
+        end_year: "",
+      }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     // Validate required fields
-    if (!formData.physician) {
+    if ("physician" in formData && !formData.physician) {
       setError("Please select a physician.");
       return;
     }
-    if (!formData.scale) {
-      setError("Please select a scale.");
-      return;
-    }
+
     // Validate EntryModal-style date fields
     if (!startDateMonth || !startDateYear) {
       setError("Please select a start date.");
@@ -163,7 +189,9 @@ const InvitedPresentationModal = ({
       return;
     }
     if (endDateMonth === "None" || endDateYear === "None") {
-      setError('Please select a valid end date (month and year) or "Current".');
+      setError(
+        'Please select a valid end date (month and year) or "Current".'
+      );
       return;
     }
     if (!formData.type) {
@@ -193,7 +221,6 @@ const InvitedPresentationModal = ({
       ...formData,
       dates,
       highlight: formData.highlight ? "true" : "false",
-      // Only include note if showNote is true, otherwise remove it
       ...(showNote ? {} : { note: "" }),
     };
 
@@ -239,8 +266,8 @@ const InvitedPresentationModal = ({
     (new Date().getFullYear() - i).toString()
   );
 
-  const physicians = [];
-  const physician_name = userInfo?.first_name + " " + userInfo?.last_name;
+  const physicians = []
+  const physician_name = userInfo?.first_name + " " + userInfo?.last_name
   physicians.push(physician_name);
 
   const presentationTypes = [
@@ -357,31 +384,6 @@ const InvitedPresentationModal = ({
                 </select>
               </div>
             </div>
-
-            {/* Scale Dropdown */}
-            {typeof formData.scale !== "undefined" && (
-              <div className="mb-1">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-semibold">Scale</label>
-                </div>
-                <select
-                  name="scale"
-                  value={formData.scale || ""}
-                  onChange={handleChange}
-                  className="w-full rounded text-sm px-3 py-2 mt-1 border border-gray-300"
-                >
-                  <option value="">Select Scale</option>
-                  {scales.map((scale) => (
-                    <option key={scale} value={scale}>
-                      {scale}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-xs text-gray-500">
-                  (Local, National, International, etc.)
-                </span>
-              </div>
-            )}
 
             {/* Type Dropdown with Other Text Field */}
             {typeof formData.type !== "undefined" && (
@@ -501,4 +503,4 @@ const InvitedPresentationModal = ({
   );
 };
 
-export default InvitedPresentationModal;
+export default AreasOfSpecialInterestModal;
