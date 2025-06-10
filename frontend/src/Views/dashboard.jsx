@@ -241,7 +241,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
               */}
 
               {/* ORCID and Scopus Connection Status */}
-              <div className="relative w-full h-full flex flex-col bg-zinc-50 border-l-8 border-gr-500 rounded-xl shadow-md px-4 py-4 mb-6">
+              {/* <div className="relative w-full h-full flex flex-col bg-zinc-50 border-l-8 border-gr-500 rounded-xl shadow-md px-4 py-4 mb-6">
                 <div className="flex items-start gap-4">
                   <svg
                     className="w-6 h-6 text-indigo-500 mt-1"
@@ -259,10 +259,10 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                   <div className="flex-1 xl:pr-24">
                     <div className="text-md font-bold text-indigo-800 mb-2">
                       Publications
-                    </div>
+                    </div> */}
 
-                    {/* ORCID Connection */}
-                    <div className="mb-2 p-3 bg-white rounded-lg border">
+              {/* ORCID Connection */}
+              {/* <div className="mb-2 p-3 bg-white rounded-lg border">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
                         <div className="flex items-center gap-2 mb-2 sm:mb-0">
                           <span className="text-sm font-semibold ">ORCID</span>
@@ -292,10 +292,10 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                           Dec 1, 2024 at 2:30 PM
                         </div>
                       )}
-                    </div>
+                    </div> */}
 
-                    {/* Scopus Connection */}
-                    <div className="mb-2 p-3 bg-white rounded-lg border">
+              {/* Scopus Connection */}
+              {/* <div className="mb-2 p-3 bg-white rounded-lg border">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
                         <div className="flex items-center gap-2 mb-2 sm:mb-0">
                           <span className="text-sm font-semibold ">Scopus</span>
@@ -326,9 +326,9 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                         </div>
                       )}
                     </div>
-                  </div>
-                  {/* Button positioned differently for mobile vs desktop */}
-                  <div className="mt-4 flex justify-start lg:absolute lg:top-3 lg:right-3 lg:mt-0">
+                  </div> */}
+              {/* Button positioned differently for mobile vs desktop */}
+              {/* <div className="mt-4 flex justify-start lg:absolute lg:top-3 lg:right-3 lg:mt-0">
                     <Link to="/home">
                       <button className="btn btn-xs btn-indigo-500 bg-indigo-500 hover:bg-indigo-600 text-white border-indigo-500">
                         Manage
@@ -336,7 +336,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                     </Link>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 

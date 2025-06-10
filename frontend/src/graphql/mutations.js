@@ -275,18 +275,14 @@ export const UPDATE_SECTION = `
     }
 `
 
-export const updateUserCVDataMutation = (
-    user_cv_data_id,
-    data_details,
-    cognito_user_id
-) => `
-    mutation UpdateUserCVData {
-        updateUserCVData(
-            user_cv_data_id: "${user_cv_data_id}"
-            data_details: ${data_details},
-            cognito_user_id: "${cognito_user_id}"
-        )
-    }
+export const UPDATE_USER_CV_DATA = `
+    mutation UpdateUserCVData($user_cv_data_id: String!, $data_details: AWSJSON, $cognito_user_id: String) {
+      updateUserCVData(
+        user_cv_data_id: $user_cv_data_id
+        data_details: $data_details
+        cognito_user_id: $cognito_user_id
+    )
+  }
 `;
 
 export const updateUserCVDataArchiveMutation = (
