@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaArrowLeft, FaTrash } from 'react-icons/fa';
 import DeleteTemplateModal from './DeleteTemplateModal';
 import { getAllSections, updateTemplate } from '../graphql/graphqlHelpers';
-import TemplateOrganizer from '../Pages/NewTemplate/TemplateOrganizer/TemplateOrganizer';
+import TemplateOrganizer from '../Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateOrganizer/TemplateOrganizer';
 import { toast } from 'react-toastify';
 
 const ManageTemplate = ({ template, onBack, fetchTemplates }) => {
