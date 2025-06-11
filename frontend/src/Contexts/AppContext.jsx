@@ -36,6 +36,8 @@ export const AppProvider = ({ children }) => {
         try {
             const session = await fetchAuthSession()
             const groups = session.tokens.idToken.payload["cognito:groups"]
+            console.log("User groups:", groups)
+            console.session
             return groups ? groups[0] : null
         } catch (error) {
             console.error("Error getting user group:", error)
