@@ -400,6 +400,10 @@ const PublicationsModal = ({
     setFetchingData(false);
   }
 
+  // Uses a Map to track unique publications by a key of doi|title.
+  // If a duplicate is found (same DOI or title),
+  // it keeps the one with more non-null fields (i.e., more complete data).
+  // The result is an array of unique, most-complete publication objects.
   function deduplicatePublications(publications) {
     const seen = new Map();
 

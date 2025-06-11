@@ -32,7 +32,7 @@ const removeCommasIfNeeded = (key, value) => {
   return value;
 };
 
-const InvitedPresentationEntry = ({
+const GenericEntryTwo = ({
   isArchived,
   onEdit,
   onArchive,
@@ -95,26 +95,13 @@ const InvitedPresentationEntry = ({
   return (
     <div className="min-h-8 shadow-glow mx-4 mt-2 px-4 py-4 flex items-center bg-white rounded-lg">
       <div className="flex-1 max-w-full">
-        {/* Date Range Line */}
-        {(data_details.start_month ||
-          data_details.start_year ||
-          data_details.end_month ||
-          data_details.end_year) && (
+        {/* Show dates field in bold if present, else fallback to old logic */}
+        {data_details.dates ? (
           <h1 className="text-gray-800 font-bold break-words">
-            {data_details.start_month}
-            {data_details.start_month && data_details.start_year ? " " : ""}
-            {data_details.start_year}
-            {" – "}
-            {data_details.end_month === "Current" && data_details.end_year === "Current"
-              ? "Current"
-              : (
-                <>
-                  {data_details.end_month}
-                  {data_details.end_month && data_details.end_year ? " " : ""}
-                  {data_details.end_year}
-                </>
-            )}
+            {truncateText(data_details.dates, MAX_CHAR_LENGTH)}
           </h1>
+        ) : (
+          <></>
         )}
 
         {/* Details Field */}
@@ -150,11 +137,12 @@ const InvitedPresentationEntry = ({
               "start_year",
               "end_month",
               "end_year",
+              "dates",
               "details",
               "highlight",
               "note",
-              "type", // Exclude "type" from generic attributes
-              "other", // Exclude "other" from generic attributes
+              "type",
+              "other",
             ].includes(key)
               ? false
               : true
@@ -172,12 +160,12 @@ const InvitedPresentationEntry = ({
         {data_details.note && (
           <div
             className={
-              data_details.highlight === "true"
+              data_details.highlight && data_details.highlight === "true"
                 ? "my-1 p-1 text-sm rounded bg-blue-50 border-l-4 border-blue-300 text-zinc-900 font-medium"
-                : "mt-[-1] p-1 text-sm rounded bg-gray-100 border-l-4 border-gray-400 text-gray-900 font-medium"
+                : "my-1 p-1 text-sm rounded bg-gray-100 border-l-4 border-gray-400 text-gray-900 font-medium"
             }
           >
-            {data_details.highlight === "true" ? (
+            {data_details.highlight && data_details.highlight === "true" ? (
               <>
                 <span className="font-semibold text-sm">Note:</span>{" "}
                 {truncateText(data_details.note, MAX_CHAR_LENGTH)}
@@ -227,4 +215,4 @@ const InvitedPresentationEntry = ({
   );
 };
 
-export default InvitedPresentationEntry;
+export default GenericEntryTwo;

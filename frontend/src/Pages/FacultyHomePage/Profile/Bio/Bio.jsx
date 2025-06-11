@@ -17,6 +17,7 @@ const Bio = () => {
           id="bio"
           name="bio"
           maxLength={3000}
+          rows={5}
           value={userInfo.bio || ""}
           className="w-full rounded text-sm px-3 py-2 border border-gray-300"
           onChange={handleBioChange}
@@ -27,7 +28,7 @@ const Bio = () => {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default Bio

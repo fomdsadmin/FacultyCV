@@ -7,7 +7,7 @@ import {
   updateUserCVDataArchive,
 } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
-import InvitedPresentationModal from "./InvitedPresentationModal";
+import AreasOfSpecialInterestModal from "./AreasOfSpecialInterestModal";
 import GenericEntryTwo from "./GenericEntryTwo";
 
 const generateEmptyEntry = (attributes) => {
@@ -24,7 +24,7 @@ const generateEmptyEntry = (attributes) => {
   return emptyEntry;
 };
 
-const InvitedPresentationSection = ({ user, section, onBack }) => {
+const AreasOfSpecialInterestSection = ({ user, section, onBack }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const [fieldData, setFieldData] = useState([]);
@@ -230,8 +230,8 @@ const InvitedPresentationSection = ({ user, section, onBack }) => {
                   isArchived={false}
                   key={index}
                   onEdit={() => handleEdit(entry)}
-                  field1={entry.data_details.dates}
-                  field2={""}
+                  field1={entry.data_details.dates} // Bolded start date - end date
+                  field2={""} // Blank
                   data_details={entry.data_details}
                   onArchive={() => handleArchive(entry)}
                 />
@@ -242,7 +242,7 @@ const InvitedPresentationSection = ({ user, section, onBack }) => {
           </div>
 
           {isModalOpen && selectedEntry && !isNew && (
-            <InvitedPresentationModal
+            <AreasOfSpecialInterestModal
               isNew={false}
               user={user}
               section={section}
@@ -255,7 +255,7 @@ const InvitedPresentationSection = ({ user, section, onBack }) => {
           )}
 
           {isModalOpen && selectedEntry && isNew && (
-            <InvitedPresentationModal
+            <AreasOfSpecialInterestModal
               isNew={true}
               user={user}
               section={section}
@@ -273,4 +273,4 @@ const InvitedPresentationSection = ({ user, section, onBack }) => {
   );
 };
 
-export default InvitedPresentationSection;
+export default AreasOfSpecialInterestSection;

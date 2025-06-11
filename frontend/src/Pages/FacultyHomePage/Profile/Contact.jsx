@@ -7,8 +7,8 @@ const Contact = () => {
 
   return (
     <div>
-      <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Contact</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+      <h2 className="text-lg font-bold mb-2 text-zinc-500">Contact</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 mb-6">
         <div>
           <label className="block text-sm mb-1">First Name</label>
           <input
@@ -56,7 +56,7 @@ const Contact = () => {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default Contact
