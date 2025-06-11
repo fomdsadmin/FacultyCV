@@ -8,10 +8,19 @@ import { rankFields } from "../../utils/rankingUtils";
 import { useApp } from "../../Contexts/AppContext";
 
 // Create context
-const GenericSectionContext = createContext();
+const GenericSectionContext = createContext(null);
 
 // Custom hook to use the context
-export const useGenericSection = () => useContext(GenericSectionContext);
+
+export const useGenericSection = () => {
+  const context = useContext(GenericSectionContext);
+  if (!context) {
+    throw new Error(
+      "useGenericSection must be used within a GenericSectionProvider"
+    );
+  }
+  return context;
+};
 
 // Helper function to generate empty entry
 const generateEmptyEntry = (attributes) => {
