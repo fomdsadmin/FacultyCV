@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import {
   getUserCVData,
   updateUserCVDataArchive,
@@ -11,6 +11,7 @@ import { useApp } from "../../Contexts/AppContext";
 const GenericSectionContext = createContext(null);
 
 // Custom hook to use the context
+
 export const useGenericSection = () => {
   const context = useContext(GenericSectionContext);
   if (!context) {
@@ -32,7 +33,7 @@ const generateEmptyEntry = (attributes) => {
 };
 
 // Provider component
-export const GenericSectionProvider = ({ children, section, onBack }) => {
+export const GenericSectionProvider = ({ section, onBack, children }) => {
   // State
   const [searchTerm, setSearchTerm] = useState("");
   const [fieldData, setFieldData] = useState([]);
@@ -40,6 +41,7 @@ export const GenericSectionProvider = ({ children, section, onBack }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState(""); // <-- Add this
 
   const { userInfo } = useApp();
 
@@ -140,15 +142,17 @@ export const GenericSectionProvider = ({ children, section, onBack }) => {
     await fetchData();
   };
 
-  const handleRemoveAll = async (entry) => {
-    console.log(userInfo, section);
-    console.log("Here");
-
+  const handleRemoveAll = async () => {
     try {
       await deleteUserCVSectionData({
-        user_id: userInfo.user_id,
+        user_id: userInfo.user_id, // or get user_id from props/context
         data_section_id: section.data_section_id,
       });
+      await fetchData(); // Refresh data after toast disappears
+      setNotification(`${section.title}'s data removed successfully!`);
+      setTimeout(() => {
+        setNotification("");
+      }, 2500);
     } catch (error) {
       console.error("Error deleting section data:", error);
     }
@@ -197,6 +201,7 @@ export const GenericSectionProvider = ({ children, section, onBack }) => {
     isModalOpen,
     isNew,
     loading,
+    notification, // <-- Provide notification
 
     // Section data
     section,
