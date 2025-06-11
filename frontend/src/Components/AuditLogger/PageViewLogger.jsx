@@ -16,6 +16,15 @@ const PageViewLogger = ({ userInfo }) => {
             .catch(() => setIp("Unknown"));
     }, []);
 
+    //set session_id once
+    useEffect(() => {
+        let sid = localStorage.getItem("session_id");
+        if (!sid) {
+            sid = crypto.randomUUID(); // Generates a unique session ID
+            localStorage.setItem("session_id", sid);
+        }
+    }, []);
+
     useEffect(() => {
 
         // Build your audit input (fill with real values as needed)
@@ -32,15 +41,14 @@ const PageViewLogger = ({ userInfo }) => {
             logged_user_email: userInfo.email || "Unknown",
             logged_user_action: "Page View",
         };
-
         // console.log("Audit Input:", auditInput);
         addAuditView(auditInput).catch(err => {
-            // Log the error as a string
+            // Log the error for debugging
             console.error("Audit log error:", err, JSON.stringify(err));
         });
     }, [location.pathname, ip, session_id, userInfo]);
 
-    return null; // This component does not render anything
+    return null; // No UI component needed, just logging
 };
 
 export default PageViewLogger;

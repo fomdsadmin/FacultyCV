@@ -15,17 +15,18 @@ CREATE TABLE audit_view (
     logged_user_id INTEGER NOT NULL,
     logged_user_first_name TEXT NOT NULL,
     logged_user_last_name TEXT NOT NULL,
- 
-    ip INET,
-    browser_version TEXT NOT NULL,
-    page TEXT,
- 
-    session_id TEXT NOT NULL,
-    assistant BOOLEAN NOT NULL,
-    profile_record TEXT,
     logged_user_role TEXT,
     logged_user_email TEXT NOT NULL
+    logged_user_action TEXT 
+    assistant BOOLEAN,
+    profile_record TEXT,
+
+    page TEXT,
+    session_id TEXT,
+    ip TEXT,
+    browser_version TEXT,
 );
+
 
 ALTER TABLE rise_data
 ADD COLUMN sponsor TEXT;
