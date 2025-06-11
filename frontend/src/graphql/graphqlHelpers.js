@@ -56,6 +56,7 @@ import {
   ADD_USER_CV_DATA,
   UPDATE_USER_CV_DATA,
   UPDATE_SECTION,
+  DELETE_USER_CV_SECTION_DATA,
   addAuditViewMutation,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
@@ -1171,6 +1172,22 @@ export const deleteUserConnection = async (user_connection_id) => {
 };
 
 /**
+ * Function to delete user cv data for a specific section
+ * Arguments:
+ * user__id - ID of the user
+ * data_section_id - ID of the data section as returned by the getAllSections call
+ * Return value:
+ * String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const deleteUserCVSectionData = async (input) => {
+  const results = await executeGraphql(DELETE_USER_CV_SECTION_DATA, {
+    user_id: input.user_id,
+    data_section_id: input.data_section_id,
+  });
+  return results["data"]["deleteUserCVSectionData"];
+};
+
+/**
  * Function to delete templates
  * Arguments:
  * template_id - ID of the template
@@ -1193,7 +1210,6 @@ export const deleteTemplate = async (template_id) => {
  */
 
 export const addUserDeclaration = async (input) => {
-  console.log(input);
   const results = await executeGraphql(ADD_USER_DECLARATION, {
     first_name: input.first_name,
     last_name: input.last_name,

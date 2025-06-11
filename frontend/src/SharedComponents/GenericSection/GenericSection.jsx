@@ -14,15 +14,15 @@ const GenericSectionContent = () => {
       <EntryList />
       <EntryModalWrapper />
     </div>
-  )
-}
+  );
+};
 
 const GenericSection = ({ section, onBack }) => {
   return (
     <GenericSectionProvider section={section} onBack={onBack}>
       <GenericSectionContent />
     </GenericSectionProvider>
-  )
-}
+  );
+};
 
 export default GenericSection

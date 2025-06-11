@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef} from 'react';
-import { getAllSections, getUserCVData } from '../graphql/graphqlHelpers';
+import { getAllSections, getUserCVData } from '../../graphql/graphqlHelpers';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
