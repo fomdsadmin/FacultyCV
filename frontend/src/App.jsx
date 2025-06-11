@@ -241,12 +241,13 @@ function App() {
       window.location.href = "/auth";
     }
   }, [userToken]);
-
+//
   const handleLogin = () => {
-    const clientId = "<Please_replace_it>";
-    const redirectUri = encodeURIComponent("<Please_replace_it"); 
-    const cognitoDomain = "<Pleae_replace_it>"; // your Cognito domain
+    const clientId = "35ies7u543bt5j2tu52r1o6ui3";
+    const redirectUri = encodeURIComponent("https://360.med.ubc.ca/auth"); 
+    const cognitoDomain = "ca-central-1bo47rplgu.auth.ca-central-1.amazoncognito.com";
     const identityProvider = "staging-facultycv"; // identity provider
+    const isLocalhost = window.location.hostname === 'localhost';
 
   window.location.href =
     `https://${cognitoDomain}/oauth2/authorize` +
