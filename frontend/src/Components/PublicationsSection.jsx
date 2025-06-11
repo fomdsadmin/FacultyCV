@@ -88,6 +88,10 @@ const PublicationsSection = ({ user, section, onBack }) => {
     setIsModalOpen(true);
   };
 
+  const handleDelete = () => {
+    console.log(user.user_id, section.data_section_id);
+  };
+
   async function fetchData() {
     try {
       const retrievedData = await getUserCVData(
@@ -266,7 +270,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
         >
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
-        <div className="m-4 flex">
+        <div className="mt-4 mx-4 flex">
           <h2 className="text-left text-4xl font-bold text-zinc-600">
             {section.title}
           </h2>
@@ -285,7 +289,16 @@ const PublicationsSection = ({ user, section, onBack }) => {
             {retrievingData ? "Retrieving..." : "Retrieve Data"}
           </button>
         </div>
-        <div className="m-4 flex">{section.description}</div>
+        <div className="mx-4 my-1 flex items-center">
+          <div className="flex-1">{section.description}</div>
+          <button
+            onClick={handleDelete}
+            className="text-white btn btn-warning min-h-0 h-8 leading-tight"
+            disabled={retrievingData}
+          >
+            Remove All
+          </button>
+        </div>
         <div className="m-4 flex">
           <label className="input input-bordered flex items-center gap-2 flex-1">
             <input

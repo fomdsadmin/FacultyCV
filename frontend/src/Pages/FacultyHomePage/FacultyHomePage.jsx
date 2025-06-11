@@ -24,7 +24,7 @@ const FacultyHomePageContent = (user) => {
         userInfo={userInfo}
       />
 
-      <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] 2xl:px-[10vw] overflow-auto custom-scrollbar w-full mb-4 relative">
+      <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] 2xl:px-[10vw] overflow-y-auto custom-scrollbar w-full mb-4 relative">
         <div className="flex items-center justify-between mt-6">
           <h1 className="text-4xl font-bold text-zinc-600">Home</h1>
           <SaveButton />

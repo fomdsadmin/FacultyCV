@@ -213,11 +213,15 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
             ✕
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {console.log("Filtered Keys:", filteredKeys)}{" "}
+            {/* Debugging line to check filtered keys */}
             {filteredKeys.map((key) =>
               key === "dates" ? (
                 // Render date selectors for 'dates' field
                 <div key={key} className="mb-1">
-                  <label className="block text-sm capitalize">Start Date</label>
+                  <label className="block text-sm capitalize font-semibold mb-1">
+                    Start Date
+                  </label>
                   <div className="flex space-x-2">
                     <select
                       name="startDateMonth"
@@ -246,7 +250,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
                       ))}
                     </select>
                   </div>
-                  <label className="block text-sm capitalize mt-2">
+                  <label className="block text-sm capitalize mt-3 mb-1 font-semibold">
                     End Date
                   </label>
                   <div className="flex space-x-2">
@@ -306,8 +310,8 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
                 </div>
               ) : key === "details" ? (
                 // Render textarea for 'details' field
-                <div key={key} className="mb-1">
-                  <label className="block text-sm capitalize">
+                <div key={key} className="mb-1 col-span-2">
+                  <label className="block text-sm font-semibold capitalize mb-1">
                     {formatKey(key)}
                   </label>
                   <textarea
@@ -318,7 +322,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
                   />
                 </div>
               ) : (
-                // Render text input for other fields
+                // Render remaining text input for other fields
                 <div key={key} className="mb-1">
                   <label className="block text-sm capitalize">
                     {formatKey(key)}

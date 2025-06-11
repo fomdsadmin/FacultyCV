@@ -144,7 +144,7 @@ export const FacultyProvider = ({ children }) => {
 
     // External functions from AppContext
     toggleViewMode,
-  }
+  };
 
   return <FacultyContext.Provider value={value}>{children}</FacultyContext.Provider>
 }

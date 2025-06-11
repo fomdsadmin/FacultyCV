@@ -20,28 +20,30 @@ const Orcid = () => {
   }
 
   const handleAddOrcidClick = () => {
-    setShowAddModal(true)
-  }
+    setShowAddModal(true);
+  };
 
-  const handleManualOrcidClick = () => {
-    setShowManualModal(true)
-  }
+  const handleManualOrcidClick = (event) => {
+    event.preventDefault();
+    setShowManualModal(true);
+  };
 
   const handleCloseAddModal = () => {
-    setShowAddModal(false)
-  }
+    setShowAddModal(false);
+  };
 
   const handleCloseManualModal = () => {
-    setShowManualModal(false)
-  }
+    setShowManualModal(false);
+  };
 
-  const handleOrcidButtonClick = () => {
+  const handleOrcidButtonClick = (event) => {
+    event.preventDefault();
     if (orcidId) {
-      window.open(`https://orcid.org/${orcidId}`, "_blank")
+      window.open(`https://orcid.org/${orcidId}`, "_blank");
     } else {
-      handleAddOrcidClick()
+      handleAddOrcidClick();
     }
-  }
+  };
 
   const handleAddOrcidIdButtonClick = () => {
     handleAddOrcidClick();

@@ -16,31 +16,34 @@ const SaveButton = () => {
         setIsSubmitting(true)
 
         try {
-            await updateUser(
-                userInfo.user_id,
-                userInfo.first_name,
-                userInfo.last_name,
-                userInfo.preferred_name,
-                userInfo.email,
-                userInfo.role,
-                userInfo.bio,
-                userInfo.rank,
-                userInfo.institution,
-                userInfo.primary_department,
-                userInfo.secondary_department,
-                userInfo.primary_faculty,
-                userInfo.secondary_faculty,
-                userInfo.primary_affiliation,
-                userInfo.secondary_affiliation,
-                userInfo.campus,
-                userInfo.keywords,
-                userInfo.institution_user_id,
-                userInfo.scopus_id,
-                userInfo.orcid_id,
-            )
-            getUserInfo(userInfo.email)
-            setIsSubmitting(false)
+          await updateUser(
+            userInfo.user_id,
+            userInfo.first_name,
+            userInfo.last_name,
+            userInfo.preferred_name,
+            userInfo.email,
+            userInfo.role,
+            userInfo.bio,
+            userInfo.rank,
+            userInfo.institution,
+            userInfo.primary_department,
+            userInfo.secondary_department,
+            userInfo.primary_faculty,
+            userInfo.secondary_faculty,
+            userInfo.primary_affiliation,
+            userInfo.secondary_affiliation,
+            userInfo.campus,
+            userInfo.keywords,
+            userInfo.institution_user_id,
+            userInfo.scopus_id,
+            userInfo.orcid_id
+          );
+          getUserInfo(userInfo.email);
+          setIsSubmitting(false);
+
+          if (setPrevUserInfo) {
             setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
+          }
         } catch (error) {
             console.error("Error updating user:", error)
             setIsSubmitting(false)
