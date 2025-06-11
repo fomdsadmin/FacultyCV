@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import PageContainer from './PageContainer.jsx';
-import FacultyMenu from '../Components/FacultyMenu.jsx';
+import PageContainer from '../../Views/PageContainer.jsx';
+import FacultyMenu from '../../Components/FacultyMenu.jsx';
 import { Link } from 'react-router-dom';
 import Dashboard from './dashboard_charts.jsx'; // ← Import chart component
 import {
   GetNotifications,
   getUserDeclarations,
-} from "../graphql/graphqlHelpers";
-import { normalizeDeclarations } from "./Declarations.jsx";
+} from "../../graphql/graphqlHelpers.js";
+import { normalizeDeclarations } from "../Declarations/Declarations.jsx";
 
 const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [notifications, setNotifications] = useState([]);

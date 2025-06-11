@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import PageContainer from "./PageContainer.jsx";
-import FacultyMenu from "../Components/FacultyMenu.jsx";
-import DeclarationForm from "../Components/DeclarationForm.jsx";
+import PageContainer from "../../Views/PageContainer.jsx"
+import FacultyMenu from "../../Components/FacultyMenu.jsx";
+import DeclarationForm from "./DeclarationForm.jsx";
 import {
   getUserDeclarations,
   addUserDeclaration,
   deleteUserDeclaration,
   updateUserDeclaration,
-} from "../graphql/graphqlHelpers";
+} from "../../graphql/graphqlHelpers.js"
 import { Link } from "react-router-dom";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { toast } from "react-toastify";

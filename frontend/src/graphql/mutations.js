@@ -285,6 +285,16 @@ export const UPDATE_USER_CV_DATA = `
   }
 `;
 
+export const DELETE_USER_CV_SECTION_DATA = `
+    mutation DeleteUserCVSectionData($user_id: String!, $data_section_id: String!) {
+      deleteUserCVSectionData(
+        user_id: $user_id
+        data_section_id: $data_section_id
+    )
+  }
+`;
+
+
 export const updateUserCVDataArchiveMutation = (
     user_cv_data_id,
     archive,
