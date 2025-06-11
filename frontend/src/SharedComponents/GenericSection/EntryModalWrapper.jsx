@@ -1,5 +1,5 @@
 import { useApp } from "../../Contexts/AppContext";
-import EntryModal from "../EntryModal"
+import EntryModal from "../EntryModal";
 import { useGenericSection } from "./GenericSectionContext"
 
 const EntryModalWrapper = () => {

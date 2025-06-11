@@ -3,13 +3,13 @@ import PageContainer from "./PageContainer.jsx";
 import FacultyMenu from "../Components/FacultyMenu";
 import WorkSection from "../Components/WorkSection";
 import "../CustomStyles/scrollbar.css";
-import GenericSection from "../Components/GenericSection.jsx";
+import GenericSection from "../SharedComponents/GenericSection/GenericSection.jsx";
 import SecureFundingSection from "../Components/SecureFundingSection.jsx";
 import PublicationsSection from "../Components/PublicationsSection.jsx";
 import PatentsSection from "../Components/PatentsSection.jsx";
 import InvitedPresentationSection from "../Components/InvitedPresentationSection.jsx";
 import { getAllSections } from "../graphql/graphqlHelpers.js";
-import EntryModal from "../Components/EntryModal.jsx";
+import EntryModal from "../SharedComponents/EntryModal";
 import AreasOfSpecialInterestSection from "../Components/AreasOfSpecialInterestSection.jsx";
 
 const AcademicWork = ({ getCognitoUser, userInfo }) => {
@@ -141,7 +141,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
         userName={userInfo.preferred_name || userInfo.first_name}
         getCognitoUser={getCognitoUser}
       />
-      <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[3vw] lg:px-[4vw] xl:px-[5vw] 2xl:px-[8vw] flex flex-col items-center w-full max-w-7xl min-h-screen mb-2 py-6 mx-auto">
+      <main className="sm:px-[1vw] md:px-[2vw] lg:px-[3vw] flex flex-col items-center w-full max-w-7xl min-h-screen mb-2 py-6 mx-auto">
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="block text-m mb-1 mt-6 text-zinc-600">
@@ -151,7 +151,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
         ) : (
           <>
             {activeSection === null ? (
-              <div className="!overflow-auto !h-full rounded-lg max-w-6xl w-full mx-auto">
+              <div className="!overflow-auto !h-full rounded-lg max-w-7xl w-full mx-auto">
                 <h1 className="text-left mb-4 text-4xl font-bold text-zinc-600 p-2 ml-2">
                   Academic Work
                 </h1>
@@ -225,20 +225,11 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                     onBack={handleBack}
                   />
                 )}
-                {activeSection.title ===
-                  "Areas of Special Interest and Accomplishments" && (
-                  <AreasOfSpecialInterestSection
-                    user={userInfo}
-                    section={activeSection}
-                    onBack={handleBack}
-                  />
-                )}
                 {![
                   "Publications",
                   "Patents",
                   "Secure Funding",
                   "Invited Presentations",
-                  "Areas of Special Interest and Accomplishments",
                 ].includes(activeSection.title) && (
                   <GenericSection
                     user={userInfo}

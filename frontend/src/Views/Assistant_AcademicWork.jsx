@@ -5,7 +5,7 @@ import Assistant_FacultyMenu from '../Components/Assistant_FacultyMenu.jsx';
 import WorkSection from '../Components/WorkSection.jsx';
 import '../CustomStyles/scrollbar.css';
 import Filters from '../Components/Filters.jsx';
-import GenericSection from '../Components/GenericSection.jsx';
+import GenericSection from "../SharedComponents/GenericSection/GenericSection.jsx";
 import CoursesTaughtSection from '../Components/CoursesTaughtSection.jsx';
 import SecureFundingSection from '../Components/SecureFundingSection.jsx';
 import PublicationsSection from '../Components/PublicationsSection.jsx';

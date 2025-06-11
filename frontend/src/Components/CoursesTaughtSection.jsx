@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import GenericEntry from './GenericEntry';
-import PermanentEntry from './PermanentEntry';
-import EntryModal from './EntryModal';
+import GenericEntry from "../SharedComponents/GenericEntry";
+import PermanentEntry from "./PermanentEntry";
+import EntryModal from "../SharedComponents/EntryModal";
 import PermanentEntryModal from './PermanentEntryModal';
 import { FaArrowLeft } from 'react-icons/fa';
 import { getUserCVData, updateUserCVDataArchive, getTeachingDataMatches, addUserCVData, getUserInstitutionId } from '../graphql/graphqlHelpers';
