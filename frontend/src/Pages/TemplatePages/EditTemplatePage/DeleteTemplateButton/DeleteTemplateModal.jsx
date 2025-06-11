@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { deleteTemplate } from "../../../../graphql/graphqlHelpers";
 import { toast } from "react-toastify";
-import { useTemplatePageContext } from "Pages/Templates/TemplatePageContext";
+import { useTemplatePageContext } from "Pages/TemplatePages/TemplatesPage/TemplatePageContext";
 
 const DeleteTemplateModal = ({ onClose }) => {
     const { activeTemplate, fetchTemplates, handleBack } = useTemplatePageContext();

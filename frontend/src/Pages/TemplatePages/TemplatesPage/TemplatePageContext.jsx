@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getAllTemplates } from '../../graphql/graphqlHelpers.js';
+import { getAllTemplates } from '../../../graphql/graphqlHelpers.js';
 
 const TemplatePageContext = createContext(null);
 

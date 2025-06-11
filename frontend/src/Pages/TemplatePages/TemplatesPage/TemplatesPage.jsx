@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import PageContainer from '../../Views/PageContainer.jsx';
-import AdminMenu from '../../Components/AdminMenu.jsx';
-import NewTemplatePage from '../TemplatePages/NewTemplatePage.jsx';
-import TemplateCard from '../../Components/TemplateCard.jsx';
-import EditReportFormatting from '../../Components/EditReportFormat.jsx';
+import PageContainer from '../../../Views/PageContainer.jsx';
+import AdminMenu from '../../../Components/AdminMenu.jsx';
+import NewTemplatePage from '../NewTemplatePage.jsx';
+import TemplateCard from '../../../Components/TemplateCard.jsx';
+import EditReportFormatting from '../../../Components/EditReportFormat.jsx';
 import EditTemplatePage from 'Pages/TemplatePages/EditTemplatePage/EditTemplatePage.jsx';
 import { TemplatePageProvider, useTemplatePageContext } from './TemplatePageContext.jsx';
 import { useApp } from 'Contexts/AppContext.jsx';

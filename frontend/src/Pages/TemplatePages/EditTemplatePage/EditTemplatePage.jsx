@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import TemplateModifier from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifier";
 import DeleteTemplateButton from "./DeleteTemplateButton/DeleteTemplateButton";
 import { HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
-import { useTemplatePageContext } from "../../Templates/TemplatePageContext";
+import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext";
 
 const EditTemplatePage = ({ onBack }) => {
     const { activeTemplate } = useTemplatePageContext();

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { addTemplate, updateTemplate } from "../../../../graphql/graphqlHelpers"
 import { toast } from "react-toastify"
 import { useTemplateModifier } from "./TemplateModifierContext"
-import { useTemplatePageContext } from "Pages/Templates/TemplatePageContext"
+import { useTemplatePageContext } from "Pages/TemplatePages/TemplatesPage/TemplatePageContext"
 
 const SaveTemplateButton = ({templateId = null}) => {
     const {
