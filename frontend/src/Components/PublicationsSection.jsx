@@ -31,6 +31,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [retrievingData, setRetrievingData] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
+  const [notification, setNotification] = useState(""); // <-- Add this
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -91,12 +92,16 @@ const PublicationsSection = ({ user, section, onBack }) => {
   };
 
   const handleDelete = async () => {
-    console.log(user.user_id, section.data_section_id);
     try {
       await deleteUserCVSectionData({
         user_id: user.user_id,
         data_section_id: section.data_section_id,
       });
+      fetchData(); // Refresh data after toast disappears
+      setNotification(`${section.title}'s data removed successfully!`);
+      setTimeout(() => {
+        setNotification("");
+      }, 2500); // 1.5 seconds
     } catch (error) {
       console.error("Error deleting section data:", error);
     }
@@ -530,6 +535,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
               />
             )}
           </div>
+        </div>
+      )}
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-6 right-6 z-50 bg-green-600 text-white px-4 py-2 rounded shadow-lg transition-all">
+          {notification}
         </div>
       )}
     </div>

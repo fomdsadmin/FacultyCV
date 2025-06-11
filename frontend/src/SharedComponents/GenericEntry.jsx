@@ -95,6 +95,7 @@ const GenericEntry = ({
   return (
     <div className="min-h-8 shadow-glow mx-4 my-2 px-4 py-4 flex items-center bg-white rounded-lg">
       <div className="flex-1 max-w-full">
+        {console.log(attributes)}
         {updatedField1 && (
           <h1 className="text-gray-800 font-bold break-words">
             {truncateText(updatedField1, MAX_CHAR_LENGTH)}
