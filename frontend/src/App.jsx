@@ -12,7 +12,7 @@ import Support from "./Views/support.jsx";
 import NotFound from "./Views/NotFound";
 import AcademicWork from "./Views/AcademicWork";
 import Declarations from "./Pages/Declarations/Declarations.jsx";
-import Reports from './Views/Reports.jsx';
+import Reports from './Pages/ReportsPage/ReportsPage.jsx';
 import Assistants from './Views/Assistants.jsx';
 import { getPresignedUrl, getUser } from './graphql/graphqlHelpers.js';
 import PageContainer from './Views/PageContainer.jsx';
