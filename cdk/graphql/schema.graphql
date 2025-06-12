@@ -110,7 +110,7 @@ type UserConnection {
 type Template {
   template_id: String!
   title: String!
-  data_section_ids: String!
+  template_structure: AWSJSON!
   start_year: String
   end_year: String
 }
@@ -532,7 +532,7 @@ type Mutation {
 
   addTemplate(
     title: String!
-    data_section_ids: String!
+    template_structure: AWSJSON!
     start_year: String
     end_year: String
   ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
@@ -540,7 +540,7 @@ type Mutation {
   updateTemplate(
     template_id: String!
     title: String
-    data_section_ids: String
+    template_structure: AWSJSON
     start_year: String
     end_year: String
   ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])

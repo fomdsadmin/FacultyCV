@@ -42,7 +42,6 @@ import {
   deleteUserConnectionMutation,
   updateUserCVDataArchiveMutation,
   linkOrcidMutation,
-  addTemplateMutation,
   updateTemplateMutation,
   deleteTemplateMutation,
   addToUserGroupMutation,
@@ -58,6 +57,8 @@ import {
   UPDATE_SECTION,
   DELETE_USER_CV_SECTION_DATA,
   addAuditViewMutation,
+  ADD_TEMPLATE,
+  UPDATE_TEMPLATE,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -826,7 +827,7 @@ export const addUserConnection = async (
  * Function to add template
  * Arguments:
  * title - title of template
- * data_section_ids - list of data section ids
+ * template_structure - how the template structures the data
  * start_year - start year of the template
  * end_year - end year of the template
  * Return value:
@@ -834,12 +835,17 @@ export const addUserConnection = async (
  */
 export const addTemplate = async (
   title,
-  data_section_ids,
+  template_structure,
   start_year,
   end_year
 ) => {
-  const results = await runGraphql(
-    addTemplateMutation(title, data_section_ids, start_year, end_year)
+  const results = await executeGraphql(
+    ADD_TEMPLATE, {
+      title,
+      template_structure,
+      start_year,
+      end_year
+    }
   );
   return results["data"]["addTemplate"];
 };
@@ -1123,18 +1129,18 @@ export const updateUserConnection = async (user_connection_id, status) => {
 export const updateTemplate = async (
   template_id,
   title,
-  data_section_ids,
+  template_structure,
   start_year,
   end_year
 ) => {
-  const results = await runGraphql(
-    updateTemplateMutation(
+  const results = await executeGraphql(
+    UPDATE_TEMPLATE, {
       template_id,
       title,
-      data_section_ids,
+      template_structure,
       start_year,
       end_year
-    )
+    }
   );
   return results["data"]["updateTemplate"];
 };

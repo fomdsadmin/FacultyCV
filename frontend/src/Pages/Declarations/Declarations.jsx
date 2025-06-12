@@ -10,7 +10,7 @@ import {
 } from "../../graphql/graphqlHelpers.js"
 import { Link } from "react-router-dom";
 import { FaRegCalendarAlt } from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Helper to map value to full label
@@ -542,20 +542,6 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             )}
           </div>
         </div>
-
-        <ToastContainer
-          position="top-right"
-          autoClose={1000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-          className="mt-6"
-        />
 
         {/* Declaration Form (Create/Edit) */}
         {showForm && (

@@ -29,3 +29,5 @@ CREATE TABLE audit_view (
 
 ALTER TABLE rise_data
 ADD COLUMN sponsor TEXT;
+
+ALTER TABLE templates RENAME data_section_ids TO template_structure;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getLatexConfiguration, updateLatexConfiguration } from "../graphql/graphqlHelpers";
 import { FaArrowLeft } from "react-icons/fa";
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const MAX_SIZE = 5.0;
@@ -41,18 +41,6 @@ const EditReportFormatting = ({ onBack }) => {
 
     return (
         <div className=" ">
-          <ToastContainer
-                  position="top-right"
-                  autoClose={1000}
-                  hideProgressBar={false}
-                  newestOnTop={false}
-                  closeOnClick
-                  rtl={false}
-                  pauseOnFocusLoss
-                  draggable
-                  pauseOnHover
-                  theme="light"
-          />  
           <button onClick={onBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 mt-5 leading-tight mr-4">
             <FaArrowLeft className="h-6 w-6 text-zinc-800" />
           </button>

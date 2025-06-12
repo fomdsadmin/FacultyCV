@@ -12,7 +12,7 @@ import Support from "./Views/support.jsx";
 import NotFound from "./Views/NotFound";
 import AcademicWork from "./Views/AcademicWork";
 import Declarations from "./Pages/Declarations/Declarations.jsx";
-import Reports from './Views/Reports.jsx';
+import Reports from './Pages/ReportsPage/ReportsPage.jsx';
 import Assistants from './Views/Assistants.jsx';
 import { getPresignedUrl, getUser } from './graphql/graphqlHelpers.js';
 import PageContainer from './Views/PageContainer.jsx';
@@ -25,7 +25,7 @@ import Assistant_Reports from './Views/Assistant_Reports.jsx';
 //import Assistant_Assistants from './Views/Assistant_Assistants.jsx';
 import Assistant_AcademicWork from './Views/Assistant_AcademicWork.jsx';
 import Analytics from './Views/Analytics.jsx';
-import Templates from './Views/Templates.jsx';
+import TemplatesPage from './Pages/TemplatePages/TemplatesPage/TemplatesPage.jsx';
 import Sections from './Views/Sections.jsx';
 import AuditPage from './Views/AuditPage.jsx';
 import ArchivedSections from './Views/ArchivedSections.jsx';
@@ -42,6 +42,7 @@ import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
 import { CookieStorage } from 'aws-amplify/utils';
 import FacultyHomePage from './Pages/FacultyHomePage/FacultyHomePage';
 import { AppProvider, useApp } from './Contexts/AppContext';
+import { ToastContainer } from 'react-toastify';
 
 Amplify.configure({
   API: {
@@ -124,6 +125,18 @@ const AppContent = () => {
   }
   return (
     <Router>
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       {user && <Header />}
       {user && <PageViewLogger userInfo={userInfo} />}
       <Routes>
@@ -148,7 +161,7 @@ const AppContent = () => {
               )
             ) :
               Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === 'Assistant' ? <AssistantHomePage userInfo={assistantUserInfo} setUserInfo={setAssistantUserInfo} getCognitoUser={getCognitoUser} getUser={getUserInfo} /> :
-                Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage/> :
+                Object.keys(userInfo).length !== 0 && userInfo.role === 'Faculty' ? <FacultyHomePage /> :
                   <PageContainer>
                     <div className='flex items-center justify-center w-full'>
                       <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -160,7 +173,7 @@ const AppContent = () => {
         <Route path="/home" element={user ? <FacultyHomePage/> : <Navigate to="/auth" />} />
         <Route path="/support" element={user ? <Support userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/academic-work" element={user ? <AcademicWork userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
-		    <Route path="/declarations" element={user ? <Declarations userInfo = {userInfo} getCognitoUser = {getCognitoUser}/> : <Navigate to="/auth" />} />
+        <Route path="/declarations" element={user ? <Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/reports" element={user ? <Reports userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/assistants" element={user ? <Assistants userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/archive" element={user ? <Archive userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
@@ -171,7 +184,7 @@ const AppContent = () => {
         <Route path="/assistant/archive" element={user ? <Assistant_Archive assistantUserInfo={assistantUserInfo} userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/analytics" element={user ? <Analytics userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/audit" element={user ? <AuditPage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
-        <Route path="/templates" element={user ? <Templates userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
+        <Route path="/templates" element={user ? <TemplatesPage /> : <Navigate to="/auth" />} />
         <Route path="/sections" element={user ? <Sections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/archived-sections" element={user ? <ArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />} />
         <Route path="/department-admin/analytics" element={user ? <DepartmentAdminAnalytics userInfo={userInfo} getCognitoUser={getCognitoUser} department={userInfo && userInfo.role ? userInfo.role.split('-')[1] : ''} toggleViewMode={toggleViewMode} /> : <Navigate to="/auth" />} />
