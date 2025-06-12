@@ -268,14 +268,15 @@ export const updateUserMutation = (
 `;
 
 export const UPDATE_SECTION = `
-    mutation UpdateSection($data_section_id: String!, $archive: Boolean, $attributes: AWSJSON) {
+    mutation UpdateSection($data_section_id: String!, $archive: Boolean, $attributes: AWSJSON, $attributes_type: AWSJSON) {
         updateSection(
             data_section_id: $data_section_id
             archive: $archive
             attributes: $attributes
+            attributes_type: $attributes_type
         )
     }
-`
+`;
 
 export const UPDATE_USER_CV_DATA = `
     mutation UpdateUserCVData($user_cv_data_id: String!, $data_details: AWSJSON, $cognito_user_id: String) {
