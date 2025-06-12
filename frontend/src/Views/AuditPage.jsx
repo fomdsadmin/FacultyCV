@@ -24,7 +24,7 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
 
     useEffect(() => {
         fetchAuditViewData();
-    }, []);
+    }, [page]);
 
     async function fetchAuditViewData() {
         setLoading(true);
@@ -37,6 +37,10 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         }
         setLoading(false);
     }
+
+    const handleRefresh = async () => {
+        await fetchAuditViewData();
+    };
 
     const pageViewColumns = [
         "log_view_id",
@@ -87,6 +91,14 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
 
             <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Audit</h1>
+
+                <button
+                    className="btn btn-info text-white m-4"
+                    onClick={handleRefresh}
+                    disabled={loading}
+                >
+                    {loading ? 'Refreshing...' : 'Refresh Data'}
+                </button>
 
                 {/* Filters */}
                 <div className="flex flex-wrap gap-4 mb-4">

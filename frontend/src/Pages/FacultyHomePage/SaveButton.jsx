@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useApp } from "../../Contexts/AppContext";
 import { updateUser } from "../../graphql/graphqlHelpers";
 import { useFaculty } from "./FacultyContext";
+import { useAuditLogger, AUDIT_ACTIONS } from '../../Contexts/AuditLoggerContext.jsx';
 
 const SaveButton = () => {
 
@@ -9,6 +10,7 @@ const SaveButton = () => {
 
     const { userInfo, getUserInfo } = useApp();
     const { setPrevUserInfo, change } = useFaculty();
+    const logAction = useAuditLogger();
 
     // Handle form submission
     const handleSubmit = async (event) => {
@@ -37,7 +39,8 @@ const SaveButton = () => {
             userInfo.institution_user_id,
             userInfo.scopus_id,
             userInfo.orcid_id
-          );
+            );
+            await logAction(AUDIT_ACTIONS.UPDATE_PROFILE, userInfo.id);
           getUserInfo(userInfo.email);
           setIsSubmitting(false);
 

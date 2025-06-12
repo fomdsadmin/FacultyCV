@@ -29,7 +29,6 @@ import TemplatesPage from './Pages/TemplatePages/TemplatesPage/TemplatesPage.jsx
 import Sections from './Views/Sections.jsx';
 import AuditPage from './Views/AuditPage.jsx';
 import ArchivedSections from './Views/ArchivedSections.jsx';
-import PageViewLogger from './Components/AuditLogger/PageViewLogger.jsx';
 import DepartmentAdminHomePage from './Views/DepartmentAdminHomePage.jsx';
 import DepartmentAdminAnalytics from './Views/DepartmentAdminAnalytics.jsx';
 import DepartmentAdminTemplates from './Views/DepartmentAdminTemplates.jsx';
@@ -43,6 +42,7 @@ import { CookieStorage } from 'aws-amplify/utils';
 import FacultyHomePage from './Pages/FacultyHomePage/FacultyHomePage';
 import { AppProvider, useApp } from './Contexts/AppContext';
 import { ToastContainer } from 'react-toastify';
+import { AuditLoggerProvider } from './Contexts/AuditLoggerContext.jsx';
 
 Amplify.configure({
   API: {
@@ -137,8 +137,9 @@ const AppContent = () => {
         pauseOnHover
         theme="light"
       />
+      <AuditLoggerProvider userInfo={userInfo}>
       {user && <Header />}
-      {user && <PageViewLogger userInfo={userInfo} />}
+      {/* {user && <PageViewLogger userInfo={userInfo} />} */}
       <Routes>
         <Route path="/home" element={user ? (
           Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> :
@@ -194,7 +195,8 @@ const AppContent = () => {
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {user && <Footer />}
+        {user && <Footer />}
+      </AuditLoggerProvider>
     </Router>
 
   );
@@ -204,7 +206,7 @@ const App = () => {
   return <>
     <AppProvider>
       <NotificationProvider>
-        <AppContent />
+          <AppContent />
       </NotificationProvider>
     </AppProvider>
   </>
