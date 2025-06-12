@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PageContainer from "./PageContainer";
 import FacultyMenu from "../Components/FacultyMenu";
 import { rankFields } from '../utils/rankingUtils';
-import GenericEntry from "../Components/GenericEntry";
+import GenericEntry from "../SharedComponents/GenericEntry";
 import { getArchivedUserCVData, getAllSections, updateUserCVDataArchive } from "../graphql/graphqlHelpers";
 
 const Archive = ({ userInfo, getCognitoUser }) => {

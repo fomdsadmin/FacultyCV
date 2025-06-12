@@ -110,7 +110,7 @@ type UserConnection {
 type Template {
   template_id: String!
   title: String!
-  data_section_ids: String!
+  template_structure: AWSJSON!
   start_year: String
   end_year: String
 }
@@ -362,13 +362,20 @@ type Mutation {
     created_by: String!
     other_data: AWSJSON!
   ): InsertResponse!
-    @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 
   deleteUserDeclaration(
     first_name: String!
     last_name: String!
     reporting_year: Int!
   ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  deleteUserCVSectionData(user_id: String!, data_section_id: String!): String
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )
@@ -470,7 +477,10 @@ type Mutation {
     data_section_id: String!
     data_details_list: [AWSJSON!]
     editable: Boolean!
-  ): String @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 
   updateUserCVData(
     user_cv_data_id: String!
@@ -522,7 +532,7 @@ type Mutation {
 
   addTemplate(
     title: String!
-    data_section_ids: String!
+    template_structure: AWSJSON!
     start_year: String
     end_year: String
   ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
@@ -530,7 +540,7 @@ type Mutation {
   updateTemplate(
     template_id: String!
     title: String
-    data_section_ids: String
+    template_structure: AWSJSON
     start_year: String
     end_year: String
   ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
@@ -541,9 +551,8 @@ type Mutation {
   updateLatexConfiguration(vspace: Float, margin: Float, font: String): String
     @aws_auth(cognito_groups: ["Admin"])
 
- addAuditView(
-    input: AuditViewInput!
-): AuditViewRecord
-@aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-  
+  addAuditView(input: AuditViewInput!): AuditViewRecord
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 }

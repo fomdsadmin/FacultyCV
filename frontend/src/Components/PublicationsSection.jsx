@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import PermanentEntry from "./PermanentEntry";
-import GenericEntry from "./GenericEntry";
-import EntryModal from "./EntryModal";
+import GenericEntry from "../SharedComponents/GenericEntry";
+import EntryModal from "../SharedComponents/EntryModal";
 import PermanentEntryModal from "./PermanentEntryModal";
 import PublicationsModal from "./PublicationsModal";
 import { FaArrowLeft } from "react-icons/fa";
 import {
   getUserCVData,
   updateUserCVDataArchive,
+  deleteUserCVSectionData,
 } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import { LuBrainCircuit } from "react-icons/lu";
@@ -29,6 +30,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
   const [isNew, setIsNew] = useState(false);
   const [loading, setLoading] = useState(true);
   const [retrievingData, setRetrievingData] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [notification, setNotification] = useState(""); // <-- Add this
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -88,8 +91,20 @@ const PublicationsSection = ({ user, section, onBack }) => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = () => {
-    console.log(user.user_id, section.data_section_id);
+  const handleDelete = async () => {
+    try {
+      await deleteUserCVSectionData({
+        user_id: user.user_id,
+        data_section_id: section.data_section_id,
+      });
+      fetchData(); // Refresh data after toast disappears
+      setNotification(`${section.title}'s data removed successfully!`);
+      setTimeout(() => {
+        setNotification("");
+      }, 2500); // 1.5 seconds
+    } catch (error) {
+      console.error("Error deleting section data:", error);
+    }
   };
 
   async function fetchData() {
@@ -138,6 +153,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
     setFieldData([]);
     fetchData();
   }, [searchTerm, section.data_section_id]);
+
+  useEffect(() => {
+    if (fieldData.length !== 0) {
+      setIsAvailable(true);
+    }
+  }, [fieldData]);
 
   const handleBack = () => {
     onBack();
@@ -294,7 +315,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
           <button
             onClick={handleDelete}
             className="text-white btn btn-warning min-h-0 h-8 leading-tight"
-            disabled={retrievingData}
+            disabled={isAvailable ? false : true}
           >
             Remove All
           </button>
@@ -514,6 +535,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
               />
             )}
           </div>
+        </div>
+      )}
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-6 right-6 z-50 bg-green-600 text-white px-4 py-2 rounded shadow-lg transition-all">
+          {notification}
         </div>
       )}
     </div>

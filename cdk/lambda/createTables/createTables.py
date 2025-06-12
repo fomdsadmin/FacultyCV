@@ -161,7 +161,7 @@ def lambda_handler(event, context):
     columns = []
     columns.append(createColumn('template_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
     columns.append(createColumn('title', 'varchar', '', False))
-    columns.append(createColumn('data_section_ids', 'varchar', '', False))
+    columns.append(createColumn('template_structure', 'varchar', '', False))
     columns.append(createColumn('start_year', 'varchar', '', False))
     columns.append(createColumn('end_year', 'varchar', '', True))
     query = createQuery('templates', columns)

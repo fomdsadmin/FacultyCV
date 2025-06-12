@@ -401,7 +401,7 @@ export const getAllTemplatesQuery = () => `
         getAllTemplates {
             template_id
             title
-            data_section_ids
+            template_structure
             start_year
             end_year
         }

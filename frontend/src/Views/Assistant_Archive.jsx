@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import AssistantMenu from "../Components/AssistantMenu";
 import Assistant_FacultyMenu from "../Components/Assistant_FacultyMenu";
 import { rankFields } from '../utils/rankingUtils';
-import GenericEntry from "../Components/GenericEntry";
+import GenericEntry from "../SharedComponents/GenericEntry";
 import { getArchivedUserCVData, getAllSections, updateUserCVDataArchive } from "../graphql/graphqlHelpers";
 import AssistantPageContainer from "../Components/AssistantPageContainer";
 

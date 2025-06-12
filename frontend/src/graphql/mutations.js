@@ -172,21 +172,16 @@ export const addUserConnectionMutation = (
     }
 `;
 
-export const addTemplateMutation = (
-    title,
-    data_section_ids,
-    start_year,
-    end_year
-) => `
-    mutation AddTemplate {
+export const ADD_TEMPLATE = `
+    mutation AddTemplate($title: String!, $template_structure: AWSJSON!, $start_year: String, $end_year: String) {
         addTemplate(
-            title: "${title}"
-            data_section_ids: "${data_section_ids}"
-            start_year: "${start_year}"
-            end_year: "${end_year}"
+            title: $title
+            template_structure: $template_structure
+            start_year: $start_year
+            end_year: $end_year
         )
     }
-`;
+`
 
 export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
     if (orcid_id) {
@@ -290,6 +285,16 @@ export const UPDATE_USER_CV_DATA = `
   }
 `;
 
+export const DELETE_USER_CV_SECTION_DATA = `
+    mutation DeleteUserCVSectionData($user_id: String!, $data_section_id: String!) {
+      deleteUserCVSectionData(
+        user_id: $user_id
+        data_section_id: $data_section_id
+    )
+  }
+`;
+
+
 export const updateUserCVDataArchiveMutation = (
     user_cv_data_id,
     archive,
@@ -327,20 +332,14 @@ export const updateUserConnectionMutation = (user_connection_id, status) => `
     }
 `;
 
-export const updateTemplateMutation = (
-    template_id,
-    title,
-    data_section_ids,
-    start_year,
-    end_year
-) => `
-    mutation UpdateTemplate {
+export const UPDATE_TEMPLATE = `
+    mutation UpdateTemplate($template_id: String!, $title: String!, $template_structure: AWSJSON, $start_year: String, $end_year: String) {
         updateTemplate(
-            template_id: "${template_id}"
-            title: "${title}"
-            data_section_ids: "${data_section_ids}"
-            start_year: "${start_year}"
-            end_year: "${end_year}"
+            template_id: $template_id
+            title: $title
+            template_structure: $template_structure
+            start_year: $start_year
+            end_year: $end_year
         )
     }
 `;
