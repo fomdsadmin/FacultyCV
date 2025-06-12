@@ -30,7 +30,7 @@ def getAllTemplates(arguments):
         templates.append({
             'template_id': result[0],
             'title': result[1],
-            'template_structure': template_structure,
+            'template_structure': json.loads(result[2]),
             'start_year': result[3],
             'end_year': result[4]
         })
