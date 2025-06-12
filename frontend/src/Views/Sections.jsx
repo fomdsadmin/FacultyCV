@@ -74,26 +74,37 @@ const Sections = ({ getCognitoUser, userInfo }) => {
 
   return (
     <PageContainer>
-      <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
+      <AdminMenu
+        getCognitoUser={getCognitoUser}
+        userName={userInfo.preferred_name || userInfo.first_name}
+      />
+      <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4">
         {loading ? (
-          <div className='w-full h-full flex items-center justify-center'>
-            <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="block text-m mb-1 mt-6 text-zinc-600">
+              Loading...
+            </div>
           </div>
         ) : (
           <>
             {openNewSection ? (
-              <NewSection onBack={handleBackFromNewSection} getDataSections={getDataSections} sections={dataSections}/>  // Render NewSection when openNewSection is true
+              <NewSection
+                onBack={handleBackFromNewSection}
+                getDataSections={getDataSections}
+                sections={dataSections}
+              /> // Render NewSection when openNewSection is true
             ) : activeSection === null ? (
-              <div className='!overflow-auto !h-full custom-scrollbar'>
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Sections</h1>
-                <button 
-                  className="btn btn-info text-white m-4" 
+              <div className="!overflow-auto !h-full custom-scrollbar">
+                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">
+                  Sections
+                </h1>
+                <button
+                  className="btn btn-info text-white m-4"
                   onClick={handleAddNewSection}
                 >
                   Add New Section
                 </button>
-                <div className='m-4 flex'>
+                <div className="m-4 flex">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
                       type="text"
@@ -111,25 +122,40 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                       <path
                         fillRule="evenodd"
                         d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-                        clipRule="evenodd" />
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </label>
                 </div>
-                <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters>
+                <Filters
+                  activeFilters={activeFilters}
+                  onFilterChange={setActiveFilters}
+                  filters={filters}
+                ></Filters>
                 {searchedSections.map((section) => (
-                  <WorkSection onClick={handleManageClick} key={section.data_section_id} id={section.data_section_id} title={section.title} category={section.data_type}></WorkSection>
+                  <WorkSection
+                    onClick={handleManageClick}
+                    key={section.data_section_id}
+                    id={section.data_section_id}
+                    title={section.title}
+                    category={section.data_type}
+                  ></WorkSection>
                 ))}
               </div>
             ) : (
-              <div className='!overflow-auto !h-full custom-scrollbar'>
-                <ManageSection section={activeSection} onBack={handleBack} getDataSections={getDataSections}></ManageSection>
+              <div className="!overflow-auto !h-full custom-scrollbar">
+                <ManageSection
+                  section={activeSection}
+                  onBack={handleBack}
+                  getDataSections={getDataSections}
+                ></ManageSection>
               </div>
             )}
           </>
         )}
       </main>
     </PageContainer>
-  )
+  );
 }
 
 export default Sections;
