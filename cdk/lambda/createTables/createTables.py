@@ -71,7 +71,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('data_type', 'varchar', '', False))
     columns.append(createColumn('attributes', 'JSON', '', False))
     columns.append(createColumn('archive', 'boolean', 'DEFAULT false', False))
-    columns.append(createColumn('attributes_types', 'JSON', '', False)) # Add this line
+    columns.append(createColumn('attributes_types', 'JSON', '', True)) # Add this line
     query = createQuery('data_sections', columns)
     cursor.execute(query)
 
