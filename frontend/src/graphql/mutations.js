@@ -125,12 +125,14 @@ export const ADD_BATCHED_USER_CV_DATA = `
     mutation AddBatchedUserCVData(
         $user_id: String!,
         $data_section_id: String!,
+        $data_section_title: String!,
         $data_details_list: [AWSJSON!],
         $editable: Boolean!,
     ) {
         addBatchedUserCVData(
             user_id: $user_id,
             data_section_id: $data_section_id,
+            data_section_title: $data_section_title!,
             data_details_list: $data_details_list,
             editable: $editable,
         )

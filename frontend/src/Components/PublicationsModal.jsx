@@ -468,6 +468,7 @@ const PublicationsModal = ({
           data_details_list: publications,
           user_id: user.user_id,
           data_section_id: publicationsSectionId,
+          data_section_title: "Publications",
           editable: "false",
         },
       };

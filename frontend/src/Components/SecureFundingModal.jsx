@@ -126,6 +126,7 @@ const SecureFundingModal = ({
           data_details_list: newBatchedData,
           user_id: user.user_id,
           data_section_id: secureFundingSectionId,
+          data_section_title: "Secure Funding",
           editable: "false",
         },
       };
@@ -145,7 +146,7 @@ const SecureFundingModal = ({
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
       else {
         console.log(
-          "Added ,",
+          "Added ",
           payload.arguments.data_details_list.length,
           "Grants Successfully | 200 OK"
         );

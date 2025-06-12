@@ -475,6 +475,7 @@ type Mutation {
   addBatchedUserCVData(
     user_id: String!
     data_section_id: String!
+    data_section_title: String!
     data_details_list: [AWSJSON!]
     editable: Boolean!
   ): String

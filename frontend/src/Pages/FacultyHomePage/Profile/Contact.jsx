@@ -8,7 +8,7 @@ const Contact = () => {
   return (
     <div>
       <h2 className="text-lg font-bold mb-2 text-zinc-500">Contact</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 ">
         <div>
           <label className="block text-sm mb-1">First Name</label>
           <input
@@ -16,17 +16,6 @@ const Contact = () => {
             name="first_name"
             type="text"
             value={userInfo.first_name || ""}
-            className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
-            readOnly
-          />
-        </div>
-        <div>
-          <label className="block text-sm mb-1">Last Name</label>
-          <input
-            id="lastName"
-            name="last_name"
-            type="text"
-            value={userInfo.last_name || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
             readOnly
           />
@@ -41,6 +30,17 @@ const Contact = () => {
             value={userInfo?.preferred_name || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300"
             onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Last Name</label>
+          <input
+            id="lastName"
+            name="last_name"
+            type="text"
+            value={userInfo.last_name || ""}
+            className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
+            readOnly
           />
         </div>
         <div>

@@ -30,16 +30,13 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
       attributes: JSON.parse(section.attributes),
     }));
     parsedSections.sort((a, b) => a.title.localeCompare(b.title));
+
+    // Don't filter out service sections here!
     setDataSections(
       parsedSections.filter(
         (section) =>
-          section.data_type !== "Service to the Community" &&
-          section.data_type !== "Teaching" &&
           section.data_type !== "Education and Career" &&
           section.data_type !== "Leaves of Absence" &&
-          section.data_type !== "Service to the Hospital" &&
-          section.data_type !== "Service to the University" &&
-          section.data_type !== "Awards and Distinctions" &&
           section.data_type !== "Employment"
       )
     );
@@ -61,15 +58,32 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
     setActiveSection(null);
   };
 
+  // Utility to group service sections under "Services"
+  const groupServiceSections = (sections) => {
+    const serviceTypes = [
+      "Service to the Community",
+      "Service to the Hospital",
+      "Service to the University",
+    ];
+    return sections.map((section) =>
+      serviceTypes.includes(section.data_type)
+        ? { ...section, data_type: "Services" }
+        : section
+    );
+  };
+
+  // Use grouped sections for filters and search
+  const groupedSections = groupServiceSections(dataSections);
+
   const filters = Array.from(
-    new Set(dataSections.map((section) => section.data_type))
+    new Set(groupedSections.map((section) => section.data_type))
   );
   const sectionDescriptions = {};
-  dataSections.forEach((section) => {
+  groupedSections.forEach((section) => {
     sectionDescriptions[section.data_type] = section.description;
   });
 
-  const searchedSections = dataSections.filter((entry) => {
+  const searchedSections = groupedSections.filter((entry) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
     const matchesSearch =
@@ -87,7 +101,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
   }) => {
     return (
       <>
-        <div className="flex flex-nowrap space-x-4 mb-6 overflow-x-auto max-w-full px-4">
+        <div className="flex flex-wrap gap-4 mb-6 px-4 max-w-full">
           <button
             className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
               activeFilter === null
@@ -110,7 +124,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                 }`}
                 onClick={() => onSelect(filter)}
               >
-                {filter}
+                {displayTabName(filter)}
               </button>
             ))}
         </div>
@@ -132,6 +146,11 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
         )}
       </>
     );
+  };
+
+  const displayTabName = (name) => {
+    if (name === "Awards and Distinctions") return "Awards";
+    return name;
   };
 
   return (
