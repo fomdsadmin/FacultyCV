@@ -58,32 +58,15 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
     setActiveSection(null);
   };
 
-  // Utility to group service sections under "Services"
-  const groupServiceSections = (sections) => {
-    const serviceTypes = [
-      "Service to the Community",
-      "Service to the Hospital",
-      "Service to the University",
-    ];
-    return sections.map((section) =>
-      serviceTypes.includes(section.data_type)
-        ? { ...section, data_type: "Services" }
-        : section
-    );
-  };
-
-  // Use grouped sections for filters and search
-  const groupedSections = groupServiceSections(dataSections);
-
   const filters = Array.from(
-    new Set(groupedSections.map((section) => section.data_type))
+    new Set(dataSections.map((section) => section.data_type))
   );
   const sectionDescriptions = {};
-  groupedSections.forEach((section) => {
+  dataSections.forEach((section) => {
     sectionDescriptions[section.data_type] = section.description;
   });
 
-  const searchedSections = groupedSections.filter((entry) => {
+  const searchedSections = dataSections.filter((entry) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
     const matchesSearch =
@@ -124,7 +107,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                 }`}
                 onClick={() => onSelect(filter)}
               >
-                {displayTabName(filter)}
+                {filter}
               </button>
             ))}
         </div>
@@ -146,11 +129,6 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
         )}
       </>
     );
-  };
-
-  const displayTabName = (name) => {
-    if (name === "Awards and Distinctions") return "Awards";
-    return name;
   };
 
   return (

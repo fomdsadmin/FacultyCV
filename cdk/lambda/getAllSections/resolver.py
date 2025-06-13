@@ -11,7 +11,7 @@ def getAllSections(arguments):
     connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute('SELECT data_section_id, title, description, data_type, attributes, archive FROM data_sections WHERE archive != true')
+    cursor.execute('SELECT data_section_id, title, description, data_type, attributes, attributes_type, archive FROM data_sections WHERE archive != true')
     results = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -23,7 +23,8 @@ def getAllSections(arguments):
             'description': result[2],
             'data_type': result[3],
             'attributes': result[4],
-            'archive': result[5]
+            'attributes_type': result[5],
+            'archive': result[6]
         })
     return data_sections
 

@@ -11,6 +11,7 @@ const AttributeModal = ({
   getDataSections,
   section,
   mode = "add", // "add" or "edit"
+  attributeTypeMap, // New prop for attribute type mapping
 }) => {
   // Add a unique id to each attribute
   const [attributes, setAttributes] = useState([
@@ -21,6 +22,30 @@ const AttributeModal = ({
   const [dropdownOptions, setDropdownOptions] = useState({});
 
   useEffect(() => {
+    // Build attribute type map from section.attributes_type
+    let attributesType =
+      typeof section.attributes_type === "string"
+        ? JSON.parse(section.attributes_type)
+        : section.attributes_type || {};
+
+    // Map attribute name to type and options (for dropdown)
+    const attrTypeMap = {};
+    Object.entries(attributesType).forEach(([type, attrsObj]) => {
+      // Normalize type: map "dates" to "date"
+      const normalizedType = type === "dates" ? "date" : type;
+      if (normalizedType === "dropdown") {
+        // attrsObj: { Type: ["A", "B"] }
+        Object.entries(attrsObj || {}).forEach(([attrName, options]) => {
+          attrTypeMap[attrName] = { type: normalizedType, options };
+        });
+      } else {
+        // attrsObj: { Note: "", Details: "" }
+        Object.keys(attrsObj || {}).forEach((attrName) => {
+          attrTypeMap[attrName] = { type: normalizedType };
+        });
+      }
+    });
+
     if (mode === "edit") {
       let existingAttributes = {};
       try {
@@ -31,29 +56,28 @@ const AttributeModal = ({
       } catch {
         existingAttributes = {};
       }
-      // Convert object to array of {id, name, type}
       const attrArr = Object.keys(existingAttributes).length
-        ? Object.entries(existingAttributes).map(([name, type], index) => ({
+        ? Object.keys(existingAttributes).map((name, index) => ({
             id: `attr-${index}`,
             name,
-            type: type || "",
+            type: attrTypeMap[name]?.type || "text",
           }))
-        : [{ id: "attr-0", name: "", type: "" }];
+        : [{ id: "attr-0", name: "", type: "text" }];
+
       setAttributes(attrArr);
 
-      // Initialize dropdownOptions for dropdown attributes
-      const dropdownInit = {};
+      // Autofill dropdown options if present
+      const dropdowns = {};
       attrArr.forEach((attr) => {
-        if (attr.type === "dropdown") {
-          dropdownInit[attr.name] = ""; // You can prefill with saved options if available
+        if (attr.type === "dropdown" && attrTypeMap[attr.name]?.options) {
+          dropdowns[attr.name] = attrTypeMap[attr.name].options.join(", ");
         }
       });
-      setDropdownOptions(dropdownInit);
+      setDropdownOptions(dropdowns);
     } else {
-      setAttributes([{ id: "attr-0", name: "", type: "" }]);
-      setDropdownOptions({});
+      setAttributes([{ id: "attr-0", name: "", type: "text" }]);
     }
-  }, [mode, section]);
+  }, [mode, section, attributeTypeMap]);
 
   const handleDropdownOptionsChange = (index, value) => {
     const attrName = attributes[index].name;
@@ -148,7 +172,13 @@ const AttributeModal = ({
         ? combinedAttributes
         : { ...existingAttributes, ...combinedAttributes };
 
-    const attributesJSONString = JSON.stringify(updatedAttributes);
+    // Only keep field names with empty string values
+    const attributesJSONString = JSON.stringify(
+      Object.keys(updatedAttributes).reduce((acc, key) => {
+        acc[key] = "";
+        return acc;
+      }, {})
+    );
 
     // Build AWSJson structure
     const awsJson = {
@@ -171,10 +201,16 @@ const AttributeModal = ({
       }
     });
 
+    console.log("Attributes JSON:", attributesJSONString);
     console.log("AWSJson for updateSection:", awsJson);
 
     try {
-      await updateSection(section.data_section_id, false, attributesJSONString);
+      await updateSection(
+        section.data_section_id,
+        false,
+        attributesJSONString,
+        JSON.stringify(awsJson)
+      );
     } catch (error) {
       console.error("Error updating section:", error);
     }
@@ -185,7 +221,7 @@ const AttributeModal = ({
   };
 
   return (
-    <dialog className="modal-dialog items-center mx-auto" open>
+    <dialog className="modal-dialog items-center ml-6" open>
       <div className="modal-content">
         {/* Header */}
         <button
