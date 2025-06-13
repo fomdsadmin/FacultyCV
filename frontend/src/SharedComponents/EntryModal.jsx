@@ -4,6 +4,7 @@ import "../CustomStyles/modal.css";
 import { addUserCVData, updateUserCVData } from "../graphql/graphqlHelpers";
 import { useApp } from "../Contexts/AppContext";
 import ModalStylingWrapper from "../SharedComponents/ModalStylingWrapper";
+import { useAuditLogger, AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
 
 const EntryModal = ({
   isNew,
@@ -21,6 +22,7 @@ const EntryModal = ({
   const [dateNeeded, setDateNeeded] = useState(false);
 
   const { userInfo } = useApp();
+  const logAction = useAuditLogger();
 
   useEffect(() => {
     // Initialize formData with all fields
@@ -192,12 +194,16 @@ const EntryModal = ({
           section.data_section_id,
           JSON.stringify(updatedFormData)
         );
+        await logAction(AUDIT_ACTIONS.ADD_CV_SECTION, userInfo.user_id);
+
       } else {
         // Update existing CV data
         await updateUserCVData(
           user_cv_data_id,
           JSON.stringify(updatedFormData)
         );
+        await logAction(AUDIT_ACTIONS.UPDATE_CV_SECTION, userInfo.user_id);
+
       }
     } catch (error) {
       console.error("Error submitting form:", error);

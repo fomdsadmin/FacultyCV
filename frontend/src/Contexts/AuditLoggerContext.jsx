@@ -12,6 +12,9 @@ export const AUDIT_ACTIONS = {
     UPDATE_SECTION: 'Update section',
     ADD_USER_DECLARATION: 'Add declaration',
     UPDATE_USER_DECLARATION: 'Update declaration',
+    ADD_CV_SECTION: 'Add CV section',
+    UPDATE_CV_SECTION: 'Update CV section',
+    
 
     // TODO add more actions
 };
@@ -49,6 +52,8 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             
         };
 
+        console.log('Audit Log Action:', auditInput.actionType, auditInput);
+
         return addAuditView(auditInput);
     };
 
@@ -59,4 +64,12 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
     );
 };
 
-export const useAuditLogger = () => useContext(AuditLoggerContext);
+export const useAuditLogger = () => {
+    const context = useContext(AuditLoggerContext);
+    if (!context) {
+        throw new Error('useAuditLogger must be used within an AuditLoggerProvider');
+    }
+    return context;
+};
+
+export { AuditLoggerContext };

@@ -125,6 +125,7 @@ const AppContent = () => {
   }
   return (
     <Router>
+      <AuditLoggerProvider userInfo={userInfo}>
       <ToastContainer
         position="top-right"
         autoClose={1000}
@@ -137,9 +138,7 @@ const AppContent = () => {
         pauseOnHover
         theme="light"
       />
-      <AuditLoggerProvider userInfo={userInfo}>
       {user && <Header />}
-      {/* {user && <PageViewLogger userInfo={userInfo} />} */}
       <Routes>
         <Route path="/home" element={user ? (
           Object.keys(userInfo).length !== 0 && userInfo.role === 'Admin' ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> :
