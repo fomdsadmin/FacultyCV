@@ -17,10 +17,10 @@ const Tabs = () => {
     PROFILE: "Profile",
     AFFILIATIONS: "Affiliations",
     EMPLOYMENT: "Employment",
-    SERVICE: "Service",
-    TEACHING: "Teaching",
     EDUCATION: "Education",
-    AWARDS: "Awards",
+    // SERVICE: "Service",
+    // TEACHING: "Teaching",
+    // AWARDS: "Awards",
   });
 
   const [activeTab, setActiveTab] = useState(CATEGORIES.PROFILE);
@@ -32,34 +32,43 @@ const Tabs = () => {
       case CATEGORIES.EMPLOYMENT:
         return ["Prior Employment", "Present Employment", "Leaves of Absence"];
 
-      case CATEGORIES.SERVICE:
-        return [
-          "Consultant",
-          "Editorships",
-          "External Examiner",
-          "Memberships on Community Committees",
-          "Memberships on Community Societies",
-          "Memberships on Hospital Committees",
-          "Memberships on University Committees",
-          "Other University Service",
-          "Other Hospital Service",
-          "Other Service",
-          "Reviewer",
-        ];
+      // case CATEGORIES.SERVICE:
+      //   return [
+      //     "Consultant",
+      //     "Editorships",
+      //     "External Examiner",
+      //     "Memberships on Community Committees",
+      //     "Memberships on Community Societies",
+      //     "Memberships on Hospital Committees",
+      //     "Memberships on University Committees",
+      //     "Other University Service",
+      //     "Other Hospital Service",
+      //     "Other Service",
+      //     "Reviewer",
+      //   ];
 
-      case CATEGORIES.TEACHING:
-        return [
-          "Teaching Interests",
-          "Courses Taught",
-          "Other Teaching",
-          "Undergraduate Students Supervised",
-          "Graduate Students Supervised",
-          "Graduate Students Supervisory Committee",
-          "Postgraduate Students Supervised",
-          "Students Supervised - Other",
-          "Continuing Education Activities",
-          "Visiting Lecturer",
-        ];
+      // case CATEGORIES.TEACHING:
+      //   return [
+      //     "Teaching Interests",
+      //     "Courses Taught",
+      //     "Other Teaching",
+      //     "Undergraduate Students Supervised",
+      //     "Graduate Students Supervised",
+      //     "Graduate Students Supervisory Committee",
+      //     "Postgraduate Students Supervised",
+      //     "Students Supervised - Other",
+      //     "Continuing Education Activities",
+      //     "Visiting Lecturer",
+      //   ];
+
+      // case CATEGORIES.AWARDS:
+      //   return [
+      //     "Teaching Awards",
+      //     "Service Awards",
+      //     "Research Awards",
+      //     "Other Awards",
+      //     "Scholarships",
+      //   ];
 
       case CATEGORIES.EDUCATION:
         return [
@@ -68,15 +77,6 @@ const Tabs = () => {
           "Continuing Medical Education",
           "Professional Qualifications, Certifications and Licenses",
           "Dissertations",
-        ];
-
-      case CATEGORIES.AWARDS:
-        return [
-          "Teaching Awards",
-          "Service Awards",
-          "Research Awards",
-          "Other Awards",
-          "Scholarships",
         ];
 
       default:

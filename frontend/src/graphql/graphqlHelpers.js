@@ -1041,11 +1041,17 @@ export const updateUser = async (
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateSection = async (data_section_id, archive, attributes) => {
+export const updateSection = async (
+  data_section_id,
+  archive,
+  attributes,
+  attributes_type
+) => {
   const results = await executeGraphql(UPDATE_SECTION, {
     data_section_id,
     archive,
     attributes,
+    attributes_type,
   });
   return results["data"]["updateSection"];
 };

@@ -82,6 +82,8 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
           ))}
         </ul>
       </div>
+
+      {/* Delete section modal */}
       {isModalOpen && (
         <DeleteSectionModal
           setIsModalOpen={setIsModalOpen}
@@ -90,23 +92,31 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
           getDataSections={getDataSections}
         />
       )}
-      {isAddAttributeModalOpen && (
-        <AttributeModal
-          setIsOpen={setIsAddAttributeModalOpen}
-          onBack={onBack}
-          section={section}
-          getDataSections={getDataSections}
-          mode="add"
-        />
-      )}
-      {isUpdateAttributeModalOpen && (
-        <AttributeModal
-          setIsOpen={setIsUpdateAttributeModalOpen}
-          onBack={onBack}
-          section={section}
-          getDataSections={getDataSections}
-          mode="edit"
-        />
+
+      {/* Add overlay and centered modal for attribute actions */}
+      {(isAddAttributeModalOpen || isUpdateAttributeModalOpen) && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center w-full justify-center mx-auto">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
+            {isAddAttributeModalOpen && (
+              <AttributeModal
+                setIsOpen={setIsAddAttributeModalOpen}
+                onBack={onBack}
+                section={section}
+                getDataSections={getDataSections}
+                mode="add"
+              />
+            )}
+            {isUpdateAttributeModalOpen && (
+              <AttributeModal
+                setIsOpen={setIsUpdateAttributeModalOpen}
+                onBack={onBack}
+                section={section}
+                getDataSections={getDataSections}
+                mode="edit"
+              />
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
