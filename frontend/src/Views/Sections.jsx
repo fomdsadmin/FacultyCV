@@ -101,7 +101,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
             ) : activeSection === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">
-                  Sections
+                  Manage Faculty Sections
                 </h1>
                 <button
                   className="btn btn-info text-white m-4"

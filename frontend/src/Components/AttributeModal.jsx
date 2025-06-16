@@ -87,19 +87,22 @@ const AttributeModal = ({
     }));
   };
 
+  const capitalizeFirst = (str) =>
+    str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+
   // Update attribute name change to keep dropdownOptions in sync
-  const handleAttributeChange = (index, key) => {
-    const oldName = attributes[index].name;
+  const handleAttributeChange = (index, value) => {
     const newAttributes = [...attributes];
-    newAttributes[index].name = key;
+    newAttributes[index].name = capitalizeFirst(value);
     setAttributes(newAttributes);
 
     // If this is a dropdown, move options to new name
-    if (newAttributes[index].type === "dropdown" && oldName !== key) {
+    if (newAttributes[index].type === "dropdown") {
       setDropdownOptions((prev) => {
         const updated = { ...prev };
+        const oldName = attributes[index].name;
         if (updated[oldName]) {
-          updated[key] = updated[oldName];
+          updated[newAttributes[index].name] = updated[oldName];
           delete updated[oldName];
         }
         return updated;
@@ -173,9 +176,15 @@ const AttributeModal = ({
         : { ...existingAttributes, ...combinedAttributes };
 
     // Only keep field names with empty string values
+    const toSnakeCase = (str) =>
+      str
+        .replace(/\s+/g, "_") // Replace spaces with underscores
+        .replace(/([a-z])([A-Z])/g, "$1_$2") // Add underscore before capital letters (not at start)
+        .toLowerCase();
+
     const attributesJSONString = JSON.stringify(
       Object.keys(updatedAttributes).reduce((acc, key) => {
-        acc[key] = "";
+        acc[key] = toSnakeCase(key);
         return acc;
       }, {})
     );
