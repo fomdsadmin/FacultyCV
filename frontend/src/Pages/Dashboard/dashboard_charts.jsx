@@ -151,26 +151,66 @@ const Dashboard = ({ userInfo }) => {
 
   useEffect(() => {
     if (!wordCloudCanvasRef.current || keywordData.length === 0) return;
+
+    const container = wordCloudCanvasRef.current.parentElement;
+    const containerWidth = container.offsetWidth;
+    const containerHeight = 500;
+
+    // Set canvas dimensions
+    wordCloudCanvasRef.current.width = containerWidth;
+    wordCloudCanvasRef.current.height = containerHeight;
+    wordCloudCanvasRef.current.style.width = `${containerWidth}px`;
+    wordCloudCanvasRef.current.style.height = `${containerHeight}px`;
+
+    // Calculate font sizes - much more conservative
     const maxValue = Math.max(...keywordData.map((d) => d.value));
-    console.log("Max value:", maxValue); // Log the maximum value for debugging
+    const minValue = Math.min(...keywordData.map((d) => d.value));
+    const numKeywords = keywordData.length;
+
+    // Much smaller font sizes to ensure fitting
+    let baseSize = Math.max(10, Math.min(16, containerWidth / 40));
+    let maxSize = Math.max(baseSize * 1.2, Math.min(24, containerWidth / 25));
+    let minSize = Math.max(8, baseSize * 0.8);
+
+    // Adjust based on number of keywords
+    if (numKeywords > 50) {
+      maxSize = Math.min(maxSize, 18);
+      minSize = Math.max(minSize, 8);
+    } else if (numKeywords > 30) {
+      maxSize = Math.min(maxSize, 20);
+      minSize = Math.max(minSize, 10);
+    }
+
     const chart = new ChartJS(wordCloudCanvasRef.current, {
       type: "wordCloud",
       data: {
-        labels: keywordData.map((d) => d.text), // Extract text for labels
+        labels: keywordData.map((d) => d.text),
         datasets: [
           {
             label: "Keywords",
-            data: keywordData.map((d) => 3 + d.value * 3),
+            data: keywordData.map((d) => {
+              const ratio =
+                maxValue === minValue
+                  ? 1
+                  : (d.value - minValue) / (maxValue - minValue);
+              return minSize + (maxSize - minSize) * ratio;
+            }),
           },
         ],
       },
       options: {
+        responsive: false,
+        maintainAspectRatio: false,
         plugins: {
-          tooltip: {
-            enabled: false,
-          },
-          datalabels: {
-            display: false,
+          tooltip: { enabled: false },
+          datalabels: { display: false },
+        },
+        layout: {
+          padding: {
+            top: 60, // Increased padding significantly
+            right: 60,
+            left: 60,
+            bottom: 60,
           },
         },
         elements: {
@@ -179,10 +219,17 @@ const Dashboard = ({ userInfo }) => {
               const label = ctx.element?.text;
               const wordObj = keywordData.find((d) => d.text === label);
               const isMax = wordObj && wordObj.value === maxValue;
-              return isMax ? "#facc15" : "#000000"; // Use a different color for the max value
+              return isMax ? "#facc15" : "#4a5568";
             },
-            padding: 10,
-            rotation: () => (Math.random() > 0.5 ? 0 : 90),
+            padding: 5, // Fixed padding
+            rotation: () => 0, // No rotation to prevent edge issues
+            family: "Arial, sans-serif",
+            weight: (ctx) => {
+              const label = ctx.element?.text;
+              const wordObj = keywordData.find((d) => d.text === label);
+              const isMax = wordObj && wordObj.value === maxValue;
+              return isMax ? "bold" : "normal";
+            },
           },
         },
       },
@@ -194,10 +241,12 @@ const Dashboard = ({ userInfo }) => {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    fitToHeight: true,
+    fitToWidth: true,
     layout: {
       padding: {
-        top: 30, // increase this to push the chart down
-        right: 25,
+        top: 10, // increase this to push the chart down
+        right: 10,
         left: 10,
         bottom: 10,
       },
@@ -220,7 +269,7 @@ const Dashboard = ({ userInfo }) => {
         position: "bottom",
         labels: {
           font: {
-            size: 14,
+            size: 12,
           },
         },
       },
@@ -330,11 +379,25 @@ const Dashboard = ({ userInfo }) => {
         )}
 
         {keywordData.length > 0 && (
-          <div className="flex-1 min-w-0 mb-4 mt-[-3vh]">
-            <div style={{ width: "100%", height: "500px" }}>
+          <div className="flex-1 min-w-0 p-4 mb-4 mt-[-3vh]">
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "100%",
+                height: "500px",
+                position: "relative",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                overflow: "hidden",
+              }}
+            >
               <canvas
                 ref={wordCloudCanvasRef}
-                style={{ width: "100%", height: "100%" }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "block",
+                }}
               ></canvas>
             </div>
           </div>
