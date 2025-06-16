@@ -25,6 +25,7 @@ const EntryModal = ({
   useEffect(() => {
     // Initialize formData with all fields
     setFormData(fields);
+    console.log("Fields received:", fields);
 
     // Handle specific year fields if they exist
     if ("year_published" in fields) {

@@ -375,30 +375,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
 
             {isModalOpen && selectedEntry && isNew && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                {console.log("Selected Entry:", selectedEntry)}
-                {selectedEntry.editable ? (
-                  <EntryModal
-                    isNew={true}
-                    user={user}
-                    section={section}
-                    fields={selectedEntry.fields}
-                    user_cv_data_id={selectedEntry.data_id}
-                    entryType={section.title}
-                    fetchData={fetchData}
-                    onClose={handleCloseModal}
-                  />
-                ) : (
-                  <PermanentEntryModal
-                    isNew={true}
-                    user={user}
-                    section={section}
-                    fields={selectedEntry.fields}
-                    user_cv_data_id={selectedEntry.data_id}
-                    entryType={section.title}
-                    fetchData={fetchData}
-                    onClose={handleCloseModal}
-                  />
-                )}
+                {console.log("Selected Entry:", selectedEntry.editable)}
+                <EntryModal
+                  isNew={true}
+                  user={user}
+                  section={section}
+                  fields={selectedEntry.fields}
+                  user_cv_data_id={selectedEntry.data_id}
+                  entryType={section.title}
+                  fetchData={fetchData}
+                  onClose={handleCloseModal}
+                />
               </div>
             )}
 

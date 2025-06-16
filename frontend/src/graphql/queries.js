@@ -125,6 +125,7 @@ export const getAllSectionsQuery = () => `
     query GetAllSections {
         getAllSections {
             attributes
+            attributes_type
             data_section_id
             data_type
             description

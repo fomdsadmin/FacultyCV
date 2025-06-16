@@ -46,6 +46,7 @@ type DataSection {
   description: String!
   data_type: String
   attributes: AWSJSON! # JSON
+  attributes_type: AWSJSON # JSON
   archive: Boolean
 }
 
