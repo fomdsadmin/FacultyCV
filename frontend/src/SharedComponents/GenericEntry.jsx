@@ -53,14 +53,14 @@ const GenericEntry = ({
           value !== field1 &&
           value !== field2 &&
           !(Array.isArray(value) && value.length === 0) &&
-          key !== "author_ids" &&
-          key !== "class_size_(per_year)" &&
-          key !== "labs_(per_year)" &&
-          key !== "lectures_(per_year)" &&
-          key !== "other_(per_year)" &&
-          key !== "scheduled_hours" &&
-          key !== "tutorials_(per_year)" &&
           key !== "author_ids"
+        // &&
+        // key !== "class_size_(per_year)" &&
+        // key !== "labs_(per_year)" &&
+        // key !== "lectures_(per_year)" &&
+        // key !== "other_(per_year)" &&
+        // key !== "scheduled_hours" &&
+        // key !== "tutorials_(per_year)" &&
       )
       .map(([key, value]) => {
         const newValue = removeCommasIfNeeded(key, String(value));

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from "../SharedComponents/GenericEntry";
-import EntryModal from "../SharedComponents/EntryModal";
+import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import EmploymentModal from './EmploymentModal';
 import { FaArrowLeft } from 'react-icons/fa';
 import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelpers';

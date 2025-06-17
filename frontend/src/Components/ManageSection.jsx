@@ -2,7 +2,7 @@ import React from 'react';
 import { useState } from 'react';
 import { FaArrowLeft, FaTrash } from 'react-icons/fa';
 import DeleteSectionModal from './DeleteSectionModal';
-import AddAttributeModal from './AddAttributeModal.jsx';
+// import AddAttributeModal from './AddAttributeModal.jsx';
 import AttributeModal from "./AttributeModal.jsx";
 
 const ManageSection = ({ section, onBack, getDataSections }) => {
@@ -77,17 +77,17 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
 
       <div className="m-4">
         <div className="flex flex-wrap gap-4 mb-4">
-          <button
+          {/* <button
             onClick={handleAddAttributeClick}
             className="btn btn-primary text-white"
           >
             Add Attribute
-          </button>
+          </button> */}
           <button
             onClick={handleUpdateAttributeClick}
             className="btn btn-secondary text-white"
           >
-            Update Attributes
+            Add/Update Attributes
           </button>
         </div>
         <h3 className="text-left text-xl font-semibold text-zinc-600 mb-2">
