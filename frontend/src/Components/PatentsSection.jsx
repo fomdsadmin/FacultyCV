@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GenericEntry from "../SharedComponents/GenericEntry";
-import EntryModal from "../SharedComponents/EntryModal";
+import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import PermanentEntry from './PermanentEntry';
 import PermanentEntryModal from './PermanentEntryModal';
 import { FaArrowLeft } from 'react-icons/fa';

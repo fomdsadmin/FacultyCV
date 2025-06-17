@@ -141,10 +141,16 @@ const AttributeModal = ({
   };
 
   const handleUpdateSection = async () => {
+    // Trim trailing spaces from attribute names
+    const trimmedAttributes = attributes.map((attr) => ({
+      ...attr,
+      name: attr.name ? attr.name.trimEnd() : "",
+    }));
+
     const newErrors = {};
     if (
-      attributes.length === 0 ||
-      attributes.some((attr) => !attr.name || attr.name.trim() === "")
+      trimmedAttributes.length === 0 ||
+      trimmedAttributes.some((attr) => !attr.name || attr.name.trim() === "")
     ) {
       newErrors.attributes = "All attribute names are required";
     }
@@ -156,7 +162,7 @@ const AttributeModal = ({
     setAddingSection(true);
 
     // Convert array to object for old attributes
-    const combinedAttributes = attributes.reduce((acc, obj) => {
+    const combinedAttributes = trimmedAttributes.reduce((acc, obj) => {
       acc[obj.name] = obj.type || "text";
       return acc;
     }, {});
