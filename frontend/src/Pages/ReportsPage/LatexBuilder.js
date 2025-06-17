@@ -81,12 +81,20 @@ const buildTableHeader = (title) => {
     return header;
 }
 
-const buildTableSubHeader = (title) => {
+const buildTableSubHeader = (preparedSection) => {
+
+    let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
+
+    if (preparedSection.show_row_count) {
+        const rowCount = userCvData.filter((cvData) => cvData.data_section_id === preparedSection.data_section_id).length;
+        titleToDisplay += ` (${rowCount})`
+    }
+
     const subHeader = String.raw`
     \begin{tabularx}{\textwidth}{|Y|}
     \hline
     \rowcolor{subHeaderGray}
-    \textbf{${title}} \\
+    \textbf{${titleToDisplay}} \\
     \hline
     \end{tabularx}%
     \vspace{-1pt}
@@ -104,19 +112,16 @@ const buildDataEntries = (attributes, dataSectionId) => {
         // Map attributes to their corresponding values in data_details
         const section = allSections.find((section) => section.data_section_id === dataSectionId);
         const row = attributes.map((attribute) => {
-            console.log("Data details: ", data.data_details);
-            console.log("Section attributes: ", section.attributes);
-            console.log("attribute: ", attribute);
-            console.log("section.attributes map: ", JSON.parse(section.attributes)[attribute]);
-            console.log("Details returned:", data.data_details[JSON.parse(section.attributes)[attribute]]);
             const tabData = data.data_details[JSON.parse(section.attributes)[attribute]];
             return sanitizeLatex(tabData);
 
         }).join(' & ');
 
+        const dataColumnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1));
+
         // Wrap the row in its own tabularx environment
         return String.raw`
-        \begin{tabularx}{\textwidth}{|${'Y|'.repeat(attributes.length)}}
+        \begin{tabularx}{\textwidth}{${dataColumnFormat}}
         \hline
         ${row} \\
         \hline
@@ -130,33 +135,32 @@ const buildDataEntries = (attributes, dataSectionId) => {
 }
 
 const buildTableAttributeGroup = (attributeGroups) => {
-    let groupedColumnFormat = "|";
-    let groupedColumnNamesArray = [];
-    ; for (const attributeGroup of attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID)) {
-        var addGroupTitle = true;
-        for (const attribute of attributeGroup.attributes) {
-            groupedColumnFormat += "Y";
 
-            if (addGroupTitle && attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID) {
-                groupedColumnNamesArray.push(String.raw`\textbf{${attributeGroup.title}}`)
-                addGroupTitle = false;
-            } else {
-                groupedColumnNamesArray.push(String.raw`\textbf{~}`);
-            }
+    const columnRatioArray = [];
+    let groupedColumnNamesArray = [];
+    for (const attributeGroup of attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID)) {
+        if (attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID) {
+            groupedColumnNamesArray.push(String.raw`\textbf{${attributeGroup.title}}`)
+        } else {
+            groupedColumnNamesArray.push(String.raw`\textbf{~}`);
         }
-        groupedColumnFormat += "|";
+        var ratio = 0;
+        for (const attribute of attributeGroup.attributes) {
+            ratio += 1;
+        }
+        columnRatioArray.push(ratio);
     }
 
+    const columnFormat = generateColumnFormatViaRatioArray(columnRatioArray);
+
     const groupedColumnHeader = String.raw`
-    \begin{tabularx}{\textwidth}{${groupedColumnFormat}}
+    \begin{tabularx}{\textwidth}{${columnFormat}}
     \hline
     \rowcolor{columnGray}
     ${groupedColumnNamesArray.join(' & ')}
     \end{tabularx}%
     \vspace{-1pt}
     `
-
-    console.log("Grouped columns: ", groupedColumnHeader);
 
     return groupedColumnHeader
 }
@@ -170,16 +174,16 @@ const buildTableSectionColumns = (attributeGroups, attributeRenameMap, dataSecti
     }
 
     // Find the attribute group with the SHOWN_ATTRIBUTE_GROUP_ID
-    const shownAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
+    const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
 
-    const attributes = shownAttributeGroups.flatMap((shownAttributeGroup) => shownAttributeGroup.attributes);
+    const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
 
     // Dynamically create the column format string based on the number of attributes
-    const columnFormat = `|${'Y|'.repeat(attributes.length)}`;
+    const columnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1));
 
     // Dynamically create the header row based on the attribute names
     const headerRow = attributes
-        .map((attribute) => `\\textbf{${attribute}}`)
+        .map((attribute) => `\\textbf{${attributeRenameMap[attribute] || attribute}}`)
         .join(' & ');
 
     // Start building the LaTeX table
@@ -201,7 +205,7 @@ const buildTableSectionColumns = (attributeGroups, attributeRenameMap, dataSecti
 const buildPreparedSection = (preparedSection, dataSectionId) => {
     let latex = "";
 
-    latex += buildTableSubHeader(preparedSection.title);
+    latex += buildTableSubHeader(preparedSection);
 
     latex += buildTableSectionColumns(preparedSection.attribute_groups, preparedSection.attribute_rename_map, dataSectionId);
 
@@ -259,6 +263,17 @@ const buildLatexHeader = () => {
 
     return latex;
 }
+
+const generateColumnFormatViaRatioArray = (ratioArray) => {
+    const totalRatio = ratioArray.reduce((sum, ratio) => sum + ratio, 0);
+
+    // Generate the column format string with dynamic \hsize values
+    const columnFormat = ratioArray
+        .map((ratio) => `>{\\hsize=${(ratio / totalRatio).toFixed(5)}\\hsize}X`)
+        .join('|');
+
+    return `|${columnFormat}|`;
+};
 
 export const buildLatex = async (userInfo, template) => {
     const latexConfiguration = JSON.parse(await getLatexConfiguration());
