@@ -466,6 +466,13 @@ type Mutation {
     attributes_type: AWSJSON # JSON
   ): String @aws_auth(cognito_groups: ["Admin"])
 
+  editSectionDetails(
+    data_section_id: String!
+    title: String!
+    data_type: String!
+    description: String
+  ): String @aws_auth(cognito_groups: ["Admin"])
+
   addUserCVData(
     user_id: String!
     data_section_id: String!
