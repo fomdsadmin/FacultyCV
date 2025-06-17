@@ -2,6 +2,70 @@ import { getAllSections, getUserCVData, getLatexConfiguration } from '../../grap
 import { SHOWN_ATTRIBUTE_GROUP_ID, HIDDEN_ATTRIBUTE_GROUP_ID } from '../TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext.jsx'
 
 let userCvData = [];
+let allSections = [];
+
+
+const sanitizeLatex = (text) => {
+    if (typeof text !== 'string') return text; // Return as-is if not a string
+
+    // Replace special LaTeX characters with their escaped versions using String.raw
+    return String.raw`${text
+        .replace(/\\/g, '\\textbackslash{}') // Backslash
+        .replace(/{/g, '\\{')               // Left curly brace
+        .replace(/}/g, '\\}')               // Right curly brace
+        .replace(/\$/g, '\\$')              // Dollar sign
+        .replace(/&/g, '\\&')               // Ampersand
+        .replace(/%/g, '\\%')               // Percent sign
+        .replace(/#/g, '\\#')               // Hash
+        .replace(/_/g, '\\_')               // Underscore
+        .replace(/\^/g, '\\textasciicircum{}') // Caret
+        .replace(/~/g, '\\textasciitilde{}')  // Tilde
+        }`;
+};
+
+const addAllowBreaks = (text) => {
+    if (typeof text !== 'string') return text; // Return as-is if not a string
+
+    // Replace specific characters with their LaTeX \allowbreak equivalents
+    return String.raw`${text}`
+        .replace(/,/g, ',\\allowbreak ')   // Comma
+        .replace(/\./g, '.\\allowbreak ') // Period
+        .replace(/-/g, '-\\allowbreak ')  // Hyphen
+        .replace(/\//g, '/\\allowbreak ') // Forward slash
+        .replace(/:/g, ':\\allowbreak ') // Colon
+        .replace(/;/g, ';\\allowbreak ') // Semicolon
+        .replace(/_/g, '_\\allowbreak '); // Underscore
+};
+
+const processLatexText = (text) => {
+    if (typeof text !== 'string') return text;
+
+    return text
+        // First add allowbreaks
+        .replace(/,/g, ',\\allowbreak{}')
+        .replace(/\./g, '.\\allowbreak{}')
+        .replace(/-/g, '-\\allowbreak{}')
+        .replace(/\//g, '/\\allowbreak{}')
+        .replace(/:/g, ':\\allowbreak{}')
+        .replace(/;/g, ';\\allowbreak{}')
+        // Then sanitize (but don't touch the allowbreak backslashes)
+        .replace(/\\/g, (match, offset, string) => {
+            // Don't escape backslashes that are part of \allowbreak
+            if (string.substring(offset, offset + 11) === '\\allowbreak') {
+                return match;
+            }
+            return '\\textbackslash{}';
+        })
+        .replace(/{/g, '\\{')
+        .replace(/}/g, '\\}')
+        .replace(/\$/g, '\\$')
+        .replace(/&/g, '\\&')
+        .replace(/%/g, '\\%')
+        .replace(/#/g, '\\#')
+        .replace(/_/g, '\\_')
+        .replace(/\^/g, '\\textasciicircum{}')
+        .replace(/~/g, '\\textasciitilde{}');
+};
 
 const buildTableHeader = (title) => {
     const header = String.raw`
@@ -38,7 +102,17 @@ const buildDataEntries = (attributes, dataSectionId) => {
     // Generate LaTeX tables for each entry
     const latexTables = sectionData.map((data) => {
         // Map attributes to their corresponding values in data_details
-        const row = attributes.map((attribute) => "testing testing testing 123").join(' & ');
+        const section = allSections.find((section) => section.data_section_id === dataSectionId);
+        const row = attributes.map((attribute) => {
+            console.log("Data details: ", data.data_details);
+            console.log("Section attributes: ", section.attributes);
+            console.log("attribute: ", attribute);
+            console.log("section.attributes map: ", JSON.parse(section.attributes)[attribute]);
+            console.log("Details returned:", data.data_details[JSON.parse(section.attributes)[attribute]]);
+            const tabData = data.data_details[JSON.parse(section.attributes)[attribute]];
+            return sanitizeLatex(tabData);
+
+        }).join(' & ');
 
         // Wrap the row in its own tabularx environment
         return String.raw`
@@ -55,15 +129,50 @@ const buildDataEntries = (attributes, dataSectionId) => {
     return latexTables.join('\n');
 }
 
+const buildTableAttributeGroup = (attributeGroups) => {
+    let groupedColumnFormat = "|";
+    let groupedColumnNamesArray = [];
+    ; for (const attributeGroup of attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID)) {
+        var addGroupTitle = true;
+        for (const attribute of attributeGroup.attributes) {
+            groupedColumnFormat += "Y";
+
+            if (addGroupTitle && attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID) {
+                groupedColumnNamesArray.push(String.raw`\textbf{${attributeGroup.title}}`)
+                addGroupTitle = false;
+            } else {
+                groupedColumnNamesArray.push(String.raw`\textbf{~}`);
+            }
+        }
+        groupedColumnFormat += "|";
+    }
+
+    const groupedColumnHeader = String.raw`
+    \begin{tabularx}{\textwidth}{${groupedColumnFormat}}
+    \hline
+    \rowcolor{columnGray}
+    ${groupedColumnNamesArray.join(' & ')}
+    \end{tabularx}%
+    \vspace{-1pt}
+    `
+
+    console.log("Grouped columns: ", groupedColumnHeader);
+
+    return groupedColumnHeader
+}
+
 const buildTableSectionColumns = (attributeGroups, attributeRenameMap, dataSectionId) => {
     let latex = "";
 
-    // Find the attribute group with the SHOWN_ATTRIBUTE_GROUP_ID
-    const shownAttributeGroup = attributeGroups.find(
-        (attributeGroup) => attributeGroup.id === SHOWN_ATTRIBUTE_GROUP_ID
-    );
+    // take into account hidden and shown attribute group
+    if (attributeGroups.length > 2) {
+        latex += buildTableAttributeGroup(attributeGroups);
+    }
 
-    const attributes = shownAttributeGroup.attributes;
+    // Find the attribute group with the SHOWN_ATTRIBUTE_GROUP_ID
+    const shownAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
+
+    const attributes = shownAttributeGroups.flatMap((shownAttributeGroup) => shownAttributeGroup.attributes);
 
     // Dynamically create the column format string based on the number of attributes
     const columnFormat = `|${'Y|'.repeat(attributes.length)}`;
@@ -142,7 +251,7 @@ const buildLatexHeader = () => {
     latex += colours;
 
     const documentStart = String.raw`
-    \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+    \newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
     \begin{document}
     `
 
@@ -156,7 +265,7 @@ export const buildLatex = async (userInfo, template) => {
     let latex = buildLatexHeader(userInfo, latexConfiguration);
 
     // Get all user data
-    const allSections = await getAllSections();
+    allSections = await getAllSections();
     const allSectionIds = allSections.map((section) => section.data_section_id);
     const unparsedData = await getUserCVData(userInfo.user_id, allSectionIds);
 
