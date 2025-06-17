@@ -83,7 +83,9 @@ const DepartmentAdminAnalytics = ({ getCognitoUser, userInfo, department }) => {
     }
 
     const publicationSectionId = dataSections.find(section => section.title === 'Publications')?.data_section_id;
-    const secureFundingSectionId = dataSections.find(section => section.title === 'Secure Funding')?.data_section_id;
+    const secureFundingSectionId = dataSections.find(
+      (section) => section.title === "Research or Equivalent Grants"
+    )?.data_section_id;
     const patentSectionId = dataSections.find(section => section.title === 'Patents')?.data_section_id;
 
     let publicationsData = [];

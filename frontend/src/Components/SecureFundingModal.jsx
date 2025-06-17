@@ -118,7 +118,7 @@ const SecureFundingModal = ({
       let dataSections = [];
       dataSections = await getAllSections();
       const secureFundingSectionId = dataSections.find(
-        (section) => section.title === "Secure Funding"
+        (section) => section.title === "Research or Equivalent Grants"
       )?.data_section_id;
 
       const payload = {
@@ -126,7 +126,7 @@ const SecureFundingModal = ({
           data_details_list: newBatchedData,
           user_id: user.user_id,
           data_section_id: secureFundingSectionId,
-          data_section_title: "Secure Funding",
+          data_section_title: "Research or Equivalent Grants",
           editable: "false",
         },
       };
@@ -229,9 +229,7 @@ const SecureFundingModal = ({
           </div>
         ) : fetchingData ? (
           <div className="flex items-center justify-center w-full mt-5 mb-5">
-            <div className="text-m text-zinc-600">
-              Fetching secure funding data...
-            </div>
+            <div className="text-m text-zinc-600">Fetching grants data...</div>
           </div>
         ) : addedSuccessfully ? (
           <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
@@ -274,8 +272,8 @@ const SecureFundingModal = ({
                           disabled={addingData}
                         >
                           {addingData
-                            ? "Adding secure funding data..."
-                            : "Add Secure Funding Data"}
+                            ? "Adding grants data..."
+                            : "Add Grant Data"}
                         </button>
                       )}
                     </div>
