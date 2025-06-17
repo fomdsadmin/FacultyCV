@@ -4,7 +4,6 @@ import { SHOWN_ATTRIBUTE_GROUP_ID, HIDDEN_ATTRIBUTE_GROUP_ID } from '../Template
 let userCvData = [];
 let allSections = [];
 
-
 const sanitizeLatex = (text) => {
     if (typeof text !== 'string') return text; // Return as-is if not a string
 
@@ -69,12 +68,12 @@ const processLatexText = (text) => {
 
 const buildTableHeader = (title) => {
     const header = String.raw`
-    \begin{tabularx}{\textwidth}{|Y|}
+    \begin{tabular}{${generateColumnFormatViaRatioArray([1])}}
     \hline
     \rowcolor{headerGray}
     \textbf{${title}} \\
     \hline
-    \end{tabularx}%
+    \end{tabular}%
     \vspace{-1pt}
     `
 
@@ -91,12 +90,12 @@ const buildTableSubHeader = (preparedSection) => {
     }
 
     const subHeader = String.raw`
-    \begin{tabularx}{\textwidth}{|Y|}
+    \begin{tabular}{${generateColumnFormatViaRatioArray([1])}}
     \hline
     \rowcolor{subHeaderGray}
     \textbf{${titleToDisplay}} \\
     \hline
-    \end{tabularx}%
+    \end{tabular}%
     \vspace{-1pt}
     `
 
@@ -121,11 +120,11 @@ const buildDataEntries = (attributes, dataSectionId) => {
 
         // Wrap the row in its own tabularx environment
         return String.raw`
-        \begin{tabularx}{\textwidth}{${dataColumnFormat}}
+        \begin{tabular}{${dataColumnFormat}}
         \hline
         ${row} \\
         \hline
-        \end{tabularx}%
+        \end{tabular}%
         \vspace{-1pt}
         `;
     });
@@ -154,11 +153,11 @@ const buildTableAttributeGroup = (attributeGroups) => {
     const columnFormat = generateColumnFormatViaRatioArray(columnRatioArray);
 
     const groupedColumnHeader = String.raw`
-    \begin{tabularx}{\textwidth}{${columnFormat}}
+    \begin{tabular}{${columnFormat}}
     \hline
     \rowcolor{columnGray}
     ${groupedColumnNamesArray.join(' & ')}
-    \end{tabularx}%
+    \end{tabular}%
     \vspace{-1pt}
     `
 
@@ -188,12 +187,12 @@ const buildTableSectionColumns = (attributeGroups, attributeRenameMap, dataSecti
 
     // Start building the LaTeX table
     latex += String.raw`
-    \begin{tabularx}{\textwidth}{${columnFormat}}
+    \begin{tabular}{${columnFormat}}
     \hline
     \rowcolor{columnGray}
     ${headerRow} \\
     \hline
-    \end{tabularx}%
+    \end{tabular}%
     \vspace{-1pt}
     `;
 
@@ -238,7 +237,7 @@ const buildLatexHeader = () => {
     `
 
     const packages = String.raw`
-    \usepackage[margin=0.5in]{geometry}
+    \usepackage[margin=0.2in]{geometry}
     \usepackage{tabularx}
     \usepackage{colortbl}
     \usepackage{array}
@@ -266,10 +265,19 @@ const buildLatexHeader = () => {
 
 const generateColumnFormatViaRatioArray = (ratioArray) => {
     const totalRatio = ratioArray.reduce((sum, ratio) => sum + ratio, 0);
+    const lineWidthRatio = 0.95;
+    const numColumns = ratioArray.length;
+    const numVerticalLines = numColumns + 1; // Lines between columns + 2 outer lines
+    
+    // Each vertical line is approximately 0.4pt ≈ 0.014cm
+    const verticalLineWidth = `${numVerticalLines * 0.4}pt`;
 
-    // Generate the column format string with dynamic \hsize values
     const columnFormat = ratioArray
-        .map((ratio) => `>{\\hsize=${(ratio / totalRatio).toFixed(5)}\\hsize}X`)
+        .map((ratio) => {
+            const widthRatio = (ratio / totalRatio).toFixed(4);
+            const ratioToUse = lineWidthRatio * widthRatio;
+            return `p{\\dimexpr${ratioToUse}\\linewidth-2\\tabcolsep-${verticalLineWidth}/${numColumns}\\relax}`;
+        })
         .join('|');
 
     return `|${columnFormat}|`;
