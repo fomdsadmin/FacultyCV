@@ -108,19 +108,6 @@ const Tabs = () => {
                 </AccordionItem>
               ))}
             {activeTab === "Education" && (
-              <AccordionItem key="Courses Taught" title={"Courses Taught"}>
-                <CoursesTaughtSection
-                  userInfo={userInfo}
-                  section={
-                    academicSections.filter(
-                      (s) => s.title === "Courses Taught"
-                    )[0]
-                  }
-                  onBack={undefined}
-                ></CoursesTaughtSection>
-              </AccordionItem>
-            )}
-            {activeTab === "Education" && (
               <AccordionItem
                 key="Post-Secondary Education"
                 title={"Post-Secondary Education"}
