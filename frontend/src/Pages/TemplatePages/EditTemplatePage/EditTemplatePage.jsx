@@ -68,6 +68,7 @@ const EditTemplatePage = ({ onBack }) => {
                     sort: {
                         numerically: false,
                         ascending: true,
+                        selectedAttribute: "",
                     },
                     count_rows: false,
                     attribute_groups: [

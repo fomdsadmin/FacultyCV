@@ -28,6 +28,7 @@ const NewTemplatePage = ({ onBack }) => {
           sort: {
             numerically: false, // if not it will be sorted alphabetically
             ascending: true,
+            selectedAttribute: "",
           },
           count_rows: false,
           attribute_groups: [
