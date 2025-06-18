@@ -30,7 +30,7 @@ const SortingButton = ({ preparedSection }) => {
     const currentSort = preparedSection.sort || {
         numerically: false,
         ascending: true,
-        selectedAttribute: ""
+        selected_attribute: ""
     };
 
     const handleSortChange = (newSortConfig) => {
