@@ -44,13 +44,6 @@ const TemplateModifier = ({
                 />
             </div>
 
-            <YearSelector 
-                startYear={startDate}
-                setStartYear={setStartDate}
-                endYear={endDate}
-                setEndYear={setEndDate}
-            />
-
             <h2 className="text-sm font-medium text-gray-700 mt-6">
                 Add or remove sections you want to include on the CV.
             </h2>
