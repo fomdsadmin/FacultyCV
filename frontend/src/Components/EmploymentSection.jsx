@@ -107,6 +107,98 @@ const EmploymentSection = ({ user, section, onBack }) => {
     fetchData();
   }, [searchTerm, section.data_section_id]);
 
+  // Add a function to sort employment entries
+  const sortEmploymentEntries = (entries) => {
+    return [...entries].sort((a, b) => {
+      const typeA = a.data_details.type?.toLowerCase();
+      const typeB = b.data_details.type?.toLowerCase();
+
+      // Put "present" entries first
+      if (typeA === "present" && typeB !== "present") return -1;
+      if (typeA !== "present" && typeB === "present") return 1;
+
+      // Extract start dates from date strings for both entries
+      const getStartDate = (dateStr) => {
+        const parts = dateStr.split(" - ");
+        const startPart = parts[0];
+
+        try {
+          const [month, year] = startPart.split(", ");
+          const monthIndex = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+          ].indexOf(month);
+
+          return new Date(parseInt(year), monthIndex);
+        } catch (error) {
+          // Handle any parsing errors
+          return new Date(0);
+        }
+      };
+
+      // For two "present" entries, sort by start date (descending)
+      if (typeA === "present" && typeB === "present") {
+        const startDateA = getStartDate(a.data_details.dates);
+        const startDateB = getStartDate(b.data_details.dates);
+
+        // Sort descending (newer start dates first)
+        return startDateB - startDateA;
+      }
+
+      // For prior entries, sort by end date (descending)
+      if (typeA === "prior" && typeB === "prior") {
+        // Extract end dates from date strings
+        const getEndDate = (dateStr) => {
+          const parts = dateStr.split(" - ");
+          if (parts.length < 2) return new Date(0); // No end date
+
+          const endPart = parts[1];
+          // Parse the end date (format: "Month, Year")
+          try {
+            const [month, year] = endPart.split(", ");
+            const monthIndex = [
+              "January",
+              "February",
+              "March",
+              "April",
+              "May",
+              "June",
+              "July",
+              "August",
+              "September",
+              "October",
+              "November",
+              "December",
+            ].indexOf(month);
+
+            return new Date(parseInt(year), monthIndex);
+          } catch (error) {
+            // Handle any parsing errors
+            return new Date(0);
+          }
+        };
+
+        const dateA = getEndDate(a.data_details.dates);
+        const dateB = getEndDate(b.data_details.dates);
+
+        // Sort descending (newer dates first)
+        return dateB - dateA;
+      }
+
+      return 0;
+    });
+  };
+
   useEffect(() => {
     if (fieldData.length !== 0) {
       setIsAvailable(true);
@@ -127,7 +219,7 @@ const EmploymentSection = ({ user, section, onBack }) => {
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
         <div className="mt-4 mx-4 flex">
-          <h2 className="text-left text-3xl font-bold text-zinc-600">
+          <h2 className="text-left text-4xl font-bold text-zinc-600">
             {section.title}
           </h2>
           <button
@@ -187,7 +279,7 @@ const EmploymentSection = ({ user, section, onBack }) => {
         <div>
           <div>
             {fieldData.length > 0 ? (
-              fieldData.map((entry, index) => (
+              sortEmploymentEntries(fieldData).map((entry, index) => (
                 <GenericEntry
                   key={index}
                   onEdit={() => handleEdit(entry)}
@@ -228,13 +320,15 @@ const EmploymentSection = ({ user, section, onBack }) => {
           )}
 
           {retrievingData && (
-            <EmploymentModal
-              user={user}
-              section={section}
-              onClose={handleCloseModal}
-              setRetrievingData={setRetrievingData}
-              fetchData={fetchData}
-            />
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center w-full justify-center mx-auto">
+              <EmploymentModal
+                user={user}
+                section={section}
+                onClose={handleCloseModal}
+                setRetrievingData={setRetrievingData}
+                fetchData={fetchData}
+              />
+            </div>
           )}
         </div>
       )}
