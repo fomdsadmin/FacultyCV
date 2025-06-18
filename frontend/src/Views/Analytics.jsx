@@ -133,7 +133,9 @@ const Analytics = ({ getCognitoUser, userInfo}) => {
   
     // Find the IDs for Publications, Secured Funding, and Patents
     const publicationSectionId = dataSections.find(section => section.title === 'Publications')?.data_section_id;
-    const secureFundingSectionId = dataSections.find(section => section.title === 'Secure Funding')?.data_section_id;
+    const secureFundingSectionId = dataSections.find(
+      (section) => section.title === "Research or Equivalent Grants"
+    )?.data_section_id;
     const patentSectionId = dataSections.find(section => section.title === 'Patents')?.data_section_id;
 
     // Initialize arrays to hold the data

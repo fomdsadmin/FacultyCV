@@ -207,7 +207,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                     onBack={handleBack}
                   />
                 )}
-                {activeSection.title === "Secure Funding" && (
+                {activeSection.title === "Research or Equivalent Grants" && (
                   <SecureFundingSection
                     user={userInfo}
                     section={activeSection}
@@ -221,9 +221,11 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                     onBack={handleBack}
                   />
                 )} */}
-                {!["Publications", "Patents", "Secure Funding"].includes(
-                  activeSection.title
-                ) && (
+                {![
+                  "Publications",
+                  "Patents",
+                  "Research or Equivalent Grants",
+                ].includes(activeSection.title) && (
                   <GenericSection
                     user={userInfo}
                     section={activeSection}

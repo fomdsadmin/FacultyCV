@@ -2,12 +2,12 @@ import React from 'react';
 import { useState } from 'react';
 import { FaArrowLeft, FaTrash } from 'react-icons/fa';
 import DeleteSectionModal from './DeleteSectionModal';
-// import AddAttributeModal from './AddAttributeModal.jsx';
+import EditSectionModal from "./EditSectionModal";
 import AttributeModal from "./AttributeModal.jsx";
 
 const ManageSection = ({ section, onBack, getDataSections }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAddAttributeModalOpen, setIsAddAttributeModalOpen] = useState(false);
+  const [isEditSectionModalOpen, setIsEditSectionModalOpen] = useState(false);
   const [isUpdateAttributeModalOpen, setIsUpdateAttributeModalOpen] =
     useState(false);
 
@@ -19,8 +19,8 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
     setIsModalOpen(true);
   };
 
-  const handleAddAttributeClick = () => {
-    setIsAddAttributeModalOpen(true);
+  const handleEditSectionClick = () => {
+    setIsEditSectionModalOpen(true);
   };
 
   const handleUpdateAttributeClick = () => {
@@ -77,12 +77,12 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
 
       <div className="m-4">
         <div className="flex flex-wrap gap-4 mb-4">
-          {/* <button
-            onClick={handleAddAttributeClick}
+          <button
+            onClick={handleEditSectionClick}
             className="btn btn-primary text-white"
           >
-            Add Attribute
-          </button> */}
+            Edit Section
+          </button>
           <button
             onClick={handleUpdateAttributeClick}
             className="btn btn-secondary text-white"
@@ -151,38 +151,45 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
         </div>
       </div>
 
-      {/* Delete section modal */}
-      {isModalOpen && (
-        <DeleteSectionModal
-          setIsModalOpen={setIsModalOpen}
-          section={section}
-          onBack={onBack}
-          getDataSections={getDataSections}
-        />
-      )}
-
-      {/* Add overlay and centered modal for attribute actions */}
-      {(isAddAttributeModalOpen || isUpdateAttributeModalOpen) && (
+      {/* Attributes add/update modal */}
+      {isEditSectionModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center w-full justify-center mx-auto">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
-            {isAddAttributeModalOpen && (
-              <AttributeModal
-                setIsOpen={setIsAddAttributeModalOpen}
-                onBack={onBack}
-                section={section}
-                getDataSections={getDataSections}
-                mode="add"
-              />
-            )}
-            {isUpdateAttributeModalOpen && (
-              <AttributeModal
-                setIsOpen={setIsUpdateAttributeModalOpen}
-                onBack={onBack}
-                section={section}
-                getDataSections={getDataSections}
-                mode="edit"
-              />
-            )}
+            <EditSectionModal
+              setIsModalOpen={setIsEditSectionModalOpen}
+              section={section}
+              onBack={onBack}
+              getDataSections={getDataSections}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Delete section modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center w-full justify-center mx-auto">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
+            <DeleteSectionModal
+              setIsModalOpen={setIsModalOpen}
+              section={section}
+              onBack={onBack}
+              getDataSections={getDataSections}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Attributes add/update modal */}
+      {isUpdateAttributeModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center w-full justify-center mx-auto">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
+            <AttributeModal
+              setIsOpen={setIsUpdateAttributeModalOpen}
+              onBack={onBack}
+              section={section}
+              getDataSections={getDataSections}
+              mode="edit"
+            />
           </div>
         </div>
       )}
