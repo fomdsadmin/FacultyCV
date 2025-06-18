@@ -77,16 +77,68 @@ const buildTableSubHeader = (preparedSection) => {
     return subHeader;
 }
 
+const sortSectionData = (sectionData, sortConfig, dataSectionId) => {
+    // Return unsorted data if no sort configuration
+    if (!sortConfig || !sortConfig.selectedAttribute) {
+        return sectionData;
+    }
+
+    const sortAttribute = sortConfig.selectedAttribute;
+    
+    // Find the section to get the attribute mapping
+    const section = allSections.find((section) => section.data_section_id === dataSectionId);
+    if (!section) {
+        console.warn(`Section not found for dataSectionId: ${dataSectionId}`);
+        return sectionData;
+    }
+
+    const attributeMapping = JSON.parse(section.attributes);
+    const sortKey = attributeMapping[sortAttribute];
+
+    if (!sortKey) {
+        console.warn(`Sort key not found for attribute: ${sortAttribute}`);
+        return sectionData;
+    }
+
+    return sectionData.sort((a, b) => {
+        let valueA = a.data_details[sortKey];
+        let valueB = b.data_details[sortKey];
+
+        // Handle arrays by joining them
+        if (Array.isArray(valueA)) valueA = valueA.join(', ');
+        if (Array.isArray(valueB)) valueB = valueB.join(', ');
+
+        // Convert to strings for safety
+        valueA = String(valueA || '');
+        valueB = String(valueB || '');
+
+        let comparison;
+
+        if (sortConfig.numerically) {
+            // Numerical sorting
+            const numA = parseFloat(valueA) || 0;
+            const numB = parseFloat(valueB) || 0;
+            comparison = numA - numB;
+        } else {
+            // Alphabetical sorting (case-insensitive)
+            comparison = valueA.toLowerCase().localeCompare(valueB.toLowerCase());
+        }
+
+        // Apply ascending/descending order
+        return sortConfig.ascending ? comparison : -comparison;
+    });
+};
+
 const buildDataEntries = (preparedSection, dataSectionId) => {
-
     const attributeGroups = preparedSection.attribute_groups;
-
     const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
-
     const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
 
     // Filter userCvData by the given dataSectionId
-    const sectionData = userCvData.filter((cvData) => cvData.data_section_id === dataSectionId);
+    let sectionData = userCvData.filter((cvData) => cvData.data_section_id === dataSectionId);
+    
+    // Apply sorting
+    sectionData = sortSectionData(sectionData, preparedSection.sort, dataSectionId);
 
     var latexTables;
 
