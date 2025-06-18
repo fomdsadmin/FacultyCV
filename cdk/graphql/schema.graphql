@@ -46,6 +46,7 @@ type DataSection {
   description: String!
   data_type: String
   attributes: AWSJSON! # JSON
+  attributes_type: AWSJSON # JSON
   archive: Boolean
 }
 
@@ -463,6 +464,13 @@ type Mutation {
     archive: Boolean
     attributes: AWSJSON # JSON
     attributes_type: AWSJSON # JSON
+  ): String @aws_auth(cognito_groups: ["Admin"])
+
+  editSectionDetails(
+    data_section_id: String!
+    title: String!
+    data_type: String!
+    description: String
   ): String @aws_auth(cognito_groups: ["Admin"])
 
   addUserCVData(

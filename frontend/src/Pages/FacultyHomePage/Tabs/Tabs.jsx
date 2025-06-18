@@ -18,9 +18,6 @@ const Tabs = () => {
     AFFILIATIONS: "Affiliations",
     EMPLOYMENT: "Employment",
     EDUCATION: "Education",
-    // SERVICE: "Service",
-    // TEACHING: "Teaching",
-    // AWARDS: "Awards",
   });
 
   const [activeTab, setActiveTab] = useState(CATEGORIES.PROFILE);
@@ -30,7 +27,7 @@ const Tabs = () => {
   const getTitlesForCategory = (category) => {
     switch (category) {
       case CATEGORIES.EMPLOYMENT:
-        return ["Prior Employment", "Present Employment", "Leaves of Absence"];
+        return ["Employment History", "Leaves of Absence"];
 
       // case CATEGORIES.SERVICE:
       //   return [
@@ -89,14 +86,16 @@ const Tabs = () => {
       <>
         {activeTab === category && (
           <Accordion key={index}>
+            {/* Filter out the sections which use custom modals from the list */}
             {getTitlesForCategory(category)
               .filter(
                 (title) =>
                   title !== "Courses Taught" &&
                   title !== "Post-Secondary Education" &&
-                  title !== "Prior Employment"
+                  title !== "Employment History"
               )
               .map((title, innerIndex) => (
+                // send remaining sections to GenericSection
                 <AccordionItem key={index + "" + innerIndex} title={title}>
                   <GenericSection
                     key={innerIndex}
@@ -107,19 +106,6 @@ const Tabs = () => {
                   />
                 </AccordionItem>
               ))}
-            {activeTab === "Education" && (
-              <AccordionItem key="Courses Taught" title={"Courses Taught"}>
-                <CoursesTaughtSection
-                  userInfo={userInfo}
-                  section={
-                    academicSections.filter(
-                      (s) => s.title === "Courses Taught"
-                    )[0]
-                  }
-                  onBack={undefined}
-                ></CoursesTaughtSection>
-              </AccordionItem>
-            )}
             {activeTab === "Education" && (
               <AccordionItem
                 key="Post-Secondary Education"
@@ -137,12 +123,15 @@ const Tabs = () => {
               </AccordionItem>
             )}
             {activeTab === "Employment" && (
-              <AccordionItem key="Prior Employment" title={"Prior Employment"}>
+              <AccordionItem
+                key="Employment History"
+                title={"Employment History"}
+              >
                 <EmploymentSection
                   user={userInfo}
                   section={
                     academicSections.filter(
-                      (s) => s.title === "Prior Employment"
+                      (s) => s.title === "Employment History"
                     )[0]
                   }
                   onBack={undefined}

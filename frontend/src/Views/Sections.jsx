@@ -24,14 +24,13 @@ const Sections = ({ getCognitoUser, userInfo }) => {
     setDataSections([]);
     const retrievedSections = await getAllSections();
 
-    const parsedSections = retrievedSections.map(section => ({
+    const parsedSections = retrievedSections.map((section) => ({
       ...section,
       attributes: JSON.parse(section.attributes),
+      attributes_type: JSON.parse(section.attributes_type || "{}"),
     }));
 
     parsedSections.sort((a, b) => a.title.localeCompare(b.title));
-
-    
 
     setDataSections(parsedSections);
     setLoading(false);
@@ -41,21 +40,27 @@ const Sections = ({ getCognitoUser, userInfo }) => {
     setSearchTerm(event.target.value);
   };
 
-  const filters = Array.from(new Set(dataSections.map(section => section.data_type)));
+  const filters = Array.from(
+    new Set(dataSections.map((section) => section.data_type))
+  );
 
   const handleManageClick = (value) => {
-    const section = dataSections.filter((section) => section.data_section_id == value);
+    const section = dataSections.filter(
+      (section) => section.data_section_id == value
+    );
     setActiveSection(section[0]);
   };
 
-  const searchedSections = dataSections.filter(entry => {
-    const section = entry.title || '';
-    const category = entry.data_type || '';
+  const searchedSections = dataSections.filter((entry) => {
+    const section = entry.title || "";
+    const category = entry.data_type || "";
 
-    const matchesSearch = section.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      section.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
       category.toLowerCase().startsWith(searchTerm.toLowerCase());
 
-    const matchesFilter = activeFilters.length === 0 || !activeFilters.includes(category);
+    const matchesFilter =
+      activeFilters.length === 0 || !activeFilters.includes(category);
 
     return matchesSearch && matchesFilter;
   });
@@ -96,7 +101,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
             ) : activeSection === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">
-                  Sections
+                  Manage Faculty Sections
                 </h1>
                 <button
                   className="btn btn-info text-white m-4"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PermanentEntry from "./PermanentEntry";
 import GenericEntry from "../SharedComponents/GenericEntry";
-import EntryModal from "../SharedComponents/EntryModal";
+import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import PermanentEntryModal from "./PermanentEntryModal";
 import PublicationsModal from "./PublicationsModal";
 import { FaArrowLeft } from "react-icons/fa";
@@ -497,34 +497,35 @@ const PublicationsSection = ({ user, section, onBack }) => {
                 onClose={handleCloseModal}
               />
             ))}
+          {console.log("Here")}
+          {isModalOpen && selectedEntry && isNew && (
+            <EntryModal
+              isNew={true}
+              user={user}
+              section={section}
+              fields={selectedEntry.fields}
+              user_cv_data_id={selectedEntry.data_id}
+              entryType={section.title}
+              fetchData={fetchData}
+              onClose={handleCloseModal}
+            />
+          )}
+          {/* // (selectedEntry.editable ? (
 
-          {isModalOpen &&
-            selectedEntry &&
-            isNew &&
-            (selectedEntry.editable ? (
-              <EntryModal
-                isNew={true}
-                user={user}
-                section={section}
-                fields={selectedEntry.fields}
-                user_cv_data_id={selectedEntry.data_id}
-                entryType={section.title}
-                fetchData={fetchData}
-                onClose={handleCloseModal}
-              />
-            ) : (
-              <PermanentEntryModal
-                isNew={true}
-                user={user}
-                section={section}
-                fields={selectedEntry.fields}
-                user_cv_data_id={selectedEntry.data_id}
-                entryType={section.title}
-                fetchData={fetchData}
-                onClose={handleCloseModal}
-              />
-            ))}
+            // ) : (
+            //   PermanentEntryModal
+            //     isNew={true}
+            //     user={user}
+            //     section={section}
+            //     fields={selectedEntry.fields}
+            //     user_cv_data_id={selectedEntry.data_id}
+            //     entryType={section.title}
+            //     fetchData={fetchData}
+            //     onClose={handleCloseModal}
+            //   />
+            // ))} */}
           <div className="">
+            {console.log("2")}
             {retrievingData && (
               <PublicationsModal
                 user={user}

@@ -11,6 +11,7 @@ const AttributeModal = ({
   getDataSections,
   section,
   mode = "add", // "add" or "edit"
+  attributeTypeMap, // New prop for attribute type mapping
 }) => {
   // Add a unique id to each attribute
   const [attributes, setAttributes] = useState([
@@ -21,6 +22,30 @@ const AttributeModal = ({
   const [dropdownOptions, setDropdownOptions] = useState({});
 
   useEffect(() => {
+    // Build attribute type map from section.attributes_type
+    let attributesType =
+      typeof section.attributes_type === "string"
+        ? JSON.parse(section.attributes_type)
+        : section.attributes_type || {};
+
+    // Map attribute name to type and options (for dropdown)
+    const attrTypeMap = {};
+    Object.entries(attributesType).forEach(([type, attrsObj]) => {
+      // Normalize type: map "dates" to "date"
+      const normalizedType = type === "dates" ? "date" : type;
+      if (normalizedType === "dropdown") {
+        // attrsObj: { Type: ["A", "B"] }
+        Object.entries(attrsObj || {}).forEach(([attrName, options]) => {
+          attrTypeMap[attrName] = { type: normalizedType, options };
+        });
+      } else {
+        // attrsObj: { Note: "", Details: "" }
+        Object.keys(attrsObj || {}).forEach((attrName) => {
+          attrTypeMap[attrName] = { type: normalizedType };
+        });
+      }
+    });
+
     if (mode === "edit") {
       let existingAttributes = {};
       try {
@@ -31,29 +56,28 @@ const AttributeModal = ({
       } catch {
         existingAttributes = {};
       }
-      // Convert object to array of {id, name, type}
       const attrArr = Object.keys(existingAttributes).length
-        ? Object.entries(existingAttributes).map(([name, type], index) => ({
+        ? Object.keys(existingAttributes).map((name, index) => ({
             id: `attr-${index}`,
             name,
-            type: type || "",
+            type: attrTypeMap[name]?.type || "text",
           }))
-        : [{ id: "attr-0", name: "", type: "" }];
+        : [{ id: "attr-0", name: "", type: "text" }];
+
       setAttributes(attrArr);
 
-      // Initialize dropdownOptions for dropdown attributes
-      const dropdownInit = {};
+      // Autofill dropdown options if present
+      const dropdowns = {};
       attrArr.forEach((attr) => {
-        if (attr.type === "dropdown") {
-          dropdownInit[attr.name] = ""; // You can prefill with saved options if available
+        if (attr.type === "dropdown" && attrTypeMap[attr.name]?.options) {
+          dropdowns[attr.name] = attrTypeMap[attr.name].options.join(", ");
         }
       });
-      setDropdownOptions(dropdownInit);
+      setDropdownOptions(dropdowns);
     } else {
-      setAttributes([{ id: "attr-0", name: "", type: "" }]);
-      setDropdownOptions({});
+      setAttributes([{ id: "attr-0", name: "", type: "text" }]);
     }
-  }, [mode, section]);
+  }, [mode, section, attributeTypeMap]);
 
   const handleDropdownOptionsChange = (index, value) => {
     const attrName = attributes[index].name;
@@ -63,19 +87,22 @@ const AttributeModal = ({
     }));
   };
 
+  const capitalizeFirst = (str) =>
+    str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+
   // Update attribute name change to keep dropdownOptions in sync
-  const handleAttributeChange = (index, key) => {
-    const oldName = attributes[index].name;
+  const handleAttributeChange = (index, value) => {
     const newAttributes = [...attributes];
-    newAttributes[index].name = key;
+    newAttributes[index].name = capitalizeFirst(value);
     setAttributes(newAttributes);
 
     // If this is a dropdown, move options to new name
-    if (newAttributes[index].type === "dropdown" && oldName !== key) {
+    if (newAttributes[index].type === "dropdown") {
       setDropdownOptions((prev) => {
         const updated = { ...prev };
+        const oldName = attributes[index].name;
         if (updated[oldName]) {
-          updated[key] = updated[oldName];
+          updated[newAttributes[index].name] = updated[oldName];
           delete updated[oldName];
         }
         return updated;
@@ -114,10 +141,16 @@ const AttributeModal = ({
   };
 
   const handleUpdateSection = async () => {
+    // Trim trailing spaces from attribute names
+    const trimmedAttributes = attributes.map((attr) => ({
+      ...attr,
+      name: attr.name ? attr.name.trimEnd() : "",
+    }));
+
     const newErrors = {};
     if (
-      attributes.length === 0 ||
-      attributes.some((attr) => !attr.name || attr.name.trim() === "")
+      trimmedAttributes.length === 0 ||
+      trimmedAttributes.some((attr) => !attr.name || attr.name.trim() === "")
     ) {
       newErrors.attributes = "All attribute names are required";
     }
@@ -129,7 +162,7 @@ const AttributeModal = ({
     setAddingSection(true);
 
     // Convert array to object for old attributes
-    const combinedAttributes = attributes.reduce((acc, obj) => {
+    const combinedAttributes = trimmedAttributes.reduce((acc, obj) => {
       acc[obj.name] = obj.type || "text";
       return acc;
     }, {});
@@ -148,7 +181,19 @@ const AttributeModal = ({
         ? combinedAttributes
         : { ...existingAttributes, ...combinedAttributes };
 
-    const attributesJSONString = JSON.stringify(updatedAttributes);
+    // Only keep field names with empty string values
+    const toSnakeCase = (str) =>
+      str
+        .replace(/\s+/g, "_") // Replace spaces with underscores
+        .replace(/([a-z])([A-Z])/g, "$1_$2") // Add underscore before capital letters (not at start)
+        .toLowerCase();
+
+    const attributesJSONString = JSON.stringify(
+      Object.keys(updatedAttributes).reduce((acc, key) => {
+        acc[key] = toSnakeCase(key);
+        return acc;
+      }, {})
+    );
 
     // Build AWSJson structure
     const awsJson = {
@@ -171,10 +216,16 @@ const AttributeModal = ({
       }
     });
 
+    console.log("Attributes JSON:", attributesJSONString);
     console.log("AWSJson for updateSection:", awsJson);
 
     try {
-      await updateSection(section.data_section_id, false, attributesJSONString);
+      await updateSection(
+        section.data_section_id,
+        false,
+        attributesJSONString,
+        JSON.stringify(awsJson)
+      );
     } catch (error) {
       console.error("Error updating section:", error);
     }
@@ -185,7 +236,7 @@ const AttributeModal = ({
   };
 
   return (
-    <dialog className="modal-dialog items-center mx-auto" open>
+    <dialog className="modal-dialog items-center ml-6" open>
       <div className="modal-content">
         {/* Header */}
         <button

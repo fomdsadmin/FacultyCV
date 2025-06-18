@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import PermanentEntry from "./PermanentEntry";
 import GenericEntry from "../SharedComponents/GenericEntry";
 import PermanentEntryModal from "./PermanentEntryModal";
-import EntryModal from "../SharedComponents/EntryModal";
+import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import { FaArrowLeft } from "react-icons/fa";
 import SecureFundingModal from "./SecureFundingModal";
 import {
@@ -374,31 +374,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
             )}
 
             {isModalOpen && selectedEntry && isNew && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                {console.log("Selected Entry:", selectedEntry)}
-                {selectedEntry.editable ? (
-                  <EntryModal
-                    isNew={true}
-                    user={user}
-                    section={section}
-                    fields={selectedEntry.fields}
-                    user_cv_data_id={selectedEntry.data_id}
-                    entryType={section.title}
-                    fetchData={fetchData}
-                    onClose={handleCloseModal}
-                  />
-                ) : (
-                  <PermanentEntryModal
-                    isNew={true}
-                    user={user}
-                    section={section}
-                    fields={selectedEntry.fields}
-                    user_cv_data_id={selectedEntry.data_id}
-                    entryType={section.title}
-                    fetchData={fetchData}
-                    onClose={handleCloseModal}
-                  />
-                )}
+              <div className="fixed inset-0 z-50 flex items-center justify-center">
+                <EntryModal
+                  isNew={true}
+                  user={user}
+                  section={section}
+                  fields={selectedEntry.fields}
+                  user_cv_data_id={selectedEntry.data_id}
+                  entryType={section.title}
+                  fetchData={fetchData}
+                  onClose={handleCloseModal}
+                />
               </div>
             )}
 

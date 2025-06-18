@@ -9,7 +9,7 @@ import PublicationsSection from "../Components/PublicationsSection.jsx";
 import PatentsSection from "../Components/PatentsSection.jsx";
 import InvitedPresentationSection from "../Components/InvitedPresentationSection.jsx";
 import { getAllSections } from "../graphql/graphqlHelpers.js";
-import EntryModal from "../SharedComponents/EntryModal";
+import EntryModal from "../SharedComponents/EntryModal/EntryModal.jsx";
 
 const AcademicWork = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,32 +58,15 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
     setActiveSection(null);
   };
 
-  // Utility to group service sections under "Services"
-  const groupServiceSections = (sections) => {
-    const serviceTypes = [
-      "Service to the Community",
-      "Service to the Hospital",
-      "Service to the University",
-    ];
-    return sections.map((section) =>
-      serviceTypes.includes(section.data_type)
-        ? { ...section, data_type: "Services" }
-        : section
-    );
-  };
-
-  // Use grouped sections for filters and search
-  const groupedSections = groupServiceSections(dataSections);
-
   const filters = Array.from(
-    new Set(groupedSections.map((section) => section.data_type))
+    new Set(dataSections.map((section) => section.data_type))
   );
   const sectionDescriptions = {};
-  groupedSections.forEach((section) => {
+  dataSections.forEach((section) => {
     sectionDescriptions[section.data_type] = section.description;
   });
 
-  const searchedSections = groupedSections.filter((entry) => {
+  const searchedSections = dataSections.filter((entry) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
     const matchesSearch =
@@ -124,7 +107,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                 }`}
                 onClick={() => onSelect(filter)}
               >
-                {displayTabName(filter)}
+                {filter}
               </button>
             ))}
         </div>
@@ -146,11 +129,6 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
         )}
       </>
     );
-  };
-
-  const displayTabName = (name) => {
-    if (name === "Awards and Distinctions") return "Awards";
-    return name;
   };
 
   return (
@@ -229,7 +207,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                     onBack={handleBack}
                   />
                 )}
-                {activeSection.title === "Secure Funding" && (
+                {activeSection.title === "Research or Equivalent Grants" && (
                   <SecureFundingSection
                     user={userInfo}
                     section={activeSection}
@@ -243,9 +221,11 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                     onBack={handleBack}
                   />
                 )} */}
-                {!["Publications", "Patents", "Secure Funding"].includes(
-                  activeSection.title
-                ) && (
+                {![
+                  "Publications",
+                  "Patents",
+                  "Research or Equivalent Grants",
+                ].includes(activeSection.title) && (
                   <GenericSection
                     user={userInfo}
                     section={activeSection}
