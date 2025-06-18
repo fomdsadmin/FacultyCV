@@ -3,6 +3,7 @@ import { SHOWN_ATTRIBUTE_GROUP_ID, HIDDEN_ATTRIBUTE_GROUP_ID } from '../Template
 
 let userCvData = [];
 let allSections = [];
+const rowNumberColumnRatio = 3;
 
 const sanitizeLatex = (text) => {
     if (typeof text !== 'string') return text; // Return as-is if not a string
@@ -27,43 +28,17 @@ const addAllowBreaks = (text) => {
 
     // Replace specific characters with their LaTeX \allowbreak equivalents
     return String.raw`${text}`
-        .replace(/,/g, ',\\allowbreak ')   // Comma
-        .replace(/\./g, '.\\allowbreak ') // Period
-        .replace(/-/g, '-\\allowbreak ')  // Hyphen
-        .replace(/\//g, '/\\allowbreak ') // Forward slash
-        .replace(/:/g, ':\\allowbreak ') // Colon
-        .replace(/;/g, ';\\allowbreak ') // Semicolon
-        .replace(/_/g, '_\\allowbreak '); // Underscore
-};
-
-const processLatexText = (text) => {
-    if (typeof text !== 'string') return text;
-
-    return text
-        // First add allowbreaks
-        .replace(/,/g, ',\\allowbreak{}')
-        .replace(/\./g, '.\\allowbreak{}')
-        .replace(/-/g, '-\\allowbreak{}')
-        .replace(/\//g, '/\\allowbreak{}')
-        .replace(/:/g, ':\\allowbreak{}')
-        .replace(/;/g, ';\\allowbreak{}')
-        // Then sanitize (but don't touch the allowbreak backslashes)
-        .replace(/\\/g, (match, offset, string) => {
-            // Don't escape backslashes that are part of \allowbreak
-            if (string.substring(offset, offset + 11) === '\\allowbreak') {
-                return match;
-            }
-            return '\\textbackslash{}';
-        })
-        .replace(/{/g, '\\{')
-        .replace(/}/g, '\\}')
-        .replace(/\$/g, '\\$')
-        .replace(/&/g, '\\&')
-        .replace(/%/g, '\\%')
-        .replace(/#/g, '\\#')
-        .replace(/_/g, '\\_')
-        .replace(/\^/g, '\\textasciicircum{}')
-        .replace(/~/g, '\\textasciitilde{}');
+        .replace(/,/g, ',\\hspace{0pt}')   // Comma
+        .replace(/\./g, '.\\hspace{0pt}') // Period
+        .replace(/-/g, '-\\hspace{0pt}')  // Hyphen
+        .replace(/\//g, '/\\hspace{0pt}') // Forward slash
+        .replace(/:/g, ':\\hspace{0pt}') // Colon
+        .replace(/;/g, ';\\hspace{0pt}') // Semicolon
+        .replace(/_/g, '_\\hspace{0pt}') // Underscore
+        .replace(/=/g, '=\\hspace{0pt}') // Equal
+        .replace(/&/g, '&\\hspace{0pt}') // Ampersand
+        .replace(/\?/g, '?\\hspace{0pt}') // Question mark
+        .replace(/(?<!\\hspace\{[^}]*)\d(?!pt)/g, '$&\\hspace{0pt}'); // Digit not in \hspace{}
 };
 
 const buildTableHeader = (title) => {
@@ -102,31 +77,78 @@ const buildTableSubHeader = (preparedSection) => {
     return subHeader;
 }
 
-const buildDataEntries = (attributes, dataSectionId) => {
+const buildDataEntries = (preparedSection, dataSectionId) => {
+
+    const attributeGroups = preparedSection.attribute_groups;
+
+    const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
+
+    const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
+
     // Filter userCvData by the given dataSectionId
     const sectionData = userCvData.filter((cvData) => cvData.data_section_id === dataSectionId);
 
+    var latexTables;
+
     // Generate LaTeX tables for each entry
-    const latexTables = sectionData.map((data) => {
+    latexTables = sectionData.map((data, rowCount) => {
         // Map attributes to their corresponding values in data_details
         const section = allSections.find((section) => section.data_section_id === dataSectionId);
-        const row = attributes.map((attribute) => {
-            const tabData = data.data_details[JSON.parse(section.attributes)[attribute]];
-            return sanitizeLatex(tabData);
+        var rowArray = attributes.map((attribute) => {
+            // Some data is an array for some reason
+            const tabData = String(data.data_details[JSON.parse(section.attributes)[attribute]]);
+            console.log('Original tabData:', tabData);
+            console.log('After sanitizeLatex:', sanitizeLatex(tabData));
+            console.log('After addAllowBreaks:', addAllowBreaks(sanitizeLatex(tabData)));
 
-        }).join(' & ');
+            if (!preparedSection.merge_visible_attributes) {
+                return String.raw`{\footnotesize ${addAllowBreaks(sanitizeLatex(tabData))}}`;
+            } else {
+                return tabData;
+            }
+        });
 
-        const dataColumnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1));
+        if (preparedSection.merge_visible_attributes) {
+            rowArray = [String.raw`{\footnotesize ${addAllowBreaks(sanitizeLatex(rowArray.join(`, `)))}}`]
+        }
+
+        var dataColumnFormat;
+
+        if (!preparedSection.include_row_number_column) {
+            dataColumnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1))
+        } else {
+            var ratioArray;
+
+            if (!preparedSection.merge_visible_attributes) {
+                ratioArray = attributes.map(() => rowNumberColumnRatio);
+                ratioArray.unshift(1);
+            } else {
+                ratioArray = [1, 18];
+            }
+
+            dataColumnFormat = generateColumnFormatViaRatioArray(ratioArray)
+            rowArray.unshift(rowCount + 1);
+        }
 
         // Wrap the row in its own tabularx environment
+        console.log(
+            String.raw`
+            \begin{tabular}{${dataColumnFormat}}
+            \hline
+            ${rowArray.join(' & ')} \\
+            \hline
+            \end{tabular}%
+            \vspace{-1pt}
+            `
+        )
         return String.raw`
-        \begin{tabular}{${dataColumnFormat}}
-        \hline
-        ${row} \\
-        \hline
-        \end{tabular}%
-        \vspace{-1pt}
-        `;
+            \begin{tabular}{${dataColumnFormat}}
+            \hline
+            ${rowArray.join(' & ')} \\
+            \hline
+            \end{tabular}%
+            \vspace{-1pt}
+            `;
     });
 
     // Join all individual tables
@@ -164,8 +186,11 @@ const buildTableAttributeGroup = (attributeGroups) => {
     return groupedColumnHeader
 }
 
-const buildTableSectionColumns = (attributeGroups, attributeRenameMap, dataSectionId) => {
+const buildTableSectionColumns = (preparedSection) => {
     let latex = "";
+
+    const attributeGroups = preparedSection.attribute_groups;
+    const attributeRenameMap = preparedSection.attribute_rename_map;
 
     // take into account hidden and shown attribute group
     if (attributeGroups.length > 2) {
@@ -177,8 +202,16 @@ const buildTableSectionColumns = (attributeGroups, attributeRenameMap, dataSecti
 
     const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
 
-    // Dynamically create the column format string based on the number of attributes
-    const columnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1));
+    var columnFormat;
+    if (!preparedSection.include_row_number_column) {
+        // Dynamically create the column format string based on the number of attributes
+        columnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1));
+    } else {
+        const customAttributeRatio = attributes.map(() => rowNumberColumnRatio);
+        customAttributeRatio.unshift(1);
+        columnFormat = generateColumnFormatViaRatioArray(customAttributeRatio);
+        attributes.unshift("Row #");
+    }
 
     // Dynamically create the header row based on the attribute names
     const headerRow = attributes
@@ -196,8 +229,6 @@ const buildTableSectionColumns = (attributeGroups, attributeRenameMap, dataSecti
     \vspace{-1pt}
     `;
 
-    latex += buildDataEntries(attributes, dataSectionId);
-
     return latex;
 }
 
@@ -206,7 +237,11 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 
     latex += buildTableSubHeader(preparedSection);
 
-    latex += buildTableSectionColumns(preparedSection.attribute_groups, preparedSection.attribute_rename_map, dataSectionId);
+    if (!preparedSection.merge_visible_attributes) {
+        latex += buildTableSectionColumns(preparedSection, dataSectionId);
+    }
+
+    latex += buildDataEntries(preparedSection, dataSectionId);
 
     return latex;
 }
@@ -241,6 +276,8 @@ const buildLatexHeader = () => {
     \usepackage{tabularx}
     \usepackage{colortbl}
     \usepackage{array}
+    \hyphenpenalty=10000
+    \exhyphenpenalty=10000
     `
 
     latex += packages;
@@ -268,7 +305,7 @@ const generateColumnFormatViaRatioArray = (ratioArray) => {
     const lineWidthRatio = 0.95;
     const numColumns = ratioArray.length;
     const numVerticalLines = numColumns + 1; // Lines between columns + 2 outer lines
-    
+
     // Each vertical line is approximately 0.4pt ≈ 0.014cm
     const verticalLineWidth = `${numVerticalLines * 0.4}pt`;
 
@@ -276,7 +313,7 @@ const generateColumnFormatViaRatioArray = (ratioArray) => {
         .map((ratio) => {
             const widthRatio = (ratio / totalRatio).toFixed(4);
             const ratioToUse = lineWidthRatio * widthRatio;
-            return `p{\\dimexpr${ratioToUse}\\linewidth-2\\tabcolsep-${verticalLineWidth}/${numColumns}\\relax}`;
+            return `>{\\raggedright\\arraybackslash}p{\\dimexpr${ratioToUse}\\linewidth-2\\tabcolsep-${verticalLineWidth}/${numColumns}\\relax}`;
         })
         .join('|');
 
