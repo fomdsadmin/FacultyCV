@@ -7,7 +7,7 @@ const Contact = () => {
 
   return (
     <div>
-      <h2 className="text-lg font-bold mb-2 text-zinc-500">Contact</h2>
+      <h2 className="text-lg font-bold mt-2 mb-2 text-zinc-500">Contact</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 ">
         <div>
           <label className="block text-sm mb-1">First Name</label>

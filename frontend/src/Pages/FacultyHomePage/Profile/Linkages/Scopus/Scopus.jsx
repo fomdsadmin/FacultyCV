@@ -2,33 +2,42 @@ import { useState } from "react"
 import { useApp } from "../../../../../Contexts/AppContext"
 import AddScopusModal from "./AddScopusModal"
 import ManualScopusModal from "./ManualScopusModal"
+import OptionsModal from "../OptionsModal";
 
 const Scopus = () => {
-  const { userInfo, setUserInfo } = useApp()
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [showManualModal, setShowManualModal] = useState(false)
+  const { userInfo, setUserInfo } = useApp();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
 
-  const scopusId = userInfo.scopus_id
+  const scopusId = userInfo.scopus_id;
 
   const handleAddScopusClick = (event) => {
-    event.preventDefault();
+    event?.preventDefault();
+    setShowOptionsModal(true);
+  };
+
+  const handleFindScopusClick = () => {
     setShowAddModal(true);
   };
 
-  const handleManualScopusClick = (event) => {
-    event.preventDefault();
+  const handleManualScopusClick = () => {
     setShowManualModal(true);
   };
 
-  const handleCloseAddModal = (event) => {
+  const handleCloseOptionsModal = () => {
+    setShowOptionsModal(false);
+  };
+
+  const handleCloseAddModal = () => {
     setShowAddModal(false);
   };
 
-  const handleCloseManualModal = (event) => {
+  const handleCloseManualModal = () => {
     setShowManualModal(false);
   };
 
-  const handleClearScopusId = (event) => {
+  const handleClearScopusId = () => {
     setUserInfo((prev) => ({
       ...prev,
       scopus_id: "",
@@ -69,13 +78,6 @@ const Scopus = () => {
             Add Scopus ID
           </button>
 
-          <button
-            onClick={handleManualScopusClick}
-            className="btn btn-sm btn-outline text-gray-700"
-          >
-            Add Manually
-          </button>
-
           {userInfo.scopus_id && (
             <button
               onClick={handleClearScopusId}
@@ -86,6 +88,14 @@ const Scopus = () => {
           )}
         </div>
       </div>
+      <OptionsModal
+        isOpen={showOptionsModal}
+        onClose={handleCloseOptionsModal}
+        onFind={handleFindScopusClick}
+        onManualAdd={handleManualScopusClick}
+        title="Add Scopus ID"
+        findButtonText="Find Scopus ID"
+      />
       <AddScopusModal isOpen={showAddModal} onClose={handleCloseAddModal} />
       <ManualScopusModal
         isOpen={showManualModal}
@@ -93,6 +103,6 @@ const Scopus = () => {
       />
     </>
   );
-}
+};
 
 export default Scopus

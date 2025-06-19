@@ -236,174 +236,186 @@ const AttributeModal = ({
   };
 
   return (
-    <dialog className="modal-dialog items-center ml-6" open>
-      <div className="modal-content">
-        {/* Header */}
-        <button
-          type="button"
-          className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
-          onClick={() => setIsOpen(false)}
-        >
-          ✕
-        </button>
-        <div className="mt-5 leading-tight mr-4 ml-4">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {mode === "edit"
-                ? "Edit Section Attributes"
-                : "Add Section Attributes"}
-            </label>
+    <div className="w-full max-w-5xl items-center ml-6 bg-white rounded-lg px-4 relative">
+      <button
+        type="button"
+        className="btn btn-md btn-circle btn-ghost absolute top-2 right-2 z-10"
+        onClick={() => setIsOpen(false)}
+        aria-label="Close"
+      >
+        ✕
+      </button>
+      <div className="w-full mt-2 mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 w-full">
+          <div className="mt-5 leading-tight mr-4 ml-4 w-full md:col-span-2">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {mode === "edit" ? "Edit Section Attributes" : "Add Section Attributes"}
+              </label>
 
-            {/* Fixed DragDropContext */}
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="attributes">
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="rounded-lg bg-gray-50 p-2" // Add container styling
-                  >
-                    {attributes.map((attribute, index) => (
-                      <Draggable
-                        key={attribute.id}
-                        draggableId={attribute.id}
-                        index={index}
-                      >
-                        {(provided, snapshot) => {
-                          // Fix positioning with proper style properties
-                          const draggableStyle = {
-                            ...provided.draggableProps.style,
-                            top: "auto", // Keep original top position
-                            left: "auto", // Keep original left position
-                            width: snapshot.isDragging ? "85%" : "100%", // Slightly narrower when dragging
-                            transform: provided.draggableProps.style.transform, // Keep transform for positioning
-                            margin: 0, // Remove margins
-                          };
+              {/* Fixed DragDropContext */}
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId="attributes">
+                  {(provided) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="rounded-lg bg-gray-50 p-2" // Add container styling
+                    >
+                      {attributes.map((attribute, index) => (
+                        <Draggable key={attribute.id} draggableId={attribute.id} index={index}>
+                          {(provided, snapshot) => {
+                            // Fix positioning with proper style properties
+                            const draggableStyle = {
+                              ...provided.draggableProps.style,
+                              top: "auto", // Keep original top position
+                              left: "auto", // Keep original left position
+                              width: snapshot.isDragging ? "85%" : "100%", // Slightly narrower when dragging
+                              transform: provided.draggableProps.style.transform, // Keep transform for positioning
+                              margin: 0, // Remove margins
+                            };
 
-                          return (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              style={draggableStyle}
-                              className={`flex flex-col gap-2 mb-2 rounded p-2 ${
-                                snapshot.isDragging
-                                  ? "bg-blue-50 shadow-lg border border-blue-200"
-                                  : "bg-white"
-                              }`}
-                            >
-                              <div className="flex gap-4 items-center">
-                                <span
-                                  {...provided.dragHandleProps}
-                                  className="cursor-grab px-2 text-gray-400"
-                                  title="Drag to reorder"
-                                >
-                                  <FaGripVertical />
-                                </span>
-                                <input
-                                  type="text"
-                                  className="input input-bordered w-full"
-                                  placeholder="Attribute name"
-                                  value={attribute.name}
-                                  onChange={(e) =>
-                                    handleAttributeChange(index, e.target.value)
-                                  }
-                                />
-                                <div className="relative w-full">
-                                  <select
-                                    className="input input-bordered w-full pr-8"
-                                    value={attribute.type || "text"}
-                                    onChange={(e) =>
-                                      handleTypeChange(index, e.target.value)
-                                    }
+                            return (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                style={draggableStyle}
+                                className={`flex flex-col gap-2 mb-2 rounded p-2 ${
+                                  snapshot.isDragging ? "bg-blue-50 shadow-lg border border-blue-200" : "bg-white"
+                                }`}
+                              >
+                                <div className="flex gap-4 items-center">
+                                  <span
+                                    {...provided.dragHandleProps}
+                                    className="cursor-grab px-2 text-gray-400"
+                                    title="Drag to reorder"
                                   >
-                                    <option value="text">text</option>
-                                    {ATTRIBUTE_TYPES.filter(
-                                      (type) => type !== "text"
-                                    ).map((type) => (
-                                      <option key={type} value={type}>
-                                        {type}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <FaChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                                </div>
-                                {attributes.length > 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveAttribute(index)}
-                                    className="btn btn-danger hover:bg-red-700 text-white bg-black h-15 w-15 flex items-center justify-center"
-                                  >
-                                    <FaTrash />
-                                  </button>
-                                )}
-                              </div>
-                              {attribute.type === "dropdown" && (
-                                <div
-                                  className={
-                                    mode === "edit"
-                                      ? "w-[77%] ml-12"
-                                      : "w-[90%] ml-12"
-                                  }
-                                >
+                                    <FaGripVertical />
+                                  </span>
                                   <input
                                     type="text"
                                     className="input input-bordered w-full"
-                                    placeholder="Dropdown options (comma separated)"
-                                    value={
-                                      dropdownOptions[attribute.name] || ""
-                                    }
-                                    onChange={(e) =>
-                                      handleDropdownOptionsChange(
-                                        index,
-                                        e.target.value
-                                      )
-                                    }
+                                    placeholder="Attribute name"
+                                    value={attribute.name}
+                                    onChange={(e) => handleAttributeChange(index, e.target.value)}
                                   />
+                                  <div className="relative w-full">
+                                    <select
+                                      className="input input-bordered w-full pr-8"
+                                      value={attribute.type || "text"}
+                                      onChange={(e) => handleTypeChange(index, e.target.value)}
+                                    >
+                                      <option value="text">text</option>
+                                      {ATTRIBUTE_TYPES.filter((type) => type !== "text").map((type) => (
+                                        <option key={type} value={type}>
+                                          {type}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <FaChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                  </div>
+                                  {attributes.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveAttribute(index)}
+                                      className="btn btn-danger hover:bg-red-700 text-white bg-black h-15 w-15 flex items-center justify-center"
+                                    >
+                                      <FaTrash />
+                                    </button>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          );
-                        }}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                                {attribute.type === "dropdown" && (
+                                  <div className={mode === "edit" ? "w-[81%] ml-12" : "w-full ml-12"}>
+                                    <input
+                                      type="text"
+                                      className="input input-bordered w-full"
+                                      placeholder="Dropdown options (comma separated)"
+                                      value={dropdownOptions[attribute.name] || ""}
+                                      onChange={(e) => handleDropdownOptionsChange(index, e.target.value)}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
 
-            {/* Rest of your form */}
-            {errors.attributes && (
-              <p className="text-red-500 text-sm">{errors.attributes}</p>
-            )}
-            <button
-              type="button"
-              onClick={handleAddAttribute}
-              className="btn btn-secondary text-white mt-4 flex items-center"
-            >
-              <FaPlus className="mr-2" /> Add Attribute
-            </button>
+              {/* Rest of your form */}
+              {errors.attributes && <p className="text-red-500 text-sm">{errors.attributes}</p>}
+              <button
+                type="button"
+                onClick={handleAddAttribute}
+                className="btn btn-sm bg-green-400 text-white mt-4 flex items-center"
+              >
+                <FaPlus className="mr-2" /> New
+              </button>
+            </div>
+
+            <div className="flex justify-start">
+              <button
+                type="button"
+                onClick={handleUpdateSection}
+                className="btn btn-primary text-white"
+                disabled={addingSection}
+              >
+                {addingSection
+                  ? mode === "edit"
+                    ? "Updating..."
+                    : "Adding..."
+                  : mode === "edit"
+                  ? "Update Section"
+                  : "Add Section"}
+              </button>
+            </div>
           </div>
-
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleUpdateSection}
-              className="btn btn-primary text-white"
-              disabled={addingSection}
-            >
-              {addingSection
-                ? mode === "edit"
-                  ? "Updating..."
-                  : "Adding..."
-                : mode === "edit"
-                ? "Update Section"
-                : "Add Section"}
-            </button>
+          <div className="md:col-span-1 mt-12 leading-tight mr-8 ml-2 max-h-[40vh] w-full bg-gray-100 rounded-lg p-4">
+            <h1 className="text-sm font-medium text-gray-700 mb-2">Notes</h1>
+            <ul className="text-xs text-gray-600 list-disc pl-4 space-y-2">
+              <li>
+                <b>Text</b>: For freeform text fields.
+                <br />
+                Example: <i>“Details”</i>
+              </li>
+              <li>
+                <b>Date</b>: For date fields. Examples:
+                <ul className="list-decimal pl-4 mt-2">
+                  <li>
+                    <i>"Start Date"</i> : Start Month and End Month
+                  </li>
+                  <li>
+                    <i>"End Date"</i> : Start Month and End Month
+                  </li>
+                  <li>
+                    <i>"Year"</i> : For single Year field
+                  </li>
+                  <li>
+                    <i>“Dates”</i> : For a range of Dates (Start Date and End Date)
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <b>Dropdown</b>: For selecting from a list. Enter options separated by commas (e.g.,{" "}
+                <i>“A, B, C, Other”</i>).
+                <br />
+                To add an “Other” option, just include it in the list.
+              </li>
+              {/* <li>
+                <b>Boolean</b>: For yes/no or true/false fields.
+              </li> */}
+              <li>
+                <b>Attribute Names</b> are for display and will be saved capitalized (e.g., <i>“Start Date”</i>).
+              </li>
+            </ul>
           </div>
         </div>
       </div>
-    </dialog>
+    </div>
   );
 };
 

@@ -33,7 +33,7 @@ const Bio = () => {
           className="w-full rounded text-sm px-3 py-2 border border-gray-300 resize-y"
           onChange={handleBioChange}
         />
-        <div className="flex space-x-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-1">
           <OrcidBioImportButton />
           <AiBioImportButton />
         </div>
