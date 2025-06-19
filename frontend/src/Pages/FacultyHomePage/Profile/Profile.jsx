@@ -1,37 +1,35 @@
-import Bio from "./Bio/Bio"
-import Contact from "./Contact"
-import Keywords from "./Keywords/Keywords"
+import Bio from "./Bio/Bio";
+import Contact from "./Contact";
+import Keywords from "./Keywords/Keywords";
 import Linkages from "./Linkages/Linkages";
 
 const Profile = () => {
   return (
     <form className="mx-4 my-2 mb-4">
       <div
-        className="grid 2xl:grid-cols-2 xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-1 sm:grid-cols-1 
-        gap-x-4 gap-y-4 max-h-[85vh] grid-rows-[auto_auto_auto]"
-        style={{
-          gridTemplateAreas: `
-            "contact linkages"
-            "bio linkages"
-            "bio keywords "
-          `,
-        }}
+        className="
+          grid 
+          grid-cols-1 
+          md:grid-cols-2 
+          xl:grid-cols-2 
+          gap-x-4 gap-y-4 
+        "
       >
-        <div style={{ gridArea: "contact" }}>
+        <div>
           <Contact />
         </div>
-        <div style={{ gridArea: "linkages" }}>
-          <Linkages />
-        </div>
-        <div style={{ gridArea: "bio" }}>
+        <div className="md:row-span-2">
           <Bio />
         </div>
-        <div style={{ gridArea: "keywords" }}>
-          <Keywords />
+        <div>
+          <Linkages />
         </div>
+        {/* <div>
+          <Keywords />
+        </div> */}
       </div>
     </form>
   );
 };
 
-export default Profile
+export default Profile;

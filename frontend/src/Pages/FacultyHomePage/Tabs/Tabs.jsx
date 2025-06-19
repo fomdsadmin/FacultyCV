@@ -7,7 +7,7 @@ import { Accordion } from "../../../SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "../../../SharedComponents/Accordion/AccordionItem"
 import GenericSection from "../../../SharedComponents/GenericSection/GenericSection"
 import { useFaculty } from "../FacultyContext"
-import InstitutionInfo from "../Profile/InstitutionInfo";
+import Affiliations from "../Affiliations";
 import Profile from "../Profile/Profile";
 
 const Tabs = () => {
@@ -166,7 +166,7 @@ const Tabs = () => {
         {Object.values(CATEGORIES).map((category, index) =>
           getSection(category, index)
         )}
-        {activeTab === "Affiliations" && <InstitutionInfo />}
+        {activeTab === "Affiliations" && <Affiliations />}
         {activeTab === "Profile" && <Profile />}
       </div>
     </div>

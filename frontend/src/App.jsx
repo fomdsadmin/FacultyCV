@@ -137,7 +137,7 @@ const AppContent = () => {
         pauseOnHover
         theme="light"
       />
-      {user && <Header />}
+      {user && <Header userInfo={userInfo}/>}
       {user && <PageViewLogger userInfo={userInfo} />}
       <Routes>
         <Route path="/home" element={user ? (
