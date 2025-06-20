@@ -1,5 +1,5 @@
-import React from 'react'
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import PageContainer from './PageContainer.jsx';
 import AdminMenu from '../Components/AdminMenu.jsx';
 import { getAllSections } from '../graphql/graphqlHelpers.js';
@@ -11,10 +11,14 @@ import NewSection from '../Components/NewSection.jsx';
 const Sections = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
+  const [activeTab, setActiveTab] = useState(null);
   const [activeSection, setActiveSection] = useState(null);
   const [dataSections, setDataSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openNewSection, setOpenNewSection] = useState(false);
+  const navigate = useNavigate();
+  const { category, title } = useParams();
+  const location = useLocation();
 
   useEffect(() => {
     getDataSections();
@@ -36,6 +40,29 @@ const Sections = ({ getCognitoUser, userInfo }) => {
     setLoading(false);
   };
 
+  // Open section if URL param is present
+  useEffect(() => {
+    if (title && dataSections.length > 0) {
+      const found = dataSections.find(
+        (s) =>
+          s.title.replace(/\s+/g, "-").toLowerCase() === title &&
+          s.data_type.replace(/\s+/g, "-").toLowerCase() === category
+      );
+      if (found) setActiveSection(found);
+    }
+  }, [title, category, dataSections]);
+
+  // Set active tab from URL param
+  useEffect(() => {
+    if (category) {
+      const matched = filters.find((f) => f.replace(/\s+/g, "-").toLowerCase() === category);
+      setActiveTab(matched || null);
+    } else {
+      setActiveTab(null);
+    }
+    if (!title) setActiveSection(null);
+  }, [category, dataSections, title]);
+
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
@@ -44,11 +71,59 @@ const Sections = ({ getCognitoUser, userInfo }) => {
     new Set(dataSections.map((section) => section.data_type))
   );
 
+  // Tab bar for categories
+  const SectionTabs = ({ filters, activeFilter, onSelect }) => (
+    <div className="flex flex-wrap gap-4 mb-6 px-4 max-w-full">
+      <button
+        className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
+          activeFilter === null ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+        }`}
+        onClick={() => onSelect(null)}
+      >
+        All
+      </button>
+      {[...filters]
+        .sort((a, b) => a.localeCompare(b))
+        .map((filter) => (
+          <button
+            key={filter}
+            className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
+              activeFilter === filter
+                ? "bg-blue-600 text-white shadow"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+            onClick={() => onSelect(filter)}
+          >
+            {filter}
+          </button>
+        ))}
+    </div>
+  );
+
+  // When user clicks a tab, update the URL and filter
+  const handleTabSelect = (selectedCategory) => {
+    setActiveTab(selectedCategory);
+    setActiveSection(null);
+    if (!selectedCategory) {
+      navigate("/sections");
+    } else {
+      const categorySlug = selectedCategory.replace(/\s+/g, "-").toLowerCase();
+      navigate(`/sections/${categorySlug}`);
+    }
+  };
+
+  // When user clicks a section, update the URL
   const handleManageClick = (value) => {
     const section = dataSections.filter(
       (section) => section.data_section_id == value
     );
     setActiveSection(section[0]);
+    if (section[0]) {
+      const categorySlug = section[0].data_type.replace(/\s+/g, "-").toLowerCase();
+      const titleSlug = section[0].title.replace(/\s+/g, "-").toLowerCase();
+      navigate(`/sections/${categorySlug}/${titleSlug}`);
+      window.scrollTo({ top: 0, behavior: "smooth" }); // <-- Add this line
+    }
   };
 
   const searchedSections = dataSections.filter((entry) => {
@@ -60,22 +135,46 @@ const Sections = ({ getCognitoUser, userInfo }) => {
       category.toLowerCase().startsWith(searchTerm.toLowerCase());
 
     const matchesFilter =
-      activeFilters.length === 0 || !activeFilters.includes(category);
+      (!activeTab || category === activeTab) &&
+      (activeFilters.length === 0 || !activeFilters.includes(category));
 
     return matchesSearch && matchesFilter;
   });
 
+  // When user clicks back, return to /sections/:category if tab is selected, else /sections
   const handleBack = () => {
     setActiveSection(null);
+    if (activeTab) {
+      const categorySlug = activeTab.replace(/\s+/g, "-").toLowerCase();
+      navigate(`/sections/${categorySlug}`);
+    } else {
+      navigate("/sections");
+    }
   };
 
   const handleAddNewSection = () => {
     setOpenNewSection(true);
+    navigate("/sections/manage");
   };
 
   const handleBackFromNewSection = () => {
     setOpenNewSection(false);
+    if (activeTab) {
+      const categorySlug = activeTab.replace(/\s+/g, "-").toLowerCase();
+      navigate(`/sections/${categorySlug}`);
+    } else {
+      navigate("/sections");
+    }
   };
+
+  // Close new section drawer if navigated away
+  useEffect(() => {
+    if (location.pathname === "/sections/manage") {
+      setOpenNewSection(true);
+    } else {
+      setOpenNewSection(false);
+    }
+  }, [location.pathname]);
 
   return (
     <PageContainer>
@@ -97,7 +196,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                 onBack={handleBackFromNewSection}
                 getDataSections={getDataSections}
                 sections={dataSections}
-              /> // Render NewSection when openNewSection is true
+              />
             ) : activeSection === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">
@@ -132,11 +231,16 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                     </svg>
                   </label>
                 </div>
-                <Filters
+                <SectionTabs
+                  filters={filters}
+                  activeFilter={activeTab}
+                  onSelect={handleTabSelect}
+                />
+                {/* <Filters
                   activeFilters={activeFilters}
                   onFilterChange={setActiveFilters}
                   filters={filters}
-                ></Filters>
+                /> */}
                 {searchedSections.map((section) => (
                   <WorkSection
                     onClick={handleManageClick}
@@ -144,7 +248,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                     id={section.data_section_id}
                     title={section.title}
                     category={section.data_type}
-                  ></WorkSection>
+                  />
                 ))}
               </div>
             ) : (
@@ -153,7 +257,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                   section={activeSection}
                   onBack={handleBack}
                   getDataSections={getDataSections}
-                ></ManageSection>
+                />
               </div>
             )}
           </>
@@ -161,6 +265,6 @@ const Sections = ({ getCognitoUser, userInfo }) => {
       </main>
     </PageContainer>
   );
-}
+};
 
 export default Sections;

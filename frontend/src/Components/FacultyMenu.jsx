@@ -93,7 +93,9 @@ const FacultyMenu = ({
                     location.pathname === "/home" ? "font-bold" : ""
                   }`}
                 >
-                  {userName}
+                  {userInfo?.role && userInfo.role.toLowerCase().includes("admin")
+                    ? "Admin View"
+                    : userName || "Faculty Home"}
                 </p>
               )}
             </Link>

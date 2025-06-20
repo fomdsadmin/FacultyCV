@@ -10,18 +10,41 @@ import PatentsSection from "../Components/PatentsSection.jsx";
 import InvitedPresentationSection from "../Components/InvitedPresentationSection.jsx";
 import { getAllSections } from "../graphql/graphqlHelpers.js";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal.jsx";
+import { useNavigate, useParams } from "react-router-dom";
 
-const AcademicWork = ({ getCognitoUser, userInfo }) => {
+const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState(null);
   const [activeSection, setActiveSection] = useState(null);
   const [dataSections, setDataSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDesc, setShowDesc] = useState(null);
+  const navigate = useNavigate();
+  const { category, title } = useParams();
 
   useEffect(() => {
     getDataSections();
   }, []);
+
+  // Open section if URL param is present
+  useEffect(() => {
+    if (title && dataSections.length > 0) {
+      const found = dataSections.find((s) => s.title.replace(/\s+/g, "-").toLowerCase() === title);
+      if (found) setActiveSection(found);
+    }
+  }, [title, dataSections]);
+
+  // When user clicks a category tab, update the URL
+  const handleTabSelect = (selectedCategory) => {
+    setActiveTab(selectedCategory);
+    setActiveSection(null);
+    if (!selectedCategory) {
+      navigate("/academic-work");
+    } else {
+      const categorySlug = selectedCategory.replace(/\s+/g, "-").toLowerCase();
+      navigate(`/academic-work/${categorySlug}`);
+    }
+  };
 
   const getDataSections = async () => {
     const retrievedSections = await getAllSections();
@@ -47,20 +70,29 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
     setSearchTerm(event.target.value);
   };
 
+  // When user clicks a section, update the URL
   const handleManageClick = (value) => {
-    const section = dataSections.filter(
-      (section) => section.data_section_id == value
-    );
+    const section = dataSections.filter((section) => section.data_section_id == value);
     setActiveSection(section[0]);
+    if (section[0]) {
+      const category = section[0].data_type.replace(/\s+/g, "-").toLowerCase();
+      const title = section[0].title.replace(/\s+/g, "-").toLowerCase();
+      navigate(`/academic-work/${category}/${title}`);
+      window.scrollTo({ top: 0, behavior: "smooth" }); // <-- Add this line
+    }
   };
 
+  // When user clicks back, return to /academic-work/category
   const handleBack = () => {
     setActiveSection(null);
+      if (category) {
+    navigate(`/academic-work/${category}`);
+  } else {
+    navigate("/academic-work");
+  }
   };
 
-  const filters = Array.from(
-    new Set(dataSections.map((section) => section.data_type))
-  );
+  const filters = Array.from(new Set(dataSections.map((section) => section.data_type)));
   const sectionDescriptions = {};
   dataSections.forEach((section) => {
     sectionDescriptions[section.data_type] = section.description;
@@ -76,20 +108,26 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
     return matchesSearch && matchesFilter;
   });
 
-  const SectionTabs = ({
-    filters,
-    activeFilter,
-    onSelect,
-    sectionDescriptions,
-  }) => {
+  // Use category from URL for filtering
+  useEffect(() => {
+    if (category) {
+      // Find the original category name from slug
+      const matched = filters.find((f) => f.replace(/\s+/g, "-").toLowerCase() === category);
+      setActiveTab(matched || null);
+    } else {
+      setActiveTab(null);
+    }
+    // Reset section view if only category is present
+    if (!title) setActiveSection(null);
+  }, [category, filters, title]);
+
+  const SectionTabs = ({ filters, activeFilter, onSelect, sectionDescriptions }) => {
     return (
       <>
         <div className="flex flex-wrap gap-4 mb-6 px-4 max-w-full">
           <button
             className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-              activeFilter === null
-                ? "bg-blue-600 text-white shadow"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              activeFilter === null ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             onClick={() => onSelect(null)}
           >
@@ -133,24 +171,18 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
 
   return (
     <PageContainer>
-      <FacultyMenu
-        userName={userInfo.preferred_name || userInfo.first_name}
-        getCognitoUser={getCognitoUser}
-      />
+      <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser}
+        toggleViewMode={toggleViewMode} userInfo={userInfo}/>
       <main className="sm:px-[1vw] md:px-[2vw] lg:px-[3vw] flex flex-col items-center w-full max-w-7xl min-h-screen mb-2 py-6 mx-auto">
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="block text-m mb-1 mt-6 text-zinc-600">
-              Loading...
-            </div>
+            <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
           </div>
         ) : (
           <>
             {activeSection === null ? (
               <div className="!overflow-auto !h-full rounded-lg max-w-7xl w-full mx-auto">
-                <h1 className="text-left mb-4 text-4xl font-bold text-zinc-600 p-2 ml-2">
-                  Academic Work
-                </h1>
+                <h1 className="text-left mb-4 text-4xl font-bold text-zinc-600 p-2 ml-2">Academic Work</h1>
                 {/* Search bar for filtering sections */}
                 <div className="mb-4 flex justify-start items-left ml-4">
                   <label className="input input-bordered flex items-left gap-2 flex-1 max-w-xl">
@@ -178,7 +210,7 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                 <SectionTabs
                   filters={filters}
                   activeFilter={activeTab}
-                  onSelect={setActiveTab}
+                  onSelect={handleTabSelect}
                   sectionDescriptions={sectionDescriptions}
                 />
                 {searchedSections.map((section) => (
@@ -194,25 +226,13 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar max-w-6xl w-full mx-auto">
                 {activeSection.title === "Publications" && (
-                  <PublicationsSection
-                    user={userInfo}
-                    section={activeSection}
-                    onBack={handleBack}
-                  />
+                  <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {activeSection.title === "Patents" && (
-                  <PatentsSection
-                    user={userInfo}
-                    section={activeSection}
-                    onBack={handleBack}
-                  />
+                  <PatentsSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {activeSection.title === "Research or Equivalent Grants" && (
-                  <SecureFundingSection
-                    user={userInfo}
-                    section={activeSection}
-                    onBack={handleBack}
-                  />
+                  <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {/* {activeSection.title === "Invited Presentations" && (
                   <InvitedPresentationSection
@@ -221,16 +241,8 @@ const AcademicWork = ({ getCognitoUser, userInfo }) => {
                     onBack={handleBack}
                   />
                 )} */}
-                {![
-                  "Publications",
-                  "Patents",
-                  "Research or Equivalent Grants",
-                ].includes(activeSection.title) && (
-                  <GenericSection
-                    user={userInfo}
-                    section={activeSection}
-                    onBack={handleBack}
-                  />
+                {!["Publications", "Patents", "Research or Equivalent Grants"].includes(activeSection.title) && (
+                  <GenericSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
               </div>
             )}

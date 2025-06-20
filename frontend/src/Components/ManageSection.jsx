@@ -5,7 +5,7 @@ import DeleteSectionModal from './DeleteSectionModal';
 import EditSectionModal from "./EditSectionModal";
 import AttributeModal from "./AttributeModal.jsx";
 
-const ManageSection = ({ section, onBack, getDataSections }) => {
+const ManageSection = ({ section, onBack, getDataSections}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditSectionModalOpen, setIsEditSectionModalOpen] = useState(false);
   const [isUpdateAttributeModalOpen, setIsUpdateAttributeModalOpen] =
