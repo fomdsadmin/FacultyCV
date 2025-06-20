@@ -12,7 +12,7 @@ import { buildLatex } from './LatexBuilder.js';
 import { useApp } from 'Contexts/AppContext.jsx';
 
 const ReportsPage = () => {
-  const { userInfo, getCognitoUser } = useApp();
+  const {userInfo, getCognitoUser, toggleViewMode} = useApp();
 
   const [user, setUser] = useState(userInfo);
   const [selectedTemplate, setSelectedTemplate] = useState('');
@@ -97,7 +97,7 @@ const ReportsPage = () => {
       <FacultyMenu
         userName={user.preferred_name || user.first_name}
         getCognitoUser={getCognitoUser}
-      />
+        toggleViewMode={toggleViewMode} userInfo={userInfo}/>
       <main className="ml-4 overflow-auto custom-scrollbar w-full">
         <div className="w-full px-8 pt-4">
           <h1 className="text-3xl font-bold text-zinc-800 mb-2">Reports</h1>

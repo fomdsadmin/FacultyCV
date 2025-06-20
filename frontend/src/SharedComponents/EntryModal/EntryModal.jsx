@@ -57,7 +57,7 @@ const EntryModal = ({
             [startDateMonth, startDateYear] = datesStr.split(", ");
           }
         }
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           startDateMonth,
           startDateYear,
@@ -75,10 +75,7 @@ const EntryModal = ({
           newFormData[snakeKey] = fields[displayName];
         }
         // For single start/end date fields, parse and set month/year
-        if (
-          displayName.toLowerCase().includes("start date") ||
-          displayName.toLowerCase().includes("end date")
-        ) {
+        if (displayName.toLowerCase().includes("start date") || displayName.toLowerCase().includes("end date")) {
           // Use the snake_case key for value if present, else fallback to displayName
           const val = fields[snakeKey] !== undefined ? fields[snakeKey] : fields[displayName];
           if (val && typeof val === "string" && val.includes(", ")) {
@@ -93,50 +90,57 @@ const EntryModal = ({
           }
         }
       });
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         ...newFormData,
       }));
+    }
+
+    // Autofill "Other" fields for dropdowns
+    if (attributesType.dropdown) {
+      Object.entries(attributesType.dropdown).forEach(([displayName, options]) => {
+        const snakeKey =
+          section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
+        const val = fields[snakeKey];
+        if (options.includes("Other") && typeof val === "string" && val.startsWith("Other (")) {
+          // Extract the value inside the parentheses
+          const match = val.match(/^Other \((.*)\)$/);
+          if (match) {
+            setFormData((prev) => ({
+              ...prev,
+              [snakeKey]: "Other",
+              [`${snakeKey}_other`]: match[1],
+            }));
+          }
+        }
+      });
     }
   }, [fields]); // Added isNew to dependencies as it's used in parsing
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => {
-      let newState = { ...prevState, [name]: value };
 
-      // Special handling for end date fields to keep them synchronized
-      if (name === "endDateMonth" || name === "endDateYear") {
-        const currentMonth = newState.endDateMonth;
-        const currentYear = newState.endDateYear;
-
-        if (name === "endDateMonth") {
-          if (value === "Current") {
-            newState.endDateYear = "Current"; // If month is 'Current', year must be 'Current'
-          } else if (value === "None") {
-            newState.endDateYear = "None"; // If month is 'None', year must be 'None'
-          } else {
-            // If month is a real month, and year was 'Current'/'None', clear year
-            if (currentYear === "Current" || currentYear === "None") {
-              newState.endDateYear = "";
-            }
-          }
-        } else if (name === "endDateYear") {
-          if (value === "Current") {
-            newState.endDateMonth = "Current"; // If year is 'Current', month must be 'Current'
-          } else if (value === "None") {
-            newState.endDateMonth = "None"; // If year is 'None', month must be 'None'
-          } else {
-            // If year is a real year, and month was 'Current'/'None', clear month
-            if (currentMonth === "Current" || currentMonth === "None") {
-              newState.endDateMonth = "";
-            }
-          }
-        }
-      }
-      return newState;
-    });
-
+    // Auto-fill both endDateMonth and endDateYear if "Current" or "None" is selected
+    if (name === "endDateMonth" && (value === "Current" || value === "None")) {
+      setFormData((prevState) => ({
+        ...prevState,
+        endDateMonth: value,
+        endDateYear: value,
+      }));
+      return;
+    }
+    if (name === "endDateYear" && (value === "Current" || value === "None")) {
+      setFormData((prevState) => ({
+        ...prevState,
+        endDateMonth: value,
+        endDateYear: value,
+      }));
+      return;
+    }
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -159,9 +163,7 @@ const EntryModal = ({
       for (const displayName of dropdownKeys) {
         // Get the snake_case key from section.attributes
         const snakeKey =
-          section.attributes && section.attributes[displayName]
-            ? section.attributes[displayName]
-            : displayName;
+          section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
         if (!formData[snakeKey]) {
           setError(`Please select a value for the field "${displayName}".`);
           return;
@@ -173,13 +175,7 @@ const EntryModal = ({
     // For "dates" field, construct the string as before
     let updatedFormData = { ...formData };
     if (dateFieldName) {
-      const {
-        startDateMonth,
-        startDateYear,
-        endDateMonth,
-        endDateYear,
-        ...rest
-      } = formData;
+      const { startDateMonth, startDateYear, endDateMonth, endDateYear, ...rest } = formData;
       const dates =
         endDateMonth === "Current"
           ? `${startDateMonth}, ${startDateYear} - ${endDateMonth}`
@@ -192,10 +188,7 @@ const EntryModal = ({
     // For single start/end date fields, construct their value as "Month, Year" or "Current"/"None"
     if (section.attributes) {
       Object.entries(section.attributes).forEach(([displayName, snakeKey]) => {
-        if (
-          displayName.toLowerCase().includes("start date") ||
-          displayName.toLowerCase().includes("end date")
-        ) {
+        if (displayName.toLowerCase().includes("start date") || displayName.toLowerCase().includes("end date")) {
           const prefix = displayName.toLowerCase().includes("start") ? "start" : "end";
           const month = formData[`${prefix}DateMonth`];
           const year = formData[`${prefix}DateYear`];
@@ -211,6 +204,20 @@ const EntryModal = ({
       });
     }
 
+    // Handle "Other" for dropdowns before saving
+    if (attributesType.dropdown) {
+      Object.entries(attributesType.dropdown).forEach(([displayName, options]) => {
+        const snakeKey =
+          section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
+        if (options.includes("Other") && formData[snakeKey] === "Other") {
+          const otherVal = formData[`${snakeKey}_other`] || "";
+          updatedFormData[snakeKey] = `Other (${otherVal})`;
+          // Remove the temp field
+          delete updatedFormData[`${snakeKey}_other`];
+        }
+      });
+    }
+
     // Only keep snake_case keys as defined in section.attributes
     const allowedKeys = section.attributes ? Object.values(section.attributes) : [];
     const filteredFormData = Object.fromEntries(
@@ -222,17 +229,10 @@ const EntryModal = ({
     try {
       if (isNew) {
         // Add new CV data
-        await addUserCVData(
-          userInfo.user_id,
-          section.data_section_id,
-          JSON.stringify(filteredFormData)
-        );
+        await addUserCVData(userInfo.user_id, section.data_section_id, JSON.stringify(filteredFormData));
       } else {
         // Update existing CV data
-        await updateUserCVData(
-          user_cv_data_id,
-          JSON.stringify(filteredFormData)
-        );
+        await updateUserCVData(user_cv_data_id, JSON.stringify(filteredFormData));
       }
     } catch (error) {
       console.error("Error submitting form:", error);
