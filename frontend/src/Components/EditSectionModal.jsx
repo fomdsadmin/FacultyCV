@@ -36,6 +36,7 @@ const EditSectionModal = ({
       setError("Failed to update section.");
       console.error(err);
       setUpdating(false);
+      // After successful update
     }
   };
 

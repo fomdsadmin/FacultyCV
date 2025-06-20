@@ -7,7 +7,6 @@ const ATTRIBUTE_TYPES = ["dropdown", "date", "boolean", "text"];
 
 const AttributeModal = ({
   setIsOpen,
-  onBack,
   getDataSections,
   section,
   mode = "add", // "add" or "edit"
@@ -232,7 +231,8 @@ const AttributeModal = ({
     await getDataSections();
     console.log("Section updated successfully: ", section.title);
     setAddingSection(false);
-    onBack();
+    setIsOpen(false);
+
   };
 
   return (
@@ -270,7 +270,7 @@ const AttributeModal = ({
                               ...provided.draggableProps.style,
                               top: "auto", // Keep original top position
                               left: "auto", // Keep original left position
-                              width: snapshot.isDragging ? "85%" : "100%", // Slightly narrower when dragging
+                              width: snapshot.isDragging ? "45%" : "100%", // Slightly narrower when dragging
                               transform: provided.draggableProps.style.transform, // Keep transform for positioning
                               margin: 0, // Remove margins
                             };
@@ -374,7 +374,7 @@ const AttributeModal = ({
               </button>
             </div>
           </div>
-          <div className="md:col-span-1 mt-12 leading-tight mr-8 ml-2 max-h-[40vh] w-full bg-gray-100 rounded-lg p-4">
+          <div className="md:col-span-1 mt-12 leading-tight mr-8 ml-2 min-h-[40vh] w-full bg-gray-100 rounded-lg p-4">
             <h1 className="text-sm font-medium text-gray-700 mb-2">Notes</h1>
             <ul className="text-xs text-gray-600 list-disc pl-4 space-y-2">
               <li>
@@ -386,10 +386,10 @@ const AttributeModal = ({
                 <b>Date</b>: For date fields. Examples:
                 <ul className="list-decimal pl-4 mt-2">
                   <li>
-                    <i>"Start Date"</i> : Start Month and End Month
+                    <i>"Start Date"</i> : Start Month and Start Year
                   </li>
                   <li>
-                    <i>"End Date"</i> : Start Month and End Month
+                    <i>"End Date"</i> : End Month and End Year
                   </li>
                   <li>
                     <i>"Year"</i> : For single Year field

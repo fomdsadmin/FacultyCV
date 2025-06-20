@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
 import CoursesTaughtSection from "../../../Components/CoursesTaughtSection"
 import EducationSection from "../../../Components/EducationSection"
 import EmploymentSection from "../../../Components/EmploymentSection"
@@ -20,7 +21,22 @@ const Tabs = () => {
     EDUCATION: "Education",
   });
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [activeTab, setActiveTab] = useState(CATEGORIES.PROFILE);
+
+  useEffect(() => {
+    if (location.pathname === "/home") {
+      setActiveTab(CATEGORIES.PROFILE);
+    } else if (location.pathname === "/home/affiliations") {
+      setActiveTab(CATEGORIES.AFFILIATIONS);
+    } else if (location.pathname === "/home/employment") {
+      setActiveTab(CATEGORIES.EMPLOYMENT);
+    } else if (location.pathname === "/home/education") {
+      setActiveTab(CATEGORIES.EDUCATION);
+    }
+  }, [location.pathname]);
 
   const { userInfo } = useApp();
 
@@ -155,7 +171,18 @@ const Tabs = () => {
                 ? "bg-blue-600 text-white shadow"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
-            onClick={() => setActiveTab(title)}
+            onClick={() => {
+              setActiveTab(title);
+              if (title === CATEGORIES.PROFILE) {
+                navigate("/home");
+              } else if (title === CATEGORIES.AFFILIATIONS) {
+                navigate("/home/affiliations");
+              } else if (title === CATEGORIES.EMPLOYMENT) {
+                navigate("/home/employment");
+              } else if (title === CATEGORIES.EDUCATION) {
+                navigate("/home/education");
+              }
+            }}
           >
             {title}
           </button>
