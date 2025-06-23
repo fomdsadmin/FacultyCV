@@ -61,7 +61,12 @@ const buildTableSubHeader = (preparedSection) => {
     let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
 
     if (preparedSection.show_row_count) {
-        const rowCount = userCvData.filter((cvData) => cvData.data_section_id === preparedSection.data_section_id).length;
+
+        let sectionData = userCvData.filter((cvData) => cvData.data_section_id === preparedSection.data_section_id);
+
+        // Apply date range filtering
+        sectionData = filterDateRanges(sectionData, preparedSection.data_section_id);
+        const rowCount = sectionData.length;
         titleToDisplay += ` (${rowCount})`
     }
 
