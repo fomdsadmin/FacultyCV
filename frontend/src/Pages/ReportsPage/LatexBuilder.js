@@ -1,271 +1,508 @@
 import { getAllSections, getUserCVData, getLatexConfiguration } from '../../graphql/graphqlHelpers.js';
+import { SHOWN_ATTRIBUTE_GROUP_ID, HIDDEN_ATTRIBUTE_GROUP_ID } from '../TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext.jsx'
 
-const buildLatexHeader = (userInfo, latexConfiguration) => {
-    console.log(userInfo)
-    return String.raw`
-    \documentclass{article}
-    \usepackage[utf8]{inputenc}
-    \usepackage{textgreek}
-    \usepackage[margin=${latexConfiguration.margin}cm]{geometry}
-    \usepackage{array}
-    \usepackage{booktabs}
-    \usepackage{tabularx}
-    \usepackage{longtable} 
-    \usepackage{hyperref}
-    \usepackage{fontspec}
+let userCvData = [];
+let allSections = [];
+const rowNumberColumnRatio = 3;
+let template = {};
 
-    \begin{document}
-    \small
-    
-    \begin{center}
-    \textbf{\Large University of British Columbia} \\
-    \textbf{\Large Curriculum Vitae for Faculty Members} \\
-    \end{center}
-    
-    \begin{flushleft}
-    \begin{tabularx}{\textwidth}{@{}lXr@{}}
-    \textbf{INITIALS:} & ${userInfo.first_name.charAt(0) + userInfo.last_name.charAt(0)} & \textbf{Date:} ${new Date().toLocaleDateString("en-CA")} \\
-    \end{tabularx}
-    \end{flushleft}
-    
-    \begin{flushleft}
-    \begin{tabularx}{\textwidth}{|p{3cm}|X|p{3cm}|X|}
-    \hline
-    \textbf{SURNAME:} & ${userInfo.last_name} &
-    \textbf{FIRST NAME:} & ${userInfo.first_name} \\
-    \hline
-    \end{tabularx}
-    \end{flushleft}
-    
-    \vspace{${latexConfiguration.vspace}cm}
-    
-    \begin{flushleft}
-    \begin{tabularx}{\textwidth}{|p{4cm}|X|}
-    \hline
-    \textbf{DEPARTMENT:} & ${userInfo.primary_department} \\
-    \hline
-    \end{tabularx}
-    \end{flushleft}
-    
-    \vspace{${latexConfiguration.vspace}cm}
-    
-    \begin{flushleft}
-      \textbf{JOINT APPOINTMENTS:} \\
-      \begin{tabularx}{\textwidth}{|X|}
-      \hline
-      ${userInfo.secondary_department || ''}${userInfo.secondary_department && userInfo.primary_faculty ? ', ' : ''}${userInfo.primary_faculty || ''}${(userInfo.secondary_department || userInfo.primary_faculty) && userInfo.secondary_faculty ? ', ' : ''}${userInfo.secondary_faculty || ''} \\
-      \hline
-      \end{tabularx}
-    \end{flushleft}
+const sanitizeLatex = (text) => {
+    if (typeof text !== 'string') return text; // Return as-is if not a string
 
-    \vspace{${latexConfiguration.vspace}cm}
-    
-    \begin{flushleft}
-    \textbf{AFFILIATIONS:} \\
-    \begin{tabularx}{\textwidth}{|X|}
-    \hline
-    ${userInfo.primary_affiliation || ''}${userInfo.primary_affiliation && userInfo.secondary_affiliation ? ', ' : ''}${userInfo.secondary_affiliation || ''} \\
-    \hline
-    \end{tabularx}
-    \end{flushleft}
-    
-    \vspace{${latexConfiguration.vspace}cm}
-    
-    \begin{flushleft}
-    \textbf{LOCATION(S):} \\
-    \begin{tabularx}{\textwidth}{|X|}
-    \hline
-    ${userInfo.campus} \\
-    \hline
-    \end{tabularx}
-    \end{flushleft}
-    
-    \vspace{${latexConfiguration.vspace}cm}
-    
-    \begin{flushleft}
-    \begin{tabularx}{\textwidth}{|p{5cm}|X|}
-    \hline
-    \textbf{PRESENT RANK:} & ${userInfo.rank} \\
-    \hline
-    \end{tabularx}
-    \end{flushleft}
-    \vspace{${latexConfiguration.vspace}cm}
-  `;
+    // Replace special LaTeX characters with their escaped versions using String.raw
+    return String.raw`${text
+        .replace(/\\/g, '\\textbackslash{}') // Backslash
+        .replace(/{/g, '\\{')               // Left curly brace
+        .replace(/}/g, '\\}')               // Right curly brace
+        .replace(/\$/g, '\\$')              // Dollar sign
+        .replace(/&/g, '\\&')               // Ampersand
+        .replace(/%/g, '\\%')               // Percent sign
+        .replace(/#/g, '\\#')               // Hash
+        .replace(/_/g, '\\_')               // Underscore
+        .replace(/\^/g, '\\textasciicircum{}') // Caret
+        .replace(/~/g, '\\textasciitilde{}')  // Tilde
+        }`;
 };
 
-const calculateColumnWidths = (headers, totalWidth = 19, columnSpacing = 0.5) => {
-    const numColumns = headers.length;
-    const totalSpacing = (numColumns - 1) * columnSpacing;
-    const contentWidth = totalWidth - totalSpacing;
-    const columnWidth = (contentWidth / numColumns).toFixed(2);
-    return headers.map(() => `p{${columnWidth}cm}`).join(" | ");
+const addAllowBreaks = (text) => {
+    if (typeof text !== 'string') return text; // Return as-is if not a string
+
+    // Replace specific characters with their LaTeX \allowbreak equivalents
+    return String.raw`${text}`
+        .replace(/,/g, ',\\hspace{0pt}')   // Comma
+        .replace(/\./g, '.\\hspace{0pt}') // Period
+        .replace(/-/g, '-\\hspace{0pt}')  // Hyphen
+        .replace(/\//g, '/\\hspace{0pt}') // Forward slash
+        .replace(/:/g, ':\\hspace{0pt}') // Colon
+        .replace(/;/g, ';\\hspace{0pt}') // Semicolon
+        .replace(/_/g, '_\\hspace{0pt}') // Underscore
+        .replace(/=/g, '=\\hspace{0pt}') // Equal
+        .replace(/&/g, '&\\hspace{0pt}') // Ampersand
+        .replace(/\?/g, '?\\hspace{0pt}') // Question mark
+        .replace(/(?<!\\hspace\{[^}]*)\d(?!pt)/g, '$&\\hspace{0pt}'); // Digit not in \hspace{}
 };
 
-const filterDataByDateRange = (parsedData, preparedSection, template) => {
-    const currentYear = new Date().getFullYear().toString();
+const buildTableHeader = (title) => {
+    const header = String.raw`
+    \begin{tabular}{${generateColumnFormatViaRatioArray([1])}}
+    \hline
+    \rowcolor{headerGray}
+    \textbf{${title}} \\
+    \hline
+    \end{tabular}%
+    \vspace{-1pt}
+    `
 
-    const isWithinRange = (year, startYear, endYear) => {
-        if (endYear === "Current") {
-            return parseInt(year) >= parseInt(startYear);
-        }
-        return (
-            parseInt(year) >= parseInt(startYear) &&
-            parseInt(year) <= parseInt(endYear)
-        );
-    };
+    return header;
+}
 
-    const extractYearFromDates = (dates) => {
-        if (dates.includes("-")) {
-            const parts = dates.split("-");
-            const endDate = parts[1].trim();
-            if (endDate === "Current") {
-                return currentYear;
-            }
-            return endDate.split(", ")[1];
-        }
-        return dates.split(", ")[1];
-    };
+const buildTableSubHeader = (preparedSection) => {
 
-    const filtered = parsedData.filter((item) => {
-        if (item.data_section_id !== preparedSection.data_section_id) {
-            return false;
+    let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
+
+    if (preparedSection.show_row_count) {
+
+        let sectionData = userCvData.filter((cvData) => cvData.data_section_id === preparedSection.data_section_id);
+
+        // Apply date range filtering
+        sectionData = filterDateRanges(sectionData, preparedSection.data_section_id);
+        const rowCount = sectionData.length;
+        titleToDisplay += ` (${rowCount})`
+    }
+
+    const subHeader = String.raw`
+    \begin{tabular}{${generateColumnFormatViaRatioArray([1])}}
+    \hline
+    \rowcolor{subHeaderGray}
+    \textbf{${titleToDisplay}} \\
+    \hline
+    \end{tabular}%
+    \vspace{-1pt}
+    `
+
+    return subHeader;
+}
+
+const sortSectionData = (sectionData, sortConfig, dataSectionId) => {
+    // Return unsorted data if no sort configuration
+    if (!sortConfig || !sortConfig.selectedAttribute) {
+        return sectionData;
+    }
+
+    const sortAttribute = sortConfig.selectedAttribute;
+    
+    // Find the section to get the attribute mapping
+    const section = allSections.find((section) => section.data_section_id === dataSectionId);
+    if (!section) {
+        console.warn(`Section not found for dataSectionId: ${dataSectionId}`);
+        return sectionData;
+    }
+
+    const attributeMapping = JSON.parse(section.attributes);
+    const sortKey = attributeMapping[sortAttribute];
+
+    if (!sortKey) {
+        console.warn(`Sort key not found for attribute: ${sortAttribute}`);
+        return sectionData;
+    }
+
+    return sectionData.sort((a, b) => {
+        let valueA = a.data_details[sortKey];
+        let valueB = b.data_details[sortKey];
+
+        // Handle arrays by joining them
+        if (Array.isArray(valueA)) valueA = valueA.join(', ');
+        if (Array.isArray(valueB)) valueB = valueB.join(', ');
+
+        // Convert to strings for safety
+        valueA = String(valueA || '');
+        valueB = String(valueB || '');
+
+        let comparison;
+
+        if (sortConfig.numerically) {
+            // Numerical sorting
+            const numA = parseFloat(valueA) || 0;
+            const numB = parseFloat(valueB) || 0;
+            comparison = numA - numB;
+        } else {
+            // Alphabetical sorting (case-insensitive)
+            comparison = valueA.toLowerCase().localeCompare(valueB.toLowerCase());
         }
 
-        const { data_details } = item;
-        if (!data_details) {
-            return false;
-        }
-
-        const { year, year_published, dates } = data_details;
-        const startYear = template.start_year;
-        const endYear = template.end_year;
-
-        if (year) {
-            return isWithinRange(year, startYear, endYear);
-        }
-        if (year_published) {
-            return isWithinRange(year_published, startYear, endYear);
-        }
-        if (dates) {
-            const extractedYear = extractYearFromDates(dates);
-            return isWithinRange(extractedYear, startYear, endYear);
-        }
-
-        return false;
+        // Apply ascending/descending order
+        return sortConfig.ascending ? comparison : -comparison;
     });
+};
 
-    // Apply sorting based on prepared section configuration
-    if (preparedSection.sort) {
-        const { numerically, ascending } = preparedSection.sort;
+const filterDateRanges = (sectionData, dataSectionId) => {
+    // If no template date range is specified, return all data
+    if (!template.start_year && !template.end_year) {
+        return sectionData;
+    }
 
-        return filtered.sort((a, b) => {
-            const getYear = (item) => {
-                const { year, year_published, dates } = item.data_details;
-                if (year) return parseInt(year);
-                if (year_published) return parseInt(year_published);
-                if (dates) return parseInt(extractYearFromDates(dates));
-                return 0;
-            };
+    // Find the section to get attribute mappings
+    const section = allSections.find((section) => section.data_section_id === dataSectionId);
+    if (!section) {
+        return sectionData;
+    }
 
-            if (numerically) {
-                const yearA = getYear(a);
-                const yearB = getYear(b);
-                return ascending ? yearA - yearB : yearB - yearA;
+    const attributeMapping = JSON.parse(section.attributes);
+    
+    // Look for date-related attributes (year or date)
+    const yearAttribute = attributeMapping['Year'] || attributeMapping['Year Published'];
+    const dateAttribute = attributeMapping['Date'];
+
+    console.log(attributeMapping);
+
+    console.log("Year attribute: ", yearAttribute)
+    console.log("Date attribute: ", dateAttribute)
+
+    return sectionData.filter((data) => {
+        let endYear = null;
+
+        // Try to extract end year from year attribute first
+        if (yearAttribute && data.data_details[yearAttribute]) {
+            const yearValue = String(data.data_details[yearAttribute]);
+            const yearMatch = yearValue.match(/\d{4}/g);
+            if (yearMatch) {
+                // If multiple years found, take the last one (end year)
+                endYear = parseInt(yearMatch[yearMatch.length - 1]);
+            }
+        }
+
+        // If no year found, try to extract from date attribute
+        if (!endYear && dateAttribute && data.data_details[dateAttribute]) {
+            const dateValue = String(data.data_details[dateAttribute]);
+            endYear = extractEndYearFromDateRange(dateValue);
+        }
+
+        // If we couldn't extract any end year, include the item (conservative approach)
+        if (!endYear) {
+            return true;
+        }
+
+        // Apply template date filters
+        let includeItem = true;
+
+        if (template.start_year) {
+            includeItem = includeItem && (endYear >= parseInt(template.start_year));
+        }
+
+        if (template.end_year) {
+            includeItem = includeItem && (endYear <= parseInt(template.end_year));
+        }
+
+        return includeItem;
+    });
+};
+
+const extractEndYearFromDateRange = (dateString) => {
+    // Handle "Current" case
+    if (dateString.toLowerCase().includes('current') || 
+        dateString.toLowerCase().includes('present') ||
+        dateString.toLowerCase().includes('ongoing')) {
+        return new Date().getFullYear(); // Use current year
+    }
+
+    // Split by common separators to find date ranges
+    const rangeSeparators = [' - ', ' – ', ' — ', ' to ', '-', '–', '—'];
+    let parts = [dateString];
+    
+    for (const separator of rangeSeparators) {
+        if (dateString.includes(separator)) {
+            parts = dateString.split(separator);
+            break;
+        }
+    }
+
+    // If we have a range, take the last part (end date)
+    const endDatePart = parts.length > 1 ? parts[parts.length - 1].trim() : parts[0].trim();
+
+    // Extract year from the end date part
+    // Look for 4-digit years
+    const yearMatch = endDatePart.match(/\d{4}/);
+    if (yearMatch) {
+        return parseInt(yearMatch[0]);
+    }
+
+    // If no 4-digit year, try 2-digit year and assume 19xx or 20xx
+    const twoDigitMatch = endDatePart.match(/\d{2}$/);
+    if (twoDigitMatch) {
+        const twoDigitYear = parseInt(twoDigitMatch[0]);
+        // Assume years 00-30 are 2000s, 31-99 are 1900s
+        return twoDigitYear <= 30 ? 2000 + twoDigitYear : 1900 + twoDigitYear;
+    }
+
+    return null; // Couldn't extract year
+};
+
+const buildDataEntries = (preparedSection, dataSectionId) => {
+    const attributeGroups = preparedSection.attribute_groups;
+    const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
+    const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
+
+    // Filter userCvData by the given dataSectionId
+    let sectionData = userCvData.filter((cvData) => cvData.data_section_id === dataSectionId);
+
+    // Apply date range filtering
+    sectionData = filterDateRanges(sectionData, dataSectionId);
+    
+    // Apply sorting
+    sectionData = sortSectionData(sectionData, preparedSection.sort, dataSectionId);
+
+    var latexTables;
+
+    // Generate LaTeX tables for each entry
+    latexTables = sectionData.map((data, rowCount) => {
+        // Map attributes to their corresponding values in data_details
+        const section = allSections.find((section) => section.data_section_id === dataSectionId);
+        var rowArray = attributes.map((attribute) => {
+            // Some data is an array for some reason
+            const tabData = String(data.data_details[JSON.parse(section.attributes)[attribute]]);
+            console.log('Original tabData:', tabData);
+            console.log('After sanitizeLatex:', sanitizeLatex(tabData));
+            console.log('After addAllowBreaks:', addAllowBreaks(sanitizeLatex(tabData)));
+
+            if (!preparedSection.merge_visible_attributes) {
+                return String.raw`{\footnotesize ${addAllowBreaks(sanitizeLatex(tabData))}}`;
             } else {
-                // Alphabetical sorting - you might want to specify which field to sort by
-                const titleA = a.data_details.title || '';
-                const titleB = b.data_details.title || '';
-                return ascending ? titleA.localeCompare(titleB) : titleB.localeCompare(titleA);
+                return tabData;
             }
         });
-    }
 
-    return filtered;
-};
+        if (preparedSection.merge_visible_attributes) {
+            rowArray = [String.raw`{\footnotesize ${addAllowBreaks(sanitizeLatex(rowArray.join(`, `)))}}`]
+        }
 
-const processGroupSection = async (preparedSection, parsedData, template, latexConfiguration) => {
-    // Filter data for this section
-    const sectionData = filterDataByDateRange(parsedData, preparedSection, template);
+        var dataColumnFormat;
 
-    if (sectionData.length === 0) {
-        return '';
-    }
+        if (!preparedSection.include_row_number_column) {
+            dataColumnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1))
+        } else {
+            var ratioArray;
 
-    // Get attributes from SHOWN_ATTRIBUTE_GROUP_ID
-    const shownAttributeGroup = preparedSection.attribute_groups.find(
-        group => group.id === 'SHOWN_ATTRIBUTE_GROUP_ID' || group.title === 'SHOWN_ATTRIBUTE_GROUP_ID'
-    );
+            if (!preparedSection.merge_visible_attributes) {
+                ratioArray = attributes.map(() => rowNumberColumnRatio);
+                ratioArray.unshift(1);
+            } else {
+                ratioArray = [1, 18];
+            }
 
-    if (!shownAttributeGroup || !shownAttributeGroup.attributes || shownAttributeGroup.attributes.length === 0) {
-        return '';
-    }
+            dataColumnFormat = generateColumnFormatViaRatioArray(ratioArray)
+            rowArray.unshift(rowCount + 1);
+        }
 
-    let latex = '';
-
-    // Use renamed section title if provided, otherwise use original title
-    const sectionTitle = preparedSection.renamed_section_title || preparedSection.title;
-    latex += String.raw`\subsection*{${sectionTitle}}`;
-
-    // Add row count if enabled
-    if (preparedSection.show_row_count && preparedSection.count_rows) {
-        latex += ` (${sectionData.length})`;
-    }
-
-    latex += String.raw`\vspace{-1.0em}` + '\n';
-
-    // Get column headers from shown attributes
-    const headers = shownAttributeGroup.attributes.map(attr => {
-        // Check if attribute is renamed in the rename map
-        return preparedSection.attribute_rename_map?.[attr] || attr;
+        // Wrap the row in its own tabularx environment
+        console.log(
+            String.raw`
+            \begin{tabular}{${dataColumnFormat}}
+            \hline
+            ${rowArray.join(' & ')} \\
+            \hline
+            \end{tabular}%
+            \vspace{-1pt}
+            `
+        )
+        return String.raw`
+            \begin{tabular}{${dataColumnFormat}}
+            \hline
+            ${rowArray.join(' & ')} \\
+            \hline
+            \end{tabular}%
+            \vspace{-1pt}
+            `;
     });
 
-    // Build table based on number of columns
-    if (headers.length === 1) {
-        // Single column with numbering
-        latex += String.raw`\begin{longtable}{| p{0.5cm} | p{17.7cm} |}` + '\n';
-        latex += String.raw`\hline` + '\n';
+    // Join all individual tables
+    return latexTables.join('\n');
+}
 
-        sectionData.forEach((item, index) => {
-            const key = shownAttributeGroup.attributes[0].replace(/\s+/g, "_").toLowerCase();
-            const value = item.data_details[key] || '';
-            latex += `${index + 1} & ${value} ` + String.raw`\\ \hline` + '\n';
-        });
-    } else {
-        // Multi-column table
-        const columns = calculateColumnWidths(headers, 21.6 - 2 * latexConfiguration.margin);
+const buildTableAttributeGroup = (attributeGroups) => {
 
-        latex += String.raw`\begin{longtable}{| ${columns} |}` + '\n';
-        latex += String.raw`\hline` + '\n';
-
-        // Add headers
-        latex += headers.map(header => String.raw`\textbf{${header}}`).join(" & ") + String.raw` \\ \hline` + '\n';
-
-        // Add data rows
-        sectionData.forEach(item => {
-            const row = shownAttributeGroup.attributes.map(attr => {
-                const key = attr.replace(/\s+/g, "_").toLowerCase();
-                const value = item.data_details[key];
-                return value !== undefined ? value : '';
-            }).join(" & ");
-            latex += `${row} ` + String.raw`\\ \hline` + '\n';
-        });
+    const columnRatioArray = [];
+    let groupedColumnNamesArray = [];
+    for (const attributeGroup of attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID)) {
+        if (attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID) {
+            groupedColumnNamesArray.push(String.raw`\textbf{${attributeGroup.title}}`)
+        } else {
+            groupedColumnNamesArray.push(String.raw`\textbf{~}`);
+        }
+        var ratio = 0;
+        for (const attribute of attributeGroup.attributes) {
+            ratio += 1;
+        }
+        columnRatioArray.push(ratio);
     }
 
-    latex += String.raw`\end{longtable}\vspace{${latexConfiguration.vspace}cm}` + '\n\n';
+    const columnFormat = generateColumnFormatViaRatioArray(columnRatioArray);
+
+    const groupedColumnHeader = String.raw`
+    \begin{tabular}{${columnFormat}}
+    \hline
+    \rowcolor{columnGray}
+    ${groupedColumnNamesArray.join(' & ')}
+    \end{tabular}%
+    \vspace{-1pt}
+    `
+
+    return groupedColumnHeader
+}
+
+const buildTableSectionColumns = (preparedSection) => {
+    let latex = "";
+
+    const attributeGroups = preparedSection.attribute_groups;
+    const attributeRenameMap = preparedSection.attribute_rename_map;
+
+    // take into account hidden and shown attribute group
+    if (attributeGroups.length > 2) {
+        latex += buildTableAttributeGroup(attributeGroups);
+    }
+
+    // Find the attribute group with the SHOWN_ATTRIBUTE_GROUP_ID
+    const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
+
+    const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
+
+    var columnFormat;
+    if (!preparedSection.include_row_number_column) {
+        // Dynamically create the column format string based on the number of attributes
+        columnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1));
+    } else {
+        const customAttributeRatio = attributes.map(() => rowNumberColumnRatio);
+        customAttributeRatio.unshift(1);
+        columnFormat = generateColumnFormatViaRatioArray(customAttributeRatio);
+        attributes.unshift("Row #");
+    }
+
+    // Dynamically create the header row based on the attribute names
+    const headerRow = attributes
+        .map((attribute) => `\\textbf{${attributeRenameMap[attribute] || attribute}}`)
+        .join(' & ');
+
+    // Start building the LaTeX table
+    latex += String.raw`
+    \begin{tabular}{${columnFormat}}
+    \hline
+    \rowcolor{columnGray}
+    ${headerRow} \\
+    \hline
+    \end{tabular}%
+    \vspace{-1pt}
+    `;
+
+    return latex;
+}
+
+const buildPreparedSection = (preparedSection, dataSectionId) => {
+    let latex = "";
+
+    latex += buildTableSubHeader(preparedSection);
+
+    if (!preparedSection.merge_visible_attributes) {
+        latex += buildTableSectionColumns(preparedSection, dataSectionId);
+    }
+
+    latex += buildDataEntries(preparedSection, dataSectionId);
+
+    return latex;
+}
+
+const buildGroup = async (group) => {
+    console.log(group)
+    let latex = "";
+
+    latex += buildTableHeader(group.title);
+
+    for (const preparedSection of group.prepared_sections) {
+        latex += buildPreparedSection(preparedSection, preparedSection.data_section_id);
+    }
+
+    const verticalSpacing = String.raw`
+    \vspace*{20pt}
+    \noindent
+    `
+
+    latex += verticalSpacing;
+
     return latex;
 };
 
-export const buildLatex = async (userInfo, template) => {
-    const latexConfiguration = JSON.parse(await getLatexConfiguration());
-    let latex = buildLatexHeader(userInfo, latexConfiguration);
+const buildLatexHeader = () => {
+    let latex = String.raw`
+    \documentclass[11pt]{article}
+    `
+
+    const packages = String.raw`
+    \usepackage[margin=0.2in]{geometry}
+    \usepackage{tabularx}
+    \usepackage{colortbl}
+    \usepackage{array}
+    \hyphenpenalty=10000
+    \exhyphenpenalty=10000
+    `
+
+    latex += packages;
+
+    const colours = String.raw`
+    \definecolor{columnGray}{gray}{0.95}
+    \definecolor{headerGray}{gray}{0.6}
+    \definecolor{subHeaderGray}{gray}{0.8}
+    `
+
+    latex += colours;
+
+    const documentStart = String.raw`
+    \newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+    \begin{document}
+    `
+
+    latex += documentStart
+
+    return latex;
+}
+
+const generateColumnFormatViaRatioArray = (ratioArray) => {
+    const totalRatio = ratioArray.reduce((sum, ratio) => sum + ratio, 0);
+    const lineWidthRatio = 0.95;
+    const numColumns = ratioArray.length;
+    const numVerticalLines = numColumns + 1; // Lines between columns + 2 outer lines
+
+    // Each vertical line is approximately 0.4pt ≈ 0.014cm
+    const verticalLineWidth = `${numVerticalLines * 0.4}pt`;
+
+    const columnFormat = ratioArray
+        .map((ratio) => {
+            const widthRatio = (ratio / totalRatio).toFixed(4);
+            const ratioToUse = lineWidthRatio * widthRatio;
+            return `>{\\raggedright\\arraybackslash}p{\\dimexpr${ratioToUse}\\linewidth-2\\tabcolsep-${verticalLineWidth}/${numColumns}\\relax}`;
+        })
+        .join('|');
+
+    return `|${columnFormat}|`;
+};
+
+export const buildLatex = async (userInfo, templateWithEndStartDate) => {
+
+    console.log(templateWithEndStartDate.start_year, templateWithEndStartDate.end_year);
+
+    //const latexConfiguration = JSON.parse(await getLatexConfiguration());
 
     // Get all user data
-    const allSections = await getAllSections();
-    const allSectionIds = allSections.map(section => section.data_section_id);
-    const userData = await getUserCVData(userInfo.user_id, allSectionIds);
+    allSections = await getAllSections();
+    template = templateWithEndStartDate;
+    const allSectionIds = allSections.map((section) => section.data_section_id);
+    const unparsedData = await getUserCVData(userInfo.user_id, allSectionIds);
+
+    let latex = buildLatexHeader();
+
+    latex += buildUserProfile(userInfo);
+
+    console.log(userInfo);
 
     // Parse user data
-    const parsedData = userData.map((data) => {
+    userCvData = unparsedData.map((data) => {
         let dataDetails;
         try {
             dataDetails = JSON.parse(data.data_details);
@@ -275,24 +512,128 @@ export const buildLatex = async (userInfo, template) => {
         return { ...data, data_details: dataDetails };
     });
 
-    // Parse the template structure first
+    console.log(userCvData)
+
+    // Parse the template structure
     const parsedGroups = JSON.parse(template.template_structure);
 
     // Process each group in the template
     for (const group of parsedGroups || []) {
         if (group.id === 'HIDDEN_GROUP_ID') continue; // Skip hidden groups
-
-        // Add group title if it exists and isn't a special ID
-        if (group.title && group.title !== 'SHOWN_GROUP_ID') {
-            latex += String.raw`\section*{${group.title}}` + '\n';
-        }
-
-        // Process each prepared section in the group
-        for (const preparedSection of group.prepared_sections || []) {
-            latex += await processGroupSection(preparedSection, parsedData, template, latexConfiguration);
-        }
+        console.log(group)
+        latex += await buildGroup(group);
     }
 
-    latex += String.raw`\end{document}`;
+    const documentEnd = String.raw`
+    \end{document}
+    `
+
+    latex += documentEnd;
+
+    console.log(latex);
+    return latex;
+};
+
+const buildUserProfile = (userInfo) => {
+    // Get current date in format "Apr 11, 2025"
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+
+    // Parse joined timestamp to get rank start date
+    const joinedDate = new Date(userInfo.joined_timestamp);
+    const rankSinceDate = joinedDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: '2-digit'
+    });
+
+    // Extract middle name/initial from preferred_name
+    const middleName = userInfo.preferred_name || "";
+
+    // Build the profile table using existing functions
+    let latex = "";
+
+    console.log(template)
+
+    // Add title at the top
+    latex += String.raw`
+    \begin{center}
+    \textbf{\large University of British Columbia} \\
+    \textbf{${template.title}}
+    \end{center}
+    \vspace{20pt}
+    `;
+
+    // Date row
+    const dateColumnFormat = generateColumnFormatViaRatioArray([1, 1]);
+    latex += String.raw`
+    \begin{tabular}{${dateColumnFormat}}
+    \hline
+    \textbf{Date:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(currentDate))}} \\
+    \hline
+    \end{tabular}%
+    \vspace{-1pt}
+    `;
+
+    // Verification Initial row
+    latex += String.raw`
+    \begin{tabular}{${dateColumnFormat}}
+    \hline
+    \textbf{Verification Initial:} & \\
+    \hline
+    \end{tabular}%
+    \vspace{-1pt}
+    `;
+
+    // Name section
+    const nameColumnFormat = generateColumnFormatViaRatioArray([3, 7]);
+    latex += String.raw`
+    \begin{tabular}{${nameColumnFormat}}
+    \hline
+    \textbf{1. SURNAME:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.last_name || ""))}} \\
+    \hline
+    \textbf{FIRST NAME:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.first_name || ""))}} \\
+    \hline
+    \textbf{MIDDLE NAME:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(middleName))}} \\
+    \hline
+    \end{tabular}%
+    \vspace{-1pt}
+    `;
+
+    // Department section
+    latex += String.raw`
+    \begin{tabular}{${nameColumnFormat}}
+    \hline
+    \textbf{2. DEPARTMENT/SCHOOL:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.primary_department || ""))}} \\
+    \hline
+    \end{tabular}%
+    \vspace{-1pt}
+    `;
+
+    // Faculty section
+    latex += String.raw`
+    \begin{tabular}{${nameColumnFormat}}
+    \hline
+    \textbf{3. FACULTY:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.primary_faculty || ""))}} \\
+    \hline
+    \end{tabular}%
+    \vspace{-1pt}
+    `;
+
+    // Rank section - use simple two-row approach
+    latex += String.raw`
+    \begin{tabular}{${nameColumnFormat}}
+    \hline
+    \textbf{4. PRESENT RANK:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.rank || ""))}} \\
+    \hline
+    \textbf{SINCE:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(rankSinceDate))}} \\
+    \hline
+    \end{tabular}%
+    \vspace{20pt}
+    `;
+
     return latex;
 };

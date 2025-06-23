@@ -68,6 +68,7 @@ const EditTemplatePage = ({ onBack }) => {
                     sort: {
                         numerically: false,
                         ascending: true,
+                        selected_attribute: "",
                     },
                     count_rows: false,
                     attribute_groups: [
@@ -84,7 +85,9 @@ const EditTemplatePage = ({ onBack }) => {
                     ],
                     attribute_rename_map: {},
                     renamed_section_title: null,
-                    show_row_count: false
+                    show_row_count: false,
+                    include_row_number_column: false,
+                    merge_visible_attributes: false
                 });
             });
 

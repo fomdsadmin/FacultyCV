@@ -28,6 +28,7 @@ const NewTemplatePage = ({ onBack }) => {
           sort: {
             numerically: false, // if not it will be sorted alphabetically
             ascending: true,
+            selected_attribute: "",
           },
           count_rows: false,
           attribute_groups: [
@@ -44,7 +45,9 @@ const NewTemplatePage = ({ onBack }) => {
           ],
           attribute_rename_map: {}, // For the backend, shows what columns to rename
           renamed_section_title: null,
-          show_row_count: false
+          show_row_count: false,
+          include_row_number_column: false,
+          merge_visible_attributes: false
         })),
       }
     ];

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DownloadButtons from './DownloadButtons.jsx';
 
 const TemplateList = ({ 
   templates, 
@@ -6,7 +7,10 @@ const TemplateList = ({
   onTemplateSelect, 
   onGenerate, 
   buildingLatex, 
-  switchingTemplates 
+  switchingTemplates,
+  downloadUrl,
+  downloadUrlDocx,
+  user
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [startYear, setStartYear] = useState(new Date().getFullYear() - 10);
@@ -62,9 +66,9 @@ const TemplateList = ({
         ))}
       </div>
       
-      {/* Date Range Picker and Generate Button */}
+      {/* Date Range Picker, Generate Button, and Download Buttons */}
       {selectedTemplate && (
-        <div className="mb-[15vh]">
+        <div className="mt-auto">
           <label className="block mb-2 font-medium text-zinc-600">
             Select Date Range (Year)
           </label>
@@ -93,13 +97,24 @@ const TemplateList = ({
               ))}
             </select>
           </div>
+          
+          {/* Generate Button */}
           <button
-            className="w-full btn btn-primary"
+            className="w-full btn btn-primary mb-4"
             onClick={handleGenerate}
             disabled={buildingLatex || switchingTemplates}
           >
             {buildingLatex ? "Generating..." : "Generate"}
           </button>
+
+          {/* Use the existing DownloadButtons component */}
+          <DownloadButtons
+            downloadUrl={downloadUrl}
+            downloadUrlDocx={downloadUrlDocx}
+            selectedTemplate={selectedTemplate}
+            user={user}
+            buildingLatex={buildingLatex}
+          />
         </div>
       )}
     </div>

@@ -13,10 +13,11 @@ const SortingButton = ({ preparedSection }) => {
         .filter(group => group.id !== HIDDEN_ATTRIBUTE_GROUP_ID)
         .flatMap(group => group.attributes || []);
 
-
-    // Initialize selectedAttribute if not set
+    // Initialize selectedAttribute from stored sort config or default to first available
     useEffect(() => {
-        if (!selectedAttribute && availableAttributes.length > 0) {
+        if (preparedSection.sort?.selectedAttribute && availableAttributes.includes(preparedSection.sort.selectedAttribute)) {
+            setSelectedAttribute(preparedSection.sort.selectedAttribute);
+        } else if (!selectedAttribute && availableAttributes.length > 0) {
             setSelectedAttribute(availableAttributes[0]);
         }
 
@@ -24,11 +25,12 @@ const SortingButton = ({ preparedSection }) => {
         if (!availableAttributes.includes(selectedAttribute)) {
             setSelectedAttribute(availableAttributes[0]);
         }
-    }, [availableAttributes, selectedAttribute]);
+    }, [availableAttributes, selectedAttribute, preparedSection.sort?.selectedAttribute]);
 
     const currentSort = preparedSection.sort || {
         numerically: false,
-        ascending: true
+        ascending: true,
+        selected_attribute: ""
     };
 
     const handleSortChange = (newSortConfig) => {
@@ -43,7 +45,9 @@ const SortingButton = ({ preparedSection }) => {
                             if (section.data_section_id === preparedSection.data_section_id) {
                                 return {
                                     ...section,
-                                    sort: newSortConfig
+                                    sort: {
+                                        ...newSortConfig,
+                                    }
                                 };
                             }
                             return section;
@@ -53,6 +57,15 @@ const SortingButton = ({ preparedSection }) => {
                 return group;
             })
         );
+    };
+
+    const handleAttributeChange = (newAttribute) => {
+        setSelectedAttribute(newAttribute);
+        // Also update the sort config with the new selected attribute
+        handleSortChange({
+            ...currentSort,
+            selectedAttribute: newAttribute
+        });
     };
 
     const getSortDisplayText = () => {
@@ -88,7 +101,7 @@ const SortingButton = ({ preparedSection }) => {
                     isOpen={isModalOpen}
                     availableAttributes={availableAttributes}
                     selectedAttribute={selectedAttribute}
-                    onAttributeChange={setSelectedAttribute}
+                    onAttributeChange={handleAttributeChange}
                     currentSort={currentSort}
                     onSortChange={handleSortChange}
                     sectionId={preparedSection.data_section_id}
