@@ -44,7 +44,7 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
   }, [isCollapsed]);
 
   const handleBackToHome = () => {
-    navigate("/dashboard");
+    navigate("/faculty/dashboard");
   };
 
   return (
@@ -55,67 +55,41 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
     >
-      <div className="mb-6">
-        {/* Back Button */}
-        <button
-          onClick={handleBackToHome}
-          className="text-black btn btn-ghost min-h-0 h-8 py-1 mt-2 ml-2 flex items-center justify-start w-[92%]"
-        >
-          <FaArrowLeft className="h-4 w-4" />
-          {!isCollapsed && showText && <span className="ml-2">Back</span>}
-        </button>
-      </div>
-
-      {/* Admin View */}
-      <div className="mt-4 flex items-center justify-between">
-        {!isCollapsed && showText && (
-          <div className="px-4 h-8 py-1 mb-4 ml-2 flex items-center justify-start">
-            <FaUser className="h-5 w-5" />
-            <p className="ml-4 font-bold">Admin View</p>
-          </div>
-        )}
-
-        {isCollapsed && (
-          <div className="px-4 h-8 py-1 mb-4 ml-2 flex items-center justify-start">
-            <FaUser className="h-5 w-5" />
-          </div>
-        )}
-      </div>
 
       {/* Tabs */}
       <ul className="menu rounded-box flex-shrink-0">
-        <li
+                <li
           className={`mb-2 ${
-            location.pathname === "/home" ? "bg-gray-200 rounded-lg" : ""
+            location.pathname === "/admin/home" ? "bg-gray-200 rounded-lg" : ""
           }`}
         >
-          <Link to="/home">
-            <FaUsers className="h-5 w-5" />
+          <Link to="/admin/home">
+            <FaChartLine className="h-5 w-5" />
             {showText && !isCollapsed && (
               <p
                 className={`ml-2 ${
-                  location.pathname === "/home" ? "font-bold" : ""
+                  location.pathname === "/admin/home" ? "font-bold" : ""
                 }`}
               >
-                Users
+                Home
               </p>
             )}
           </Link>
         </li>
         <li
           className={`mb-2 ${
-            location.pathname === "/analytics" ? "bg-gray-200 rounded-lg" : ""
+            location.pathname === "/admin/users" ? "bg-gray-200 rounded-lg" : ""
           }`}
         >
-          <Link to="/analytics">
-            <FaChartLine className="h-5 w-5" />
+          <Link to="/admin/users">
+            <FaUsers className="h-5 w-5" />
             {showText && !isCollapsed && (
               <p
                 className={`ml-2 ${
-                  location.pathname === "/analytics" ? "font-bold" : ""
+                  location.pathname === "/admin/users" ? "font-bold" : ""
                 }`}
               >
-                Analytics
+                Users
               </p>
             )}
           </Link>
@@ -197,7 +171,7 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
       </ul>
 
       {/* Sign Out Button */}
-      <div className="left-0 w-full flex justify-center">
+      {/* <div className="left-0 w-full flex justify-center">
         {!isCollapsed && showText && (
           <button
             className="text-white btn btn-warning py-1 px-4 w-44 min-h-0 h-8 leading-tight focus:outline-none hover:bg-warning-dark"
@@ -207,7 +181,7 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
             {isSigningOut ? "Signing Out..." : "Sign Out"}
           </button>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

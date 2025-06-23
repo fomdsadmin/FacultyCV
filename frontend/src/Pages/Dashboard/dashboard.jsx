@@ -118,7 +118,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                         <span className="inline-block px-2 py-1 rounded-full bg-green-200 text-green-800 font-semibold text-xs shadow">
                           Submitted
                         </span>
-                        <Link to="/declarations">
+                        <Link to="/faculty/declarations">
                           <button className="btn btn-xs btn-outline btn-success">
                             View Declarations
                           </button>
@@ -159,7 +159,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
                   {/* Button positioned differently for mobile vs desktop */}
                   <div className="mt-4 flex justify-start xl:absolute xl:top-3 xl:right-3 xl:mt-0">
-                    <Link to="/declarations">
+                    <Link to="/faculty/declarations">
                       <button className="btn btn-xs btn-warning">
                         Declare Now
                       </button>

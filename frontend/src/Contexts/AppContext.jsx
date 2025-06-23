@@ -1,8 +1,8 @@
 "use client"
+
 import { createContext, useContext, useState, useEffect } from "react"
-import { fetchUserAttributes, signOut, fetchAuthSession } from "aws-amplify/auth"
+import { fetchUserAttributes, fetchAuthSession, getCurrentUser } from "aws-amplify/auth"
 import { getUser } from "../graphql/graphqlHelpers.js"
-import { Navigate } from "react-router-dom"
 
 // Create the context
 const AppContext = createContext(null)
@@ -24,12 +24,21 @@ export const AppProvider = ({ children }) => {
     const [assistantUserInfo, setAssistantUserInfo] = useState({})
     const [loading, setLoading] = useState(false)
     const [userGroup, setUserGroup] = useState(null)
-    const [viewMode, setViewMode] = useState("department-admin") // 'department-admin' or 'faculty'
+    
+    // Role management state
+    const [actualRole, setActualRole] = useState("") // User's actual assigned role (permissions)
+    const [currentViewRole, setCurrentViewRole] = useState("") // Current active view role
 
-    // Toggle view mode function
-    const toggleViewMode = () => {
-        setViewMode((prevMode) => (prevMode === "department-admin" ? "faculty" : "department-admin"))
-    }
+    // Initialize actual role when userInfo changes
+    useEffect(() => {
+        if (userInfo && userInfo.role) {
+            setActualRole(userInfo.role);
+            // Only set currentViewRole initially if not already set
+            if (!currentViewRole) {
+                setCurrentViewRole(userInfo.role);
+            }
+        }
+    }, [userInfo]);
 
     // Get user group from Cognito
     async function getUserGroup() {
@@ -54,8 +63,8 @@ export const AppProvider = ({ children }) => {
             }
             setLoading(false)
         } catch (error) {
-            console.error("Error getting user info:", error)
             setLoading(false)
+            console.error("Error fetching user info:", error)
         }
     }
 
@@ -63,20 +72,19 @@ export const AppProvider = ({ children }) => {
     async function getCognitoUser() {
         try {
             setLoading(true)
+            const userData = await getCurrentUser()
+            setUser(userData)
+            
             const attributes = await fetchUserAttributes()
-            const currentUser = attributes.email
-            setUser(currentUser)
-            await getUserInfo(currentUser)
-            getUserGroup().then((group) => setUserGroup(group))
-            return <Navigate to="/home" />;
+            const email = attributes.email
+            
+            const userGroup = await getUserGroup()
+            setUserGroup(userGroup)
+            
+            await getUserInfo(email)
         } catch (error) {
-            console.error("Error getting Cognito user:", error)
-            setUser(null)
-            setUserInfo({})
-            setAssistantUserInfo({})
-            signOut()
             setLoading(false)
-            return <Navigate to="/auth" />;
+            console.error("Error getting Cognito user:", error)
         }
     }
 
@@ -85,33 +93,45 @@ export const AppProvider = ({ children }) => {
         getCognitoUser()
     }, [])
 
+    // Get available roles based on user's permission level
+    const getAvailableRoles = () => {
+        if (!userInfo || !userInfo.role) return [];
+        
+        const isAdmin = userInfo.role === "Admin";
+        const isDepartmentAdmin = userInfo.role.startsWith("Admin-");
+        const department = isDepartmentAdmin ? userInfo.role.split("Admin-")[1] : "";
+        
+        if (isAdmin) {
+            return [
+                { label: "Admin", value: "Admin", route: "/admin/home" },
+                { label: `Department Admin - ${department || "All"}`, value: `Admin-${department || "All"}`, route: "/department-admin/home" },
+                { label: "Faculty", value: "Faculty", route: "/faculty/home" },
+                { label: "Assistant", value: "Assistant", route: "/assistant/home" }
+            ];
+        } else if (isDepartmentAdmin) {
+            return [
+                { label: `Department Admin - ${department}`, value: `Admin-${department}`, route: "/department-admin/home" },
+                { label: "Faculty", value: "Faculty", route: "/faculty/home" }
+            ];
+        } else {
+            return [{ 
+                label: userInfo.role, 
+                value: userInfo.role, 
+                route: userInfo.role === "Faculty" ? "/faculty/home" : "/assistant/home" 
+            }];
+        }
+    };
+
     // Get department from role
     const getDepartment = () => {
-        return userInfo && userInfo.role && userInfo.role.startsWith("Admin-") ? userInfo.role.split("-")[1] : ""
-    }
-
-    // Determine user role type
-    const getUserRoleType = () => {
-        if (!userInfo || !userInfo.role) return null
-        if (userInfo.role === "Admin") return "admin"
-        if (userInfo.role.startsWith("Admin-")) return "department-admin"
-        if (userInfo.role === "Faculty") return "faculty"
-        return null
-    }
-
-    // Check if user is authenticated
-    const isAuthenticated = () => {
-        return !!user
-    }
-
-    // Check if user info is loaded
-    const isUserInfoLoaded = () => {
-        return Object.keys(userInfo).length > 0 || Object.keys(assistantUserInfo).length > 0
+        return userInfo && userInfo.role && userInfo.role.startsWith("Admin-") 
+            ? userInfo.role.split("-")[1] 
+            : ""
     }
 
     // Context value
     const value = {
-        // State
+        // User state
         user,
         userInfo,
         setUserInfo,
@@ -119,16 +139,18 @@ export const AppProvider = ({ children }) => {
         setAssistantUserInfo,
         loading,
         userGroup,
-        viewMode,
+        setLoading,
+        
+        // Role management
+        actualRole,
+        currentViewRole,
+        setCurrentViewRole,
+        getAvailableRoles,
 
         // Functions
-        toggleViewMode,
         getUserInfo,
         getCognitoUser,
         getDepartment,
-        getUserRoleType,
-        isAuthenticated,
-        isUserInfoLoaded,
     }
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>
