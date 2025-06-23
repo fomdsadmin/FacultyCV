@@ -91,6 +91,7 @@ const AppContent = () => {
       const userInformation = await getUser(email);
       if (userInformation.role === "Assistant") {
         setAssistantUserInfo(userInformation);
+        setUserInfo(userInformation);
       } else {
         setUserInfo(userInformation);
       }
@@ -126,6 +127,9 @@ const AppContent = () => {
       />
       {user && <Header userInfo={userInfo} getCognitoUser={getCognitoUser} />}
       {user && <PageViewLogger userInfo={userInfo} />}
+      {console.log("Current View Role:", currentViewRole)}
+      {console.log("User Info:", userInfo)}
+      {console.log("Assistant User Info:", assistantUserInfo)}
       <Routes>
         {/* Main home route - redirects based on role */}
         <Route
@@ -134,7 +138,9 @@ const AppContent = () => {
             user ? (
               Object.keys(userInfo).length !== 0 && userInfo.role === "Admin" ? (
                 <Navigate to="/admin/home" />
-              ) : Object.keys(userInfo).length !== 0 && userInfo.role.startsWith("Admin-") ? (
+              ) : Object.keys(userInfo).length !== 0 &&
+                typeof userInfo.role === "string" &&
+                userInfo.role.startsWith("Admin-") ? (
                 <Navigate to="/department-admin/home" />
               ) : Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === "Assistant" ? (
                 <Navigate to="/assistant/home" />
@@ -153,6 +159,22 @@ const AppContent = () => {
           }
         />
 
+        <Route
+          path="/assistant/home"
+          element={
+            user && assistantUserInfo.role === "Assistant" && currentViewRole === "Assistant" ? (
+              <Assistant_FacultyHomePage
+                assistantUserInfo={assistantUserInfo}
+                userInfo={assistantUserInfo}
+                setUserInfo={setAssistantUserInfo}
+                getUser={getUserInfo}
+                getCognitoUser={getCognitoUser}
+              />
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
         {/* Role-specific home routes that check currentViewRole */}
         <Route
           path="/admin/users"
@@ -167,19 +189,25 @@ const AppContent = () => {
 
         <Route
           path="/admin/home"
-          element={user ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+          element={
+            user ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />
+          }
         />
 
         <Route
           path="/department-admin/home"
           element={
             user &&
+            typeof userInfo.role === "string" &&
             (userInfo.role.startsWith("Admin-") || userInfo.role === "Admin") &&
+            typeof currentViewRole === "string" &&
             currentViewRole.startsWith("Admin-") ? (
               <DepartmentAdminHomePage
                 userInfo={userInfo}
                 getCognitoUser={getCognitoUser}
-                department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
+                department={
+                  typeof userInfo.role === "string" && userInfo.role.split("-")[1] ? userInfo.role.split("-")[1] : ""
+                }
               />
             ) : (
               <Navigate to="/auth" />
@@ -191,6 +219,7 @@ const AppContent = () => {
           path="/faculty/home"
           element={
             user &&
+            typeof userInfo.role === "string" &&
             (userInfo.role === "Faculty" || userInfo.role.startsWith("Admin-") || userInfo.role === "Admin") &&
             currentViewRole === "Faculty" ? (
               <FacultyHomePage
@@ -198,25 +227,6 @@ const AppContent = () => {
                 setUserInfo={setUserInfo}
                 getCognitoUser={getCognitoUser}
                 getUser={getUserInfo}
-              />
-            ) : (
-              <Navigate to="/home" />
-            )
-          }
-        />
-
-        <Route
-          path="/assistant/home"
-          element={
-            user &&
-            (assistantUserInfo.role === "Assistant" || userInfo.role === "Admin") &&
-            currentViewRole === "Assistant" ? (
-              <Assistant_FacultyHomePage
-                assistantUserInfo={assistantUserInfo}
-                userInfo={userInfo}
-                setUserInfo={setUserInfo}
-                getUser={getUserInfo}
-                getCognitoUser={getCognitoUser}
               />
             ) : (
               <Navigate to="/home" />
@@ -285,22 +295,6 @@ const AppContent = () => {
         <Route
           path="/archive"
           element={user ? <Archive userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
-        />
-        <Route
-          path="/assistant/home"
-          element={
-            user ? (
-              <Assistant_FacultyHomePage
-                assistantUserInfo={assistantUserInfo}
-                userInfo={userInfo}
-                setUserInfo={setUserInfo}
-                getUser={getUserInfo}
-                getCognitoUser={getCognitoUser}
-              />
-            ) : (
-              <Navigate to="/auth" />
-            )
-          }
         />
         <Route
           path="/assistant/academic-work"
@@ -377,9 +371,9 @@ const AppContent = () => {
           element={
             user ? (
               <DepartmentAdminUsers
-                userInfo={{ ...userInfo, role: currentViewRole }} // Pass current view role
+                userInfo={{ ...userInfo, role: currentViewRole }}
                 getCognitoUser={getCognitoUser}
-                department={currentViewRole.split("-")[1] || ""}
+                department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
               />
             ) : (
               <Navigate to="/auth" />
@@ -391,9 +385,9 @@ const AppContent = () => {
           element={
             user ? (
               <DepartmentAdminUsers
-                userInfo={{ ...userInfo, role: currentViewRole }} // Pass current view role
+                userInfo={{ ...userInfo, role: currentViewRole }}
                 getCognitoUser={getCognitoUser}
-                department={currentViewRole.split("-")[1] || ""}
+                department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
               />
             ) : (
               <Navigate to="/auth" />
