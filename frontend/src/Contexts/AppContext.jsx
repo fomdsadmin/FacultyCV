@@ -106,7 +106,6 @@ export const AppProvider = ({ children }) => {
                 { label: "Admin", value: "Admin", route: "/admin/home" },
                 { label: `Department Admin - ${department || "All"}`, value: `Admin-${department || "All"}`, route: "/department-admin/home" },
                 { label: "Faculty", value: "Faculty", route: "/faculty/home" },
-                { label: "Assistant", value: "Assistant", route: "/assistant/home" }
             ];
         } else if (isDepartmentAdmin) {
             return [

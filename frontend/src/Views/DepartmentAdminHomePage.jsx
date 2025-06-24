@@ -48,16 +48,33 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     setLoading(true);
     try {
       const users = await getAllUsers();
-      const filteredFacultyUsers = users.filter(
-        (user) =>
-          user.role === "Faculty" &&
-          (user.primary_department === department || user.secondary_department === department)
-      );
-      const filteredAssistantUsers = users.filter(
-        (user) =>
-          user.role === "Assistant" &&
-          (user.primary_department === department || user.secondary_department === department)
-      );
+      let filteredFacultyUsers = [];
+      if (department === "All") {
+        filteredFacultyUsers = users.filter(
+          (user) =>
+            user.role === "Faculty" 
+        );
+      } else {
+        filteredFacultyUsers = users.filter(
+          (user) =>
+            user.role === "Faculty" &&
+            (user.primary_department === department || user.secondary_department === department)
+        );
+      }
+
+      let filteredAssistantUsers = [];
+      if (department === "All") {
+        filteredAssistantUsers = users.filter(
+          (user) =>
+            user.role === "Assistant" 
+        );
+      } else {
+        filteredAssistantUsers = users.filter(
+          (user) =>
+            user.role === "Assistant" &&
+            (user.primary_department === department || user.secondary_department === department)
+        );
+      }
       const facultyTimestamps = filteredFacultyUsers
         .map((user) => new Date(user.joined_timestamp))
         .sort((a, b) => a - b)
@@ -88,8 +105,13 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   async function fetchGeneratedCVs() {
     setLoading(true);
     try {
-      const generatedCVs = await getNumberOfGeneratedCVs(department);
-      setTotalCVsGenerated(generatedCVs);
+      if (department === "All") {
+        const generatedCVs = await getNumberOfGeneratedCVs();
+        setTotalCVsGenerated(generatedCVs);
+      } else {
+        const generatedCVs = await getNumberOfGeneratedCVs(department);
+        setTotalCVsGenerated(generatedCVs);
+      }
     } catch (error) {
       console.error("Error fetching generated CVs:", error);
     }
@@ -111,33 +133,40 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     )?.data_section_id;
     const patentSectionId = dataSections.find((section) => section.title === "Patents")?.data_section_id;
 
-    let publicationsData = [];
-    let grantsData = [];
-    let patentsData = [];
+    // Fetch all publications, grants, and patents in parallel for all users
+    const publicationPromises = users.map((user) =>
+      getUserCVData(user.user_id, publicationSectionId).catch((e) => {
+        console.error("Error fetching publications:", e);
+        return [];
+      })
+    );
+    const grantPromises = users.map((user) =>
+      getUserCVData(user.user_id, secureFundingSectionId).catch((e) => {
+        console.error("Error fetching grants:", e);
+        return [];
+      })
+    );
+    const patentPromises = users.map((user) =>
+      getUserCVData(user.user_id, patentSectionId).catch((e) => {
+        console.error("Error fetching patents:", e);
+        return [];
+      })
+    );
 
-    for (const user of users) {
-      try {
-        const fetchedPublications = await getUserCVData(user.user_id, publicationSectionId);
-        publicationsData = [...publicationsData, ...fetchedPublications];
-      } catch (error) {
-        console.error("Error fetching publications:", error);
-      }
-      try {
-        const fetchedGrants = await getUserCVData(user.user_id, secureFundingSectionId);
-        grantsData = [...grantsData, ...fetchedGrants];
-      } catch (error) {
-        console.error("Error fetching grants:", error);
-      }
-      try {
-        const fetchedPatents = await getUserCVData(user.user_id, patentSectionId);
-        patentsData = [...patentsData, ...fetchedPatents];
-      } catch (error) {
-        console.error("Error fetching patents:", error);
-      }
-    }
+    // Await all in parallel
+    const [publicationsResults, grantsResults, patentsResults] = await Promise.all([
+      Promise.all(publicationPromises),
+      Promise.all(grantPromises),
+      Promise.all(patentPromises),
+    ]);
 
+    // Flatten results
+    const publicationsData = publicationsResults.flat();
+    const grantsData = grantsResults.flat();
+    const patentsData = patentsResults.flat();
+
+    // Grant money
     let totalGrantMoneyRaised = [];
-
     for (const data of grantsData) {
       try {
         const dataDetails = JSON.parse(data.data_details);
@@ -147,8 +176,6 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
             user_id: data.user_id,
             years: parseInt(dataDetails.year),
           });
-        } else {
-          console.warn(`Missing dates field in grant data at index ${grantsData.indexOf(data)}`);
         }
       } catch (error) {
         console.error("Error parsing grant data:", error);
@@ -270,7 +297,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
     data.sort((a, b) => parseInt(a.date) - parseInt(b.date));
 
-    console.log("Final data for graph:", data);
+    // console.log("Final data for graph:", data);
     return data;
   };
 
@@ -313,7 +340,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     // Sort data by year to ensure chronological order
     data.sort((a, b) => parseInt(a.year) - parseInt(b.year));
 
-    console.log("Final data for yearly publications graph:", data);
+    // console.log("Final data for yearly publications graph:", data);
     return data;
   };
 
@@ -476,7 +503,9 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
               {/* Department Keywords Section */}
               <div className="mt-10">
                 <div className="flex flex-col gap-6 p-2 rounded-lg shadow-md bg-zinc-50">
-                <h2 className="text-lg font-semibold mb-2 p-4">Keywords From Publications (Department-wide, Top 25)</h2>
+                  <h2 className="text-lg font-semibold mb-2 p-4">
+                    Keywords From Publications (Department-wide, Top 25)
+                  </h2>
                   {keywordData.length > 0 && (
                     <div className="flex-1 min-w-0 p-4">
                       <div className="flex flex-wrap gap-2">

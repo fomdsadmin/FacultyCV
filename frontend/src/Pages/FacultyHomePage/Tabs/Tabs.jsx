@@ -112,12 +112,9 @@ const Tabs = () => {
               )
               .map((title, innerIndex) => (
                 // send remaining sections to GenericSection
-                <AccordionItem key={index + "" + innerIndex} title={title}>
+                <AccordionItem key={title} title={title}>
                   <GenericSection
-                    key={innerIndex}
-                    section={
-                      academicSections.filter((s) => s.title === title)[0]
-                    }
+                    section={academicSections.filter((s) => s.title === title)[0]}
                     onBack={null}
                   />
                 </AccordionItem>

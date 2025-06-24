@@ -1000,7 +1000,9 @@ export const updateUser = async (
   keywords,
   institution_user_id,
   scopus_id,
-  orcid_id
+  orcid_id,
+  cwl,
+  vpp
 ) => {
   const cognito_user_id = await getUserId();
   const results = await runGraphql(
@@ -1025,6 +1027,8 @@ export const updateUser = async (
       institution_user_id,
       scopus_id,
       orcid_id,
+      cwl,
+      vpp,
       cognito_user_id
     )
   );

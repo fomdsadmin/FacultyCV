@@ -127,9 +127,9 @@ const AppContent = () => {
       />
       {user && <Header userInfo={userInfo} getCognitoUser={getCognitoUser} />}
       {user && <PageViewLogger userInfo={userInfo} />}
-      {console.log("Current View Role:", currentViewRole)}
+      {/* {console.log("Current View Role:", currentViewRole)}
       {console.log("User Info:", userInfo)}
-      {console.log("Assistant User Info:", assistantUserInfo)}
+      {console.log("Assistant User Info:", assistantUserInfo)} */}
       <Routes>
         {/* Main home route - redirects based on role */}
         <Route
@@ -206,7 +206,7 @@ const AppContent = () => {
                 userInfo={userInfo}
                 getCognitoUser={getCognitoUser}
                 department={
-                  typeof userInfo.role === "string" && userInfo.role.split("-")[1] ? userInfo.role.split("-")[1] : ""
+                  typeof userInfo.role === "string" && userInfo.role.split("-")[1] ? userInfo.role.split("-")[1] : "All"
                 }
               />
             ) : (

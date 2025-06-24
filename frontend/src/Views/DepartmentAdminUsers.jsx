@@ -24,14 +24,20 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
     try {
       const users = await getAllUsers();
 
-      const filteredUsers = users.filter(
-        (user) =>
-          user.email !== userInfo.email &&
-          (user.primary_department === department ||
-            user.secondary_department === department ||
-            user.role === `Admin-${department}` ||
-            user.role === "Assistant")
-      );
+      let filteredUsers;
+      if (department === "All") {
+        // Show all users except the current user
+        filteredUsers = users.filter((user) => user.email !== userInfo.email);
+      } else {
+        filteredUsers = users.filter(
+          (user) =>
+            user.email !== userInfo.email &&
+            (user.primary_department === department ||
+              user.secondary_department === department ||
+              user.role === `Admin-${department}` ||
+              user.role === "Assistant")
+        );
+      }
 
       setUsers(filteredUsers);
     } catch (error) {}
