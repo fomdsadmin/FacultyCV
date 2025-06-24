@@ -8,9 +8,7 @@ const NewTemplatePage = ({ onBack }) => {
   const [title, setTitle] = useState("")
   const [sections, setSections] = useState([])
   const [template, setTemplate] = useState({groups: []});
-  const [loading, setLoading] = useState(true)
-  const [startYear, setStartYear] = useState("")
-  const [endYear, setEndYear] = useState("")
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchSections()
@@ -101,16 +99,11 @@ const NewTemplatePage = ({ onBack }) => {
           </div>
         ) : (
           <TemplateModifier
-            groups={template.groups}
-            setGroup={setGroups}
+            template={template}
+            setTemplate={setTemplate}
             title={title}
             setTitle={setTitle}
-            endDate={endYear}
-            setEndDate={setEndYear}
-            startDate={startYear}
-            setStartDate={setStartYear}
             onBack={onBack}
-            sortAscending={template.sort_ascending}
           />
         )}
       </div>

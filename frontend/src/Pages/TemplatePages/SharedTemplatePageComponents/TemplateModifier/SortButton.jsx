@@ -3,22 +3,13 @@ import { FaSort, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
 import { useTemplateModifier } from './TemplateModifierContext';
 
 const SortButton = () => {
-    const { groups, setGroups } = useTemplateModifier();
+    const { sortAscending,  setSortAscending } = useTemplateModifier();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleSortChange = (sortAscending) => {
-        console.log(groups)
-        return;
-        const updatedGroups = {
-            ...groups,
-            sort_ascending: sortAscending
-        }
-
-        setGroups(updatedGroups);
+        setSortAscending(sortAscending)
         setIsDropdownOpen(false);
     };
-
-    const currentSort = groups.sort_ascending;
 
     return (
         <div className="relative">
@@ -26,12 +17,12 @@ const SortButton = () => {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="btn btn-outline btn-sm flex items-center gap-2"
             >
-                {currentSort ? (
+                {sortAscending ? (
                     <FaSortAmountUp className="h-4 w-4" />
                 ) : (
                     <FaSortAmountDown className="h-4 w-4" />
                 )}
-                <span>Sort: {currentSort ? 'Ascending' : 'Descending'}</span>
+                <span>Sort: {sortAscending ? 'Ascending' : 'Descending'}</span>
             </button>
 
             {isDropdownOpen && (
@@ -40,7 +31,7 @@ const SortButton = () => {
                         <button
                             onClick={() => handleSortChange(true)}
                             className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 ${
-                                currentSort ? 'bg-blue-50 text-blue-700' : ''
+                                sortAscending ? 'bg-blue-50 text-blue-700' : ''
                             }`}
                         >
                             <FaSortAmountUp className="h-4 w-4" />
@@ -52,7 +43,7 @@ const SortButton = () => {
                         <button
                             onClick={() => handleSortChange(false)}
                             className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 ${
-                                !currentSort ? 'bg-blue-50 text-blue-700' : ''
+                                !sortAscending ? 'bg-blue-50 text-blue-700' : ''
                             }`}
                         >
                             <FaSortAmountDown className="h-4 w-4" />

@@ -10,10 +10,8 @@ import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext";
 const EditTemplatePage = ({ onBack }) => {
     const { activeTemplate } = useTemplatePageContext();
     const [title, setTitle] = useState(activeTemplate?.title || "")
-    const [template, setTemplate] = useState({ groups: [] });
+    const [template, setTemplate] = useState({ groups: [], sort_ascending: null });
     const [loading, setLoading] = useState(true)
-    const [startYear, setStartYear] = useState(activeTemplate?.start_year || "")
-    const [endYear, setEndYear] = useState(activeTemplate?.end_year || "")
 
     useEffect(() => {
         if (activeTemplate) {
@@ -150,17 +148,12 @@ const EditTemplatePage = ({ onBack }) => {
                     </div>
                 ) : (
                     <TemplateModifier
-                        groups={template.groups}
-                        setGroup={setGroups}
                         title={title}
                         setTitle={setTitle}
-                        endDate={endYear}
-                        setEndDate={setEndYear}
-                        startDate={startYear}
-                        setStartDate={setStartYear}
                         onBack={onBack}
                         templateId={activeTemplate.template_id}
-                        sortAscending={template.sort_ascending}
+                        template={template}
+                        setTemplate={setTemplate}
                     />
                 )}
             </div>

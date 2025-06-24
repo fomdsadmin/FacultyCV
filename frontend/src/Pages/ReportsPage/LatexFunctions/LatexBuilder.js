@@ -6,6 +6,7 @@ let userCvData = [];
 let allSections = [];
 const rowNumberColumnRatio = 3;
 let template = {};
+let sortAscending;
 
 const buildTableHeader = (title) => {
     const columnFormat = generateColumnFormatViaRatioArray([1]);
@@ -42,14 +43,7 @@ const buildTableSubHeader = (preparedSection) => {
     return cellRowBuilder(subHeaderRowData, columnFormat);
 }
 
-const sortSectionData = (sectionData, sortConfig, dataSectionId) => {
-    // Return unsorted data if no sort configuration
-    if (!sortConfig || !sortConfig.selectedAttribute) {
-        return sectionData;
-    }
-
-    const sortAttribute = sortConfig.selectedAttribute;
-    
+const sortSectionData = (sectionData, dataSectionId) => {
     // Find the section to get the attribute mapping
     const section = allSections.find((section) => section.data_section_id === dataSectionId);
     if (!section) {
@@ -58,39 +52,61 @@ const sortSectionData = (sectionData, sortConfig, dataSectionId) => {
     }
 
     const attributeMapping = JSON.parse(section.attributes);
-    const sortKey = attributeMapping[sortAttribute];
 
-    if (!sortKey) {
-        console.warn(`Sort key not found for attribute: ${sortAttribute}`);
+    // Look for date-related attributes (year or date)
+    const yearAttribute = attributeMapping['Year'] || attributeMapping['Year Published'];
+    const dateAttribute = attributeMapping['Date'];
+
+    // If no date attributes found, return unsorted data
+    if (!yearAttribute && !dateAttribute) {
         return sectionData;
     }
 
     return sectionData.sort((a, b) => {
-        let valueA = a.data_details[sortKey];
-        let valueB = b.data_details[sortKey];
+        let endYearA = null;
+        let endYearB = null;
 
-        // Handle arrays by joining them
-        if (Array.isArray(valueA)) valueA = valueA.join(', ');
-        if (Array.isArray(valueB)) valueB = valueB.join(', ');
+        // Try to extract end year from year attribute first
+        if (yearAttribute) {
+            if (a.data_details[yearAttribute]) {
+                const yearValueA = String(a.data_details[yearAttribute]);
+                const yearMatchA = yearValueA.match(/\d{4}/g);
+                if (yearMatchA) {
+                    endYearA = parseInt(yearMatchA[yearMatchA.length - 1]);
+                }
+            }
 
-        // Convert to strings for safety
-        valueA = String(valueA || '');
-        valueB = String(valueB || '');
-
-        let comparison;
-
-        if (sortConfig.numerically) {
-            // Numerical sorting
-            const numA = parseFloat(valueA) || 0;
-            const numB = parseFloat(valueB) || 0;
-            comparison = numA - numB;
-        } else {
-            // Alphabetical sorting (case-insensitive)
-            comparison = valueA.toLowerCase().localeCompare(valueB.toLowerCase());
+            if (b.data_details[yearAttribute]) {
+                const yearValueB = String(b.data_details[yearAttribute]);
+                const yearMatchB = yearValueB.match(/\d{4}/g);
+                if (yearMatchB) {
+                    endYearB = parseInt(yearMatchB[yearMatchB.length - 1]);
+                }
+            }
         }
 
-        // Apply ascending/descending order
-        return sortConfig.ascending ? comparison : -comparison;
+        // If no year found, try to extract from date attribute
+        if (!endYearA && dateAttribute && a.data_details[dateAttribute]) {
+            const dateValueA = String(a.data_details[dateAttribute]);
+            endYearA = extractEndYearFromDateRange(dateValueA);
+        }
+
+        if (!endYearB && dateAttribute && b.data_details[dateAttribute]) {
+            const dateValueB = String(b.data_details[dateAttribute]);
+            endYearB = extractEndYearFromDateRange(dateValueB);
+        }
+
+        // Handle cases where we couldn't extract years
+        // Items without dates go to the end
+        if (!endYearA && !endYearB) return 0;
+        if (!endYearA) return 1;
+        if (!endYearB) return -1;
+
+        // Sort by year
+        const comparison = endYearA - endYearB;
+
+        // Apply ascending/descending order based on sortAscending
+        return sortAscending ? comparison : -comparison;
     });
 };
 
@@ -107,7 +123,7 @@ const filterDateRanges = (sectionData, dataSectionId) => {
     }
 
     const attributeMapping = JSON.parse(section.attributes);
-    
+
     // Look for date-related attributes (year or date)
     const yearAttribute = attributeMapping['Year'] || attributeMapping['Year Published'];
     const dateAttribute = attributeMapping['Date'];
@@ -153,7 +169,7 @@ const filterDateRanges = (sectionData, dataSectionId) => {
 
 const extractEndYearFromDateRange = (dateString) => {
     // Handle "Current" case
-    if (dateString.toLowerCase().includes('current') || 
+    if (dateString.toLowerCase().includes('current') ||
         dateString.toLowerCase().includes('present') ||
         dateString.toLowerCase().includes('ongoing')) {
         return new Date().getFullYear(); // Use current year
@@ -162,7 +178,7 @@ const extractEndYearFromDateRange = (dateString) => {
     // Split by common separators to find date ranges
     const rangeSeparators = [' - ', ' – ', ' — ', ' to ', '-', '–', '—'];
     let parts = [dateString];
-    
+
     for (const separator of rangeSeparators) {
         if (dateString.includes(separator)) {
             parts = dateString.split(separator);
@@ -201,15 +217,15 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
 
     // Apply date range filtering
     sectionData = filterDateRanges(sectionData, dataSectionId);
-    
+
     // Apply sorting
-    sectionData = sortSectionData(sectionData, preparedSection.sort, dataSectionId);
+    sectionData = sortSectionData(sectionData, dataSectionId);
 
     // Generate LaTeX tables for each entry
     const latexTables = sectionData.map((data, rowCount) => {
         // Map attributes to their corresponding values in data_details
         const section = allSections.find((section) => section.data_section_id === dataSectionId);
-        
+
         let rowArray = attributes.map((attribute) => {
             // Some data is an array for some reason
             const tabData = String(data.data_details[JSON.parse(section.attributes)[attribute]]);
@@ -251,7 +267,7 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
             }
 
             dataColumnFormat = generateColumnFormatViaRatioArray(ratioArray);
-            
+
             // Add row number as first cell
             rowArray.unshift(cellOptionsBuilder(
                 String(rowCount + 1),
@@ -321,9 +337,9 @@ const buildTableSectionColumns = (preparedSection) => {
     }
 
     // Create header row data using cellOptionsBuilder
-    const headerRowData = attributes.map((attribute) => 
+    const headerRowData = attributes.map((attribute) =>
         cellOptionsBuilder(
-            attributeRenameMap[attribute] || attribute, 
+            attributeRenameMap[attribute] || attribute,
             true,        // bold
             null,        // size
             'columnGray' // background color
@@ -437,6 +453,7 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
 
     // Parse the template structure
     const parsedGroups = JSON.parse(template.template_structure).groups;
+    sortAscending = JSON.parse(template.template_structure).sort_ascending;
 
     // Process each group in the template
     for (const group of parsedGroups || []) {
@@ -503,7 +520,7 @@ const buildUserProfile = (userInfo) => {
 
     // Name section
     const nameColumnFormat = generateColumnFormatViaRatioArray([3, 7]);
-    
+
     // Surname row
     const surnameRowData = [
         cellOptionsBuilder('1. SURNAME:', true, null, null),
