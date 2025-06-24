@@ -8,7 +8,7 @@ import { useNotification } from '../../Contexts/NotificationContext.jsx';
 import { getUserId } from '../../getAuthToken.js';
 import TemplateList from './TemplateList.jsx';
 import ReportPreview from './ReportPreview.jsx';
-import { buildLatex } from './LatexBuilder.js';
+import { buildLatex } from './LatexFunctions/LatexBuilder.js';
 import { useApp } from 'Contexts/AppContext.jsx';
 
 const ReportsPage = () => {

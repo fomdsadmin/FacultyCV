@@ -1,67 +1,28 @@
-import { getAllSections, getUserCVData, getLatexConfiguration } from '../../graphql/graphqlHelpers.js';
-import { SHOWN_ATTRIBUTE_GROUP_ID, HIDDEN_ATTRIBUTE_GROUP_ID } from '../TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext.jsx'
+import { getAllSections, getUserCVData, getLatexConfiguration } from '../../../graphql/graphqlHelpers.js';
+import { SHOWN_ATTRIBUTE_GROUP_ID, HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID } from '../../TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext.jsx'
+import { cellOptionsBuilder, cellRowBuilder, generateColumnFormatViaRatioArray } from './LatexTableBuilder.js';
 
 let userCvData = [];
 let allSections = [];
 const rowNumberColumnRatio = 3;
 let template = {};
 
-const sanitizeLatex = (text) => {
-    if (typeof text !== 'string') return text; // Return as-is if not a string
-
-    // Replace special LaTeX characters with their escaped versions using String.raw
-    return String.raw`${text
-        .replace(/\\/g, '\\textbackslash{}') // Backslash
-        .replace(/{/g, '\\{')               // Left curly brace
-        .replace(/}/g, '\\}')               // Right curly brace
-        .replace(/\$/g, '\\$')              // Dollar sign
-        .replace(/&/g, '\\&')               // Ampersand
-        .replace(/%/g, '\\%')               // Percent sign
-        .replace(/#/g, '\\#')               // Hash
-        .replace(/_/g, '\\_')               // Underscore
-        .replace(/\^/g, '\\textasciicircum{}') // Caret
-        .replace(/~/g, '\\textasciitilde{}')  // Tilde
-        }`;
-};
-
-const addAllowBreaks = (text) => {
-    if (typeof text !== 'string') return text; // Return as-is if not a string
-
-    // Replace specific characters with their LaTeX \allowbreak equivalents
-    return String.raw`${text}`
-        .replace(/,/g, ',\\hspace{0pt}')   // Comma
-        .replace(/\./g, '.\\hspace{0pt}') // Period
-        .replace(/-/g, '-\\hspace{0pt}')  // Hyphen
-        .replace(/\//g, '/\\hspace{0pt}') // Forward slash
-        .replace(/:/g, ':\\hspace{0pt}') // Colon
-        .replace(/;/g, ';\\hspace{0pt}') // Semicolon
-        .replace(/_/g, '_\\hspace{0pt}') // Underscore
-        .replace(/=/g, '=\\hspace{0pt}') // Equal
-        .replace(/&/g, '&\\hspace{0pt}') // Ampersand
-        .replace(/\?/g, '?\\hspace{0pt}') // Question mark
-        .replace(/(?<!\\hspace\{[^}]*)\d(?!pt)/g, '$&\\hspace{0pt}'); // Digit not in \hspace{}
-};
-
 const buildTableHeader = (title) => {
-    const header = String.raw`
-    \begin{tabular}{${generateColumnFormatViaRatioArray([1])}}
-    \hline
-    \rowcolor{headerGray}
-    \textbf{${title}} \\
-    \hline
-    \end{tabular}%
-    \vspace{-1pt}
-    `
+    const columnFormat = generateColumnFormatViaRatioArray([1]);
+    const headerRowData = [cellOptionsBuilder(
+        title,
+        true,         // bold
+        null,         // default size
+        'headerGray'  // background color
+    )];
 
-    return header;
+    return cellRowBuilder(headerRowData, columnFormat);
 }
 
 const buildTableSubHeader = (preparedSection) => {
-
     let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
 
     if (preparedSection.show_row_count) {
-
         let sectionData = userCvData.filter((cvData) => cvData.data_section_id === preparedSection.data_section_id);
 
         // Apply date range filtering
@@ -70,17 +31,15 @@ const buildTableSubHeader = (preparedSection) => {
         titleToDisplay += ` (${rowCount})`
     }
 
-    const subHeader = String.raw`
-    \begin{tabular}{${generateColumnFormatViaRatioArray([1])}}
-    \hline
-    \rowcolor{subHeaderGray}
-    \textbf{${titleToDisplay}} \\
-    \hline
-    \end{tabular}%
-    \vspace{-1pt}
-    `
+    const columnFormat = generateColumnFormatViaRatioArray([1]);
+    const subHeaderRowData = [cellOptionsBuilder(
+        titleToDisplay,
+        true,            // bold
+        null,            // default size
+        'subHeaderGray'  // background color
+    )];
 
-    return subHeader;
+    return cellRowBuilder(subHeaderRowData, columnFormat);
 }
 
 const sortSectionData = (sectionData, sortConfig, dataSectionId) => {
@@ -152,11 +111,6 @@ const filterDateRanges = (sectionData, dataSectionId) => {
     // Look for date-related attributes (year or date)
     const yearAttribute = attributeMapping['Year'] || attributeMapping['Year Published'];
     const dateAttribute = attributeMapping['Date'];
-
-    console.log(attributeMapping);
-
-    console.log("Year attribute: ", yearAttribute)
-    console.log("Date attribute: ", dateAttribute)
 
     return sectionData.filter((data) => {
         let endYear = null;
@@ -251,28 +205,35 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     // Apply sorting
     sectionData = sortSectionData(sectionData, preparedSection.sort, dataSectionId);
 
-    var latexTables;
-
     // Generate LaTeX tables for each entry
-    latexTables = sectionData.map((data, rowCount) => {
+    const latexTables = sectionData.map((data, rowCount) => {
         // Map attributes to their corresponding values in data_details
         const section = allSections.find((section) => section.data_section_id === dataSectionId);
-        var rowArray = attributes.map((attribute) => {
+        
+        let rowArray = attributes.map((attribute) => {
             // Some data is an array for some reason
             const tabData = String(data.data_details[JSON.parse(section.attributes)[attribute]]);
-            console.log('Original tabData:', tabData);
-            console.log('After sanitizeLatex:', sanitizeLatex(tabData));
-            console.log('After addAllowBreaks:', addAllowBreaks(sanitizeLatex(tabData)));
 
             if (!preparedSection.merge_visible_attributes) {
-                return String.raw`{\footnotesize ${addAllowBreaks(sanitizeLatex(tabData))}}`;
+                return cellOptionsBuilder(
+                    tabData,
+                    false,        // not bold
+                    'footnotesize', // small size
+                    null          // no background color
+                );
             } else {
                 return tabData;
             }
         });
 
         if (preparedSection.merge_visible_attributes) {
-            rowArray = [String.raw`{\footnotesize ${addAllowBreaks(sanitizeLatex(rowArray.join(`, `)))}}`]
+            const mergedText = rowArray.join(`, `);
+            rowArray = [cellOptionsBuilder(
+                mergedText,
+                false,        // not bold
+                'footnotesize', // small size
+                null          // no background color
+            )];
         }
 
         var dataColumnFormat;
@@ -289,29 +250,19 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
                 ratioArray = [1, 18];
             }
 
-            dataColumnFormat = generateColumnFormatViaRatioArray(ratioArray)
-            rowArray.unshift(rowCount + 1);
+            dataColumnFormat = generateColumnFormatViaRatioArray(ratioArray);
+            
+            // Add row number as first cell
+            rowArray.unshift(cellOptionsBuilder(
+                String(rowCount + 1),
+                false,        // not bold
+                'footnotesize', // small size
+                null          // no background color
+            ));
         }
 
-        // Wrap the row in its own tabularx environment
-        console.log(
-            String.raw`
-            \begin{tabular}{${dataColumnFormat}}
-            \hline
-            ${rowArray.join(' & ')} \\
-            \hline
-            \end{tabular}%
-            \vspace{-1pt}
-            `
-        )
-        return String.raw`
-            \begin{tabular}{${dataColumnFormat}}
-            \hline
-            ${rowArray.join(' & ')} \\
-            \hline
-            \end{tabular}%
-            \vspace{-1pt}
-            `;
+        // Use cellRowBuilder to generate the table
+        return cellRowBuilder(rowArray, dataColumnFormat);
     });
 
     // Join all individual tables
@@ -324,9 +275,9 @@ const buildTableAttributeGroup = (attributeGroups) => {
     let groupedColumnNamesArray = [];
     for (const attributeGroup of attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID)) {
         if (attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID) {
-            groupedColumnNamesArray.push(String.raw`\textbf{${attributeGroup.title}}`)
+            groupedColumnNamesArray.push(cellOptionsBuilder(attributeGroup.title, true, 'small', 'columnGray'))
         } else {
-            groupedColumnNamesArray.push(String.raw`\textbf{~}`);
+            groupedColumnNamesArray.push(cellOptionsBuilder('~', true, 'small', 'columnGray'))
         }
         var ratio = 0;
         for (const attribute of attributeGroup.attributes) {
@@ -337,14 +288,7 @@ const buildTableAttributeGroup = (attributeGroups) => {
 
     const columnFormat = generateColumnFormatViaRatioArray(columnRatioArray);
 
-    const groupedColumnHeader = String.raw`
-    \begin{tabular}{${columnFormat}}
-    \hline
-    \rowcolor{columnGray}
-    ${groupedColumnNamesArray.join(' & ')}
-    \end{tabular}%
-    \vspace{-1pt}
-    `
+    const groupedColumnHeader = cellRowBuilder(groupedColumnNamesArray, columnFormat)
 
     return groupedColumnHeader
 }
@@ -376,21 +320,18 @@ const buildTableSectionColumns = (preparedSection) => {
         attributes.unshift("Row #");
     }
 
-    // Dynamically create the header row based on the attribute names
-    const headerRow = attributes
-        .map((attribute) => `\\textbf{${attributeRenameMap[attribute] || attribute}}`)
-        .join(' & ');
+    // Create header row data using cellOptionsBuilder
+    const headerRowData = attributes.map((attribute) => 
+        cellOptionsBuilder(
+            attributeRenameMap[attribute] || attribute, 
+            true,        // bold
+            null,        // size
+            'columnGray' // background color
+        )
+    );
 
-    // Start building the LaTeX table
-    latex += String.raw`
-    \begin{tabular}{${columnFormat}}
-    \hline
-    \rowcolor{columnGray}
-    ${headerRow} \\
-    \hline
-    \end{tabular}%
-    \vspace{-1pt}
-    `;
+    // Build the header row using cellRowBuilder
+    latex += cellRowBuilder(headerRowData, columnFormat);
 
     return latex;
 }
@@ -401,7 +342,7 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
     latex += buildTableSubHeader(preparedSection);
 
     if (!preparedSection.merge_visible_attributes) {
-        latex += buildTableSectionColumns(preparedSection, dataSectionId);
+        latex += buildTableSectionColumns(preparedSection);
     }
 
     latex += buildDataEntries(preparedSection, dataSectionId);
@@ -463,26 +404,6 @@ const buildLatexHeader = () => {
     return latex;
 }
 
-const generateColumnFormatViaRatioArray = (ratioArray) => {
-    const totalRatio = ratioArray.reduce((sum, ratio) => sum + ratio, 0);
-    const lineWidthRatio = 0.95;
-    const numColumns = ratioArray.length;
-    const numVerticalLines = numColumns + 1; // Lines between columns + 2 outer lines
-
-    // Each vertical line is approximately 0.4pt ≈ 0.014cm
-    const verticalLineWidth = `${numVerticalLines * 0.4}pt`;
-
-    const columnFormat = ratioArray
-        .map((ratio) => {
-            const widthRatio = (ratio / totalRatio).toFixed(4);
-            const ratioToUse = lineWidthRatio * widthRatio;
-            return `>{\\raggedright\\arraybackslash}p{\\dimexpr${ratioToUse}\\linewidth-2\\tabcolsep-${verticalLineWidth}/${numColumns}\\relax}`;
-        })
-        .join('|');
-
-    return `|${columnFormat}|`;
-};
-
 export const buildLatex = async (userInfo, templateWithEndStartDate) => {
 
     console.log(templateWithEndStartDate.start_year, templateWithEndStartDate.end_year);
@@ -515,11 +436,11 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
     console.log(userCvData)
 
     // Parse the template structure
-    const parsedGroups = JSON.parse(template.template_structure);
+    const parsedGroups = JSON.parse(template.template_structure).groups;
 
     // Process each group in the template
     for (const group of parsedGroups || []) {
-        if (group.id === 'HIDDEN_GROUP_ID') continue; // Skip hidden groups
+        if (group.id === HIDDEN_GROUP_ID) continue; // Skip hidden groups
         console.log(group)
         latex += await buildGroup(group);
     }
@@ -556,8 +477,6 @@ const buildUserProfile = (userInfo) => {
     // Build the profile table using existing functions
     let latex = "";
 
-    console.log(template)
-
     // Add title at the top
     latex += String.raw`
     \begin{center}
@@ -569,71 +488,79 @@ const buildUserProfile = (userInfo) => {
 
     // Date row
     const dateColumnFormat = generateColumnFormatViaRatioArray([1, 1]);
-    latex += String.raw`
-    \begin{tabular}{${dateColumnFormat}}
-    \hline
-    \textbf{Date:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(currentDate))}} \\
-    \hline
-    \end{tabular}%
-    \vspace{-1pt}
-    `;
+    const dateRowData = [
+        cellOptionsBuilder('Date:', true, null, null),
+        cellOptionsBuilder(currentDate, false, 'footnotesize', null)
+    ];
+    latex += cellRowBuilder(dateRowData, dateColumnFormat);
 
     // Verification Initial row
-    latex += String.raw`
-    \begin{tabular}{${dateColumnFormat}}
-    \hline
-    \textbf{Verification Initial:} & \\
-    \hline
-    \end{tabular}%
-    \vspace{-1pt}
-    `;
+    const verificationRowData = [
+        cellOptionsBuilder('Verification Initial:', true, null, null),
+        cellOptionsBuilder('', false, null, null)
+    ];
+    latex += cellRowBuilder(verificationRowData, dateColumnFormat);
 
     // Name section
     const nameColumnFormat = generateColumnFormatViaRatioArray([3, 7]);
-    latex += String.raw`
-    \begin{tabular}{${nameColumnFormat}}
-    \hline
-    \textbf{1. SURNAME:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.last_name || ""))}} \\
-    \hline
-    \textbf{FIRST NAME:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.first_name || ""))}} \\
-    \hline
-    \textbf{MIDDLE NAME:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(middleName))}} \\
-    \hline
-    \end{tabular}%
-    \vspace{-1pt}
-    `;
+    
+    // Surname row
+    const surnameRowData = [
+        cellOptionsBuilder('1. SURNAME:', true, null, null),
+        cellOptionsBuilder(userInfo.last_name || '', false, 'footnotesize', null)
+    ];
+    latex += cellRowBuilder(surnameRowData, nameColumnFormat);
+
+    // First name row
+    const firstNameRowData = [
+        cellOptionsBuilder('FIRST NAME:', true, null, null),
+        cellOptionsBuilder(userInfo.first_name || '', false, 'footnotesize', null)
+    ];
+    latex += cellRowBuilder(firstNameRowData, nameColumnFormat);
+
+    // Middle name row
+    const middleNameRowData = [
+        cellOptionsBuilder('MIDDLE NAME:', true, null, null),
+        cellOptionsBuilder(middleName, false, 'footnotesize', null)
+    ];
+    latex += cellRowBuilder(middleNameRowData, nameColumnFormat);
 
     // Department section
-    latex += String.raw`
-    \begin{tabular}{${nameColumnFormat}}
-    \hline
-    \textbf{2. DEPARTMENT/SCHOOL:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.primary_department || ""))}} \\
-    \hline
-    \end{tabular}%
-    \vspace{-1pt}
-    `;
+    const departmentRowData = [
+        cellOptionsBuilder('2. DEPARTMENT/SCHOOL:', true, null, null),
+        cellOptionsBuilder(userInfo.primary_department || '', false, 'footnotesize', null)
+    ];
+    latex += cellRowBuilder(departmentRowData, nameColumnFormat);
 
     // Faculty section
-    latex += String.raw`
-    \begin{tabular}{${nameColumnFormat}}
-    \hline
-    \textbf{3. FACULTY:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.primary_faculty || ""))}} \\
-    \hline
-    \end{tabular}%
-    \vspace{-1pt}
-    `;
+    const facultyRowData = [
+        cellOptionsBuilder('3. FACULTY:', true, null, null),
+        cellOptionsBuilder(userInfo.primary_faculty || '', false, 'footnotesize', null)
+    ];
+    latex += cellRowBuilder(facultyRowData, nameColumnFormat);
 
-    // Rank section - use simple two-row approach
-    latex += String.raw`
-    \begin{tabular}{${nameColumnFormat}}
-    \hline
-    \textbf{4. PRESENT RANK:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(userInfo.rank || ""))}} \\
-    \hline
-    \textbf{SINCE:} & {\footnotesize ${addAllowBreaks(sanitizeLatex(rankSinceDate))}} \\
-    \hline
-    \end{tabular}%
-    \vspace{20pt}
-    `;
+    // Present rank row
+    const rankRowData = [
+        cellOptionsBuilder('4. PRESENT RANK:', true, null, null),
+        cellOptionsBuilder(userInfo.rank || '', false, 'footnotesize', null)
+    ];
+    latex += cellRowBuilder(rankRowData, nameColumnFormat);
+
+    // Since row
+    const sinceRowData = [
+        cellOptionsBuilder('SINCE:', true, null, null),
+        cellOptionsBuilder(rankSinceDate, false, 'footnotesize', null)
+    ];
+    latex += cellRowBuilder(sinceRowData, nameColumnFormat);
+
+
+    const verticalSpacing = String.raw`
+    \vspace*{20pt}
+    \noindent
+    `
+
+    // Add final spacing
+    latex += verticalSpacing;
 
     return latex;
 };

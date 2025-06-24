@@ -21,6 +21,7 @@ export const TemplateModifierProvider = ({
     children,
     groups,
     setGroups,
+    sortAscending,
     title,
     setTitle,
     endDate,
@@ -51,6 +52,7 @@ export const TemplateModifierProvider = ({
     setEndDate,
     startDate,
     setStartDate,
+    sortAscending,
 
     // onBack
     onBack,

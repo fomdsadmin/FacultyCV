@@ -3,6 +3,7 @@ import YearSelector from "./YearSelector"
 import TemplateOrganizer from "./TemplateOrganizer/TemplateOrganizer"
 import AddGroupButton from "./AddGroupButton/AddGroupButton"
 import SaveTemplateButton from "./SaveTemplateButton"
+import SortButton from "./SortButton"
 
 const TemplateModifier = ({
     groups,
@@ -14,7 +15,8 @@ const TemplateModifier = ({
     startDate,
     setStartDate,
     onBack,
-    templateId = null
+    templateId,
+    sortAscending
 }) => {
 
     return <>
@@ -28,6 +30,7 @@ const TemplateModifier = ({
             startDate={startDate}
             setStartDate={setStartDate}
             onBack={onBack}
+            sortAscending={sortAscending}
         >
             <div className="flex justify-end mb-4">
                 <SaveTemplateButton templateId={templateId}></SaveTemplateButton>
@@ -52,6 +55,7 @@ const TemplateModifier = ({
             </h2>
 
             <div className="flex justify-end mb-4 space-x-2">
+                <SortButton />
                 <AddGroupButton/>
             </div>
 
