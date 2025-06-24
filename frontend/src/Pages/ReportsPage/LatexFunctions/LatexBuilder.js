@@ -494,11 +494,17 @@ const buildUserProfile = (userInfo) => {
     // Build the profile table using existing functions
     let latex = "";
 
+    const startYear = template.start_year || 'All';
+    const endYear = template.end_year || 'Present';
+    const sortOrder = sortAscending ? 'Ascending' : 'Descending';
+    const dateRangeText = `(${startYear} - ${endYear}, ${sortOrder})`;
+
     // Add title at the top
     latex += String.raw`
     \begin{center}
     \textbf{\large University of British Columbia} \\
-    \textbf{${template.title}}
+    \textbf{${template.title}} \\
+    ${dateRangeText}
     \end{center}
     \vspace{20pt}
     `;
