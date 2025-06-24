@@ -62,7 +62,7 @@ const DepartmentAdminTemplates = ({ getCognitoUser, userInfo }) => {
   return (
     <PageContainer>
       <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
+      <main className='px-12 mt-4 overflow-auto custom-scrollbar w-full mb-4'>
         {loading ? (
           <div className='w-full h-full flex items-center justify-center'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>

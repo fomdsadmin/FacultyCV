@@ -38,6 +38,8 @@ type User {
   scopus_id: String
   orcid_id: String
   joined_timestamp: String
+  cwl: String
+  vpp: String
 }
 
 type DataSection {
@@ -445,6 +447,8 @@ type Mutation {
     institution_user_id: String
     scopus_id: String
     orcid_id: String
+    cwl: String
+    vpp: String
     user_id: String!
     cognito_user_id: String
   ): String

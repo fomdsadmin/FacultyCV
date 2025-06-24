@@ -238,6 +238,8 @@ export const updateUserMutation = (
     institution_user_id,
     scopus_id,
     orcid_id,
+    cwl,
+    vpp,
     cognito_user_id
 ) => `
     mutation UpdateUser {
@@ -261,6 +263,8 @@ export const updateUserMutation = (
             institution_user_id: "${institution_user_id}"
             scopus_id: "${scopus_id}"
             orcid_id: "${orcid_id}"
+            cwl: "${cwl}"
+            vpp: "${vpp}"
             user_id: "${user_id}"
             cognito_user_id: "${cognito_user_id}"
         )

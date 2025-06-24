@@ -64,15 +64,15 @@ const FacultyMenu = ({
         <ul className="menu rounded-box flex-shrink-0">
           <li
             className={`mb-2 ${
-              location.pathname === "/dashboard" ? "bg-gray-200 rounded-lg" : ""
+              location.pathname === "/faculty/dashboard" ? "bg-gray-200 rounded-lg" : ""
             }`}
           >
-            <Link to="/dashboard">
+            <Link to="/faculty/dashboard">
               <LuLayoutDashboard className="h-5 w-5" />
               {showText && !isCollapsed && (
                 <p
                   className={`ml-2 ${
-                    location.pathname === "/dashboard" ? "font-bold" : ""
+                    location.pathname === "/faculty/dashboard" ? "font-bold" : ""
                   }`}
                 >
                   Dashboard
@@ -82,37 +82,35 @@ const FacultyMenu = ({
           </li>
           <li
             className={`mb-2 ${
-              location.pathname === "/home" ? "bg-gray-200 rounded-lg" : ""
+              location.pathname === "/faculty/home" ? "bg-gray-200 rounded-lg" : ""
             }`}
           >
-            <Link to="/home">
+            <Link to="/faculty/home">
               <TbHome className="h-5 w-5" />
               {showText && !isCollapsed && (
                 <p
                   className={`ml-2 ${
-                    location.pathname === "/home" ? "font-bold" : ""
+                    location.pathname === "/faculty/home" ? "font-bold" : ""
                   }`}
                 >
-                  {userInfo?.role && userInfo.role.toLowerCase().includes("admin")
-                    ? "Admin View"
-                    : userName || "Faculty Home"}
+                  {userName}
                 </p>
               )}
             </Link>
           </li>
           <li
             className={`mb-2 ${
-              location.pathname === "/academic-work"
+              location.pathname === "/faculty/academic-work"
                 ? "bg-gray-200 rounded-lg"
                 : ""
             }`}
           >
-            <Link to="/academic-work">
+            <Link to="/faculty/academic-work">
               <HiOutlineAcademicCap className="h-5 w-5" />
               {showText && !isCollapsed && (
                 <p
                   className={`ml-2 ${
-                    location.pathname === "/academic-work" ? "font-bold" : ""
+                    location.pathname === "/faculty/academic-work" ? "font-bold" : ""
                   }`}
                 >
                   Academic Work
@@ -122,12 +120,12 @@ const FacultyMenu = ({
           </li>
           <li
             className={`mb-2 ${
-              location.pathname === "/declarations"
+              location.pathname === "/faculty/declarations"
                 ? "bg-gray-200 rounded-lg"
                 : ""
             }`}
           >
-            <Link to="/declarations">
+            <Link to="/faculty/declarations">
               <HiOutlineDocumentText className="h-5 w-5" />
               {showText && !isCollapsed && (
                 <p
@@ -160,17 +158,17 @@ const FacultyMenu = ({
           </li>
           <li
             className={`mb-2 ${
-              location.pathname === "/assistants"
+              location.pathname === "/faculty/assistants"
                 ? "bg-gray-200 rounded-lg"
                 : ""
             }`}
           >
-            <Link to="/assistants">
+            <Link to="/faculty/assistants">
               <IoPersonAddOutline className="h-5 w-5" />
               {showText && !isCollapsed && (
                 <p
                   className={`ml-2 ${
-                    location.pathname === "/assistants" ? "font-bold" : ""
+                    location.pathname === "/faculty/assistants" ? "font-bold" : ""
                   }`}
                 >
                   Assistants
@@ -215,7 +213,7 @@ const FacultyMenu = ({
             </Link>
           </li>
         </ul>
-        <div className="left-0 w-full flex justify-center">
+        {/* <div className="left-0 w-full flex justify-center">
           {!isCollapsed && showText && (
             <button
               className="text-white btn btn-warning py-1 px-4 w-44 min-h-0 h-8 leading-tight focus:outline-none hover:bg-warning-dark"
@@ -225,7 +223,7 @@ const FacultyMenu = ({
               {isSigningOut ? "Signing Out..." : "Sign Out"}
             </button>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );

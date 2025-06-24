@@ -39,10 +39,10 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
     setActiveTab(selectedCategory);
     setActiveSection(null);
     if (!selectedCategory) {
-      navigate("/academic-work");
+      navigate("/faculty/academic-work");
     } else {
       const categorySlug = selectedCategory.replace(/\s+/g, "-").toLowerCase();
-      navigate(`/academic-work/${categorySlug}`);
+      navigate(`/faculty/academic-work/${categorySlug}`);
     }
   };
 
@@ -77,7 +77,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
     if (section[0]) {
       const category = section[0].data_type.replace(/\s+/g, "-").toLowerCase();
       const title = section[0].title.replace(/\s+/g, "-").toLowerCase();
-      navigate(`/academic-work/${category}/${title}`);
+      navigate(`/faculty/academic-work/${category}/${title}`);
       window.scrollTo({ top: 0, behavior: "smooth" }); // <-- Add this line
     }
   };
@@ -86,9 +86,9 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   const handleBack = () => {
     setActiveSection(null);
       if (category) {
-    navigate(`/academic-work/${category}`);
+    navigate(`/faculty/academic-work/${category}`);
   } else {
-    navigate("/academic-work");
+    navigate("/faculty/academic-work");
   }
   };
 

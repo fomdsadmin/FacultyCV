@@ -27,13 +27,13 @@ const Tabs = () => {
   const [activeTab, setActiveTab] = useState(CATEGORIES.PROFILE);
 
   useEffect(() => {
-    if (location.pathname === "/home") {
+    if (location.pathname === "/faculty/home") {
       setActiveTab(CATEGORIES.PROFILE);
-    } else if (location.pathname === "/home/affiliations") {
+    } else if (location.pathname === "/faculty/home/affiliations") {
       setActiveTab(CATEGORIES.AFFILIATIONS);
-    } else if (location.pathname === "/home/employment") {
+    } else if (location.pathname === "/faculty/home/employment") {
       setActiveTab(CATEGORIES.EMPLOYMENT);
-    } else if (location.pathname === "/home/education") {
+    } else if (location.pathname === "/faculty/home/education") {
       setActiveTab(CATEGORIES.EDUCATION);
     }
   }, [location.pathname]);
@@ -112,12 +112,9 @@ const Tabs = () => {
               )
               .map((title, innerIndex) => (
                 // send remaining sections to GenericSection
-                <AccordionItem key={index + "" + innerIndex} title={title}>
+                <AccordionItem key={title} title={title}>
                   <GenericSection
-                    key={innerIndex}
-                    section={
-                      academicSections.filter((s) => s.title === title)[0]
-                    }
+                    section={academicSections.filter((s) => s.title === title)[0]}
                     onBack={null}
                   />
                 </AccordionItem>
@@ -174,13 +171,13 @@ const Tabs = () => {
             onClick={() => {
               setActiveTab(title);
               if (title === CATEGORIES.PROFILE) {
-                navigate("/home");
+                navigate("/faculty/home");
               } else if (title === CATEGORIES.AFFILIATIONS) {
-                navigate("/home/affiliations");
+                navigate("/faculty/home/affiliations");
               } else if (title === CATEGORIES.EMPLOYMENT) {
-                navigate("/home/employment");
+                navigate("/faculty/home/employment");
               } else if (title === CATEGORIES.EDUCATION) {
-                navigate("/home/education");
+                navigate("/faculty/home/education");
               }
             }}
           >
