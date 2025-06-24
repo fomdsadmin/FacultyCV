@@ -218,7 +218,8 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
 
       {/* User Insights Section */}
       <div className="bg-white rounded-lg shadow w-full">
-        {user.role === "Faculty" && <DepartmentAdminUserInsights user={user} department={user.primary_department} />}
+        {(user.role === "Faculty" || user.role.startsWith("Admin-"))
+          && <DepartmentAdminUserInsights user={user} department={user.primary_department} />}
       </div>
     </div>
   );

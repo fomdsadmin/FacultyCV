@@ -7,21 +7,21 @@ import { useNavigate } from "react-router-dom";
 const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [showText, setShowText] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-      getCognitoUser();
-      navigate("/auth");
-    } catch (error) {
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
+  // const handleSignOut = async () => {
+  //   setIsSigningOut(true);
+  //   try {
+  //     await signOut();
+  //     getCognitoUser();
+  //     navigate("/auth");
+  //   } catch (error) {
+  //   } finally {
+  //     setIsSigningOut(false);
+  //   }
+  // };
 
   const handleToggle = () => {
     // toggleViewMode(); // Call the toggle function passed as a prop
@@ -95,7 +95,7 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             )}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === "/department-admin/sections" ? "bg-gray-200 rounded-lg" : ""}`}>
+        {/* <li className={`mb-2 ${location.pathname === "/department-admin/sections" ? "bg-gray-200 rounded-lg" : ""}`}>
           <Link to="/department-admin/sections">
             <FaFileAlt className="h-5 w-5" />
             {showText && !isCollapsed && (
@@ -104,21 +104,21 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
               </p>
             )}
           </Link>
-        </li>
-        <li
+        </li> */}
+        {/* <li
           className={`mb-6 ${
             location.pathname === "/department-admin/archived-sections" ? "bg-gray-200 rounded-lg" : ""
           }`}
         >
           <Link to="/department-admin/archived-sections">
-            <FaArchive className="h-5 w-5" /> {/* Changed to archive icon */}
+            <FaArchive className="h-5 w-5" /> 
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === "/department-admin/archived-sections" ? "font-bold" : ""}`}>
                 Archived Sections
               </p>
             )}
           </Link>
-        </li>
+        </li> */}
       </ul>
 
       {/* Toggle Button */}

@@ -15,21 +15,21 @@ import { signOut } from "aws-amplify/auth";
 const AdminMenu = ({ userName, getCognitoUser }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [showText, setShowText] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-      getCognitoUser();
-      navigate("/auth");
-    } catch (error) {
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
+  // const handleSignOut = async () => {
+  //   setIsSigningOut(true);
+  //   try {
+  //     await signOut();
+  //     getCognitoUser();
+  //     navigate("/auth");
+  //   } catch (error) {
+  //   } finally {
+  //     setIsSigningOut(false);
+  //   }
+  // };
 
   useEffect(() => {
     let timer;
