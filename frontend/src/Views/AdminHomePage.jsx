@@ -10,6 +10,7 @@ import BarChartComponent from '../Components/BarChart.jsx';
 
 const AdminHomePage = ({ getCognitoUser, userInfo}) => {
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState([]);
   const [facultyUsers, setFacultyUsers] = useState([]);
   const [assistantUsers, setAssistantUsers] = useState([]);
   const [adminUsers, setAdminUsers] = useState([]);
@@ -43,6 +44,7 @@ const AdminHomePage = ({ getCognitoUser, userInfo}) => {
     setLoading(true);
     try {
       const users = await getAllUsers();
+      setUsers(users);
       const filteredFacultyUsers = users.filter(user => user.role === 'Faculty');
       const filteredAssistantUsers = users.filter(user => user.role === 'Assistant');
       const filteredAdminUsers = users.filter(user => user.role === 'Admin');
@@ -336,7 +338,7 @@ const AdminHomePage = ({ getCognitoUser, userInfo}) => {
             <div className='m-4 max-w-3xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10'>
               {role === 'All' && (
                 <>
-                  <AnalyticsCard title="Total Users" value={facultyUsers.length + assistantUsers.length + adminUsers.length} />
+                  <AnalyticsCard title="Total Users" value={users.length} />
                   <AnalyticsCard title="Faculty Users" value={facultyUsers.length} />
                   <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
                   <AnalyticsCard title="Department Admin Users" value={departmentAdminUsers.length} />

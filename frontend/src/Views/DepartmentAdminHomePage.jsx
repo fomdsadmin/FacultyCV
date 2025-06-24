@@ -52,12 +52,12 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
       if (department === "All") {
         filteredFacultyUsers = users.filter(
           (user) =>
-            user.role === "Faculty" 
+            (user.role === "Faculty" || user.role.startsWith("Admin-")) 
         );
       } else {
         filteredFacultyUsers = users.filter(
           (user) =>
-            user.role === "Faculty" &&
+            (user.role === "Faculty" || user.role.startsWith("Admin-")) &&
             (user.primary_department === department || user.secondary_department === department)
         );
       }

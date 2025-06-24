@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "../../Contexts/AppContext";
 import { updateUser } from "../../graphql/graphqlHelpers";
 import { useFaculty } from "./FacultyContext";
+import { use } from "react";
 
 const SaveButton = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -9,10 +10,15 @@ const SaveButton = () => {
   const { userInfo, getUserInfo } = useApp();
   const { setPrevUserInfo, change } = useFaculty();
 
+  useEffect(() => {
+    getUserInfo(userInfo.email);
+  }, []);
+
   // Handle form submission
   const handleSubmit = async (event) => {
     if (event) event.preventDefault();
     setIsSubmitting(true);
+
     // for all values, if value not null, trim before sending to backend
     for (const key in userInfo) {
       if (userInfo[key] && typeof userInfo[key] === "string") {
@@ -20,10 +26,12 @@ const SaveButton = () => {
       }
     }
 
+    // Sanitize bio to prevent GraphQL syntax errors
+    const sanitizedBio = sanitizeInput(userInfo.bio);
+
     try {
       const cwlID = userInfo.cwl ? userInfo.cwl : "";
-        const vppID = userInfo.vpp ? userInfo.vpp : "";
-        console.log("Saving user with cwlID:", cwlID, "and vppID:", vppID);
+      const vppID = userInfo.vpp ? userInfo.vpp : "";
       await updateUser(
         userInfo.user_id,
         userInfo.first_name,
@@ -31,7 +39,7 @@ const SaveButton = () => {
         userInfo.preferred_name,
         userInfo.email,
         userInfo.role,
-        userInfo.bio,
+        sanitizedBio, // use sanitized bio here
         userInfo.rank,
         userInfo.institution,
         userInfo.primary_department,
@@ -59,6 +67,14 @@ const SaveButton = () => {
       setIsSubmitting(false);
     }
   };
+
+  function sanitizeInput(input) {
+    if (!input) return "";
+    return input
+      .replace(/\\/g, "\\\\")   // escape backslashes
+      .replace(/"/g, '\\"')     // escape double quotes
+      .replace(/\n/g, "\\n");   // escape newlines
+  }
 
   return (
     <button

@@ -31,7 +31,6 @@ def getPublicationMatches(scopus_id, page_number, results_per_page):
     response = requests.get(URL, headers=headers, params=query)
 
     rjson = response.json()
-    print(rjson)
     publications = []
     if 'search-results' not in rjson:
         print("Did not recieve any publications from API")

@@ -31,7 +31,6 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
       } else {
         filteredUsers = users.filter(
           (user) =>
-            user.email !== userInfo.email &&
             (user.primary_department === department ||
               user.secondary_department === department ||
               user.role === `Admin-${department}` ||
