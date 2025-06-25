@@ -179,9 +179,7 @@ const filterDateRanges = (sectionData, dataSectionId) => {
 
 const extractEndYearFromDateRange = (dateString) => {
     // Handle "Current" case
-    if (dateString.toLowerCase().includes('current') ||
-        dateString.toLowerCase().includes('present') ||
-        dateString.toLowerCase().includes('ongoing')) {
+    if (dateString.toLowerCase().includes('current')) {
         return new Date().getFullYear(); // Use current year
     }
 
@@ -217,8 +215,96 @@ const extractEndYearFromDateRange = (dateString) => {
     return null; // Couldn't extract year
 };
 
-const buildDataEntries = (preparedSection, dataSectionId) => {
+// Handle publication-specific logic (author name bolding, DOI links)
+const buildPublicationRowArray = (data, attributes, section) => {
+    const AUTHOR_NAMES = "Author Names";
+    const AUTHOR_IDS = "Author Ids";
+    const sectionAttributes = JSON.parse(section.attributes);
 
+    return attributes.map((attribute) => {
+        // Handle author names specially for publications
+        if (attribute === 'Author Names') {
+            const authorNames = data.data_details[sectionAttributes[AUTHOR_NAMES]];
+            const authorIds = data.data_details[sectionAttributes[AUTHOR_IDS]];
+            const indexOfThisAuthor = authorIds.indexOf(userInfo.scopus_id);
+
+            // Create individual textOptions for each author
+            const authorTextOptions = authorNames.map((authorName, index) =>
+                textOptions(authorName, index === indexOfThisAuthor, 9.5)
+            );
+
+            return {
+                textOptions: authorTextOptions,
+                color: null
+            };
+        }
+
+        // Handle DOI links
+        if (attribute === 'Doi') {
+            const doi = data.data_details[sectionAttributes[attribute]];
+            if (doi && doi.trim() !== '') {
+                const doiLink = `https://doi.org/${doi}`;
+                return {
+                    textOptions: [textOptions(doi, false, 9.5, doiLink)],
+                    color: null
+                };
+            }
+        }
+
+        // Regular attribute handling
+        const tabData = data.data_details[sectionAttributes[attribute]];
+        return {
+            textOptions: [textOptions(tabData, false, 9.5)],
+            color: null
+        };
+    });
+};
+
+// Handle regular sections (non-publication)
+const buildRegularRowArray = (data, attributes, section) => {
+    const sectionAttributes = JSON.parse(section.attributes);
+
+    return attributes.map((attribute) => {
+        const tabData = data.data_details[sectionAttributes[attribute]];
+        return {
+            textOptions: [textOptions(tabData, false, 9.5)],
+            color: null
+        };
+    });
+};
+
+// Add row number column to the beginning of row array
+const addRowNumberColumn = (rowArray, rowCount) => {
+    rowArray.unshift({
+        textOptions: [textOptions(String(rowCount + 1), false, 9.5)],
+        color: null
+    });
+    return rowArray;
+};
+
+// Generate column format based on merge and row number options
+const generateDataColumnFormat = (attributes, preparedSection) => {
+    if (!preparedSection.merge_visible_attributes) {
+        // Normal case: each attribute gets its own column
+        if (!preparedSection.include_row_number_column) {
+            return generateColumnFormatViaRatioArray(attributes.map(() => 1));
+        } else {
+            const ratioArray = attributes.map(() => rowNumberColumnRatio);
+            ratioArray.unshift(1);
+            return generateColumnFormatViaRatioArray(ratioArray);
+        }
+    } else {
+        // Merged case: only one column for all merged attributes
+        if (!preparedSection.include_row_number_column) {
+            return generateColumnFormatViaRatioArray([1]); // Single column
+        } else {
+            return generateColumnFormatViaRatioArray([1, 18]); // Row number + merged content
+        }
+    }
+};
+
+// Main buildDataEntries function - now much cleaner
+const buildDataEntries = (preparedSection, dataSectionId) => {
     const PUBLICATION_SECTION_ID = "1c23b9a0-b6b5-40b8-a4aa-f822d0567f09";
 
     const attributeGroups = preparedSection.attribute_groups;
@@ -238,80 +324,29 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     const latexTables = sectionData.map((data, rowCount) => {
         const section = allSections.find((section) => section.data_section_id === dataSectionId);
 
-        let rowArray = attributes.map((attribute) => {
-            // Handle author names specially for publications
-            if (section.data_section_id === PUBLICATION_SECTION_ID && attribute === 'Author Names') {
-                const AUTHOR_NAMES = "Author Names";
-                const AUTHOR_IDS = "Author Ids";
-                const sectionAttributes = JSON.parse(section.attributes);
-
-                const authorNames = data.data_details[sectionAttributes[AUTHOR_NAMES]];
-                const authorIds = data.data_details[sectionAttributes[AUTHOR_IDS]];
-
-                const indexOfThisAuthor = authorIds.indexOf(userInfo.scopus_id);
-
-                // Create individual textOptions for each author
-                const authorTextOptions = authorNames.map((authorName, index) =>
-                    textOptions(authorName, index === indexOfThisAuthor, 9.5)
-                );
-
-                return {
-                    textOptions: authorTextOptions, // Array of textOptions - textOptionsBuilder will join with commas
-                    color: null
-                };
-            }
-
-            // Handle DOI links
-            if (attribute === 'Doi') {
-                const doi = data.data_details[JSON.parse(section.attributes)[attribute]];
-                if (doi && doi.trim() !== '') {
-                    const doiLink = `https://doi.org/${doi}`;
-                    return {
-                        textOptions: [textOptions(doi, false, 9.5, doiLink)],
-                        color: null
-                    };
-                }
-            }
-
-            // Regular attribute handling
-            const tabData = data.data_details[JSON.parse(section.attributes)[attribute]];
-
-            return {
-                textOptions: [textOptions(tabData, false, 9.5)],
-                color: null
-            };
-        });
-
-        var dataColumnFormat;
-
-        if (!preparedSection.merge_visible_attributes) {
-            // Normal case: each attribute gets its own column
-            if (!preparedSection.include_row_number_column) {
-                dataColumnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1))
-            } else {
-                const ratioArray = attributes.map(() => rowNumberColumnRatio);
-                ratioArray.unshift(1);
-                dataColumnFormat = generateColumnFormatViaRatioArray(ratioArray);
-            }
+        // Build row array based on section type
+        let rowArray;
+        if (section.data_section_id === PUBLICATION_SECTION_ID) {
+            rowArray = buildPublicationRowArray(data, attributes, section);
         } else {
-            // Merged case: only one column for all merged attributes
-            if (!preparedSection.include_row_number_column) {
-                dataColumnFormat = generateColumnFormatViaRatioArray([1]); // Single column
-            } else {
-                dataColumnFormat = generateColumnFormatViaRatioArray([1, 18]); // Row number + merged content
-            }
+            rowArray = buildRegularRowArray(data, attributes, section);
         }
 
-        // Add row number as first cell if included
+        // Add row number column if needed
         if (preparedSection.include_row_number_column) {
-            rowArray.unshift({
-                textOptions: [textOptions(String(rowCount + 1), false, 9.5)],
-                color: null
-            });
+            rowArray = addRowNumberColumn(rowArray, rowCount);
         }
+
+        // Generate column format
+        const dataColumnFormat = generateDataColumnFormat(attributes, preparedSection);
 
         // Use cellRowBuilder with mergeCells option
-        return cellRowBuilder(rowArray, dataColumnFormat, preparedSection.merge_visible_attributes, !preparedSection.include_row_number_column);
+        return cellRowBuilder(
+            rowArray,
+            dataColumnFormat,
+            preparedSection.merge_visible_attributes,
+            !preparedSection.include_row_number_column
+        );
     });
 
     // Join all individual tables
