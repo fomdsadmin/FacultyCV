@@ -605,7 +605,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(middleName, false, 'footnotesize')],
+            textOptions: [textOptions(middleName || '', false, 'footnotesize')],
             color: null
         }
     ];

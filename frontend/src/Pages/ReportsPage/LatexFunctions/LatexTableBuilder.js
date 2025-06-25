@@ -70,6 +70,10 @@ export const cellRowBuilder = (cellOptions, columnFormat, mergeCells = false, in
 
         var latex = textOptionsBuilder(cellOption.textOptions);
 
+        if (latex.trim() === "") {
+            return "";
+        }
+
         if (cellOption.color) {
             const cellColor = '\\cellcolor{' + cellOption.color + '}';
             latex = cellColor + latex;
@@ -78,6 +82,7 @@ export const cellRowBuilder = (cellOptions, columnFormat, mergeCells = false, in
     });
 
     if (mergeCells) {
+            cellFormat = cellFormat.filter((text) => text.trim() !== "");
         if (includeFirstColumnInMerge) {
             // Merge all cells including the first column (row number)
             cellFormat = cellFormat.join(', ');
