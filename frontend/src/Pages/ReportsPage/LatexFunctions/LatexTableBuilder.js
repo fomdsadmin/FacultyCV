@@ -18,38 +18,78 @@ export const generateColumnFormatViaRatioArray = (ratioArray) => {
     return `|${columnFormat}|`;
 };
 
-export const cellOptionsBuilder = (text, bold, size, color) => {
+export const textOptions = (text, bold = false, size = 'small', link = null) => {
     return {
         text: text,
         bold: bold,
         size: size,
+        link: link
+    }
+}
+
+export const cellOptions = (textOptions, color = null) => {
+    return {
+        textOptions: textOptions,
         color: color
     }
 }
 
-export const cellRowBuilder = (cellFormatArray, columnFormat) => {
-    console.log(cellFormatArray)
-    const cellFormat = cellFormatArray.map((cellOptions) => {
-        console.log(cellOptions.text)
-        var latex = addBreaks(sanitizeLatex(cellOptions.text));
+const textOptionsBuilder = (textOptions) => {
+    const processedTexts = textOptions.map((textOption) => {
 
-        if (cellOptions.bold) {
+        if (!textOption.text || textOption.text === 'undefined' || textOption.text === 'null') {
+            return "";
+        }
+
+        let latex = addBreaks(sanitizeLatex(String(textOption.text)));
+
+        if (textOption.bold) {
             latex = String.raw`\textbf{${latex}}`
         }
 
-        if (cellOptions.size) {
-            console.log(cellOptions.size);
-            const textSize = '\\' + cellOptions.size + '{';
+        if (textOption.size) {
+            console.log(textOption.size);
+            const textSize = '\\' + textOption.size + '{';
             latex = textSize + latex + "}"
         }
 
-        if (cellOptions.color) {
-            const cellColor = '\\cellcolor{' + cellOptions.color + '}';
-            latex = cellColor + latex;
+        if (textOption.link) {
+            latex = String.raw`\href{${textOption.link}}{${latex}}`
         }
 
         return latex;
-    }).join(' & ');
+    }).filter((text) => text.trim() !== "");
+
+    return processedTexts.join(', ');
+}
+
+export const cellRowBuilder = (cellOptions, columnFormat, mergeCells = false, includeFirstColumnInMerge = false) => {
+    console.log(cellOptions)
+    let cellFormat = cellOptions.map((cellOption) => {
+        console.log(cellOption.text)
+
+        var latex = textOptionsBuilder(cellOption.textOptions);
+
+        if (cellOption.color) {
+            const cellColor = '\\cellcolor{' + cellOption.color + '}';
+            latex = cellColor + latex;
+        }
+        return latex;
+    });
+
+    if (mergeCells) {
+        if (includeFirstColumnInMerge) {
+            // Merge all cells including the first column (row number)
+            cellFormat = cellFormat.join(', ');
+        } else {
+            // Keep first column separate, merge the rest
+            const firstColumn = cellFormat[0];
+            const mergedRest = cellFormat.slice(1).join(', ');
+            cellFormat = firstColumn + ' & ' + mergedRest;
+        }
+    } else {
+        cellFormat = cellFormat.join(' & ');
+    }
 
     return String.raw`
     \begin{tabular}{${columnFormat}}

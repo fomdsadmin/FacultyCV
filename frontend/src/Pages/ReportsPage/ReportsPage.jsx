@@ -24,6 +24,7 @@ const ReportsPage = () => {
   const [downloadUrlDocx, setDownloadUrlDocx] = useState(null);
   const { setNotification } = useNotification();
   const [switchingTemplates, setSwitchingTemplates] = useState(false);
+  
 
   useEffect(() => {
     setUser(userInfo);
