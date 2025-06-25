@@ -10,10 +10,8 @@ import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext";
 const EditTemplatePage = ({ onBack }) => {
     const { activeTemplate } = useTemplatePageContext();
     const [title, setTitle] = useState(activeTemplate?.title || "")
-    const [groups, setGroups] = useState([]);
+    const [template, setTemplate] = useState({ groups: [], sort_ascending: null });
     const [loading, setLoading] = useState(true)
-    const [startYear, setStartYear] = useState(activeTemplate?.start_year || "")
-    const [endYear, setEndYear] = useState(activeTemplate?.end_year || "")
 
     useEffect(() => {
         if (activeTemplate) {
@@ -23,39 +21,36 @@ const EditTemplatePage = ({ onBack }) => {
 
     const initializeTemplate = async () => {
         if (!activeTemplate) return;
-        
+
         setLoading(true);
 
         try {
             // Parse the existing template structure
             const templateStructure = JSON.parse(activeTemplate.template_structure);
-            
+
+            const templateGroups = templateStructure.groups;
+
             // Get all sections to potentially add missing ones to hidden group
             const fetchedSections = await getAllSections();
             const sortedSections = fetchedSections.sort((a, b) => a.title.localeCompare(b.title));
 
-            // Check if there's already a hidden group
-            let hiddenGroup = templateStructure.find(group => group.id === HIDDEN_GROUP_ID);
-            
-            if (!hiddenGroup) {
-                // Create hidden group if it doesn't exist
-                hiddenGroup = {
-                    id: HIDDEN_GROUP_ID,
-                    title: HIDDEN_GROUP_ID,
-                    prepared_sections: []
-                };
-                templateStructure.push(hiddenGroup);
-            }
+            // Add back hidden group
+            const hiddenGroup = {
+                id: HIDDEN_GROUP_ID,
+                title: HIDDEN_GROUP_ID,
+                prepared_sections: []
+            };
+            templateStructure.groups.push(hiddenGroup);
 
             // Find sections that are not in any group and add them to hidden group
             const existingSectionIds = new Set();
-            templateStructure.forEach(group => {
+            templateGroups.forEach(group => {
                 group.prepared_sections?.forEach(section => {
                     existingSectionIds.add(section.data_section_id);
                 });
             });
 
-            const missingSections = sortedSections.filter(section => 
+            const missingSections = sortedSections.filter(section =>
                 !existingSectionIds.has(section.data_section_id)
             );
 
@@ -91,11 +86,17 @@ const EditTemplatePage = ({ onBack }) => {
                 });
             });
 
-            setGroups(templateStructure);
+            setTemplate({
+                sort_ascending: templateStructure.sort_ascending,
+                groups: templateGroups
+            });
         } catch (error) {
             console.error('Error parsing template structure:', error);
             toast.error("Failed to load template data.", { autoClose: 3000 });
-            setGroups([]);
+            setTemplate({
+                sort_ascending: true,
+                groups: []
+            });
         }
 
         setLoading(false);
@@ -109,6 +110,26 @@ const EditTemplatePage = ({ onBack }) => {
         );
     }
 
+    const setGroups = (newGroupsOrUpdater) => {
+        setTemplate(prevTemplate => {
+            // Check if newGroupsOrUpdater is a function
+            if (typeof newGroupsOrUpdater === 'function') {
+                // Call the function with the previous groups
+                const updatedGroups = newGroupsOrUpdater(prevTemplate.groups);
+                return {
+                    ...prevTemplate,
+                    groups: updatedGroups
+                };
+            } else {
+                // It's a direct value
+                return {
+                    ...prevTemplate,
+                    groups: newGroupsOrUpdater
+                };
+            }
+        });
+    };
+
     return (
         <div className="">
             <div className="flex justify-between items-center pt-4">
@@ -117,26 +138,22 @@ const EditTemplatePage = ({ onBack }) => {
                 </button>
                 <DeleteTemplateButton />
             </div>
-            
+
             <div className="mt-5 leading-tight mr-4 ml-4">
                 <h2 className="text-2xl font-bold mb-6">Edit Template</h2>
-                
+
                 {loading ? (
                     <div className="w-full h-full flex items-center justify-center">
                         <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
                     </div>
                 ) : (
                     <TemplateModifier
-                        groups={groups}
-                        setGroup={setGroups}
                         title={title}
                         setTitle={setTitle}
-                        endDate={endYear}
-                        setEndDate={setEndYear}
-                        startDate={startYear}
-                        setStartDate={setStartYear}
                         onBack={onBack}
                         templateId={activeTemplate.template_id}
+                        template={template}
+                        setTemplate={setTemplate}
                     />
                 )}
             </div>

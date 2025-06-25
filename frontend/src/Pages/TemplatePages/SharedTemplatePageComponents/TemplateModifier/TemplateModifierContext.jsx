@@ -18,16 +18,15 @@ export const useTemplateModifier = () => {
 }
 
 export const TemplateModifierProvider = ({
-    children,
-    groups,
-    setGroups,
-    title,
-    setTitle,
-    endDate,
-    setEndDate,
-    startDate,
-    onBack,
-    setStartDate }) => {
+  children,
+  groups,
+  setGroups,
+  sortAscending,
+  title,
+  setTitle,
+  onBack,
+  setSortAscending
+}) => {
 
   const getGroupIdContainingPreparedSectionId = (preparedSectionId) => {
     const group = groups.find(group =>
@@ -41,20 +40,18 @@ export const TemplateModifierProvider = ({
     HIDDEN_GROUP_ID,
     SHOWN_ATTRIBUTE_GROUP_ID,
     HIDDEN_ATTRIBUTE_GROUP_ID,
-    
+
     // State
     groups,
     setGroups,
     title,
     setTitle,
-    endDate,
-    setEndDate,
-    startDate,
-    setStartDate,
+    sortAscending,
+    setSortAscending,
 
     // onBack
     onBack,
-    
+
     // Helpers
     getGroupIdContainingPreparedSectionId
   }

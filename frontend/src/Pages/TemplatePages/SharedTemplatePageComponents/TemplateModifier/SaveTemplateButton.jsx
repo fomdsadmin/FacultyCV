@@ -6,14 +6,15 @@ import { toast } from "react-toastify"
 import { useTemplateModifier } from "./TemplateModifierContext"
 import { useTemplatePageContext } from "Pages/TemplatePages/TemplatesPage/TemplatePageContext"
 
-const SaveTemplateButton = ({templateId = null}) => {
+const SaveTemplateButton = ({ templateId = null }) => {
     const {
         title,
         startYear,
         endYear,
         groups,
         HIDDEN_GROUP_ID,
-        onBack
+        onBack,
+        sortAscending
     } = useTemplateModifier();
 
     const { fetchTemplates } = useTemplatePageContext();
@@ -31,7 +32,10 @@ const SaveTemplateButton = ({templateId = null}) => {
         console.log(HIDDEN_GROUP_ID)
 
         // Build template structure from groups data
-        const templateStructure = JSON.stringify(clean_groups)
+        const templateStructure = JSON.stringify({
+            sort_ascending: sortAscending,
+            groups: clean_groups
+        })
         console.log(clean_groups);
 
         setAddingTemplate(true)
