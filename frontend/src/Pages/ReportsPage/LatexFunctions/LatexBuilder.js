@@ -252,7 +252,7 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
 
                 // Create individual textOptions for each author
                 const authorTextOptions = authorNames.map((authorName, index) =>
-                    textOptions(authorName, index === indexOfThisAuthor, 'footnotesize')
+                    textOptions(authorName, index === indexOfThisAuthor, 9.5)
                 );
 
                 return {
@@ -267,7 +267,7 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
                 if (doi && doi.trim() !== '') {
                     const doiLink = `https://doi.org/${doi}`;
                     return {
-                        textOptions: [textOptions(doi, false, 'footnotesize', doiLink)],
+                        textOptions: [textOptions(doi, false, 9.5, doiLink)],
                         color: null
                     };
                 }
@@ -277,7 +277,7 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
             const tabData = data.data_details[JSON.parse(section.attributes)[attribute]];
 
             return {
-                textOptions: [textOptions(tabData, false, 'footnotesize')],
+                textOptions: [textOptions(tabData, false, 9.5)],
                 color: null
             };
         });
@@ -305,7 +305,7 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
         // Add row number as first cell if included
         if (preparedSection.include_row_number_column) {
             rowArray.unshift({
-                textOptions: [textOptions(String(rowCount + 1), false, 'footnotesize')],
+                textOptions: [textOptions(String(rowCount + 1), false, 9.5)],
                 color: null
             });
         }
@@ -327,7 +327,7 @@ const buildTableAttributeGroup = (attributeGroups) => {
 
         // Create the cell object in the format cellRowBuilder expects
         const cellObject = {
-            textOptions: [textOptions(title, true, 'small')], // text, bold=true, size='small'
+            textOptions: [textOptions(title, true, 11)], // text, bold=true, size='small'
             color: 'columnGray'
         };
 
@@ -462,6 +462,7 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
     template = templateWithEndStartDate;
     const allSectionIds = allSections.map((section) => section.data_section_id);
     const unparsedData = await getUserCVData(userInfo.user_id, allSectionIds);
+    sortAscending = JSON.parse(template.template_structure).sort_ascending;
 
     let latex = buildLatexHeader();
 
@@ -484,7 +485,6 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
 
     // Parse the template structure
     const parsedGroups = JSON.parse(template.template_structure).groups;
-    sortAscending = JSON.parse(template.template_structure).sort_ascending;
 
     // Process each group in the template
     for (const group of parsedGroups || []) {
@@ -550,7 +550,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(currentDate, false, 'footnotesize')], // text, bold=false, size='footnotesize'
+            textOptions: [textOptions(currentDate, false, 9.5)], // text, bold=false, size='footnotesize'
             color: null
         }
     ];
@@ -579,7 +579,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.last_name || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.last_name || '', false, 9.5)],
             color: null
         }
     ];
@@ -592,7 +592,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.first_name || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.first_name || '', false, 9.5)],
             color: null
         }
     ];
@@ -605,7 +605,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(middleName || '', false, 'footnotesize')],
+            textOptions: [textOptions(middleName || '', false, 9.5)],
             color: null
         }
     ];
@@ -618,7 +618,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.primary_department || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.primary_department || '', false, 9.5)],
             color: null
         }
     ];
@@ -627,11 +627,11 @@ const buildUserProfile = (userInfoParam) => {
     // Faculty section
     const facultyRowData = [
         {
-            textOptions: [textOptions('3. FACULTY:', true, null)],
+            textOptions: [textOptions('3. FACULTY:', true, 9.5)],
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.primary_faculty || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.primary_faculty || '', false, 9.5)],
             color: null
         }
     ];
@@ -640,11 +640,11 @@ const buildUserProfile = (userInfoParam) => {
     // Present rank row
     const rankRowData = [
         {
-            textOptions: [textOptions('4. PRESENT RANK:', true, null)],
+            textOptions: [textOptions('4. PRESENT RANK:', true, 9.5)],
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.rank || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.rank || '', false, 9.5)],
             color: null
         }
     ];
@@ -657,7 +657,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(rankSinceDate, false, 'footnotesize')],
+            textOptions: [textOptions(rankSinceDate, false, 9.5)],
             color: null
         }
     ];

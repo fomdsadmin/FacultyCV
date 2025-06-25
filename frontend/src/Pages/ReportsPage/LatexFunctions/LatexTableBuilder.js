@@ -18,7 +18,7 @@ export const generateColumnFormatViaRatioArray = (ratioArray) => {
     return `|${columnFormat}|`;
 };
 
-export const textOptions = (text, bold = false, size = 'small', link = null) => {
+export const textOptions = (text, bold = false, size = 9.5, link = null) => {
     return {
         text: text,
         bold: bold,
@@ -49,8 +49,7 @@ const textOptionsBuilder = (textOptions) => {
 
         if (textOption.size) {
             console.log(textOption.size);
-            const textSize = '\\' + textOption.size + '{';
-            latex = textSize + latex + "}"
+            latex = `\\fontsize{${textOption.size}}\\selectfont{${latex}}`;
         }
 
         if (textOption.link) {
