@@ -127,9 +127,9 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
       console.error("Error fetching data sections:", error);
     }
 
-    const publicationSectionId = dataSections.find((section) => section.title === "Publications")?.data_section_id;
+    const publicationSectionId = dataSections.find((section) => section.title.includes("Publications"))?.data_section_id;
     const secureFundingSectionId = dataSections.find(
-      (section) => section.title === "Research or Equivalent Grants"
+      (section) => section.title.includes("Research or Equivalent Grants and Contracts")
     )?.data_section_id;
     const patentSectionId = dataSections.find((section) => section.title === "Patents")?.data_section_id;
 
@@ -209,12 +209,29 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     facultyUsers.some((user) => user.user_id === publication.user_id)
   );
 
-  const filteredGrants = grants.filter((grant) => facultyUsers.some((user) => user.user_id === grant.user_id));
+  const filteredGrants =
+    department === "All"
+      ? grants
+      : grants.filter((grant) =>
+          facultyUsers.some((user) => user.user_id === grant.user_id)
+        );
 
   const filteredPatents = patents.filter((patent) => facultyUsers.some((user) => user.user_id === patent.user_id));
 
-  const totalGrantMoneyRaised = grantMoneyRaised
-    .reduce((total, grant) => total + grant.amount, 0)
+  // Filter the grantMoneyRaised array similar to how you filter grants
+  const filteredGrantMoney = department === "All" 
+    ? grantMoneyRaised
+    : grantMoneyRaised.filter((grant) => 
+        facultyUsers.some((user) => user.user_id === grant.user_id)
+      );
+
+  // Add safeguards to handle NaN values when calculating the total
+  const totalGrantMoneyRaised = filteredGrantMoney
+    .reduce((total, grant) => {
+      // Make sure amount is a valid number
+      const amount = Number(grant.amount);
+      return total + (isNaN(amount) ? 0 : amount);
+    }, 0)
     .toLocaleString("en-US", { style: "currency", currency: "USD" });
 
   const getGraphData = () => {
@@ -362,9 +379,9 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
   // Minimal graph container
   const GraphContainer = ({ title, children }) => (
-    <div className="bg-white rounded-lg shadow-sm p-5 mb-8 w-full">
-      <h2 className="text-base font-semibold text-zinc-700 mb-3">{title}</h2>
-      <div className="w-full overflow-x-auto">{children}</div>
+    <div className="bg-white rounded-lg shadow-sm p-6 mb-8 w-full h-full flex flex-col">
+      <h2 className="text-lg font-semibold text-zinc-700 mb-4">{title}</h2>
+      <div className="w-full flex-1 min-h-[300px]">{children}</div>
     </div>
   );
 
@@ -487,9 +504,17 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
           ) : (
             <>
               <SummaryCards />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <GraphContainer title="Users Joined Over Time">
-                  <BarChartComponent data={getGraphData()} dataKey="Users" xAxisKey="date" barColor="#ff8042" />
+                  <BarChartComponent 
+                    data={getGraphData()} 
+                    dataKey="Users" 
+                    xAxisKey="date" 
+                    barColor="#ff8042"
+                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                      minHeight={300}
+                      minWidth={500}
+                  />
                 </GraphContainer>
                 <GraphContainer title="Yearly Grant Funding">
                   <BarChartComponent
@@ -497,6 +522,8 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                     dataKey="GrantFunding"
                     xAxisKey="date"
                     barColor="#82ca9d"
+                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    minHeight={300}
                   />
                 </GraphContainer>
               </div>
@@ -559,13 +586,15 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                   </div>
                 </div>
               </div>
-              <div className="mt-6">
+              <div className="mt-6 mb-8">
                 <GraphContainer title="Yearly Publications (Last 5 Years)">
                   <BarChartComponent
                     data={getYearlyPublicationsGraphData()}
                     dataKey="Publications"
                     xAxisKey="year"
                     barColor="#8884d8"
+                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    minHeight={300}
                   />
                 </GraphContainer>
               </div>

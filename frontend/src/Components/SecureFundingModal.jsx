@@ -107,6 +107,7 @@ const SecureFundingModal = ({
     for (const data of selectedSecureFundingData) {
       data.year = data.dates.split("-")[0];
       delete data.dates;
+      data.type = "Grant"
       newBatchedData.push(data);
     }
 
@@ -118,7 +119,7 @@ const SecureFundingModal = ({
       let dataSections = [];
       dataSections = await getAllSections();
       const secureFundingSectionId = dataSections.find(
-        (section) => section.title === "Research or Equivalent Grants"
+        (section) => section.title.includes("Research or Equivalent Grants")
       )?.data_section_id;
 
       const payload = {
@@ -126,7 +127,6 @@ const SecureFundingModal = ({
           data_details_list: newBatchedData,
           user_id: user.user_id,
           data_section_id: secureFundingSectionId,
-          data_section_title: "Research or Equivalent Grants",
           editable: "false",
         },
       };
@@ -178,7 +178,8 @@ const SecureFundingModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <dialog
-        className={`modal ${modalHeightClass} max-h-4/5 relative bg-white rounded-xl shadow-xl max-w-4xl w-full p-0 overflow-y-auto`}
+        className={`modal ${modalHeightClass} max-h-4/5 relative bg-white 
+        rounded-xl shadow-xl max-w-4xl mx-4 w-full p-0 overflow-y-auto`}
         open
         style={{ margin: 0, padding: 0 }}
       >

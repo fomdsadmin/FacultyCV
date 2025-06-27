@@ -372,10 +372,10 @@ const AdminHomePage = ({ getCognitoUser, userInfo}) => {
                 </>
               )}
             </div>
-            <div className='h-[300px] w-[75%]'>
+            {/* <div className='h-[300px] w-[75%]'>
               <h2 className='text-left m-4 text-l font-bold text-zinc-600 pt-[8px] pb-[8px]'>Number of Users with time</h2>
               <LineGraph data={getGraphData()} />
-            </div>
+            </div> */}
           </div>
         )}
       </main>

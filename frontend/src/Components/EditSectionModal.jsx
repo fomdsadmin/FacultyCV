@@ -3,15 +3,11 @@ import "../CustomStyles/scrollbar.css";
 import "../CustomStyles/modal.css";
 import { editSectionDetails } from "../graphql/graphqlHelpers";
 
-const EditSectionModal = ({
-  setIsModalOpen,
-  section,
-  onBack,
-  getDataSections,
-}) => {
+const EditSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }) => {
   const [title, setTitle] = useState(section.title || "");
   const [type, setType] = useState(section.data_type || "");
   const [description, setDescription] = useState(section.description || "");
+  const [info, setInfo] = useState(section.info || "");
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState("");
 
@@ -23,12 +19,13 @@ const EditSectionModal = ({
     const data_type = type;
     setUpdating(true);
     try {
-      await editSectionDetails(
-        section.data_section_id,
+      console.log("Updating section with data:", {
         title,
         data_type,
         description,
-      );
+        info,
+      });
+      await editSectionDetails(section.data_section_id, title, data_type, description, info);
       await getDataSections();
       setIsModalOpen(false);
       onBack();
@@ -50,9 +47,7 @@ const EditSectionModal = ({
         >
           ✕
         </button>
-        <h2 className="text-lg font-semibold mb-4 mt-4 px-4 text-left">
-          Edit Section
-        </h2>
+        <h2 className="text-lg font-semibold mb-4 mt-4 px-4 text-left">Edit Section</h2>
         <div className="flex flex-col gap-4 px-4">
           <label className="font-medium text-sm">
             Title
@@ -75,10 +70,20 @@ const EditSectionModal = ({
             />
           </label>
           <label className="font-medium text-sm">
+            Information
+            <textarea
+              className="input input-bordered h-full w-full mt-1 py-1 text-md font-normal"
+              rows={2}
+              value={info}
+              onChange={(e) => setInfo(e.target.value)}
+              placeholder="Section Information"
+            />
+          </label>
+          <label className="font-medium text-sm">
             Description
             <textarea
               className="input input-bordered h-full w-full mt-1 py-1 text-md font-normal"
-              rows={3}
+              rows={5}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Section Description"
@@ -95,12 +100,7 @@ const EditSectionModal = ({
           >
             Cancel
           </button>
-          <button
-            type="button"
-            className="btn btn-primary text-white"
-            onClick={handleUpdate}
-            disabled={updating}
-          >
+          <button type="button" className="btn btn-primary text-white" onClick={handleUpdate} disabled={updating}>
             {updating ? "Updating..." : "Update Section"}
           </button>
         </div>

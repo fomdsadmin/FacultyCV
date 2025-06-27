@@ -236,7 +236,8 @@ const AttributeModal = ({
   };
 
   return (
-    <div className="w-full max-w-5xl items-center ml-6 bg-white rounded-lg px-4 relative">
+    <div className="w-full max-w-5xl items-center mx-6 bg-white rounded-lg px-4 relative 
+                    overflow-y-auto max-h-[80vh]">
       <button
         type="button"
         className="btn btn-md btn-circle btn-ghost absolute top-2 right-2 z-10"

@@ -1,15 +1,14 @@
-import React from 'react';
-import { useState } from 'react';
-import { FaArrowLeft, FaTrash } from 'react-icons/fa';
-import DeleteSectionModal from './DeleteSectionModal';
+import React from "react";
+import { useState } from "react";
+import { FaArrowLeft, FaTrash } from "react-icons/fa";
+import DeleteSectionModal from "./DeleteSectionModal";
 import EditSectionModal from "./EditSectionModal";
 import AttributeModal from "./AttributeModal.jsx";
 
-const ManageSection = ({ section, onBack, getDataSections}) => {
+const ManageSection = ({ section, onBack, getDataSections }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditSectionModalOpen, setIsEditSectionModalOpen] = useState(false);
-  const [isUpdateAttributeModalOpen, setIsUpdateAttributeModalOpen] =
-    useState(false);
+  const [isUpdateAttributeModalOpen, setIsUpdateAttributeModalOpen] = useState(false);
 
   const handleBack = () => {
     onBack();
@@ -27,16 +26,11 @@ const ManageSection = ({ section, onBack, getDataSections}) => {
     setIsUpdateAttributeModalOpen(true);
   };
 
-  const attributes =
-    typeof section.attributes === "string"
-      ? JSON.parse(section.attributes)
-      : section.attributes;
+  const attributes = typeof section.attributes === "string" ? JSON.parse(section.attributes) : section.attributes;
 
   // Try to get dropdown options if present (from section.attributes_types or similar)
   let attributesType =
-    typeof section.attributes_type === "string"
-      ? JSON.parse(section.attributes_type)
-      : section.attributes_type;
+    typeof section.attributes_type === "string" ? JSON.parse(section.attributes_type) : section.attributes_type;
   if (typeof attributesType === "string") {
     try {
       attributesType = JSON.parse(attributesType);
@@ -60,7 +54,8 @@ const ManageSection = ({ section, onBack, getDataSections}) => {
       <div className="m-4 flex items-center">
         <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
       </div>
-      <h2 className="m-4 text-left text-2xl text-zinc-600 flex">{section.data_type}</h2>
+      <h2 className="mx-4 mt-4 text-left text-2xl text-zinc-600 flex">{section.data_type}</h2>
+      <h2 className="mx-4 mb-4 mt-2 text-left text-xl text-zinc-600 flex">{section.info}</h2>
       <div className="m-4 flex text-lg text-zinc-700">{section.description}</div>
 
       <div className="m-4">
@@ -144,7 +139,10 @@ const ManageSection = ({ section, onBack, getDataSections}) => {
 
       {/* Attributes add/update modal */}
       {isUpdateAttributeModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center w-full justify-center mx-auto">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex 
+                        items-center w-full justify-center mx-auto"
+        >
           <AttributeModal
             setIsOpen={setIsUpdateAttributeModalOpen}
             onBack={onBack}

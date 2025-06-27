@@ -185,12 +185,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
     // Map author names, bold the one matching user's scopus_id
     const authorDisplay = authorList.map((name, idx) => {
-      if (
-        user.scopus_id &&
-        authorIds &&
-        authorIds[idx] &&
-        String(authorIds[idx]) === String(user.scopus_id)
-      ) {
+      if (user.scopus_id && authorIds && authorIds[idx] && String(authorIds[idx]) === String(user.scopus_id)) {
         return (
           <span key={idx} className="font-bold ">
             {name}
@@ -202,7 +197,6 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
     return (
       <div className="bg-white rounded-lg shadow p-4">
-        {console.log(details)}
         <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
         <p className="text-sm text-gray-700 mb-2">
           {details.display_date ? details.display_date.trim() + ", " : ""}
@@ -223,11 +217,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
         {authorList?.length > 0 && (
           <p className="text-sm text-gray-700 mb-1">
             <span className="font-semibold">Author Names:</span>{" "}
-            {authorDisplay.reduce((prev, curr, idx) => [
-              prev,
-              idx > 0 ? ", " : null,
-              curr,
-            ])}
+            {authorDisplay.reduce((prev, curr, idx) => [prev, idx > 0 ? ", " : null, curr])}
           </p>
         )}
 
@@ -259,8 +249,14 @@ const PublicationsSection = ({ user, section, onBack }) => {
         )}
 
         {details.publication_id && (
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-700 mb-1">
             <span className="font-semibold">Publication Id:</span> {details.publication_id}
+          </p>
+        )}
+
+        {details.publication_type && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Type:</span> {details.publication_type}
           </p>
         )}
       </div>
@@ -411,9 +407,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
                   onArchive={() => handleArchive(entry)}
                 />
               ) : (
-                <PermanentEntry
+                <GenericEntry
                   key={index}
-                  isArchived={false}
                   onEdit={() => handleEdit(entry)}
                   data_details={renderDataDetails(entry.data_details)}
                   onArchive={() => handleArchive(entry)}
@@ -448,7 +443,6 @@ const PublicationsSection = ({ user, section, onBack }) => {
                 onClose={handleCloseModal}
               />
             ))}
-          {console.log("Here")}
           {isModalOpen && selectedEntry && isNew && (
             <EntryModal
               isNew={true}
@@ -475,18 +469,15 @@ const PublicationsSection = ({ user, section, onBack }) => {
             //     onClose={handleCloseModal}
             //   />
             // ))} */}
-          <div className="">
-            {console.log("2")}
-            {retrievingData && (
-              <PublicationsModal
-                user={user}
-                section={section}
-                onClose={handleCloseModal}
-                setRetrievingData={setRetrievingData}
-                fetchData={fetchData}
-              />
-            )}
-          </div>
+          {retrievingData && (
+            <PublicationsModal
+              user={user}
+              section={section}
+              onClose={handleCloseModal}
+              setRetrievingData={setRetrievingData}
+              fetchData={fetchData}
+            />
+          )}
         </div>
       )}
       {/* Notification Toast */}

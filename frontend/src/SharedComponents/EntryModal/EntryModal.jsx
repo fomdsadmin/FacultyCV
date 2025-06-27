@@ -7,6 +7,7 @@ import ModalStylingWrapper from "../ModalStylingWrapper";
 import DateEntry, { validateDateFields } from "./DateEntry";
 import DropdownEntry from "./DropdownEntry";
 import TextEntry from "./TextEntry";
+import BooleanEntry from "./BooleanEntry";
 
 const EntryModal = ({
   isNew,
@@ -115,10 +116,36 @@ const EntryModal = ({
         }
       });
     }
+    
+    // Autofill boolean fields - map snake_case values to display name keys for checkboxes
+    if (attributesType.boolean && section.attributes) {
+      Object.entries(attributesType.boolean).forEach(([displayName]) => {
+        const snakeKey = 
+          section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
+        
+        // If the value exists with the snake_case key, map it to the display name for the checkbox
+        if (fields[snakeKey] !== undefined) {
+          setFormData((prev) => ({
+            ...prev,
+            [displayName]: !!fields[snakeKey], // Convert to true boolean
+          }));
+        }
+      });
+    }
+
   }, [fields]); // Added isNew to dependencies as it's used in parsing
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+
+    // Handle checkbox inputs differently than text inputs
+    if (type === 'checkbox') {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: checked,
+      }));
+      return;
+    }
 
     // Auto-fill both endDateMonth and endDateYear if "Current" or "None" is selected
     if (name === "endDateMonth" && (value === "Current" || value === "None")) {
@@ -171,6 +198,25 @@ const EntryModal = ({
       }
     }
 
+    // Validate Highlight field - if checked, ensure Highlight Notes is not empty
+    if (attributesType.boolean) {
+      const highlightAttr = Object.keys(attributesType.boolean).find(
+        attr => attr.toLowerCase() === "highlight"
+      );
+      
+      if (highlightAttr && formData[highlightAttr] === true) {
+        // Find the Highlight Notes field (case insensitive)
+        const highlightNotesKey = Object.keys(formData).find(
+          key => key.toLowerCase().includes("highlight") && key.toLowerCase().includes("note")
+        );
+        
+        if (!highlightNotesKey || !formData[highlightNotesKey] || formData[highlightNotesKey].trim() === "") {
+          setError("Please provide Highlight Notes when marking an entry as a Highlight.");
+          return;
+        }
+      }
+    }
+
     // --- Date fields saving ---
     // For "dates" field, construct the string as before
     let updatedFormData = { ...formData };
@@ -218,6 +264,24 @@ const EntryModal = ({
       });
     }
 
+    // Handle boolean fields - ensure they use snake_case keys and proper boolean values
+    if (attributesType.boolean) {
+      Object.entries(attributesType.boolean).forEach(([displayName]) => {
+        const snakeKey = 
+          section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
+        
+        // If the original key exists in formData, ensure it's saved with snake_case key
+        if (formData[displayName] !== undefined) {
+          updatedFormData[snakeKey] = !!formData[displayName]; // Convert to true boolean
+          
+          // Remove original key if different from snake_case key
+          if (displayName !== snakeKey) {
+            delete updatedFormData[displayName];
+          }
+        }
+      });
+    }
+
     // Only keep snake_case keys as defined in section.attributes
     const allowedKeys = section.attributes ? Object.values(section.attributes) : [];
     const filteredFormData = Object.fromEntries(
@@ -261,9 +325,9 @@ const EntryModal = ({
           >
             ✕
           </button>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 mt-4 w-full max-w-2xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 mt-4 w-full max-w-2xl">
             {/* Render fields in the desired order: date, dropdown, text */}
-            {["date", "dropdown", "text"].map((type) => {
+            {["date", "dropdown", "text", "boolean"].map((type) => {
               const attrsObj = attributesType && attributesType[type];
               if (!attrsObj) return null;
               if (type === "date") {
@@ -288,6 +352,15 @@ const EntryModal = ({
               } else if (type === "text") {
                 return (
                   <TextEntry
+                    attrsObj={attrsObj}
+                    attributes={section.attributes}
+                    formData={formData}
+                    handleChange={handleChange}
+                  />
+                );
+              } else if (type === "boolean") {
+                return (
+                  <BooleanEntry
                     attrsObj={attrsObj}
                     attributes={section.attributes}
                     formData={formData}

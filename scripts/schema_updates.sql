@@ -41,3 +41,6 @@ ADD COLUMN IF NOT EXISTS cwl TEXT;
 
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS vpp TEXT;
+
+ALTER TABLE data_sections
+ADD COLUMN IF NOT EXISTS info TEXT DEFAULT 'Summary of section description';
