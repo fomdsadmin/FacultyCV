@@ -104,10 +104,22 @@ const SecureFundingModal = ({
 
     // make a single batch
     const newBatchedData = [];
-    for (const data of selectedSecureFundingData) {
+    let fname, lname;
+    const tempData = [...selectedSecureFundingData];
+    for (const data of tempData) {
       data.year = data.dates.split("-")[0];
       delete data.dates;
       data.type = "Grant"
+      fname = data.first_name || "";
+      lname = data.last_name || "";
+      if (fname) {
+        data.principal_investigator = fname
+      }
+      if (lname) {
+        data.principal_investigator += ` ${lname}`;
+      }
+      delete data.first_name;
+      delete data.last_name;
       newBatchedData.push(data);
     }
 

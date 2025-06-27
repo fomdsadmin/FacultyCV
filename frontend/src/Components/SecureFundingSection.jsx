@@ -369,7 +369,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                     onClose={handleCloseModal}
                   />
                 ) : (
-                  <PermanentEntryModal
+                  // <PermanentEntryModal
+                  //   isNew={false}
+                  //   user={user}
+                  //   section={section}
+                  //   fields={selectedEntry.fields}
+                  //   user_cv_data_id={selectedEntry.data_id}
+                  //   entryType={section.title}
+                  //   fetchData={fetchData}
+                  //   onClose={handleCloseModal}
+                      // />
+                                        <EntryModal
                     isNew={false}
                     user={user}
                     section={section}
