@@ -283,12 +283,13 @@ export const UPDATE_SECTION = `
 `;
 
 export const EDIT_SECTION_DETAILS = `
-    mutation EditSectionDetails($data_section_id: String!, $title: String!, $data_type: String!, $description: String) {
+    mutation EditSectionDetails($data_section_id: String!, $title: String!, $data_type: String!, $description: String, $info: String) {
         editSectionDetails(
             data_section_id: $data_section_id
             title: $title
             data_type: $data_type
             description: $description
+            info: $info
         )
     }
 `;

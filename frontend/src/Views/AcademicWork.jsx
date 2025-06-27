@@ -308,12 +308,13 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                     id={section.data_section_id}
                     title={section.title}
                     category={section.data_type}
+                    info={section.info}
                   />
                 ))}
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar max-w-6xl w-full mx-auto">
-                {activeSection.title.includes("Publications") && (
+                {activeSection.title === "Publications" && (
                   <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {activeSection.title.includes("Patents") && (
@@ -322,15 +323,10 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                 {activeSection.title.includes("Research or Equivalent Grants") && (
                   <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
-                {/* {activeSection.title === "Invited Presentations" && (
-                  <InvitedPresentationSection
-                    user={userInfo}
-                    section={activeSection}
-                    onBack={handleBack}
-                  />
-                )} */}
-                {!["Publications", "Patents", "Research or Equivalent Grants"].some(keyword =>
-                  activeSection.title.includes(keyword)
+                {!(
+                  activeSection.title === "Publications" ||
+                  activeSection.title.includes("Patents") ||
+                  activeSection.title.includes("Research or Equivalent Grants")
                 ) && (
                   <GenericSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}

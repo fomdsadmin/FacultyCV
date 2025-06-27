@@ -49,7 +49,7 @@ const Dashboard = ({ userInfo }) => {
       const section2 = "Research or Equivalent Grants";
 
       const publicationSectionId = dataSections.find(section => section.title === section1)?.data_section_id;
-      const secureFundingSectionId = dataSections.find(section => section.title === section2)?.data_section_id;
+      const secureFundingSectionId = dataSections.find(section => section.title.includes(section2))?.data_section_id;
 
       const pubSectionId = publicationSectionId;
         

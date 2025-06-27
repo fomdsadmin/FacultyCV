@@ -38,8 +38,8 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
     setLoading(true);
     try {
       const sectionIds = {
-        Publications: dataSections.find((s) => s.title === "Publications")?.data_section_id,
-        Grants: dataSections.find((s) => s.title === "Research or Equivalent Grants")?.data_section_id,
+        Publications: dataSections.find((s) => s.title.includes("Publications"))?.data_section_id,
+        Grants: dataSections.find((s) => s.title.includes("Research or Equivalent Grants"))?.data_section_id,
         Patents: dataSections.find((s) => s.title === "Patents")?.data_section_id,
       };
 
@@ -152,6 +152,14 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
     );
   };
 
+  // Reusable graph container component
+  const GraphContainer = ({ title, children }) => (
+    <div className="bg-white rounded-lg shadow-sm p-6 mb-4 w-full h-full flex flex-col">
+      <h3 className="text-lg font-semibold text-zinc-700 mb-6">{title}</h3>
+      <div className="w-full flex-1 min-h-[350px]">{children}</div>
+    </div>
+  );
+
   return (
     <div className="py-8 px-12 bg-white rounded-lg shadow w-full">
       <h2 className="text-xl font-bold text-zinc-700 mb-6">User Analytics</h2>
@@ -163,29 +171,27 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
       {!loading && user && (
         <>
           <UserSummaryCards />
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-            <div className="bg-white rounded-lg shadow-sm p-5">
-              <h3 className="text-base font-semibold text-zinc-700 mb-8">Yearly Grant Funding</h3>
-              <div className="w-full min-h-[320px] flex items-center justify-center">
-                <BarChartComponent
-                  data={getGrantMoneyGraphData()}
-                  dataKey="Funding"
-                  xAxisKey="date"
-                  barColor="#82ca9d"
-                />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-5">
-              <h3 className="text-base font-semibold text-zinc-700 mb-8">Yearly Publications (Last 5 Years)</h3>
-              <div className="w-full min-h-[320px] flex items-center justify-center">
-                <BarChartComponent
-                  data={getYearlyPublicationsGraphData()}
-                  dataKey="Publications"
-                  xAxisKey="year"
-                  barColor="#8884d8"
-                />
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-4">
+            <GraphContainer title="Yearly Grant Funding">
+              <BarChartComponent
+                data={getGrantMoneyGraphData()}
+                dataKey="Funding"
+                xAxisKey="date"
+                barColor="#82ca9d"
+                margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                minHeight={350}
+              />
+            </GraphContainer>
+            <GraphContainer title="Yearly Publications (Last 5 Years)">
+              <BarChartComponent
+                data={getYearlyPublicationsGraphData()}
+                dataKey="Publications"
+                xAxisKey="year"
+                barColor="#8884d8"
+                margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                minHeight={350}
+              />
+            </GraphContainer>
           </div>
         </>
       )}

@@ -302,6 +302,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                     id={section.data_section_id}
                     title={section.title}
                     category={section.data_type}
+                    info={section.info}
                   />
                 ))}
               </div>

@@ -45,11 +45,13 @@ type User {
 type DataSection {
   data_section_id: String!
   title: String!
+  info: String!
   description: String!
   data_type: String
   attributes: AWSJSON! # JSON
   attributes_type: AWSJSON # JSON
   archive: Boolean
+
 }
 
 type Notification {
@@ -475,6 +477,7 @@ type Mutation {
     title: String!
     data_type: String!
     description: String
+    info: String
   ): String @aws_auth(cognito_groups: ["Admin"])
 
   addUserCVData(

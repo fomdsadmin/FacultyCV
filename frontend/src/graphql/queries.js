@@ -133,6 +133,7 @@ export const getAllSectionsQuery = () => `
             description
             title
             archive
+            info
         }
     }
 `;

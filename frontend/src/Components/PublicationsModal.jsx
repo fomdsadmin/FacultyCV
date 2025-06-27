@@ -463,6 +463,16 @@ const PublicationsModal = ({
         (section) => section.title === "Publications"
       )?.data_section_id;
 
+      // Add "Type: Journal" to each publication
+      publications = publications.map((pub) => {
+        return {
+          ...pub,
+          publication_type: "Journal", // Assuming all fetched publications are journal articles
+        }
+      });
+      console.log("Publications to be added:", publications);
+
+
       const payload = {
         arguments: {
           data_details_list: publications,

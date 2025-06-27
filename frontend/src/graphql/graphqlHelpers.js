@@ -1063,13 +1063,15 @@ export const editSectionDetails = async (
   data_section_id,
   title,
   data_type,
-  description
+  description,
+  info
 ) => {
   const results = await executeGraphql(EDIT_SECTION_DETAILS, {
     data_section_id,
     title,
     data_type,
     description,
+    info,
   });
   return results["data"]["editSectionDetails"];
 };
