@@ -93,7 +93,7 @@ const FacultyMenu = ({
                     location.pathname === "/faculty/home" ? "font-bold" : ""
                   }`}
                 >
-                  {userName}
+                  Home
                 </p>
               )}
             </Link>

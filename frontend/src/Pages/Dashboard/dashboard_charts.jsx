@@ -245,7 +245,7 @@ const Dashboard = ({ userInfo }) => {
     fitToWidth: true,
     layout: {
       padding: {
-        top: 10, // increase this to push the chart down
+        top: 10,
         right: 10,
         left: 10,
         bottom: 10,
@@ -253,6 +253,10 @@ const Dashboard = ({ userInfo }) => {
     },
     plugins: {
       datalabels: {
+        // Only display labels when hovering
+        display: function(context) {
+          return false; // Hide all datalabels by default
+        },
         color: "#333",
         anchor: "end",
         align: "top",
@@ -263,6 +267,25 @@ const Dashboard = ({ userInfo }) => {
           const label = context.dataset.label || "";
           return label.includes("Funding") ? formatCAD(value) : value;
         },
+      },
+      tooltip: {
+        enabled: true,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        titleColor: '#333',
+        bodyColor: '#333',
+        borderColor: '#ccc',
+        borderWidth: 1,
+        padding: 10,
+        displayColors: false,
+        callbacks: {
+          label: function(context) {
+            const label = context.dataset.label || '';
+            const value = context.parsed.y;
+            return label.includes("Funding") ? 
+              `${label}: ${formatCAD(value)}` : 
+              `${label}: ${value}`;
+          }
+        }
       },
       legend: {
         display: true,
