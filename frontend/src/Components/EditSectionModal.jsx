@@ -80,7 +80,7 @@ const EditSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }) 
             />
           </label>
           <label className="font-medium text-sm">
-            Description
+            Description ("/newline" or "\n" for new line, "\li" for list item)
             <textarea
               className="input input-bordered h-full w-full mt-1 py-1 text-md font-normal"
               rows={5}
