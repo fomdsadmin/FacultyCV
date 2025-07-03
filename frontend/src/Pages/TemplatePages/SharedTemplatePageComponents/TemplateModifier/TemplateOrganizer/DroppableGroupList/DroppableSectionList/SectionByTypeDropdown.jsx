@@ -46,7 +46,7 @@ const SectionByTypeDropdown = ({ preparedSection }) => {
     };
 
     return (
-        <div className="relative inline-block mt-2">
+        <div className="relative inline-block">
             {/* Hidden select for functionality */}
             <select
                 value={preparedSection.section_by_type || ""}
