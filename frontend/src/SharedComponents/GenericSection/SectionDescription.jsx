@@ -13,7 +13,7 @@ const SectionDescription = () => {
     const formattedDescription = section.description
         ? section.description
             .trim()
-            .replace(/\/newline|\n/g, "<br>")
+            .replace(/\/newline|\\n|\r\n|\r|\n/g, "<br>")
             .replace(/\\li\s*/g, "• ")  // Convert \li to bullet points
         : "";
 
