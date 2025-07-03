@@ -9,9 +9,12 @@ const SectionDescription = () => {
     const [needsExpansion, setNeedsExpansion] = useState(false);
     const textRef = useRef(null);
 
-    // Support both \newline and real newlines
+    // Simpler formattedDescription processing:
     const formattedDescription = section.description
-        ? section.description.trim().replace(/\/newline|\n/g, "<br>")
+        ? section.description
+            .trim()
+            .replace(/\/newline|\n/g, "<br>")
+            .replace(/\\li\s*/g, "• ")  // Convert \li to bullet points
         : "";
 
     useEffect(() => {
