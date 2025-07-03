@@ -5,11 +5,7 @@ import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import PermanentEntryModal from "./PermanentEntryModal";
 import PublicationsModal from "./PublicationsModal";
 import { FaArrowLeft } from "react-icons/fa";
-import {
-  getUserCVData,
-  updateUserCVDataArchive,
-  deleteUserCVSectionData,
-} from "../graphql/graphqlHelpers";
+import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import { LuBrainCircuit } from "react-icons/lu";
 
@@ -38,10 +34,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
   const [sortDescending, setSortDescending] = useState(true);
 
   const totalPages = Math.ceil(fieldData.length / pageSize);
-  const paginatedData = fieldData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -109,10 +102,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
   async function fetchData() {
     try {
-      const retrievedData = await getUserCVData(
-        user.user_id,
-        section.data_section_id
-      );
+      const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
       const parsedData = retrievedData.map((data) => ({
         ...data,
         data_details: JSON.parse(data.data_details),
@@ -121,12 +111,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
       const filteredData = parsedData.filter((entry) => {
         const [field1, field2] = rankFields(entry.data_details);
         return (
-          (field1 &&
-            typeof field1 === "string" &&
-            field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 &&
-            typeof field2 === "string" &&
-            field2.toLowerCase().includes(searchTerm.toLowerCase()))
+          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
 
@@ -164,20 +150,11 @@ const PublicationsSection = ({ user, section, onBack }) => {
     onBack();
   };
 
-  const GenericEntry = ({
-    field1,
-    field2,
-    data_details,
-    onEdit,
-    onArchive,
-  }) => (
+  const GenericEntry = ({ field1, field2, data_details, onEdit, onArchive }) => (
     <div className="entry">
       <h2>{field1}</h2>
       <div className="m-2 flex">
-        <button
-          onClick={onArchive}
-          className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight"
-        >
+        <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
           X
         </button>
       </div>
@@ -185,21 +162,11 @@ const PublicationsSection = ({ user, section, onBack }) => {
       <div>{data_details}</div>
     </div>
   );
-  const PermanentEntry = ({
-    field1,
-    field2,
-    data_details,
-    isArchived,
-    onEdit,
-    onArchive,
-  }) => (
+  const PermanentEntry = ({ field1, field2, data_details, isArchived, onEdit, onArchive }) => (
     <div className={`entry ${isArchived ? "archived" : ""}`}>
       <h2>{field1}</h2>
       <div className="m-2 flex">
-        <button
-          onClick={onArchive}
-          className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight"
-        >
+        <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
           X
         </button>
       </div>
@@ -212,26 +179,45 @@ const PublicationsSection = ({ user, section, onBack }) => {
     // console.log(details);
     if (!details || typeof details !== "object") return null;
 
-    const authorList = Array.isArray(details.author_names)
-      ? details.author_names
-      : [details.author_names];
+    const authorList = Array.isArray(details.author_names) ? details.author_names : [details.author_names];
+    const authorIds = Array.isArray(details.author_ids) ? details.author_ids : [details.author_ids];
+    const keywordsList = Array.isArray(details.keywords) ? details.keywords : [details.keywords];
 
-    const keywordsList = Array.isArray(details.keywords)
-      ? details.keywords
-      : [details.keywords];
+    // Map author names, bold the one matching user's scopus_id
+    const authorDisplay = authorList.map((name, idx) => {
+      if (user.scopus_id && authorIds && authorIds[idx] && String(authorIds[idx]) === String(user.scopus_id)) {
+        return (
+          <span key={idx} className="font-bold ">
+            {name}
+          </span>
+        );
+      }
+      return <span key={idx}>{name}</span>;
+    });
 
     return (
       <div className="bg-white rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
         <p className="text-sm text-gray-700 mb-2">
-          <span className="font-semibold">Year: </span>
-          {details.year_published}
+          {details.display_date ? details.display_date.trim() + ", " : ""}
+          {details.volume && (
+            <>
+              <span className="font-normal">Volume: </span>
+              {`${details.volume}`}
+            </>
+          )}
+          {details.article_number && (
+            <>
+              <span className="font-normal">, Article Number: </span>
+              {details.article_number}
+            </>
+          )}
         </p>
 
         {authorList?.length > 0 && (
           <p className="text-sm text-gray-700 mb-1">
             <span className="font-semibold">Author Names:</span>{" "}
-            {authorList.join(", ")}
+            {authorDisplay.reduce((prev, curr, idx) => [prev, idx > 0 ? ", " : null, curr])}
           </p>
         )}
 
@@ -243,8 +229,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
         {keywordsList?.length > 0 && (
           <p className="text-sm text-gray-700 mb-1">
-            <span className="font-semibold">Keywords:</span>{" "}
-            {keywordsList.join(", ")}
+            <span className="font-semibold">Keywords:</span> {keywordsList.join(", ")}
           </p>
         )}
 
@@ -257,44 +242,37 @@ const PublicationsSection = ({ user, section, onBack }) => {
         {details.link && (
           <p className="text-sm text-gray-700 mb-1">
             <span className="font-semibold">Link:</span>{" "}
-            <a
-              href={details.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
+            <a href={details.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
               {details.link}
             </a>
           </p>
         )}
 
         {details.publication_id && (
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold">Publication Id:</span>{" "}
-            {details.publication_id}
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Publication Id:</span> {details.publication_id}
+          </p>
+        )}
+
+        {details.publication_type && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Type:</span> {details.publication_type}
           </p>
         )}
       </div>
     );
   };
 
-  const sortedData = sortDescending
-    ? paginatedData
-    : [...paginatedData].reverse();
+  const sortedData = sortDescending ? paginatedData : [...paginatedData].reverse();
 
   return (
     <div>
       <div>
-        <button
-          onClick={handleBack}
-          className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5"
-        >
+        <button onClick={handleBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5">
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
         <div className="mt-4 mx-4 flex">
-          <h2 className="text-left text-4xl font-bold text-zinc-600">
-            {section.title}
-          </h2>
+          <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
           <button
             onClick={handleNew}
             className="ml-auto text-white btn btn-success min-h-0 h-8 leading-tight"
@@ -348,13 +326,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
       <div className="m-4 p-4 rounded-2xl border border-gray-300 shadow-sm bg-white flex flex-wrap justify-between items-center">
         {/* Left controls */}
         <div className="flex items-center gap-3">
-          <svg
-            className="w-6 h-6 text-blue-600"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -362,10 +334,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
             />
           </svg>
           <span className="text-lg font-medium text-gray-700">
-            Total Publications:{" "}
-            <span className="font-semibold text-blue-600">
-              {fieldData.length}
-            </span>
+            Total Publications: <span className="font-semibold text-blue-600">{fieldData.length}</span>
           </span>
         </div>
         {/* Right controls */}
@@ -380,32 +349,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
           >
             <span className="mr-1 text-sm">Year</span>
             {sortDescending ? (
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 15l7-7 7 7"
-                />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
               </svg>
             ) : (
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 9l-7 7-7-7"
-                />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             )}
           </button>
@@ -434,9 +383,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </span>
           <button
             className="btn btn-outline btn-sm"
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
           >
             Next
@@ -460,9 +407,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
                   onArchive={() => handleArchive(entry)}
                 />
               ) : (
-                <PermanentEntry
+                <GenericEntry
                   key={index}
-                  isArchived={false}
                   onEdit={() => handleEdit(entry)}
                   data_details={renderDataDetails(entry.data_details)}
                   onArchive={() => handleArchive(entry)}
@@ -497,7 +443,6 @@ const PublicationsSection = ({ user, section, onBack }) => {
                 onClose={handleCloseModal}
               />
             ))}
-          {console.log("Here")}
           {isModalOpen && selectedEntry && isNew && (
             <EntryModal
               isNew={true}
@@ -524,18 +469,15 @@ const PublicationsSection = ({ user, section, onBack }) => {
             //     onClose={handleCloseModal}
             //   />
             // ))} */}
-          <div className="">
-            {console.log("2")}
-            {retrievingData && (
-              <PublicationsModal
-                user={user}
-                section={section}
-                onClose={handleCloseModal}
-                setRetrievingData={setRetrievingData}
-                fetchData={fetchData}
-              />
-            )}
-          </div>
+          {retrievingData && (
+            <PublicationsModal
+              user={user}
+              section={section}
+              onClose={handleCloseModal}
+              setRetrievingData={setRetrievingData}
+              fetchData={fetchData}
+            />
+          )}
         </div>
       )}
       {/* Notification Toast */}

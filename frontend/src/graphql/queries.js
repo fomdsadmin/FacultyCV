@@ -32,6 +32,8 @@ export const getUserQuery = `
             scopus_id
             orcid_id
             joined_timestamp   
+            cwl
+            vpp
         }
     }
 `;
@@ -131,6 +133,7 @@ export const getAllSectionsQuery = () => `
             description
             title
             archive
+            info
         }
     }
 `;

@@ -13,8 +13,8 @@ def editSectionDetails(arguments):
     print("Connected to Database")
     cursor = connection.cursor()
 
-    cursor.execute("UPDATE data_sections SET title = %s, data_type = %s, description = %s WHERE data_section_id = %s", 
-                  (arguments['title'], arguments['data_type'], arguments['description'], arguments['data_section_id']))
+    cursor.execute("UPDATE data_sections SET title = %s, data_type = %s, description = %s, info = %s WHERE data_section_id = %s", 
+                  (arguments['title'], arguments['data_type'], arguments['description'], arguments['info'], arguments['data_section_id']))
                   
     cursor.close()
     connection.commit()

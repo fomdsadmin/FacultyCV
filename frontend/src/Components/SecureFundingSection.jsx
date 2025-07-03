@@ -200,7 +200,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
         <div className="m-4 flex">
-          <h2 className="text-left text-4xl font-bold text-zinc-600">
+          <h2 className="text-left text-4xl font-bold text-zinc-600 pr-8">
             {section.title}
           </h2>
           <button
@@ -313,14 +313,15 @@ const SecureFundingSection = ({ user, section, onBack }) => {
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-center w-full relative mx-auto">
-            <div>
+          <div className="flex items-center justify-center w-full max-w-7xl relative mx-auto">
+            <div className="w-full max-w-7xl">
               {paginatedData.length > 0 ? (
                 paginatedData.map((entry, index) => {
                   // Omit the "agency" field and add "sponsor" field for view (PermanentEntry)
                   const { agency, ...filteredDetails } = entry.data_details;
 
                   return entry.editable ? (
+                    <div className="w-full">
                     <GenericEntry
                       key={index}
                       onEdit={() => handleEdit(entry)}
@@ -328,17 +329,26 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                       field2={entry.field2}
                       data_details={entry.data_details} // For edit, just omit agency
                       onArchive={() => handleArchive(entry)}
-                    />
+                      />
+                      </div>
                   ) : (
-                    <PermanentEntry
-                      isArchived={false}
+                      <GenericEntry
                       key={index}
                       onEdit={() => handleEdit(entry)}
                       field1={entry.field1}
                       field2={entry.field2}
-                      data_details={entry.data_details} // For view, omit agency and add sponsor
+                      data_details={entry.data_details} // For edit, just omit agency
                       onArchive={() => handleArchive(entry)}
                     />
+                    // <PermanentEntry
+                    //   isArchived={false}
+                    //   key={index}
+                    //   onEdit={() => handleEdit(entry)}
+                    //   field1={entry.field1}
+                    //   field2={entry.field2}
+                    //   data_details={entry.data_details} // For view, omit agency and add sponsor
+                    //   onArchive={() => handleArchive(entry)}
+                    // />
                   );
                 })
               ) : (
@@ -359,7 +369,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                     onClose={handleCloseModal}
                   />
                 ) : (
-                  <PermanentEntryModal
+                  // <PermanentEntryModal
+                  //   isNew={false}
+                  //   user={user}
+                  //   section={section}
+                  //   fields={selectedEntry.fields}
+                  //   user_cv_data_id={selectedEntry.data_id}
+                  //   entryType={section.title}
+                  //   fetchData={fetchData}
+                  //   onClose={handleCloseModal}
+                      // />
+                                        <EntryModal
                     isNew={false}
                     user={user}
                     section={section}

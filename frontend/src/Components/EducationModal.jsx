@@ -21,6 +21,7 @@ const EducationModal = ({ user, section, onClose, setRetrievingData, fetchData }
       const response = await getOrcidSections(user.orcid_id, "education");
 
       if (response?.other_data) {
+
         const otherData =
           typeof response.other_data === "string" ? JSON.parse(response.other_data) : response.other_data;
 
@@ -54,9 +55,10 @@ const EducationModal = ({ user, section, onClose, setRetrievingData, fetchData }
           const dataObject = {
             "university/organization": education["organization_name"] || "",
             degree: education["role_title"] || "",
-            subject_area: "",
-            dates: dates,
+            // subject_area: "",
+            end_year: education["end_year"] || "",
           };
+          console.log("Data Object:", dataObject);
 
           // Create escaped JSON string
           return dataObject;

@@ -59,7 +59,9 @@ def lambda_handler(event, context):
     columns.append(createColumn('institution_user_id', 'varchar', '', False))
     columns.append(createColumn('scopus_id', 'varchar', '', False))
     columns.append(createColumn('orcid_id', 'varchar', '', False))
-    columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', True))  # Add this line
+    columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', False))  
+    columns.append(createColumn('cwl', 'TEXT', '', False))  # Add this line
+    columns.append(createColumn('vpp', 'TEXT', '', True))  # Add this
     query = createQuery('users', columns)
     cursor.execute(query)
 
@@ -71,7 +73,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('data_type', 'varchar', '', False))
     columns.append(createColumn('attributes', 'JSON', '', False))
     columns.append(createColumn('archive', 'boolean', 'DEFAULT false', False))
-    columns.append(createColumn('attributes_types', 'JSON', '', True)) # Add this line
+    columns.append(createColumn('attributes_types', 'JSON', '', False)) # Add this line
+    columns.append(createColumn('info', 'TEXT', '', True)) # Add this line
     query = createQuery('data_sections', columns)
     cursor.execute(query)
 

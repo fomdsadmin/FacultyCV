@@ -238,6 +238,8 @@ export const updateUserMutation = (
     institution_user_id,
     scopus_id,
     orcid_id,
+    cwl,
+    vpp,
     cognito_user_id
 ) => `
     mutation UpdateUser {
@@ -261,6 +263,8 @@ export const updateUserMutation = (
             institution_user_id: "${institution_user_id}"
             scopus_id: "${scopus_id}"
             orcid_id: "${orcid_id}"
+            cwl: "${cwl}"
+            vpp: "${vpp}"
             user_id: "${user_id}"
             cognito_user_id: "${cognito_user_id}"
         )
@@ -279,12 +283,13 @@ export const UPDATE_SECTION = `
 `;
 
 export const EDIT_SECTION_DETAILS = `
-    mutation EditSectionDetails($data_section_id: String!, $title: String!, $data_type: String!, $description: String) {
+    mutation EditSectionDetails($data_section_id: String!, $title: String!, $data_type: String!, $description: String, $info: String) {
         editSectionDetails(
             data_section_id: $data_section_id
             title: $title
             data_type: $data_type
             description: $description
+            info: $info
         )
     }
 `;

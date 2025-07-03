@@ -28,10 +28,19 @@ CREATE TABLE audit_view (
 );
 
 ALTER TABLE rise_data
-ADD COLUMN sponsor TEXT;
+ADD COLUMN IF NOT EXISTS sponsor TEXT;
 
 ALTER TABLE templates 
 RENAME data_section_ids TO template_structure;
 
 ALTER TABLE data_sections
-ADD COLUMN attributes_type JSON;
+ADD COLUMN IF NOT EXISTS attributes_type JSON;
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS cwl TEXT;
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS vpp TEXT;
+
+ALTER TABLE data_sections
+ADD COLUMN IF NOT EXISTS info TEXT DEFAULT 'Summary of section description';

@@ -12,6 +12,85 @@ import { getAllSections } from "../graphql/graphqlHelpers.js";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 
+// Natural sort function for titles/categories with leading numbers
+function naturalSort(a, b) {
+  const numA = parseInt(a, 10);
+  const numB = parseInt(b, 10);
+  const hasNumA = !isNaN(numA);
+  const hasNumB = !isNaN(numB);
+
+  if (hasNumA && hasNumB) {
+    if (numA !== numB) return numA - numB;
+    return a.localeCompare(b, undefined, { sensitivity: "base" });
+  }
+  if (hasNumA) return -1;
+  if (hasNumB) return 1;
+  return a.localeCompare(b, undefined, { sensitivity: "base" });
+}
+
+function parseSectionTitle(title) {
+  // Match: 8a., 8b.1., 8[f-i]., 8., etc.
+  // Groups: [number][letter][subnumber][bracket]
+  const match = title.match(/^(\d+)([a-z])?(?:\.([0-9]+))?(?:\[(.*?)\])?/i);
+  let num = match ? parseInt(match[1], 10) : null;
+  let letter = match && match[2] ? match[2] : "";
+  let subnum = match && match[3] ? parseInt(match[3], 10) : null;
+  let bracket = match && match[4] ? match[4] : "";
+
+  // If bracket, get the start letter (e.g. 'f' from 'f-i')
+  let letterIndex = "";
+  if (bracket) {
+    letterIndex = bracket.split("-")[0].trim();
+  }
+
+  return { num, letter, subnum, bracket, letterIndex, raw: title };
+}
+
+function sectionTitleSort(a, b) {
+  const A = parseSectionTitle(a.title);
+  const B = parseSectionTitle(b.title);
+
+  // 1. Sort by number
+  if (A.num !== null && B.num !== null) {
+    if (A.num !== B.num) return A.num - B.num;
+
+    // 2. If both have brackets, sort by start letter
+    if (A.bracket && B.bracket) {
+      return A.letterIndex.localeCompare(B.letterIndex);
+    }
+
+    // 3. If one has bracket and the other is a single letter
+    if (A.bracket && B.letter) {
+      // If B.letter is in A.bracket range, bracket comes first
+      const [start, end] = A.bracket.split("-").map((s) => s.trim());
+      if (B.letter >= start && (!end || B.letter <= end)) return -1;
+      // Otherwise, sort by letter
+      return A.letterIndex.localeCompare(B.letter);
+    }
+    if (A.letter && B.bracket) {
+      const [start, end] = B.bracket.split("-").map((s) => s.trim());
+      if (A.letter >= start && (!end || A.letter <= end)) return 1;
+      return A.letter.localeCompare(B.letterIndex);
+    }
+
+    // 4. If both are single letters, sort alphabetically
+    if (A.letter && B.letter) {
+      if (A.letter !== B.letter) return A.letter.localeCompare(B.letter);
+    }
+
+    // 5. Subnumber
+    if ((A.subnum || 0) !== (B.subnum || 0)) return (A.subnum || 0) - (B.subnum || 0);
+
+    // 6. Fallback
+    return A.raw.localeCompare(B.raw, undefined, { sensitivity: "base" });
+  }
+
+  // Numbered comes before non-numbered
+  if (A.num !== null) return -1;
+  if (B.num !== null) return 1;
+  return A.raw.localeCompare(B.raw, undefined, { sensitivity: "base" });
+}
+
 const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState(null);
@@ -29,7 +108,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   // Open section if URL param is present
   useEffect(() => {
     if (title && dataSections.length > 0) {
-      const found = dataSections.find((s) => s.title.replace(/\s+/g, "-").toLowerCase() === title);
+      const found = dataSections.find((s) => slugify(s.title) === title);
       if (found) setActiveSection(found);
     }
   }, [title, dataSections]);
@@ -39,10 +118,10 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
     setActiveTab(selectedCategory);
     setActiveSection(null);
     if (!selectedCategory) {
-      navigate("/academic-work");
+      navigate("/faculty/academic-work");
     } else {
-      const categorySlug = selectedCategory.replace(/\s+/g, "-").toLowerCase();
-      navigate(`/academic-work/${categorySlug}`);
+      const categorySlug = slugify(selectedCategory);
+      navigate(`/faculty/academic-work/${categorySlug}`);
     }
   };
 
@@ -52,15 +131,17 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
       ...section,
       attributes: JSON.parse(section.attributes),
     }));
-    parsedSections.sort((a, b) => a.title.localeCompare(b.title));
 
-    // Don't filter out service sections here!
+    // Sort sections by title using natural sort
+    parsedSections.sort((a, b) => naturalSort(a.title, b.title));
+
+    // Filter out unwanted sections
     setDataSections(
       parsedSections.filter(
         (section) =>
-          section.data_type !== "Education and Career" &&
-          section.data_type !== "Leaves of Absence" &&
-          section.data_type !== "Employment"
+          !section.data_type.includes("Education and Career") &&
+          !section.data_type.includes("Leaves of Absence") &&
+          !section.data_type.includes("Employment")
       )
     );
     setLoading(false);
@@ -72,24 +153,24 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
 
   // When user clicks a section, update the URL
   const handleManageClick = (value) => {
-    const section = dataSections.filter((section) => section.data_section_id == value);
-    setActiveSection(section[0]);
-    if (section[0]) {
-      const category = section[0].data_type.replace(/\s+/g, "-").toLowerCase();
-      const title = section[0].title.replace(/\s+/g, "-").toLowerCase();
-      navigate(`/academic-work/${category}/${title}`);
-      window.scrollTo({ top: 0, behavior: "smooth" }); // <-- Add this line
+    const section = dataSections.find((section) => section.data_section_id == value);
+    setActiveSection(section);
+    if (section) {
+      const categorySlug = slugify(section.data_type);
+      const titleSlug = slugify(section.title);
+      navigate(`/faculty/academic-work/${categorySlug}/${titleSlug}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   // When user clicks back, return to /academic-work/category
   const handleBack = () => {
     setActiveSection(null);
-      if (category) {
-    navigate(`/academic-work/${category}`);
-  } else {
-    navigate("/academic-work");
-  }
+    if (category) {
+      navigate(`/faculty/academic-work/${category}`);
+    } else {
+      navigate("/faculty/academic-work");
+    }
   };
 
   const filters = Array.from(new Set(dataSections.map((section) => section.data_type)));
@@ -101,9 +182,10 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   const searchedSections = dataSections.filter((entry) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
+    const search = searchTerm.toLowerCase();
     const matchesSearch =
-      section.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-      category.toLowerCase().startsWith(searchTerm.toLowerCase());
+      section.toLowerCase().includes(search) ||
+      category.toLowerCase().includes(search);
     const matchesFilter = !activeTab || category === activeTab;
     return matchesSearch && matchesFilter;
   });
@@ -112,7 +194,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   useEffect(() => {
     if (category) {
       // Find the original category name from slug
-      const matched = filters.find((f) => f.replace(/\s+/g, "-").toLowerCase() === category);
+      const matched = filters.find((f) => slugify(f) === category);
       setActiveTab(matched || null);
     } else {
       setActiveTab(null);
@@ -133,21 +215,19 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
           >
             All
           </button>
-          {[...filters]
-            .sort((a, b) => a.localeCompare(b))
-            .map((filter) => (
-              <button
-                key={filter}
-                className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-                  activeFilter === filter
-                    ? "bg-blue-600 text-white shadow"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                onClick={() => onSelect(filter)}
-              >
-                {filter}
-              </button>
-            ))}
+          {[...filters].sort(naturalSort).map((filter) => (
+            <button
+              key={filter}
+              className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
+                activeFilter === filter
+                  ? "bg-blue-600 text-white shadow"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => onSelect(filter)}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
         {showDesc && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -171,9 +251,17 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
 
   return (
     <PageContainer>
-      <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser}
-        toggleViewMode={toggleViewMode} userInfo={userInfo}/>
-      <main className="sm:px-[1vw] md:px-[2vw] lg:px-[3vw] flex flex-col items-center w-full max-w-7xl min-h-screen mb-2 py-6 mx-auto">
+      <FacultyMenu
+        userName={userInfo.preferred_name || userInfo.first_name}
+        getCognitoUser={getCognitoUser}
+        toggleViewMode={toggleViewMode}
+        userInfo={userInfo}
+      />
+      <main
+        className="px-[1vw] xs:px-[1vw] sm:px-[2vw] md:px-[2vw] lg:px-[2vw] 
+                       xl:px-[5vw] 2xl:px-[8vw] overflow-y-auto custom-scrollbar
+                       mt-4 w-full mb-4 relative"
+      >
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -181,7 +269,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
         ) : (
           <>
             {activeSection === null ? (
-              <div className="!overflow-auto !h-full rounded-lg max-w-7xl w-full mx-auto">
+              <div className="!overflow-auto !h-full rounded-lg w-full mx-auto">
                 <h1 className="text-left mb-4 text-4xl font-bold text-zinc-600 p-2 ml-2">Academic Work</h1>
                 {/* Search bar for filtering sections */}
                 <div className="mb-4 flex justify-start items-left ml-4">
@@ -213,13 +301,14 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                   onSelect={handleTabSelect}
                   sectionDescriptions={sectionDescriptions}
                 />
-                {searchedSections.map((section) => (
+                {[...searchedSections].sort(sectionTitleSort).map((section) => (
                   <WorkSection
                     onClick={handleManageClick}
                     key={section.data_section_id}
                     id={section.data_section_id}
                     title={section.title}
                     category={section.data_type}
+                    info={section.info}
                   />
                 ))}
               </div>
@@ -228,20 +317,17 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                 {activeSection.title === "Publications" && (
                   <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
-                {activeSection.title === "Patents" && (
+                {activeSection.title.includes("Patents") && (
                   <PatentsSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
-                {activeSection.title === "Research or Equivalent Grants" && (
+                {activeSection.title.includes("Research or Equivalent Grants") && (
                   <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
-                {/* {activeSection.title === "Invited Presentations" && (
-                  <InvitedPresentationSection
-                    user={userInfo}
-                    section={activeSection}
-                    onBack={handleBack}
-                  />
-                )} */}
-                {!["Publications", "Patents", "Research or Equivalent Grants"].includes(activeSection.title) && (
+                {!(
+                  activeSection.title === "Publications" ||
+                  activeSection.title.includes("Patents") ||
+                  activeSection.title.includes("Research or Equivalent Grants")
+                ) && (
                   <GenericSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
               </div>
@@ -252,5 +338,15 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
     </PageContainer>
   );
 };
+
+function slugify(str) {
+  return str
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+}
 
 export default AcademicWork;

@@ -135,7 +135,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
   }
 
   return (
-    <dialog className="modal-dialog" open>
+    <dialog className="modal-dialog ml-4" open>
       <div className="modal-content">
         <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" onClick={() => setIsModalOpen(false)}>✕</button>
         
