@@ -14,26 +14,6 @@ const NewTemplatePage = ({ onBack }) => {
     fetchSections()
   }, [])
 
-  const setGroups = (newGroupsOrUpdater) => {
-    setTemplate(prevTemplate => {
-      // Check if newGroupsOrUpdater is a function
-      if (typeof newGroupsOrUpdater === 'function') {
-        // Call the function with the previous groups
-        const updatedGroups = newGroupsOrUpdater(prevTemplate.groups);
-        return {
-          ...prevTemplate,
-          groups: updatedGroups
-        };
-      } else {
-        // It's a direct value
-        return {
-          ...prevTemplate,
-          groups: newGroupsOrUpdater
-        };
-      }
-    });
-  };
-
   useEffect(() => {
     const initialData = {
       sort_ascending: true,

@@ -417,8 +417,22 @@ const buildTableSectionColumns = (preparedSection) => {
     return latex;
 }
 
+const buildPreparedSectionWithType = (preparedSectionWithType) => {
+
+    
+
+    return "";
+}
+
 const buildPreparedSection = (preparedSection, dataSectionId) => {
     let latex = "";
+    console.log(preparedSection);
+
+    const attributes = preparedSection.attribute_groups.flatMap((attributeGroup) => attributeGroup.attributes);
+
+    if (attributes.includes('Type')) {
+        return buildPreparedSectionWithType(preparedSection);
+    }
 
     latex += buildTableSubHeader(preparedSection);
 
@@ -432,7 +446,7 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 }
 
 const buildGroup = async (group) => {
-    console.log(group)
+    //console.log(group)
     let latex = "";
 
     latex += buildTableHeader(group.title);
@@ -488,7 +502,7 @@ const buildLatexHeader = () => {
 
 export const buildLatex = async (userInfo, templateWithEndStartDate) => {
 
-    console.log(templateWithEndStartDate.start_year, templateWithEndStartDate.end_year);
+    //console.log(templateWithEndStartDate.start_year, templateWithEndStartDate.end_year);
 
     //const latexConfiguration = JSON.parse(await getLatexConfiguration());
 
@@ -503,7 +517,7 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
 
     latex += buildUserProfile(userInfo);
 
-    console.log("UserInfo", userInfo);
+    //console.log("UserInfo", userInfo);
 
     // Parse user data
     userCvData = unparsedData.map((data) => {
@@ -516,7 +530,7 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
         return { ...data, data_details: dataDetails };
     });
 
-    console.log(userCvData)
+    //console.log(userCvData)
 
     // Parse the template structure
     const parsedGroups = JSON.parse(template.template_structure).groups;
@@ -524,7 +538,7 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
     // Process each group in the template
     for (const group of parsedGroups || []) {
         if (group.id === HIDDEN_GROUP_ID) continue; // Skip hidden groups
-        console.log(group)
+        //console.log(group)
         latex += await buildGroup(group);
     }
 
