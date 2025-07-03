@@ -10,6 +10,7 @@ import RemoveSectionButton from "./RemoveSectionButton"
 import RowCountCheckbox from "./RowCountCheckbox"
 import IncludeRowNumberCheckbox from "./IncludeRowNumberCheckbox"
 import MergeVisibleAttributesCheckbox from "./MergeVisibleAttributesCheckbox"
+import SectionByTypeDropdown from "./SectionByTypeDropdown"
 
 const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, isInHiddenGroup }) => {
 
@@ -55,7 +56,8 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                 >
                     <Accordion>
                         <AccordionItem title={accordionTitle} hideIsOpenIcon={true && !isInHiddenGroup}>
-                            <SortingButton preparedSection={preparedSection}/>
+                            <SortingButton preparedSection={preparedSection} />
+                            <SectionByTypeDropdown preparedSection={preparedSection} />
                             <RowCountCheckbox preparedSection={preparedSection} />
                             <IncludeRowNumberCheckbox preparedSection={preparedSection} />
                             <MergeVisibleAttributesCheckbox preparedSection={preparedSection} />
