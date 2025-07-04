@@ -12,7 +12,12 @@ def getRiseDataMatches(arguments):
     print("Connected to Database")
     cursor = connection.cursor()
     # Retrieve results with the same first name AND last name
-    cursor.execute('SELECT * FROM rise_data WHERE first_name = %s AND last_name = %s', (arguments['first_name'], arguments['last_name'],))
+    # cursor.execute('SELECT * FROM rise_data WHERE first_name = %s AND last_name = %s', (arguments['first_name'], arguments['last_name'],))
+    cursor.execute('''
+        SELECT * FROM rise_data 
+        WHERE split_part(first_name, ' ', 1) = %s 
+        AND split_part(last_name, ' ', 1) = %s
+    ''', (arguments['first_name'].split()[0], arguments['last_name'].split()[0]))
     results_same_first_last = cursor.fetchall()
 
     # # Retrieve results with the same last name

@@ -163,6 +163,10 @@ def getBatchedPublicationMatches(scopus_id, start_index=0, batch_size=250, count
             cited_by = None
             year_published = ''
             link = ''
+            volume = ''
+            display_date = ''
+            article_number = ''
+
             # This will evaluate to false if the publication no longer exists
             if(list(keys).count('author-count')):
                 author_ids = []
@@ -194,10 +198,18 @@ def getBatchedPublicationMatches(scopus_id, start_index=0, batch_size=250, count
                         author_names.append(author['authname'])
                 if (list(keys).count('link')):
                     link = result['link'][2]['@href']
+                if (list(keys).count('prism:volume')):
+                    volume = result['prism:volume']
+                if (list(keys).count('prism:coverDisplayDate')):
+                    display_date = result['prism:coverDisplayDate']
+                if (list(keys).count('article-number')):
+                    article_number = result['article-number']
                 publications.append({'doi': doi, 'publication_id': id, 'title': title, 
                     'keywords': keywords, 'journal': journal, 'cited_by': cited_by, 
                     'year_published': year_published, 'author_ids': author_ids, 
-                    'author_names': author_names, 'link': link})
+                    'author_names': author_names, 'link': link, 
+                    'volume': volume, 'display_date': display_date, 
+                    'article_number': article_number})
     
     return {
         'publications': publications,

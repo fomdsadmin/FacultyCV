@@ -59,6 +59,7 @@ import {
   addAuditViewMutation,
   ADD_TEMPLATE,
   UPDATE_TEMPLATE,
+  EDIT_SECTION_DETAILS,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -839,14 +840,12 @@ export const addTemplate = async (
   start_year,
   end_year
 ) => {
-  const results = await executeGraphql(
-    ADD_TEMPLATE, {
-      title,
-      template_structure,
-      start_year,
-      end_year
-    }
-  );
+  const results = await executeGraphql(ADD_TEMPLATE, {
+    title,
+    template_structure,
+    start_year,
+    end_year,
+  });
   return results["data"]["addTemplate"];
 };
 
@@ -1001,7 +1000,9 @@ export const updateUser = async (
   keywords,
   institution_user_id,
   scopus_id,
-  orcid_id
+  orcid_id,
+  cwl,
+  vpp
 ) => {
   const cognito_user_id = await getUserId();
   const results = await runGraphql(
@@ -1026,6 +1027,8 @@ export const updateUser = async (
       institution_user_id,
       scopus_id,
       orcid_id,
+      cwl,
+      vpp,
       cognito_user_id
     )
   );
@@ -1054,6 +1057,23 @@ export const updateSection = async (
     attributes_type,
   });
   return results["data"]["updateSection"];
+};
+
+export const editSectionDetails = async (
+  data_section_id,
+  title,
+  data_type,
+  description,
+  info
+) => {
+  const results = await executeGraphql(EDIT_SECTION_DETAILS, {
+    data_section_id,
+    title,
+    data_type,
+    description,
+    info,
+  });
+  return results["data"]["editSectionDetails"];
 };
 
 /**

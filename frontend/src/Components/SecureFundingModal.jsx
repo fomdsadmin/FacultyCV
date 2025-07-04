@@ -104,9 +104,22 @@ const SecureFundingModal = ({
 
     // make a single batch
     const newBatchedData = [];
-    for (const data of selectedSecureFundingData) {
+    let fname, lname;
+    const tempData = [...selectedSecureFundingData];
+    for (const data of tempData) {
       data.year = data.dates.split("-")[0];
       delete data.dates;
+      data.type = "Grant"
+      fname = data.first_name || "";
+      lname = data.last_name || "";
+      if (fname) {
+        data.principal_investigator = fname
+      }
+      if (lname) {
+        data.principal_investigator += ` ${lname}`;
+      }
+      delete data.first_name;
+      delete data.last_name;
       newBatchedData.push(data);
     }
 
@@ -118,7 +131,7 @@ const SecureFundingModal = ({
       let dataSections = [];
       dataSections = await getAllSections();
       const secureFundingSectionId = dataSections.find(
-        (section) => section.title === "Secure Funding"
+        (section) => section.title.includes("Research or Equivalent Grants")
       )?.data_section_id;
 
       const payload = {
@@ -126,7 +139,6 @@ const SecureFundingModal = ({
           data_details_list: newBatchedData,
           user_id: user.user_id,
           data_section_id: secureFundingSectionId,
-          data_section_title: "Secure Funding",
           editable: "false",
         },
       };
@@ -178,7 +190,8 @@ const SecureFundingModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <dialog
-        className={`modal ${modalHeightClass} max-h-4/5 relative bg-white rounded-xl shadow-xl max-w-4xl w-full p-0 overflow-y-auto`}
+        className={`modal ${modalHeightClass} max-h-4/5 relative bg-white 
+        rounded-xl shadow-xl max-w-4xl mx-4 w-full p-0 overflow-y-auto`}
         open
         style={{ margin: 0, padding: 0 }}
       >
@@ -229,9 +242,7 @@ const SecureFundingModal = ({
           </div>
         ) : fetchingData ? (
           <div className="flex items-center justify-center w-full mt-5 mb-5">
-            <div className="text-m text-zinc-600">
-              Fetching secure funding data...
-            </div>
+            <div className="text-m text-zinc-600">Fetching grants data...</div>
           </div>
         ) : addedSuccessfully ? (
           <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
@@ -274,8 +285,8 @@ const SecureFundingModal = ({
                           disabled={addingData}
                         >
                           {addingData
-                            ? "Adding secure funding data..."
-                            : "Add Secure Funding Data"}
+                            ? "Adding grants data..."
+                            : "Add Grant Data"}
                         </button>
                       )}
                     </div>

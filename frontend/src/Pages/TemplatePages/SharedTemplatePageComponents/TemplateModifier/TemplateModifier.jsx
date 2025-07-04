@@ -1,33 +1,54 @@
 import { TemplateModifierProvider } from "./TemplateModifierContext"
-import YearSelector from "./YearSelector"
 import TemplateOrganizer from "./TemplateOrganizer/TemplateOrganizer"
 import AddGroupButton from "./AddGroupButton/AddGroupButton"
 import SaveTemplateButton from "./SaveTemplateButton"
+import SortButton from "./SortButton"
 
 const TemplateModifier = ({
-    groups,
-    setGroup,
+    template,
+    setTemplate,
     title,
     setTitle,
-    endDate,
-    setEndDate,
-    startDate,
-    setStartDate,
     onBack,
-    templateId = null
+    templateId=null
 }) => {
+
+    const setGroups = (newGroupsOrUpdater) => {
+        setTemplate(prevTemplate => {
+            // Check if newGroupsOrUpdater is a function
+            if (typeof newGroupsOrUpdater === 'function') {
+                // Call the function with the previous groups
+                const updatedGroups = newGroupsOrUpdater(prevTemplate.groups);
+                return {
+                    ...prevTemplate,
+                    groups: updatedGroups
+                };
+            } else {
+                // It's a direct value
+                return {
+                    ...prevTemplate,
+                    groups: newGroupsOrUpdater
+                };
+            }
+        });
+    };
+
+    const setSortAscending = (ascending) => {
+        setTemplate((prevTemplate) => ({
+            ...prevTemplate,
+            sort_ascending: ascending
+        }))
+    }
 
     return <>
         <TemplateModifierProvider
-            groups={groups}
-            setGroups={setGroup}
+            groups={template.groups}
+            setGroups={setGroups}
             title={title}
             setTitle={setTitle}
-            endDate={endDate}
-            setEndDate={setEndDate}
-            startDate={startDate}
-            setStartDate={setStartDate}
             onBack={onBack}
+            sortAscending={template.sort_ascending}
+            setSortAscending={setSortAscending}
         >
             <div className="flex justify-end mb-4">
                 <SaveTemplateButton templateId={templateId}></SaveTemplateButton>
@@ -44,13 +65,6 @@ const TemplateModifier = ({
                 />
             </div>
 
-            <YearSelector 
-                startYear={startDate}
-                setStartYear={setStartDate}
-                endYear={endDate}
-                setEndYear={setEndDate}
-            />
-
             <h2 className="text-sm font-medium text-gray-700 mt-6">
                 Add or remove sections you want to include on the CV.
             </h2>
@@ -59,7 +73,8 @@ const TemplateModifier = ({
             </h2>
 
             <div className="flex justify-end mb-4 space-x-2">
-                <AddGroupButton/>
+                <SortButton />
+                <AddGroupButton />
             </div>
 
             <TemplateOrganizer />

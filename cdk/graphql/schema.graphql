@@ -38,15 +38,20 @@ type User {
   scopus_id: String
   orcid_id: String
   joined_timestamp: String
+  cwl: String
+  vpp: String
 }
 
 type DataSection {
   data_section_id: String!
   title: String!
+  info: String!
   description: String!
   data_type: String
   attributes: AWSJSON! # JSON
+  attributes_type: AWSJSON # JSON
   archive: Boolean
+
 }
 
 type Notification {
@@ -444,6 +449,8 @@ type Mutation {
     institution_user_id: String
     scopus_id: String
     orcid_id: String
+    cwl: String
+    vpp: String
     user_id: String!
     cognito_user_id: String
   ): String
@@ -463,6 +470,14 @@ type Mutation {
     archive: Boolean
     attributes: AWSJSON # JSON
     attributes_type: AWSJSON # JSON
+  ): String @aws_auth(cognito_groups: ["Admin"])
+
+  editSectionDetails(
+    data_section_id: String!
+    title: String!
+    data_type: String!
+    description: String
+    info: String
   ): String @aws_auth(cognito_groups: ["Admin"])
 
   addUserCVData(

@@ -12,7 +12,7 @@ const SectionHeader = () => {
   return (
     <>
       <BackButton />
-      <div className="m-4 flex items-center">
+      <div className="m-4 flex items-center pr-4">
         <SectionTitle />
         <NewButton />
         <div className="mx-4 my-1 flex items-center">

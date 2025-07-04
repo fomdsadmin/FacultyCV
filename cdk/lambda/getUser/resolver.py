@@ -74,7 +74,9 @@ def getUser(event):
             'institution_user_id': '',
             'scopus_id': '',
             'orcid_id': '',
-            'joined_timestamp': ''
+            'joined_timestamp': '',
+            'cwl': '',
+            'vpp': ''
         }
 
     if result is not None:
@@ -99,7 +101,9 @@ def getUser(event):
             'institution_user_id': result[17],
             'scopus_id': result[18],
             'orcid_id': result[19],
-            'joined_timestamp': result[20]
+            'joined_timestamp': result[20],
+            'cwl': result[21],
+            'vpp': result[22]
         }
     else:
         user = "User not found"

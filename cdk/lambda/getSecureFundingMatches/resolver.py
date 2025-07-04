@@ -14,9 +14,14 @@ def getSecureFundingMatches(arguments):
 
     # Retrieve results with the same last name
     #cursor.execute('SELECT * FROM grants WHERE last_name = %s', (arguments['last_name'],))
-    cursor.execute('SELECT * FROM grants WHERE first_name = %s AND last_name = %s', (arguments['first_name'], arguments['last_name']))
+    # cursor.execute('SELECT * FROM grants WHERE first_name = %s AND last_name = %s', (arguments['first_name'], arguments['last_name']))
+    cursor.execute('''
+        SELECT * FROM grants
+        WHERE split_part(first_name, ' ', 1) = %s 
+        AND split_part(last_name, ' ', 1) = %s
+    ''', (arguments['first_name'].split()[0], arguments['last_name'].split()[0]))
     results_same_last = cursor.fetchall()
-
+    
     # Retrieve results with the same first name
     # cursor.execute('SELECT * FROM grants WHERE first_name = %s', (arguments['first_name'],))
     # results_same_first = cursor.fetchall()
