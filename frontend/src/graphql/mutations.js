@@ -282,6 +282,17 @@ export const UPDATE_SECTION = `
     }
 `;
 
+export const UPDATE_USER_AFFILIATIONS = `
+    mutation UpdateUserAffiliations($user_id: String!, $first_name: String, $last_name: String, $affiliations: AWSJSON) {
+        updateUserAffiliations(
+            user_id: $user_id,
+            first_name: $first_name,
+            last_name: $last_name,
+            affiliations: $affiliations
+        )
+    }
+`;
+
 export const EDIT_SECTION_DETAILS = `
     mutation EditSectionDetails($data_section_id: String!, $title: String!, $data_type: String!, $description: String, $info: String) {
         editSectionDetails(

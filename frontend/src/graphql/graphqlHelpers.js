@@ -60,6 +60,7 @@ import {
   ADD_TEMPLATE,
   UPDATE_TEMPLATE,
   EDIT_SECTION_DETAILS,
+  UPDATE_USER_AFFILIATIONS,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -1033,6 +1034,22 @@ export const updateUser = async (
     )
   );
   return results["data"]["updateUser"];
+};
+
+
+export const updateUserAffiliations = async (
+  user_id,
+  first_name,
+  last_name,
+  affiliations
+) => {
+  const results = await executeGraphql(UPDATE_USER_AFFILIATIONS, {
+    user_id: user_id,
+    first_name: first_name,
+    last_name: last_name,
+    affiliations: affiliations,
+  });
+  return results["data"]["updateUserAffiliations"];
 };
 
 /**

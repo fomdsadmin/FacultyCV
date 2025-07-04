@@ -180,6 +180,10 @@ type TotalOrcidPublications {
   put_codes: [Int]!
 }
 
+type Affiliations {
+  data_details: AWSJSON! # JSON
+}
+
 type Declaration {
   reporting_year: String!
   other_data: AWSJSON!
@@ -276,6 +280,11 @@ type Query {
     )
 
   getUserDeclarations(first_name: String!, last_name: String!): [Declaration!]
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+  
+  getUserAffiliations(user_id: String!, first_name: String!, last_name: String!): [Affiliations!]
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )
@@ -457,6 +466,13 @@ type Mutation {
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )
+  
+  updateUserAffiliations(
+    user_id: String!
+    first_name: String
+    last_name: String
+    affiliations: AWSJSON
+  ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
   addSection(
     title: String!
