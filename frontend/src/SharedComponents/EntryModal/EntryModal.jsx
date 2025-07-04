@@ -255,7 +255,7 @@ const EntryModal = ({
       Object.entries(attributesType.dropdown).forEach(([displayName, options]) => {
         const snakeKey =
           section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
-        if (options.includes("Other") && formData[snakeKey] === "Other") {
+        if (options.includes("Other") && formData[snakeKey]?.includes("Other")) {
           const otherVal = formData[`${snakeKey}_other`] || "";
           updatedFormData[snakeKey] = `Other (${otherVal})`;
           // Remove the temp field
