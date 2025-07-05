@@ -94,7 +94,7 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
     };
 
     return (
-        <AuditLoggerContext.Provider value={logAction}>
+        <AuditLoggerContext.Provider value={contextValue}>
             {children}
         </AuditLoggerContext.Provider>
     );
