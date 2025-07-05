@@ -58,6 +58,7 @@ const SaveButton = () => {
         cwlID,
         vppID
       );
+      await logAction(AUDIT_ACTIONS.UPDATE_PROFILE, userInfo.id)
       getUserInfo(userInfo.email);
       setIsSubmitting(false);
 

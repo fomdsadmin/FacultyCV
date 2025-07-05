@@ -7,10 +7,12 @@ import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem';
 
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
 import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
+import { confirmSignUp } from 'aws-amplify/auth';
 
 const AuditPage = ({ getCognitoUser, userInfo }) => {
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
+
 
     const PAGE_SIZE = 20;
     const [page, setPage] = useState(1); // Current page number
@@ -42,6 +44,81 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         await fetchAuditViewData();
     };
 
+    // Add handler to download CSV
+    const handleDownloadCSV = () => {
+        // Filter columns based on visibility
+        const columns = pageViewColumns.filter(col => visibleColumns.includes(col));
+
+        // Create CSV header row
+        const csvRows = [columns.join(',')];
+
+        // Add data rows (use filtered data to match what user is viewing)
+        pageViewData.forEach(log => {
+            const rowData = columns.map(col => {
+                const val = log[col];
+                // Handle different data types and escape quotes/commas for CSV
+                if (val === null || val === undefined) return '';
+                if (typeof val === "boolean") return String(val);
+                if (typeof val === "string") return `"${val.replace(/"/g, '""')}"`;
+                return val;
+            });
+            csvRows.push(rowData.join(','));
+        });
+
+        // Generate and trigger download
+        const csvContent = "data:text/csv;charset=utf-8," + csvRows.join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Update the formatTimestamp function to adjust for UTC
+    const formatTimestamp = (timestamp) => {
+        if (!timestamp) return '';
+
+        try {
+            // Parse the timestamp, assuming it's UTC and convert to local time
+            // The format appears to be "2025-07-04 22:43:40.644432" (UTC)
+
+            // standardize the timestamp format
+            let parsedTimestamp = timestamp;
+
+            // If the timestamp contains space and no 'T' (like "2025-07-04 22:43:40.644432")
+            // Convert it to ISO format by replacing space with 'T' and adding 'Z' to indicate UTC
+            if (typeof timestamp === 'string' && timestamp.includes(' ') && !timestamp.includes('T')) {
+                parsedTimestamp = timestamp.replace(' ', 'T') + 'Z';
+            }
+
+            // Create date object - now properly interpreting as UTC
+            const date = new Date(parsedTimestamp);
+
+            console.log("Original timestamp:", timestamp);
+            console.log("Parsed as UTC:", date.toISOString());
+            console.log("Local time:", date.toString());
+
+            // Format the date in local time
+            let convertedDate = date.toLocaleString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+                timeZoneName: 'short'
+            });
+
+            return convertedDate;
+        } catch (error) {
+            console.error("Error formatting timestamp:", error, timestamp);
+            return timestamp; // Return the original if parsing fails
+        }
+    };
+
     const pageViewColumns = [
         "log_view_id",
         "ts",
@@ -59,7 +136,11 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         "browser_version",
     ];
 
-    const [visibleColumns, setVisibleColumns] = useState(pageViewColumns);
+    // Create a default set of visible columns that excludes log_view_id
+    const defaultVisibleColumns = pageViewColumns.filter(col => col !== "log_view_id");
+
+    // Initialize state with the filtered columns
+    const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
 
     const pageViewData = auditViewData.filter(log => {
         const matchesPage = log.page;
@@ -84,6 +165,7 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
     // Pagination logic
     const totalPages = Math.ceil(pageViewData.length / PAGE_SIZE);
     const pagedData = pageViewData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
 
 
     return (
@@ -155,7 +237,7 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                                     setLastNameFilter('');
                                     setStartDate('');
                                     setEndDate('');
-                                    setActionFilter(''); 
+                                    setActionFilter('');
                                 }}
                             >
                                 Clear Filters
@@ -225,6 +307,14 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                     </button>
                 </div>
 
+                {/* Download CSV and Turn Off Audit */}
+                <button
+                    className="btn btn-success text-white"
+                    onClick={handleDownloadCSV}
+                    disabled={loading || pageViewData.length === 0}
+                >
+                    Download CSV
+                </button>
 
                 {loading ? (
                     <div>Loading...</div>
@@ -242,7 +332,14 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                                 {pagedData.map((log, idx) => (
                                     <tr key={log.log_view_id || idx}>
                                         {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
-                                            <td key={col}>{typeof log[col] === "boolean" ? String(log[col]) : log[col]}</td>
+                                            <td key={col}>
+                                                {col === "ts"
+                                                    ? formatTimestamp(log[col])
+                                                    : typeof log[col] === "boolean"
+                                                        ? String(log[col])
+                                                        : log[col]}
+
+                                            </td>
                                         ))}
                                     </tr>
                                 ))}
