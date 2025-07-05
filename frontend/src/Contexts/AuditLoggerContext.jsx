@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { addAuditView } from '../graphql/graphqlHelpers';
 
 const AuditLoggerContext = createContext(null);
 
 export const AUDIT_ACTIONS = {
-    VIEW_PAGE: 'VIEW_PAGE',
+    VIEW_PAGE: 'View page',
     CREATE_PROFILE: 'Create profile',
     UPDATE_PROFILE: 'Update profile',
     CREATE_SECTION: 'Create section',
@@ -22,6 +22,27 @@ export const AUDIT_ACTIONS = {
 export const AuditLoggerProvider = ({ children, userInfo }) => {
     const [ip, setIp] = useState('Unknown');
     const location = useLocation();
+    const previousPath = useRef(null);
+
+    // Log page views automatically
+    useEffect(() => {
+        const logPageView = async () => {
+            // Skip logging for certain paths or if userInfo is not available
+            if (!userInfo || !userInfo.email) {
+                console.log("Page view logging skipped - no user info available");
+                return;
+            }
+
+            if (location.pathname !== previousPath.current) {
+                previousPath.current = location.pathname;
+
+                await logAction(AUDIT_ACTIONS.VIEW_PAGE);
+                console.log(`Logged page view: ${location.pathname}`);
+            }
+        };
+
+        logPageView();
+    }, [location.pathname, userInfo]);
 
     useEffect(() => {
         // Get IP once
@@ -37,6 +58,12 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
     }, []);
 
     const logAction = async (actionType, profileRecord = '', extra = {}) => {
+        if (!userInfo) {
+            console.warn("Cannot log action - no user info available");
+            return;
+        }
+
+
         const auditInput = {
             logged_user_first_name: userInfo?.first_name || 'Unknown',
             logged_user_last_name: userInfo?.last_name || 'Unknown',
@@ -52,9 +79,18 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             
         };
 
-        console.log('Audit Log Action:', auditInput.actionType, auditInput);
+        console.log('Audit Log Action:', actionType, auditInput);
+        try {
+            return await addAuditView(auditInput);
+        } catch (error) {
+            console.error("Failed to log audit action:", error);
+        }
 
-        return addAuditView(auditInput);
+        // return addAuditView(auditInput);
+    };
+
+    const contextValue = {
+        logAction,
     };
 
     return (
@@ -63,6 +99,8 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
         </AuditLoggerContext.Provider>
     );
 };
+
+
 
 export const useAuditLogger = () => {
     const context = useContext(AuditLoggerContext);
