@@ -1,20 +1,37 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../../Contexts/AppContext";
-import { updateUser } from "../../graphql/graphqlHelpers";
+import { updateUser, updateUserAffiliations } from "../../graphql/graphqlHelpers";
 import { useFaculty } from "./FacultyContext";
-import { use } from "react";
-import { useAuditLogger, AUDIT_ACTIONS } from '../../Contexts/AuditLoggerContext.jsx';
+import { useLocation } from "react-router-dom"; // <-- import useLocation
 
 const SaveButton = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { userInfo, getUserInfo } = useApp();
   const { setPrevUserInfo, change } = useFaculty();
+  const location = useLocation(); // <-- get location
 
   useEffect(() => {
     getUserInfo(userInfo.email);
   }, []);
-    const logAction = useAuditLogger();
+
+  // Dummy function for affiliations save
+  const handleAffiliationsSave = async () => {
+    // TODO: Replace with real save logic for affiliations
+    alert("Affiliations save called!");
+    const affiliations = {};
+    try {
+      await updateUserAffiliations(
+        userInfo.user_id,
+        userInfo.first_name,
+        userInfo.last_name,
+        affiliations
+      );
+    } catch (error) {
+      console.error("Error updating user affiliations:", error);
+    }
+    setIsSubmitting(false);
+  };
 
   // Handle form submission
   const handleSubmit = async (event) => {
@@ -74,10 +91,21 @@ const SaveButton = () => {
   function sanitizeInput(input) {
     if (!input) return "";
     return input
-      .replace(/\\/g, "\\\\")   // escape backslashes
-      .replace(/"/g, '\\"')     // escape double quotes
-      .replace(/\n/g, "\\n");   // escape newlines
+      .replace(/\\/g, "\\\\") // escape backslashes
+      .replace(/"/g, '\\"') // escape double quotes
+      .replace(/\n/g, "\\n"); // escape newlines
   }
+
+  // Decide which save function to call
+  const handleClick = (event) => {
+    setIsSubmitting(true);
+    console.log(location.pathname);
+    if (location.pathname === "/faculty/home/affiliations") {
+      handleAffiliationsSave();
+    } else {
+      handleSubmit(event);
+    }
+  };
 
   return (
     <button
@@ -86,7 +114,7 @@ const SaveButton = () => {
         change ? "btn-success" : "btn-disabled bg-gray-400"
       }`}
       disabled={!change || isSubmitting}
-      onClick={change && !isSubmitting ? handleSubmit : undefined}
+      onClick={change && !isSubmitting ? handleClick : undefined}
     >
       {isSubmitting ? "Saving..." : change ? "Save" : "Saved"}
     </button>

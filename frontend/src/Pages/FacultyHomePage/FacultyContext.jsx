@@ -32,6 +32,8 @@ export const FacultyProvider = ({ children }) => {
   const [institutions, setInstitutions] = useState([]);
   const [campuses, setCampuses] = useState([]);
   const [ranks, setRanks] = useState([]);
+  const [authorities, setAuthorities] = useState([]);
+  const [authoritiesMap, setAuthoritiesMap] = useState({});
   const [loading, setLoading] = useState(true);
 
   // Academic sections state
@@ -47,7 +49,6 @@ export const FacultyProvider = ({ children }) => {
     if (userInfo && !prevUserInfo) {
       setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
     }
-
   }, [userInfo, prevUserInfo]);
 
   // Compares the previous userInfo and the userInfo displayed on frontend to determine if a change was made
@@ -89,6 +90,8 @@ export const FacultyProvider = ({ children }) => {
       const rnks = [];
       const affils = [];
       const insts = [];
+      const authrts = [];
+      const authorityMap = {};
 
       result.forEach((element) => {
         if (element.type === "Department") {
@@ -103,15 +106,27 @@ export const FacultyProvider = ({ children }) => {
           affils.push(element.value);
         } else if (element.type === "Institution") {
           insts.push(element.value);
+        } else if (element.type === "Authority") {
+          authrts.push(element.value);
+          authorityMap[element.value] = []; // Initialize with empty array
+        } else if (element.type.startsWith("Authority - ")) {
+          // Example: element.type = "Authority - Fraser Health"
+          const authorityName = element.type.split('-')[1].trim();
+          if (authorityMap[authorityName]) {
+            authorityMap[authorityName].push(element.value);
+          } else {
+            authorityMap[authorityName] = [element.value];
+          }
         }
       });
-
       setDepartments(depts.sort());
       setFaculties(facs.sort());
       setCampuses(camps.sort());
       setRanks(rnks.sort());
       setAffiliations(affils.sort());
       setInstitutions(insts.sort());
+      setAuthorities(authrts.sort());
+      setAuthoritiesMap(authorityMap);
       setLoading(false);
     });
   };
@@ -138,6 +153,8 @@ export const FacultyProvider = ({ children }) => {
     institutions,
     campuses,
     ranks,
+    authorities,
+    authoritiesMap,
     loading,
 
     // Academic sections

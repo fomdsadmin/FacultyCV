@@ -5,11 +5,7 @@ import PermanentEntryModal from "./PermanentEntryModal";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import { FaArrowLeft } from "react-icons/fa";
 import SecureFundingModal from "./SecureFundingModal";
-import {
-  getUserCVData,
-  updateUserCVDataArchive,
-  deleteUserCVSectionData,
-} from "../graphql/graphqlHelpers";
+import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 
 const generateEmptyEntry = (attributes) => {
@@ -40,10 +36,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   const [notification, setNotification] = useState(""); // <-- Add this
 
   const totalPages = Math.ceil(fieldData.length / pageSize);
-  const paginatedData = fieldData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -110,10 +103,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
 
   async function fetchData() {
     try {
-      const retrievedData = await getUserCVData(
-        user.user_id,
-        section.data_section_id
-      );
+      const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
       // Parse the data_details field from a JSON string to a JSON object
       const parsedData = retrievedData.map((data) => ({
         ...data,
@@ -124,12 +114,8 @@ const SecureFundingSection = ({ user, section, onBack }) => {
         const [field1, field2] = rankFields(entry.data_details);
 
         return (
-          (field1 &&
-            typeof field1 === "string" &&
-            field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 &&
-            typeof field2 === "string" &&
-            field2.toLowerCase().includes(searchTerm.toLowerCase()))
+          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
 
@@ -140,18 +126,9 @@ const SecureFundingSection = ({ user, section, onBack }) => {
 
       // Sorting logic
       rankedData.sort((a, b) => {
-        const isDate = (str) =>
-          /\b\d{4}[-/]\d{2}[-/]\d{2}\b/.test(str) || /\b\d{4}\b/.test(str); // Regex to match dates like YYYY-MM-DD or YYYY
-        const dateA = isDate(a.field1)
-          ? new Date(a.field1)
-          : isDate(a.field2)
-          ? new Date(a.field2)
-          : null;
-        const dateB = isDate(b.field1)
-          ? new Date(b.field1)
-          : isDate(b.field2)
-          ? new Date(b.field2)
-          : null;
+        const isDate = (str) => /\b\d{4}[-/]\d{2}[-/]\d{2}\b/.test(str) || /\b\d{4}\b/.test(str); // Regex to match dates like YYYY-MM-DD or YYYY
+        const dateA = isDate(a.field1) ? new Date(a.field1) : isDate(a.field2) ? new Date(a.field2) : null;
+        const dateB = isDate(b.field1) ? new Date(b.field1) : isDate(b.field2) ? new Date(b.field2) : null;
 
         if (dateA && dateB) {
           return dateB - dateA;
@@ -193,16 +170,11 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   return (
     <div>
       <div>
-        <button
-          onClick={handleBack}
-          className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5"
-        >
+        <button onClick={handleBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5">
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
         <div className="m-4 flex">
-          <h2 className="text-left text-4xl font-bold text-zinc-600 pr-8">
-            {section.title}
-          </h2>
+          <h2 className="text-left text-4xl font-bold text-zinc-600 pr-8">{section.title}</h2>
           <button
             onClick={handleNew}
             className="ml-auto text-white btn btn-success min-h-0 h-8 leading-tight"
@@ -274,10 +246,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                 />
               </svg>
               <span className="text-lg font-medium text-gray-700">
-                Total Grants:{" "}
-                <span className="font-semibold text-blue-600">
-                  {fieldData.length}
-                </span>
+                Total Grants: <span className="font-semibold text-blue-600">{fieldData.length}</span>
               </span>
             </div>
             <div className="flex items-center gap-4">
@@ -304,9 +273,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
               </span>
               <button
                 className="btn btn-outline btn-sm"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
               >
                 Next
@@ -322,17 +289,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
 
                   return entry.editable ? (
                     <div className="w-full">
-                    <GenericEntry
-                      key={index}
-                      onEdit={() => handleEdit(entry)}
-                      field1={entry.field1}
-                      field2={entry.field2}
-                      data_details={entry.data_details} // For edit, just omit agency
-                      onArchive={() => handleArchive(entry)}
-                      />
-                      </div>
-                  ) : (
                       <GenericEntry
+                        key={index}
+                        onEdit={() => handleEdit(entry)}
+                        field1={entry.field1}
+                        field2={entry.field2}
+                        data_details={entry.data_details} // For edit, just omit agency
+                        onArchive={() => handleArchive(entry)}
+                      />
+                    </div>
+                  ) : (
+                    <GenericEntry
                       key={index}
                       onEdit={() => handleEdit(entry)}
                       field1={entry.field1}
@@ -378,8 +345,8 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                   //   entryType={section.title}
                   //   fetchData={fetchData}
                   //   onClose={handleCloseModal}
-                      // />
-                                        <EntryModal
+                  // />
+                  <EntryModal
                     isNew={false}
                     user={user}
                     section={section}
