@@ -1,17 +1,22 @@
+import { useState } from "react";
 import { useTemplateModifier } from "../../../TemplateModifierContext";
 import { FaChevronDown } from "react-icons/fa";
 
-const SectionByTypeDropdown = ({ preparedSection }) => {
-    const { setGroups, getGroupIdContainingPreparedSectionId, HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplateModifier();
+const SectionByAttributeDropdown = ({ preparedSection }) => {
+    const { setGroups, getGroupIdContainingPreparedSectionId, sectionsMap} = useTemplateModifier();
+    const [selectedDropdownValue, setSelectedDropdownValue] = useState(""); 
 
-    // Get available attributes (excluding hidden ones, like SortingButton)
-    const availableAttributes = preparedSection.attribute_groups
-        .filter(group => group.id !== HIDDEN_ATTRIBUTE_GROUP_ID)
-        .flatMap(group => group.attributes || []);
+    // Get dropdown attributes only
+    const dropdownData = JSON.parse(sectionsMap[preparedSection.data_section_id].attributes_type);
+    const dropdownAttributes = !sectionsMap ? []: Object.keys(dropdownData.dropdown);
+    const dropdownValues = !sectionsMap ? []: Object.values(dropdownData.dropdown);
 
+    console.log("dropDownAttributes: ", dropdownAttributes)
     const handleSectionByTypeChange = (e) => {
         const selectedAttribute = e.target.value === "" ? null : e.target.value;
         const groupId = getGroupIdContainingPreparedSectionId(preparedSection.data_section_id);
+
+        setSelectedDropdownValue(selectedAttribute);
         
         setGroups(prevGroups => 
             prevGroups.map(group => {
@@ -36,7 +41,7 @@ const SectionByTypeDropdown = ({ preparedSection }) => {
 
     const getDisplayText = () => {
         if (!preparedSection.section_by_type) {
-            return "Section by type (unselected)";
+            return "Section by attribute (unselected)";
         }
         return (
             <span>
@@ -53,8 +58,8 @@ const SectionByTypeDropdown = ({ preparedSection }) => {
                 onChange={handleSectionByTypeChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             >
-                <option value={""}>{"Section by type (unselected)"}</option>
-                {availableAttributes.map(attribute => (
+                <option value={""}>{"Section by attribute (unselected)"}</option>
+                {dropdownAttributes.map(attribute => (
                     <option key={attribute} value={attribute}>
                         Section by {attribute}
                     </option>
@@ -70,4 +75,4 @@ const SectionByTypeDropdown = ({ preparedSection }) => {
     );
 };
 
-export default SectionByTypeDropdown;
+export default SectionByAttributeDropdown;

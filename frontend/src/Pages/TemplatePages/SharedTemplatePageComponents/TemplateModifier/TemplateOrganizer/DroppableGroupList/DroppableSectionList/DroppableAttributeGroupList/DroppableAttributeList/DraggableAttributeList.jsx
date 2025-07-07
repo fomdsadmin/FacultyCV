@@ -1,6 +1,7 @@
 import { Draggable } from "react-beautiful-dnd";
 import { FaGripVertical } from "react-icons/fa";
 import RenameAttributeButton from "./RenameAttributeButton/RenameAttributeButton";
+import NoteSettingsButton from "./NoteSettingsButton/NoteSettingsButton";
 import { useSectionData } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateOrganizer/hooks/useSectionData";
 import { useEffect, useState } from "react";
 import { useTemplateModifier } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
@@ -41,6 +42,10 @@ const DraggableAttributeList = ({ draggableId, attributeIndex, attribute, dataSe
                         <FaGripVertical className="h-3 w-3 text-gray-500" />
                     </div>
                     <RenameAttributeButton
+                        attribute={attribute}
+                        dataSectionId={dataSectionId}
+                    />
+                    <NoteSettingsButton
                         attribute={attribute}
                         dataSectionId={dataSectionId}
                     />

@@ -105,7 +105,7 @@ export const cellRowBuilder = (cellOptions, columnFormat, mergeCells = false, in
     `;
 }
 
-const sanitizeLatex = (text) => {
+export const sanitizeLatex = (text) => {
     if (typeof text !== 'string') return text; // Return as-is if not a string
 
     // Replace special LaTeX characters with their escaped versions using String.raw
@@ -123,7 +123,7 @@ const sanitizeLatex = (text) => {
         }`;
 };
 
-const addBreaks = (text) => {
+export const addBreaks = (text) => {
     if (typeof text !== 'string') return text; // Return as-is if not a string
 
     // Replace specific characters with their LaTeX \allowbreak equivalents

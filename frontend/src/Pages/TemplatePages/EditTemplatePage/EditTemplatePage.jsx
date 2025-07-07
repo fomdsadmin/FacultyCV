@@ -83,7 +83,6 @@ const EditTemplatePage = ({ onBack }) => {
                     show_row_count: false,
                     include_row_number_column: false,
                     merge_visible_attributes: false,
-                    section_by_type: null
                 });
             });
 

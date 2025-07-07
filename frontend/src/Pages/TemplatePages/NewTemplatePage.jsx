@@ -47,8 +47,7 @@ const NewTemplatePage = ({ onBack }) => {
             renamed_section_title: null,
             show_row_count: false,
             include_row_number_column: false,
-            merge_visible_attributes: false,
-            section_by_type: null
+            merge_visible_attributes: false
           })),
         }
       ]

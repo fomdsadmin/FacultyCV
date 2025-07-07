@@ -1,6 +1,7 @@
 "use client"
 
-import { createContext, useContext } from "react"
+import { getAllSections } from "graphql/graphqlHelpers";
+import { createContext, useContext, useEffect, useState } from "react"
 
 const TemplateModifierContext = createContext(null);
 
@@ -35,6 +36,23 @@ export const TemplateModifierProvider = ({
     return group?.id;
   };
 
+  const [sectionsMap, setSectionsMap] = useState(null);
+
+  useEffect(() => {
+    const helperFunction = async () => {
+      const allSections = await getAllSections();
+
+      // Create sectionsMap with data_section_id as key and section as value
+      const sectionsMap = {};
+      allSections.forEach((section) => {
+        sectionsMap[section.data_section_id] = section;
+      });
+
+      setSectionsMap(sectionsMap)
+    }
+    helperFunction();
+  }, []);
+
   const value = {
     // Constants
     HIDDEN_GROUP_ID,
@@ -48,6 +66,7 @@ export const TemplateModifierProvider = ({
     setTitle,
     sortAscending,
     setSortAscending,
+    sectionsMap,
 
     // onBack
     onBack,

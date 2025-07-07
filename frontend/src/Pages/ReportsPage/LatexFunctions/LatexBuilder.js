@@ -1,22 +1,22 @@
 import { getAllSections, getUserCVData, getLatexConfiguration } from '../../../graphql/graphqlHelpers.js';
 import { SHOWN_ATTRIBUTE_GROUP_ID, HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID } from '../../TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext.jsx'
-import { cellRowBuilder, generateColumnFormatViaRatioArray, textOptions } from './LatexTableBuilder.js';
+import { cellRowBuilder, generateColumnFormatViaRatioArray, sanitizeLatex, textOptions } from './LatexTableBuilder.js';
 
-let userCvData = [];
-let allSections = [];
+let userCvDataMap = {}
+let sectionsMap = {};
 const rowNumberColumnRatio = 3;
 let template = {};
 let sortAscending;
 let userInfo;
 
 const DO_NOT_FILTER_SECTIONS = [
-    'Leaves of Absence',
-    'Employment History',
-    'Continuing Education or Training',
-    'Continuing Medical Education',
-    'Professional Qualifications, Certifications and Licenses',
-    'Dissertations',
-    'Post-Secondary Education'
+    '7a. Leaves of Absence',
+    '6[a-d]. Employment Record',
+    '5c. Continuing Education or Training',
+    '5d. Continuing Medical Education',
+    '5e. Professional Qualifications, Certifications and Licenses',
+    '5b. Dissertations',
+    '5a. Post-Secondary Education'
 ]
 
 const buildTableHeader = (title) => {
@@ -29,11 +29,16 @@ const buildTableHeader = (title) => {
     return cellRowBuilder(headerRowData, columnFormat);
 }
 
+// Helper function to get CV data for a section
+const getUserCvDataMap = (dataSectionId) => {
+    return userCvDataMap[dataSectionId] || [];
+};
+
 const buildTableSubHeader = (preparedSection) => {
     let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
 
     if (preparedSection.show_row_count) {
-        let sectionData = userCvData.filter((cvData) => cvData.data_section_id === preparedSection.data_section_id);
+        let sectionData = getUserCvDataMap(preparedSection.data_section_id);
         sectionData = filterDateRanges(sectionData, preparedSection.data_section_id);
         const rowCount = sectionData.length;
         titleToDisplay += ` (${rowCount})`
@@ -50,7 +55,7 @@ const buildTableSubHeader = (preparedSection) => {
 
 const sortSectionData = (sectionData, dataSectionId) => {
     // Find the section to get the attribute mapping
-    const section = allSections.find((section) => section.data_section_id === dataSectionId);
+    const section = sectionsMap[dataSectionId];
     if (!section) {
         console.warn(`Section not found for dataSectionId: ${dataSectionId}`);
         return sectionData;
@@ -117,7 +122,7 @@ const sortSectionData = (sectionData, dataSectionId) => {
 
 const filterDateRanges = (sectionData, dataSectionId) => {
     // Find the section to get attribute mappings
-    const section = allSections.find((section) => section.data_section_id === dataSectionId);
+    const section = sectionsMap[dataSectionId];
     if (!section) {
         return sectionData;
     }
@@ -311,8 +316,8 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
     const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
 
-    // Filter userCvData by the given dataSectionId
-    let sectionData = userCvData.filter((cvData) => cvData.data_section_id === dataSectionId);
+    // Get section data using helper function
+    let sectionData = getUserCvDataMap(dataSectionId);
 
     // Apply date range filtering
     sectionData = filterDateRanges(sectionData, dataSectionId);
@@ -320,9 +325,14 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     // Apply sorting
     sectionData = sortSectionData(sectionData, dataSectionId);
 
+    // This means the section passed in is a mapped section, and the rows of data inserted must be filtered based on the type dropdown value selected
+    if (preparedSection.attribute_filter_value) {
+        sectionData = sectionData.filter((sectionData) => sectionData[preparedSection.section_by_type] !== preparedSection.attribute_filter_value);
+    }
+
     // Generate LaTeX tables for each entry
     const latexTables = sectionData.map((data, rowCount) => {
-        const section = allSections.find((section) => section.data_section_id === dataSectionId);
+        const section = sectionsMap[dataSectionId];
 
         // Build row array based on section type
         let rowArray;
@@ -418,29 +428,138 @@ const buildTableSectionColumns = (preparedSection) => {
 }
 
 const buildPreparedSectionWithType = (preparedSectionWithType) => {
+    let latex = "";
+    const attributes = preparedSectionWithType.attribute_groups.flatMap((attributeGroup) => attributeGroup.attributes);
 
-    
+    console.log("Build type object: ", sectionsMap[preparedSectionWithType.data_section_id]);
+    console.log("Attributes type: ", JSON.parse(sectionsMap[preparedSectionWithType.data_section_id].attributes_type));
 
-    return "";
+    const sectionTitles = JSON.parse(sectionsMap[preparedSectionWithType.data_section_id].attributes_type).dropdown[preparedSectionWithType.section_by_type];
+
+    console.log("section titles: ", sectionTitles);
+
+    console.log("User cv groups", getUserCvDataMap(preparedSectionWithType.data_section_id));
+
+    const mappedSections = sectionTitles.map((title) => {
+        const section = {
+            ...preparedSectionWithType,
+            renamed_section_title: title,
+            attribute_filter_value: title
+        }
+        return section;
+    });
+
+    for (const mappedSection of mappedSections) {
+        latex += buildPreparedSection(mappedSection, mappedSection.data_section_id);
+    }
+
+    console.log("mappedSections: ", mappedSections);
+
+    return latex;
 }
 
+const buildSubSections = (preparedSectionWithSubSections) => {
+
+    let latex = "";
+
+    const mappedSections = preparedSectionWithSubSections
+        .sub_section_settings
+        .sub_sections
+        .map((subSection) => {
+            const section = {
+                ...preparedSectionWithSubSections,
+                sub_section_settings: null,
+                renamed_section_title: subSection.renamed_title || subSection.original_title,
+                attribute_filter_value: subSection.original_title,
+                attribute_rename_map: subSection.attributes_rename_dict,
+                show_header: preparedSectionWithSubSections.sub_section_settings.display_titles,
+                is_sub_section: true
+            }
+            console.log("section: ", section);
+            return section;
+        })
+
+    for (const mappedSection of mappedSections) {
+        latex += buildPreparedSection(mappedSection, mappedSection.data_section_id);
+    }
+    return latex;
+}
+
+const buildNotes = (preparedSection) => {
+
+    if (!preparedSection.note_settings || preparedSection.note_settings.length === 0) {
+        return "";
+    }
+
+    let latex = "";
+    const dataSectionId = preparedSection.data_section_id;
+    const sectionData = getUserCvDataMap(dataSectionId);
+    const filteredSectionData = filterDateRanges(sectionData, dataSectionId);
+    const section = sectionsMap[dataSectionId];
+    const sectionAttributes = JSON.parse(section.attributes);
+
+    // Start a paragraph with reduced line width
+    latex += String.raw`\begin{quote}` + '\n';
+
+    preparedSection.note_settings.forEach(noteSetting => {
+        if (noteSetting.display_attribute_name) {
+            // Get the display name (check for rename first)
+            const attributeRenameMap = preparedSection.attribute_rename_map || {};
+            const displayName = attributeRenameMap[noteSetting.attribute] || noteSetting.attribute;
+            latex += '\n\n' + String.raw`\underline{\textbf{` + displayName + String.raw`}}` + '\n\n';
+        }
+        filteredSectionData.forEach(data => {
+            const attributeKey = sectionAttributes[noteSetting.attribute];
+            const noteToShow = String(data.data_details[attributeKey]);
+            const attributeToAssociateWithNote = noteSetting.attribute_to_associate_note;
+
+            if (!noteToShow || noteToShow.trim() === '') {
+                return; // Changed from continue to return
+            }
+
+            if (attributeToAssociateWithNote && attributeToAssociateWithNote.trim() !== '') {
+                // Get the association value
+                const associationKey = sectionAttributes[attributeToAssociateWithNote];
+                const associationValue = data.data_details[associationKey];
+
+                if (associationValue && associationValue.trim() !== '') {
+                    latex += String.raw`\hspace{20pt}\textbf{${sanitizeLatex(associationValue)}}` + ': ' + sanitizeLatex(noteToShow) + '\n\n';
+                }
+            } else {
+                // Use bullet point format
+                latex += String.raw`\begin{itemize}` + '\n';
+                latex += String.raw`\item ` + sanitizeLatex(noteToShow) + '\n';
+                latex += String.raw`\end{itemize}` + '\n';
+            }
+        });
+    });
+
+    // End the quote environment
+    latex += String.raw`\end{quote}` + '\n';
+
+    return latex;
+};
+
+// Also fix the typo in buildPreparedSection
 const buildPreparedSection = (preparedSection, dataSectionId) => {
     let latex = "";
     console.log(preparedSection);
 
-    const attributes = preparedSection.attribute_groups.flatMap((attributeGroup) => attributeGroup.attributes);
-
-    if (attributes.includes('Type')) {
-        return buildPreparedSectionWithType(preparedSection);
+    if (preparedSection.sub_section_settings && preparedSection.sub_section_settings.sub_sections.length > 0) {
+        return buildSubSections(preparedSection);
     }
 
-    latex += buildTableSubHeader(preparedSection);
+    if (!preparedSection.is_sub_section || (preparedSection.is_sub_section && preparedSection.show_header)) {
+        latex += buildTableSubHeader(preparedSection);
+    }
 
     if (!preparedSection.merge_visible_attributes) {
         latex += buildTableSectionColumns(preparedSection);
     }
 
     latex += buildDataEntries(preparedSection, dataSectionId);
+
+    latex += buildNotes(preparedSection);
 
     return latex;
 }
@@ -507,11 +626,17 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
     //const latexConfiguration = JSON.parse(await getLatexConfiguration());
 
     // Get all user data
-    allSections = await getAllSections();
+    const allSections = await getAllSections();
     template = templateWithEndStartDate;
     const allSectionIds = allSections.map((section) => section.data_section_id);
     const unparsedData = await getUserCVData(userInfo.user_id, allSectionIds);
     sortAscending = JSON.parse(template.template_structure).sort_ascending;
+
+    // Create sectionsMap with data_section_id as key and section as value
+    sectionsMap = {};
+    allSections.forEach((section) => {
+        sectionsMap[section.data_section_id] = section;
+    });
 
     let latex = buildLatexHeader();
 
@@ -519,8 +644,8 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
 
     //console.log("UserInfo", userInfo);
 
-    // Parse user data
-    userCvData = unparsedData.map((data) => {
+    // Parse user data and create userCvDataMap
+    const userCvData = unparsedData.map((data) => {
         let dataDetails;
         try {
             dataDetails = JSON.parse(data.data_details);
@@ -528,6 +653,16 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
             dataDetails = data.data_details;
         }
         return { ...data, data_details: dataDetails };
+    });
+
+    // Create userCvDataMap with data_section_id as key and array of CV data as value
+    userCvDataMap = {};
+    userCvData.forEach((cvData) => {
+        const sectionId = cvData.data_section_id;
+        if (!userCvDataMap[sectionId]) {
+            userCvDataMap[sectionId] = [];
+        }
+        userCvDataMap[sectionId].push(cvData);
     });
 
     //console.log(userCvData)
