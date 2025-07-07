@@ -73,13 +73,7 @@ const Affiliations = () => {
 
   // Function to save all affiliations data
   const handleSaveAffiliations = async () => {
-    if (!userInfo?.user_id) {
-      alert("User information is missing");
-      return;
-    }
-
     setIsSaving(true);
-    
     try {
       // Update the affiliationsData object with all current data
       const updatedAffiliationsData = {
