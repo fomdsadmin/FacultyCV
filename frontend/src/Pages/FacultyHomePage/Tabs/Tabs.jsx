@@ -8,7 +8,7 @@ import { Accordion } from "../../../SharedComponents/Accordion/Accordion";
 import { AccordionItem } from "../../../SharedComponents/Accordion/AccordionItem";
 import GenericSection from "../../../SharedComponents/GenericSection/GenericSection";
 import { useFaculty } from "../FacultyContext";
-import Affiliations from "../Affiliations";
+import Affiliations from "../Affiliations/Affiliations";
 import Profile from "../Profile/Profile";
 import { get } from "aws-amplify/api";
 
