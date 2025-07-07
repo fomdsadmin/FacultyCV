@@ -237,6 +237,16 @@ export const getUserDeclarationsQuery = (first_name, last_name) => `
     }
 `;
 
+export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
+    query getUserAffiliations {
+        getUserAffiliations (
+            first_name: "${first_name}", last_name: "${last_name}", user_id: "${user_id}"
+        ) {
+            data_details
+        }
+    }
+`;
+
 export const getAuditViewQuery = (logged_user_id) => {
     if (logged_user_id !== undefined && logged_user_id !== null) {
         return `

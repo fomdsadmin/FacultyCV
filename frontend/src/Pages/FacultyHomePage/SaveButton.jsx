@@ -4,7 +4,7 @@ import { updateUser, updateUserAffiliations } from "../../graphql/graphqlHelpers
 import { useFaculty } from "./FacultyContext";
 import { useLocation } from "react-router-dom"; // <-- import useLocation
 
-const SaveButton = () => {
+const SaveButton = ({ affiliationsData }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { userInfo, getUserInfo } = useApp();
@@ -17,18 +17,23 @@ const SaveButton = () => {
 
   // Dummy function for affiliations save
   const handleAffiliationsSave = async () => {
-    // TODO: Replace with real save logic for affiliations
-    alert("Affiliations save called!");
-    const affiliations = {};
+    setIsSubmitting(true);
     try {
       await updateUserAffiliations(
         userInfo.user_id,
         userInfo.first_name,
         userInfo.last_name,
-        affiliations
+        affiliationsData
       );
+      alert("Affiliations saved!");
+
+      // Reset change state after successful save
+      // if (setPrevUserInfo) {
+      //   setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
+      // }
     } catch (error) {
       console.error("Error updating user affiliations:", error);
+      alert("Failed to save affiliations. Please try again.");
     }
     setIsSubmitting(false);
   };
