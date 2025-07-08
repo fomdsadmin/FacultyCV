@@ -13,9 +13,7 @@ const truncateText = (text, maxLength) => {
 };
 
 const capitalizeWords = (string) => {
-  return string
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  return string.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 const addSpaceAfterComma = (string) => {
@@ -23,24 +21,13 @@ const addSpaceAfterComma = (string) => {
 };
 
 const removeCommasIfNeeded = (key, value) => {
-  if (
-    key.toLowerCase().includes("dates") ||
-    key.toLowerCase().includes("year")
-  ) {
+  if (key.toLowerCase().includes("dates") || key.toLowerCase().includes("year")) {
     return value.replace(/,/g, "");
   }
   return value;
 };
 
-const GenericEntry = ({
-  isArchived,
-  onEdit,
-  onArchive,
-  onRestore,
-  field1,
-  field2,
-  data_details,
-}) => {
+const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2, data_details }) => {
   const [attributes, setAttributes] = useState([]);
   const [updatedField1, setUpdatedField1] = useState(field1);
   const [updatedField2, setUpdatedField2] = useState(field2);
@@ -71,18 +58,10 @@ const GenericEntry = ({
     let tempField1 = field1;
     let tempField2 = field2;
     Object.entries(data_details).forEach(([key, value]) => {
-      if (
-        value === field1 &&
-        (key.toLowerCase().includes("dates") ||
-          key.toLowerCase().includes("year"))
-      ) {
+      if (value === field1 && (key.toLowerCase().includes("dates") || key.toLowerCase().includes("year"))) {
         tempField1 = field1.replace(/,/g, "");
       }
-      if (
-        value === field2 &&
-        (key.toLowerCase().includes("dates") ||
-          key.toLowerCase().includes("year"))
-      ) {
+      if (value === field2 && (key.toLowerCase().includes("dates") || key.toLowerCase().includes("year"))) {
         tempField2 = field2.replace(/,/g, "");
       }
     });
@@ -95,25 +74,21 @@ const GenericEntry = ({
   return (
     <div className="min-h-8 shadow-glow mx-4 my-2 px-4 py-4 flex items-center bg-white rounded-lg">
       <div className="flex-1 w-full">
-        {console.log(attributes)}
         {updatedField1 && (
-          <h1 className="text-gray-800 font-bold break-words">
-            {truncateText(updatedField1, MAX_CHAR_LENGTH)}
-          </h1>
+          <h1 className="text-gray-800 font-bold break-words">{truncateText(updatedField1, MAX_CHAR_LENGTH)}</h1>
         )}
-        {updatedField2 && (
-          <h2 className="text-gray-600 break-words">
-            {truncateText(updatedField2, MAX_CHAR_LENGTH)}
-          </h2>
-        )}
+        {updatedField2 && <h2 className="text-gray-600 break-words">{truncateText(updatedField2, MAX_CHAR_LENGTH)}</h2>}
         {attributes.map((attribute, index) => {
           // Split "Label: Value"
           const [label, ...rest] = attribute.split(": ");
           const value = rest.join(": ");
+          // Special case: Only show Agency if value is not 'rise' (case-insensitive)
+          if (label.trim() === "Agency" && value.trim().toLowerCase() === "rise") {
+            return <></>;
+          }
           return (
             <p key={index} className="text-gray-600 break-words text-sm">
-              <span className="font-bold">{label}:</span>{" "}
-              {truncateText(value, MAX_CHAR_LENGTH)}
+              <span className="font-bold">{label}:</span> {truncateText(value, MAX_CHAR_LENGTH)}
             </p>
           );
         })}
@@ -122,26 +97,17 @@ const GenericEntry = ({
       <div className="flex items-center space-x-1">
         {!isArchived && (
           <>
-            <button
-              className="btn btn-sm btn-circle btn-ghost"
-              onClick={() => onEdit()}
-            >
+            <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onEdit()}>
               <FaRegEdit className="h-5 w-5" />
             </button>
-            <button
-              className="btn btn-sm btn-circle btn-ghost"
-              onClick={() => onArchive()}
-            >
+            <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onArchive()}>
               <IoClose className="h-5 w-5" />
             </button>
           </>
         )}
 
         {isArchived && (
-          <button
-            className="btn btn-xs btn-circle btn-ghost"
-            onClick={onRestore}
-          >
+          <button className="btn btn-xs btn-circle btn-ghost" onClick={onRestore}>
             <LuUndo2 className="h-4 w-4" />
           </button>
         )}

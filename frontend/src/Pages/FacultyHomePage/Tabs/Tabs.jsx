@@ -18,8 +18,8 @@ const Tabs = () => {
   const CATEGORIES = Object.freeze({
     PROFILE: "Profile",
     AFFILIATIONS: "Affiliations",
-    EMPLOYMENT: "Employment",
     EDUCATION: "Education",
+    EMPLOYMENT: "Employment",
   });
 
   const navigate = useNavigate();
@@ -42,9 +42,6 @@ const Tabs = () => {
   const { userInfo } = useApp();
 
   const getTitlesForCategory = (category) => {
-    if (category.includes("Employment")) {
-      return ["Employment Record", "Leaves of Absence"];
-    }
     if (category.includes("Education")) {
       return [
         "5a. Post-Secondary Education",
@@ -53,6 +50,9 @@ const Tabs = () => {
         "5e. Professional Qualifications, Certifications and Licenses",
         "5b. Dissertations",
       ];
+    }
+    if (category.includes("Employment")) {
+      return ["Employment Record", "Leaves of Absence"];
     }
 
     return [];
@@ -102,13 +102,19 @@ const Tabs = () => {
                 if (title.includes("Leaves of Absence")) {
                   return (
                     <AccordionItem key={title} title={"7. Leaves of Absence"}>
-                      <GenericSection section={academicSections.filter((s) => s.title.includes(title))[0]} onBack={null} />
+                      <GenericSection
+                        section={academicSections.filter((s) => s.title.includes(title))[0]}
+                        onBack={null}
+                      />
                     </AccordionItem>
                   );
                 } else {
                   return (
                     <AccordionItem key={title} title={title}>
-                      <GenericSection section={academicSections.filter((s) => s.title.includes(title))[0]} onBack={null} />
+                      <GenericSection
+                        section={academicSections.filter((s) => s.title.includes(title))[0]}
+                        onBack={null}
+                      />
                     </AccordionItem>
                   );
                 }
