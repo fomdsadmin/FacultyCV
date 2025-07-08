@@ -427,40 +427,22 @@ const buildTableSectionColumns = (preparedSection) => {
     return latex;
 }
 
-const buildPreparedSectionWithType = (preparedSectionWithType) => {
-    let latex = "";
-    const attributes = preparedSectionWithType.attribute_groups.flatMap((attributeGroup) => attributeGroup.attributes);
-
-    console.log("Build type object: ", sectionsMap[preparedSectionWithType.data_section_id]);
-    console.log("Attributes type: ", JSON.parse(sectionsMap[preparedSectionWithType.data_section_id].attributes_type));
-
-    const sectionTitles = JSON.parse(sectionsMap[preparedSectionWithType.data_section_id].attributes_type).dropdown[preparedSectionWithType.section_by_type];
-
-    console.log("section titles: ", sectionTitles);
-
-    console.log("User cv groups", getUserCvDataMap(preparedSectionWithType.data_section_id));
-
-    const mappedSections = sectionTitles.map((title) => {
-        const section = {
-            ...preparedSectionWithType,
-            renamed_section_title: title,
-            attribute_filter_value: title
-        }
-        return section;
-    });
-
-    for (const mappedSection of mappedSections) {
-        latex += buildPreparedSection(mappedSection, mappedSection.data_section_id);
-    }
-
-    console.log("mappedSections: ", mappedSections);
-
-    return latex;
-}
-
 const buildSubSections = (preparedSectionWithSubSections) => {
 
     let latex = "";
+
+    console.log("prepared sub sections", preparedSectionWithSubSections)
+
+    if (preparedSectionWithSubSections.sub_section_settings.display_section_title) {
+        const titleToDisplay = preparedSectionWithSubSections.renamed_section_title || preparedSectionWithSubSections.title;
+        const columnFormat = generateColumnFormatViaRatioArray([1]);
+        const subHeaderRowData = [{
+            textOptions: [textOptions(titleToDisplay, true, null)], // text, bold=true, size=null
+            color: 'subHeaderGray'
+        }];
+
+        latex += cellRowBuilder(subHeaderRowData, columnFormat);
+    }
 
     const mappedSections = preparedSectionWithSubSections
         .sub_section_settings
@@ -498,6 +480,10 @@ const buildNotes = (preparedSection) => {
     const section = sectionsMap[dataSectionId];
     const sectionAttributes = JSON.parse(section.attributes);
 
+    if (filteredSectionData.length === 0) {
+        return "";
+    }
+
     // Start a paragraph with reduced line width
     latex += String.raw`\begin{quote}` + '\n';
 
@@ -510,11 +496,11 @@ const buildNotes = (preparedSection) => {
         }
         filteredSectionData.forEach(data => {
             const attributeKey = sectionAttributes[noteSetting.attribute];
-            const noteToShow = String(data.data_details[attributeKey]);
+            const noteToShow = data.data_details[attributeKey];
             const attributeToAssociateWithNote = noteSetting.attribute_to_associate_note;
 
-            if (!noteToShow || noteToShow.trim() === '') {
-                return; // Changed from continue to return
+            if (!noteToShow || String(noteToShow).trim() === '') {
+                return;
             }
 
             if (attributeToAssociateWithNote && attributeToAssociateWithNote.trim() !== '') {
@@ -528,7 +514,7 @@ const buildNotes = (preparedSection) => {
             } else {
                 // Use bullet point format
                 latex += String.raw`\begin{itemize}` + '\n';
-                latex += String.raw`\item ` + sanitizeLatex(noteToShow) + '\n';
+                latex += String.raw`\item ` + sanitizeLatex(String(noteToShow)) + '\n';
                 latex += String.raw`\end{itemize}` + '\n';
             }
         });

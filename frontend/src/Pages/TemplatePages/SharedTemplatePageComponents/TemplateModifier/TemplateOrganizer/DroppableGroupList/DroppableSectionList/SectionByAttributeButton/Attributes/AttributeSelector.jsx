@@ -17,6 +17,13 @@ const AttributeSelector = ({
         }));
     };
 
+    const handleDisplaySectionTitleChange = (e) => {
+        setSubSectionSettings(prevSettings => ({
+            ...prevSettings,
+            display_section_title: e.target.checked
+        }));
+    };
+
     return (
         <>
             <p className="text-sm text-gray-600 mb-4">
@@ -45,18 +52,32 @@ const AttributeSelector = ({
             </select>
 
             {selectedAttribute && (
-                <div className="flex items-center gap-2 mb-4">
-                    <input
-                        type="checkbox"
-                        id="display-titles"
-                        checked={subSectionSettings.display_titles || false}
-                        onChange={handleDisplayTitlesChange}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="display-titles" className="text-sm text-gray-700">
-                        Display subsection titles
-                    </label>
-                </div>
+                <>
+                    <div className="flex items-center gap-2 mb-4">
+                        <input
+                            type="checkbox"
+                            id="display-section-title"
+                            checked={subSectionSettings.display_section_title || false}
+                            onChange={handleDisplaySectionTitleChange}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="display-section-title" className="text-sm text-gray-700">
+                            Display section title
+                        </label>
+                    </div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <input
+                            type="checkbox"
+                            id="display-titles"
+                            checked={subSectionSettings.display_titles || false}
+                            onChange={handleDisplayTitlesChange}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="display-titles" className="text-sm text-gray-700">
+                            Display subsection titles
+                        </label>
+                    </div>
+                </>
             )}
         </>
     );
