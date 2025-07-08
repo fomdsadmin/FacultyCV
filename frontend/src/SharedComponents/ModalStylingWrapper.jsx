@@ -1,7 +1,18 @@
 import { createPortal } from "react-dom"
+import { useEffect } from "react"
 
 // Wrap all your dialog components with this
 const ModalStylingWrapper = ({ children, useDefaultBox = false }) => {
+    // Lock body scroll when modal is mounted
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        
+        // Cleanup on unmount
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
     return createPortal(
         <div 
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
