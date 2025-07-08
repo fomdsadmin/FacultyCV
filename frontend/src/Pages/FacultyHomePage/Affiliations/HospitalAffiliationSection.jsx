@@ -6,10 +6,6 @@ const HospitalAffiliationSection = ({ hospitalAffiliations, setHospitalAffiliati
   const { authorities, authoritiesMap } = useFaculty();
   const [showHospitalDetails, setShowHospitalDetails] = useState(false);
   
-  useEffect(() => {
-    console.log("Authorities Map:", authoritiesMap);
-  }, [authoritiesMap]);
-
   const handleHospitalInputChange = (index, field, value) => {
     const updatedAffiliations = [...hospitalAffiliations];
     updatedAffiliations[index] = {
