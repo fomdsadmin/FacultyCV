@@ -12,7 +12,6 @@ import Affiliations from "../Affiliations/Affiliations";
 import Profile from "../Profile/Profile";
 import { get } from "aws-amplify/api";
 
-
 const Tabs = () => {
   const { academicSections } = useFaculty();
 
@@ -48,16 +47,15 @@ const Tabs = () => {
     }
     if (category.includes("Education")) {
       return [
-        "Post-Secondary Education",
-        "Continuing Education or Training",
-        "Continuing Medical Education",
-        "Professional Qualifications, Certifications and Licenses",
-        "Dissertations",
+        "5a. Post-Secondary Education",
+        "5c. Continuing Education or Training",
+        "5d. Continuing Medical Education",
+        "5e. Professional Qualifications, Certifications and Licenses",
+        "5b. Dissertations",
       ];
     }
 
     return [];
-
   };
 
   const getSection = (category, index) => {
@@ -66,30 +64,8 @@ const Tabs = () => {
         {activeTab.includes(category) && (
           <Accordion key={index}>
             {/* Filter out the sections which use custom modals from the list */}
-            {getTitlesForCategory(category)
-              .filter(
-                (title) =>
-                  title !== "Courses Taught" &&
-                  title !== "Post-Secondary Education" &&
-                  title !== "Employment Record"
-              )
-              .map((title, innerIndex) => (
-                // send remaining sections to GenericSection
-                <AccordionItem key={title} title={title}>
-                  <GenericSection section={academicSections.filter((s) => s.title.includes(title))[0]} onBack={null} />
-                </AccordionItem>
-              ))}
-            {activeTab.includes("Education") && (
-              <AccordionItem key="Post-Secondary Education" title={"Post-Secondary Education"}>
-                <EducationSection
-                  user={userInfo}
-                  section={academicSections.filter((s) => s.title.includes("Post-Secondary Education"))[0]}
-                  onBack={undefined}
-                ></EducationSection>
-              </AccordionItem>
-            )}
             {activeTab.includes("Employment") && (
-              <AccordionItem key="Employment Record" title={"Employment Record"}>
+              <AccordionItem key="Employment Record" title={"6. Employment Record"}>
                 <EmploymentSection
                   user={userInfo}
                   section={academicSections.filter((s) => s.title.includes("Employment Record"))[0]}
@@ -97,6 +73,46 @@ const Tabs = () => {
                 ></EmploymentSection>
               </AccordionItem>
             )}
+            {activeTab.includes("Education") && (
+              <AccordionItem key="Post-Secondary Education" title={"5a. Post-Secondary Education"}>
+                <EducationSection
+                  user={userInfo}
+                  section={academicSections.filter((s) => s.title.includes("Post-Secondary Education"))[0]}
+                  onBack={undefined}
+                ></EducationSection>
+              </AccordionItem>
+            )}
+            {getTitlesForCategory(category)
+              .filter(
+                (title) =>
+                  title !== "Courses Taught" &&
+                  !title.includes("Post-Secondary Education") &&
+                  !title.includes("Employment Record")
+              )
+              .sort((a, b) => {
+                // Extract the prefix (e.g., "5a.", "5b.") and compare
+                const getPrefix = (str) => {
+                  const match = str.match(/^(\d+[a-z]?)/i);
+                  return match ? match[1] : str;
+                };
+                return getPrefix(a).localeCompare(getPrefix(b), undefined, { numeric: true });
+              })
+              .map((title, innerIndex) => {
+                // send remaining sections to GenericSection
+                if (title.includes("Leaves of Absence")) {
+                  return (
+                    <AccordionItem key={title} title={"7. Leaves of Absence"}>
+                      <GenericSection section={academicSections.filter((s) => s.title.includes(title))[0]} onBack={null} />
+                    </AccordionItem>
+                  );
+                } else {
+                  return (
+                    <AccordionItem key={title} title={title}>
+                      <GenericSection section={academicSections.filter((s) => s.title.includes(title))[0]} onBack={null} />
+                    </AccordionItem>
+                  );
+                }
+              })}
           </Accordion>
         )}
       </>
@@ -104,12 +120,12 @@ const Tabs = () => {
   };
 
   return (
-    <div className="mt-6 pr-5">
-      <div className="flex space-x-4 mb-4 overflow-x-auto max-w-[100%]">
+    <div className="pr-5 w-full max-w-7xl">
+      <div className="flex space-x-4 mb-4 overflow-x-auto max-w-7xl">
         {Object.values(CATEGORIES).map((title) => (
           <button
             key={title}
-            className={`text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 ${
+            className={`text-md xl:text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 ${
               activeTab === title ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             onClick={() => {
@@ -130,7 +146,7 @@ const Tabs = () => {
         ))}
       </div>
 
-      <div className="border border-gray-200 rounded-md bg-white p-4">
+      <div className="border border-gray-200 rounded-md bg-white p-4 w-full">
         {Object.values(CATEGORIES).map((category, index) => getSection(category, index))}
         {activeTab === "Affiliations" && <Affiliations />}
         {activeTab === "Profile" && <Profile />}
