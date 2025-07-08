@@ -8,23 +8,27 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [currentViewRole, setCurrentViewRole] = useState(null);
 
-  return (
-  <AppContext.Provider
-    value={{
-      userInfo,
-      setUserInfo,
-      assistantUserInfo,
-      setAssistantUserInfo,
-      loading,
-      setLoading,
-      currentViewRole,
-      setCurrentViewRole,
-    }}
-  >
-    {children}
-  </AppContext.Provider>
-);
+  // Add this to track Amplify config status
+  const [amplifyConfigured, setAmplifyConfigured] = useState(false);
 
+  return (
+    <AppContext.Provider
+      value={{
+        userInfo,
+        setUserInfo,
+        assistantUserInfo,
+        setAssistantUserInfo,
+        loading,
+        setLoading,
+        currentViewRole,
+        setCurrentViewRole,
+        amplifyConfigured,      
+        setAmplifyConfigured,  
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
 };
 
 export const useApp = () => useContext(AppContext);
