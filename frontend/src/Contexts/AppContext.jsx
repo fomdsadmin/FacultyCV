@@ -8,7 +8,7 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [currentViewRole, setCurrentViewRole] = useState(null);
 
-  // Add this to track Amplify config status
+  // Track Amplify config status
   const [amplifyConfigured, setAmplifyConfigured] = useState(false);
 
   return (
@@ -22,8 +22,8 @@ export const AppProvider = ({ children }) => {
         setLoading,
         currentViewRole,
         setCurrentViewRole,
-        amplifyConfigured,      
-        setAmplifyConfigured,  
+        amplifyConfigured,
+        setAmplifyConfigured,
       }}
     >
       {children}

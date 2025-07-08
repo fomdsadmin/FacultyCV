@@ -1,17 +1,33 @@
 import { generateClient } from "aws-amplify/api";
 import { getUserQuery } from "./queries";
 import { addUserMutation } from "./mutations";
+import { fetchAuthSession } from "aws-amplify/auth";
 
 export const runGraphql = async (query, variables = {}, token) => {
-  const client = generateClient();
+  // const session = await fetchAuthSession();
+  // const token = session.tokens?.idToken?.toString();
+  // console.log("session", session);
+
+  const client = generateClient({
+    headers: async () => {
+      return {
+        Authorization: token,
+      };
+    },
+  });
+
+
+  if (!client) {
+    throw new Error("GraphQL client is not configured properly.");
+  }
+  else {
+    console.log("GraphQL client configured successfully.");
+    console.log(client);
+  }
 
   const result = await client.graphql({
     query,
-    variables,
-    authMode: "openidConnect",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+    variables
   });
 
   return result;
@@ -41,8 +57,7 @@ export const addUser = async (
   keywords,
   institution_user_id,
   scopus_id,
-  orcid_id,
-  token
+  orcid_id
 ) => {
   const results = await runGraphql(
     addUserMutation(
@@ -66,8 +81,7 @@ export const addUser = async (
       scopus_id,
       orcid_id
     ),
-    null,
-    token
+    null
   );
 
   return results?.data?.addUser;
