@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Section, Dropdown } from "./Affiliations";
 import { useFaculty } from "../FacultyContext.jsx";
 
 const ResearchAffiliationSection = ({ researchAffiliations, setResearchAffiliations }) => {
   const { affiliations } = useFaculty();
+  const [showResearchDetails, setShowResearchDetails] = useState(false);
 
   const handleResearchInputChange = (index, field, value) => {
     const updatedAffiliations = [...researchAffiliations];
@@ -16,7 +17,6 @@ const ResearchAffiliationSection = ({ researchAffiliations, setResearchAffiliati
 
   // Function to add a new research affiliation
   const handleAddResearchAffiliation = () => {
-    // Create a new empty research affiliation
     const newAffiliation = {
       center: "",
       division: "",
@@ -25,7 +25,6 @@ const ResearchAffiliationSection = ({ researchAffiliations, setResearchAffiliati
       end: ""
     };
     
-    // Add to the researchAffiliations array
     setResearchAffiliations([...researchAffiliations, newAffiliation]);
   };
 
@@ -37,119 +36,144 @@ const ResearchAffiliationSection = ({ researchAffiliations, setResearchAffiliati
   };
 
   return (
-    <Section title="Research Affiliation">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                Research Center/Institute
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                Division/Pillar (if applicable)
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                Title (i.e Head)
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                Start Date
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                End Date
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {researchAffiliations.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center text-gray-400 py-4">
-                  No research affiliations added.
-                </td>
-              </tr>
-            ) : (
-              researchAffiliations.map((affiliation, idx) => (
-                <tr key={idx}>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <Dropdown
-                      name={`center-${idx}`}
-                      value={affiliation.center || ""}
-                      onChange={(e) => handleResearchInputChange(idx, "center", e.target.value)}
-                      options={affiliations}
-                    />
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    <input
-                      type="text"
-                      className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-200"
-                      placeholder="Enter division/pillar"
-                      value={affiliation.division || ""}
-                      onChange={(e) => handleResearchInputChange(idx, "division", e.target.value)}
-                    />
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    <input
-                      type="text"
-                      className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-200"
-                      placeholder="Enter title"
-                      value={affiliation.title || ""}
-                      onChange={(e) => handleResearchInputChange(idx, "title", e.target.value)}
-                    />
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    <input
-                      type="date"
-                      className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-200"
-                      value={affiliation.start || ""}
-                      onChange={(e) => handleResearchInputChange(idx, "start", e.target.value)}
-                    />
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    <input
-                      type="date"
-                      className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-200"
-                      value={affiliation.end || ""}
-                      onChange={(e) => handleResearchInputChange(idx, "end", e.target.value)}
-                    />
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <button
-                      onClick={() => handleDeleteResearchAffiliation(idx)}
-                      className="text-red-500 hover:text-red-700"
-                      title="Delete"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-        <div className="mt-2 text-right">
-          <button
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-            onClick={handleAddResearchAffiliation}
-            type="button"
+    <>
+      {/* Dropdown button for Research Affiliations */}
+      <div className="">
+        <button
+          onClick={() => setShowResearchDetails(!showResearchDetails)}
+          className="flex items-center justify-between w-full bg-gray-50 hover:bg-gray-100 transition-colors px-4 py-2 rounded border text-left font-semibold text-zinc-600"
+        >
+          <span>Research Affiliation</span>
+          <svg
+            className={`h-5 w-5 transition-transform ${showResearchDetails ? 'transform rotate-180' : ''}`}
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
           >
-            + Add
-          </button>
-        </div>
+            <path
+              fillRule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+
+        {/* Collapsible content */}
+        {showResearchDetails && (
+          <div className="mt-4 border rounded-lg bg-white p-4">
+            <div className="overflow-x-auto">
+              {researchAffiliations.length === 0 ? (
+                <div className="text-center text-gray-400">
+                  No research affiliations found.
+                </div>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Research Center/Institute
+                      </th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Division/Pillar (if applicable)
+                      </th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Title (i.e Head)
+                      </th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Start Date
+                      </th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        End Date
+                      </th>
+                      {/* Removed the Actions heading */}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {researchAffiliations.map((affiliation, idx) => (
+                      <tr key={idx} className="relative">
+                        <td className="pr-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <Dropdown
+                            name={`center-${idx}`}
+                            value={affiliation.center || ""}
+                            onChange={(e) => handleResearchInputChange(idx, "center", e.target.value)}
+                            options={affiliations}
+                          />
+                        </td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <input
+                            type="text"
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                            placeholder="Enter division/pillar"
+                            value={affiliation.division || ""}
+                            onChange={(e) => handleResearchInputChange(idx, "division", e.target.value)}
+                          />
+                        </td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <input
+                            type="text"
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                            placeholder="Enter title"
+                            value={affiliation.title || ""}
+                            onChange={(e) => handleResearchInputChange(idx, "title", e.target.value)}
+                          />
+                        </td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <input
+                            type="date"
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                            value={affiliation.start || ""}
+                            onChange={(e) => handleResearchInputChange(idx, "start", e.target.value)}
+                          />
+                        </td>
+                        <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700 pr-10">
+                          <div className="flex items-center">
+                            <input
+                              type="date"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              value={affiliation.end || ""}
+                              onChange={(e) => handleResearchInputChange(idx, "end", e.target.value)}
+                            />
+                            {/* Delete button positioned absolutely to the right */}
+                            <button
+                              onClick={() => handleDeleteResearchAffiliation(idx)}
+                              className="text-red-500 hover:text-red-700 absolute right-2"
+                              title="Delete"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              <div className="mt-2 text-right">
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                  onClick={handleAddResearchAffiliation}
+                  type="button"
+                >
+                  + Add
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </Section>
+    </>
   );
 };
 

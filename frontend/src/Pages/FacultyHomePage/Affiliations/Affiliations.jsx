@@ -51,8 +51,7 @@ export const Dropdown = ({ label, ...props }) => (
 );
 
 const Affiliations = () => {
-  const { faculties, institutions, campuses} =
-    useFaculty();
+  const { faculties, institutions, campuses } = useFaculty();
   const { userInfo } = useApp();
 
   // Dynamic data placeholders
@@ -66,8 +65,7 @@ const Affiliations = () => {
   const [researchAffiliations, setResearchAffiliations] = useState([]);
   const [hospitalAffiliations, setHospitalAffiliations] = useState([]);
 
-
-  const [departmentRows, setDepartmentRows] = useState({}); 
+  const [departmentRows, setDepartmentRows] = useState({});
   const [researchRows, setResearchRows] = useState([]);
   const [hospitalRows, setHospitalRows] = useState([]);
 
@@ -81,9 +79,9 @@ const Affiliations = () => {
         institution: institutionData,
         academic_units: academicUnits,
         research_affiliations: researchAffiliations,
-        hospital_affiliations: hospitalAffiliations
+        hospital_affiliations: hospitalAffiliations,
       };
-      
+
       // Update affiliationsData state
       setAffiliationsData(updatedAffiliationsData);
       console.log("Saving affiliations data:", updatedAffiliationsData);
@@ -94,8 +92,8 @@ const Affiliations = () => {
         userInfo.last_name,
         JSON.stringify(updatedAffiliationsData)
       );
-      
-      alert("Affiliations saved successfully!");
+
+      // alert("Affiliations saved successfully!");
     } catch (error) {
       console.error("Error saving affiliations:", error);
       alert("Failed to save affiliations. Please try again.");
@@ -123,27 +121,26 @@ const Affiliations = () => {
               data = {};
             }
           }
-          
+
           setAffiliationsData(data);
 
-          // Objects - make sure we properly initialize with data from the API
+          // Objects - make sure we properly initialize with data
           setFacultyData({
             primary_faculty: data.faculty?.primary_faculty || "",
-            secondary_faculty: data.faculty?.secondary_faculty || ""
+            secondary_faculty: data.faculty?.secondary_faculty || "",
           });
 
           setInstitutionData({
             institution: data.institution?.institution || "",
-            campus: data.institution?.campus || ""
+            campus: data.institution?.campus || "",
           });
-          
+
           // Arrays of objects
           setAcademicUnits(Array.isArray(data.academic_units) ? data.academic_units : []);
           setResearchAffiliations(Array.isArray(data.research_affiliations) ? data.research_affiliations : []);
           setHospitalAffiliations(Array.isArray(data.hospital_affiliations) ? data.hospital_affiliations : []);
 
-          console.log(academicUnits)
-
+          console.log(academicUnits);
         } else {
           console.log("No affiliations data found");
           // Initialize with empty defaults
@@ -168,7 +165,7 @@ const Affiliations = () => {
     const { name, value } = e.target;
     setInstitutionData({
       ...institutionData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -176,62 +173,55 @@ const Affiliations = () => {
     const { name, value } = e.target;
     setFacultyData({
       ...facultyData,
-      [name]: value
+      [name]: value,
     });
   };
 
   return (
-    <div className="mx-auto p-4 xl:px-12">
-      {/* Save Button */}
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={handleSaveAffiliations}
-          disabled={isSaving}
-          className={`btn ${isSaving ? 'btn-disabled bg-gray-400' : 'btn-success'} text-white px-4 py-2 rounded-md text-sm font-medium`}
-        >
-          {isSaving ? 'Saving...' : 'Save Affiliations'}
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 xl:gap-2">
+    <div className="mx-auto p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xl:gap-2">
         <Section title="Institution">
-          <Field
-            label="Institution"
-            name="institution"
-            value={institutionData.institution || ""}
-            onChange={handleInstitutionChange}
-            options={institutions}
-          />
-          <Field
-            label="Campus"
-            name="campus"
-            value={institutionData.campus || ""}
-            onChange={handleInstitutionChange}
-            options={campuses}
-          />
+          <div className="gap-x-2 gap-y-4 grid grid-cols-1 md:grid-cols-2">
+            <Field
+              label="Institution"
+              name="institution"
+              value={institutionData.institution || ""}
+              onChange={handleInstitutionChange}
+              options={institutions}
+            />
+            <Field
+              label="Campus"
+              name="campus"
+              value={institutionData.campus || ""}
+              onChange={handleInstitutionChange}
+              options={campuses}
+            />
+          </div>
         </Section>
         <Section title="Faculty">
-          <Field
-            label="Primary Faculty"
-            name="primary_faculty"
-            value={facultyData.primary_faculty || ""}
-            onChange={handleFacultyChange}
-            options={faculties}
-          />
-          <Field
-            label="Secondary Faculty"
-            name="secondary_faculty"
-            value={facultyData.secondary_faculty || ""}
-            onChange={handleFacultyChange}
-            options={faculties}
-          />
+          <div className="gap-x-2 gap-y-4 grid grid-cols-1 md:grid-cols-2">
+            <Field
+              label="Primary Faculty"
+              name="primary_faculty"
+              value={facultyData.primary_faculty || ""}
+              onChange={handleFacultyChange}
+              options={faculties}
+            />
+            <Field
+              label="Joint Faculty"
+              name="secondary_faculty"
+              value={facultyData.secondary_faculty || ""}
+              onChange={handleFacultyChange}
+              options={faculties}
+            />
+          </div>
         </Section>
       </div>
 
       <div className="my-4 gap-y-4 flex flex-col">
         {/* Academic Units Table */}
-        <AcademicUnitSection 
-          academicUnits={academicUnits} 
+        <AcademicUnitSection
+          academicUnits={academicUnits}
           setAcademicUnits={setAcademicUnits}
           setAffiliationsData={setAffiliationsData}
         />
@@ -247,6 +237,18 @@ const Affiliations = () => {
           hospitalAffiliations={hospitalAffiliations}
           setHospitalAffiliations={setHospitalAffiliations}
         />
+      </div>
+      {}
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={handleSaveAffiliations}
+          disabled={isSaving}
+          className={`btn ${
+            isSaving ? "btn-disabled bg-gray-400" : "btn-success"
+          } btn mt-2 text-white px-4 py-2 min-h-0 h-10`}
+        >
+          {isSaving ? "Saving..." : "Save Affiliations"}
+        </button>
       </div>
     </div>
   );

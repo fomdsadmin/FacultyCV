@@ -114,7 +114,7 @@ const SaveButton = ({ affiliationsData }) => {
   return (
     <button
       type="button"
-      className={`btn text-white py-1 px-2 w-1/5 min-h-0 h-8 leading-tight ${
+      className={`btn text-white px-4 py-2 min-h-0 h-10  leading-tight ${
         change ? "btn-success" : "btn-disabled bg-gray-400"
       }`}
       disabled={!change || isSubmitting}
