@@ -8,6 +8,7 @@ import {
   updateUserCVDataArchive,
   deleteUserCVSectionData,
 } from "../graphql/graphqlHelpers";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const EmploymentSection = ({ user, section, onBack }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,6 +21,9 @@ const EmploymentSection = ({ user, section, onBack }) => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [notification, setNotification] = useState(""); // <-- Add this
 
+    const { logAction } = useAuditLogger();
+  
+  
   const handleDelete = async () => {
     try {
       await deleteUserCVSectionData({
@@ -31,6 +35,8 @@ const EmploymentSection = ({ user, section, onBack }) => {
       setTimeout(() => {
         setNotification("");
       }, 2500); // 1.5 seconds
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_CV_DATA);
     } catch (error) {
       console.error("Error deleting section data:", error);
     }
@@ -45,6 +51,7 @@ const EmploymentSection = ({ user, section, onBack }) => {
     setFieldData([]);
     try {
       await updateUserCVDataArchive(entry.user_cv_data_id, true);
+      await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA);
     } catch (error) {
       console.error("Error archiving entry:", error);
     }

@@ -8,6 +8,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import { LuBrainCircuit } from "react-icons/lu";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const generateEmptyEntry = (attributes) => {
   const emptyEntry = {};
@@ -35,6 +36,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
   const totalPages = Math.ceil(fieldData.length / pageSize);
   const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     setCurrentPage(1);
@@ -49,6 +51,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
     setFieldData([]);
     try {
       await updateUserCVDataArchive(entry.user_cv_data_id, true);
+      await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA);
     } catch (error) {
       console.error("Error archiving entry:", error);
     }
@@ -95,6 +98,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
       setTimeout(() => {
         setNotification("");
       }, 2500); // 1.5 seconds
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_CV_DATA);
     } catch (error) {
       console.error("Error deleting section data:", error);
     }

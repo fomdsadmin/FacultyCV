@@ -4,6 +4,7 @@ import "../CustomStyles/scrollbar.css";
 import "../CustomStyles/modal.css";
 import { addUserCVData, getUserCVData, getOrcidSections } from "../graphql/graphqlHelpers";
 import { getMonthName } from "../utils/time";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const EducationModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
   const [educationData, setEducationData] = useState([]);
@@ -12,6 +13,7 @@ const EducationModal = ({ user, section, onClose, setRetrievingData, fetchData }
   const [initialRender, setInitialRender] = useState(true);
   const [count, setCount] = useState(1);
   const navigate = useNavigate(); // Add this line
+  const { logAction } = useAuditLogger();
 
   async function fetchEducationData() {
     setFetchingData(true);
@@ -65,6 +67,8 @@ const EducationModal = ({ user, section, onClose, setRetrievingData, fetchData }
         });
 
         setEducationData(transformedData);
+        // Log the retrieval action
+        await logAction(AUDIT_ACTIONS.RETRIEVE_EXTERNAL_DATA);
       } else {
         console.error("No education data found in response.");
       }
@@ -91,7 +95,10 @@ const EducationModal = ({ user, section, onClose, setRetrievingData, fetchData }
 
         try {
           await addUserCVData(user.user_id, section.data_section_id, JSON.stringify(education), false);
+          
           setCount((prevCount) => prevCount + 1);
+          // Log the addition of each education entry
+          await logAction(AUDIT_ACTIONS.UPDATE_CV_DATA);
         } catch (error) {
           console.error("Error adding education entry:", error);
         }

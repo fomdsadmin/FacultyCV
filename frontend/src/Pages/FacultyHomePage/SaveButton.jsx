@@ -3,6 +3,8 @@ import { useApp } from "../../Contexts/AppContext";
 import { updateUser, updateUserAffiliations } from "../../graphql/graphqlHelpers";
 import { useFaculty } from "./FacultyContext";
 import { useLocation } from "react-router-dom"; // <-- import useLocation
+import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext";
+
 
 const SaveButton = ({ affiliationsData }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -10,6 +12,7 @@ const SaveButton = ({ affiliationsData }) => {
   const { userInfo, getUserInfo } = useApp();
   const { setPrevUserInfo, change } = useFaculty();
   const location = useLocation(); // <-- get location
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     getUserInfo(userInfo.email);
@@ -80,9 +83,12 @@ const SaveButton = ({ affiliationsData }) => {
         cwlID,
         vppID
       );
+      
+      
       getUserInfo(userInfo.email);
       setIsSubmitting(false);
-
+      
+      
       if (setPrevUserInfo) {
         setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
       }
@@ -101,13 +107,15 @@ const SaveButton = ({ affiliationsData }) => {
   }
 
   // Decide which save function to call
-  const handleClick = (event) => {
+  const handleClick = async (event) => {
     setIsSubmitting(true);
     console.log(location.pathname);
     if (location.pathname === "/faculty/home/affiliations") {
       handleAffiliationsSave();
+      await logAction(AUDIT_ACTIONS.UPDATE_AFFILIATIONS);
     } else {
       handleSubmit(event);
+      await logAction(AUDIT_ACTIONS.UPDATE_PROFILE);
     }
   };
 

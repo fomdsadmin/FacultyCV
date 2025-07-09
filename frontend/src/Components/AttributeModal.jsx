@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaPlus, FaTrash, FaGripVertical, FaChevronDown } from "react-icons/fa";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { updateSection } from "../graphql/graphqlHelpers";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const ATTRIBUTE_TYPES = ["dropdown", "date", "boolean", "text"];
 
@@ -19,6 +20,8 @@ const AttributeModal = ({
   const [addingSection, setAddingSection] = useState(false);
   const [errors, setErrors] = useState({});
   const [dropdownOptions, setDropdownOptions] = useState({});
+
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     // Build attribute type map from section.attributes_type
@@ -225,6 +228,9 @@ const AttributeModal = ({
         attributesJSONString,
         JSON.stringify(awsJson)
       );
+      // Log the update action
+      await logAction(AUDIT_ACTIONS.UPDATE_SECTION_ATTRIBUTES);
+
     } catch (error) {
       console.error("Error updating section:", error);
     }

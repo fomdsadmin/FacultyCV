@@ -28,8 +28,8 @@ import AdminHomePage from "./Views/AdminHomePage.jsx";
 import TemplatesPage from "./Pages/TemplatePages/TemplatesPage/TemplatesPage.jsx";
 import Sections from "./Views/Sections.jsx";
 import AuditPage from "./Views/AuditPage.jsx";
+import { AuditLoggerProvider } from './Contexts/AuditLoggerContext.jsx';
 import ArchivedSections from "./Views/ArchivedSections.jsx";
-import PageViewLogger from "./Components/AuditLogger/PageViewLogger.jsx";
 import DepartmentAdminUsers from "./Views/DepartmentAdminUsers.jsx";
 import DepartmentAdminHomePage from "./Views/DepartmentAdminHomePage.jsx";
 import DepartmentAdminUserInsights from "./Views/DepartmentAdminUserInsights.jsx";
@@ -113,6 +113,7 @@ const AppContent = () => {
 
   return (
     <Router>
+      <AuditLoggerProvider userInfo={userInfo}>
       <ToastContainer
         position="top-right"
         autoClose={1000}
@@ -126,7 +127,6 @@ const AppContent = () => {
         theme="light"
       />
       {user && <Header userInfo={userInfo} getCognitoUser={getCognitoUser} />}
-      {user && <PageViewLogger userInfo={userInfo} />}
       {/* {console.log("Current View Role:", currentViewRole)}
       {console.log("User Info:", userInfo)}
       {console.log("Assistant User Info:", assistantUserInfo)} */}
@@ -453,7 +453,8 @@ const AppContent = () => {
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {user && <Footer />}
+        {user && <Footer />}
+      </AuditLoggerProvider>
     </Router>
   );
 };
@@ -462,7 +463,7 @@ const App = () => {
   return (
     <AppProvider>
       <NotificationProvider>
-        <AppContent />
+          <AppContent />
       </NotificationProvider>
     </AppProvider>
   );

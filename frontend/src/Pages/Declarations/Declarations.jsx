@@ -12,6 +12,9 @@ import { Link } from "react-router-dom";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuditLogger, AUDIT_ACTIONS } from '../../Contexts/AuditLoggerContext';
+
+
 
 // Helper to map value to full label
 const DECLARATION_LABELS = {
@@ -73,6 +76,8 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+
+  const logAction = useAuditLogger();
 
   // Year logic
   const thisYear = new Date().getFullYear();
@@ -164,6 +169,8 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         userInfo.last_name,
         year
       );
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_USER_DECLARATION);
       toast.success("Declaration deleted successfully!", {
         autoClose: 2000,
         theme: "light",
@@ -268,10 +275,12 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       if (editYear) {
         // Edit mode: update
         await updateUserDeclaration(input);
+        await logAction(AUDIT_ACTIONS.UPDATE_USER_DECLARATION, userInfo.id);
         toast.success("Declaration updated successfully!", { autoClose: 2000 });
       } else {
         // Create mode: add
         await addUserDeclaration(input);
+        await logAction(AUDIT_ACTIONS.ADD_USER_DECLARATION, userInfo.id);
         toast.success("Declaration added successfully!", { autoClose: 2000 });
       }
       setShowForm(false);

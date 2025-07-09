@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "../CustomStyles/scrollbar.css";
 import "../CustomStyles/modal.css";
 import { editSectionDetails } from "../graphql/graphqlHelpers";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const EditSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }) => {
   const [title, setTitle] = useState(section.title || "");
@@ -10,6 +11,8 @@ const EditSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }) 
   const [info, setInfo] = useState(section.info || "");
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState("");
+
+  const { logAction } = useAuditLogger();
 
   const handleUpdate = async () => {
     if (!title.trim() || !type.trim()) {
@@ -26,6 +29,10 @@ const EditSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }) 
         info,
       });
       await editSectionDetails(section.data_section_id, title, data_type, description, info);
+
+      // Log the section update action
+      await logAction(AUDIT_ACTIONS.EDIT_SECTION_DETAILS);
+
       await getDataSections();
       setIsModalOpen(false);
       onBack();

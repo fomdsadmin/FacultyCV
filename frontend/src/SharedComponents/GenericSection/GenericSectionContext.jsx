@@ -6,7 +6,7 @@ import {
 } from "../../graphql/graphqlHelpers";
 import { rankFields } from "../../utils/rankingUtils";
 import { useApp } from "../../Contexts/AppContext";
-
+import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext";
 // Create context
 const GenericSectionContext = createContext(null);
 
@@ -44,6 +44,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
   const [notification, setNotification] = useState(""); // <-- Add this
 
   const { userInfo } = useApp();
+  const { logAction } = useAuditLogger();
 
   // Fetch data function
   const fetchData = async () => {
@@ -136,6 +137,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     setFieldData([]);
     try {
       await updateUserCVDataArchive(entry.user_cv_data_id, true);
+      await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA);
     } catch (error) {
       console.error("Error archiving entry:", error);
     }
@@ -153,6 +155,8 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
       setTimeout(() => {
         setNotification("");
       }, 2500);
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_CV_DATA);
     } catch (error) {
       console.error("Error deleting section data:", error);
     }
