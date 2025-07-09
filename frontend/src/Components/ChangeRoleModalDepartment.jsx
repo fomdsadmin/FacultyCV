@@ -3,11 +3,14 @@ import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { updateUser } from '../graphql/graphqlHelpers';
 import { addToUserGroup, removeFromUserGroup } from '../graphql/graphqlHelpers';
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, department }) => {
   const [changingRole, setChangingRole] = useState(false);
   const [confirmChange, setConfirmChange] = useState(false);
   const [newRole, setNewRole] = useState(userInfo.role);
+
+  const { logAction } = useAuditLogger();
 
   async function changeRole() {
     setChangingRole(true);
@@ -63,6 +66,8 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
       
       fetchAllUsers();
       handleBack();
+      // Log the role change action
+      await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, userInfo.email);
     } catch {
       console.error('Error changing role');
     }
