@@ -304,16 +304,16 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                     >
                         {loading ? 'Refreshing...' : 'Refresh Data'}
                     </button>
+                    {/* Download CSV and Turn Off Audit */}
+                    <button
+                        className="btn btn-success text-white"
+                        onClick={handleDownloadCSV}
+                        disabled={loading || pageViewData.length === 0}
+                    >
+                        Download CSV
+                    </button>
                 </div>
 
-                {/* Download CSV and Turn Off Audit */}
-                <button
-                    className="btn btn-success text-white"
-                    onClick={handleDownloadCSV}
-                    disabled={loading || pageViewData.length === 0}
-                >
-                    Download CSV
-                </button>
 
                 {loading ? (
                     <div>Loading...</div>
