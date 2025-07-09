@@ -277,7 +277,7 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                     </AccordionItem>
                 </Accordion>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-7 mt-4 mb-4 justify-end">
                     {/* Pagination Controls */}
                     <div className="flex gap-2 items-center">
                         <button
