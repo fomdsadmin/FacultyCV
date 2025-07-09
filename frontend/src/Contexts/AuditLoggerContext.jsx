@@ -8,14 +8,20 @@ export const AUDIT_ACTIONS = {
     VIEW_PAGE: 'View page',
     CREATE_PROFILE: 'Create profile',
     UPDATE_PROFILE: 'Update profile',
-    CREATE_SECTION: 'Create section',
-    UPDATE_SECTION: 'Update section',
+
+    CREATE_SECTION: 'Create section', // admin
+    EDIT_SECTION_DETAILS: 'Update section details', //admin
+    ARCHIVE_SECTION: 'Archive section', // admin
+    
     ADD_USER_DECLARATION: 'Add declaration',
     UPDATE_USER_DECLARATION: 'Update declaration',
-    ADD_CV_SECTION: 'Add CV section',
-    UPDATE_CV_SECTION: 'Update CV section',
+    DELETE_USER_DECLARATION: 'Delete declaration',
     
-
+    ADD_CV_DATA: 'Add CV data',
+    UPDATE_CV_DATA: 'Update CV data',
+    DELETE_CV_DATA: 'Delete all CV data',
+    ARCHIVE_CV_DATA: 'Archive CV data',
+    RETRIEVE_EXTERNAL_DATA: 'Retrieve external data',
     // TODO add more actions
 };
 
@@ -37,7 +43,7 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
                 previousPath.current = location.pathname;
 
                 await logAction(AUDIT_ACTIONS.VIEW_PAGE);
-                console.log(`Logged page view: ${location.pathname}`);
+                // console.log(`Logged page view: ${location.pathname}`);
             }
         };
 
@@ -76,10 +82,10 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             profile_record: profileRecord,
             logged_user_email: userInfo?.email || 'Unknown',
             logged_user_action: actionType,
-            
+
         };
 
-        console.log('Audit Log Action:', actionType, auditInput);
+        // console.log('Audit Log Action:', actionType, auditInput);
         try {
             return await addAuditView(auditInput);
         } catch (error) {

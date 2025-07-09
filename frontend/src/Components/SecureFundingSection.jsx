@@ -7,6 +7,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import SecureFundingModal from "./SecureFundingModal";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const generateEmptyEntry = (attributes) => {
   const emptyEntry = {};
@@ -38,6 +39,8 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   const totalPages = Math.ceil(fieldData.length / pageSize);
   const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  const { logAction } = useAuditLogger();
+
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
@@ -53,6 +56,8 @@ const SecureFundingSection = ({ user, section, onBack }) => {
     }
     await fetchData();
     setLoading(false);
+    // Log the archive action
+    await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA);
   };
 
   const handleDelete = async () => {
@@ -66,6 +71,8 @@ const SecureFundingSection = ({ user, section, onBack }) => {
       setTimeout(() => {
         setNotification("");
       }, 2500); // 1.5 seconds
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_CV_DATA);
     } catch (error) {
       console.error("Error deleting section data:", error);
     }

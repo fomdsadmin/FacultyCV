@@ -31,7 +31,7 @@ const EditSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }) 
       await editSectionDetails(section.data_section_id, title, data_type, description, info);
 
       // Log the section update action
-      await logAction(AUDIT_ACTIONS.UPDATE_SECTION);
+      await logAction(AUDIT_ACTIONS.EDIT_SECTION_DETAILS);
 
       await getDataSections();
       setIsModalOpen(false);

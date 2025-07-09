@@ -7,6 +7,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import PatentsModal from "./PatentsModal";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const generateEmptyEntry = (attributes) => {
   const emptyEntry = {};
@@ -39,6 +40,9 @@ const PatentsSection = ({ user, section, onBack }) => {
   const totalPages = Math.ceil(fieldData.length / pageSize);
   const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  const { logAction } = useAuditLogger();
+  
+
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
@@ -54,6 +58,8 @@ const PatentsSection = ({ user, section, onBack }) => {
     }
     await fetchData();
     setLoading(false);
+    //log the archive action
+    await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA)
   };
 
   const handleEdit = (entry) => {
@@ -113,6 +119,9 @@ const PatentsSection = ({ user, section, onBack }) => {
       });
 
       setFieldData(rankedData);
+
+      //log the retrieval action
+      await logAction(AUDIT_ACTIONS.RETRIEVE_EXTERNAL_DATA);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -155,6 +164,8 @@ const PatentsSection = ({ user, section, onBack }) => {
       setTimeout(() => {
         setNotification("");
       }, 2500); // 2.5 seconds
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_CV_DATA);
     } catch (error) {
       console.error("Error deleting section data:", error);
     }

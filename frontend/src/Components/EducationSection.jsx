@@ -9,6 +9,7 @@ import {
   deleteUserCVSectionData 
 } from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 
 const EducationSection = ({ user, section, onBack = null }) => {
@@ -21,6 +22,7 @@ const EducationSection = ({ user, section, onBack = null }) => {
   const [loading, setLoading] = useState(true);
   const [isAvailable, setIsAvailable] = useState(false);
   const [notification, setNotification] = useState("");
+  const { logAction } = useAuditLogger();
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -37,6 +39,8 @@ const EducationSection = ({ user, section, onBack = null }) => {
       setTimeout(() => {
         setNotification("");
       }, 2500); // 2.5 seconds
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_CV_DATA);
     } catch (error) {
       console.error("Error deleting section data:", error);
     }
@@ -47,6 +51,7 @@ const EducationSection = ({ user, section, onBack = null }) => {
     setFieldData([]);
     try {
       await updateUserCVDataArchive(entry.user_cv_data_id, true);
+      await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA);
     } catch (error) {
       console.error('Error archiving entry:', error);
     }

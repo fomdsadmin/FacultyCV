@@ -4,6 +4,7 @@ import '../CustomStyles/modal.css';
 import { addUserCVData, getUserCVData, getOrcidSections } from '../graphql/graphqlHelpers';
 import { getMonthName } from '../utils/time';
 import { useNavigate } from "react-router-dom"; // Add this import
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const EmploymentModal = ({
   user,
@@ -18,6 +19,9 @@ const EmploymentModal = ({
   const [addingData, setAddingData] = useState(false);
   const [initialRender, setInitialRender] = useState(true);
   const [count, setCount] = useState(1);
+
+    const { logAction } = useAuditLogger();
+  
 
   // Function to navigate to home page
   const goToHomePage = () => {
@@ -88,6 +92,8 @@ const EmploymentModal = ({
         });
 
         setEmploymentData(transformedData);
+        // Log the retrieval action
+        await logAction(AUDIT_ACTIONS.RETRIEVE_EXTERNAL_DATA, "employment");
       } else {
         console.error("No employment data found in response.");
       }
@@ -126,6 +132,9 @@ const EmploymentModal = ({
             false
           );
           setCount((prevCount) => prevCount + 1);
+
+          // Log the section update action
+          await logAction(AUDIT_ACTIONS.UPDATE_CV_DATA);
         } catch (error) {
           console.error("Error adding employment entry:", error);
         }

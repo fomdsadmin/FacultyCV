@@ -178,6 +178,8 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         userInfo.last_name
       );
       setDeclarations(data);
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_USER_DECLARATION);
     } catch (error) {
       alert("Failed to delete declaration.");
       console.error("Error delete declaration:", error);

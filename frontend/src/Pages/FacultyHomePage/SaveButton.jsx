@@ -3,6 +3,8 @@ import { useApp } from "../../Contexts/AppContext";
 import { updateUser, updateUserAffiliations } from "../../graphql/graphqlHelpers";
 import { useFaculty } from "./FacultyContext";
 import { useLocation } from "react-router-dom"; // <-- import useLocation
+import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext";
+
 
 const SaveButton = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -10,6 +12,7 @@ const SaveButton = () => {
   const { userInfo, getUserInfo } = useApp();
   const { setPrevUserInfo, change } = useFaculty();
   const location = useLocation(); // <-- get location
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     getUserInfo(userInfo.email);
@@ -75,10 +78,12 @@ const SaveButton = () => {
         cwlID,
         vppID
       );
-      await logAction(AUDIT_ACTIONS.UPDATE_PROFILE, userInfo.id)
+      
+      
       getUserInfo(userInfo.email);
       setIsSubmitting(false);
-
+      
+      
       if (setPrevUserInfo) {
         setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
       }
@@ -105,6 +110,8 @@ const SaveButton = () => {
     } else {
       handleSubmit(event);
     }
+    // Log the update action
+    logAction(AUDIT_ACTIONS.UPDATE_PROFILE);
   };
 
   return (

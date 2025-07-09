@@ -95,9 +95,9 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
             // Create date object - now properly interpreting as UTC
             const date = new Date(parsedTimestamp);
 
-            console.log("Original timestamp:", timestamp);
-            console.log("Parsed as UTC:", date.toISOString());
-            console.log("Local time:", date.toString());
+            // console.log("Original timestamp:", timestamp);
+            // console.log("Parsed as UTC:", date.toISOString());
+            // console.log("Local time:", date.toString());
 
             // Format the date in local time
             let convertedDate = date.toLocaleString(undefined, {

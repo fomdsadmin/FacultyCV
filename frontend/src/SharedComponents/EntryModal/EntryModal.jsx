@@ -8,6 +8,7 @@ import DateEntry, { validateDateFields } from "./DateEntry";
 import DropdownEntry from "./DropdownEntry";
 import TextEntry from "./TextEntry";
 import BooleanEntry from "./BooleanEntry";
+import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext";
 
 const EntryModal = ({
   isNew,
@@ -27,6 +28,7 @@ const EntryModal = ({
   );
 
   const { userInfo } = useApp();
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     // Initialize formData with all fields
@@ -294,9 +296,13 @@ const EntryModal = ({
       if (isNew) {
         // Add new CV data
         await addUserCVData(userInfo.user_id, section.data_section_id, JSON.stringify(filteredFormData));
+        // Log the addition action
+        await logAction(AUDIT_ACTIONS.ADD_CV_DATA);
       } else {
         // Update existing CV data
         await updateUserCVData(user_cv_data_id, JSON.stringify(filteredFormData));
+        // Log the update action
+        await logAction(AUDIT_ACTIONS.UPDATE_CV_DATA, user_cv_data_id);
       }
     } catch (error) {
       console.error("Error submitting form:", error);
