@@ -484,16 +484,9 @@ const buildNotes = (preparedSection) => {
         return "";
     }
 
-    // Start a paragraph with reduced line width
-    latex += String.raw`\begin{quote}` + '\n';
-
+    let preparedSectionsLatex = "";
     preparedSection.note_settings.forEach(noteSetting => {
-        if (noteSetting.display_attribute_name) {
-            // Get the display name (check for rename first)
-            const attributeRenameMap = preparedSection.attribute_rename_map || {};
-            const displayName = attributeRenameMap[noteSetting.attribute] || noteSetting.attribute;
-            latex += '\n\n' + String.raw`\underline{\textbf{` + displayName + String.raw`}}` + '\n\n';
-        }
+        let preparedSectionLatex = "";
         filteredSectionData.forEach(data => {
             const attributeKey = sectionAttributes[noteSetting.attribute];
             const noteToShow = data.data_details[attributeKey];
@@ -509,19 +502,32 @@ const buildNotes = (preparedSection) => {
                 const associationValue = data.data_details[associationKey];
 
                 if (associationValue && associationValue.trim() !== '') {
-                    latex += String.raw`\hspace{20pt}\textbf{${sanitizeLatex(associationValue)}}` + ': ' + sanitizeLatex(noteToShow) + '\n\n';
+                    preparedSectionLatex += String.raw`\hspace{20pt}\textbf{${sanitizeLatex(associationValue)}}` + ': ' + sanitizeLatex(noteToShow) + '\n\n';
                 }
             } else {
                 // Use bullet point format
-                latex += String.raw`\begin{itemize}` + '\n';
-                latex += String.raw`\item ` + sanitizeLatex(String(noteToShow)) + '\n';
-                latex += String.raw`\end{itemize}` + '\n';
+                preparedSectionLatex += String.raw`\begin{itemize}` + '\n';
+                preparedSectionLatex += String.raw`\item ` + sanitizeLatex(String(noteToShow)) + '\n';
+                preparedSectionLatex += String.raw`\end{itemize}` + '\n';
             }
         });
+
+        if (noteSetting.display_attribute_name && preparedSectionLatex.length > 0) {
+            // Get the display name (check for rename first)
+            const attributeRenameMap = preparedSection.attribute_rename_map || {};
+            const displayName = attributeRenameMap[noteSetting.attribute] || noteSetting.attribute;
+            preparedSectionsLatex = '\n\n' + String.raw`\underline{\textbf{` + displayName + String.raw`}}` + '\n\n' + preparedSectionLatex;
+        }
     });
 
-    // End the quote environment
-    latex += String.raw`\end{quote}` + '\n';
+    if (preparedSectionsLatex.length > 0) {
+        // Start a paragraph with reduced line width
+        latex += String.raw`\begin{quote}` + '\n';
+        // Add notes latex
+        latex += preparedSectionsLatex;
+        // End the quote environment
+        latex += String.raw`\end{quote}` + '\n';
+    }
 
     return latex;
 };
