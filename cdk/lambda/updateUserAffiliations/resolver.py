@@ -15,69 +15,68 @@ def updateUserAffiliations(arguments):
     print("Connected to database")
     cursor = connection.cursor()
 
-    # Extract affiliations JSON object from arguments
-    affiliations = arguments.get('affiliations', {}) or {}
+    user_id = arguments.get('user_id')
+    first_name = arguments.get('first_name')
+    last_name = arguments.get('last_name')
+    
+    # Parse affiliations JSON if it's a string
+    affiliations_str = arguments.get('affiliations', '{}')
+    if isinstance(affiliations_str, str):
+        try:
+            affiliations = json.loads(affiliations_str)
+        except json.JSONDecodeError:
+            print("Error decoding JSON:", affiliations_str)
+            affiliations = {}
+    else:
+        affiliations = affiliations_str
+        
+    print(f"Parsed affiliations data: {affiliations}")
 
-    # Prepare the UPDATE query with all required fields
-    query = """
-    UPDATE users SET 
-        first_name = %s,
-        last_name = %s,
-        primary_academic_unit = %s,
-        secondary_academic_unit = %s,
-        primary_academic_rank = %s,
-        secondary_academic_rank = %s,
-        primary_appointment_percent = %s,
-        secondary_appointment_percent = %s,
-        primary_start_date = %s,
-        secondary_start_date = %s,
-        department_division = %s,
-        department_program = %s,
-        department_title = %s,
-        department_start_date = %s,
-        department_end_date = %s,
-        research_center = %s,
-        research_division_or_pillar = %s,
-        research_title = %s,
-        research_start_date = %s,
-        research_end_date = %s,
-        hospital_health_authority = %s,
-        hospital_name = %s,
-        hospital_role = %s,
-        hospital_start_date = %s,
-        hospital_end_date = %s
-    WHERE user_id = %s
-    """
+    # First check if a record exists
+    cursor.execute("SELECT COUNT(*) FROM affiliations WHERE user_id = %s", (user_id,))
+    record_exists = cursor.fetchone()[0] > 0
 
-    # Use affiliations.get(...) for all affiliation fields
-    cursor.execute(query, (
-        arguments.get('first_name', ''),
-        arguments.get('last_name', ''),
-        affiliations.get('primary_academic_unit', ''),
-        affiliations.get('secondary_academic_unit', ''),
-        affiliations.get('primary_academic_rank', ''),
-        affiliations.get('secondary_academic_rank', ''),
-        affiliations.get('primary_appointment_percent', ''),
-        affiliations.get('secondary_appointment_percent', ''),
-        affiliations.get('primary_start_date', ''),
-        affiliations.get('secondary_start_date', ''),
-        affiliations.get('department_division', ''),
-        affiliations.get('department_program', ''),
-        affiliations.get('department_title', ''),
-        affiliations.get('department_start_date', ''),
-        affiliations.get('department_end_date', ''),
-        affiliations.get('research_center', ''),
-        affiliations.get('research_division_or_pillar', ''),
-        affiliations.get('research_title', ''),
-        affiliations.get('research_start_date', ''),
-        affiliations.get('research_end_date', ''),
-        affiliations.get('hospital_health_authority', ''),
-        affiliations.get('hospital_name', ''),
-        affiliations.get('hospital_role', ''),
-        affiliations.get('hospital_start_date', ''),
-        affiliations.get('hospital_end_date', ''),
-        arguments['user_id']
-    ))
+    if record_exists:
+        # Update existing record
+        query = """
+        UPDATE affiliations SET 
+            faculty = %s,
+            institution = %s,
+            academic_units = %s,
+            research_affiliations = %s,
+            hospital_affiliations = %s
+        WHERE user_id = %s AND first_name = %s AND last_name = %s
+        """
+        
+        cursor.execute(query, (
+            json.dumps(affiliations.get('faculty', {})),
+            json.dumps(affiliations.get('institution', {})),
+            json.dumps(affiliations.get('academic_units', [])),
+            json.dumps(affiliations.get('research_affiliations', [])),
+            json.dumps(affiliations.get('hospital_affiliations', [])),
+            user_id,
+            first_name,
+            last_name
+        ))
+    else:
+        # Insert new record
+        query = """
+        INSERT INTO affiliations (
+            user_id, first_name, last_name, faculty, institution, 
+            academic_units, research_affiliations, hospital_affiliations
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        cursor.execute(query, (
+            user_id,
+            first_name,
+            last_name,
+            json.dumps(affiliations.get('faculty', {})),
+            json.dumps(affiliations.get('institution', {})),
+            json.dumps(affiliations.get('academic_units', [])),
+            json.dumps(affiliations.get('research_affiliations', [])),
+            json.dumps(affiliations.get('hospital_affiliations', []))
+        ))
 
     cursor.close()
     connection.commit()

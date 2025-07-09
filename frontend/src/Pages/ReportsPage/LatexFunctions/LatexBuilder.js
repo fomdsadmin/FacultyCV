@@ -1,22 +1,22 @@
 import { getAllSections, getUserCVData, getLatexConfiguration } from '../../../graphql/graphqlHelpers.js';
 import { SHOWN_ATTRIBUTE_GROUP_ID, HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID } from '../../TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext.jsx'
-import { cellRowBuilder, generateColumnFormatViaRatioArray, textOptions } from './LatexTableBuilder.js';
+import { cellRowBuilder, generateColumnFormatViaRatioArray, sanitizeLatex, textOptions } from './LatexTableBuilder.js';
 
-let userCvData = [];
-let allSections = [];
+let userCvDataMap = {}
+let sectionsMap = {};
 const rowNumberColumnRatio = 3;
 let template = {};
 let sortAscending;
 let userInfo;
 
 const DO_NOT_FILTER_SECTIONS = [
-    'Leaves of Absence',
-    'Employment History',
-    'Continuing Education or Training',
-    'Continuing Medical Education',
-    'Professional Qualifications, Certifications and Licenses',
-    'Dissertations',
-    'Post-Secondary Education'
+    '7a. Leaves of Absence',
+    '6[a-d]. Employment Record',
+    '5c. Continuing Education or Training',
+    '5d. Continuing Medical Education',
+    '5e. Professional Qualifications, Certifications and Licenses',
+    '5b. Dissertations',
+    '5a. Post-Secondary Education'
 ]
 
 const buildTableHeader = (title) => {
@@ -29,11 +29,16 @@ const buildTableHeader = (title) => {
     return cellRowBuilder(headerRowData, columnFormat);
 }
 
+// Helper function to get CV data for a section
+const getUserCvDataMap = (dataSectionId) => {
+    return userCvDataMap[dataSectionId] || [];
+};
+
 const buildTableSubHeader = (preparedSection) => {
     let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
 
     if (preparedSection.show_row_count) {
-        let sectionData = userCvData.filter((cvData) => cvData.data_section_id === preparedSection.data_section_id);
+        let sectionData = getUserCvDataMap(preparedSection.data_section_id);
         sectionData = filterDateRanges(sectionData, preparedSection.data_section_id);
         const rowCount = sectionData.length;
         titleToDisplay += ` (${rowCount})`
@@ -50,7 +55,7 @@ const buildTableSubHeader = (preparedSection) => {
 
 const sortSectionData = (sectionData, dataSectionId) => {
     // Find the section to get the attribute mapping
-    const section = allSections.find((section) => section.data_section_id === dataSectionId);
+    const section = sectionsMap[dataSectionId];
     if (!section) {
         console.warn(`Section not found for dataSectionId: ${dataSectionId}`);
         return sectionData;
@@ -117,7 +122,7 @@ const sortSectionData = (sectionData, dataSectionId) => {
 
 const filterDateRanges = (sectionData, dataSectionId) => {
     // Find the section to get attribute mappings
-    const section = allSections.find((section) => section.data_section_id === dataSectionId);
+    const section = sectionsMap[dataSectionId];
     if (!section) {
         return sectionData;
     }
@@ -179,9 +184,7 @@ const filterDateRanges = (sectionData, dataSectionId) => {
 
 const extractEndYearFromDateRange = (dateString) => {
     // Handle "Current" case
-    if (dateString.toLowerCase().includes('current') ||
-        dateString.toLowerCase().includes('present') ||
-        dateString.toLowerCase().includes('ongoing')) {
+    if (dateString.toLowerCase().includes('current')) {
         return new Date().getFullYear(); // Use current year
     }
 
@@ -217,16 +220,104 @@ const extractEndYearFromDateRange = (dateString) => {
     return null; // Couldn't extract year
 };
 
-const buildDataEntries = (preparedSection, dataSectionId) => {
+// Handle publication-specific logic (author name bolding, DOI links)
+const buildPublicationRowArray = (data, attributes, section) => {
+    const AUTHOR_NAMES = "Author Names";
+    const AUTHOR_IDS = "Author Ids";
+    const sectionAttributes = JSON.parse(section.attributes);
 
+    return attributes.map((attribute) => {
+        // Handle author names specially for publications
+        if (attribute === 'Author Names') {
+            const authorNames = data.data_details[sectionAttributes[AUTHOR_NAMES]];
+            const authorIds = data.data_details[sectionAttributes[AUTHOR_IDS]];
+            const indexOfThisAuthor = authorIds.indexOf(userInfo.scopus_id);
+
+            // Create individual textOptions for each author
+            const authorTextOptions = authorNames.map((authorName, index) =>
+                textOptions(authorName, index === indexOfThisAuthor, 9.5)
+            );
+
+            return {
+                textOptions: authorTextOptions,
+                color: null
+            };
+        }
+
+        // Handle DOI links
+        if (attribute === 'Doi') {
+            const doi = data.data_details[sectionAttributes[attribute]];
+            if (doi && doi.trim() !== '') {
+                const doiLink = `https://doi.org/${doi}`;
+                return {
+                    textOptions: [textOptions(doi, false, 9.5, doiLink)],
+                    color: null
+                };
+            }
+        }
+
+        // Regular attribute handling
+        const tabData = data.data_details[sectionAttributes[attribute]];
+        return {
+            textOptions: [textOptions(tabData, false, 9.5)],
+            color: null
+        };
+    });
+};
+
+// Handle regular sections (non-publication)
+const buildRegularRowArray = (data, attributes, section) => {
+    const sectionAttributes = JSON.parse(section.attributes);
+
+    return attributes.map((attribute) => {
+        const tabData = data.data_details[sectionAttributes[attribute]];
+        return {
+            textOptions: [textOptions(tabData, false, 9.5)],
+            color: null
+        };
+    });
+};
+
+// Add row number column to the beginning of row array
+const addRowNumberColumn = (rowArray, rowCount) => {
+    rowArray.unshift({
+        textOptions: [textOptions(String(rowCount + 1), false, 9.5)],
+        color: null
+    });
+    return rowArray;
+};
+
+// Generate column format based on merge and row number options
+const generateDataColumnFormat = (attributes, preparedSection) => {
+    if (!preparedSection.merge_visible_attributes) {
+        // Normal case: each attribute gets its own column
+        if (!preparedSection.include_row_number_column) {
+            return generateColumnFormatViaRatioArray(attributes.map(() => 1));
+        } else {
+            const ratioArray = attributes.map(() => rowNumberColumnRatio);
+            ratioArray.unshift(1);
+            return generateColumnFormatViaRatioArray(ratioArray);
+        }
+    } else {
+        // Merged case: only one column for all merged attributes
+        if (!preparedSection.include_row_number_column) {
+            return generateColumnFormatViaRatioArray([1]); // Single column
+        } else {
+            return generateColumnFormatViaRatioArray([1, 18]); // Row number + merged content
+        }
+    }
+};
+
+// Main buildDataEntries function - now much cleaner
+const buildDataEntries = (preparedSection, dataSectionId) => {
     const PUBLICATION_SECTION_ID = "1c23b9a0-b6b5-40b8-a4aa-f822d0567f09";
 
     const attributeGroups = preparedSection.attribute_groups;
     const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
     const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
 
-    // Filter userCvData by the given dataSectionId
-    let sectionData = userCvData.filter((cvData) => cvData.data_section_id === dataSectionId);
+    // Get section data using helper function
+    let sectionData = getUserCvDataMap(dataSectionId);
 
     // Apply date range filtering
     sectionData = filterDateRanges(sectionData, dataSectionId);
@@ -234,84 +325,38 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     // Apply sorting
     sectionData = sortSectionData(sectionData, dataSectionId);
 
+    // This means the section passed in is a mapped section, and the rows of data inserted must be filtered based on the type dropdown value selected
+    if (preparedSection.attribute_filter_value) {
+        sectionData = sectionData.filter((sectionData) => sectionData[preparedSection.section_by_type] !== preparedSection.attribute_filter_value);
+    }
+
     // Generate LaTeX tables for each entry
     const latexTables = sectionData.map((data, rowCount) => {
-        const section = allSections.find((section) => section.data_section_id === dataSectionId);
+        const section = sectionsMap[dataSectionId];
 
-        let rowArray = attributes.map((attribute) => {
-            // Handle author names specially for publications
-            if (section.data_section_id === PUBLICATION_SECTION_ID && attribute === 'Author Names') {
-                const AUTHOR_NAMES = "Author Names";
-                const AUTHOR_IDS = "Author Ids";
-                const sectionAttributes = JSON.parse(section.attributes);
-
-                const authorNames = data.data_details[sectionAttributes[AUTHOR_NAMES]];
-                const authorIds = data.data_details[sectionAttributes[AUTHOR_IDS]];
-
-                const indexOfThisAuthor = authorIds.indexOf(userInfo.scopus_id);
-
-                // Create individual textOptions for each author
-                const authorTextOptions = authorNames.map((authorName, index) =>
-                    textOptions(authorName, index === indexOfThisAuthor, 'footnotesize')
-                );
-
-                return {
-                    textOptions: authorTextOptions, // Array of textOptions - textOptionsBuilder will join with commas
-                    color: null
-                };
-            }
-
-            // Handle DOI links
-            if (attribute === 'Doi') {
-                const doi = data.data_details[JSON.parse(section.attributes)[attribute]];
-                if (doi && doi.trim() !== '') {
-                    const doiLink = `https://doi.org/${doi}`;
-                    return {
-                        textOptions: [textOptions(doi, false, 'footnotesize', doiLink)],
-                        color: null
-                    };
-                }
-            }
-
-            // Regular attribute handling
-            const tabData = data.data_details[JSON.parse(section.attributes)[attribute]];
-
-            return {
-                textOptions: [textOptions(tabData, false, 'footnotesize')],
-                color: null
-            };
-        });
-
-        var dataColumnFormat;
-
-        if (!preparedSection.merge_visible_attributes) {
-            // Normal case: each attribute gets its own column
-            if (!preparedSection.include_row_number_column) {
-                dataColumnFormat = generateColumnFormatViaRatioArray(attributes.map(() => 1))
-            } else {
-                const ratioArray = attributes.map(() => rowNumberColumnRatio);
-                ratioArray.unshift(1);
-                dataColumnFormat = generateColumnFormatViaRatioArray(ratioArray);
-            }
+        // Build row array based on section type
+        let rowArray;
+        if (section.data_section_id === PUBLICATION_SECTION_ID) {
+            rowArray = buildPublicationRowArray(data, attributes, section);
         } else {
-            // Merged case: only one column for all merged attributes
-            if (!preparedSection.include_row_number_column) {
-                dataColumnFormat = generateColumnFormatViaRatioArray([1]); // Single column
-            } else {
-                dataColumnFormat = generateColumnFormatViaRatioArray([1, 18]); // Row number + merged content
-            }
+            rowArray = buildRegularRowArray(data, attributes, section);
         }
 
-        // Add row number as first cell if included
+        // Add row number column if needed
         if (preparedSection.include_row_number_column) {
-            rowArray.unshift({
-                textOptions: [textOptions(String(rowCount + 1), false, 'footnotesize')],
-                color: null
-            });
+            rowArray = addRowNumberColumn(rowArray, rowCount);
         }
+
+        // Generate column format
+        const dataColumnFormat = generateDataColumnFormat(attributes, preparedSection);
 
         // Use cellRowBuilder with mergeCells option
-        return cellRowBuilder(rowArray, dataColumnFormat, preparedSection.merge_visible_attributes, !preparedSection.include_row_number_column);
+        return cellRowBuilder(
+            rowArray,
+            dataColumnFormat,
+            preparedSection.merge_visible_attributes,
+            !preparedSection.include_row_number_column
+        );
     });
 
     // Join all individual tables
@@ -327,7 +372,7 @@ const buildTableAttributeGroup = (attributeGroups) => {
 
         // Create the cell object in the format cellRowBuilder expects
         const cellObject = {
-            textOptions: [textOptions(title, true, 'small')], // text, bold=true, size='small'
+            textOptions: [textOptions(title, true, 11)], // text, bold=true, size='small'
             color: 'columnGray'
         };
 
@@ -382,10 +427,123 @@ const buildTableSectionColumns = (preparedSection) => {
     return latex;
 }
 
-const buildPreparedSection = (preparedSection, dataSectionId) => {
+const buildSubSections = (preparedSectionWithSubSections) => {
+
     let latex = "";
 
-    latex += buildTableSubHeader(preparedSection);
+    console.log("prepared sub sections", preparedSectionWithSubSections)
+
+    if (preparedSectionWithSubSections.sub_section_settings.display_section_title) {
+        const titleToDisplay = preparedSectionWithSubSections.renamed_section_title || preparedSectionWithSubSections.title;
+        const columnFormat = generateColumnFormatViaRatioArray([1]);
+        const subHeaderRowData = [{
+            textOptions: [textOptions(titleToDisplay, true, null)], // text, bold=true, size=null
+            color: 'subHeaderGray'
+        }];
+
+        latex += cellRowBuilder(subHeaderRowData, columnFormat);
+    }
+
+    const mappedSections = preparedSectionWithSubSections
+        .sub_section_settings
+        .sub_sections
+        .map((subSection) => {
+            const section = {
+                ...preparedSectionWithSubSections,
+                sub_section_settings: null,
+                renamed_section_title: subSection.renamed_title || subSection.original_title,
+                attribute_filter_value: subSection.original_title,
+                attribute_rename_map: subSection.attributes_rename_dict,
+                show_header: preparedSectionWithSubSections.sub_section_settings.display_titles,
+                is_sub_section: true
+            }
+            console.log("section: ", section);
+            return section;
+        })
+
+    for (const mappedSection of mappedSections) {
+        latex += buildPreparedSection(mappedSection, mappedSection.data_section_id);
+    }
+    return latex;
+}
+
+const buildNotes = (preparedSection) => {
+
+    if (!preparedSection.note_settings || preparedSection.note_settings.length === 0) {
+        return "";
+    }
+
+    let latex = "";
+    const dataSectionId = preparedSection.data_section_id;
+    const sectionData = getUserCvDataMap(dataSectionId);
+    const filteredSectionData = filterDateRanges(sectionData, dataSectionId);
+    const section = sectionsMap[dataSectionId];
+    const sectionAttributes = JSON.parse(section.attributes);
+
+    if (filteredSectionData.length === 0) {
+        return "";
+    }
+
+    let preparedSectionsLatex = "";
+    preparedSection.note_settings.forEach(noteSetting => {
+        let preparedSectionLatex = "";
+        filteredSectionData.forEach(data => {
+            const attributeKey = sectionAttributes[noteSetting.attribute];
+            const noteToShow = data.data_details[attributeKey];
+            const attributeToAssociateWithNote = noteSetting.attribute_to_associate_note;
+
+            if (!noteToShow || String(noteToShow).trim() === '') {
+                return;
+            }
+
+            if (attributeToAssociateWithNote && attributeToAssociateWithNote.trim() !== '') {
+                // Get the association value
+                const associationKey = sectionAttributes[attributeToAssociateWithNote];
+                const associationValue = data.data_details[associationKey];
+
+                if (associationValue && associationValue.trim() !== '') {
+                    preparedSectionLatex += String.raw`\hspace{20pt}\textbf{${sanitizeLatex(associationValue)}}` + ': ' + sanitizeLatex(noteToShow) + '\n\n';
+                }
+            } else {
+                // Use bullet point format
+                preparedSectionLatex += String.raw`\begin{itemize}` + '\n';
+                preparedSectionLatex += String.raw`\item ` + sanitizeLatex(String(noteToShow)) + '\n';
+                preparedSectionLatex += String.raw`\end{itemize}` + '\n';
+            }
+        });
+
+        if (noteSetting.display_attribute_name && preparedSectionLatex.length > 0) {
+            // Get the display name (check for rename first)
+            const attributeRenameMap = preparedSection.attribute_rename_map || {};
+            const displayName = attributeRenameMap[noteSetting.attribute] || noteSetting.attribute;
+            preparedSectionsLatex = '\n\n' + String.raw`\underline{\textbf{` + displayName + String.raw`}}` + '\n\n' + preparedSectionLatex;
+        }
+    });
+
+    if (preparedSectionsLatex.length > 0) {
+        // Start a paragraph with reduced line width
+        latex += String.raw`\begin{quote}` + '\n';
+        // Add notes latex
+        latex += preparedSectionsLatex;
+        // End the quote environment
+        latex += String.raw`\end{quote}` + '\n';
+    }
+
+    return latex;
+};
+
+// Also fix the typo in buildPreparedSection
+const buildPreparedSection = (preparedSection, dataSectionId) => {
+    let latex = "";
+    console.log(preparedSection);
+
+    if (preparedSection.sub_section_settings && preparedSection.sub_section_settings.sub_sections.length > 0) {
+        return buildSubSections(preparedSection);
+    }
+
+    if (!preparedSection.is_sub_section || (preparedSection.is_sub_section && preparedSection.show_header)) {
+        latex += buildTableSubHeader(preparedSection);
+    }
 
     if (!preparedSection.merge_visible_attributes) {
         latex += buildTableSectionColumns(preparedSection);
@@ -393,11 +551,13 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 
     latex += buildDataEntries(preparedSection, dataSectionId);
 
+    latex += buildNotes(preparedSection);
+
     return latex;
 }
 
 const buildGroup = async (group) => {
-    console.log(group)
+    //console.log(group)
     let latex = "";
 
     latex += buildTableHeader(group.title);
@@ -453,24 +613,31 @@ const buildLatexHeader = () => {
 
 export const buildLatex = async (userInfo, templateWithEndStartDate) => {
 
-    console.log(templateWithEndStartDate.start_year, templateWithEndStartDate.end_year);
+    //console.log(templateWithEndStartDate.start_year, templateWithEndStartDate.end_year);
 
     //const latexConfiguration = JSON.parse(await getLatexConfiguration());
 
     // Get all user data
-    allSections = await getAllSections();
+    const allSections = await getAllSections();
     template = templateWithEndStartDate;
     const allSectionIds = allSections.map((section) => section.data_section_id);
     const unparsedData = await getUserCVData(userInfo.user_id, allSectionIds);
+    sortAscending = JSON.parse(template.template_structure).sort_ascending;
+
+    // Create sectionsMap with data_section_id as key and section as value
+    sectionsMap = {};
+    allSections.forEach((section) => {
+        sectionsMap[section.data_section_id] = section;
+    });
 
     let latex = buildLatexHeader();
 
     latex += buildUserProfile(userInfo);
 
-    console.log("UserInfo", userInfo);
+    //console.log("UserInfo", userInfo);
 
-    // Parse user data
-    userCvData = unparsedData.map((data) => {
+    // Parse user data and create userCvDataMap
+    const userCvData = unparsedData.map((data) => {
         let dataDetails;
         try {
             dataDetails = JSON.parse(data.data_details);
@@ -480,16 +647,25 @@ export const buildLatex = async (userInfo, templateWithEndStartDate) => {
         return { ...data, data_details: dataDetails };
     });
 
-    console.log(userCvData)
+    // Create userCvDataMap with data_section_id as key and array of CV data as value
+    userCvDataMap = {};
+    userCvData.forEach((cvData) => {
+        const sectionId = cvData.data_section_id;
+        if (!userCvDataMap[sectionId]) {
+            userCvDataMap[sectionId] = [];
+        }
+        userCvDataMap[sectionId].push(cvData);
+    });
+
+    //console.log(userCvData)
 
     // Parse the template structure
     const parsedGroups = JSON.parse(template.template_structure).groups;
-    sortAscending = JSON.parse(template.template_structure).sort_ascending;
 
     // Process each group in the template
     for (const group of parsedGroups || []) {
         if (group.id === HIDDEN_GROUP_ID) continue; // Skip hidden groups
-        console.log(group)
+        //console.log(group)
         latex += await buildGroup(group);
     }
 
@@ -550,7 +726,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(currentDate, false, 'footnotesize')], // text, bold=false, size='footnotesize'
+            textOptions: [textOptions(currentDate, false, 9.5)], // text, bold=false, size='footnotesize'
             color: null
         }
     ];
@@ -579,7 +755,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.last_name || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.last_name || '', false, 9.5)],
             color: null
         }
     ];
@@ -592,7 +768,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.first_name || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.first_name || '', false, 9.5)],
             color: null
         }
     ];
@@ -605,7 +781,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(middleName || '', false, 'footnotesize')],
+            textOptions: [textOptions(middleName || '', false, 9.5)],
             color: null
         }
     ];
@@ -618,7 +794,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.primary_department || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.primary_department || '', false, 9.5)],
             color: null
         }
     ];
@@ -627,11 +803,11 @@ const buildUserProfile = (userInfoParam) => {
     // Faculty section
     const facultyRowData = [
         {
-            textOptions: [textOptions('3. FACULTY:', true, null)],
+            textOptions: [textOptions('3. FACULTY:', true, 9.5)],
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.primary_faculty || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.primary_faculty || '', false, 9.5)],
             color: null
         }
     ];
@@ -640,11 +816,11 @@ const buildUserProfile = (userInfoParam) => {
     // Present rank row
     const rankRowData = [
         {
-            textOptions: [textOptions('4. PRESENT RANK:', true, null)],
+            textOptions: [textOptions('4. PRESENT RANK:', true, 9.5)],
             color: null
         },
         {
-            textOptions: [textOptions(userInfo.rank || '', false, 'footnotesize')],
+            textOptions: [textOptions(userInfo.rank || '', false, 9.5)],
             color: null
         }
     ];
@@ -657,7 +833,7 @@ const buildUserProfile = (userInfoParam) => {
             color: null
         },
         {
-            textOptions: [textOptions(rankSinceDate, false, 'footnotesize')],
+            textOptions: [textOptions(rankSinceDate, false, 9.5)],
             color: null
         }
     ];

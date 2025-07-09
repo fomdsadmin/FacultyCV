@@ -6,7 +6,7 @@ import { useLocation } from "react-router-dom"; // <-- import useLocation
 import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext";
 
 
-const SaveButton = () => {
+const SaveButton = ({ affiliationsData }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { userInfo, getUserInfo } = useApp();
@@ -20,18 +20,23 @@ const SaveButton = () => {
 
   // Dummy function for affiliations save
   const handleAffiliationsSave = async () => {
-    // TODO: Replace with real save logic for affiliations
-    alert("Affiliations save called!");
-    const affiliations = {};
+    setIsSubmitting(true);
     try {
       await updateUserAffiliations(
         userInfo.user_id,
         userInfo.first_name,
         userInfo.last_name,
-        affiliations
+        affiliationsData
       );
+      alert("Affiliations saved!");
+
+      // Reset change state after successful save
+      // if (setPrevUserInfo) {
+      //   setPrevUserInfo(JSON.parse(JSON.stringify(userInfo)));
+      // }
     } catch (error) {
       console.error("Error updating user affiliations:", error);
+      alert("Failed to save affiliations. Please try again.");
     }
     setIsSubmitting(false);
   };
@@ -117,7 +122,7 @@ const SaveButton = () => {
   return (
     <button
       type="button"
-      className={`btn text-white py-1 px-2 w-1/5 min-h-0 h-8 leading-tight ${
+      className={`btn text-white px-4 py-2 min-h-0 h-10  leading-tight ${
         change ? "btn-success" : "btn-disabled bg-gray-400"
       }`}
       disabled={!change || isSubmitting}

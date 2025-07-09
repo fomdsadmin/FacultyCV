@@ -105,14 +105,20 @@ const EntryModal = ({
         const snakeKey =
           section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
         const val = fields[snakeKey];
-        if (options.includes("Other") && typeof val === "string" && val.startsWith("Other (")) {
-          // Extract the value inside the parentheses
-          const match = val.match(/^Other \((.*)\)$/);
+        // Match any option that contains "Other" and is followed by " (value)"
+        if (
+          Array.isArray(options) &&
+          typeof val === "string" &&
+          /\bother\b/i.test(val) &&
+          /\(.*\)$/.test(val)
+        ) {
+          // Extract the option text (e.g., "i. Other") and the value in parentheses
+          const match = val.match(/^(.*Other)\s*\((.*)\)$/i);
           if (match) {
             setFormData((prev) => ({
               ...prev,
-              [snakeKey]: "Other",
-              [`${snakeKey}_other`]: match[1],
+              [snakeKey]: match[1].trim(),
+              [`${snakeKey}_other`]: match[2],
             }));
           }
         }
@@ -257,10 +263,16 @@ const EntryModal = ({
       Object.entries(attributesType.dropdown).forEach(([displayName, options]) => {
         const snakeKey =
           section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
-        if (options.includes("Other") && formData[snakeKey]?.includes("Other")) {
-          const otherVal = formData[`${snakeKey}_other`] || "";
-          updatedFormData[snakeKey] = `Other (${otherVal})`;
-          // Remove the temp field
+        const selectedValue = formData[snakeKey];
+        const otherVal = formData[`${snakeKey}_other`] || "";
+        // If the selected value contains "Other" (case-insensitive) and there is an other value
+        if (
+          options.some(opt => opt.toLowerCase().includes("other")) &&
+          typeof selectedValue === "string" &&
+          selectedValue.toLowerCase().includes("other") &&
+          otherVal.trim() !== ""
+        ) {
+          updatedFormData[snakeKey] = `${selectedValue} (${otherVal})`;
           delete updatedFormData[`${snakeKey}_other`];
         }
       });

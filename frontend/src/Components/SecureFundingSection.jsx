@@ -5,6 +5,7 @@ import PermanentEntryModal from "./PermanentEntryModal";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import { FaArrowLeft } from "react-icons/fa";
 import SecureFundingModal from "./SecureFundingModal";
+import SecureFundingEntry from "./SecureFundingEntry";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
@@ -293,20 +294,21 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                 paginatedData.map((entry, index) => {
                   // Omit the "agency" field and add "sponsor" field for view (PermanentEntry)
                   const { agency, ...filteredDetails } = entry.data_details;
-
                   return entry.editable ? (
                     <div className="w-full">
                       <GenericEntry
+                        // isArchived={entry.is_archived ? true : false}
                         key={index}
                         onEdit={() => handleEdit(entry)}
                         field1={entry.field1}
                         field2={entry.field2}
                         data_details={entry.data_details} // For edit, just omit agency
                         onArchive={() => handleArchive(entry)}
-                      />
+                        />
                     </div>
                   ) : (
-                    <GenericEntry
+                      <GenericEntry
+                        // isArchived={entry.is_archived}
                       key={index}
                       onEdit={() => handleEdit(entry)}
                       field1={entry.field1}

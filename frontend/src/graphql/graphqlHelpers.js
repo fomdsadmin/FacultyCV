@@ -29,6 +29,7 @@ import {
   getLatexConfigurationQuery,
   GET_BIO_RESPONSE_DATA,
   getAuditViewQuery,
+  getUserAffiliationsQuery
 } from "./queries";
 import {
   addUserMutation,
@@ -271,6 +272,12 @@ export const getUserCVData = async (user_id, data_section_ids) => {
   return results["data"]["getUserCVData"];
 };
 
+export const getUserAffiliations = async (user_id, first_name, last_name) => {
+  const query = getUserAffiliationsQuery(user_id, first_name, last_name);
+  const results = await executeGraphql(query);
+  return results["data"]["getUserAffiliations"];
+};
+
 /**
  * Function to get the archived user cv data given the user id
  * Arguments:
@@ -505,7 +512,7 @@ export const getPublicationMatches = async (
  *  {
  *      secure_funding_id
  *      first_name,
- *      last_name,
+ *      last_name
  *      data_details: JSON string
  *  }, ...
  * ]
