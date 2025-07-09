@@ -53,13 +53,13 @@ const PatentsSection = ({ user, section, onBack }) => {
     // Implement restore functionality here
     try {
       const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
+      //log the archive action
+      await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA)
     } catch (error) {
       console.error("Error archiving entry:", error);
     }
     await fetchData();
     setLoading(false);
-    //log the archive action
-    await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA)
   };
 
   const handleEdit = (entry) => {

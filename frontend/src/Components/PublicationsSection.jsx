@@ -51,12 +51,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
     setFieldData([]);
     try {
       await updateUserCVDataArchive(entry.user_cv_data_id, true);
+      await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA);
     } catch (error) {
       console.error("Error archiving entry:", error);
     }
     await fetchData();
     setLoading(false);
-    logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA);
   };
 
   const handleEdit = (entry) => {

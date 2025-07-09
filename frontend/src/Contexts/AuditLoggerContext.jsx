@@ -6,12 +6,18 @@ const AuditLoggerContext = createContext(null);
 
 export const AUDIT_ACTIONS = {
     VIEW_PAGE: 'View page',
-    CREATE_PROFILE: 'Create profile',
     UPDATE_PROFILE: 'Update profile',
+    UPDATE_AFFILIATIONS: 'Update affiliations',
 
-    CREATE_SECTION: 'Create section', // admin
     EDIT_SECTION_DETAILS: 'Update section details', //admin
+    UPDATE_SECTION_ATTRIBUTES: 'Update section attributes', // admin
     ARCHIVE_SECTION: 'Archive section', // admin
+    SEND_CONNECTION_INVITE: 'Send connection invite', // admin
+    DELETE_CONNECTION: 'Delete connection', // admin
+    ACCEPT_CONNECTION: 'Accept connection', // admin
+    CHANGE_USER_ROLE: 'Change role', // admin
+    
+    FORM_CONNECTION: 'Form connection', 
     
     ADD_USER_DECLARATION: 'Add declaration',
     UPDATE_USER_DECLARATION: 'Update declaration',

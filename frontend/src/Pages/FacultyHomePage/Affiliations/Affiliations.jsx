@@ -6,6 +6,7 @@ import SaveButton from "../SaveButton";
 import AcademicUnitSection from "./AcademicUnitSection";
 import ResearchAffiliationSection from "./ResearchAffiliationSection";
 import HospitalAffiliationSection from "./HospitalAffiliationSection";
+import { useAuditLogger, AUDIT_ACTIONS } from "../../../Contexts/AuditLoggerContext"; 
 
 // Responsive Section card
 export const Section = ({ title, children }) => (
@@ -69,6 +70,8 @@ const Affiliations = () => {
   const [researchRows, setResearchRows] = useState([]);
   const [hospitalRows, setHospitalRows] = useState([]);
 
+  const { logAction } = useAuditLogger();
+
   // Function to save all affiliations data
   const handleSaveAffiliations = async () => {
     setIsSaving(true);
@@ -92,6 +95,9 @@ const Affiliations = () => {
         userInfo.last_name,
         JSON.stringify(updatedAffiliationsData)
       );
+
+      // Log the save action
+      await logAction(AUDIT_ACTIONS.UPDATE_AFFILIATIONS);
 
       // alert("Affiliations saved successfully!");
     } catch (error) {

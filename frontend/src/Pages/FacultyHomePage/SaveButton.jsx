@@ -107,16 +107,16 @@ const SaveButton = ({ affiliationsData }) => {
   }
 
   // Decide which save function to call
-  const handleClick = (event) => {
+  const handleClick = async (event) => {
     setIsSubmitting(true);
     console.log(location.pathname);
     if (location.pathname === "/faculty/home/affiliations") {
       handleAffiliationsSave();
+      await logAction(AUDIT_ACTIONS.UPDATE_AFFILIATIONS);
     } else {
       handleSubmit(event);
+      await logAction(AUDIT_ACTIONS.UPDATE_PROFILE);
     }
-    // Log the update action
-    logAction(AUDIT_ACTIONS.UPDATE_PROFILE);
   };
 
   return (
