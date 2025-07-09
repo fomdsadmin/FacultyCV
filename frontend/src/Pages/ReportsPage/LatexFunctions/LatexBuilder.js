@@ -448,6 +448,21 @@ const buildSubSections = (preparedSectionWithSubSections) => {
         .sub_section_settings
         .sub_sections
         .map((subSection) => {
+
+            const updatedAttributeGroups = preparedSectionWithSubSections.attribute_groups.map((attributeGroup) => {
+                const attributesToHide = subSection.hidden_attributes_list || [];
+
+                let updatedAttributeGroup = attributeGroup;
+
+                if (attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID) {
+                    updatedAttributeGroup = {
+                        ...attributeGroup,
+                        attributes: attributeGroup.attributes.filter((attribute) => !attributesToHide.includes(attribute))
+                    }
+                }
+                return updatedAttributeGroup;
+            })
+
             const section = {
                 ...preparedSectionWithSubSections,
                 sub_section_settings: null,
@@ -455,11 +470,14 @@ const buildSubSections = (preparedSectionWithSubSections) => {
                 attribute_filter_value: subSection.original_title,
                 attribute_rename_map: subSection.attributes_rename_dict,
                 show_header: preparedSectionWithSubSections.sub_section_settings.display_titles,
+                attribute_groups: updatedAttributeGroups,
                 is_sub_section: true
             }
             console.log("section: ", section);
             return section;
         })
+
+    console.log("mappedSections: ", mappedSections);
 
     for (const mappedSection of mappedSections) {
         latex += buildPreparedSection(mappedSection, mappedSection.data_section_id);
