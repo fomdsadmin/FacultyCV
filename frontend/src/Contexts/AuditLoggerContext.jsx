@@ -93,12 +93,12 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
 
         // console.log('Audit Log Action:', actionType, auditInput);
         try {
-            return await addAuditView(auditInput);
+            await addAuditView(auditInput);
         } catch (error) {
             console.error("Failed to log audit action:", error);
         }
+        return;
 
-        // return addAuditView(auditInput);
     };
 
     const contextValue = {
