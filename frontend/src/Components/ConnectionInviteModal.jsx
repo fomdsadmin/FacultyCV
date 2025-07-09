@@ -54,7 +54,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
       }
       getAllUserConnections();
       // Log the invite action
-      await logAction(AUDIT_ACTIONS.FORM_CONNECTION);
+      await logAction(AUDIT_ACTIONS.FORM_CONNECTION, userInfo.email);
       setIsModalOpen(false); // Close the modal on success
     } catch (error) {
       console.error('Error sending invite:', error);
@@ -131,7 +131,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
       getAllUserConnections();
       setIsModalOpen(false); // Close the modal on success
       // Log the invite action
-      await logAction(AUDIT_ACTIONS.SEND_CONNECTION_INVITE);
+      await logAction(AUDIT_ACTIONS.SEND_CONNECTION_INVITE, userInfo.email);
     } catch (error) {
       console.error('Error sending invite:', error);
       setError('Error sending invite. Please try again.');
