@@ -77,7 +77,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [fetchError, setFetchError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
 
-  const logAction = useAuditLogger();
+  const { logAction } = useAuditLogger();
 
   // Year logic
   const thisYear = new Date().getFullYear();
