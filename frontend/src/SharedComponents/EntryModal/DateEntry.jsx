@@ -18,10 +18,13 @@ function validateDateFields(formData, attrsObj) {
     if (!endDateMonth || !endDateYear) {
       return "Please select an end date (month and year) or 'Current'.";
     }
-    if (endDateMonth === "None" || endDateYear === "None") {
+    // Allow "None" as a valid option for end dates
+    if ((endDateMonth === "None" && endDateYear !== "None") || 
+        (endDateMonth !== "None" && endDateYear === "None")) {
       return "Please select a valid end date (month and year) or 'Current'.";
     }
-    if (endDateMonth !== "Current" && endDateYear !== "Current") {
+    if (endDateMonth !== "Current" && endDateYear !== "Current" && 
+        endDateMonth !== "None" && endDateYear !== "None") {
       // Compare start and end
       const start = new Date(Number(startDateYear), monthToNum(startDateMonth));
       const end = new Date(Number(endDateYear), monthToNum(endDateMonth));
@@ -43,14 +46,18 @@ function validateDateFields(formData, attrsObj) {
       if (!formData.endDateMonth || !formData.endDateYear) {
         return "Please select an end date (month and year) or 'Current'.";
       }
-      if (formData.endDateMonth === "None" || formData.endDateYear === "None") {
+      // Allow "None" as a valid option for end dates
+      if ((formData.endDateMonth === "None" && formData.endDateYear !== "None") || 
+          (formData.endDateMonth !== "None" && formData.endDateYear === "None")) {
         return "Please select a valid end date (month and year) or 'Current'.";
       }
       if (
         formData.startDateMonth &&
         formData.startDateYear &&
         formData.endDateMonth !== "Current" &&
-        formData.endDateYear !== "Current"
+        formData.endDateYear !== "Current" &&
+        formData.endDateMonth !== "None" &&
+        formData.endDateYear !== "None"
       ) {
         const start = new Date(Number(formData.startDateYear), monthToNum(formData.startDateMonth));
         const end = new Date(Number(formData.endDateYear), monthToNum(formData.endDateMonth));
