@@ -182,9 +182,20 @@ const EntryModal = ({
     e.preventDefault();
     setError("");
 
+    let finalFormData = { ...formData };
+
+    // Collect values from rich text editors before validation and save as HTML
+    if (window.richTextEditorRefs) {
+      Object.entries(window.richTextEditorRefs).forEach(([fieldName, ref]) => {
+        if (ref && ref.getValue) {
+          finalFormData[fieldName] = ref.getValue();
+        }
+      });
+    }
+
     // Validate date fields using DateEntry's validation
     if (attributesType.date) {
-      const dateError = validateDateFields(formData, attributesType.date);
+      const dateError = validateDateFields(finalFormData, attributesType.date);
       if (dateError) {
         setError(dateError);
         return;
@@ -199,7 +210,7 @@ const EntryModal = ({
         // Get the snake_case key from section.attributes
         const snakeKey =
           section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
-        if (!formData[snakeKey]) {
+        if (!finalFormData[snakeKey]) {
           setError(`Please select a value for the field "${displayName}".`);
           return;
         }
@@ -227,16 +238,15 @@ const EntryModal = ({
 
     // --- Date fields saving ---
     // For "dates" field, construct the string as before
-    let updatedFormData = { ...formData };
     if (dateFieldName) {
-      const { startDateMonth, startDateYear, endDateMonth, endDateYear, ...rest } = formData;
+      const { startDateMonth, startDateYear, endDateMonth, endDateYear, ...rest } = finalFormData;
       const dates =
         endDateMonth === "Current"
           ? `${startDateMonth}, ${startDateYear} - ${endDateMonth}`
           : endDateMonth === "None"
           ? `${startDateMonth}, ${startDateYear}`
           : `${startDateMonth}, ${startDateYear} - ${endDateMonth}, ${endDateYear}`;
-      updatedFormData = { ...rest, [dateFieldName]: dates };
+      finalFormData = { ...rest, [dateFieldName]: dates };
     }
 
     // For single start/end date fields, construct their value as "Month, Year" or "Current"/"None"
@@ -244,16 +254,16 @@ const EntryModal = ({
       Object.entries(section.attributes).forEach(([displayName, snakeKey]) => {
         if (displayName.toLowerCase().includes("start date") || displayName.toLowerCase().includes("end date")) {
           const prefix = displayName.toLowerCase().includes("start") ? "start" : "end";
-          const month = formData[`${prefix}DateMonth`];
-          const year = formData[`${prefix}DateYear`];
+          const month = finalFormData[`${prefix}DateMonth`];
+          const year = finalFormData[`${prefix}DateYear`];
           if (month === "Current" || month === "None") {
-            updatedFormData[snakeKey] = month;
+            finalFormData[snakeKey] = month;
           } else if (month && year) {
-            updatedFormData[snakeKey] = `${month}, ${year}`;
+            finalFormData[snakeKey] = `${month}, ${year}`;
           }
-          // Remove the temporary fields from updatedFormData
-          delete updatedFormData[`${prefix}DateMonth`];
-          delete updatedFormData[`${prefix}DateYear`];
+          // Remove the temporary fields from finalFormData
+          delete finalFormData[`${prefix}DateMonth`];
+          delete finalFormData[`${prefix}DateYear`];
         }
       });
     }
@@ -263,8 +273,8 @@ const EntryModal = ({
       Object.entries(attributesType.dropdown).forEach(([displayName, options]) => {
         const snakeKey =
           section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
-        const selectedValue = formData[snakeKey];
-        const otherVal = formData[`${snakeKey}_other`] || "";
+        const selectedValue = finalFormData[snakeKey];
+        const otherVal = finalFormData[`${snakeKey}_other`] || "";
         // If the selected value contains "Other" (case-insensitive) and there is an other value
         if (
           options.some(opt => opt.toLowerCase().includes("other")) &&
@@ -272,8 +282,8 @@ const EntryModal = ({
           selectedValue.toLowerCase().includes("other") &&
           otherVal.trim() !== ""
         ) {
-          updatedFormData[snakeKey] = `${selectedValue} (${otherVal})`;
-          delete updatedFormData[`${snakeKey}_other`];
+          finalFormData[snakeKey] = `${selectedValue} (${otherVal})`;
+          delete finalFormData[`${snakeKey}_other`];
         }
       });
     }
@@ -284,13 +294,13 @@ const EntryModal = ({
         const snakeKey = 
           section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
         
-        // If the original key exists in formData, ensure it's saved with snake_case key
-        if (formData[displayName] !== undefined) {
-          updatedFormData[snakeKey] = !!formData[displayName]; // Convert to true boolean
+        // If the original key exists in finalFormData, ensure it's saved with snake_case key
+        if (finalFormData[displayName] !== undefined) {
+          finalFormData[snakeKey] = !!finalFormData[displayName]; // Convert to true boolean
           
           // Remove original key if different from snake_case key
           if (displayName !== snakeKey) {
-            delete updatedFormData[displayName];
+            delete finalFormData[displayName];
           }
         }
       });
@@ -299,10 +309,10 @@ const EntryModal = ({
     // Only keep snake_case keys as defined in section.attributes
     const allowedKeys = section.attributes ? Object.values(section.attributes) : [];
     const filteredFormData = Object.fromEntries(
-      Object.entries(updatedFormData).filter(([key]) => allowedKeys.includes(key))
+      Object.entries(finalFormData).filter(([key]) => allowedKeys.includes(key))
     );
 
-    console.log("Submitting form data:", updatedFormData);
+    console.log("Submitting form data:", finalFormData);
 
     try {
       if (isNew) {

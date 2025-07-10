@@ -21,12 +21,12 @@ export const rankFields = (entry) => {
     physician: 14,
     publisher: 15,
     journal: 16,
+    scale: 16,
     other: 17,
-    details: 18,
     description: 19,
     inventor: 20,
     supervisor: 21,
-    note: 22,
+    details: 22,
   };
 
   const rankedFields = Object.entries(entry)

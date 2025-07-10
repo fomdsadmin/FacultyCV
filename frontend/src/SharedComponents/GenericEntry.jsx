@@ -2,14 +2,42 @@ import React, { useState, useEffect } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { LuUndo2 } from "react-icons/lu";
+import "./GenericEntry.css";
 
-const MAX_CHAR_LENGTH = 220;
+const MAX_CHAR_LENGTH = 250;
 
 const truncateText = (text, maxLength) => {
   if (text.length > maxLength) {
     return `${text.substring(0, maxLength)}...`;
   }
   return text;
+};
+
+const truncateHtml = (html, maxLength) => {
+  // Strip HTML tags for length calculation
+  const textOnly = html.replace(/<[^>]*>/g, '');
+  if (textOnly.length <= maxLength) {
+    return html;
+  }
+  
+  // Truncate the text and add ellipsis
+  const truncatedText = textOnly.substring(0, maxLength);
+  // Find the last complete word
+  const lastSpaceIndex = truncatedText.lastIndexOf(' ');
+  const finalText = lastSpaceIndex > 0 ? truncatedText.substring(0, lastSpaceIndex) : truncatedText;
+  
+  return `${finalText}...`;
+};
+
+const isHtmlContent = (content) => {
+  // Check if content contains HTML tags (simple detection)
+  return /<[a-z][\s\S]*>/i.test(content);
+};
+
+const isRichTextField = (key) => {
+  // Check if field name suggests it's a rich text field
+  const lowerKey = key.toLowerCase();
+  return lowerKey.includes('details') || lowerKey.includes('note');
 };
 
 const capitalizeWords = (string) => {
@@ -34,21 +62,25 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
 
   useEffect(() => {
     const newAttributes = Object.entries(data_details)
-      .filter(
-        ([key, value]) =>
+      .filter(([key, value]) => {
+        // Find which keys correspond to field1 and field2
+        const field1Key = Object.keys(data_details).find((k) => data_details[k] === field1);
+        const field2Key = Object.keys(data_details).find((k) => data_details[k] === field2);
+
+        return (
           value &&
-          value !== field1 &&
-          value !== field2 &&
+          key !== field1Key &&
+          key !== field2Key &&
           !(Array.isArray(value) && value.length === 0) &&
-          key !== "author_ids"
-        // &&
-        // key !== "class_size_(per_year)" &&
-        // key !== "labs_(per_year)" &&
-        // key !== "lectures_(per_year)" &&
-        // key !== "other_(per_year)" &&
-        // key !== "scheduled_hours" &&
-        // key !== "tutorials_(per_year)" &&
-      )
+          key !== "author_ids" &&
+          key !== "class_size_(per_year)" &&
+          key !== "labs_(per_year)" &&
+          key !== "lectures_(per_year)" &&
+          key !== "other_(per_year)" &&
+          key !== "scheduled_hours" &&
+          key !== "tutorials_(per_year)"
+        );
+      })
       .map(([key, value]) => {
         const newValue = removeCommasIfNeeded(key, String(value));
         return `${capitalizeWords(key)}: ${addSpaceAfterComma(newValue)}`;
@@ -75,20 +107,59 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
     <div className="min-h-8 shadow-glow mx-4 my-2 px-4 py-4 flex items-center bg-white rounded-lg">
       <div className="flex-1 w-full">
         {updatedField1 && (
-          <h1 className="text-gray-800 font-bold break-words">{truncateText(updatedField1, MAX_CHAR_LENGTH)}</h1>
+          <h1 className="text-gray-800 font-bold break-words">
+            {isHtmlContent(updatedField1) ? (
+              <div 
+                className="html-content inline"
+                dangerouslySetInnerHTML={{ __html: truncateHtml(updatedField1, MAX_CHAR_LENGTH) }}
+              />
+            ) : (
+              truncateText(updatedField1, MAX_CHAR_LENGTH)
+            )}
+          </h1>
         )}
-        {updatedField2 && <h2 className="text-gray-600 break-words">{truncateText(updatedField2, MAX_CHAR_LENGTH)}</h2>}
+        {updatedField2 && (
+          <h2 className="text-gray-600 break-words mb-[3px]">
+            {isHtmlContent(updatedField2) ? (
+              <div 
+                className="html-content inline"
+                dangerouslySetInnerHTML={{ __html: truncateHtml(updatedField2, MAX_CHAR_LENGTH) }}
+              />
+            ) : (
+              truncateText(updatedField2, MAX_CHAR_LENGTH)
+            )}
+          </h2>
+        )}
         {attributes.map((attribute, index) => {
           // Split "Label: Value"
           const [label, ...rest] = attribute.split(": ");
           const value = rest.join(": ");
+          const originalKey = Object.keys(data_details).find(k => 
+            capitalizeWords(k) === label.trim()
+          );
+          
           // Special case: Only show Agency if value is not 'rise' (case-insensitive)
           if (label.trim() === "Agency" && value.trim().toLowerCase() === "rise") {
             return <></>;
           }
+          if (label.trim().toLowerCase() === "highlight") {
+            return <></>;
+          }
+          
+          const isRichField = originalKey && isRichTextField(originalKey);
+          const isHtml = isHtmlContent(value);
+          
           return (
             <p key={index} className="text-gray-600 break-words text-sm">
-              <span className="font-bold">{label}:</span> {truncateText(value, MAX_CHAR_LENGTH)}
+              <span className="font-bold">{label}:</span>{" "}
+              {isRichField && isHtml ? (
+                <span 
+                  className="html-content inline"
+                  dangerouslySetInnerHTML={{ __html: truncateHtml(value, MAX_CHAR_LENGTH) }}
+                />
+              ) : (
+                truncateText(value, MAX_CHAR_LENGTH)
+              )}
             </p>
           );
         })}
