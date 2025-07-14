@@ -34,12 +34,6 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange }) => {
     
     return 1;
   };
-
-  // Helper function to check if field should use rich text editor
-  const shouldUseRichTextEditor = (fieldName) => {
-    const lower = fieldName.toLowerCase();
-    return ["details", "note"].some(key => lower.includes(key));
-  };
   
   return Object.entries(attrsObj).map(([attrName, value]) => {
     // Get the snake_case key from attributes mapping
@@ -48,7 +42,6 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange }) => {
     const currentValue = formData[snakeKey] || '';
     const shouldSpan = shouldSpanTwoColumns(currentValue, attrName);
     const rows = calculateRows(currentValue, attrName);
-    const useRichText = shouldUseRichTextEditor(attrName);
     
     if (["title"].some((key) => lower.includes(key))) {
       // Title fields - always span 2 columns
