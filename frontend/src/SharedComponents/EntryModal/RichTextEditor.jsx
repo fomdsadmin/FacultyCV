@@ -19,6 +19,41 @@ const RichTextEditor = forwardRef(({ value, onChange, rows = 10, name }, ref) =>
     setEditorHeight(newHeight);
   }, [editorValue]);
 
+  // Add tooltips to toolbar buttons
+  useEffect(() => {
+    const addTooltips = () => {
+      if (quillRef.current) {
+        const toolbar = quillRef.current.getEditor().getModule('toolbar').container;
+        
+        // Define tooltip text for each button
+        const tooltips = {
+          '.ql-bold': 'Bold',
+          '.ql-italic': 'Italic',
+          '.ql-underline': 'Underline',
+          '.ql-strike': 'Strikethrough',
+          '.ql-script[value="sub"]': 'Subscript',
+          '.ql-script[value="super"]': 'Superscript',
+          '.ql-list[value="ordered"]': 'Numbered List',
+          '.ql-list[value="bullet"]': 'Bullet List',
+          '.ql-blockquote': 'Quote',
+          '.ql-clean': 'Remove Formatting'
+        };
+
+        // Add title attribute to each button
+        Object.entries(tooltips).forEach(([selector, title]) => {
+          const button = toolbar.querySelector(selector);
+          if (button) {
+            button.setAttribute('title', title);
+          }
+        });
+      }
+    };
+
+    // Add tooltips after the editor is initialized
+    const timer = setTimeout(addTooltips, 100);
+    return () => clearTimeout(timer);
+  }, [editorValue]); // Re-run when editor content changes to ensure tooltips are always present
+
   // Simple change handler - only update local state
   const handleChange = (content) => {
     setEditorValue(content);
@@ -43,17 +78,17 @@ const RichTextEditor = forwardRef(({ value, onChange, rows = 10, name }, ref) =>
 
   const modules = {
     toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline'],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'script': 'sub'}, { 'script': 'super' }],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link', 'blockquote'],
+      ['blockquote'],
       ['clean']
     ],
   };
 
   const formats = [
-    'header', 'bold', 'italic', 'underline',
-    'list', 'bullet', 'link', 'blockquote'
+    'bold', 'italic', 'underline', 'strike',
+    'script', 'list', 'bullet', 'blockquote'
   ];
 
   const dynamicHeight = calculateHeight();

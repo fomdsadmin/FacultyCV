@@ -149,18 +149,32 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
           const isRichField = originalKey && isRichTextField(originalKey);
           const isHtml = isHtmlContent(value);
           
+          // Check if rich text field is empty
+          if (isRichField && isHtml) {
+            // Strip HTML tags and check if content is empty
+            const textOnly = value.replace(/<[^>]*>/g, '').trim();
+            if (!textOnly || textOnly === '') {
+              return <></>;
+            }
+          }
+          
+          // Check if regular text field is empty
+          if (!isRichField && (!value || value.trim() === '')) {
+            return <></>;
+          }
+          
           return (
-            <p key={index} className="text-gray-600 break-words text-sm">
-              <span className="font-bold">{label}:</span>{" "}
+            <div key={index} className="text-gray-600 break-words text-sm">
+              <span className="font-bold">{label}:</span>
               {isRichField && isHtml ? (
-                <span 
+                <div 
                   className="html-content inline"
                   dangerouslySetInnerHTML={{ __html: truncateHtml(value, MAX_CHAR_LENGTH) }}
                 />
               ) : (
-                truncateText(value, MAX_CHAR_LENGTH)
+                <span> {truncateText(value, MAX_CHAR_LENGTH)}</span>
               )}
-            </p>
+            </div>
           );
         })}
       </div>
