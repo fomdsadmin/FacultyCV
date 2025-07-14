@@ -56,6 +56,7 @@ export const normalizeDeclarations = (rawDeclarations) => {
       meritJustification: other.merit_justification || "",
       psaJustification: other.psa_justification || "",
       honorific: other.fom_honorific_impact_report || "",
+      supportAnticipated: other.support_anticipated || "",
       created_by: decl.created_by,
       created_on: decl.created_on,
       updated_at: other.updated_at || null,
@@ -143,6 +144,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [meritJustification, setMeritJustification] = useState("");
   const [psaJustification, setPsaJustification] = useState("");
   const [honorific, setHonorific] = useState("");
+  const [supportAnticipated, setSupportAnticipated] = useState("");
   const [year, setYear] = useState("");
 
   // Handler for edit button
@@ -163,6 +165,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setMeritJustification(data?.meritJustification || "");
     setPsaJustification(data?.psaJustification || "");
     setHonorific(data?.honorific || "");
+    setSupportAnticipated(data?.supportAnticipated || "");
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
@@ -203,6 +206,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setMeritJustification("");
     setPsaJustification("");
     setHonorific("");
+    setSupportAnticipated("");
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
@@ -225,7 +229,10 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setMeritJustification("");
     setPsaJustification("");
     setHonorific("");
+    setSupportAnticipated("");
     setValidationErrors({});
+    // Scroll to top of page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Handler for saving a declaration
@@ -299,8 +306,9 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         fom_promotion_review: promotion.toLowerCase(),
         promotion_submission_date: promotionSubmissionDate || null,
         promotion_pathways: promotionPathways || null,
-        promotion_effective_date: promotionEffectiveDate || (Number(editYear || year) + 1),
+        promotion_effective_date: promotionEffectiveDate || Number(editYear || year) + 1,
         fom_honorific_impact_report: honorific || null,
+        support_anticipated: supportAnticipated || null,
         updated_at: editYear ? new Date().toISOString() : null,
       }),
     };
@@ -332,10 +340,13 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setMeritJustification("");
       setPsaJustification("");
       setHonorific("");
+      setSupportAnticipated("");
       setValidationErrors({});
       // Refresh declarations
       const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
       setDeclarations(data);
+      // Scroll to top of page
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       if (editYear) {
         alert("Failed to update declaration.");
@@ -377,12 +388,8 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       {/* Main content */}
       <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] 2xl:px-[10vw] w-full overflow-auto mt-2 py-6">
         {/* Heading row */}
-        <div className="max-w-6xl mx-auto px-0 mb-2">
+        <div className="max-w-6xl mx-auto px-0 flex justify-between">
           <div className="text-4xl font-bold text-zinc-600">Declarations</div>
-        </div>
-
-        {/* Button row */}
-        <div className="flex justify-end max-w-6xl mx-auto px-0 mb-4">
           <button
             className={`btn btn-primary px-6 py-2 rounded-lg shadow transition
         ${
@@ -397,6 +404,9 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             Create New Declaration
           </button>
         </div>
+
+        {/* Button row */}
+        <div className="flex justify-end max-w-6xl mx-auto px-0 mb-4"></div>
 
         {/* Declarations List Dropdown */}
         <div className="mb-8 max-w-6xl mx-auto px-0">
@@ -501,7 +511,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                         </div>
                       </button>
                       {expandedYear === decl.year && (
-                        <div className="px-6 ml-10 pb-4 pt-2 text-gray-700 text-base">
+                        <div className="px-6 ml-10 mr-16 pb-4 pt-2 text-gray-700 text-base">
                           <div className="mb-4">
                             <b>Conflict of Interest and Commitment:</b>
                             <div className="">{DECLARATION_LABELS.coi[decl.coi] || decl.coi}</div>
@@ -512,17 +522,15 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                             )}
                           </div>
                           <div className="mb-4">
-                            <b>FOM Merit:</b>
-                            <div className="">{DECLARATION_LABELS.fomMerit[decl.fomMerit] || decl.fomMerit}</div>
-                            {decl.psaSubmissionDate && (
-                              <div className="text-m text-gray-500">
-                                <b>Submission Date:</b> {decl.psaSubmissionDate}
-                              </div>
-                            )}
-                          </div>
-                          <div className="mb-4">
-                            <b>PSA Awards:</b>
-                            <div className="">{DECLARATION_LABELS.psa[decl.psa] || decl.psa}</div>
+                            <b>FOM Merit & PSA:</b>
+                            <ul className="list-disc ml-4">
+                              <li>
+                                <div className="">{DECLARATION_LABELS.fomMerit[decl.fomMerit] || decl.fomMerit}</div>
+                              </li>
+                              <li>
+                                <div className="">{DECLARATION_LABELS.psa[decl.psa] || decl.psa}</div>
+                              </li>
+                            </ul>
                             {decl.psaSubmissionDate && (
                               <div className="text-m text-gray-500">
                                 <b>Submission Date:</b> {decl.psaSubmissionDate}
@@ -533,8 +541,26 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                             <b>FOM Promotion Review:</b>
                             <div className="">{DECLARATION_LABELS.promotion[decl.promotion] || decl.promotion}</div>
                             {decl.promotionSubmissionDate && (
-                              <div className="text-m">
-                                Effective Date: July 1, {decl.promotionEffectiveDate}
+                              <div className="text-m">Effective Date: July 1, {decl.promotionEffectiveDate}</div>
+                            )}
+                            {decl.promotionPathways && (
+                              <div className="text-m text-gray-500 ">
+                                <b>Research Stream Pathways:</b>
+                                <br />
+                                {decl.promotionPathways.split(",").map((pathway, index) => (
+                                  <ul className="list-disc ml-4">
+                                    <li>
+                                      <span key={index} className="">
+                                        {pathway.trim()}
+                                      </span>
+                                    </li>
+                                  </ul>
+                                ))}
+                              </div>
+                            )}
+                            {decl.supportAnticipated && (
+                              <div className=" text-gray-500">
+                                <b>Support Anticipated:</b> {decl.supportAnticipated}
                               </div>
                             )}
                             {decl.promotionSubmissionDate && (
@@ -546,7 +572,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                           {decl.honorific && (
                             <div className="mb-4">
                               <b>Honorific Impact Report:</b>
-                              <div className="ml-4 text-m mt-1text-gray-600">{decl.honorific}</div>
+                              <div className="text-m mt-1text-gray-600">{decl.honorific}</div>
                             </div>
                           )}
                           <div className="flex flex-col text-xs text-gray-500 items-end justify-end">
@@ -599,6 +625,8 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             setPsaJustification={setPsaJustification}
             honorific={honorific}
             setHonorific={setHonorific}
+            supportAnticipated={supportAnticipated}
+            setSupportAnticipated={setSupportAnticipated}
             formRef={formRef}
             onCancel={handleCancel}
             onSave={handleSave}

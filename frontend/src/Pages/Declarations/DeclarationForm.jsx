@@ -29,6 +29,8 @@ const DeclarationForm = ({
   setPromotionEffectiveDate,
   honorific,
   setHonorific,
+  supportAnticipated,
+  setSupportAnticipated,
   formRef,
   onCancel,
   onSave,
@@ -393,7 +395,7 @@ const DeclarationForm = ({
                   <span className="text-gray-600">July 1,</span>
                   <select
                     className="px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm min-w-[100px]"
-                    value={promotionEffectiveDate || (nextYearNum || "")}
+                    value={promotionEffectiveDate || nextYearNum || ""}
                     onChange={(e) => setPromotionEffectiveDate(e.target.value)}
                   >
                     <option value={nextYearNum}>{nextYearNum}</option>
@@ -417,17 +419,138 @@ const DeclarationForm = ({
             )}
 
             {hasSelectedYear ? (
-              <p className="mt-4 text-gray-500">
-                <b>Anticipated pathway for Research Stream</b>
-                <br />
-                <ul className="list-disc list-inside mt-2 ml-4 px-4 mb-2">
-                  <li>Traditional</li>
-                  <ul className="list-disc list-inside ml-4 px-4">
-                    <li>Indigenous scholarly activity</li>
-                  </ul>
-                  <li>Blended with scholarship of teaching or professional contributions</li>
-                </ul>
-              </p>
+              <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <p className="text-gray-700 font-semibold mb-3">
+                  <b>Anticipated pathway for Research Stream</b>
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center mb-2">
+                      <input
+                        id="traditional"
+                        type="checkbox"
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        checked={promotionPathways.includes("Traditional")}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          let pathwaysArray = promotionPathways
+                            ? promotionPathways.split(", ").filter((p) => p.trim())
+                            : [];
+
+                          if (isChecked) {
+                            // Add Traditional if not present
+                            if (!pathwaysArray.some((p) => p.includes("Traditional"))) {
+                              pathwaysArray.push("Traditional");
+                            }
+                          } else {
+                            // Remove Traditional and its sub-option
+                            pathwaysArray = pathwaysArray.filter((p) => !p.includes("Traditional"));
+                          }
+
+                          setPromotionPathways(pathwaysArray.join(", "));
+                        }}
+                      />
+                      <label htmlFor="traditional" className="ml-2 text-gray-700 font-medium">
+                        Traditional
+                      </label>
+                    </div>
+
+                    {/* Sub-option for Traditional */}
+                    <div className="ml-6">
+                      <div className="flex items-center">
+                        <input
+                          id="indigenous"
+                          type="checkbox"
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                          checked={promotionPathways.includes("Traditional - Indigenous scholarly activity")}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            let pathwaysArray = promotionPathways
+                              ? promotionPathways.split(", ").filter((p) => p.trim())
+                              : [];
+
+                            if (isChecked) {
+                              // Remove "Traditional" and add "Traditional - Indigenous scholarly activity"
+                              pathwaysArray = pathwaysArray.filter((p) => p !== "Traditional");
+                              if (!pathwaysArray.includes("Traditional - Indigenous scholarly activity")) {
+                                pathwaysArray.push("Traditional - Indigenous scholarly activity");
+                              }
+                            } else {
+                              // Replace sub-option with main option
+                              pathwaysArray = pathwaysArray.filter(
+                                (p) => p !== "Traditional - Indigenous scholarly activity"
+                              );
+                              if (!pathwaysArray.includes("Traditional")) {
+                                pathwaysArray.push("Traditional");
+                              }
+                            }
+
+                            setPromotionPathways(pathwaysArray.join(", "));
+                          }}
+                        />
+                        <label htmlFor="indigenous" className="ml-2 text-gray-700">
+                          Indigenous scholarly activity
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      id="blended"
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      checked={promotionPathways.includes(
+                        "Blended with scholarship of teaching or professional contributions"
+                      )}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        let pathwaysArray = promotionPathways
+                          ? promotionPathways.split(", ").filter((p) => p.trim())
+                          : [];
+
+                        if (isChecked) {
+                          // Add Blended option
+                          if (
+                            !pathwaysArray.includes(
+                              "Blended with scholarship of teaching or professional contributions"
+                            )
+                          ) {
+                            pathwaysArray.push("Blended with scholarship of teaching or professional contributions");
+                          }
+                        } else {
+                          // Remove Blended option
+                          pathwaysArray = pathwaysArray.filter(
+                            (p) => p !== "Blended with scholarship of teaching or professional contributions"
+                          );
+                        }
+
+                        setPromotionPathways(pathwaysArray.join(", "));
+                      }}
+                    />
+                    <label htmlFor="blended" className="ml-2 text-gray-700 font-medium">
+                      Blended with scholarship of teaching or professional contributions
+                    </label>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <></>
+            )}
+
+            {hasSelectedYear ? (
+              <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <p className="text-gray-700 font-semibold mb-3">
+                  <b>Support anticipated</b>
+                </p>
+                <textarea
+                  className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 p-3 resize-y min-h-[100px] transition-all duration-150"
+                  placeholder="Please describe any support anticipated for your promotion application (optional)..."
+                  value={supportAnticipated}
+                  onChange={(e) => setSupportAnticipated(e.target.value)}
+                  rows={4}
+                />
+              </div>
             ) : (
               <></>
             )}
@@ -490,7 +613,7 @@ const DeclarationForm = ({
               used more broadly to bring additional awareness to the Faculty’s accomplishments.
               <br />
               <br />
-              Alternately, if a full report has recently been prepared, please attach a copy of the report.
+              Alternately, if a full report has recently been prepared, please email a copy of the report.
               <br />
               <br />
               <b>
@@ -501,7 +624,7 @@ const DeclarationForm = ({
                 .
               </b>
               <ul className="list-disc list-inside mt-2 ml-4 px-4 mb-2">
-                <li>Full or Summary Report is attached; OR</li>
+                <li>Full or Summary Report is emailed; OR</li>
                 <li>Report is as follows:</li>
               </ul>
               <br />
