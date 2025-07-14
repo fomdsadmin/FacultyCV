@@ -386,16 +386,17 @@ const EntryModal = ({
                     handleChange={handleChange}
                   />
                 );
-              } else if (type === "boolean") {
-                return (
-                  <BooleanEntry
-                    attrsObj={attrsObj}
-                    attributes={section.attributes}
-                    formData={formData}
-                    handleChange={handleChange}
-                  />
-                );
-              }
+              } 
+              // else if (type === "boolean") {
+              //   return (
+              //     <BooleanEntry
+              //       attrsObj={attrsObj}
+              //       attributes={section.attributes}
+              //       formData={formData}
+              //       handleChange={handleChange}
+              //     />
+              //   );
+              // }
               return null;
             })}
           </div>

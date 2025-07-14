@@ -298,7 +298,7 @@ const DeclarationForm = ({
               <ul className="list-disc list-inside mt-2 ml-4 px-4 mb-2">
                 <li>Performance over a period of time which is worthy of recognition;</li>
                 <li>
-                  The relationship of a faculty member’s salary to that of other faculty taking into considerationtotal
+                  The relationship of a faculty member’s salary to that of other faculty taking into consideration total
                   years of service at UBC; and
                 </li>
                 <li>Market considerations.</li>

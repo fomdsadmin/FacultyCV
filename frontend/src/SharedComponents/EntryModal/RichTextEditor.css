@@ -115,6 +115,24 @@
   font-style: italic;
 }
 
+.html-content u {
+  text-decoration: underline;
+}
+
+.html-content s {
+  text-decoration: line-through;
+}
+
+.html-content sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+
+.html-content sup {
+  vertical-align: super;
+  font-size: smaller;
+}
+
 .html-content a {
   color: #3b82f6;
   text-decoration: underline;
@@ -148,6 +166,22 @@
   font-style: italic;
 }
 
+.rich-text-editor .ql-editor .ql-strike {
+  text-decoration: line-through;
+}
+
+.rich-text-editor .ql-editor .ql-script {
+  font-size: 0.8em;
+}
+
+.rich-text-editor .ql-editor .ql-script[data-value="sub"] {
+  vertical-align: sub;
+}
+
+.rich-text-editor .ql-editor .ql-script[data-value="super"] {
+  vertical-align: super;
+}
+
 .rich-text-editor .ql-toolbar .ql-formats {
   margin-right: 12px;
 }
@@ -158,4 +192,135 @@
 
 .rich-text-editor .ql-snow .ql-tooltip {
   z-index: 1000;
+}
+
+/* Tooltip styles for toolbar buttons */
+.rich-text-editor .ql-toolbar button[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #374151;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1001;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar button[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #374151;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar button[title] {
+  position: relative;
+}
+
+.rich-text-editor .ql-toolbar .ql-picker-label[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #374151;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1001;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar .ql-picker-label[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #374151;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar .ql-picker-label[title] {
+  position: relative;
+}
+
+/* Clear All button styling */
+.rich-text-editor .ql-toolbar .ql-clearAll {
+  background-color: transparent;
+  color: #444;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  position: relative;
+}
+
+.rich-text-editor .ql-toolbar .ql-clearAll:hover {
+  background-color: #06c;
+  color: #fff;
+}
+
+.rich-text-editor .ql-toolbar .ql-clearAll::before {
+  content: '🗑️';
+  font-size: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.rich-text-editor .ql-toolbar .ql-clearAll:after {
+  content: '';
+}
+
+/* Override tooltip positioning for clear all button */
+.rich-text-editor .ql-toolbar .ql-clearAll[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #374151;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1002;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar .ql-clearAll[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #374151;
+  z-index: 1002;
+  pointer-events: none;
 }
