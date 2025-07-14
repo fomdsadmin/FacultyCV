@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { adminCreateUser, addUser, updateUser, getUser } from "../graphql/graphqlHelpers.js";
+import React, { useState, useEffect } from "react";
+import { adminCreateUser, addUser, updateUser, getUser, getAllUniversityInfo } from "../graphql/graphqlHelpers.js";
 
 const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
@@ -10,8 +10,29 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [role, setRole] = useState("Faculty");
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Fetch departments when component mounts
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const universityInfo = await getAllUniversityInfo();
+        const departmentList = universityInfo
+          .filter(item => item.type === 'Department')
+          .map(item => item.value)
+          .sort();
+        setDepartments(departmentList);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      }
+    };
+    
+    if (isOpen) {
+      fetchDepartments();
+    }
+  }, [isOpen]);
 
   const handleRoleChange = (event) => {
     setRole("");
@@ -302,16 +323,22 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
 
             {isDepartmentAdmin && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department Name</label>
-                <input
+                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <select
                   className="input input-bordered w-full text-sm"
                   value={selectedDepartment}
                   onChange={handleDepartmentInputChange}
-                  placeholder="Department Name"
                   required
-                />
+                >
+                  <option value="">Select a department...</option>
+                  {departments.map((department, index) => (
+                    <option key={index} value={department}>
+                      {department}
+                    </option>
+                  ))}
+                </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Should be exactly the same as name in list of departments provided during deployment
+                  Select the department for this admin role
                 </p>
               </div>
             )}
