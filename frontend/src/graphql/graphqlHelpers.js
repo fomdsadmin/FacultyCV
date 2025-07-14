@@ -1,42 +1,46 @@
-import { generateClient } from "aws-amplify/api";
-import { getUserQuery } from "./queries";
+import { generateClient, put } from "aws-amplify/api";
 import { addUserMutation } from "./mutations";
-import { fetchAuthSession } from "aws-amplify/auth";
+import { getAllUsersQuery, getUserQuery } from "./queries";
+import { Amplify } from "aws-amplify";
 
-export const runGraphql = async (query, variables = {}, token) => {
-  // const session = await fetchAuthSession();
-  // const token = session.tokens?.idToken?.toString();
-  // console.log("session", session);
-
-  const client = generateClient({
-    headers: async () => {
-      return {
-        Authorization: token,
-      };
-    },
+export const runGraphql = async (query) => {
+  const client = generateClient();
+  const results = await client.graphql({
+    query: query,
   });
+  return results;
+};
 
-
-  if (!client) {
-    throw new Error("GraphQL client is not configured properly.");
-  }
-  else {
-    console.log("GraphQL client configured successfully.");
-    console.log(client);
-  }
-
-  const result = await client.graphql({
+const executeGraphql = async (query, variables = null) => {
+  const client = generateClient();
+  let input = {
     query,
-    variables
-  });
+  };
 
-  return result;
+  if (variables) {
+    input = {
+      query,
+      variables,
+    };
+  }
+
+  const results = await client.graphql(input);
+  console.log(results)
+  return results;
 };
 
-export const getUser = async (email, token) => {
-  const results = await runGraphql(getUserQuery, { email }, token);
-  return results?.data?.getUser;
+export const getUser = async (email="knaveentest2@ubc.ca") => {
+  const results = await executeGraphql(getUserQuery, { email: email });
+  console.log(results);
+  return results["data"]["getUser"];
 };
+
+export const getAllUsers = async () => {
+  const results = await executeGraphql(getAllUsersQuery);
+  console.log(results);
+  return results["data"]["getAllUsers"];
+};
+
 
 export const addUser = async (
   first_name,

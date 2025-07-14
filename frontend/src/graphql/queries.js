@@ -31,7 +31,7 @@ export const getUserQuery = `
             keywords
             scopus_id
             orcid_id
-            joined_timestamp   
+            joined_timestamp
         }
     }
 `;
@@ -63,7 +63,7 @@ export const getUserInstitutionIdQuery = (email) => `
     }
 `;
 
-export const getAllUsersQuery = () => `
+export const getAllUsersQuery = `
     query GetAllUsers {
         getAllUsers {
             user_id
