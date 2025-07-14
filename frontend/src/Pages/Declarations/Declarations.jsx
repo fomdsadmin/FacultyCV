@@ -21,8 +21,8 @@ const DECLARATION_LABELS = {
     NO: "No, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.",
   },
   fomMerit: {
-    YES: "Yes, I do wish to be awarded merit for my academic activities.",
-    NO: "No, I do NOT wish to be awarded merit for my academic activities.",
+    YES: "Yes, I do wish to be awarded merit by the Dean for my academic activities performed during",
+    NO: "No, I do NOT wish to be awarded merit by the Dean for my academic activities performed during",
   },
   psa: {
     YES: "Yes, I do wish to be considered for PSA.",
@@ -232,7 +232,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setSupportAnticipated("");
     setValidationErrors({});
     // Scroll to top of page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Handler for saving a declaration
@@ -346,7 +346,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
       setDeclarations(data);
       // Scroll to top of page
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       if (editYear) {
         alert("Failed to update declaration.");
@@ -525,10 +525,14 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                             <b>FOM Merit & PSA:</b>
                             <ul className="list-disc ml-4">
                               <li>
-                                <div className="">{DECLARATION_LABELS.fomMerit[decl.fomMerit] || decl.fomMerit}</div>
+                                {console.log(decl)}
+                                <div className="">
+                                  {DECLARATION_LABELS.fomMerit[decl.fomMerit]} January 1, {decl.year} - December 31,{" "}
+                                  {decl.year}{" "}
+                                </div>
                               </li>
                               <li>
-                                <div className="">{DECLARATION_LABELS.psa[decl.psa] || decl.psa}</div>
+                                <div className="">{DECLARATION_LABELS.psa[decl.psa]} </div>
                               </li>
                             </ul>
                             {decl.psaSubmissionDate && (
@@ -539,7 +543,11 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                           </div>
                           <div className="mb-4">
                             <b>FOM Promotion Review:</b>
-                            <div className="">{DECLARATION_LABELS.promotion[decl.promotion] || decl.promotion}</div>
+                            <ul className="list-disc ml-4">
+                              <li>
+                                <div className="">{DECLARATION_LABELS.promotion[decl.promotion] || decl.promotion}</div>
+                              </li>
+                            </ul>
                             {decl.promotionSubmissionDate && (
                               <div className="text-m">Effective Date: July 1, {decl.promotionEffectiveDate}</div>
                             )}

@@ -249,30 +249,47 @@ const DeclarationForm = ({
               may still be considered for the Faculty of Medicine Outstanding Academic Performance (OAP) award.
               <br />
               <br />
-              <b>
-                <i>
-                  Please indicate below <u>ONLY</u> if you wish to opt out of merit considerations.
-                </i>
-              </b>
             </p>
 
-            <div className="mt-6 space-y-4">
+            <div className="space-y-4">
               <div className="flex items-center">
-                <input
-                  id="fomMerit"
-                  type="checkbox"
-                  className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                  checked={fomMerit === "NO"}
-                  onChange={(e) => {
-                    setFomMerit(e.target.checked ? "NO" : "YES");
-                    clearError("fomMerit");
-                  }}
-                />
-                <label htmlFor="fomMerit" className="ml-3 text-gray-700 font-medium">
-                  I do NOT wish to be awarded merit for my academic activities.
-                </label>
+                {hasSelectedYear ? (
+                  <div className="mt-2">
+                    <b>
+                      <i>
+                        Please indicate below <u>ONLY</u> if you wish to opt out of merit considerations.
+                      </i>
+                    </b>
+                    <div className="flex items-start gap-3 mt-6 mb-6">
+                      <input
+                        id="fomMerit"
+                        type="checkbox"
+                        className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mt-1"
+                        checked={fomMerit === "NO"}
+                        onChange={(e) => {
+                          setFomMerit(e.target.checked ? "NO" : "YES");
+                          clearError("fomMerit");
+                        }}
+                      />
+                      <label htmlFor="fomMerit" className="text-gray-700 font-medium">
+                        <b>
+                          I do{" "}
+                          <i>
+                            <u>NOT</u>
+                          </i>{" "}
+                          wish to be awarded merit by the Dean for my academic activities performed during
+                          <br />
+                          January 1, {reportingYear} – December 31, {reportingYear}.
+                        </b>
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <b>Please select a year first.</b>
+                )}
               </div>
             </div>
+
             <p className="text-gray-500 mt-6">
               <b>
                 <u>PSA may be</u>
@@ -312,7 +329,13 @@ const DeclarationForm = ({
                   }}
                 />
                 <label htmlFor="psa" className="ml-3 text-gray-700 font-medium">
-                  I do NOT wish to be considered for PSA.
+                  <b>
+                    I do{" "}
+                    <i>
+                      <u>NOT</u>
+                    </i>{" "}
+                    wish to be considered for PSA.
+                  </b>
                 </label>
               </div>
             </div>
@@ -618,9 +641,13 @@ const DeclarationForm = ({
               <br />
               <b>
                 Please submit your impact report to your Department Head / School Director and{" "}
-                <span className="text-blue-500">
-                  <u>fomdae.assistant@ubc.ca</u>
-                </span>
+                <a
+                  href="mailto:fomdae.assistant@ubc.ca"
+                  className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
+                  style={{ textDecorationThickness: "2px" }}
+                >
+                  fomdae.assistant@ubc.ca
+                </a>
                 .
               </b>
               <ul className="list-disc list-inside mt-2 ml-4 px-4 mb-2">
