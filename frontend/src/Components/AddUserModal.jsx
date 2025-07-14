@@ -5,6 +5,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
+  const [cwl, setCwl] = useState("");
+  const [vpp, setVpp] = useState("");
   const [role, setRole] = useState("Faculty");
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState("");
@@ -48,6 +50,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         username,
         firstName,
         lastName,
+        cwl,
+        vpp,
         role,
       });
 
@@ -119,6 +123,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         username: username,
         firstName: firstName,
         lastName: lastName,
+        cwl: cwl,
+        vpp: vpp,
         role: role,
         temporaryPassword: result.temporaryPassword,
       });
@@ -140,6 +146,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     setFirstName("");
     setLastName("");
     setUsername("");
+    setCwl("");
+    setVpp("");
     setRole("Faculty");
     setIsDepartmentAdmin(false);
     setSelectedDepartment("");
@@ -208,6 +216,30 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
               <p className="text-xs text-gray-500 mt-1">
                 A temporary password will be generated and provided after user creation.
               </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CWL</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={cwl}
+                  onChange={(e) => setCwl(e.target.value)}
+                  placeholder="CWL"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">VPP</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={vpp}
+                  onChange={(e) => setVpp(e.target.value)}
+                  placeholder="VPP"
+                  required
+                />
+              </div>
             </div>
 
             <div>
