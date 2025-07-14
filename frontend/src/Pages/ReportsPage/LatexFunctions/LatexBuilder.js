@@ -233,6 +233,15 @@ const buildPublicationRowArray = (data, attributes, section) => {
             const authorIds = data.data_details[sectionAttributes[AUTHOR_IDS]];
             const indexOfThisAuthor = authorIds.indexOf(userInfo.scopus_id);
 
+            // Check if authorNames is an array before mapping
+            if (!Array.isArray(authorNames)) {
+                console.warn('authorNames is not an array:', authorNames);
+                return {
+                    textOptions: [textOptions(String(authorNames), false, 9.5)],
+                    color: null
+                };
+            }
+
             // Create individual textOptions for each author
             const authorTextOptions = authorNames.map((authorName, index) =>
                 textOptions(authorName, index === indexOfThisAuthor, 9.5)
