@@ -188,6 +188,15 @@ const PublicationsSection = ({ user, section, onBack }) => {
     const authorIds = Array.isArray(details.author_ids) ? details.author_ids : [details.author_ids];
     const keywordsList = Array.isArray(details.keywords) ? details.keywords : [details.keywords];
 
+    // Handle date display - check for both display_date and end_date
+    let formattedDate = "";
+
+    if (details.display_date) {
+      formattedDate = details.display_date.trim() + ", ";
+    } else if (details.end_date) {
+      formattedDate = details.end_date.trim() + ", ";
+    }
+    
     // Map author names, bold the one matching user's scopus_id
     const authorDisplay = authorList.map((name, idx) => {
       if (user.scopus_id && authorIds && authorIds[idx] && String(authorIds[idx]) === String(user.scopus_id)) {
@@ -204,7 +213,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
       <div className="bg-white rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
         <p className="text-sm text-gray-700 mb-2">
-          {details.display_date ? details.display_date.trim() + ", " : ""}
+          {formattedDate}
           {details.volume && (
             <>
               <span className="font-normal">Volume: </span>
