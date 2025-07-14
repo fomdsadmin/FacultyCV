@@ -46,6 +46,7 @@ import {
   updateTemplateMutation,
   deleteTemplateMutation,
   addToUserGroupMutation,
+  adminCreateUserMutation,
   removeFromUserGroupMutation,
   updateLatexConfigurationMutation,
   ADD_USER_DECLARATION,
@@ -642,6 +643,15 @@ export const getAuditViewData = async (logged_user_id) => {
 export const addToUserGroup = async (userName, userGroup) => {
   const results = await runGraphql(addToUserGroupMutation(userName, userGroup));
   return results["data"]["addToUserGroup"];
+};
+
+/**
+ * Function to create user in Cognito using admin APIs
+ *
+ */
+export const adminCreateUser = async (first_name, last_name, email, role) => {
+  const results = await runGraphql(adminCreateUserMutation(first_name, last_name, email, role));
+  return results["data"]["adminCreateUser"];
 };
 
 /**
