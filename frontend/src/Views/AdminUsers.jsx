@@ -5,6 +5,7 @@ import AdminMenu from "../Components/AdminMenu.jsx";
 import Filters from "../Components/Filters.jsx";
 import ManageUser from "../Components/ManageUser.jsx";
 import UserCard from "../Components/UserCard.jsx";
+import AddUserModal from "../Components/AddUserModal.jsx";
 import { getAllUsers } from "../graphql/graphqlHelpers.js";
 
 const AdminUsers = ({ userInfo, getCognitoUser }) => {
@@ -14,6 +15,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   useEffect(() => {
     fetchAllUsers();
@@ -107,6 +109,15 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     setActiveUser(null);
   };
 
+  const handleAddUserSuccess = (result) => {
+    setIsAddUserModalOpen(false);
+    // You can handle the result here - maybe show a success message
+    // or redirect to confirmation page
+    console.log('User creation result:', result);
+    // Refresh the users list
+    fetchAllUsers();
+  };
+
   return (
     <PageContainer>
       <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
@@ -120,6 +131,16 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users</h1>
+                <button 
+                  onClick={() => setIsAddUserModalOpen(true)} 
+                  className="btn btn-primary ml-4 gap-2"
+                  title="Add New User"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                  </svg>
+                  Add New User
+                </button>
                 <div className="m-4 flex">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
@@ -172,6 +193,12 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
           </div>
         )}
       </main>
+      
+      <AddUserModal
+        isOpen={isAddUserModalOpen}
+        onClose={() => setIsAddUserModalOpen(false)}
+        onSuccess={handleAddUserSuccess}
+      />
     </PageContainer>
   );
 };
