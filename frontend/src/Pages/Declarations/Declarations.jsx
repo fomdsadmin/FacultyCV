@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import PageContainer from "../../Views/PageContainer.jsx"
+import PageContainer from "../../Views/PageContainer.jsx";
 import FacultyMenu from "../../Components/FacultyMenu.jsx";
 import DeclarationForm from "./DeclarationForm.jsx";
 import {
@@ -7,32 +7,30 @@ import {
   addUserDeclaration,
   deleteUserDeclaration,
   updateUserDeclaration,
-} from "../../graphql/graphqlHelpers.js"
+} from "../../graphql/graphqlHelpers.js";
 import { Link } from "react-router-dom";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useAuditLogger, AUDIT_ACTIONS } from '../../Contexts/AuditLoggerContext';
-
-
+import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext";
 
 // Helper to map value to full label
 const DECLARATION_LABELS = {
   coi: {
-    YES: "YES, my Conflict of Interest and Conflict of Commitment declarations are up to date.",
-    NO: "NO, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.",
+    YES: "Yes, my Conflict of Interest and Conflict of Commitment declarations are up to date.",
+    NO: "No, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.",
   },
   fomMerit: {
-    YES: "I do wish to be awarded merit for my academic activities.",
-    NO: "I do NOT wish to be awarded merit for my academic activities.",
+    YES: "Yes, I do wish to be awarded merit for my academic activities.",
+    NO: "No, I do NOT wish to be awarded merit for my academic activities.",
   },
   psa: {
-    YES: "I do wish to be considered for PSA.",
-    NO: "I do NOT wish to be considered for PSA.",
+    YES: "Yes, I do wish to be considered for PSA.",
+    NO: "No, I do NOT wish to be considered for PSA.",
   },
   promotion: {
-    YES: "I do wish to be considered for promotion.",
-    NO: "I do NOT wish to be considered for promotion.",
+    YES: "Yes, I do wish to be considered for promotion.",
+    NO: "No, I do NOT wish to be considered for promotion.",
   },
 };
 
@@ -47,15 +45,20 @@ export const normalizeDeclarations = (rawDeclarations) => {
     return {
       year: Number(decl.reporting_year),
       coi: (other.conflict_of_interest || "").toUpperCase(),
-      fomMerit: (other.fom_merit || "").toUpperCase(),
-      psa: (other.psa_awards || "").toUpperCase(),
+      coiSubmissionDate: other.coi_submission_date || "",
+      fomMerit: (other.fom_merit || "YES").toUpperCase(),
+      psa: (other.psa_awards || "YES").toUpperCase(),
+      psaSubmissionDate: other.psa_submission_date || "",
       promotion: (other.fom_promotion_review || "").toUpperCase(),
+      promotionSubmissionDate: other.promotion_submission_date || "",
+      promotionPathways: other.promotion_pathways || "",
+      promotionEffectiveDate: other.promotion_effective_date || "",
       meritJustification: other.merit_justification || "",
       psaJustification: other.psa_justification || "",
       honorific: other.fom_honorific_impact_report || "",
       created_by: decl.created_by,
       created_on: decl.created_on,
-      updated_at: other.updated_at || null, // <-- add this line
+      updated_at: other.updated_at || null,
     };
   });
 };
@@ -77,7 +80,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [fetchError, setFetchError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
 
-  const logAction = useAuditLogger();
+  const { logAction } = useAuditLogger();
 
   // Year logic
   const thisYear = new Date().getFullYear();
@@ -100,10 +103,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setLoading(true);
       setFetchError(null);
       try {
-        const data = await fetchDeclarations(
-          userInfo.first_name,
-          userInfo.last_name
-        );
+        const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
         setDeclarations(data);
       } catch (err) {
         setFetchError("Could not load declarations.");
@@ -116,29 +116,30 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }
   }, [userInfo?.first_name, userInfo?.last_name]);
   // Find the biggest/latest year
-  const currentYear =
-    declarations.length > 0
-      ? Math.max(...declarations.map((d) => d.year))
-      : null;
+  const currentYear = declarations.length > 0 ? Math.max(...declarations.map((d) => d.year)) : null;
 
   // Expand the current year by default on mount or when declarations change
   useEffect(() => {
     if (currentYear) setExpandedYear(currentYear);
   }, [currentYear]);
 
-  const [expandedYear, setExpandedYear] = useState(currentYear);
+  const [expandedYear, setExpandedYear] = useState(null);
 
   // State for showing the form (create or edit)
   const [showForm, setShowForm] = useState(false);
-  const [editYear, setEditYear] = useState(null); // track which year is being edited
+  const [editYear, setEditYear] = useState(null);
 
-  // Controlled state for select fields
-  const formRef = useRef(null); // scroll to form
+  // Controlled state for form fields
+  const formRef = useRef(null);
   const [coi, setCoi] = useState("");
+  const [coiSubmissionDate, setCoiSubmissionDate] = useState("");
   const [fomMerit, setFomMerit] = useState("");
-  const [psa, setPsa] = useState("");
+  const [psa, setPsa] = useState("YES");
+  const [psaSubmissionDate, setPsaSubmissionDate] = useState("");
   const [promotion, setPromotion] = useState("");
-  // Controlled state for textareas (optional, for future save logic)
+  const [promotionSubmissionDate, setPromotionSubmissionDate] = useState("");
+  const [promotionEffectiveDate, setPromotionEffectiveDate] = useState("");
+  const [promotionPathways, setPromotionPathways] = useState("");
   const [meritJustification, setMeritJustification] = useState("");
   const [psaJustification, setPsaJustification] = useState("");
   const [honorific, setHonorific] = useState("");
@@ -151,9 +152,14 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     const data = declarations.find((d) => d.year === year);
     setYear(year);
     setCoi(data?.coi || "");
+    setCoiSubmissionDate(data?.coiSubmissionDate || "");
     setFomMerit(data?.fomMerit || "");
     setPsa(data?.psa || "");
+    setPsaSubmissionDate(data?.psaSubmissionDate || "");
     setPromotion(data?.promotion || "");
+    setPromotionSubmissionDate(data?.promotionSubmissionDate || "");
+    setPromotionPathways(data?.promotionPathways || "");
+    setPromotionEffectiveDate(data?.promotionEffectiveDate || "");
     setMeritJustification(data?.meritJustification || "");
     setPsaJustification(data?.psaJustification || "");
     setHonorific(data?.honorific || "");
@@ -162,23 +168,17 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }, 100);
   };
 
+  // Handler for delete button
   const handleDelete = async (year) => {
     try {
-      await deleteUserDeclaration(
-        userInfo.first_name,
-        userInfo.last_name,
-        year
-      );
+      await deleteUserDeclaration(userInfo.first_name, userInfo.last_name, year);
       // Log the deletion action
       await logAction(AUDIT_ACTIONS.DELETE_USER_DECLARATION);
       toast.success("Declaration deleted successfully!", {
         autoClose: 2000,
         theme: "light",
       }); // <-- Add this line
-      const data = await fetchDeclarations(
-        userInfo.first_name,
-        userInfo.last_name
-      );
+      const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
       setDeclarations(data);
     } catch (error) {
       alert("Failed to delete declaration.");
@@ -192,9 +192,14 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setShowForm(true);
     setYear("");
     setCoi("");
+    setCoiSubmissionDate("");
     setFomMerit("");
     setPsa("");
+    setPsaSubmissionDate("");
     setPromotion("");
+    setPromotionSubmissionDate("");
+    setPromotionPathways("");
+    setPromotionEffectiveDate("");
     setMeritJustification("");
     setPsaJustification("");
     setHonorific("");
@@ -209,24 +214,47 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setEditYear(null);
     setYear("");
     setCoi("");
+    setCoiSubmissionDate("");
     setFomMerit("");
     setPsa("");
+    setPsaSubmissionDate("");
     setPromotion("");
+    setPromotionSubmissionDate("");
+    setPromotionPathways("");
+    setPromotionEffectiveDate("");
     setMeritJustification("");
     setPsaJustification("");
     setHonorific("");
+    setValidationErrors({});
   };
 
-  // Handler for saving a new declaration (calls Lambda)
+  // Handler for saving a declaration
   const handleSave = async () => {
     // Validation logic
     const errors = {};
-    if (!editYear && (!year || year === ""))
-      errors.year = "Please select a reporting year.";
-    if (!coi) errors.coi = "Please select Yes or No.";
-    if (!fomMerit) errors.fomMerit = "Please select Yes or No.";
-    if (!psa) errors.psa = "Please select Yes or No.";
-    if (!promotion) errors.promotion = "Please select Yes or No.";
+    if (!editYear && (!year || year === "")) errors.year = "Please select a reporting year.";
+    if (!coi) errors.coi = "Please indicate Yes or No.";
+    if (!coiSubmissionDate) errors.coiSubmissionDate = "Please select a submission date.";
+    if (!psaSubmissionDate) errors.psaSubmissionDate = "Please select a submission date.";
+    if (!promotion) errors.promotion = "Please indicate Yes or No.";
+    if (!promotionSubmissionDate) errors.promotionSubmissionDate = "Please select a submission date.";
+
+    // Date validation
+    const validateDate = (dateValue, fieldName) => {
+      if (dateValue) {
+        const submissionDate = new Date(dateValue);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (submissionDate > today) {
+          errors[fieldName] = "Submission date cannot be in the future.";
+        }
+      }
+    };
+
+    validateDate(coiSubmissionDate, "coiSubmissionDate");
+    validateDate(psaSubmissionDate, "psaSubmissionDate");
+    validateDate(promotionSubmissionDate, "promotionSubmissionDate");
 
     setValidationErrors(errors);
 
@@ -236,14 +264,15 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         const firstErrorKey = [
           "year",
           "coi",
+          "coiSubmissionDate",
           "fomMerit",
           "psa",
+          "psaSubmissionDate",
           "promotion",
+          "promotionSubmissionDate",
         ].find((key) => errors[key]);
         if (firstErrorKey) {
-          const el = document.getElementById(
-            `declaration-field-${firstErrorKey}`
-          );
+          const el = document.getElementById(`declaration-field-${firstErrorKey}`);
           if (el) {
             el.scrollIntoView({ behavior: "smooth", block: "center" });
             el.focus?.();
@@ -261,11 +290,16 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       created_by: userInfo.email || userInfo.first_name,
       other_data: JSON.stringify({
         conflict_of_interest: coi.toLowerCase(),
+        coi_submission_date: coiSubmissionDate || null,
         fom_merit: fomMerit.toLowerCase(),
         merit_justification: meritJustification || null,
         psa_awards: psa.toLowerCase(),
+        psa_submission_date: psaSubmissionDate || null,
         psa_justification: psaJustification || null,
         fom_promotion_review: promotion.toLowerCase(),
+        promotion_submission_date: promotionSubmissionDate || null,
+        promotion_pathways: promotionPathways || null,
+        promotion_effective_date: promotionEffectiveDate || (Number(editYear || year) + 1),
         fom_honorific_impact_report: honorific || null,
         updated_at: editYear ? new Date().toISOString() : null,
       }),
@@ -287,28 +321,26 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setEditYear(null);
       setYear("");
       setCoi("");
+      setCoiSubmissionDate("");
       setFomMerit("");
       setPsa("");
+      setPsaSubmissionDate("");
       setPromotion("");
+      setPromotionSubmissionDate("");
+      setPromotionPathways("");
+      setPromotionEffectiveDate("");
       setMeritJustification("");
       setPsaJustification("");
       setHonorific("");
       setValidationErrors({});
       // Refresh declarations
-      const data = await fetchDeclarations(
-        userInfo.first_name,
-        userInfo.last_name
-      );
+      const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
       setDeclarations(data);
     } catch (error) {
       if (editYear) {
         alert("Failed to update declaration.");
         console.error("Error updating declaration:", error);
-      } else if (
-        !editYear &&
-        error.message &&
-        error.message.includes("Entry already exists")
-      ) {
+      } else if (!editYear && error.message && error.message.includes("Entry already exists")) {
         alert("A declaration for this year already exists.");
       } else {
         alert("Failed to save declaration.");
@@ -325,6 +357,12 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     // In create mode, show only available years
     return [{ value: "", label: "Select year..." }, ...availableYears];
   }, [editYear, availableYears]);
+
+  // Helper function to get today's date in YYYY-MM-DD format
+  const getTodaysDate = () => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  };
 
   return (
     <PageContainer>
@@ -379,8 +417,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
               declarations
                 .sort((a, b) => b.year - a.year)
                 .map((decl) => {
-                  const canEdit =
-                    decl.year === thisYear || decl.year === nextYear;
+                  const canEdit = decl.year === thisYear || decl.year === nextYear;
                   const isCurrent = decl.year === thisYear;
                   const isNext = decl.year === nextYear;
                   return (
@@ -396,38 +433,22 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                             ? "border-green-500 bg-white"
                             : "border-zinc-300 bg-zinc-50"
                         }
-                        ${
-                          expandedYear === decl.year
-                            ? "ring-2 ring-blue-300"
-                            : ""
-                        }
+                        ${expandedYear === decl.year ? "ring-2 ring-blue-300" : ""}
                       `}
                     >
                       <button
                         className="flex items-center justify-between px-6 py-3 text-left hover:bg-blue-50 transition rounded-t-xl"
-                        onClick={() =>
-                          setExpandedYear(
-                            expandedYear === decl.year ? null : decl.year
-                          )
-                        }
+                        onClick={() => setExpandedYear(expandedYear === decl.year ? null : decl.year)}
                       >
                         <div className="flex items-center gap-3 px-2">
                           <FaRegCalendarAlt
                             className={`text-xl ${
-                              isCurrent
-                                ? "text-blue-500"
-                                : isNext
-                                ? "text-green-500"
-                                : "text-zinc-400"
+                              isCurrent ? "text-blue-500" : isNext ? "text-green-500" : "text-zinc-400"
                             }`}
                           />
                           <span
                             className={`font-bold text-lg ${
-                              isCurrent
-                                ? "text-blue-700"
-                                : isNext
-                                ? "text-green-700"
-                                : "text-zinc-600"
+                              isCurrent ? "text-blue-700" : isNext ? "text-green-700" : "text-zinc-600"
                             }`}
                           >
                             {decl.year}
@@ -475,11 +496,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                             strokeWidth={2}
                             viewBox="0 0 24 24"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M19 9l-7 7-7-7"
-                            />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                           </svg>
                         </div>
                       </button>
@@ -487,59 +504,59 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                         <div className="px-6 ml-10 pb-4 pt-2 text-gray-700 text-base">
                           <div className="mb-4">
                             <b>Conflict of Interest and Commitment:</b>
-                            <div className="ml-4">
-                              {DECLARATION_LABELS.coi[decl.coi] || decl.coi}
-                            </div>
+                            <div className="">{DECLARATION_LABELS.coi[decl.coi] || decl.coi}</div>
+                            {decl.coiSubmissionDate && (
+                              <div className="text-m text-gray-500">
+                                <b>Submission Date:</b> {decl.coiSubmissionDate}
+                              </div>
+                            )}
                           </div>
                           <div className="mb-4">
                             <b>FOM Merit:</b>
-                            <div className="ml-4">
-                              {DECLARATION_LABELS.fomMerit[decl.fomMerit] ||
-                                decl.fomMerit}
-                            </div>
-                            {decl.meritJustification && (
-                              <div className="ml-4 mt-1 text-mmt-1 text-m text-gray-500">
-                                <b>Justification:</b> {decl.meritJustification}
+                            <div className="">{DECLARATION_LABELS.fomMerit[decl.fomMerit] || decl.fomMerit}</div>
+                            {decl.psaSubmissionDate && (
+                              <div className="text-m text-gray-500">
+                                <b>Submission Date:</b> {decl.psaSubmissionDate}
                               </div>
                             )}
                           </div>
                           <div className="mb-4">
                             <b>PSA Awards:</b>
-                            <div className="ml-4">
-                              {DECLARATION_LABELS.psa[decl.psa] || decl.psa}
-                            </div>
-                            {decl.psaJustification && (
-                              <div className="ml-4 mt-1 text-m text-gray-500">
-                                <b>Justification:</b> {decl.psaJustification}
+                            <div className="">{DECLARATION_LABELS.psa[decl.psa] || decl.psa}</div>
+                            {decl.psaSubmissionDate && (
+                              <div className="text-m text-gray-500">
+                                <b>Submission Date:</b> {decl.psaSubmissionDate}
                               </div>
                             )}
                           </div>
                           <div className="mb-4">
-                            <b>Promotion Review:</b>
-                            <div className="ml-4">
-                              {DECLARATION_LABELS.promotion[decl.promotion] ||
-                                decl.promotion}
-                            </div>
+                            <b>FOM Promotion Review:</b>
+                            <div className="">{DECLARATION_LABELS.promotion[decl.promotion] || decl.promotion}</div>
+                            {decl.promotionSubmissionDate && (
+                              <div className="text-m">
+                                Effective Date: July 1, {decl.promotionEffectiveDate}
+                              </div>
+                            )}
+                            {decl.promotionSubmissionDate && (
+                              <div className="text-m text-gray-500">
+                                <b>Submission Date:</b> {decl.promotionSubmissionDate}
+                              </div>
+                            )}
                           </div>
                           {decl.honorific && (
                             <div className="mb-4">
                               <b>Honorific Impact Report:</b>
-                              <div className="ml-4 text-m mt-1text-gray-600">
-                                {decl.honorific}
-                              </div>
+                              <div className="ml-4 text-m mt-1text-gray-600">{decl.honorific}</div>
                             </div>
                           )}
                           <div className="flex flex-col text-xs text-gray-500 items-end justify-end">
                             <div>
                               Created by: {decl.created_by} &nbsp;|&nbsp;{" "}
-                              {decl.created_on
-                                ? decl.created_on.split(" ")[0]
-                                : ""}
+                              {decl.created_on ? decl.created_on.split(" ")[0] : ""}
                             </div>
                             {decl.updated_at && (
                               <div className="mt-1 items-end">
-                                Updated &nbsp;:&nbsp;{" "}
-                                {decl.updated_at.split("T")[0]}
+                                Updated &nbsp;:&nbsp; {decl.updated_at.split("T")[0]}
                               </div>
                             )}
                           </div>
@@ -560,12 +577,22 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             setYear={setYear}
             coi={coi}
             setCoi={setCoi}
+            coiSubmissionDate={coiSubmissionDate}
+            setCoiSubmissionDate={setCoiSubmissionDate}
             fomMerit={fomMerit}
             setFomMerit={setFomMerit}
             psa={psa}
             setPsa={setPsa}
+            psaSubmissionDate={psaSubmissionDate}
+            setPsaSubmissionDate={setPsaSubmissionDate}
             promotion={promotion}
             setPromotion={setPromotion}
+            promotionSubmissionDate={promotionSubmissionDate}
+            setPromotionSubmissionDate={setPromotionSubmissionDate}
+            promotionPathways={promotionPathways}
+            setPromotionPathways={setPromotionPathways}
+            promotionEffectiveDate={promotionEffectiveDate}
+            setPromotionEffectiveDate={setPromotionEffectiveDate}
             meritJustification={meritJustification}
             setMeritJustification={setMeritJustification}
             psaJustification={psaJustification}
@@ -578,7 +605,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             yearOptions={yearOptionsForForm}
             isEdit={!!editYear}
             validationErrors={validationErrors}
-            setValidationErrors={setValidationErrors} // <-- Add this line
+            setValidationErrors={setValidationErrors}
           />
         )}
       </main>
