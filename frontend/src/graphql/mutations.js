@@ -43,6 +43,17 @@ export const addToUserGroupMutation = (userName, userGroup) => `
     }
 `;
 
+export const adminCreateUserMutation = (first_name, last_name, email, role) => `
+    mutation AdminCreateUser {
+        adminCreateUser(
+            first_name: "${first_name}",
+            last_name: "${last_name}",
+            email: "${email}",
+            role: "${role}"
+        )
+    }
+`;
+
 export const removeFromUserGroupMutation = (userName, userGroup) => `
     mutation RemoveFromUserGroup {
         removeFromUserGroup(

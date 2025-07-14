@@ -94,6 +94,16 @@ export class ResolverStack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "adminCreateUser",
+      ["adminCreateUser"],
+      "Mutation",
+      { USER_POOL_ID: apiStack.getUserPoolId() },
+      resolverRole,
+      []
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "removeFromUserGroup",
       ["removeFromUserGroup"],
       "Mutation",

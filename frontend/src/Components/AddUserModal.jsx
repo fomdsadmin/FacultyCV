@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { signUp } from "aws-amplify/auth";
+import { adminCreateUser, addUser, updateUser, getUser } from "../graphql/graphqlHelpers.js";
 
 const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [role, setRole] = useState("Faculty");
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState("");
@@ -31,24 +30,12 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSignUp = async (event) => {
     event.preventDefault();
-    const confirmPassword = event.target.confirmPassword.value;
-
-    // Password specifications
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[^\s]{8,}$/;
 
     // Username specification
     const usernameRegex = /@[\w-]+\.ubc\.ca$/;
     const username2Regex = /@ubc\.ca$/;
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match!");
-      return;
-    } else if (!passwordRegex.test(password)) {
-      setError(
-        "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number."
-      );
-      return;
-    } else if (!usernameRegex.test(username) && !username2Regex.test(username)) {
+    if (!usernameRegex.test(username) && !username2Regex.test(username)) {
       setError("Email must end with @ubc.ca or @[department].ubc.ca");
       return;
     }
@@ -56,50 +43,94 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     setError("");
 
     try {
-        setLoading(true);
-        console.log("Signing up user:", {
-            username,
-            firstName,
-            lastName,
-            role,
-            password
-        });
-    //   const { isSignUpComplete, userId, nextStep } = await signUp({
-    //     username: username,
-    //     password: password,
-    //     attributes: {
-    //       email: username,
-    //     },
-    //   });
+      setLoading(true);
+      console.log("Creating user:", {
+        username,
+        firstName,
+        lastName,
+        role,
+      });
+
+      // Step 1: Create user in Cognito using admin APIs
+      const response = await adminCreateUser(firstName, lastName, username, role);
+      
+      // Parse the response (it returns a JSON string)
+      const result = JSON.parse(response);
+      
+      if (result.statusCode !== 200) {
+        throw new Error(result.error || "Failed to create user");
+      }
+      
+      console.log("User created in Cognito:", result);
+
+    //   // Step 2: Add user to database
+    //   await addUser(
+    //     firstName,
+    //     lastName,
+    //     "",
+    //     username,
+    //     role,
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     ""
+    //   );
+
+    //   // Step 3: Update user info in database
+    //   const user = await getUser(username);
+    //   await updateUser(
+    //     user.user_id,
+    //     firstName,
+    //     lastName,
+    //     "",
+    //     username,
+    //     role,
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     ""
+    //   );
+
       setLoading(false);
 
-    //   if (!isSignUpComplete) {
-    //     // User needs to confirm their email
-    //     onSuccess({
-    //       type: "confirmation_required",
-    //       username: username,
-    //       firstName: firstName,
-    //       lastName: lastName,
-    //       role: role,
-    //     });
-    //   } else {
-    //     // Sign up complete
-    //     onSuccess({
-    //       type: "signup_complete",
-    //       username: username,
-    //       firstName: firstName,
-    //       lastName: lastName,
-    //       role: role,
-    //     });
-    //   }
+      // Notify parent component of success
+      onSuccess({
+        type: "user_created",
+        username: username,
+        firstName: firstName,
+        lastName: lastName,
+        role: role,
+        temporaryPassword: result.temporaryPassword,
+      });
+
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error creating user:", error);
       if (error.name === "UsernameExistsException") {
         setError("An account with this email already exists.");
       } else if (error.name === "InvalidPasswordException") {
         setError("Password does not meet requirements.");
       } else {
-        setError("An error occurred during sign up. Please try again.");
+        setError("An error occurred during user creation. Please try again.");
       }
       setLoading(false);
     }
@@ -109,7 +140,6 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     setFirstName("");
     setLastName("");
     setUsername("");
-    setPassword("");
     setRole("Faculty");
     setIsDepartmentAdmin(false);
     setSelectedDepartment("");
@@ -175,29 +205,9 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                 type="email"
                 required
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                className="input input-bordered w-full text-sm"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                type="password"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-              <input
-                className="input input-bordered w-full text-sm"
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                type="password"
-                required
-              />
+              <p className="text-xs text-gray-500 mt-1">
+                A temporary password will be generated and provided after user creation.
+              </p>
             </div>
 
             <div>

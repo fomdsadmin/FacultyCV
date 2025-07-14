@@ -111,9 +111,18 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
 
   const handleAddUserSuccess = (result) => {
     setIsAddUserModalOpen(false);
-    // You can handle the result here - maybe show a success message
-    // or redirect to confirmation page
-    console.log('User creation result:', result);
+    console.log('User created successfully:', result);
+    
+    if (result.type === "user_created") {
+      // Show success message with temporary password
+      alert(`User ${result.firstName} ${result.lastName} has been created successfully!\n\nTemporary Password: ${result.temporaryPassword}\n\nPlease securely share this temporary password with the user. They will be required to change it on first login.`);
+    } else if (result.type === "signup_complete") {
+      // Show success message
+      alert(`User ${result.firstName} ${result.lastName} has been created successfully!`);
+    } else if (result.type === "confirmation_required") {
+      // Show confirmation message
+      alert(`User ${result.firstName} ${result.lastName} has been created.`);
+    }
     // Refresh the users list
     fetchAllUsers();
   };

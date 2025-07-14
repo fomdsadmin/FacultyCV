@@ -408,6 +408,16 @@ type Mutation {
 
   removeFromUserGroup(userName: String!, userGroup: String!): String
 
+  adminCreateUser(
+    first_name: String!
+    last_name: String!
+    email: String!
+    role: String!
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin"]
+    )
+
   generatePDF(first_name: String!): String
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
