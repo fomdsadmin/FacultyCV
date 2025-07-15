@@ -43,7 +43,7 @@ export const syncTemplateSections = (groups, upToDateSections) => {
                 modifiedDescriptionSet.add("Attribute types were changed");
             }
 
-            if (section.modifiedDescription) {
+            if (section.modified_description) {
                 section.modifiedDescription.forEach((description) => {
                     modifiedDescriptionSet.add(description);
                 }) 
