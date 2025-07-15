@@ -94,16 +94,6 @@ export class ResolverStack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
-      "adminCreateUser",
-      ["adminCreateUser"],
-      "Mutation",
-      { USER_POOL_ID: apiStack.getUserPoolId() },
-      resolverRole,
-      []
-    );
-
-    createResolver(
-      apiStack.getApi(),
       "removeFromUserGroup",
       ["removeFromUserGroup"],
       "Mutation",
@@ -176,6 +166,18 @@ export class ResolverStack extends cdk.Stack {
       apiStack.getApi(),
       "addUser",
       ["addUser"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "removeUser",
+      ["removeUser"],
       "Mutation",
       {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,

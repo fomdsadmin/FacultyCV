@@ -6,7 +6,43 @@ import Filters from "../Components/Filters.jsx";
 import ManageUser from "../Components/ManageUser.jsx";
 import UserCard from "../Components/UserCard.jsx";
 import AddUserModal from "../Components/AddUserModal.jsx";
-import { getAllUsers } from "../graphql/graphqlHelpers.js";
+import { getAllUsers, removeUser } from "../graphql/graphqlHelpers.js";
+
+// Custom Modal Component
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = "confirm" }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <h3 className="text-lg font-semibold mb-4 text-gray-800">{title}</h3>
+        <p className="text-gray-600 mb-6 whitespace-pre-line">{message}</p>
+        <div className="flex justify-end gap-3">
+          {type === "confirm" && (
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            onClick={type === "confirm" ? onConfirm : onClose}
+            className={`px-4 py-2 rounded-lg text-white transition-colors ${
+              type === "confirm" 
+                ? "bg-red-600 hover:bg-red-700" 
+                : type === "error"
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {type === "confirm" ? "Confirm" : "OK"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [loading, setLoading] = useState(true);
@@ -16,6 +52,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
 
   useEffect(() => {
     fetchAllUsers();
@@ -109,22 +146,68 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     setActiveUser(null);
   };
 
+  const showModal = (title, message, type = "confirm", onConfirm = null) => {
+    setModal({ isOpen: true, title, message, type, onConfirm });
+  };
+
+  const closeModal = () => {
+    setModal({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
+  };
+
   const handleAddUserSuccess = (result) => {
-    setIsAddUserModalOpen(false);
-    console.log('User created successfully:', result);
+    console.log('User created successfully');
     
-    if (result.type === "user_created") {
-      // Show success message with temporary password
-      alert(`User ${result.firstName} ${result.lastName} has been created successfully!\n\nTemporary Password: ${result.temporaryPassword}\n\nPlease securely share this temporary password with the user. They will be required to change it on first login.`);
-    } else if (result.type === "signup_complete") {
-      // Show success message
-      alert(`User ${result.firstName} ${result.lastName} has been created successfully!`);
-    } else if (result.type === "confirmation_required") {
-      // Show confirmation message
-      alert(`User ${result.firstName} ${result.lastName} has been created.`);
-    }
     // Refresh the users list
     fetchAllUsers();
+  };
+
+  const handleRemoveUser = async (userId) => {
+    const userToRemove = users.find(user => user.user_id === userId);
+    
+    if (!userToRemove) {
+      console.error('User not found');
+      return;
+    }
+
+    // Show confirmation dialog
+    showModal(
+      "Confirm User Removal",
+      `Are you sure you want to remove user "${userToRemove.first_name} ${userToRemove.last_name}" (${userToRemove.email})?\n\nThis action cannot be undone.`,
+      "confirm",
+      async () => {
+        try {
+          console.log('Removing user:', userToRemove);
+          
+          // Call the removeUser function
+          const result = await removeUser(
+            userToRemove.user_id,
+            userToRemove.email,
+            userToRemove.first_name,
+            userToRemove.last_name
+          );
+          
+          console.log('User removal result:', result);
+          
+          // Refresh the users list
+          fetchAllUsers();
+          
+          // Show success message
+          showModal(
+            "User Removed Successfully",
+            `User ${userToRemove.first_name} ${userToRemove.last_name} has been successfully removed.`,
+            "success"
+          );
+          
+        } catch (error) {
+          console.error('Error removing user:', error);
+          showModal(
+            "Error",
+            "Failed to remove user. Please try again.",
+            "error"
+          );
+        }
+      }
+    );
   };
 
   return (
@@ -184,6 +267,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                   searchedUsers.map((user) => (
                     <UserCard
                       onClick={handleManageClick}
+                      onRemove={handleRemoveUser}
                       key={user.user_id}
                       id={user.user_id}
                       firstName={user.first_name}
@@ -207,6 +291,15 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
         onSuccess={handleAddUserSuccess}
+      />
+      
+      <ConfirmModal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
       />
     </PageContainer>
   );

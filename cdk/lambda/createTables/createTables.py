@@ -78,6 +78,19 @@ def lambda_handler(event, context):
     query = createQuery('data_sections', columns)
     cursor.execute(query)
 
+    # Create Affiliations Table
+    columns = []
+    columns.append(createColumn('user_id', 'TEXT', 'NOT NULL', False))
+    columns.append(createColumn('first_name', 'TEXT', '', False))
+    columns.append(createColumn('last_name', 'TEXT', '', False))
+    columns.append(createColumn('hospital_affiliations', 'JSON', '', False))
+    columns.append(createColumn('institution', 'JSON', '', False))
+    columns.append(createColumn('academic_units', 'JSON', '', False))
+    columns.append(createColumn('research_affiliations', 'JSON', '', False))
+    columns.append(createColumn('faculty', 'JSON', '', True))
+    query = createQuery('affiliations', columns)
+    cursor.execute(query)
+
     # Create User CV Data Table
     columns = []
     columns.append(createColumn('user_cv_data_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))

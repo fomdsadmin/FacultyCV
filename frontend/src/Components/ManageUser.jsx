@@ -4,17 +4,24 @@ import ConnectionCard from "./ConnectionCard";
 import AssociatedUser from "./AssociatedUser";
 import ConnectionInviteModal from "./ConnectionInviteModal";
 import ChangeRoleModal from "./ChangeRoleModal";
-import { getUserConnections } from '../graphql/graphqlHelpers';
+import UpdateUserModal from "./UpdateUserModal";
+import { getUserConnections } from "../graphql/graphqlHelpers";
 import { IoMdAddCircleOutline } from "react-icons/io";
 import DepartmentAdminUserInsights from "../Views/DepartmentAdminUserInsights"; // Use the same insights component
 
 const ManageUser = ({ user, onBack, fetchAllUsers }) => {
+  const [currentUser, setCurrentUser] = useState(user);
   const [loading, setLoading] = useState(true);
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
   const [isChangeRoleModalOpen, setIsChangeRoleModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [isUpdateUserModalOpen, setIsUpdateUserModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [pendingConnections, setPendingConnections] = useState([]);
   const [confirmedConnections, setConfirmedConnections] = useState([]);
+
+  useEffect(() => {
+    setCurrentUser(user);
+  }, [user]);
 
   useEffect(() => {
     getAllUserConnections();
@@ -25,24 +32,25 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
     setLoading(true);
     try {
       let retrievedUserConnections;
-      if (user.role === 'Faculty') {
-        retrievedUserConnections = await getUserConnections(user.user_id);
+      if (currentUser.role === "Faculty") {
+        retrievedUserConnections = await getUserConnections(currentUser.user_id);
       } else {
-        retrievedUserConnections = await getUserConnections(user.user_id, false);
+        retrievedUserConnections = await getUserConnections(currentUser.user_id, false);
       }
 
-      const filteredUserConnections = retrievedUserConnections.filter(connection =>
-        connection.assistant_first_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-        connection.assistant_last_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-        connection.assistant_email.toLowerCase().startsWith(searchTerm.toLowerCase())
+      const filteredUserConnections = retrievedUserConnections.filter(
+        (connection) =>
+          connection.assistant_first_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+          connection.assistant_last_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+          connection.assistant_email.toLowerCase().startsWith(searchTerm.toLowerCase())
       );
 
-      setPendingConnections(filteredUserConnections.filter(connection => connection.status === 'pending'));
-      setConfirmedConnections(filteredUserConnections.filter(connection => connection.status === 'confirmed'));
+      setPendingConnections(filteredUserConnections.filter((connection) => connection.status === "pending"));
+      setConfirmedConnections(filteredUserConnections.filter((connection) => connection.status === "confirmed"));
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
-    setLoading(false)
+    setLoading(false);
   }
 
   const handleSearchChange = (event) => {
@@ -55,6 +63,19 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
 
   const handleChangeRole = () => {
     setIsChangeRoleModalOpen(true);
+  };
+
+  const handleUpdateUser = () => {
+    setIsUpdateUserModalOpen(true);
+  };
+
+  const handleUpdateSuccess = (updatedUser) => {
+    // Update the local user state immediately
+    setCurrentUser(updatedUser);
+    // Update the user data in the parent component
+    fetchAllUsers();
+    // Don't close the modal - let the user decide when to close it
+    // The modal will show the success message and updated fields
   };
 
   return (
@@ -71,19 +92,22 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
       <div className="bg-white rounded-lg shadow px-12 py-8 flex flex-col gap-1">
         <div className="flex items-center justify-between gap-1">
           <h3 className="text-xl font-semibold text-zinc-700">
-            {user.first_name} {user.last_name}
+            {currentUser.first_name} {currentUser.last_name}
           </h3>
           <div className="text-zinc-500 text-sm">
-            Joined: {user.joined_timestamp ? new Date(user.joined_timestamp).toLocaleDateString() : "N/A"}
+            Joined: {currentUser.joined_timestamp ? new Date(currentUser.joined_timestamp).toLocaleDateString() : "N/A"}
           </div>
         </div>
         <div className="flex items-center justify-between gap-1">
-          <h3 className="text-sm text-zinc-500 mb-2">{user.email}</h3>
-          <div className="text-zinc-500 text-sm mb-2">{user.role}</div>
+          <h3 className="text-sm text-zinc-500 mb-2">{currentUser.email}</h3>
+          <div className="text-zinc-500 text-sm mb-2">{currentUser.role}</div>
         </div>
-        <div className="text-zinc-500 text-sm mb-2">Primary Department: {user.primary_department}</div>
-        <div className="text-zinc-500 text-sm">Secondary Department: {user.secondary_department || "N/A"}</div>
-        <div className="flex flex-wrap justify-end">
+        <div className="text-zinc-500 text-sm mb-2">Primary Department: {currentUser.primary_department}</div>
+        <div className="text-zinc-500 text-sm">Secondary Department: {currentUser.secondary_department || "N/A"}</div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button onClick={handleUpdateUser} className="btn btn-primary h-9 px-5 text-white font-semibold">
+            Update User
+          </button>
           <button onClick={handleChangeRole} className="btn btn-info h-9 px-5 text-white font-semibold">
             Change Role
           </button>
@@ -134,7 +158,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
           </div>
         ) : (
           <div>
-            {(user.role === "Faculty" || user.role === "Assistant") && (
+            {(currentUser.role === "Faculty" || currentUser.role === "Assistant") && (
               <>
                 {pendingConnections.length === 0 && confirmedConnections.length === 0 ? (
                   <div className="text-center my-8 text-lg text-zinc-500">No connections found.</div>
@@ -143,11 +167,11 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
                     {pendingConnections.length > 0 && (
                       <section className="mb-6">
                         <h4 className="text-lg font-semibold text-zinc-700 mb-2">
-                          {user.role === "Faculty" ? "Invitations" : "Pending Connections"}
+                          {currentUser.role === "Faculty" ? "Invitations" : "Pending Connections"}
                         </h4>
                         <div className="flex flex-wrap gap-4">
                           {pendingConnections.map((connection) =>
-                            user.role === "Faculty" ? (
+                            currentUser.role === "Faculty" ? (
                               <AssociatedUser
                                 key={connection.user_connection_id}
                                 connection={connection}
@@ -169,7 +193,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
                         <h4 className="text-lg font-semibold text-zinc-700 mb-2">Active Connections</h4>
                         <div className="flex flex-wrap gap-4">
                           {confirmedConnections.map((connection) =>
-                            user.role === "Faculty" ? (
+                            currentUser.role === "Faculty" ? (
                               <AssociatedUser
                                 key={connection.user_connection_id}
                                 connection={connection}
@@ -195,7 +219,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
             {isConnectionModalOpen && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                 <ConnectionInviteModal
-                  userInfo={user}
+                  userInfo={currentUser}
                   getAllUserConnections={getAllUserConnections}
                   setIsModalOpen={setIsConnectionModalOpen}
                   admin={true}
@@ -205,12 +229,22 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
             {isChangeRoleModalOpen && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                 <ChangeRoleModal
-                  userInfo={user}
+                  userInfo={currentUser}
                   setIsModalOpen={setIsChangeRoleModalOpen}
                   fetchAllUsers={fetchAllUsers}
                   handleBack={handleBack}
                 />
               </div>
+            )}
+            {isUpdateUserModalOpen && (
+              <UpdateUserModal
+                isOpen={isUpdateUserModalOpen}
+                onClose={() => setIsUpdateUserModalOpen(false)}
+                onBack={() => setIsUpdateUserModalOpen(false)}
+                existingUser={currentUser}
+                setExistingUser={setCurrentUser}
+                onUpdateSuccess={handleUpdateSuccess}
+              />
             )}
           </div>
         )}
@@ -218,11 +252,12 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
 
       {/* User Insights Section */}
       <div className="bg-white rounded-lg shadow w-full">
-        {(user.role === "Faculty" || user.role.startsWith("Admin-"))
-          && <DepartmentAdminUserInsights user={user} department={user.primary_department} />}
+        {(currentUser.role === "Faculty" || currentUser.role.startsWith("Admin-")) && (
+          <DepartmentAdminUserInsights user={currentUser} department={currentUser.primary_department} />
+        )}
       </div>
     </div>
   );
-}
+};
 
 export default ManageUser;

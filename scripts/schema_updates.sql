@@ -16,17 +16,27 @@ CREATE TABLE audit_view (
     logged_user_first_name TEXT NOT NULL,
     logged_user_last_name TEXT NOT NULL,
     logged_user_role TEXT,
-    logged_user_email TEXT NOT NULL
-    logged_user_action TEXT 
+    logged_user_email TEXT NOT NULL,
+    logged_user_action TEXT,
     assistant BOOLEAN,
     profile_record TEXT,
 
     page TEXT,
     session_id TEXT,
     ip TEXT,
-    browser_version TEXT,
+    browser_version TEXT
 );
 
+CREATE TABLE affiliations (
+    user_id TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    hospital_affiliations JSON,
+    institution JSON,
+    academic_units JSON,
+    research_affiliations JSON,
+    faculty JSON
+);
 
 ALTER TABLE rise_data
 ADD COLUMN IF NOT EXISTS sponsor TEXT;
