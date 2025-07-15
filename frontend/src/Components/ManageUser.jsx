@@ -70,12 +70,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
   };
 
   const handleUpdateSuccess = (updatedUser) => {
-    // Update the local user state immediately
     setCurrentUser(updatedUser);
-    // Update the user data in the parent component
-    fetchAllUsers();
-    // Don't close the modal - let the user decide when to close it
-    // The modal will show the success message and updated fields
   };
 
   return (
@@ -99,11 +94,11 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
           </div>
         </div>
         <div className="flex items-center justify-between gap-1">
-          <h3 className="text-sm text-zinc-500 mb-2">{currentUser.email}</h3>
-          <div className="text-zinc-500 text-sm mb-2">{currentUser.role}</div>
+          <h3 className="text-sm text-zinc-500 mb-2"></h3>
+          <div className="text-zinc-500 text-sm mb-2"></div>
         </div>
-        <div className="text-zinc-500 text-sm mb-2">Primary Department: {currentUser.primary_department}</div>
-        <div className="text-zinc-500 text-sm">Secondary Department: {currentUser.secondary_department || "N/A"}</div>
+        <div className="text-zinc-500 text-sm mb-2">{currentUser.email}</div>
+        <div className="text-zinc-500 text-sm">Role: {currentUser.role}</div>
         <div className="flex flex-wrap justify-end gap-2">
           <button onClick={handleUpdateUser} className="btn btn-primary h-9 px-5 text-white font-semibold">
             Update User
@@ -242,7 +237,6 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
                 onClose={() => setIsUpdateUserModalOpen(false)}
                 onBack={() => setIsUpdateUserModalOpen(false)}
                 existingUser={currentUser}
-                setExistingUser={setCurrentUser}
                 onUpdateSuccess={handleUpdateSuccess}
               />
             )}
