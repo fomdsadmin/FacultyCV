@@ -44,7 +44,7 @@ export const syncTemplateSections = (groups, upToDateSections) => {
             }
 
             if (section.modified_description) {
-                section.modifiedDescription.forEach((description) => {
+                section.modified_description.forEach((description) => {
                     modifiedDescriptionSet.add(description);
                 }) 
             }
