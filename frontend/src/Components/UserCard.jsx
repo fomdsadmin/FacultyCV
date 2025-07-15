@@ -1,9 +1,13 @@
 import React from "react";
 
-const UserCard = ({ onClick, id, firstName, lastName, email, role }) => {
+const UserCard = ({ onClick, onRemove, id, firstName, lastName, email, role }) => {
 
     const handleClick = () => {
         onClick(id);
+    }
+
+    const handleRemove = () => {
+        onRemove(id);
     }
 
     return (                
@@ -18,6 +22,7 @@ const UserCard = ({ onClick, id, firstName, lastName, email, role }) => {
 
                 <div className="card-actions">
                     <button onClick={handleClick} className="text-white btn btn-primary min-h-0 h-8 leading-tight">Manage</button>
+                    <button onClick={handleRemove} className="text-white btn btn-error min-h-0 h-8 leading-tight ml-2">Remove</button>
                 </div>
 
             </div>

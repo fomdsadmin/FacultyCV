@@ -278,7 +278,7 @@ const AuthPage = ({ getCognitoUser }) => {
       }
     } catch (error) {
       try {
-        const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+        const result = await addUser(first_name, last_name, email, role, "", ""); // last 2: cwl, vpp
         const user = await getUser(email);
         const result3 = await updateUser(user.user_id, first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
         
