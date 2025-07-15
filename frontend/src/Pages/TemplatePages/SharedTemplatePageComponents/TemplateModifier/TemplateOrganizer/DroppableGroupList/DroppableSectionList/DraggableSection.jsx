@@ -1,5 +1,6 @@
+import React from "react";
 import { Draggable } from "react-beautiful-dnd"
-import { FaGripVertical } from "react-icons/fa"
+import { FaGripVertical, FaEdit } from "react-icons/fa"
 import DroppableAttributeGroupList from "./DroppableAttributeGroupList/DroppableAttributeGroupList"
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
@@ -11,8 +12,10 @@ import RowCountCheckbox from "./RowCountCheckbox"
 import IncludeRowNumberCheckbox from "./IncludeRowNumberCheckbox"
 import MergeVisibleAttributesCheckbox from "./MergeVisibleAttributesCheckbox"
 import SectionByAttributeButton from "./SectionByAttributeButton/SectionByAttributeButton"
+import ModifiedWarningModal from "./ModifiedWarningModal"
 
 const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, isInHiddenGroup }) => {
+    const [showModal, setShowModal] = React.useState(false);
 
     return <Draggable
         draggableId={draggableId}
@@ -20,11 +23,11 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
     >
         {(provided) => {
             const accordionTitle = (
-                <div className="flex justify-between items-start w-full"> {/* Changed from items-center to items-start */}
-                    <div className="flex items-center gap-2 flex-1 min-w-0"> {/* Added flex-1 min-w-0 */}
+                <div className="flex justify-between items-start w-full">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                         <div
                             {...provided.dragHandleProps}
-                            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded flex-shrink-0" // Added flex-shrink-0
+                            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded flex-shrink-0"
                         >
                             <FaGripVertical className="h-4 w-4 text-gray-500" />
                         </div>
@@ -39,11 +42,22 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                                         </span>
                                     </span>
                                 )}
+                                {preparedSection.modified && (
+                                    <button
+                                        className="ml-2 flex items-center gap-1 text-yellow-500 hover:text-yellow-700 focus:outline-none"
+                                        title="Show Changes"
+                                        onClick={e => { e.stopPropagation(); setShowModal(true); }}
+                                        style={{ background: 'none', border: 'none', padding: 0 }}
+                                    >
+                                        <FaEdit />
+                                        <span className="text-xs font-semibold">Modified</span>
+                                    </button>
+                                )}
                             </h3>
                             <p className="text-sm text-gray-600 break-words">{preparedSection.data_type}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 pl-4 flex-shrink-0"> {/* Changed pr-4 to pl-4 and added flex-shrink-0 */}
+                    <div className="flex items-center gap-2 pl-4 flex-shrink-0">
                         <AddAttributeGroupButton dataSectionId={preparedSection.data_section_id} />
                         <RemoveSectionButton preparedSection={preparedSection} />
                     </div>
@@ -69,6 +83,12 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                             />
                         </AccordionItem>
                     </Accordion>
+                    <ModifiedWarningModal
+                        open={showModal}
+                        onClose={() => setShowModal(false)}
+                        descriptions={preparedSection.modified_description || []}
+                        sectionId={preparedSection.data_section_id}
+                    />
                 </div>
             );
         }}

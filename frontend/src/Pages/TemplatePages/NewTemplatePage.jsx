@@ -22,6 +22,7 @@ const NewTemplatePage = ({ onBack }) => {
           id: HIDDEN_GROUP_ID,
           title: HIDDEN_GROUP_ID,
           prepared_sections: sections.map((section) => ({
+            attributes_type: section.attributes_type,
             data_section_id: section.data_section_id,
             data_type: section.data_type,
             title: section.title,

@@ -6,6 +6,7 @@ import TemplateModifier from "../SharedTemplatePageComponents/TemplateModifier/T
 import DeleteTemplateButton from "./DeleteTemplateButton/DeleteTemplateButton";
 import { HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext";
+import { syncTemplateSections } from "../SyncTemplateSections"
 
 const EditTemplatePage = ({ onBack }) => {
     const { activeTemplate } = useTemplatePageContext();
@@ -59,6 +60,7 @@ const EditTemplatePage = ({ onBack }) => {
                 hiddenGroup.prepared_sections.push({
                     data_section_id: section.data_section_id,
                     data_type: section.data_type,
+                    attributes_type: section.attributes_type,
                     title: section.title,
                     sort: {
                         numerically: false,
@@ -86,9 +88,11 @@ const EditTemplatePage = ({ onBack }) => {
                 });
             });
 
+            console.log(syncTemplateSections(templateGroups, fetchedSections));
+
             setTemplate({
                 sort_ascending: templateStructure.sort_ascending,
-                groups: templateGroups
+                groups: syncTemplateSections(templateGroups, fetchedSections)
             });
         } catch (error) {
             console.error('Error parsing template structure:', error);
