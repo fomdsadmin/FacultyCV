@@ -4,10 +4,13 @@ import DroppableSectionList from "./DroppableSectionList/DroppableSectionList";
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 import { useTemplateModifier } from "../../TemplateModifierContext";
+import React, { useState } from "react";
 
 const DraggableGroup = ({ group, groupIndex }) => {
 
     const { HIDDEN_GROUP_ID, groups, setGroups } = useTemplateModifier();
+    const [showRenameModal, setShowRenameModal] = useState(false);
+    const [newGroupTitle, setNewGroupTitle] = useState(group.title);
 
     const onRemoveGroup = () => {
         var updatedGroups = [...groups];
@@ -25,6 +28,14 @@ const DraggableGroup = ({ group, groupIndex }) => {
 
         setGroups(updatedGroups);
     }
+
+    const handleRenameGroup = () => {
+        const updatedGroups = groups.map(g =>
+            g.id === group.id ? { ...g, title: newGroupTitle } : g
+        );
+        setGroups(updatedGroups);
+        setShowRenameModal(false);
+    };
 
     const isHiddenGroup = group.id === HIDDEN_GROUP_ID
 
@@ -46,6 +57,15 @@ const DraggableGroup = ({ group, groupIndex }) => {
                                 </div>
                             )}
                             <h2 className="font-bold text-lg">{group.title}</h2>
+                            {!isHiddenGroup && (
+                                <button
+                                    className="ml-2 px-2 py-1 text-blue-500 hover:text-blue-700 border border-blue-300 rounded text-xs"
+                                    onClick={e => { e.stopPropagation(); setShowRenameModal(true); }}
+                                    title="Rename Group"
+                                >
+                                    Rename
+                                </button>
+                            )}
                         </div>
                         {group.id !== HIDDEN_GROUP_ID && (
                             <button 
@@ -72,6 +92,33 @@ const DraggableGroup = ({ group, groupIndex }) => {
                                 <DroppableSectionList group={group} isInHiddenGroup={isHiddenGroup} />
                             </AccordionItem>
                         </Accordion>
+                        {showRenameModal && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+                                <div className="bg-white p-6 rounded shadow-lg min-w-[300px]">
+                                    <h3 className="text-lg font-semibold mb-2">Rename Group</h3>
+                                    <input
+                                        type="text"
+                                        className="border rounded px-2 py-1 w-full mb-4"
+                                        value={newGroupTitle}
+                                        onChange={e => setNewGroupTitle(e.target.value)}
+                                    />
+                                    <div className="flex gap-2 justify-end">
+                                        <button
+                                            className="px-3 py-1 bg-blue-500 text-white rounded"
+                                            onClick={handleRenameGroup}
+                                        >
+                                            Save
+                                        </button>
+                                        <button
+                                            className="px-3 py-1 bg-gray-300 rounded"
+                                            onClick={() => setShowRenameModal(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             }}
