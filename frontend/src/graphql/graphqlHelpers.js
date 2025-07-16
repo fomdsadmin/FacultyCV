@@ -980,7 +980,6 @@ export const updateUserAffiliations = async (user_id, first_name, last_name, aff
  * @returns {Promise<string>} String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateUserPermissions = async (user_id, pending, approved) => {
-  const cognito_user_id = await getUserId();
   const results = await runGraphql(updateUserPermissionsMutation(user_id, pending, approved));
   return results["data"]["updateUserPermissions"];
 };
