@@ -1,9 +1,13 @@
 import React from "react";
 
-const TemplateCard = ({ onClick, id, title }) => {
+const TemplateCard = ({ onClick, onClone, id, title }) => {
 
     const handleClick = () => {
         onClick(id);
+    }
+
+    const handleClone = () => {
+        if (onClone) onClone(id);
     }
 
     return (                
@@ -14,8 +18,9 @@ const TemplateCard = ({ onClick, id, title }) => {
                     <h3 className="card-title">{title}</h3>
                 </div>
 
-                <div className="card-actions">
+                <div className="card-actions flex gap-2">
                     <button onClick={handleClick} className="text-white btn btn-primary min-h-0 h-8 leading-tight">Manage</button>
+                    <button onClick={handleClone} className="btn btn-secondary min-h-0 h-8 leading-tight">Clone</button>
                 </div>
 
             </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PageContainer from '../../../Views/PageContainer.jsx';
 import AdminMenu from '../../../Components/AdminMenu.jsx';
 import NewTemplatePage from '../NewTemplatePage.jsx';
@@ -7,10 +7,12 @@ import EditReportFormatting from '../../../Components/EditReportFormat.jsx';
 import EditTemplatePage from 'Pages/TemplatePages/EditTemplatePage/EditTemplatePage.jsx';
 import { TemplatePageProvider, useTemplatePageContext } from './TemplatePageContext.jsx';
 import { useApp } from 'Contexts/AppContext.jsx';
+import { addTemplate } from '../../../graphql/graphqlHelpers';
+import { toast } from 'react-toastify';
 
 const TemplatesPageContent = () => {
-  const { getCognitoUser, userInfo} = useApp();
-  const { templates, activeTemplate, handleManageClick, handleBack,loading } = useTemplatePageContext();
+  const { getCognitoUser, userInfo } = useApp();
+  const { templates, activeTemplate, handleManageClick, handleBack, loading, fetchTemplates } = useTemplatePageContext();
   
   // Local state only
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +44,32 @@ const TemplatesPageContent = () => {
   const handleBackFromEditReportFormatting = () => {
     setEditReportFormatting(false);
   }
+
+  const handleCloneTemplate = async (templateId) => {
+    const templateToClone = templates.find(t => t.template_id === templateId);
+    if (!templateToClone) return;
+    // Generate unique title
+    const baseTitle = `Copy of ${templateToClone.title}`;
+    let newTitle = baseTitle;
+    let copyNumber = 2;
+    const existingTitles = templates.map(t => t.title);
+    while (existingTitles.includes(newTitle)) {
+      newTitle = `Copy (${copyNumber}) of ${templateToClone.title}`;
+      copyNumber++;
+    }
+    try {
+      await addTemplate(
+        newTitle,
+        templateToClone.template_structure,
+        templateToClone.start_year,
+        templateToClone.end_year
+      );
+      toast.success('Template cloned!', { autoClose: 2000 });
+      fetchTemplates();
+    } catch (err) {
+      toast.error('Failed to clone template.', { autoClose: 2000 });
+    }
+  };
 
   return (
     <PageContainer>
@@ -95,7 +123,13 @@ const TemplatesPageContent = () => {
                   </label>
                 </div>
                 {searchedTemplates.map((template) => (
-                  <TemplateCard onClick={handleManageClick} key={template.template_id} id={template.template_id} title={template.title}></TemplateCard>
+                  <TemplateCard 
+                    onClick={handleManageClick} 
+                    onClone={handleCloneTemplate}
+                    key={template.template_id} 
+                    id={template.template_id} 
+                    title={template.title}
+                  />
                 ))}
               </div>
             ) : (
