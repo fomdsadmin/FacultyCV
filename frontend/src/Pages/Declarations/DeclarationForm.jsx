@@ -11,25 +11,33 @@ const DeclarationForm = ({
   setYear,
   coi,
   setCoi,
+  coiSubmissionDate,
+  setCoiSubmissionDate,
   fomMerit,
   setFomMerit,
   psa,
   setPsa,
+  psaSubmissionDate,
+  setPsaSubmissionDate,
   promotion,
   setPromotion,
-  meritJustification,
-  setMeritJustification,
-  psaJustification,
-  setPsaJustification,
+  promotionSubmissionDate,
+  setPromotionSubmissionDate,
+  promotionPathways,
+  setPromotionPathways,
+  promotionEffectiveDate,
+  setPromotionEffectiveDate,
   honorific,
   setHonorific,
+  supportAnticipated,
+  setSupportAnticipated,
   formRef,
   onCancel,
   onSave,
   yearOptions = [],
   isEdit = false,
   validationErrors = {},
-  setValidationErrors, // <-- Add this prop!
+  setValidationErrors,
 }) => {
   // Helper to clear error for a field
   const clearError = (field) => {
@@ -39,6 +47,30 @@ const DeclarationForm = ({
         delete updated[field];
         return updated;
       });
+    }
+  };
+
+  // Helper to validate submission dates
+  const validateSubmissionDate = (dateValue, fieldName) => {
+    if (!dateValue) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [fieldName]: "Please select a submission date.",
+      }));
+      return;
+    }
+
+    const submissionDate = new Date(dateValue);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+
+    if (submissionDate > today) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [fieldName]: "Submission date cannot be in the future.",
+      }));
+    } else {
+      clearError(fieldName);
     }
   };
 
@@ -70,11 +102,7 @@ const DeclarationForm = ({
                     ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                     : "border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
                 }
-                ${
-                  validationErrors.year
-                    ? "border-red-500 ring-2 ring-red-200"
-                    : ""
-                }
+                ${validationErrors.year ? "border-red-500 ring-2 ring-red-200" : ""}
               `}
               value={isEdit ? editYear : year}
               onChange={(e) => {
@@ -93,29 +121,20 @@ const DeclarationForm = ({
               readOnly={!!isEdit}
             >
               {yearOptions.map((opt) => (
-                <option
-                  key={opt.value}
-                  value={opt.value}
-                  disabled={opt.value === ""}
-                >
+                <option key={opt.value} value={opt.value} disabled={opt.value === ""}>
                   {opt.label}
                 </option>
               ))}
             </select>
           </div>
-          {validationErrors.year && (
-            <div className="text-red-500 text-sm mt-1">
-              {validationErrors.year}
-            </div>
-          )}
+          {validationErrors.year && <div className="text-red-500 text-sm mt-1">{validationErrors.year}</div>}
         </div>
 
         <div id="declaration-field-coi">
           <h2 className="text-lg font-semibold mb-3">
-            Conflict of Interest and Commitment Declaration{" "}
-            <span className="text-red-500">*</span>
+            Conflict of Interest and Commitment Declaration <span className="text-red-500">*</span>
           </h2>
-          <div className="bg-gray-50 p-4 rounded-lg shadow-sm border max-h-96 overflow-y-auto border-r-8 border-r-blue-500">
+          <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border max-h-96 overflow-y-auto border-r-8 border-r-blue-500">
             <p className="text-gray-500">
               In accordance with{" "}
               <a
@@ -127,9 +146,8 @@ const DeclarationForm = ({
               >
                 UBC Policy SC3
               </a>
-              , you must maintain up-to-date Conflict of Interest and Conflict
-              of Commitment declarations. For more information regarding
-              Conflict of Interest and Commitment, please refer to the
+              , you must maintain up-to-date Conflict of Interest and Conflict of Commitment declarations. For more
+              information regarding Conflict of Interest and Commitment, please refer to the
               <a
                 href={unicouncil_link}
                 target="_blank"
@@ -154,13 +172,10 @@ const DeclarationForm = ({
             </p>
             <br />
             <p className="text-gray-500">
-              Please indicate whether your Conflict of Interest and Conflict of
-              Commitment declarations are up to date.
+              Please indicate whether your Conflict of Interest and Conflict of Commitment declarations are up to date.
             </p>
             <select
-              className={`select select-bordered w-3/5 mt-5 ${
-                validationErrors.coi ? "border-red-500" : ""
-              }`}
+              className={`select select-bordered w-3/5 mt-5 ${validationErrors.coi ? "border-red-500" : ""}`}
               value={coi}
               onChange={(e) => {
                 setCoi(e.target.value);
@@ -170,160 +185,192 @@ const DeclarationForm = ({
             >
               <option value=""></option>
               <option value="YES">
-                Yes, my Conflict of Interest and Conflict of Commitment
-                declarations are up to date.
+                Yes, my Conflict of Interest and Conflict of Commitment declarations are up to date.
               </option>
               <option value="NO">
-                No, my Conflict of Interest and Conflict of Commitment
-                declarations are NOT up to date.
+                No, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.
               </option>
             </select>
-            {validationErrors.coi && (
-              <div className="text-red-500 text-sm mt-1">
-                {validationErrors.coi}
+            {validationErrors.coi && <div className="text-red-500 text-sm mt-1">{validationErrors.coi}</div>}
+
+            <div className="mt-4 flex items-center">
+              <label className="block text-base font-semibold">
+                <span className="text-gray-700 mr-4">
+                  Date of Submission <span className="text-red-500">*</span>
+                </span>
+              </label>
+              <div className="relative w-56 ">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <FaRegCalendarAlt />
+                </span>
+                <input
+                  type="date"
+                  className={`
+                    pl-10 pr-4 py-2 rounded-lg border transition-colors duration-150 w-full
+                    text-base bg-white shadow-sm
+                    border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200
+                    ${validationErrors.coiSubmissionDate ? "border-red-500 ring-2 ring-red-200" : ""}
+                  `}
+                  value={coiSubmissionDate}
+                  onChange={(e) => {
+                    setCoiSubmissionDate(e.target.value);
+                    validateSubmissionDate(e.target.value, "coiSubmissionDate");
+                  }}
+                  placeholder="Select submission date"
+                  required
+                />
               </div>
+            </div>
+            {validationErrors.coiSubmissionDate && (
+              <div className="text-red-500 text-sm mt-2">{validationErrors.coiSubmissionDate}</div>
             )}
           </div>
         </div>
 
         <div id="declaration-field-fomMerit">
           <h2 className="text-lg font-semibold mb-3">
-            FOM Merit <span className="text-red-500">*</span>
+            FOM Merit & PSA <span className="text-red-500">*</span>
           </h2>
-          <div className="bg-gray-50 p-4 rounded-lg shadow-sm border max-h-96 overflow-y-auto">
+          <div className="bg-gray-50 py-6 px-8  rounded-lg shadow-sm border">
             <p className="text-gray-500">
-              All eligible members shall be considered for a <b>merit award</b>{" "}
-              by their Department Head/School Director and a reasonable number
-              of colleagues.
-              <br />
-              <br />
+              All eligible members{" "}
               <i>
-                Note: If you request not to be awarded merit, you will still be
-                considered for a Faculty of Medicine Outstanding Academic
-                Performance (OAP) award.
-              </i>
+                shall be considered for a{" "}
+                <b>
+                  <u>merit award</u>{" "}
+                </b>
+              </i>{" "}
+              by their Department Head/School Director and a reasonable number of colleagues.
               <br />
               <br />
-              Please indicate your request below:
+              Please note that all faculty are <u>required</u> to submit an annual academic activity report by January
+              31 of each calendar year. The academic activities will be reviewed annually, including for those who opt
+              out of merit awards and/or Performance Salary Adjustment (PSA). Should you opt out of a merit award, you
+              may still be considered for the Faculty of Medicine Outstanding Academic Performance (OAP) award.
+              <br />
+              <br />
             </p>
-            <select
-              className={`select select-bordered w-3/5 mt-5 ${
-                validationErrors.fomMerit ? "border-red-500" : ""
-              }`}
-              value={fomMerit}
-              onChange={(e) => {
-                setFomMerit(e.target.value);
-                clearError("fomMerit");
-              }}
-              required
-            >
-              <option value=""></option>
-              <option value="YES">
-                I do wish to be awarded merit for my academic activities.
-              </option>
-              <option value="NO">
-                I do NOT wish to be awarded merit for my academic activities.
-              </option>
-            </select>
-            {validationErrors.fomMerit && (
-              <div className="text-red-500 text-sm mt-1">
-                {validationErrors.fomMerit}
+
+            <div className="space-y-4">
+              <div className="flex items-center">
+                {hasSelectedYear ? (
+                  <div className="mt-2">
+                    <b>
+                      <i>
+                        Please indicate below <u>ONLY</u> if you wish to opt out of merit considerations.
+                      </i>
+                    </b>
+                    <div className="flex items-start gap-3 mt-6 mb-6">
+                      <input
+                        id="fomMerit"
+                        type="checkbox"
+                        className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mt-1"
+                        checked={fomMerit === "NO"}
+                        onChange={(e) => {
+                          setFomMerit(e.target.checked ? "NO" : "YES");
+                          clearError("fomMerit");
+                        }}
+                      />
+                      <label htmlFor="fomMerit" className="text-gray-700 font-medium">
+                        <b>
+                          I do{" "}
+                          <i>
+                            <u>NOT</u>
+                          </i>{" "}
+                          wish to be awarded merit by the Dean for my academic activities performed during
+                          <br />
+                          January 1, {reportingYear} – December 31, {reportingYear}.
+                        </b>
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <b>Please select a year first.</b>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-lg font-semibold mb-3">Merit Justification</h2>
-          <div className="bg-gray-50 p-6 rounded-lg shadow-sm border overflow-y-auto">
-            <div className="bg-gray-100 p-6 rounded-lg shadow-sm border max-h-96 overflow-y-auto border-l-8 border-l-blue-500">
-              <p className="text-gray-500">
-                When requesting merit consideration, please provide a summary of
-                your relevant achievements in the following areas:
-                <br />
-                1. Teaching activities and impact,
-                <br />
-                2. Scholarly activities and accomplishments and
-                <br />
-                3. Service contributions to the department, faculty, and broader
-                community.
-                <br />
-                <br />
-                Your summary should highlight key contributions and achievements
-                that support your merit consideration.
-              </p>
             </div>
-            <textarea
-              className="mt-6 w-full rounded-lg border-4 border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 p-3 resize-y min-h-[120px] transition-all duration-150"
-              placeholder="Enter your merit justification here... (OPTIONAL)"
-              value={meritJustification}
-              onChange={(e) => setMeritJustification(e.target.value)}
-              rows={7}
-            />
-          </div>
-        </div>
 
-        <div id="declaration-field-psa">
-          <h2 className="text-lg font-semibold mb-3">
-            PSA Awards <span className="text-red-500">*</span>
-          </h2>
-          <div className="bg-gray-50 p-16 rounded-lg shadow-sm border overflow-y-auto">
-            <p className="text-gray-500">
-              Department Head/School Director reviews and makes recommendations
-              for <b>PSA awards</b> based on the following factors:
-              <br />
-              <br />
-              <ul className="list-disc list-inside">
+            <p className="text-gray-500 mt-6">
+              <b>
+                <u>PSA may be</u>
+              </b>{" "}
+              recommended by the Department Head/School Director based on the following factors:
+              <ul className="list-disc list-inside mt-2 ml-4 px-4 mb-2">
+                <li>Performance over a period of time which is worthy of recognition;</li>
                 <li>
-                  Performance over a period of time which is worthy of
-                  recognition;
-                </li>
-                <li>
-                  The relationship of a faculty member’s salary to that of other
-                  faculty taking into consideration total years of service at
-                  UBC; and
+                  The relationship of a faculty member’s salary to that of other faculty taking into consideration total
+                  years of service at UBC; and
                 </li>
                 <li>Market considerations.</li>
               </ul>
+              <i>
+                Note: Normally, PSA would not be awarded to members in their first three (3) years of employment as a
+                Faculty Member at UBC.
+              </i>
               <br />
               <br />
-              Please indicate your request below:
+              <b>
+                <i>
+                  Please indicate below <u>ONLY</u> if you wish to opt out of PSA considerations.
+                </i>
+              </b>
             </p>
-            <select
-              className={`select select-bordered w-3/5 mt-5 ${
-                validationErrors.psa ? "border-red-500" : ""
-              }`}
-              value={psa}
-              onChange={(e) => {
-                setPsa(e.target.value);
-                clearError("psa");
-              }}
-              required
-            >
-              <option value=""></option>
-              <option value="YES">I do wish to be considered for PSA.</option>
-              <option value="NO">
-                I do NOT wish to be considered for PSA.
-              </option>
-            </select>
-            {validationErrors.psa && (
-              <div className="text-red-500 text-sm mt-1">
-                {validationErrors.psa}
-              </div>
-            )}
-          </div>
-        </div>
 
-        <div>
-          <h2 className="text-lg font-semibold mb-3">PSA Justification:</h2>
-          <div className="bg-gray-50 p-10 rounded-lg shadow-sm border overflow-y-auto">
-            <textarea
-              className="mt-6 w-full rounded-lg border-4 border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 p-3 resize-y min-h-[100px] transition-all duration-150"
-              placeholder="Enter your PSA justification here... (OPTIONAL)"
-              value={psaJustification}
-              onChange={(e) => setPsaJustification(e.target.value)}
-              rows={5}
-            />
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center">
+                <input
+                  id="psa"
+                  type="checkbox"
+                  className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  checked={psa === "NO"}
+                  onChange={(e) => {
+                    setPsa(e.target.checked ? "NO" : "YES");
+                    clearError("psa");
+                  }}
+                />
+                <label htmlFor="psa" className="ml-3 text-gray-700 font-medium">
+                  <b>
+                    I do{" "}
+                    <i>
+                      <u>NOT</u>
+                    </i>{" "}
+                    wish to be considered for PSA.
+                  </b>
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center">
+              <label className="block text-base font-semibold">
+                <span className="text-gray-700 mr-4">
+                  Date of Submission <span className="text-red-500">*</span>
+                </span>
+              </label>
+              <div className="relative w-56 ">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <FaRegCalendarAlt />
+                </span>
+                <input
+                  type="date"
+                  className={`
+                    pl-10 pr-4 py-2 rounded-lg border transition-colors duration-150 w-full
+                    text-base bg-white shadow-sm
+                    border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200
+                    ${validationErrors.psaSubmissionDate ? "border-red-500 ring-2 ring-red-200" : ""}
+                  `}
+                  value={psaSubmissionDate}
+                  onChange={(e) => {
+                    setPsaSubmissionDate(e.target.value);
+                    validateSubmissionDate(e.target.value, "psaSubmissionDate");
+                  }}
+                  placeholder="Select submission date"
+                  required
+                />
+              </div>
+            </div>
+            {validationErrors.psaSubmissionDate && (
+              <div className="text-red-500 text-sm mt-2">{validationErrors.psaSubmissionDate}</div>
+            )}
           </div>
         </div>
 
@@ -331,23 +378,20 @@ const DeclarationForm = ({
           <h2 className="text-lg font-semibold mb-3">
             FOM Promotion Review <span className="text-red-500">*</span>
           </h2>
-          <div className="bg-gray-50 p-12 rounded-lg shadow-sm border max-h-96 overflow-y-auto">
+          <div className="bg-gray-50 py-6 px-8  rounded-lg shadow-sm border">
             <p className="text-gray-500">
               {hasSelectedYear ? (
                 <>
-                  Please indicate whether you wish to be considered for review
-                  for promotion during the upcoming academic year (July 1,{" "}
-                  {reportingYearNum} – June 30, {nextYearNum}) for an effective
-                  of July 1, {nextYearNum}.
+                  For those faculty in ranks other than Professor or Professor of Teaching, please indicate whether you
+                  wish to be considered for review for promotion during the upcoming academic year (July 1,{" "}
+                  {reportingYearNum} – June 30, {nextYearNum}) for an effective of July 1, {nextYearNum}.
                 </>
               ) : (
                 <>Please select a year first.</>
               )}
             </p>
             <select
-              className={`select select-bordered w-3/5 mt-5 ${
-                validationErrors.promotion ? "border-red-500" : ""
-              }`}
+              className={`select select-bordered w-3/5 mt-5 ${validationErrors.promotion ? "border-red-500" : ""}`}
               value={promotion}
               onChange={(e) => {
                 setPromotion(e.target.value);
@@ -357,55 +401,265 @@ const DeclarationForm = ({
               disabled={!hasSelectedYear}
             >
               <option value=""></option>
-              <option value="YES">
-                I do wish to be considered for promotion.
-              </option>
-              <option value="NO">
-                I do NOT wish to be considered for promotion.
-              </option>
+              <option value="YES">I do wish to be considered for promotion.</option>
+              <option value="NO">I do NOT wish to be considered for promotion.</option>
             </select>
             {validationErrors.promotion && (
-              <div className="text-red-500 text-sm mt-1">
-                {validationErrors.promotion}
-              </div>
+              <div className="text-red-500 text-sm mt-1">{validationErrors.promotion}</div>
             )}
+
+            {hasSelectedYear ? (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-gray-700 mb-3">
+                  <b>If applicable, please specify the anticipated effective date for your next promotion:</b>
+                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-gray-700 font-medium">Effective Date:</span>
+                  <span className="text-gray-600">July 1,</span>
+                  <select
+                    className="px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm min-w-[100px]"
+                    value={promotionEffectiveDate || nextYearNum || ""}
+                    onChange={(e) => setPromotionEffectiveDate(e.target.value)}
+                  >
+                    <option value={nextYearNum}>{nextYearNum}</option>
+                    {Array.from({ length: 10 }, (_, i) => {
+                      const year = nextYearNum + i + 1;
+                      return (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+                <p className="text-sm text-gray-600 italic mt-3">
+                  <b>Note:</b> The application deadline is one year prior to the effective date. By default, the
+                  promotion will be effective from July 1, {nextYearNum}.
+                </p>
+              </div>
+            ) : (
+              <></>
+            )}
+
+            {hasSelectedYear ? (
+              <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <p className="text-gray-700 font-semibold mb-3">
+                  <b>Anticipated pathway for Research Stream</b>
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center mb-2">
+                      <input
+                        id="traditional"
+                        type="checkbox"
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        checked={promotionPathways.includes("Traditional")}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          let pathwaysArray = promotionPathways
+                            ? promotionPathways.split(", ").filter((p) => p.trim())
+                            : [];
+
+                          if (isChecked) {
+                            // Add Traditional if not present
+                            if (!pathwaysArray.some((p) => p.includes("Traditional"))) {
+                              pathwaysArray.push("Traditional");
+                            }
+                          } else {
+                            // Remove Traditional and its sub-option
+                            pathwaysArray = pathwaysArray.filter((p) => !p.includes("Traditional"));
+                          }
+
+                          setPromotionPathways(pathwaysArray.join(", "));
+                        }}
+                      />
+                      <label htmlFor="traditional" className="ml-2 text-gray-700 font-medium">
+                        Traditional
+                      </label>
+                    </div>
+
+                    {/* Sub-option for Traditional */}
+                    <div className="ml-6">
+                      <div className="flex items-center">
+                        <input
+                          id="indigenous"
+                          type="checkbox"
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                          checked={promotionPathways.includes("Traditional - Indigenous scholarly activity")}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            let pathwaysArray = promotionPathways
+                              ? promotionPathways.split(", ").filter((p) => p.trim())
+                              : [];
+
+                            if (isChecked) {
+                              // Remove "Traditional" and add "Traditional - Indigenous scholarly activity"
+                              pathwaysArray = pathwaysArray.filter((p) => p !== "Traditional");
+                              if (!pathwaysArray.includes("Traditional - Indigenous scholarly activity")) {
+                                pathwaysArray.push("Traditional - Indigenous scholarly activity");
+                              }
+                            } else {
+                              // Replace sub-option with main option
+                              pathwaysArray = pathwaysArray.filter(
+                                (p) => p !== "Traditional - Indigenous scholarly activity"
+                              );
+                              if (!pathwaysArray.includes("Traditional")) {
+                                pathwaysArray.push("Traditional");
+                              }
+                            }
+
+                            setPromotionPathways(pathwaysArray.join(", "));
+                          }}
+                        />
+                        <label htmlFor="indigenous" className="ml-2 text-gray-700">
+                          Indigenous scholarly activity
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      id="blended"
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      checked={promotionPathways.includes(
+                        "Blended with scholarship of teaching or professional contributions"
+                      )}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        let pathwaysArray = promotionPathways
+                          ? promotionPathways.split(", ").filter((p) => p.trim())
+                          : [];
+
+                        if (isChecked) {
+                          // Add Blended option
+                          if (
+                            !pathwaysArray.includes(
+                              "Blended with scholarship of teaching or professional contributions"
+                            )
+                          ) {
+                            pathwaysArray.push("Blended with scholarship of teaching or professional contributions");
+                          }
+                        } else {
+                          // Remove Blended option
+                          pathwaysArray = pathwaysArray.filter(
+                            (p) => p !== "Blended with scholarship of teaching or professional contributions"
+                          );
+                        }
+
+                        setPromotionPathways(pathwaysArray.join(", "));
+                      }}
+                    />
+                    <label htmlFor="blended" className="ml-2 text-gray-700 font-medium">
+                      Blended with scholarship of teaching or professional contributions
+                    </label>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <></>
+            )}
+
+            {hasSelectedYear ? (
+              <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <p className="text-gray-700 font-semibold mb-3">
+                  <b>Support anticipated</b>
+                </p>
+                <textarea
+                  className="w-full rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 p-3 resize-y min-h-[100px] transition-all duration-150"
+                  placeholder="Please describe any support anticipated for your promotion application (optional)..."
+                  value={supportAnticipated}
+                  onChange={(e) => setSupportAnticipated(e.target.value)}
+                  rows={4}
+                />
+              </div>
+            ) : (
+              <></>
+            )}
+
             <p className="text-gray-500">
               <br />
               <b>
-                Please note that all faculty are required to submit an annual
-                activity report, regardless of whether they wish to be
-                considered for promotion.
+                Please note that all faculty are <u>required</u> to submit an annual activity report, regardless of
+                whether they wish to be considered for promotion.
               </b>
             </p>
+
+            <div className="mt-4 flex items-center">
+              <label className="block text-base font-semibold">
+                <span className="text-gray-700 mr-4">
+                  Date of Submission <span className="text-red-500">*</span>
+                </span>
+              </label>
+              <div className="relative w-56 ">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <FaRegCalendarAlt />
+                </span>
+                <input
+                  type="date"
+                  className={`
+                    pl-10 pr-4 py-2 rounded-lg border transition-colors duration-150 w-full
+                    text-base bg-white shadow-sm
+                    border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200
+                    ${validationErrors.promotionSubmissionDate ? "border-red-500 ring-2 ring-red-200" : ""}
+                  `}
+                  value={promotionSubmissionDate}
+                  onChange={(e) => {
+                    setPromotionSubmissionDate(e.target.value);
+                    validateSubmissionDate(e.target.value, "promotionSubmissionDate");
+                  }}
+                  placeholder="Select submission date"
+                  required
+                />
+              </div>
+            </div>
+            {validationErrors.promotionSubmissionDate && (
+              <div className="text-red-500 text-sm mt-2">{validationErrors.promotionSubmissionDate}</div>
+            )}
           </div>
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-3">
-            FOM Honorific Impact Report
-          </h2>
-          <div className="bg-gray-50 p-12 rounded-lg shadow-sm border overflow-y-auto">
+          <h2 className="text-lg font-semibold mb-3">FOM Honorific Impact Report</h2>
+          <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border overflow-y-auto">
             <p className="text-gray-500">
-              If you are the holder of a Faculty of Medicine Honorific (i.e.,
-              Chair, Professorship, Distinguished Scholar), please provide a
-              summary of the impact your activities have had on the advancement
-              of medical research, education and community service in the recent
-              calendar year.
+              If you are the holder of a Faculty of Medicine Honorific (i.e., Chair, Professorship, Distinguished
+              Scholar), please provide a summary of the impact your activities have had on the advancement of medical
+              research, education and community service in the recent calendar year.
               <br />
               <br />
+              Please complete the field below (approximately 100 words) explaining the impact your activities have made
+              to education and/or research and/or community service over the past year. Consider this your “elevator
+              pitch” – provide the most impactful highlight(s) of the work being conducted in the name of the honorific.
+              This information will be used by the Development Office in its report to the stakeholder(s), and may be
+              used more broadly to bring additional awareness to the Faculty’s accomplishments.
               <br />
-              Please complete the field below (approximately 100 words)
-              explaining the impact your activities have made to education
-              and/or research and/or community service over the past year.
-              Consider this your “elevator pitch” – provide the most impactful
-              highlight(s) of the work being conducted in the name of the
-              honorific. This information will be used by the Development Office
-              in its report to the stakeholder(s), and may be used more broadly
-              to bring additional awareness to the Faculty’s accomplishments.
+              <br />
+              Alternately, if a full report has recently been prepared, please email a copy of the report.
+              <br />
+              <br />
+              <b>
+                Please submit your impact report to your Department Head / School Director and{" "}
+                <a
+                  href="mailto:fomdae.assistant@ubc.ca"
+                  className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
+                  style={{ textDecorationThickness: "2px" }}
+                >
+                  fomdae.assistant@ubc.ca
+                </a>
+                .
+              </b>
+              <ul className="list-disc list-inside mt-2 ml-4 px-4 mb-2">
+                <li>Full or Summary Report is emailed; OR</li>
+                <li>Report is as follows:</li>
+              </ul>
+              <br />
+              <u>Short Paragraph (approximately 100 words)</u>
             </p>
             <textarea
               className="mt-6 w-full rounded-lg border-4 border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 p-3 resize-y min-h-[100px] transition-all duration-150"
-              placeholder="Enter your Honorific Impact Report here... (OPTIONAL)"
+              placeholder="Enter your Honorific Impact Report here..."
               value={honorific}
               onChange={(e) => setHonorific(e.target.value)}
               rows={7}
@@ -414,17 +668,11 @@ const DeclarationForm = ({
         </div>
 
         <div className="flex flex-col justify-end">
-          <button
-            type="button"
-            className="btn btn-primary px-6 py-2 rounded-lg shadow transition"
-            onClick={onSave}
-          >
+          <button type="button" className="btn btn-primary px-6 py-2 rounded-lg shadow transition" onClick={onSave}>
             {isEdit ? "Update Declaration" : "Save Declaration"}
           </button>
           {Object.keys(validationErrors).length > 0 && (
-            <div className="text-red-500 text-sm mt-2">
-              Please fill all required fields above before submitting.
-            </div>
+            <div className="text-red-500 text-sm mt-2">Please fill all required fields above before submitting.</div>
           )}
           <button
             className="btn btn-outline btn-error mt-6"

@@ -119,7 +119,9 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
         userInfo.keywords,
         userInfo.institution_user_id,
         userInfo.scopus_id,
-        userInfo.orcid_id
+        userInfo.orcid_id,
+        userInfo.cwl,
+        userInfo.vpp
       );
       
       fetchAllUsers();

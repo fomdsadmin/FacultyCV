@@ -416,26 +416,23 @@ type Mutation {
   addUser(
     first_name: String!
     last_name: String!
-    preferred_name: String
     email: String!
     role: String!
-    bio: String
-    rank: String
-    institution: String
-    primary_department: String
-    secondary_department: String
-    primary_faculty: String
-    secondary_faculty: String
-    primary_affiliation: String
-    secondary_affiliation: String
-    campus: String
-    keywords: String
-    institution_user_id: String
-    scopus_id: String
-    orcid_id: String
+    cwl: String
+    vpp: String
   ): String
     @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+      cognito_groups: ["Admin"]
+    )
+
+  removeUser(
+    user_id: String!
+    email: String!
+    first_name: String!
+    last_name: String!
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin"]
     )
 
   updateUser(

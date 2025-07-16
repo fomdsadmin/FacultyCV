@@ -29,10 +29,10 @@ import {
   getLatexConfigurationQuery,
   GET_BIO_RESPONSE_DATA,
   getAuditViewQuery,
-  getUserAffiliationsQuery
+  getUserAffiliationsQuery,
 } from "./queries";
 import {
-  addUserMutation,
+  ADD_USER,
   addUniversityInfoMutation,
   updateUserCVDataMutation,
   updateUserMutation,
@@ -47,6 +47,7 @@ import {
   deleteTemplateMutation,
   addToUserGroupMutation,
   removeFromUserGroupMutation,
+  REMOVE_USER,
   updateLatexConfigurationMutation,
   ADD_USER_DECLARATION,
   ADD_BATCHED_USER_CV_DATA,
@@ -264,9 +265,7 @@ export const getExistingUser = async (institution_user_id) => {
  * }
  */
 export const getUserCVData = async (user_id, data_section_ids) => {
-  const results = await runGraphql(
-    getUserCVDataQuery(user_id, data_section_ids)
-  );
+  const results = await runGraphql(getUserCVDataQuery(user_id, data_section_ids));
 
   // console.log(results["data"]["getUserCVData"]);
   return results["data"]["getUserCVData"];
@@ -320,9 +319,7 @@ export const GetNotifications = async () => {
 };
 
 export const getUserDeclarations = async (first_name, last_name) => {
-  const results = await runGraphql(
-    getUserDeclarationsQuery(first_name, last_name)
-  );
+  const results = await runGraphql(getUserDeclarationsQuery(first_name, last_name));
   return results["data"]["getUserDeclarations"];
 };
 
@@ -345,14 +342,8 @@ export const getUserDeclarations = async (first_name, last_name) => {
  *  }, ...
  * ]
  */
-export const getElsevierAuthorMatches = async (
-  first_name,
-  last_name,
-  institution_name
-) => {
-  const results = await runGraphql(
-    getElsevierAuthorMatchesQuery(first_name, last_name, institution_name)
-  );
+export const getElsevierAuthorMatches = async (first_name, last_name, institution_name) => {
+  const results = await runGraphql(getElsevierAuthorMatchesQuery(first_name, last_name, institution_name));
   return results["data"]["getElsevierAuthorMatches"];
 };
 
@@ -375,14 +366,8 @@ export const getElsevierAuthorMatches = async (
  *  }, ...
  * ]
  */
-export const getOrcidAuthorMatches = async (
-  first_name,
-  last_name,
-  institution_name
-) => {
-  const results = await runGraphql(
-    getOrcidAuthorMatchesQuery(first_name, last_name, institution_name)
-  );
+export const getOrcidAuthorMatches = async (first_name, last_name, institution_name) => {
+  const results = await runGraphql(getOrcidAuthorMatchesQuery(first_name, last_name, institution_name));
   return results["data"]["getOrcidAuthorMatches"];
 };
 
@@ -397,9 +382,7 @@ export const getTotalOrcidPublications = async (orcid_id) => {
 };
 
 export const getOrcidPublication = async (orcid_id, put_codes) => {
-  const results = await runGraphql(
-    getOrcidPublicationQuery(orcid_id, put_codes)
-  );
+  const results = await runGraphql(getOrcidPublicationQuery(orcid_id, put_codes));
   return results["data"]["getOrcidPublication"];
 };
 
@@ -461,9 +444,7 @@ export const getAllTemplates = async () => {
  * ]
  */
 export const getTeachingDataMatches = async (institution_user_id) => {
-  const results = await runGraphql(
-    getTeachingDataMatchesQuery(institution_user_id)
-  );
+  const results = await runGraphql(getTeachingDataMatchesQuery(institution_user_id));
   return results["data"]["getTeachingDataMatches"];
 };
 
@@ -491,14 +472,8 @@ export const getTeachingDataMatches = async (institution_user_id) => {
  *       total_pages
  *  }
  */
-export const getPublicationMatches = async (
-  scopus_id,
-  page_number,
-  results_per_page
-) => {
-  const results = await runGraphql(
-    getPublicationMatchesQuery(scopus_id, page_number, results_per_page)
-  );
+export const getPublicationMatches = async (scopus_id, page_number, results_per_page) => {
+  const results = await runGraphql(getPublicationMatchesQuery(scopus_id, page_number, results_per_page));
   return results["data"]["getPublicationMatches"];
 };
 
@@ -518,9 +493,7 @@ export const getPublicationMatches = async (
  * ]
  */
 export const getSecureFundingMatches = async (first_name, last_name) => {
-  const results = await runGraphql(
-    getSecureFundingMatchesQuery(first_name, last_name)
-  );
+  const results = await runGraphql(getSecureFundingMatchesQuery(first_name, last_name));
   return results["data"]["getSecureFundingMatches"];
 };
 
@@ -540,9 +513,7 @@ export const getSecureFundingMatches = async (first_name, last_name) => {
  * ]
  */
 export const getRiseDataMatches = async (first_name, last_name) => {
-  const results = await runGraphql(
-    getRiseDataMatchesQuery(first_name, last_name)
-  );
+  const results = await runGraphql(getRiseDataMatchesQuery(first_name, last_name));
   return results["data"]["getRiseDataMatches"];
 };
 
@@ -562,9 +533,7 @@ export const getRiseDataMatches = async (first_name, last_name) => {
  * ]
  */
 export const getPatentMatches = async (first_name, last_name) => {
-  const results = await runGraphql(
-    getPatentMatchesQuery(first_name, last_name)
-  );
+  const results = await runGraphql(getPatentMatchesQuery(first_name, last_name));
   return results["data"]["getPatentMatches"];
 };
 
@@ -603,9 +572,7 @@ export const getNumberOfGeneratedCVs = async (department) => {
  * Boolean: true or false
  */
 export const cvIsUpToDate = async (cognito_user_id, user_id, template_id) => {
-  const results = await runGraphql(
-    cvIsUpToDateQuery(cognito_user_id, user_id, template_id)
-  );
+  const results = await runGraphql(cvIsUpToDateQuery(cognito_user_id, user_id, template_id));
   return results["data"]["cvIsUpToDate"];
 };
 
@@ -644,14 +611,13 @@ export const addToUserGroup = async (userName, userGroup) => {
   return results["data"]["addToUserGroup"];
 };
 
+
 /**
  * Function to remove user from user group
  *
  */
 export const removeFromUserGroup = async (userName, userGroup) => {
-  const results = await runGraphql(
-    removeFromUserGroupMutation(userName, userGroup)
-  );
+  const results = await runGraphql(removeFromUserGroupMutation(userName, userGroup));
   return results["data"]["removeFromUserGroup"];
 };
 
@@ -665,12 +631,7 @@ export const removeFromUserGroup = async (userName, userGroup) => {
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUserCVData = async (
-  user_id,
-  data_section_id,
-  data_details,
-  editable = true
-) => {
+export const addUserCVData = async (user_id, data_section_id, data_details, editable = true) => {
   const cognito_user_id = await getUserId();
   // console.log("data_details ", data_details);
   const results = await executeGraphql(ADD_USER_CV_DATA, {
@@ -733,58 +694,42 @@ export const addSection = async (title, description, data_type, attributes) => {
 export const addUser = async (
   first_name,
   last_name,
-  preferred_name,
   email,
   role,
-  bio,
-  rank,
-  institution,
-  primary_department,
-  secondary_department,
-  primary_faculty,
-  secondary_faculty,
-  primary_affiliation,
-  secondary_affiliation,
-  campus,
-  keywords,
-  institution_user_id,
-  scopus_id,
-  orcid_id
+  cwl,
+  vpp
 ) => {
-  const results = await runGraphql(
-    addUserMutation(
-      first_name,
-      last_name,
-      preferred_name,
-      email,
-      role,
-      bio,
-      rank,
-      institution,
-      primary_department,
-      secondary_department,
-      primary_faculty,
-      secondary_faculty,
-      primary_affiliation,
-      secondary_affiliation,
-      campus,
-      keywords,
-      institution_user_id,
-      scopus_id,
-      orcid_id
-    )
-  );
+  const results = await executeGraphql(ADD_USER, {
+    first_name,
+    last_name,
+    email,
+    role,
+    cwl,
+    vpp
+  });
   return results["data"]["addUser"];
 };
 
 /**
- * Function to add university info to university_info table
- * Arguments:
- * type
- * value
+ * Remove a user from the database
+ * Parameters:
+ *      user_id: String - the user ID
+ *      email: String - the user's email
+ *      first_name: String - the user's first name
+ *      last_name: String - the user's last name
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
+export const removeUser = async (user_id, email, first_name, last_name) => {
+  const results = await executeGraphql(REMOVE_USER, {
+    user_id,
+    email,
+    first_name,
+    last_name,
+  });
+  return results["data"]["removeUser"];
+};
+
 export const addUniversityInfo = async (type, value) => {
   const results = await runGraphql(addUniversityInfoMutation(type, value));
   return results["data"]["addUniversityInfo"];
@@ -842,12 +787,7 @@ export const addUserConnection = async (
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addTemplate = async (
-  title,
-  template_structure,
-  start_year,
-  end_year
-) => {
+export const addTemplate = async (title, template_structure, start_year, end_year) => {
   const results = await executeGraphql(ADD_TEMPLATE, {
     title,
     template_structure,
@@ -868,9 +808,7 @@ export const addTemplate = async (
  * String saying "Scopus ID linked successfully" if call succeeded, anything else means call failed
  */
 export const linkScopusId = async (user_id, scopus_id, orcid_id) => {
-  const results = await runGraphql(
-    linkScopusIdMutation(user_id, scopus_id, orcid_id)
-  );
+  const results = await runGraphql(linkScopusIdMutation(user_id, scopus_id, orcid_id));
   return results["data"]["linkScopusId"];
 };
 
@@ -898,14 +836,8 @@ export const linkOrcid = async (user_id, orcid_id) => {
 export const linkTeachingData = async (user_id, data_details) => {
   // First get the data_section_id for the teaching data
   const results = await getAllSections();
-  const data_section_id = results.find(
-    (section) => section.title === "Courses Taught"
-  ).data_section_id;
-  const status = await addUserCVData(
-    user_id,
-    data_section_id,
-    JSON.stringify(data_details)
-  );
+  const data_section_id = results.find((section) => section.title === "Courses Taught").data_section_id;
+  const status = await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
   if (status === "SUCCESS") {
     return "Teaching data linked successfully";
   } else {
@@ -924,14 +856,8 @@ export const linkTeachingData = async (user_id, data_details) => {
 export const linkPublication = async (user_id, data_details) => {
   // First get the data_section_id for the teaching data
   const results = await getAllSections();
-  const data_section_id = results.find(
-    (section) => section.title === "Publications"
-  ).data_section_id;
-  const status = await addUserCVData(
-    user_id,
-    data_section_id,
-    JSON.stringify(data_details)
-  );
+  const data_section_id = results.find((section) => section.title === "Publications").data_section_id;
+  const status = await addUserCVData(user_id, data_section_id, JSON.stringify(data_details));
   if (status === "SUCCESS") {
     return "Publication linked successfully";
   } else {
@@ -1043,13 +969,7 @@ export const updateUser = async (
   return results["data"]["updateUser"];
 };
 
-
-export const updateUserAffiliations = async (
-  user_id,
-  first_name,
-  last_name,
-  affiliations
-) => {
+export const updateUserAffiliations = async (user_id, first_name, last_name, affiliations) => {
   const results = await executeGraphql(UPDATE_USER_AFFILIATIONS, {
     user_id: user_id,
     first_name: first_name,
@@ -1068,12 +988,7 @@ export const updateUserAffiliations = async (
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateSection = async (
-  data_section_id,
-  archive,
-  attributes,
-  attributes_type
-) => {
+export const updateSection = async (data_section_id, archive, attributes, attributes_type) => {
   const results = await executeGraphql(UPDATE_SECTION, {
     data_section_id,
     archive,
@@ -1083,13 +998,7 @@ export const updateSection = async (
   return results["data"]["updateSection"];
 };
 
-export const editSectionDetails = async (
-  data_section_id,
-  title,
-  data_type,
-  description,
-  info
-) => {
+export const editSectionDetails = async (data_section_id, title, data_type, description, info) => {
   const results = await executeGraphql(EDIT_SECTION_DETAILS, {
     data_section_id,
     title,
@@ -1128,9 +1037,7 @@ export const updateUserCVData = async (user_cv_data_id, data_details) => {
  */
 export const updateUserCVDataArchive = async (user_cv_data_id, archive) => {
   const cognito_user_id = await getUserId();
-  const results = await runGraphql(
-    updateUserCVDataArchiveMutation(user_cv_data_id, archive, cognito_user_id)
-  );
+  const results = await runGraphql(updateUserCVDataArchiveMutation(user_cv_data_id, archive, cognito_user_id));
   return results["data"]["updateUserCVDataArchive"];
 };
 
@@ -1144,9 +1051,7 @@ export const updateUserCVDataArchive = async (user_cv_data_id, archive) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateUniversityInfo = async (university_info_id, type, value) => {
-  const results = await runGraphql(
-    updateUniversityInfoMutation(university_info_id, type, value)
-  );
+  const results = await runGraphql(updateUniversityInfoMutation(university_info_id, type, value));
   return results["data"]["updateUniversityInfo"];
 };
 
@@ -1159,9 +1064,7 @@ export const updateUniversityInfo = async (university_info_id, type, value) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateUserConnection = async (user_connection_id, status) => {
-  const results = await runGraphql(
-    updateUserConnectionMutation(user_connection_id, status)
-  );
+  const results = await runGraphql(updateUserConnectionMutation(user_connection_id, status));
   return results["data"]["updateUserConnection"];
 };
 
@@ -1176,22 +1079,14 @@ export const updateUserConnection = async (user_connection_id, status) => {
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateTemplate = async (
-  template_id,
-  title,
-  template_structure,
-  start_year,
-  end_year
-) => {
-  const results = await executeGraphql(
-    UPDATE_TEMPLATE, {
-      template_id,
-      title,
-      template_structure,
-      start_year,
-      end_year
-    }
-  );
+export const updateTemplate = async (template_id, title, template_structure, start_year, end_year) => {
+  const results = await executeGraphql(UPDATE_TEMPLATE, {
+    template_id,
+    title,
+    template_structure,
+    start_year,
+    end_year,
+  });
   return results["data"]["updateTemplate"];
 };
 
@@ -1205,9 +1100,7 @@ export const updateTemplate = async (
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const updateLatexConfiguration = async (vspace, margin, font) => {
-  const results = await runGraphql(
-    updateLatexConfigurationMutation(vspace, margin, font)
-  );
+  const results = await runGraphql(updateLatexConfigurationMutation(vspace, margin, font));
   return results["data"]["updateTemplate"];
 };
 
@@ -1221,9 +1114,7 @@ export const updateLatexConfiguration = async (vspace, margin, font) => {
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
 export const deleteUserConnection = async (user_connection_id) => {
-  const results = await runGraphql(
-    deleteUserConnectionMutation(user_connection_id)
-  );
+  const results = await runGraphql(deleteUserConnectionMutation(user_connection_id));
   return results["data"]["deleteUserConnection"];
 };
 
@@ -1286,11 +1177,7 @@ export const updateUserDeclaration = async (input) => {
   return results["data"]["updateUserDeclaration"];
 };
 
-export const deleteUserDeclaration = async (
-  first_name,
-  last_name,
-  reporting_year
-) => {
+export const deleteUserDeclaration = async (first_name, last_name, reporting_year) => {
   const results = await executeGraphql(DELETE_USER_DECLARATION, {
     first_name: first_name,
     last_name: last_name,
@@ -1304,6 +1191,4 @@ export const getBioResponseData = async (username_input) => {
     username_input: username_input,
   });
   return results["data"]["getBioResponseData"];
-}
-
-
+};

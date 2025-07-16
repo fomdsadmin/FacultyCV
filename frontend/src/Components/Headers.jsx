@@ -17,7 +17,7 @@ const Header = ({ userInfo, getCognitoUser }) => {
 
   const userEmail = userInfo?.email || "Error";
   const userRole = userInfo?.role || "Error";
-  const firstName = userInfo?.preferred_name || userInfo?.first_name || "User";
+  const firstName = userInfo?.first_name || "User";
 
   // Determine if user has multiple roles and which roles to show
   const isAdmin = userRole === "Admin";

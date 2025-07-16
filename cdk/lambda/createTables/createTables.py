@@ -78,6 +78,19 @@ def lambda_handler(event, context):
     query = createQuery('data_sections', columns)
     cursor.execute(query)
 
+    # Create Affiliations Table
+    columns = []
+    columns.append(createColumn('user_id', 'TEXT', 'NOT NULL', False))
+    columns.append(createColumn('first_name', 'TEXT', '', False))
+    columns.append(createColumn('last_name', 'TEXT', '', False))
+    columns.append(createColumn('hospital_affiliations', 'JSON', '', False))
+    columns.append(createColumn('institution', 'JSON', '', False))
+    columns.append(createColumn('academic_units', 'JSON', '', False))
+    columns.append(createColumn('research_affiliations', 'JSON', '', False))
+    columns.append(createColumn('faculty', 'JSON', '', True))
+    query = createQuery('affiliations', columns)
+    cursor.execute(query)
+
     # Create User CV Data Table
     columns = []
     columns.append(createColumn('user_cv_data_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
@@ -202,7 +215,7 @@ def lambda_handler(event, context):
     columns = []
     columns.append(createColumn('log_view_id', 'serial', 'PRIMARY KEY', False))
     columns.append(createColumn('ts', 'timestamp', '', False))
-    columns.append(createColumn('logged_user_email', 'text', 'NOT NULL', True))
+    columns.append(createColumn('logged_user_email', 'text', 'NOT NULL', False))
     columns.append(createColumn('logged_user_id', 'integer', 'NOT NULL', False))
     columns.append(createColumn('logged_user_first_name', 'text', 'NOT NULL', False))
     columns.append(createColumn('logged_user_last_name', 'text', 'NOT NULL', False))
@@ -213,7 +226,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('page', 'text', '', False))
     columns.append(createColumn('session_id', 'text', '', False))
     columns.append(createColumn('assistant', 'boolean', '', False))
-    columns.append(createColumn('profile_record', 'text', '', False))
+    columns.append(createColumn('profile_record', 'text', '', True))
     query = createQuery('audit_view', columns)
     cursor.execute(query)
     

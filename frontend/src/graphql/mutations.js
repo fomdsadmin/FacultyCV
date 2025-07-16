@@ -63,48 +63,26 @@ export const ADD_SECTION = `
     }
 `;
 
-export const addUserMutation = (
-    first_name,
-    last_name,
-    preferred_name,
-    email,
-    role,
-    bio,
-    rank,
-    institution,
-    primary_department,
-    secondary_department,
-    primary_faculty,
-    secondary_faculty,
-    primary_affiliation,
-    secondary_affiliation,
-    campus,
-    keywords,
-    institution_user_id,
-    scopus_id,
-    orcid_id
-) => `
-    mutation AddUser {
+export const ADD_USER = `
+    mutation AddUser($first_name: String!, $last_name: String!, $email: String!, $role: String!, $cwl: String!, $vpp: String!) {
         addUser(
-            first_name: "${first_name}"
-            last_name: "${last_name}"
-            preferred_name: "${preferred_name}"
-            email: "${email}"
-            role: "${role}"
-            bio: "${bio}"
-            rank: "${rank}"
-            institution: "${institution}"
-            primary_department: "${primary_department}"
-            secondary_department: "${secondary_department}"
-            primary_faculty: "${primary_faculty}"
-            secondary_faculty: "${secondary_faculty}"
-            primary_affiliation: "${primary_affiliation}"
-            secondary_affiliation: "${secondary_affiliation}"
-            campus: "${campus}"
-            keywords: "${keywords}"
-            institution_user_id: "${institution_user_id}"
-            scopus_id: "${scopus_id}"
-            orcid_id: "${orcid_id}"
+            first_name: $first_name,
+            last_name: $last_name,
+            email: $email,
+            role: $role,
+            cwl: $cwl,
+            vpp: $vpp
+        )
+    }
+`;
+
+export const REMOVE_USER = `
+    mutation RemoveUser($user_id: String!, $email: String!, $first_name: String!, $last_name: String!) {
+        removeUser(
+            user_id: $user_id,
+            email: $email,
+            first_name: $first_name,
+            last_name: $last_name
         )
     }
 `;
