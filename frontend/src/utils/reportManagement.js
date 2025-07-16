@@ -6,6 +6,7 @@ export const uploadLatexToS3 = async (latex, key) => {
     const jwt = await getJWT()
     const url = await getPresignedUrl(jwt, key, 'PUT');
     // Upload file to S3
+    console.log(url);
     const response = await fetch(url, {
       method: 'PUT',
       body: latex,
@@ -16,6 +17,8 @@ export const uploadLatexToS3 = async (latex, key) => {
     if (!response.ok)
       throw new Error(`Failed to upload: ${response.statusText}`);
     else
+
+    console.log(response)
       
     return;
 } 
@@ -24,11 +27,12 @@ export const uploadLatexToS3 = async (latex, key) => {
 export const getDownloadUrl = async (key, tryNumber) => {
   const jwt = await getJWT()
   const url = await getPresignedUrl(jwt, key, 'GET');
+  console.log("presigned url: ", url);
   if (url === "WAIT") {
     // Wait for 1 second
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    if (tryNumber > 120) throw new Error("Timeout waiting for PDF to be available");
+    if (tryNumber > 1200) throw new Error("Timeout waiting for PDF to be available");
     return await getDownloadUrl(key, tryNumber+1);
   }
   return url;

@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import PageContainer from "./PageContainer";
 import FacultyMenu from "../Components/FacultyMenu";
 import { rankFields } from '../utils/rankingUtils';
-import GenericEntry from "../Components/GenericEntry";
+import GenericEntry from "../SharedComponents/GenericEntry";
 import { getArchivedUserCVData, getAllSections, updateUserCVDataArchive } from "../graphql/graphqlHelpers";
 
-const Archive = ({ userInfo, getCognitoUser }) => {
+const Archive = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredEntries, setFilteredEntries] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -116,8 +116,9 @@ const Archive = ({ userInfo, getCognitoUser }) => {
 
     return (
       <PageContainer>
-        <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser} />
-        <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
+        <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser}
+          toggleViewMode={toggleViewMode} userInfo={userInfo} />
+        <main className='px-12 mt-4 overflow-auto custom-scrollbar w-full mb-4'>
           <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
           {loading ? (
             <div className='flex items-center justify-center w-full'>

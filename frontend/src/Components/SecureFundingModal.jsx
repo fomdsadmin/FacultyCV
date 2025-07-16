@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import "../CustomStyles/scrollbar.css";
 import "../CustomStyles/modal.css";
 import SecureFundingEntry from "./SecureFundingEntry";
+import { fetchAuthSession } from "aws-amplify/auth";
 import {
   getSecureFundingMatches,
   getRiseDataMatches,
   addUserCVData,
-  addBatchedUserCVData,
+  getAllSections,
 } from "../graphql/graphqlHelpers";
 
 const SecureFundingModal = ({
@@ -23,6 +24,7 @@ const SecureFundingModal = ({
   const [fetchingData, setFetchingData] = useState(true);
   const [initialRender, setInitialRender] = useState(true);
   const [addingData, setAddingData] = useState(false);
+  const [addedSuccessfully, setAddedSuccessfully] = useState(false);
 
   async function fetchSecureFundingData() {
     setFetchingData(true);
@@ -32,7 +34,10 @@ const SecureFundingModal = ({
         user.first_name,
         user.last_name
       );
-      console.log("Retrieved secure funding data:", retrievedData);
+      console.log(
+        "Retrieved secure funding data, Total: ",
+        retrievedData.length
+      );
       const allDataDetails = [];
       const uniqueDataDetails = new Set();
 
@@ -75,7 +80,7 @@ const SecureFundingModal = ({
         }
       }
 
-      console.log("Retrieved RISE data:", allDataDetails);
+      console.log("Retrieved RISE data, Total: ", allDataDetails.length);
       setAllSecureFundingData(allDataDetails);
       setSelectedSecureFundingData(allDataDetails);
     } catch (error) {
@@ -97,25 +102,79 @@ const SecureFundingModal = ({
   async function addSecureFundingData() {
     setAddingData(true);
 
-    // Split into batches
-    for (const data of selectedSecureFundingData) {
-      try {
-        data.year = data.dates.split("-")[0];
-        delete data.dates;
-        const graphqlReadyJSON = JSON.stringify(data);
-        await addUserCVData(
-          user.user_id,
-          section.data_section_id,
-          graphqlReadyJSON,
-          false
-        );
-      } catch (error) {
-        console.error("Error adding new entry:", error);
+    // make a single batch
+    const newBatchedData = [];
+    let fname, lname;
+    const tempData = [...selectedSecureFundingData];
+    for (const data of tempData) {
+      data.year = data.dates.split("-")[0];
+      delete data.dates;
+      data.type = "Grant"
+      fname = data.first_name || "";
+      lname = data.last_name || "";
+      if (fname) {
+        data.principal_investigator = fname
       }
+      if (lname) {
+        data.principal_investigator += ` ${lname}`;
+      }
+      delete data.first_name;
+      delete data.last_name;
+      newBatchedData.push(data);
     }
-    setRetrievingData(false);
+
+    try {
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken?.toString();
+      if (!idToken) throw new Error("Auth Error: No ID token found.");
+
+      let dataSections = [];
+      dataSections = await getAllSections();
+      const secureFundingSectionId = dataSections.find(
+        (section) => section.title.includes("Research or Equivalent Grants")
+      )?.data_section_id;
+
+      const payload = {
+        arguments: {
+          data_details_list: newBatchedData,
+          user_id: user.user_id,
+          data_section_id: secureFundingSectionId,
+          editable: "false",
+        },
+      };
+      const baseUrl = window.location.hostname.startsWith("dev.")
+        ? "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev"
+        : "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev";
+
+      const response = await fetch(`${baseUrl}/addBatchedData`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      else {
+        console.log(
+          "Added ",
+          payload.arguments.data_details_list.length,
+          "Grants Successfully | 200 OK"
+        );
+        setAddedSuccessfully(true);
+      }
+    } catch (error) {
+      console.error("Error adding new entry:", error);
+    }
+
     setAddingData(false);
-    fetchData();
+
+    // Don't immediately close - allow the success message to display
+    setTimeout(() => {
+      setRetrievingData(false);
+      fetchData();
+    }, 2500);
   }
 
   // Dynamically set modal height based on number of entries
@@ -131,7 +190,8 @@ const SecureFundingModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <dialog
-        className={`modal ${modalHeightClass} max-h-4/5 relative bg-white rounded-xl shadow-xl max-w-4xl w-full p-0 overflow-y-auto`}
+        className={`modal ${modalHeightClass} max-h-4/5 relative bg-white 
+        rounded-xl shadow-xl max-w-4xl mx-4 w-full p-0 overflow-y-auto`}
         open
         style={{ margin: 0, padding: 0 }}
       >
@@ -182,8 +242,16 @@ const SecureFundingModal = ({
           </div>
         ) : fetchingData ? (
           <div className="flex items-center justify-center w-full mt-5 mb-5">
-            <div className="text-m text-zinc-600">
-              Fetching secure funding data...
+            <div className="text-m text-zinc-600">Fetching grants data...</div>
+          </div>
+        ) : addedSuccessfully ? (
+          <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
+            <div className="block text-lg font-bold mb-2 mt-6 text-green-600">
+              Grants Added Successfully!
+            </div>
+            <div className="text-sm text-gray-600 mt-1">
+              {selectedSecureFundingData.length} grants have been added to your
+              profile
             </div>
           </div>
         ) : (
@@ -217,8 +285,8 @@ const SecureFundingModal = ({
                           disabled={addingData}
                         >
                           {addingData
-                            ? "Adding secure funding data..."
-                            : "Add Secure Funding Data"}
+                            ? "Adding grants data..."
+                            : "Add Grant Data"}
                         </button>
                       )}
                     </div>

@@ -23,25 +23,25 @@ def addUserCVData(arguments):
         # Insert the new entry
         cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable) VALUES (%s, %s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], data_details_json, arguments['editable'],))
         data_section_id = arguments['data_section_id']
-        cursor.execute('SELECT template_id, data_section_ids FROM templates')
-        templates = cursor.fetchall()
-        # Get all template ids which have the data_section_id
-        filtered_template_ids = []
-        for template in templates:
-            if data_section_id in template[1]:
-                filtered_template_ids.append(template[0])
-        for template_id in filtered_template_ids:
-            # Update the key cognito_user_id/user_id/template_id to the current timestamp
-            # The above key works for assistants and faculty
-            user_logs = {
-                'logEntryId': {'S': f"{arguments['cognito_user_id']}/{arguments['user_id']}/{template_id}"},
-                'timestamp': {'N': f"{int(time.time())}"}
-            }
-            dynamodb.put_item(
-                TableName=os.environ['TABLE_NAME'],
-                Item=user_logs
-            )
-        print("Updated user logs")
+        # cursor.execute('SELECT template_id, data_section_ids FROM templates')
+        # templates = cursor.fetchall()
+        # # Get all template ids which have the data_section_id
+        # filtered_template_ids = []
+        # for template in templates:
+        #     if data_section_id in template[1]:
+        #         filtered_template_ids.append(template[0])
+        # for template_id in filtered_template_ids:
+        #     # Update the key cognito_user_id/user_id/template_id to the current timestamp
+        #     # The above key works for assistants and faculty
+        #     user_logs = {
+        #         'logEntryId': {'S': f"{arguments['cognito_user_id']}/{arguments['user_id']}/{template_id}"},
+        #         'timestamp': {'N': f"{int(time.time())}"}
+        #     }
+        #     dynamodb.put_item(
+        #         TableName=os.environ['TABLE_NAME'],
+        #         Item=user_logs
+        #     )
+        # print("Updated user logs")
         connection.commit()
         cursor.close()
         connection.close()

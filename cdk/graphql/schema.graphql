@@ -38,15 +38,20 @@ type User {
   scopus_id: String
   orcid_id: String
   joined_timestamp: String
+  cwl: String
+  vpp: String
 }
 
 type DataSection {
   data_section_id: String!
   title: String!
+  info: String!
   description: String!
   data_type: String
   attributes: AWSJSON! # JSON
+  attributes_type: AWSJSON # JSON
   archive: Boolean
+
 }
 
 type Notification {
@@ -110,7 +115,7 @@ type UserConnection {
 type Template {
   template_id: String!
   title: String!
-  data_section_ids: String!
+  template_structure: AWSJSON!
   start_year: String
   end_year: String
 }
@@ -175,6 +180,10 @@ type TotalOrcidPublications {
   put_codes: [Int]!
 }
 
+type Affiliations {
+  data_details: AWSJSON! # JSON
+}
+
 type Declaration {
   reporting_year: String!
   other_data: AWSJSON!
@@ -187,20 +196,35 @@ type InsertResponse {
   created_on: String!
 }
 
+input AuditViewInput {
+	logged_user_first_name: String!
+	logged_user_last_name: String!
+	ip: String
+	browser_version: String
+	page: String
+	session_id: String
+	assistant: Boolean
+	profile_record: String
+	logged_user_role: String
+	logged_user_email: String
+	logged_user_action: String
+}
+
 type AuditViewRecord {
-  log_view_id: Int
-  ts: String
-  logged_user_id: Int
-  logged_user_first_name: String
-  logged_user_last_name: String
-  ip: String
-  browser_name: String
-  browser_version: String
-  page: String
-  session_id: String
-  assistant: Boolean
-  profile_record: String
-  logged_user_role: String
+	log_view_id: Int!
+	ts: String!
+	logged_user_id: String!
+	logged_user_first_name: String!
+	logged_user_last_name: String!
+	ip: String
+	browser_version: String
+	page: String
+	session_id: String
+	assistant: Boolean
+	profile_record: String
+	logged_user_role: String
+	logged_user_email: String
+	logged_user_action: String
 }
 
 type Query {
@@ -256,6 +280,11 @@ type Query {
     )
 
   getUserDeclarations(first_name: String!, last_name: String!): [Declaration!]
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+  
+  getUserAffiliations(user_id: String!, first_name: String!, last_name: String!): [Affiliations!]
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )
@@ -332,10 +361,12 @@ type Query {
   getLatexConfiguration: String!
     @aws_auth(cognito_groups: ["Faculty", "Assistant", "Admin"])
 
-  getAuditView(logged_user_id: Int!): [AuditViewRecord]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+  getAuditView(logged_user_id: Int): [AuditViewRecord]
+    @aws_auth(cognito_groups: ["Admin"])
 
 }
+
+
 
 type Mutation {
   addUserDeclaration(
@@ -345,13 +376,20 @@ type Mutation {
     created_by: String!
     other_data: AWSJSON!
   ): InsertResponse!
-    @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 
   deleteUserDeclaration(
     first_name: String!
     last_name: String!
     reporting_year: Int!
   ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
+
+  deleteUserCVSectionData(user_id: String!, data_section_id: String!): String
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )
@@ -378,26 +416,23 @@ type Mutation {
   addUser(
     first_name: String!
     last_name: String!
-    preferred_name: String
     email: String!
     role: String!
-    bio: String
-    rank: String
-    institution: String
-    primary_department: String
-    secondary_department: String
-    primary_faculty: String
-    secondary_faculty: String
-    primary_affiliation: String
-    secondary_affiliation: String
-    campus: String
-    keywords: String
-    institution_user_id: String
-    scopus_id: String
-    orcid_id: String
+    cwl: String
+    vpp: String
   ): String
     @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+      cognito_groups: ["Admin"]
+    )
+
+  removeUser(
+    user_id: String!
+    email: String!
+    first_name: String!
+    last_name: String!
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin"]
     )
 
   updateUser(
@@ -420,12 +455,21 @@ type Mutation {
     institution_user_id: String
     scopus_id: String
     orcid_id: String
+    cwl: String
+    vpp: String
     user_id: String!
     cognito_user_id: String
   ): String
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )
+  
+  updateUserAffiliations(
+    user_id: String!
+    first_name: String
+    last_name: String
+    affiliations: AWSJSON
+  ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
 
   addSection(
     title: String!
@@ -438,6 +482,15 @@ type Mutation {
     data_section_id: String!
     archive: Boolean
     attributes: AWSJSON # JSON
+    attributes_type: AWSJSON # JSON
+  ): String @aws_auth(cognito_groups: ["Admin"])
+
+  editSectionDetails(
+    data_section_id: String!
+    title: String!
+    data_type: String!
+    description: String
+    info: String
   ): String @aws_auth(cognito_groups: ["Admin"])
 
   addUserCVData(
@@ -451,9 +504,13 @@ type Mutation {
   addBatchedUserCVData(
     user_id: String!
     data_section_id: String!
+    data_section_title: String!
     data_details_list: [AWSJSON!]
     editable: Boolean!
-  ): String @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","Faculty","Assistant"])
+  ): String
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 
   updateUserCVData(
     user_cv_data_id: String!
@@ -505,7 +562,7 @@ type Mutation {
 
   addTemplate(
     title: String!
-    data_section_ids: String!
+    template_structure: AWSJSON!
     start_year: String
     end_year: String
   ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
@@ -513,7 +570,7 @@ type Mutation {
   updateTemplate(
     template_id: String!
     title: String
-    data_section_ids: String
+    template_structure: AWSJSON
     start_year: String
     end_year: String
   ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
@@ -523,4 +580,9 @@ type Mutation {
 
   updateLatexConfiguration(vspace: Float, margin: Float, font: String): String
     @aws_auth(cognito_groups: ["Admin"])
+
+  addAuditView(input: AuditViewInput!): AuditViewRecord
+    @aws_auth(
+      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
+    )
 }

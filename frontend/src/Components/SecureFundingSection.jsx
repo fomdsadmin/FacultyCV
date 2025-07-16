@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
 import PermanentEntry from "./PermanentEntry";
-import GenericEntry from "./GenericEntry";
+import GenericEntry from "../SharedComponents/GenericEntry";
 import PermanentEntryModal from "./PermanentEntryModal";
-import EntryModal from "./EntryModal";
+import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import { FaArrowLeft } from "react-icons/fa";
 import SecureFundingModal from "./SecureFundingModal";
-import {
-  getUserCVData,
-  updateUserCVDataArchive,
-} from "../graphql/graphqlHelpers";
+import SecureFundingEntry from "./SecureFundingEntry";
+import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const generateEmptyEntry = (attributes) => {
   const emptyEntry = {};
@@ -35,11 +34,13 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [notification, setNotification] = useState(""); // <-- Add this
+
   const totalPages = Math.ceil(fieldData.length / pageSize);
-  const paginatedData = fieldData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const { logAction } = useAuditLogger();
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -51,11 +52,31 @@ const SecureFundingSection = ({ user, section, onBack }) => {
     // Implement restore functionality here
     try {
       const result = await updateUserCVDataArchive(entry.user_cv_data_id, true);
+      // Log the archive action
+      await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA);
     } catch (error) {
       console.error("Error archiving entry:", error);
     }
     await fetchData();
     setLoading(false);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteUserCVSectionData({
+        user_id: user.user_id,
+        data_section_id: section.data_section_id,
+      });
+      fetchData(); // Refresh data after toast disappears
+      setNotification(`${section.title}'s data removed successfully!`);
+      setTimeout(() => {
+        setNotification("");
+      }, 2500); // 1.5 seconds
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_CV_DATA);
+    } catch (error) {
+      console.error("Error deleting section data:", error);
+    }
   };
 
   const handleEdit = (entry) => {
@@ -90,10 +111,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
 
   async function fetchData() {
     try {
-      const retrievedData = await getUserCVData(
-        user.user_id,
-        section.data_section_id
-      );
+      const retrievedData = await getUserCVData(user.user_id, section.data_section_id);
       // Parse the data_details field from a JSON string to a JSON object
       const parsedData = retrievedData.map((data) => ({
         ...data,
@@ -104,12 +122,8 @@ const SecureFundingSection = ({ user, section, onBack }) => {
         const [field1, field2] = rankFields(entry.data_details);
 
         return (
-          (field1 &&
-            typeof field1 === "string" &&
-            field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 &&
-            typeof field2 === "string" &&
-            field2.toLowerCase().includes(searchTerm.toLowerCase()))
+          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
 
@@ -120,18 +134,9 @@ const SecureFundingSection = ({ user, section, onBack }) => {
 
       // Sorting logic
       rankedData.sort((a, b) => {
-        const isDate = (str) =>
-          /\b\d{4}[-/]\d{2}[-/]\d{2}\b/.test(str) || /\b\d{4}\b/.test(str); // Regex to match dates like YYYY-MM-DD or YYYY
-        const dateA = isDate(a.field1)
-          ? new Date(a.field1)
-          : isDate(a.field2)
-          ? new Date(a.field2)
-          : null;
-        const dateB = isDate(b.field1)
-          ? new Date(b.field1)
-          : isDate(b.field2)
-          ? new Date(b.field2)
-          : null;
+        const isDate = (str) => /\b\d{4}[-/]\d{2}[-/]\d{2}\b/.test(str) || /\b\d{4}\b/.test(str); // Regex to match dates like YYYY-MM-DD or YYYY
+        const dateA = isDate(a.field1) ? new Date(a.field1) : isDate(a.field2) ? new Date(a.field2) : null;
+        const dateB = isDate(b.field1) ? new Date(b.field1) : isDate(b.field2) ? new Date(b.field2) : null;
 
         if (dateA && dateB) {
           return dateB - dateA;
@@ -151,6 +156,12 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   }
 
   useEffect(() => {
+    if (fieldData.length !== 0) {
+      setIsAvailable(true);
+    }
+  }, [fieldData]);
+
+  useEffect(() => {
     setLoading(true);
     setFieldData([]);
     fetchData();
@@ -167,16 +178,11 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   return (
     <div>
       <div>
-        <button
-          onClick={handleBack}
-          className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5"
-        >
+        <button onClick={handleBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5">
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
         <div className="m-4 flex">
-          <h2 className="text-left text-4xl font-bold text-zinc-600">
-            {section.title}
-          </h2>
+          <h2 className="text-left text-4xl font-bold text-zinc-600 pr-8">{section.title}</h2>
           <button
             onClick={handleNew}
             className="ml-auto text-white btn btn-success min-h-0 h-8 leading-tight"
@@ -192,7 +198,16 @@ const SecureFundingSection = ({ user, section, onBack }) => {
             {retrievingData ? "Retrieving..." : "Retrieve Data"}
           </button>{" "}
         </div>
-        <div className="m-4 flex">{section.description}</div>
+        <div className="mx-4 my-1 flex items-center">
+          <div className="flex-1">{section.description}</div>
+          <button
+            onClick={handleDelete}
+            className="text-white btn btn-warning min-h-0 h-8 leading-tight"
+            disabled={isAvailable ? false : true}
+          >
+            Remove All
+          </button>
+        </div>
         <div className="m-4 flex">
           <label className="input input-bordered flex items-center gap-2 flex-1">
             <input
@@ -239,10 +254,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                 />
               </svg>
               <span className="text-lg font-medium text-gray-700">
-                Total Grants:{" "}
-                <span className="font-semibold text-blue-600">
-                  {fieldData.length}
-                </span>
+                Total Grants: <span className="font-semibold text-blue-600">{fieldData.length}</span>
               </span>
             </div>
             <div className="flex items-center gap-4">
@@ -269,24 +281,34 @@ const SecureFundingSection = ({ user, section, onBack }) => {
               </span>
               <button
                 className="btn btn-outline btn-sm"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
               >
                 Next
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-center w-full relative mx-auto">
-            <div>
+          <div className="flex items-center justify-center w-full max-w-7xl relative mx-auto">
+            <div className="w-full max-w-7xl">
               {paginatedData.length > 0 ? (
                 paginatedData.map((entry, index) => {
                   // Omit the "agency" field and add "sponsor" field for view (PermanentEntry)
                   const { agency, ...filteredDetails } = entry.data_details;
-
                   return entry.editable ? (
-                    <GenericEntry
+                    <div className="w-full">
+                      <GenericEntry
+                        // isArchived={entry.is_archived ? true : false}
+                        key={index}
+                        onEdit={() => handleEdit(entry)}
+                        field1={entry.field1}
+                        field2={entry.field2}
+                        data_details={entry.data_details} // For edit, just omit agency
+                        onArchive={() => handleArchive(entry)}
+                        />
+                    </div>
+                  ) : (
+                      <GenericEntry
+                        // isArchived={entry.is_archived}
                       key={index}
                       onEdit={() => handleEdit(entry)}
                       field1={entry.field1}
@@ -294,16 +316,15 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                       data_details={entry.data_details} // For edit, just omit agency
                       onArchive={() => handleArchive(entry)}
                     />
-                  ) : (
-                    <PermanentEntry
-                      isArchived={false}
-                      key={index}
-                      onEdit={() => handleEdit(entry)}
-                      field1={entry.field1}
-                      field2={entry.field2}
-                      data_details={entry.data_details} // For view, omit agency and add sponsor
-                      onArchive={() => handleArchive(entry)}
-                    />
+                    // <PermanentEntry
+                    //   isArchived={false}
+                    //   key={index}
+                    //   onEdit={() => handleEdit(entry)}
+                    //   field1={entry.field1}
+                    //   field2={entry.field2}
+                    //   data_details={entry.data_details} // For view, omit agency and add sponsor
+                    //   onArchive={() => handleArchive(entry)}
+                    // />
                   );
                 })
               ) : (
@@ -324,7 +345,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                     onClose={handleCloseModal}
                   />
                 ) : (
-                  <PermanentEntryModal
+                  // <PermanentEntryModal
+                  //   isNew={false}
+                  //   user={user}
+                  //   section={section}
+                  //   fields={selectedEntry.fields}
+                  //   user_cv_data_id={selectedEntry.data_id}
+                  //   entryType={section.title}
+                  //   fetchData={fetchData}
+                  //   onClose={handleCloseModal}
+                  // />
+                  <EntryModal
                     isNew={false}
                     user={user}
                     section={section}
@@ -339,31 +370,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
             )}
 
             {isModalOpen && selectedEntry && isNew && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                {console.log("Selected Entry:", selectedEntry)}
-                {selectedEntry.editable ? (
-                  <EntryModal
-                    isNew={true}
-                    user={user}
-                    section={section}
-                    fields={selectedEntry.fields}
-                    user_cv_data_id={selectedEntry.data_id}
-                    entryType={section.title}
-                    fetchData={fetchData}
-                    onClose={handleCloseModal}
-                  />
-                ) : (
-                  <PermanentEntryModal
-                    isNew={true}
-                    user={user}
-                    section={section}
-                    fields={selectedEntry.fields}
-                    user_cv_data_id={selectedEntry.data_id}
-                    entryType={section.title}
-                    fetchData={fetchData}
-                    onClose={handleCloseModal}
-                  />
-                )}
+              <div className="fixed inset-0 z-50 flex items-center justify-center">
+                <EntryModal
+                  isNew={true}
+                  user={user}
+                  section={section}
+                  fields={selectedEntry.fields}
+                  user_cv_data_id={selectedEntry.data_id}
+                  entryType={section.title}
+                  fetchData={fetchData}
+                  onClose={handleCloseModal}
+                />
               </div>
             )}
 
@@ -378,6 +395,12 @@ const SecureFundingSection = ({ user, section, onBack }) => {
             )}
           </div>
         </>
+      )}
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-6 right-6 z-50 bg-green-600 text-white px-4 py-2 rounded shadow-lg transition-all">
+          {notification}
+        </div>
       )}
     </div>
   );

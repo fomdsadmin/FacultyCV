@@ -5,7 +5,7 @@ import Assistant_FacultyMenu from '../Components/Assistant_FacultyMenu.jsx';
 import WorkSection from '../Components/WorkSection.jsx';
 import '../CustomStyles/scrollbar.css';
 import Filters from '../Components/Filters.jsx';
-import GenericSection from '../Components/GenericSection.jsx';
+import GenericSection from "../SharedComponents/GenericSection/GenericSection.jsx";
 import CoursesTaughtSection from '../Components/CoursesTaughtSection.jsx';
 import SecureFundingSection from '../Components/SecureFundingSection.jsx';
 import PublicationsSection from '../Components/PublicationsSection.jsx';
@@ -69,20 +69,32 @@ const Assistant_AcademicWork = ({ getCognitoUser, userInfo, assistantUserInfo })
   
   return (
     <div>
-      <AssistantMenu getCognitoUser={getCognitoUser} userName={assistantUserInfo.preferred_name || assistantUserInfo.first_name}></AssistantMenu>
+      <AssistantMenu
+        getCognitoUser={getCognitoUser}
+        userName={
+          assistantUserInfo.preferred_name || assistantUserInfo.first_name
+        }
+      ></AssistantMenu>
       <AssistantPageContainer>
-        <Assistant_FacultyMenu userInfo={userInfo} assistantUserInfo={assistantUserInfo}></Assistant_FacultyMenu>
-        <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
+        <Assistant_FacultyMenu
+          userInfo={userInfo}
+          assistantUserInfo={assistantUserInfo}
+        ></Assistant_FacultyMenu>
+        <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4">
           {loading ? (
-            <div className='w-full h-full flex items-center justify-center'>
-              <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="block text-m mb-1 mt-6 text-zinc-600">
+                Loading...
+              </div>
             </div>
           ) : (
             <>
               {activeSection === null ? (
-                <div className='!overflow-auto !h-full custom-scrollbar'>
-                  <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Academic Work</h1>
-                  <div className='m-4 flex'>
+                <div className="!overflow-auto !h-full custom-scrollbar">
+                  <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">
+                    Academic Work
+                  </h1>
+                  <div className="m-4 flex">
                     <label className="input input-bordered flex items-center gap-2 flex-1">
                       <input
                         type="text"
@@ -100,32 +112,66 @@ const Assistant_AcademicWork = ({ getCognitoUser, userInfo, assistantUserInfo })
                         <path
                           fillRule="evenodd"
                           d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-                          clipRule="evenodd" />
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </label>
                   </div>
-                  <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters>
+                  <Filters
+                    activeFilters={activeFilters}
+                    onFilterChange={setActiveFilters}
+                    filters={filters}
+                  ></Filters>
                   {searchedSections.map((section) => (
-                    <WorkSection onClick={handleManageClick} key={section.data_section_id} id={section.data_section_id} title={section.title} category={section.data_type}></WorkSection>
+                    <WorkSection
+                      onClick={handleManageClick}
+                      key={section.data_section_id}
+                      id={section.data_section_id}
+                      title={section.title}
+                      category={section.data_type}
+                    ></WorkSection>
                   ))}
                 </div>
               ) : (
-                <div className='!overflow-auto !h-full custom-scrollbar'>
-                  {activeSection.title === 'Publications' && 
-                    <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack}></PublicationsSection>
-                  }
-                  {activeSection.title === 'Patents' && 
-                    <PatentsSection user={userInfo} section={activeSection} onBack={handleBack}></PatentsSection>
-                  }
-                  {activeSection.title === 'Secure Funding' && 
-                    <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack}></SecureFundingSection>
-                  }
-                  {activeSection.title === 'Courses Taught' && 
-                    <CoursesTaughtSection user={userInfo} section={activeSection} onBack={handleBack}></CoursesTaughtSection>
-                  } 
-                  {activeSection.title !== 'Publications' && activeSection.title !== 'Patents' && activeSection.title !== 'Courses Taught' && activeSection.title !== 'Secure Funding' &&
-                    <GenericSection user={userInfo} section={activeSection} onBack={handleBack}></GenericSection>
-                  }
+                <div className="!overflow-auto !h-full custom-scrollbar">
+                  {activeSection.title === "Publications" && (
+                    <PublicationsSection
+                      user={userInfo}
+                      section={activeSection}
+                      onBack={handleBack}
+                    ></PublicationsSection>
+                  )}
+                  {activeSection.title === "Patents" && (
+                    <PatentsSection
+                      user={userInfo}
+                      section={activeSection}
+                      onBack={handleBack}
+                    ></PatentsSection>
+                  )}
+                  {activeSection.title === "Research or Equivalent Grants" && (
+                    <SecureFundingSection
+                      user={userInfo}
+                      section={activeSection}
+                      onBack={handleBack}
+                    ></SecureFundingSection>
+                  )}
+                  {activeSection.title === "Courses Taught" && (
+                    <CoursesTaughtSection
+                      user={userInfo}
+                      section={activeSection}
+                      onBack={handleBack}
+                    ></CoursesTaughtSection>
+                  )}
+                  {activeSection.title !== "Publications" &&
+                    activeSection.title !== "Patents" &&
+                    activeSection.title !== "Courses Taught" &&
+                    activeSection.title !== "Research or Equivalent Grants" && (
+                      <GenericSection
+                        user={userInfo}
+                        section={activeSection}
+                        onBack={handleBack}
+                      ></GenericSection>
+                    )}
                 </div>
               )}
             </>
@@ -133,7 +179,6 @@ const Assistant_AcademicWork = ({ getCognitoUser, userInfo, assistantUserInfo })
         </main>
       </AssistantPageContainer>
     </div>
-    
   );    
 };
 

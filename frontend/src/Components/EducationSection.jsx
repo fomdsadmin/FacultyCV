@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import GenericEntry from './GenericEntry';
-import EntryModal from './EntryModal';
+import GenericEntry from "../SharedComponents/GenericEntry";
+import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import EducationModal from './EducationModal';
 import { FaArrowLeft } from 'react-icons/fa';
-import { getUserCVData, updateUserCVDataArchive } from '../graphql/graphqlHelpers';
+import { 
+  getUserCVData, 
+  updateUserCVDataArchive, 
+  deleteUserCVSectionData 
+} from '../graphql/graphqlHelpers';
 import { rankFields } from '../utils/rankingUtils';
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 
 const EducationSection = ({ user, section, onBack = null }) => {
@@ -15,9 +20,30 @@ const EducationSection = ({ user, section, onBack = null }) => {
   const [isNew, setIsNew] = useState(false);
   const [retrievingData, setRetrievingData] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [notification, setNotification] = useState("");
+  const { logAction } = useAuditLogger();
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteUserCVSectionData({
+        user_id: user.user_id,
+        data_section_id: section.data_section_id,
+      });
+      fetchData(); // Refresh data after deletion
+      setNotification(`${section.title}'s data removed successfully!`);
+      setTimeout(() => {
+        setNotification("");
+      }, 2500); // 2.5 seconds
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_CV_DATA);
+    } catch (error) {
+      console.error("Error deleting section data:", error);
+    }
   };
 
   const handleArchive = async (entry) => {
@@ -25,6 +51,7 @@ const EducationSection = ({ user, section, onBack = null }) => {
     setFieldData([]);
     try {
       await updateUserCVDataArchive(entry.user_cv_data_id, true);
+      await logAction(AUDIT_ACTIONS.ARCHIVE_CV_DATA);
     } catch (error) {
       console.error('Error archiving entry:', error);
     }
@@ -126,6 +153,14 @@ const EducationSection = ({ user, section, onBack = null }) => {
     fetchData();
   }, [searchTerm, section.data_section_id]);
 
+  useEffect(() => {
+    if (fieldData.length !== 0) {
+      setIsAvailable(true);
+    } else {
+      setIsAvailable(false);
+    }
+  }, [fieldData]);
+
   const handleBack = () => {
     onBack();
   };
@@ -143,7 +178,16 @@ const EducationSection = ({ user, section, onBack = null }) => {
             {retrievingData ? 'Retrieving...' : 'Retrieve Data'}
           </button>
         </div>
-        <div className='m-4 flex'>{section.description}</div>
+        <div className='mx-4 my-1 flex items-center'>
+          <div className="flex-1 mr-12 mt-4">{section.description}</div>
+          <button
+            onClick={handleDelete}
+            className="text-white btn btn-warning min-h-0 h-8 leading-tight"
+            disabled={!isAvailable}
+          >
+            Remove All
+          </button>
+        </div>
         <div className='m-4 flex'>
           <label className="input input-bordered flex items-center gap-2 flex-1">
             <input
@@ -180,7 +224,7 @@ const EducationSection = ({ user, section, onBack = null }) => {
                   key={index}
                   onEdit={() => handleEdit(entry)}
                   field1={entry.data_details.degree}
-                  field2={entry.data_details.institution}
+                  field2={entry.data_details.end_year}
                   data_details={entry.data_details}
                   onArchive={() => handleArchive(entry)}
                 />
@@ -211,6 +255,11 @@ const EducationSection = ({ user, section, onBack = null }) => {
               fetchData={fetchData}
             />
           )}
+        </div>
+      )}
+      {notification && (
+        <div className="fixed top-8 right-6 z-50 bg-green-600 text-white px-4 py-2 rounded shadow-lg transition-all">
+          {notification}
         </div>
       )}
     </div>

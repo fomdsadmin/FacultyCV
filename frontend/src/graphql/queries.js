@@ -32,6 +32,8 @@ export const getUserQuery = `
             scopus_id
             orcid_id
             joined_timestamp   
+            cwl
+            vpp
         }
     }
 `;
@@ -87,6 +89,8 @@ export const getAllUsersQuery = () => `
             scopus_id
             orcid_id
             joined_timestamp
+            cwl
+            vpp
         }
     }
 `;
@@ -125,11 +129,13 @@ export const getAllSectionsQuery = () => `
     query GetAllSections {
         getAllSections {
             attributes
+            attributes_type
             data_section_id
             data_type
             description
             title
             archive
+            info
         }
     }
 `;
@@ -232,6 +238,63 @@ export const getUserDeclarationsQuery = (first_name, last_name) => `
         }
     }
 `;
+
+export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
+    query getUserAffiliations {
+        getUserAffiliations (
+            first_name: "${first_name}", last_name: "${last_name}", user_id: "${user_id}"
+        ) {
+            data_details
+        }
+    }
+`;
+
+export const getAuditViewQuery = (logged_user_id) => {
+    if (logged_user_id !== undefined && logged_user_id !== null) {
+        return `
+            query getAuditView {
+                getAuditView(logged_user_id: ${logged_user_id}) {
+                    log_view_id
+                    ts
+                    logged_user_id
+                    logged_user_first_name
+                    logged_user_last_name
+                    ip
+                    browser_version
+                    page
+                    session_id
+                    assistant
+                    profile_record
+                    logged_user_role,
+                    logged_user_email,
+                    logged_user_action
+                }
+            }
+        `;
+    } else {
+        return `
+            query getAuditView {
+                getAuditView {
+                    log_view_id
+                    ts
+                    logged_user_id
+                    logged_user_first_name
+                    logged_user_last_name
+                    ip
+                    browser_version
+                    page
+                    session_id
+                    assistant
+                    profile_record
+                    logged_user_role,
+                    logged_user_email,
+                    logged_user_action
+                }
+            }
+        `;
+    }
+};
+
 
 export const getElsevierAuthorMatchesQuery = (
     first_name,
@@ -354,7 +417,7 @@ export const getAllTemplatesQuery = () => `
         getAllTemplates {
             template_id
             title
-            data_section_ids
+            template_structure
             start_year
             end_year
         }

@@ -117,6 +117,19 @@ export class ResolverStack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "getUserAffiliations",
+      ["getUserAffiliations"],
+      "Query",
+      {
+        USER_POOL_ID: apiStack.getUserPoolId(),
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "getAllUsers",
       ["getAllUsers"],
       "Query",
@@ -163,8 +176,33 @@ export class ResolverStack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "removeUser",
+      ["removeUser"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "updateUser",
       ["updateUser"],
+      "Mutation",
+      {
+        TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "updateUserAffiliations",
+      ["updateUserAffiliations"],
       "Mutation",
       {
         TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
@@ -221,8 +259,20 @@ export class ResolverStack extends cdk.Stack {
       resolverRole,
       [psycopgLayer, databaseConnectLayer]
     );
-	
-	createResolver(
+
+    createResolver(
+      apiStack.getApi(),
+      "editSectionDetails",
+      ["editSectionDetails"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
       apiStack.getApi(),
       "addBatchedUserCVData",
       ["addBatchedUserCVData"],

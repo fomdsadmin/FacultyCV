@@ -3,6 +3,7 @@ import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { updateUser } from '../graphql/graphqlHelpers';
 import { addToUserGroup, removeFromUserGroup, getAllUniversityInfo } from '../graphql/graphqlHelpers';
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }) => {
   const [changingRole, setChangingRole] = useState(false);
@@ -18,6 +19,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
   );
   const [departments, setDepartments] = useState([]);
 
+  const { logAction } = useAuditLogger();
   useEffect(() => {
     fetchUniversityInfo();
   }, []);
@@ -78,6 +80,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
           const result = await addToUserGroup(userInfo.email, updatedRole);
           
         }
+        
       } catch (error) {
         
         return;
@@ -116,11 +119,16 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
         userInfo.keywords,
         userInfo.institution_user_id,
         userInfo.scopus_id,
-        userInfo.orcid_id
+        userInfo.orcid_id,
+        userInfo.cwl,
+        userInfo.vpp
       );
       
       fetchAllUsers();
       handleBack();
+      // Log the role change action
+      await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, userInfo.email);
+     
     } catch {
       console.error('Error changing role');
     }

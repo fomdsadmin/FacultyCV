@@ -1,6 +1,6 @@
 import React from "react";
 
-const WorkSection = ({ onClick, id, title, category }) => {
+const WorkSection = ({ onClick, id, title, category, info }) => {
 
     const handleClick = () => {
         onClick(id);
@@ -13,6 +13,7 @@ const WorkSection = ({ onClick, id, title, category }) => {
                 <div className="flex flex-col justify-center">
                     <h3 className="card-title">{title}</h3>
                     <p>{category}</p>
+                    <p className="text-sm">{info}</p>
                 </div>
 
                 <div className="card-actions">

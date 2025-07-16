@@ -72,7 +72,7 @@ const AuthPage = ({ getCognitoUser }) => {
         }
       } else {
         getCognitoUser();
-        navigate('/dashboard');
+        navigate('/home');
       }
     } catch (error) {
       
@@ -262,7 +262,7 @@ const AuthPage = ({ getCognitoUser }) => {
     
     // put user data in database if it doesn't already exist
     try {
-      const userInformation = await getExistingUser(institution_user_id);
+      const userInformation = await getUser(email);
       
       if (!userInformation.role) {
         
@@ -271,16 +271,16 @@ const AuthPage = ({ getCognitoUser }) => {
             email, role, userInformation.bio, userInformation.rank, userInformation.institution,
             userInformation.primary_department, userInformation.secondary_department, userInformation.primary_faculty,
             userInformation.secondary_faculty, userInformation.primary_affiliation, userInformation.secondary_affiliation, userInformation.campus, userInformation.keywords,
-            userInformation.institution_user_id, userInformation.scopus_id, userInformation.orcid_id
+            userInformation.institution_user_id, userInformation.scopus_id, userInformation.orcid_id, userInformation.cwl, userInformation.vpp
         )
         
     
       }
     } catch (error) {
       try {
-        const result = await addUser(first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+        const result = await addUser(first_name, last_name, email, role, "", ""); // last 2: cwl, vpp
         const user = await getUser(email);
-        const result3 = await updateUser(user.user_id, first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+        // const result3 = await updateUser(user.user_id, first_name, last_name, '', email, role, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
         
       } catch (error) {
         
@@ -289,7 +289,7 @@ const AuthPage = ({ getCognitoUser }) => {
     }
     getCognitoUser();
     
-    navigate('/dashboard');
+    navigate('/home');
   };
 
   async function handleResetPassword(event) {

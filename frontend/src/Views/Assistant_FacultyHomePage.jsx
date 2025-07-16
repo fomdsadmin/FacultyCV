@@ -134,7 +134,7 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
   
   return (
     <div>
-      <AssistantMenu getCognitoUser={getCognitoUser} userName={assistantUserInfo.preferred_name || assistantUserInfo.first_name}></AssistantMenu>
+      {/* <AssistantMenu getCognitoUser={getCognitoUser} userName={assistantUserInfo.preferred_name || assistantUserInfo.first_name}></AssistantMenu> */}
       <AssistantPageContainer>
         <Assistant_FacultyMenu userInfo={userInfo} assistantUserInfo={assistantUserInfo}></Assistant_FacultyMenu>
         <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4 relative'>

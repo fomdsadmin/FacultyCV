@@ -3,11 +3,14 @@ import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { updateUser } from '../graphql/graphqlHelpers';
 import { addToUserGroup, removeFromUserGroup } from '../graphql/graphqlHelpers';
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, department }) => {
   const [changingRole, setChangingRole] = useState(false);
   const [confirmChange, setConfirmChange] = useState(false);
   const [newRole, setNewRole] = useState(userInfo.role);
+
+  const { logAction } = useAuditLogger();
 
   async function changeRole() {
     setChangingRole(true);
@@ -58,11 +61,15 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
         userInfo.keywords,
         userInfo.institution_user_id,
         userInfo.scopus_id,
-        userInfo.orcid_id
+        userInfo.orcid_id,
+        userInfo.cwl,
+        userInfo.vpp
       );
       
       fetchAllUsers();
       handleBack();
+      // Log the role change action
+      await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, userInfo.email);
     } catch {
       console.error('Error changing role');
     }
@@ -80,8 +87,8 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
   };
 
   return (
-    <dialog className="modal-dialog" open>
-      <div className="modal-content">
+    <dialog className="modal-dialog ml-4" open>
+      <div className="modal-content p-4">
         <div>
           <button
             type="button"

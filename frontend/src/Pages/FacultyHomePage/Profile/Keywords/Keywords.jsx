@@ -16,6 +16,7 @@ const Keywords = () => {
           id="keywords"
           name="keywords"
           maxLength={1000}
+          rows={3}
           value={userInfo.keywords || ""}
           className="w-full rounded text-sm px-3 py-2 border border-gray-300"
           placeholder="Add keywords separated by commas"
@@ -24,7 +25,7 @@ const Keywords = () => {
         <OrcidKeywordsImportButton />
       </div>
     </div>
-  )
+  );
 }
 
 export default Keywords
