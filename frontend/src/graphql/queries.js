@@ -91,6 +91,8 @@ export const getAllUsersQuery = () => `
             joined_timestamp
             cwl
             vpp
+            pending
+            approved
         }
     }
 `;
