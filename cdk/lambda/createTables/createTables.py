@@ -61,7 +61,9 @@ def lambda_handler(event, context):
     columns.append(createColumn('orcid_id', 'varchar', '', False))
     columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', False))  
     columns.append(createColumn('cwl', 'TEXT', '', False))  # Add this line
-    columns.append(createColumn('vpp', 'TEXT', '', True))  # Add this
+    columns.append(createColumn('vpp', 'TEXT', '', False))  # Add this
+    columns.append(createColumn('pending', 'BOOLEAN', 'DEFAULT true', False))  # Add this
+    columns.append(createColumn('approved', 'BOOLEAN', 'DEFAULT false', True))  # Add this
     query = createQuery('users', columns)
     cursor.execute(query)
 
@@ -215,7 +217,7 @@ def lambda_handler(event, context):
     columns = []
     columns.append(createColumn('log_view_id', 'serial', 'PRIMARY KEY', False))
     columns.append(createColumn('ts', 'timestamp', '', False))
-    columns.append(createColumn('logged_user_email', 'text', 'NOT NULL', True))
+    columns.append(createColumn('logged_user_email', 'text', 'NOT NULL', False))
     columns.append(createColumn('logged_user_id', 'integer', 'NOT NULL', False))
     columns.append(createColumn('logged_user_first_name', 'text', 'NOT NULL', False))
     columns.append(createColumn('logged_user_last_name', 'text', 'NOT NULL', False))
@@ -226,7 +228,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('page', 'text', '', False))
     columns.append(createColumn('session_id', 'text', '', False))
     columns.append(createColumn('assistant', 'boolean', '', False))
-    columns.append(createColumn('profile_record', 'text', '', False))
+    columns.append(createColumn('profile_record', 'text', '', True))
     query = createQuery('audit_view', columns)
     cursor.execute(query)
     
