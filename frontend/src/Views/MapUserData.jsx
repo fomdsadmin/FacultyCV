@@ -22,9 +22,10 @@ const MapUserData = () => {
         }
         const existingUser = await getUser(email);
         console.log("Existing user data:", existingUser);
+        console.log("User was already in table")
 
       } catch (error) {
-          await addUser(
+          /**await addUser(
             given_name || "",
             family_name || "",
             "",
@@ -46,7 +47,8 @@ const MapUserData = () => {
             "",
             ""
           );
-          console.log("New user added.");
+          */
+        console.log("Redirect to a form to add user");
         console.error("Error syncing user data:", error);
       }
     }
