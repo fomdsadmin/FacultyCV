@@ -420,6 +420,8 @@ type Mutation {
     last_name: String!
     email: String!
     role: String!
+    pending: Boolean!
+    approved: Boolean!
     cwl: String
     vpp: String
   ): String

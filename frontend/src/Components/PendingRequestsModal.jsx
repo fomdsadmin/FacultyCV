@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { updateUserPermissions } from "graphql/graphqlHelpers";
 
-const PendingRequestsModal = ({ isOpen, onClose, pendingUsers, setPendingUsers, rejectedUsers, setRejectedUsers }) => {
+const PendingRequestsModal = ({
+  isOpen,
+  onClose,
+  pendingUsers,
+  setPendingUsers,
+  rejectedUsers,
+  setRejectedUsers,
+  refreshUsers,
+}) => {
   const [showRejected, setShowRejected] = useState(false);
 
   const handleAccept = async (userId) => {
@@ -10,6 +18,7 @@ const PendingRequestsModal = ({ isOpen, onClose, pendingUsers, setPendingUsers, 
     // Remove from pending list
     setPendingUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
     await updateUserPermissions(userId, false, true);
+    refreshUsers();
   };
 
   const handleReject = async (userId) => {
@@ -21,6 +30,7 @@ const PendingRequestsModal = ({ isOpen, onClose, pendingUsers, setPendingUsers, 
       setPendingUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
       setRejectedUsers((prev) => [...prev, userToReject]);
       await updateUserPermissions(userId, false, false);
+      refreshUsers();
     }
   };
 
@@ -30,6 +40,7 @@ const PendingRequestsModal = ({ isOpen, onClose, pendingUsers, setPendingUsers, 
     // Remove from rejected list
     setRejectedUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
     await updateUserPermissions(userId, false, true);
+    refreshUsers();
   };
 
   if (!isOpen) return null;

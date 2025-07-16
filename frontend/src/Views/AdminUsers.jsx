@@ -82,8 +82,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         }
       });
 
-      const filteredUsers = approvedUsersList.filter((user) => user.email !== userInfo.email);
-      setUsers(filteredUsers);
+      setUsers(approvedUsersList);
       setPendingUsers(pendingUsersList);
       setRejectedUsers(rejectedUsersList);
 
@@ -245,7 +244,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
           <div>
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users</h1>
+                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users ({users.length})</h1>
                 <button
                   onClick={() => setIsAddUserModalOpen(true)}
                   className="btn btn-primary ml-4"
@@ -259,7 +258,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                 <button
                   onClick={() => setIsPendingRequestsModalOpen(true)}
                   className="btn btn-primary ml-4"
-                  title="Pending Requests"
+                  title={`Pending Requests`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path
@@ -268,7 +267,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Pending Requests
+                  Pending Requests ({pendingUsers.length})
                 </button>
                 <div className="m-4 flex">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
@@ -336,6 +335,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         setPendingUsers={setPendingUsers}
         rejectedUsers={rejectedUsers}
         setRejectedUsers={setRejectedUsers}
+        refreshUsers={fetchAllUsers}
         onClose={() => setIsPendingRequestsModalOpen(false)}
       />
 

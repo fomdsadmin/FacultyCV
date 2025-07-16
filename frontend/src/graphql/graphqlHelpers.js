@@ -697,6 +697,8 @@ export const addUser = async (first_name, last_name, email, role, cwl, vpp) => {
     last_name,
     email,
     role,
+    pending: true, // Default to pending
+    approved: false, // Default to not approved
     cwl,
     vpp,
   });

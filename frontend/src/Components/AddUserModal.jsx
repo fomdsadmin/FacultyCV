@@ -117,11 +117,15 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         console.log("User found in pool, added to Cognito group, statusCode 200 OK");
         const cwlChecked = cwl ? cwl : "";
         const vppChecked = vpp ? vpp : "";
+        const pending = true; // Default to pending
+        const approved = false; // Default to not approved
         console.log("Adding user to database with details:", {
           firstName,
           lastName,
           username,
           role,
+          pending,
+          approved,
           cwlChecked,
           vppChecked,
         });
@@ -130,6 +134,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
           lastName,
           username,
           role,
+          pending,
+          approved,
           cwlChecked,
           vppChecked
         );
