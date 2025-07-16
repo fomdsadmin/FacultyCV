@@ -317,10 +317,24 @@ const generateDataColumnFormat = (attributes, preparedSection) => {
     }
 };
 
+const buildGrantsAndContractsRowArray = (data, attributes, section) => {
+    const sectionAttributes = JSON.parse(section.attributes);
+
+    return attributes.map((attribute) => {
+        const makeAgencyBlank =  (attribute === "Agency" && data.data_details[sectionAttributes[attribute]].toLowerCase() === "rise");
+
+        const tabData = data.data_details[sectionAttributes[attribute]];
+        return {
+            textOptions: [textOptions(makeAgencyBlank ? "" : tabData, false, 9.5)],
+            color: null
+        };
+    });
+}
+
 // Main buildDataEntries function - now much cleaner
 const buildDataEntries = (preparedSection, dataSectionId) => {
     const PUBLICATION_SECTION_ID = "1c23b9a0-b6b5-40b8-a4aa-f822d0567f09";
-    const RESEARCH_OR_EQUIVALENT_GRANTS_AND_CONTRACTS_ID = "";
+    const RESEARCH_OR_EQUIVALENT_GRANTS_AND_CONTRACTS_ID = "26939d15-7ef9-46f6-9b49-22cf95074e88";
 
     const attributeGroups = preparedSection.attribute_groups;
     const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
@@ -348,6 +362,8 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
         let rowArray;
         if (section.data_section_id === PUBLICATION_SECTION_ID) {
             rowArray = buildPublicationRowArray(data, attributes, section);
+        } else if (section.data_section_id === RESEARCH_OR_EQUIVALENT_GRANTS_AND_CONTRACTS_ID) {
+            rowArray = buildGrantsAndContractsRowArray(data, attributes, section);
         } else {
             rowArray = buildRegularRowArray(data, attributes, section);
         }
