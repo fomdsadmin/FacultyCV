@@ -253,14 +253,12 @@ export const updateUserPermissionsMutation = (
     user_id,
     pending,
     approved,
-    cognito_user_id
 ) => `
     mutation UpdateUserPermissions {
         updateUserPermissions(
             user_id: "${user_id}"
             pending: ${pending}
             approved: ${approved}
-            cognito_user_id: "${cognito_user_id || ''}"
         )
     }
 `;
