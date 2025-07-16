@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { getUser, updateUser } from "../graphql/graphqlHelpers.js";
 import { get } from "aws-amplify/api";
 
-const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, setExistingUser, onUpdateSuccess }) => {
+const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSuccess }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
@@ -11,15 +11,14 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, setExistingUse
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [updatedUserData, setUpdatedUserData] = useState(null);
 
   useEffect(() => {
     if (existingUser) {
       setFirstName(existingUser.first_name || "");
       setLastName(existingUser.last_name || "");
       setUsername(existingUser.username || existingUser.email);
-      setCwl(existingUser.cwl || "");
-      setVpp(existingUser.vpp || "");
+      setCwl(existingUser.cwl ? existingUser.cwl : "");
+      setVpp(existingUser.vpp ? existingUser.vpp : "");
       setError("");
       // Don't clear success message here to allow it to persist after update
     }
@@ -71,9 +70,7 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, setExistingUse
       console.log("User updated successfully:", newResult);
       
       // Store the updated user data
-      setExistingUser(newResult);
-      setUpdatedUserData(newResult);
-      
+      onUpdateSuccess(newResult);
       // Set success message after updating the user data
       setSuccessMessage("User Successfully Updated");
       
@@ -87,18 +84,10 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, setExistingUse
   };
 
   const handleClose = () => {
-    // Call onUpdateSuccess with the latest updated data before closing
-    if (updatedUserData && onUpdateSuccess) {
-      onUpdateSuccess(updatedUserData);
-    }
     onClose();
   };
 
   const handleBack = () => {
-    // Call onUpdateSuccess with the latest updated data before going back
-    if (updatedUserData && onUpdateSuccess) {
-      onUpdateSuccess(updatedUserData);
-    }
     onBack();
   };
 
@@ -162,7 +151,7 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, setExistingUse
                 <label className="block text-sm font-medium text-gray-700 mb-1">CWL</label>
                 <input
                   className="input input-bordered w-full text-sm"
-                  value={cwl}
+                  value={cwl ? cwl : ""}
                   onChange={(e) => setCwl(e.target.value)}
                   placeholder="CWL (optional)"
                 />
@@ -172,7 +161,7 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, setExistingUse
                 <label className="block text-sm font-medium text-gray-700 mb-1">VPP</label>
                 <input
                   className="input input-bordered w-full text-sm"
-                  value={vpp}
+                  value={vpp ? vpp : ""}
                   onChange={(e) => setVpp(e.target.value)}
                   placeholder="VPP (optional)"
                 />

@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
   addUser,
-  updateUser,
   getUser,
   getAllUniversityInfo,
   addToUserGroup,
 } from "../graphql/graphqlHelpers.js";
-import UpdateUserModal from "./UpdateUserModal";
 
 const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
@@ -296,7 +294,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">CWL</label>
                   <input
                     className="input input-bordered w-full text-sm"
-                    value={cwl}
+                    value={cwl || ""}
                     onChange={(e) => setCwl(e.target.value)}
                     placeholder="CWL (optional)"
                   />
@@ -306,7 +304,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">VPP</label>
                   <input
                     className="input input-bordered w-full text-sm"
-                    value={vpp}
+                    value={vpp || ""}
                     onChange={(e) => setVpp(e.target.value)}
                     placeholder="VPP (optional)"
                   />
