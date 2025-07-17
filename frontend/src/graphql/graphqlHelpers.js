@@ -549,7 +549,7 @@ export const getPatentMatches = async (first_name, last_name) => {
  * Return value:
  * String - the presigned URL
  */
-export const getPresignedUrl = async (jwt, fileKey, type, purpose) => {
+export const getPresignedUrl = async (jwt, fileKey, type, purpose = "cv") => {
   const results = await runGraphql(getPresignedUrlQuery(jwt, fileKey, type, purpose));
   return results["data"]["getPresignedUrl"];
 };

@@ -15,17 +15,17 @@ const truncateText = (text, maxLength) => {
 
 const truncateHtml = (html, maxLength) => {
   // Strip HTML tags for length calculation
-  const textOnly = html.replace(/<[^>]*>/g, "");
+  const textOnly = html.replace(/<[^>]*>/g, '');
   if (textOnly.length <= maxLength) {
     return html;
   }
-
+  
   // Truncate the text and add ellipsis
   const truncatedText = textOnly.substring(0, maxLength);
   // Find the last complete word
-  const lastSpaceIndex = truncatedText.lastIndexOf(" ");
+  const lastSpaceIndex = truncatedText.lastIndexOf(' ');
   const finalText = lastSpaceIndex > 0 ? truncatedText.substring(0, lastSpaceIndex) : truncatedText;
-
+  
   return `${finalText}...`;
 };
 
@@ -37,7 +37,7 @@ const isHtmlContent = (content) => {
 const isRichTextField = (key) => {
   // Check if field name suggests it's a rich text field
   const lowerKey = key.toLowerCase();
-  return lowerKey.includes("details") || lowerKey.includes("note");
+  return lowerKey.includes('details') || lowerKey.includes('note');
 };
 
 const capitalizeWords = (string) => {
@@ -90,10 +90,10 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
     let tempField1 = field1;
     let tempField2 = field2;
     Object.entries(data_details).forEach(([key, value]) => {
-      if (value === field1 && (key.toLowerCase().includes("date") || key.toLowerCase().includes("year"))) {
+      if (value === field1 && (key.toLowerCase().includes("dates") || key.toLowerCase().includes("year"))) {
         tempField1 = field1.replace(/,/g, "");
       }
-      if (value === field2 && (key.toLowerCase().includes("date") || key.toLowerCase().includes("year"))) {
+      if (value === field2 && (key.toLowerCase().includes("dates") || key.toLowerCase().includes("year"))) {
         tempField2 = field2.replace(/,/g, "");
       }
     });
@@ -107,17 +107,37 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
     <div className="min-h-8 shadow-glow mx-4 my-2 px-4 py-4 flex items-center bg-white rounded-lg">
       <div className="flex-1 w-full">
         {updatedField1 && (
-          <h1 className="text-gray-800 font-bold break-words">{truncateText(updatedField1, MAX_CHAR_LENGTH)}</h1>
+          <h1 className="text-gray-800 font-bold break-words">
+            {isHtmlContent(updatedField1) ? (
+              <div 
+                className="html-content inline"
+                dangerouslySetInnerHTML={{ __html: truncateHtml(updatedField1, MAX_CHAR_LENGTH) }}
+              />
+            ) : (
+              truncateText(updatedField1, MAX_CHAR_LENGTH)
+            )}
+          </h1>
         )}
         {updatedField2 && (
-          <h2 className="text-gray-600 break-words mb-[3px]">{truncateText(updatedField2, MAX_CHAR_LENGTH)}</h2>
+          <h2 className="text-gray-600 break-words mb-[3px]">
+            {isHtmlContent(updatedField2) ? (
+              <div 
+                className="html-content inline"
+                dangerouslySetInnerHTML={{ __html: truncateHtml(updatedField2, MAX_CHAR_LENGTH) }}
+              />
+            ) : (
+              truncateText(updatedField2, MAX_CHAR_LENGTH)
+            )}
+          </h2>
         )}
         {attributes.map((attribute, index) => {
           // Split "Label: Value"
           const [label, ...rest] = attribute.split(": ");
           const value = rest.join(": ");
-          const originalKey = Object.keys(data_details).find((k) => capitalizeWords(k) === label.trim());
-
+          const originalKey = Object.keys(data_details).find(k => 
+            capitalizeWords(k) === label.trim()
+          );
+          
           // Special case: Only show Agency if value is not 'rise' (case-insensitive)
           if (label.trim() === "Agency" && value.trim().toLowerCase() === "rise") {
             return <></>;
@@ -125,29 +145,29 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
           if (label.trim().toLowerCase() === "highlight") {
             return <></>;
           }
-
+          
           const isRichField = originalKey && isRichTextField(originalKey);
           const isHtml = isHtmlContent(value);
-
+          
           // Check if rich text field is empty
           if (isRichField && isHtml) {
             // Strip HTML tags and check if content is empty
-            const textOnly = value.replace(/<[^>]*>/g, "").trim();
-            if (!textOnly || textOnly === "") {
+            const textOnly = value.replace(/<[^>]*>/g, '').trim();
+            if (!textOnly || textOnly === '') {
               return <></>;
             }
           }
-
+          
           // Check if regular text field is empty
-          if (!isRichField && (!value || value.trim() === "")) {
+          if (!isRichField && (!value || value.trim() === '')) {
             return <></>;
           }
-
+          
           return (
             <div key={index} className="text-gray-600 break-words text-sm">
               <span className="font-bold">{label}:</span>
               {isRichField && isHtml ? (
-                <div
+                <div 
                   className="html-content inline"
                   dangerouslySetInnerHTML={{ __html: truncateHtml(value, MAX_CHAR_LENGTH) }}
                 />
