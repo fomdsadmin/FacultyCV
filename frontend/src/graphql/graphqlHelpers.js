@@ -36,6 +36,7 @@ import {
   addUniversityInfoMutation,
   updateUserCVDataMutation,
   updateUserMutation,
+  updateUserPermissionsMutation,
   updateUniversityInfoMutation,
   linkScopusIdMutation,
   addUserConnectionMutation,
@@ -611,7 +612,6 @@ export const addToUserGroup = async (userName, userGroup) => {
   return results["data"]["addToUserGroup"];
 };
 
-
 /**
  * Function to remove user from user group
  *
@@ -691,21 +691,14 @@ export const addSection = async (title, description, data_type, attributes) => {
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUser = async (
-  first_name,
-  last_name,
-  email,
-  role,
-  cwl,
-  vpp
-) => {
+export const addUser = async (first_name, last_name, email, role, cwl, vpp) => {
   const results = await executeGraphql(ADD_USER, {
     first_name,
     last_name,
     email,
     role,
     cwl,
-    vpp
+    vpp,
   });
   return results["data"]["addUser"];
 };
@@ -977,6 +970,18 @@ export const updateUserAffiliations = async (user_id, first_name, last_name, aff
     affiliations: affiliations,
   });
   return results["data"]["updateUserAffiliations"];
+};
+
+/**
+ * Updates user permissions (pending and approved status)
+ * @param {string} user_id - The ID of the user to update
+ * @param {boolean} pending - Whether the user is pending approval
+ * @param {boolean} approved - Whether the user is approved
+ * @returns {Promise<string>} String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateUserPermissions = async (user_id, pending, approved) => {
+  const results = await runGraphql(updateUserPermissionsMutation(user_id, pending, approved));
+  return results["data"]["updateUserPermissions"];
 };
 
 /**

@@ -40,6 +40,8 @@ type User {
   joined_timestamp: String
   cwl: String
   vpp: String
+  pending: Boolean
+  approved: Boolean
 }
 
 type DataSection {
@@ -463,6 +465,13 @@ type Mutation {
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )
+  
+  updateUserPermissions(
+    user_id: String!
+    pending: Boolean
+    approved: Boolean
+  ): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
   
   updateUserAffiliations(
     user_id: String!

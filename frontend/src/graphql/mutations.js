@@ -249,6 +249,20 @@ export const updateUserMutation = (
     }
 `;
 
+export const updateUserPermissionsMutation = (
+    user_id,
+    pending,
+    approved,
+) => `
+    mutation UpdateUserPermissions {
+        updateUserPermissions(
+            user_id: "${user_id}"
+            pending: ${pending}
+            approved: ${approved}
+        )
+    }
+`;
+
 export const UPDATE_SECTION = `
     mutation UpdateSection($data_section_id: String!, $archive: Boolean, $attributes: AWSJSON, $attributes_type: AWSJSON) {
         updateSection(

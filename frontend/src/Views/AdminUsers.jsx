@@ -6,6 +6,7 @@ import Filters from "../Components/Filters.jsx";
 import ManageUser from "../Components/ManageUser.jsx";
 import UserCard from "../Components/UserCard.jsx";
 import AddUserModal from "../Components/AddUserModal.jsx";
+import PendingRequestsModal from "../Components/PendingRequestsModal.jsx";
 import { getAllUsers, removeUser } from "../graphql/graphqlHelpers.js";
 
 // Custom Modal Component
@@ -29,8 +30,8 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = "conf
           <button
             onClick={type === "confirm" ? onConfirm : onClose}
             className={`px-4 py-2 rounded-lg text-white transition-colors ${
-              type === "confirm" 
-                ? "bg-red-600 hover:bg-red-700" 
+              type === "confirm"
+                ? "bg-red-600 hover:bg-red-700"
                 : type === "error"
                 ? "bg-red-600 hover:bg-red-700"
                 : "bg-blue-600 hover:bg-blue-700"
@@ -47,11 +48,14 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = "conf
 const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [rejectedUsers, setRejectedUsers] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isPendingRequestsModalOpen, setIsPendingRequestsModalOpen] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
 
   useEffect(() => {
@@ -62,9 +66,33 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     setLoading(true);
     try {
       const users = await getAllUsers();
-      const filteredUsers = users.filter((user) => user.email !== userInfo.email);
+
+      // Clear and rebuild the arrays
+      const pendingUsersList = [];
+      const approvedUsersList = [];
+      const rejectedUsersList = [];
+
+      users.forEach((user) => {
+        if (user.pending === true && user.approved === false) {
+          pendingUsersList.push(user);
+        } else if (user.pending == false && user.approved === false) {
+          rejectedUsersList.push(user);
+        } else if (user.pending == false && user.approved === true) {
+          approvedUsersList.push(user);
+        }
+      });
+
+      const filteredUsers = approvedUsersList.filter((user) => user.email !== userInfo.email);
       setUsers(filteredUsers);
-    } catch (error) {}
+      setPendingUsers(pendingUsersList);
+      setRejectedUsers(rejectedUsersList);
+
+      console.log("Pending users count:", pendingUsersList.length, pendingUsersList);
+      console.log("Rejected users count:", rejectedUsersList.length, rejectedUsersList);
+      console.log("Approved users count:", approvedUsersList.length, approvedUsersList);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
     setLoading(false);
   }
 
@@ -155,17 +183,17 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   };
 
   const handleAddUserSuccess = (result) => {
-    console.log('User created successfully');
-    
+    console.log("User created successfully");
+
     // Refresh the users list
     fetchAllUsers();
   };
 
   const handleRemoveUser = async (userId) => {
-    const userToRemove = users.find(user => user.user_id === userId);
-    
+    const userToRemove = users.find((user) => user.user_id === userId);
+
     if (!userToRemove) {
-      console.error('User not found');
+      console.error("User not found");
       return;
     }
 
@@ -176,8 +204,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
       "confirm",
       async () => {
         try {
-          console.log('Removing user:', userToRemove);
-          
+          console.log("Removing user:", userToRemove);
+
           // Call the removeUser function
           const result = await removeUser(
             userToRemove.user_id,
@@ -185,26 +213,21 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
             userToRemove.first_name,
             userToRemove.last_name
           );
-          
-          console.log('User removal result:', result);
-          
+
+          console.log("User removal result:", result);
+
           // Refresh the users list
           fetchAllUsers();
-          
+
           // Show success message
           showModal(
             "User Removed Successfully",
             `User ${userToRemove.first_name} ${userToRemove.last_name} has been successfully removed.`,
             "success"
           );
-          
         } catch (error) {
-          console.error('Error removing user:', error);
-          showModal(
-            "Error",
-            "Failed to remove user. Please try again.",
-            "error"
-          );
+          console.error("Error removing user:", error);
+          showModal("Error", "Failed to remove user. Please try again.", "error");
         }
       }
     );
@@ -223,15 +246,29 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users</h1>
-                <button 
-                  onClick={() => setIsAddUserModalOpen(true)} 
-                  className="btn btn-primary ml-4 gap-2"
+                <button
+                  onClick={() => setIsAddUserModalOpen(true)}
+                  className="btn btn-primary ml-4"
                   title="Add New User"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
                   </svg>
                   Add New User
+                </button>
+                <button
+                  onClick={() => setIsPendingRequestsModalOpen(true)}
+                  className="btn btn-primary ml-4"
+                  title="Pending Requests"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Pending Requests
                 </button>
                 <div className="m-4 flex">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
@@ -286,13 +323,22 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
           </div>
         )}
       </main>
-      
+
       <AddUserModal
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
         onSuccess={handleAddUserSuccess}
       />
-      
+
+      <PendingRequestsModal
+        isOpen={isPendingRequestsModalOpen}
+        pendingUsers={pendingUsers}
+        setPendingUsers={setPendingUsers}
+        rejectedUsers={rejectedUsers}
+        setRejectedUsers={setRejectedUsers}
+        onClose={() => setIsPendingRequestsModalOpen(false)}
+      />
+
       <ConfirmModal
         isOpen={modal.isOpen}
         onClose={closeModal}

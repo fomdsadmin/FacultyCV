@@ -1,16 +1,18 @@
 import { Draggable } from "react-beautiful-dnd"
-import { FaTimesCircle, FaGripVertical } from "react-icons/fa";
+import { FaTimesCircle, FaGripVertical, FaEdit } from "react-icons/fa";
 import DroppableSectionList from "./DroppableSectionList/DroppableSectionList";
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 import { useTemplateModifier } from "../../TemplateModifierContext";
 import React, { useState } from "react";
+import { useEffect } from "react";
 
 const DraggableGroup = ({ group, groupIndex }) => {
 
     const { HIDDEN_GROUP_ID, groups, setGroups } = useTemplateModifier();
     const [showRenameModal, setShowRenameModal] = useState(false);
     const [newGroupTitle, setNewGroupTitle] = useState(group.title);
+    const [isModified, setIsModified] = useState(false);
 
     const onRemoveGroup = () => {
         var updatedGroups = [...groups];
@@ -28,6 +30,10 @@ const DraggableGroup = ({ group, groupIndex }) => {
 
         setGroups(updatedGroups);
     }
+
+    useEffect(() => {
+        setIsModified(group.prepared_sections.some(section => section.modified))
+    }, [group])
 
     const handleRenameGroup = () => {
         const updatedGroups = groups.map(g =>
@@ -49,14 +55,30 @@ const DraggableGroup = ({ group, groupIndex }) => {
                     <div className="flex justify-between items-center w-full">
                         <div className="flex items-center gap-2">
                             {!isHiddenGroup && (
-                                <div 
+                                <div
                                     {...provided.dragHandleProps}
                                     className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"
                                 >
                                     <FaGripVertical className="h-4 w-4 text-gray-500" />
                                 </div>
                             )}
-                            <h2 className="font-bold text-lg">{group.title}</h2>
+                            <h2 className="font-bold text-lg flex items-center gap-1">
+                                {group.title}
+                                {isModified && (
+                                    <div
+                                        className="ml-2 flex items-center gap-1 text-yellow-500 hover:text-yellow-700 focus:outline-none relative group"
+                                        style={{ background: 'none', border: 'none', padding: 0 }}
+                                    >
+                                        <FaEdit />
+                                        <span className="text-xs font-semibold">Modified</span>
+                                        <div
+                                            className="absolute top-full left-0 mt-1 px-2 py-1 bg-black text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            This group has modified sections
+                                        </div>
+                                    </div>
+                                )}
+                            </h2>
                             {!isHiddenGroup && (
                                 <button
                                     className="ml-2 px-2 py-1 text-blue-500 hover:text-blue-700 border border-blue-300 rounded text-xs"
@@ -68,11 +90,11 @@ const DraggableGroup = ({ group, groupIndex }) => {
                             )}
                         </div>
                         {group.id !== HIDDEN_GROUP_ID && (
-                            <button 
+                            <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onRemoveGroup();
-                                }} 
+                                }}
                                 className="btn btn-xs btn-circle btn-ghost"
                             >
                                 <FaTimesCircle className="h-6 w-6 text-red-500" />
