@@ -93,7 +93,7 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
       const timestamp = Date.now();
       const fileName = selectedFile.name.split(".")[0];
       const fileExtension = selectedFile.name.split(".")[1];
-      const fileKey = `import/${fileName}_${fileExtension}`;
+      const fileKey = `${fileName}_${fileExtension}`;
 
       console.log("File Key:", fileKey);
 
@@ -157,7 +157,7 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-6">
         <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-zinc-600">Import Users</h2>
