@@ -1,5 +1,5 @@
-import React from "react";
-import { FaRegCalendarAlt } from "react-icons/fa"; // Add at the top if using react-icons
+import React, { useState } from "react";
+import { FaRegCalendarAlt, FaChevronDown, FaChevronUp } from "react-icons/fa"; // Add at the top if using react-icons
 
 const sc3_link = "https://universitycounsel.ubc.ca/policies/coi-policy/";
 const unicouncil_link = "https://universitycounsel.ubc.ca/subject-areas/coi/";
@@ -39,6 +39,21 @@ const DeclarationForm = ({
   validationErrors = {},
   setValidationErrors,
 }) => {
+  // State for managing section collapse/expand
+  const [expandedSections, setExpandedSections] = useState({
+    coi: true, // Conflict of Interest expanded by default
+    fomMerit: false,
+    promotion: false,
+    honorific: false,
+  });
+
+  // Toggle section expansion
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
   // Helper to clear error for a field
   const clearError = (field) => {
     if (validationErrors[field]) {
@@ -131,107 +146,124 @@ const DeclarationForm = ({
         </div>
 
         <div id="declaration-field-coi">
-          <h2 className="text-lg font-semibold mb-3">
-            Conflict of Interest and Commitment Declaration <span className="text-red-500">*</span>
-          </h2>
-          <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border max-h-96 overflow-y-auto border-r-8 border-r-blue-500">
-            <p className="text-gray-500">
-              In accordance with{" "}
-              <a
-                href={sc3_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                style={{ textDecorationThickness: "2px" }}
-              >
-                UBC Policy SC3
-              </a>
-              , you must maintain up-to-date Conflict of Interest and Conflict of Commitment declarations. For more
-              information regarding Conflict of Interest and Commitment, please refer to the
-              <a
-                href={unicouncil_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                style={{ textDecorationThickness: "2px" }}
-              >
-                {" "}
-                Office of the University Counsel{" "}
-              </a>
-              and the
-              <a
-                href={orcs_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                style={{ textDecorationThickness: "2px" }}
-              >
-                {" "}
-                UBC Office of Research Services.
-              </a>
-            </p>
-            <br />
-            <p className="text-gray-500">
-              Please indicate whether your Conflict of Interest and Conflict of Commitment declarations are up to date.
-            </p>
-            <select
-              className={`select select-bordered w-3/5 mt-5 ${validationErrors.coi ? "border-red-500" : ""}`}
-              value={coi}
-              onChange={(e) => {
-                setCoi(e.target.value);
-                clearError("coi");
-              }}
-              required
-            >
-              <option value=""></option>
-              <option value="YES">
-                Yes, my Conflict of Interest and Conflict of Commitment declarations are up to date.
-              </option>
-              <option value="NO">
-                No, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.
-              </option>
-            </select>
-            {validationErrors.coi && <div className="text-red-500 text-sm mt-1">{validationErrors.coi}</div>}
-
-            <div className="mt-4 flex items-center">
-              <label className="block text-base font-semibold">
-                <span className="text-gray-700 mr-4">
-                  Date of Submission <span className="text-red-500">*</span>
-                </span>
-              </label>
-              <div className="relative w-56 ">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                  <FaRegCalendarAlt />
-                </span>
-                <input
-                  type="date"
-                  className={`
-                    pl-10 pr-4 py-2 rounded-lg border transition-colors duration-150 w-full
-                    text-base bg-white shadow-sm
-                    border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200
-                    ${validationErrors.coiSubmissionDate ? "border-red-500 ring-2 ring-red-200" : ""}
-                  `}
-                  value={coiSubmissionDate}
-                  onChange={(e) => {
-                    setCoiSubmissionDate(e.target.value);
-                    validateSubmissionDate(e.target.value, "coiSubmissionDate");
-                  }}
-                  placeholder="Select submission date"
-                  required
-                />
-              </div>
-            </div>
-            {validationErrors.coiSubmissionDate && (
-              <div className="text-red-500 text-sm mt-2">{validationErrors.coiSubmissionDate}</div>
-            )}
+          <div 
+            className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
+            onClick={() => toggleSection('coi')}
+          >
+            <h2 className="text-lg font-semibold">
+              Conflict of Interest and Commitment Declaration <span className="text-red-500">*</span>
+            </h2>
+            {expandedSections.coi ? <FaChevronUp /> : <FaChevronDown />}
           </div>
+          
+          {expandedSections.coi && (
+            <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border max-h-96 overflow-y-auto border-r-8 border-r-blue-500 mt-3">
+              <p className="text-gray-500">
+                In accordance with{" "}
+                <a
+                  href={sc3_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
+                  style={{ textDecorationThickness: "2px" }}
+                >
+                  UBC Policy SC3
+                </a>
+                , you must maintain up-to-date Conflict of Interest and Conflict of Commitment declarations. For more
+                information regarding Conflict of Interest and Commitment, please refer to the
+                <a
+                  href={unicouncil_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
+                  style={{ textDecorationThickness: "2px" }}
+                >
+                  {" "}
+                  Office of the University Counsel{" "}
+                </a>
+                and the
+                <a
+                  href={orcs_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
+                  style={{ textDecorationThickness: "2px" }}
+                >
+                  {" "}
+                  UBC Office of Research Services.
+                </a>
+              </p>
+              <br />
+              <p className="text-gray-500">
+                Please indicate whether your Conflict of Interest and Conflict of Commitment declarations are up to date.
+              </p>
+              <select
+                className={`select select-bordered w-3/5 mt-5 ${validationErrors.coi ? "border-red-500" : ""}`}
+                value={coi}
+                onChange={(e) => {
+                  setCoi(e.target.value);
+                  clearError("coi");
+                }}
+                required
+              >
+                <option value=""></option>
+                <option value="YES">
+                  Yes, my Conflict of Interest and Conflict of Commitment declarations are up to date.
+                </option>
+                <option value="NO">
+                  No, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.
+                </option>
+              </select>
+              {validationErrors.coi && <div className="text-red-500 text-sm mt-1">{validationErrors.coi}</div>}
+
+              <div className="mt-4 flex items-center">
+                <label className="block text-base font-semibold">
+                  <span className="text-gray-700 mr-4">
+                    Date of Submission <span className="text-red-500">*</span>
+                  </span>
+                </label>
+                <div className="relative w-56 ">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <FaRegCalendarAlt />
+                  </span>
+                  <input
+                    type="date"
+                    className={`
+                      pl-10 pr-4 py-2 rounded-lg border transition-colors duration-150 w-full
+                      text-base bg-white shadow-sm
+                      border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200
+                      ${validationErrors.coiSubmissionDate ? "border-red-500 ring-2 ring-red-200" : ""}
+                    `}
+                    value={coiSubmissionDate}
+                    onChange={(e) => {
+                      setCoiSubmissionDate(e.target.value);
+                      validateSubmissionDate(e.target.value, "coiSubmissionDate");
+                    }}
+                    placeholder="Select submission date"
+                    required
+                  />
+                </div>
+              </div>
+              {validationErrors.coiSubmissionDate && (
+                <div className="text-red-500 text-sm mt-2">{validationErrors.coiSubmissionDate}</div>
+              )}
+            </div>
+          )}
         </div>
 
         <div id="declaration-field-fomMerit">
-          <h2 className="text-lg font-semibold mb-3">
-            FOM Merit & PSA <span className="text-red-500">*</span>
-          </h2>
-          <div className="bg-gray-50 py-6 px-8  rounded-lg shadow-sm border">
+          <div 
+            className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
+            onClick={() => toggleSection('fomMerit')}
+          >
+            <h2 className="text-lg font-semibold">
+              FOM Merit & PSA <span className="text-red-500">*</span>
+            </h2>
+            {expandedSections.fomMerit ? <FaChevronUp /> : <FaChevronDown />}
+          </div>
+          
+          {expandedSections.fomMerit && (
+            <div className="bg-gray-50 py-6 px-8  rounded-lg shadow-sm border mt-3">
             <p className="text-gray-500">
               All eligible members{" "}
               <i>
@@ -371,14 +403,23 @@ const DeclarationForm = ({
             {validationErrors.psaSubmissionDate && (
               <div className="text-red-500 text-sm mt-2">{validationErrors.psaSubmissionDate}</div>
             )}
-          </div>
+            </div>
+          )}
         </div>
 
         <div id="declaration-field-promotion">
-          <h2 className="text-lg font-semibold mb-3">
-            FOM Promotion Review <span className="text-red-500">*</span>
-          </h2>
-          <div className="bg-gray-50 py-6 px-8  rounded-lg shadow-sm border">
+          <div 
+            className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
+            onClick={() => toggleSection('promotion')}
+          >
+            <h2 className="text-lg font-semibold">
+              FOM Promotion Review <span className="text-red-500">*</span>
+            </h2>
+            {expandedSections.promotion ? <FaChevronUp /> : <FaChevronDown />}
+          </div>
+          
+          {expandedSections.promotion && (
+            <div className="bg-gray-50 py-6 px-8  rounded-lg shadow-sm border mt-3">
             <p className="text-gray-500">
               {hasSelectedYear ? (
                 <>
@@ -617,12 +658,21 @@ const DeclarationForm = ({
             {validationErrors.promotionSubmissionDate && (
               <div className="text-red-500 text-sm mt-2">{validationErrors.promotionSubmissionDate}</div>
             )}
-          </div>
+            </div>
+          )}
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-3">FOM Honorific Impact Report</h2>
-          <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border overflow-y-auto">
+          <div 
+            className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
+            onClick={() => toggleSection('honorific')}
+          >
+            <h2 className="text-lg font-semibold">FOM Honorific Impact Report</h2>
+            {expandedSections.honorific ? <FaChevronUp /> : <FaChevronDown />}
+          </div>
+          
+          {expandedSections.honorific && (
+            <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border overflow-y-auto mt-3">
             <p className="text-gray-500">
               If you are the holder of a Faculty of Medicine Honorific (i.e., Chair, Professorship, Distinguished
               Scholar), please provide a summary of the impact your activities have had on the advancement of medical
@@ -664,7 +714,8 @@ const DeclarationForm = ({
               onChange={(e) => setHonorific(e.target.value)}
               rows={7}
             />
-          </div>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col justify-end">

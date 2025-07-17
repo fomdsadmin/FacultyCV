@@ -167,8 +167,8 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setHonorific(data?.honorific || "");
     setSupportAnticipated(data?.supportAnticipated || "");
     setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    }, 200);
   };
 
   // Handler for delete button
@@ -208,8 +208,8 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setHonorific("");
     setSupportAnticipated("");
     setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    }, 200);
   };
 
   // Reset fields on cancel and close form
@@ -410,15 +410,15 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         <div className="mb-8 max-w-6xl mx-auto px-0">
           <div className="space-y-6">
             {loading ? (
-              <div className="rounded-2xl bg-zinc-100 shadow-xl border-2 border-zinc-300 px-10 py-10 flex items-center justify-center text-lg text-gray-500">
+              <div className="rounded-2xl bg-zinc-100 shadow-xl border-2 border-zinc-300 px-10 py-6 flex items-center justify-center text-lg text-gray-500">
                 Loading...
               </div>
             ) : fetchError ? (
-              <div className="rounded-2xl bg-red-100 shadow-xl border-2 border-red-300 px-10 py-10 flex items-center justify-center text-lg text-red-500">
+              <div className="rounded-2xl bg-red-100 shadow-xl border-2 border-red-300 px-10 py-6 flex items-center justify-center text-lg text-red-500">
                 {fetchError}
               </div>
             ) : declarations.length === 0 ? (
-              <div className="rounded-2xl bg-zinc-100 shadow-xl border-2 border-zinc-300 px-10 py-10 flex items-center justify-center text-lg text-gray-500">
+              <div className="rounded-2xl bg-zinc-100 shadow-xl border-2 border-zinc-300 px-10 py-6 flex items-center justify-center text-lg text-gray-500">
                 No declarations found.
               </div>
             ) : (
