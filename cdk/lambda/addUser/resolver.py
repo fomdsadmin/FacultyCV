@@ -19,9 +19,11 @@ def addUser(arguments):
         last_name, 
         email, 
         role,
+        pending,
+        approved,
         cwl,
         vpp
-    ) VALUES (%s, %s, %s, %s, %s, %s)
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
 
     # Execute the query with the provided arguments
@@ -30,6 +32,8 @@ def addUser(arguments):
         arguments['last_name'],
         arguments['email'],
         arguments['role'],
+        arguments['pending'] if 'pending' in arguments else True,
+        arguments['approved'] if 'approved' in arguments else False,
         arguments['cwl'] if 'cwl' in arguments else '',
         arguments['vpp'] if 'vpp' in arguments else '',
     ))
