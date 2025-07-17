@@ -346,7 +346,7 @@ type Query {
   getPatentMatches(first_name: String!, last_name: String!): [Patent]
     @aws_auth(cognito_groups: ["Faculty", "Assistant"])
 
-  getPresignedUrl(jwt: String!, key: String!, type: String): String
+  getPresignedUrl(jwt: String!, key: String!, type: String, purpose: String): String
     @aws_auth(
       cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
     )

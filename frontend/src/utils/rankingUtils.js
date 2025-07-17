@@ -5,7 +5,7 @@ export const rankFields = (entry) => {
     "university/organization": 3,
     "university/organization/company": 4,
     year: 5,
-    dates: 6,
+    dates: 5,
     end: 6,
     end_date: 7,
     end_year: 7,   

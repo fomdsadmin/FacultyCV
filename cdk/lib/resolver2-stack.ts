@@ -12,6 +12,7 @@ import { Role } from "aws-cdk-lib/aws-iam";
 import { DatabaseStack } from "./database-stack";
 import { CVGenStack } from "./cvgen-stack";
 import { ApiStack } from "./api-stack";
+import { UserImportStack } from "./userimport-stack";
 
 export class Resolver2Stack extends cdk.Stack {
   constructor(
@@ -20,6 +21,7 @@ export class Resolver2Stack extends cdk.Stack {
     apiStack: ApiStack,
     databaseStack: DatabaseStack,
     cvGenStack: CVGenStack,
+    userImportStack: UserImportStack,
     props?: cdk.StackProps
   ) {
     super(scope, id, props);
@@ -309,6 +311,7 @@ export class Resolver2Stack extends cdk.Stack {
       "Query",
       {
         BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
+        USER_IMPORT_BUCKET_NAME: userImportStack.userImportS3Bucket.bucketName,
         USER_POOL_ISS: `https://cognito-idp.${
           this.region
         }.amazonaws.com/${apiStack.getUserPoolId()}`,
