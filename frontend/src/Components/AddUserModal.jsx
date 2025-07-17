@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  addUser,
-  getUser,
-  getAllUniversityInfo,
-  addToUserGroup,
-} from "../graphql/graphqlHelpers.js";
+import { addUser, getUser, getAllUniversityInfo, addToUserGroup } from "../graphql/graphqlHelpers.js";
 
 const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
@@ -112,7 +107,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         setError(`User not found in Cognito pool and was not added to database `);
         setLoading(false);
         return;
-      } else{
+      } else {
         // Step 2: Add user to database (since they don't exist)
         console.log("User found in pool, added to Cognito group, statusCode 200 OK");
         const cwlChecked = cwl ? cwl : "";
@@ -129,18 +124,9 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
           cwlChecked,
           vppChecked,
         });
-        const result = await addUser(
-          firstName,
-          lastName,
-          username,
-          role,
-          pending,
-          approved,
-          cwlChecked,
-          vppChecked
-        );
+        const result = await addUser(firstName, lastName, username, role, pending, approved, cwlChecked, vppChecked);
         console.log("User added to database successfully");
-      } 
+      }
 
       setLoading(false);
 
@@ -235,6 +221,9 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                 <p>
                   <strong>Email:</strong> {createdUser.username}
                 </p>
+                <p>
+                  <strong>Department:</strong> {createdUser.username}
+                </p>
                 {createdUser.cwl && (
                   <p>
                     <strong>CWL:</strong> {createdUser.cwl}
@@ -291,6 +280,18 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Email"
                   type="email"
+                  required
+                />
+              </div>
+              {/* TODO: Ask about primary and joint*/}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Department"
+                  type="department"
                   required
                 />
               </div>
@@ -419,13 +420,17 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
               )}
 
               <div className="flex gap-3 pt-4">
-                <button 
-                  type="button" 
-                  onClick={showUpdateRole ? () => {
-                    setShowUpdateRole(false);
-                    setExistingUser(null);
-                    setError("");
-                  } : handleClose} 
+                <button
+                  type="button"
+                  onClick={
+                    showUpdateRole
+                      ? () => {
+                          setShowUpdateRole(false);
+                          setExistingUser(null);
+                          setError("");
+                        }
+                      : handleClose
+                  }
                   className="btn btn-secondary flex-1"
                 >
                   Cancel

@@ -6,6 +6,7 @@ import Filters from "../Components/Filters.jsx";
 import ManageUser from "../Components/ManageUser.jsx";
 import UserCard from "../Components/UserCard.jsx";
 import AddUserModal from "../Components/AddUserModal.jsx";
+import ImportUserModal from "../Components/ImportUserModal.jsx";
 import PendingRequestsModal from "../Components/PendingRequestsModal.jsx";
 import { getAllUsers, removeUser } from "../graphql/graphqlHelpers.js";
 
@@ -56,6 +57,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isPendingRequestsModalOpen, setIsPendingRequestsModalOpen] = useState(false);
+  const [isImportUsersModalOpen, setIsImportUsersModalOpen] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
 
   useEffect(() => {
@@ -183,7 +185,6 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
 
   const handleAddUserSuccess = (result) => {
     console.log("User created successfully");
-
     // Refresh the users list
     fetchAllUsers();
   };
@@ -269,6 +270,17 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                   </svg>
                   Pending Requests ({pendingUsers.length})
                 </button>
+                <button
+                  onClick={() => setIsImportUsersModalOpen(true)}
+                  className="btn btn-primary ml-4"
+                  title={`Import Users`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 2a1 1 0 011 1v5.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L9 8.586V3a1 1 0 011-1z" />
+                    <path d="M3 14a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
+                  </svg>
+                  Import Users
+                </button>
                 <div className="m-4 flex">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
@@ -326,6 +338,12 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
       <AddUserModal
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
+        onSuccess={handleAddUserSuccess}
+      />
+
+      <ImportUserModal
+        isOpen={isImportUsersModalOpen}
+        onClose={() => setIsImportUsersModalOpen(false)}
         onSuccess={handleAddUserSuccess}
       />
 

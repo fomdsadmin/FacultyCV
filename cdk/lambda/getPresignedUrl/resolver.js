@@ -3,17 +3,17 @@ const { validateCognitoJwtFields } = require("aws-jwt-verify/cognito-verifier");
 const { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
-const getPresignedUrl = async (fileKey, type) => {
+const getPresignedUrl = async (fileKey, type, bucketName) => {
     const s3Client = new S3Client();
     const commandFunction = type == "GET" ? GetObjectCommand : PutObjectCommand;
-    const command = new commandFunction({ Bucket: process.env.BUCKET_NAME, Key: fileKey });
+    const command = new commandFunction({ Bucket: bucketName, Key: fileKey });
     return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 }
 
-const getLastModified = async (fileKey) => {
+const getLastModified = async (fileKey, bucketName) => {
     const s3Client = new S3Client();
     const input = {
-        Bucket: process.env.BUCKET_NAME,
+        Bucket: bucketName,
         Key: fileKey
     };
     try {
@@ -33,6 +33,7 @@ exports.lambda_handler = async(event, context) => {
     const jwt = event['arguments']['jwt'];
     const fileKey = event['arguments']['key'];
     const type = event['arguments']['type'];
+    const purpose = event['arguments']['purpose'] || "cv"; // Add this argument
 
     const verifier = JwtRsaVerifier.create([{
         issuer: process.env.USER_POOL_ISS,
@@ -56,20 +57,25 @@ exports.lambda_handler = async(event, context) => {
         return "FAILURE";
     }
 
-    // To store/get multiple tenant's CV's separately
-    const actualFileKey = payload.username + '/' + fileKey;
+    let bucketName;
+    let actualFileKey;
+    if (purpose === "user-import") {
+        bucketName = process.env.USER_IMPORT_BUCKET_NAME;
+        actualFileKey = 'import/' + fileKey; // Use import/ prefix to match S3 event notifications
+    } else {
+        bucketName = process.env.BUCKET_NAME;
+        actualFileKey = payload.username + '/' + fileKey;
+    }
 
-    // If the type is GET, then the corresponding .tex file should be created before the PDF requested
-    // Else PDF is outdated and the requester needs to wait
-    if (type == "GET") {
-        const lastModifiedLatex = await getLastModified(actualFileKey.replace('pdf', 'tex'));
-        const lastModifiedPdf = await getLastModified(actualFileKey);
+    // For CV GET requests, check freshness
+    if (purpose === "cv" && type == "GET") {
+        const lastModifiedLatex = await getLastModified(actualFileKey.replace('pdf', 'tex'), bucketName);
+        const lastModifiedPdf = await getLastModified(actualFileKey, bucketName);
         if (lastModifiedLatex == -1 || lastModifiedPdf == -1 || lastModifiedLatex > lastModifiedPdf) {
             return "WAIT";
         }
     }
 
-    const url = await getPresignedUrl(actualFileKey, type);
-
+    const url = await getPresignedUrl(actualFileKey, type, bucketName);
     return url;
 }
