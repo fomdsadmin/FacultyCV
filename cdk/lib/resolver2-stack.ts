@@ -9,6 +9,7 @@ import {
   Runtime,
 } from "aws-cdk-lib/aws-lambda";
 import { Role } from "aws-cdk-lib/aws-iam";
+import * as iam from "aws-cdk-lib/aws-iam";
 import { DatabaseStack } from "./database-stack";
 import { CVGenStack } from "./cvgen-stack";
 import { ApiStack } from "./api-stack";
@@ -36,6 +37,19 @@ export class Resolver2Stack extends cdk.Stack {
     const requestsLayer = apiStack.getLayers()["requests"];
     const awsJwtVerifyLayer = apiStack.getLayers()["aws-jwt-verify"];
     const resolverRole = apiStack.getResolverRole();
+
+    // Grant resolver role access to user import S3 bucket
+    resolverRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "s3:*Object",
+        "s3:ListBucket",
+      ],
+      resources: [
+        userImportStack.userImportS3Bucket.bucketArn + "/*", 
+        userImportStack.userImportS3Bucket.bucketArn
+      ]
+    }));
 
     // GraphQL Resolvers
     const assignResolver = (

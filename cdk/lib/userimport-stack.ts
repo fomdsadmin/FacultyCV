@@ -38,7 +38,14 @@ export class UserImportStack extends Stack {
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
-      bucketName: `${resourcePrefix}-${Stack.of(this).account}-user-import-s3-bucket`
+      bucketName: `${resourcePrefix}-${Stack.of(this).account}-user-import-s3-bucket`,
+      cors: [{
+        allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.POST, s3.HttpMethods.DELETE, s3.HttpMethods.HEAD],
+        allowedOrigins: ["http://localhost:3000", "https://dev.360.med.ubc.ca"], // In production, replace with specific origins like ["https://yourdomain.com", "http://localhost:3000"]
+        allowedHeaders: ["*"],
+        exposedHeaders: ["ETag"],
+        maxAge: 3000
+      }]
     });
 
     // Create folder structure for the user to upload user import files

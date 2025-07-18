@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { addUser, getUser, getAllUniversityInfo, addToUserGroup } from "../graphql/graphqlHelpers.js";
+import { addUser, getUser, getAllUniversityInfo, addToUserGroup, updateUser } from "../graphql/graphqlHelpers.js";
 
 const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
@@ -10,6 +10,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [role, setRole] = useState("Faculty");
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [department, setDepartment] = useState("");
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -65,6 +66,11 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
 
     if (!usernameRegex.test(username) && !username2Regex.test(username)) {
       setError("Email must end with @ubc.ca or @[department].ubc.ca");
+      return;
+    }
+
+    if (!department) {
+      setError("Please select a department");
       return;
     }
 
@@ -124,8 +130,39 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
           cwlChecked,
           vppChecked,
         });
-        const result = await addUser(firstName, lastName, username, role, pending, approved, cwlChecked, vppChecked);
+        const result = await addUser(firstName, lastName, username, role, cwlChecked, vppChecked);
         console.log("User added to database successfully");
+        
+        // Step 3: Update user with department information
+        if (department) {
+          console.log("Updating user with department information:", department);
+          const userDetails = await getUser(username);
+          await updateUser(
+            userDetails.user_id,
+            firstName,
+            lastName,
+            "", // preferred_name
+            username,
+            role,
+            "", // bio
+            "", // rank
+            "", // institution
+            department, // primary_department
+            "", // secondary_department
+            "", // primary_faculty
+            "", // secondary_faculty
+            "", // primary_affiliation
+            "", // secondary_affiliation
+            "", // campus
+            "", // keywords
+            "", // institution_user_id
+            "", // scopus_id
+            "", // orcid_id
+            cwlChecked,
+            vppChecked
+          );
+          console.log("User department updated successfully");
+        }
       }
 
       setLoading(false);
@@ -139,6 +176,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         cwl: cwl,
         vpp: vpp,
         role: role,
+        department: department,
       });
 
       // Clear form fields but keep success message
@@ -150,6 +188,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       setRole("Faculty");
       setIsDepartmentAdmin(false);
       setSelectedDepartment("");
+      setDepartment("");
       setError("");
 
       // Notify parent component of success
@@ -161,6 +200,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         cwl: cwl,
         vpp: vpp,
         role: role,
+        department: department,
       });
     } catch (error) {
       console.error("Error creating user:", error);
@@ -177,6 +217,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     setRole("Faculty");
     setIsDepartmentAdmin(false);
     setSelectedDepartment("");
+    setDepartment("");
     setError("");
     setExistingUser(null);
     setShowUpdateRole(false);
@@ -222,7 +263,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   <strong>Email:</strong> {createdUser.username}
                 </p>
                 <p>
-                  <strong>Department:</strong> {createdUser.username}
+                  <strong>Department:</strong> {createdUser.department}
                 </p>
                 {createdUser.cwl && (
                   <p>
@@ -286,14 +327,19 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
               {/* TODO: Ask about primary and joint*/}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                <input
+                <select
                   className="input input-bordered w-full text-sm"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Department"
-                  type="department"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
                   required
-                />
+                >
+                  <option value="">Select a department...</option>
+                  {departments.map((dept, index) => (
+                    <option key={index} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
