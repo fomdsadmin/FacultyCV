@@ -38,18 +38,7 @@ export class Resolver2Stack extends cdk.Stack {
     const awsJwtVerifyLayer = apiStack.getLayers()["aws-jwt-verify"];
     const resolverRole = apiStack.getResolverRole();
 
-    // Grant resolver role access to user import S3 bucket
-    resolverRole.addToPolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: [
-        "s3:*Object",
-        "s3:ListBucket",
-      ],
-      resources: [
-        userImportStack.userImportS3Bucket.bucketArn + "/*", 
-        userImportStack.userImportS3Bucket.bucketArn
-      ]
-    }));
+    // Note: S3 permissions for user import bucket will be handled separately
 
     // GraphQL Resolvers
     const assignResolver = (
@@ -325,7 +314,7 @@ export class Resolver2Stack extends cdk.Stack {
       "Query",
       {
         BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
-        USER_IMPORT_BUCKET_NAME: userImportStack.userImportS3Bucket.bucketName,
+        USER_IMPORT_BUCKET_NAME: userImportStack.getUserImportBucketName(),
         USER_POOL_ISS: `https://cognito-idp.${
           this.region
         }.amazonaws.com/${apiStack.getUserPoolId()}`,

@@ -269,6 +269,19 @@ export class ApiStack extends cdk.Stack {
       resources: [cvGenStack.cvS3Bucket.bucketArn + "/*", cvGenStack.cvS3Bucket.bucketArn]
     }));
 
+    // Grant S3 permissions for user import bucket (using constructed ARN to avoid circular dependency)
+    this.resolverRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "s3:*Object",
+        "s3:ListBucket",
+      ],
+      resources: [
+        `arn:aws:s3:::${resourcePrefix}-${this.account}-user-import-s3-bucket/*`,
+        `arn:aws:s3:::${resourcePrefix}-${this.account}-user-import-s3-bucket`
+      ]
+    }));
+
     this.resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
