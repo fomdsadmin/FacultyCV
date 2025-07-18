@@ -225,7 +225,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
               }`}
               onClick={() => onSelect(filter)}
             >
-              {filter}
+              {filter.split(".")[1] ? filter.split(".")[1].trim() : filter}
             </button>
           ))}
         </div>

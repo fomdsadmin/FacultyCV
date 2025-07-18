@@ -6,13 +6,19 @@ const WorkSection = ({ onClick, id, title, category, info }) => {
         onClick(id);
     }
 
+    const arr = title.split(".");
+    const name = arr[arr.length - 1];
+    const catArr = category.split(".");
+    const catName = catArr[catArr.length - 1];
+
+
     return (                
         <div className="bg-base-100 pr-5 my-3 m-4 p-4 shadow-glow rounded-lg">
             <div className="flex justify-between items-center ">
                 
                 <div className="flex flex-col justify-center">
-                    <h3 className="card-title">{title}</h3>
-                    <p>{category}</p>
+                    <h3 className="card-title">{name ? name.trim() : title}</h3>
+                    <p>{catName ? catName.trim() : category}</p>
                     <p className="text-sm">{info}</p>
                 </div>
 
