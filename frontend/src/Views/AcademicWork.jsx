@@ -121,7 +121,18 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
       navigate("/faculty/academic-work");
     } else {
       const categorySlug = slugify(selectedCategory);
-      navigate(`/faculty/academic-work/${categorySlug}`);
+      let categorySlugClean = "";
+      // 12-scholarly-and-professional-activities -> scholarly-and-professional-activities
+      // publications-and-patents -> publications-and-patents
+      if (categorySlug.split("-")[0].match(/\d/)) {
+        // Category slug with number prefix
+        categorySlugClean = categorySlug.split("-").slice(1).join("-");
+      } else {
+        // Category slug without number prefix
+        categorySlugClean = categorySlug;
+      }
+      // fix for categories that have a number prefix
+      navigate(`/faculty/academic-work/${categorySlugClean}`);
     }
   };
 
@@ -157,8 +168,24 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
+      let categorySlugClean = "";
+      if (categorySlug.split("-")[0].match(/\d/)) {
+        // Category slug with number prefix
+        categorySlugClean = categorySlug.split("-").slice(1).join("-");
+      } else {
+        // Category slug without number prefix
+        categorySlugClean = categorySlug;
+      }
       const titleSlug = slugify(section.title);
-      navigate(`/faculty/academic-work/${categorySlug}/${titleSlug}`);
+      let titleSlugClean = "";
+      if (titleSlug.split("-")[0].match(/\d/)) {
+        // Title slug with number prefix (e.g., 8a, 8c-d, 8)
+        titleSlugClean = titleSlug.split("-").slice(1).join("-");
+      } else {
+        // Title slug without number prefix
+        titleSlugClean = titleSlug;
+      }
+      navigate(`/faculty/academic-work/${categorySlugClean}/${titleSlugClean}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -183,9 +210,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
     const search = searchTerm.toLowerCase();
-    const matchesSearch =
-      section.toLowerCase().includes(search) ||
-      category.toLowerCase().includes(search);
+    const matchesSearch = section.toLowerCase().includes(search) || category.toLowerCase().includes(search);
     const matchesFilter = !activeTab || category === activeTab;
     return matchesSearch && matchesFilter;
   });
@@ -194,7 +219,13 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   useEffect(() => {
     if (category) {
       // Find the original category name from slug
-      const matched = filters.find((f) => slugify(f) === category);
+      const matched = filters.find((f) => {
+        const fullSlug = slugify(f);
+        const cleanedSlug = fullSlug.split("-")[0].match(/\d/) 
+          ? fullSlug.split("-").slice(1).join("-") 
+          : fullSlug;
+        return fullSlug === category || cleanedSlug === category;
+      });
       setActiveTab(matched || null);
     } else {
       setActiveTab(null);
@@ -327,9 +358,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                   activeSection.title === "Publications" ||
                   activeSection.title.includes("Patents") ||
                   activeSection.title.includes("Research or Equivalent Grants")
-                ) && (
-                  <GenericSection user={userInfo} section={activeSection} onBack={handleBack} />
-                )}
+                ) && <GenericSection user={userInfo} section={activeSection} onBack={handleBack} />}
               </div>
             )}
           </>
