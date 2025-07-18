@@ -9,22 +9,30 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import { triggers } from "aws-cdk-lib";
 import { DatabaseStack } from "./database-stack";
-import { ApiStack } from "./api-stack";
 import { Effect, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { LayerVersion } from "aws-cdk-lib/aws-lambda";
+
+export interface UserImportStackProps extends StackProps {
+  userPoolId: string;
+  psycopgLayer: LayerVersion;
+  databaseConnectLayer: LayerVersion;
+}
 
 export class UserImportStack extends Stack {
 
   public readonly userImportS3Bucket: s3.Bucket;
-
+  
+  public getUserImportBucketName = () => this.userImportS3Bucket.bucketName;
+  public getUserImportBucketArn = () => this.userImportS3Bucket.bucketArn;
+  
   constructor(
     scope: Construct,
     id: string,
     vpcStack: VpcStack,
     databaseStack: DatabaseStack,
-    apiStack: ApiStack,
-    props?: StackProps
+    userImportProps: UserImportStackProps
   ) {
-    super(scope, id, props);
+    super(scope, id, userImportProps);
 
     let resourcePrefix = this.node.tryGetContext('prefix');
     if (!resourcePrefix)
@@ -48,9 +56,10 @@ export class UserImportStack extends Stack {
       }]
     });
 
+
     // Create folder structure for the user to upload user import files
     const createUserImportFolders = new triggers.TriggerFunction(this, "facultyCV-createUserImportFolders", {
-      runtime: lambda.Runtime.PYTHON_3_11,
+      runtime: lambda.Runtime.PYTHON_3_9,
       functionName: `${resourcePrefix}-createUserImportFolders`,
       handler: "createUserImportFolders.lambda_handler",
       code: lambda.Code.fromAsset("lambda/create-user-import-folders"),
@@ -81,14 +90,14 @@ export class UserImportStack extends Stack {
         memorySize: 512,
         environment: {
             'DB_PROXY_ENDPOINT': databaseStack.rdsProxyEndpoint,
-            'USER_POOL_ID': apiStack.getUserPoolId(),
+            'USER_POOL_ID': userImportProps.userPoolId,
             'BUCKET_NAME': this.userImportS3Bucket.bucketName
         },
         vpc: vpcStack.vpc,
         vpcSubnets: {
             subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
-        layers: [apiStack.getLayers()['psycopg2'], apiStack.getLayers()['databaseConnect']]
+        layers: [userImportProps.psycopgLayer, userImportProps.databaseConnectLayer]
     });
     
     // Add S3 permissions for the user import Lambda

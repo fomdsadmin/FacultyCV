@@ -37,15 +37,18 @@ const apiStack = new ApiStack(app, `${resourcePrefix}-ApiStack`, databaseStack, 
    {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
+const userImportStack = new UserImportStack(app, `${resourcePrefix}-UserImportStack`, vpcStack, databaseStack, {
+  userPoolId: apiStack.getUserPoolId(),
+  psycopgLayer: apiStack.getLayers()['psycopg2'],
+  databaseConnectLayer: apiStack.getLayers()['databaseConnect'],
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
+});
+
 const resolverStack = new ResolverStack(app, `${resourcePrefix}-ResolverStack`, apiStack, databaseStack, cvGenStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
 const grantDataStack = new GrantDataStack(app, `${resourcePrefix}-GrantDataStack`, vpcStack, databaseStack,
-  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-);
-
-const userImportStack = new UserImportStack(app, `${resourcePrefix}-UserImportStack`, vpcStack, databaseStack, apiStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 
