@@ -59,7 +59,7 @@ export class UserImportStack extends Stack {
 
     // Create folder structure for the user to upload user import files
     const createUserImportFolders = new triggers.TriggerFunction(this, "facultyCV-createUserImportFolders", {
-      runtime: lambda.Runtime.PYTHON_3_11,
+      runtime: lambda.Runtime.PYTHON_3_9,
       functionName: `${resourcePrefix}-createUserImportFolders`,
       handler: "createUserImportFolders.lambda_handler",
       code: lambda.Code.fromAsset("lambda/create-user-import-folders"),
