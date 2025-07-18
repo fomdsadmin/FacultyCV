@@ -66,7 +66,7 @@ export class UserImportStack extends Stack {
 
     // Lambda function to process user import files
     const processUserImport = new lambda.Function(this, "facultyCV-processUserImport", {
-        runtime: lambda.Runtime.PYTHON_3_11,
+        runtime: lambda.Runtime.PYTHON_3_9,
         functionName: `${resourcePrefix}-processUserImport`,
         handler: "lambda_function.lambda_handler",
         code: lambda.Code.fromAsset("lambda/processUserImport"),
