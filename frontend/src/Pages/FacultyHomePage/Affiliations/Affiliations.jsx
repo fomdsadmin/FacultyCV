@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useApp } from "../../../Contexts/AppContext";
 import { useFaculty } from "../FacultyContext";
-import { getUserAffiliations, updateUserAffiliations } from "../../../graphql/graphqlHelpers.js";
+import { getUserAffiliations, updateUserAffiliations, updateUser, getUser } from "../../../graphql/graphqlHelpers.js";
 import SaveButton from "../SaveButton";
 import AcademicUnitSection from "./AcademicUnitSection";
 import ResearchAffiliationSection from "./ResearchAffiliationSection";
@@ -96,6 +96,16 @@ const Affiliations = () => {
         JSON.stringify(updatedAffiliationsData)
       );
 
+      // update userInfo for primary faculty and primary Department
+      console.log(facultyData.primary_faculty, userInfo.primary_faculty);
+      await updateUser(userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.preferred_name, userInfo.email, userInfo.role,
+        userInfo.bio, userInfo.rank, userInfo.institution, userInfo.primary_department, userInfo.secondary_department,
+        facultyData.primary_faculty, userInfo.secondary_faculty, "", "", userInfo.campus, '', '', '', '', '', ''
+      );
+
+      const res = await getUser(userInfo.email); // Refresh user info after update
+      console.log("Updated user info:", res); 
+
       // Log the save action
       await logAction(AUDIT_ACTIONS.UPDATE_AFFILIATIONS);
 
@@ -132,27 +142,62 @@ const Affiliations = () => {
 
           // Objects - make sure we properly initialize with data
           setFacultyData({
-            primary_faculty: data.faculty?.primary_faculty || "",
-            secondary_faculty: data.faculty?.secondary_faculty || "",
+            primary_faculty: data.faculty?.primary_faculty || userInfo.primary_faculty || "",
+            secondary_faculty: data.faculty?.secondary_faculty || userInfo.secondary_faculty || "",
           });
 
           setInstitutionData({
-            institution: data.institution?.institution || "",
-            campus: data.institution?.campus || "",
+            institution: data.institution?.institution || userInfo.institution || "",
+            campus: data.institution?.campus || userInfo.campus || "",
           });
 
           // Arrays of objects
-          setAcademicUnits(Array.isArray(data.academic_units) ? data.academic_units : []);
+          const academicUnitsData = Array.isArray(data.academic_units) ? data.academic_units : [];
+          
+          // If no academic units exist, autofill with primary department
+          if (academicUnitsData.length === 0 && userInfo.primary_department) {
+            academicUnitsData.push({
+              unit: userInfo.primary_department,
+              rank: "",
+              title: "",
+              percent: "100",
+              additional_info: {
+                division: "",
+                program: "",
+                start: "",
+                end: ""
+              }
+            });
+          }
+          
+          setAcademicUnits(academicUnitsData);
           setResearchAffiliations(Array.isArray(data.research_affiliations) ? data.research_affiliations : []);
           setHospitalAffiliations(Array.isArray(data.hospital_affiliations) ? data.hospital_affiliations : []);
 
-          console.log(academicUnits);
+          console.log(academicUnitsData);
         } else {
           console.log("No affiliations data found");
-          // Initialize with empty defaults
+          // Initialize with defaults - autofill academic units with primary department
           setFacultyData({});
           setInstitutionData({});
-          setAcademicUnits([]);
+          
+          const defaultAcademicUnits = [];
+          if (userInfo.primary_department) {
+            defaultAcademicUnits.push({
+              unit: userInfo.primary_department,
+              rank: "",
+              title: "",
+              percent: "100",
+              additional_info: {
+                division: "",
+                program: "",
+                start: "",
+                end: ""
+              }
+            });
+          }
+          
+          setAcademicUnits(defaultAcademicUnits);
           setResearchAffiliations([]);
           setHospitalAffiliations([]);
         }
