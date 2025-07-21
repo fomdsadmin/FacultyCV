@@ -53,7 +53,7 @@ export const Dropdown = ({ label, ...props }) => (
 
 const Affiliations = () => {
   const { faculties, institutions, campuses } = useFaculty();
-  const { userInfo } = useApp();
+  const { userInfo, setUserInfo } = useApp();
 
   // Dynamic data placeholders
   const [affiliationsData, setAffiliationsData] = useState({});
@@ -146,6 +146,30 @@ const Affiliations = () => {
 
       const res = await getUser(userInfo.email); // Refresh user info after update
       console.log("Updated user info:", res);
+      console.log("Current facultyData before update:", facultyData);
+      console.log("Current institutionData before update:", institutionData);
+      
+      // Update the context with the new user info to prevent form reset
+      if (res) {
+        setUserInfo(res);
+        
+        // Also update local form state to ensure immediate UI consistency
+        const newFacultyData = {
+          primary_faculty: res.primary_faculty || facultyData.primary_faculty || "",
+          secondary_faculty: res.secondary_faculty || facultyData.secondary_faculty || "",
+        };
+        
+        const newInstitutionData = {
+          institution: res.institution || institutionData.institution || "",
+          campus: res.campus || institutionData.campus || "",
+        };
+
+        console.log("Setting new facultyData:", newFacultyData);
+        console.log("Setting new institutionData:", newInstitutionData);
+
+        setFacultyData(newFacultyData);
+        setInstitutionData(newInstitutionData);
+      }
 
       // Log the save action
       await logAction(AUDIT_ACTIONS.UPDATE_AFFILIATIONS);
@@ -282,6 +306,12 @@ const Affiliations = () => {
               userInfo.cwl,
               userInfo.vpp
             );
+            
+            // Update the context with the new user info
+            const refreshedUser = await getUser(userInfo.email);
+            if (refreshedUser) {
+              setUserInfo(refreshedUser);
+            }
           }
         } else {
           console.log("No affiliations data found");
@@ -359,6 +389,12 @@ const Affiliations = () => {
               userInfo.cwl,
               userInfo.vpp
             );
+            
+            // Update the context with the new user info
+            const refreshedUser = await getUser(userInfo.email);
+            if (refreshedUser) {
+              setUserInfo(refreshedUser);
+            }
           }
 
           setFacultyData({
@@ -380,6 +416,23 @@ const Affiliations = () => {
       fetchAffiliations();
     }
   }, [userInfo]);
+
+  // Effect to update local form state when userInfo changes (e.g., after save)
+  useEffect(() => {
+    if (userInfo) {
+      setFacultyData((prev) => ({
+        ...prev,
+        primary_faculty: userInfo.primary_faculty || prev.primary_faculty || "",
+        secondary_faculty: userInfo.secondary_faculty || prev.secondary_faculty || "",
+      }));
+
+      setInstitutionData((prev) => ({
+        ...prev,
+        institution: userInfo.institution || prev.institution || "",
+        campus: userInfo.campus || prev.campus || "",
+      }));
+    }
+  }, [userInfo.primary_faculty, userInfo.secondary_faculty, userInfo.institution, userInfo.campus]);
 
   // Add handlers for institution and faculty data
   const handleInstitutionChange = (e) => {
