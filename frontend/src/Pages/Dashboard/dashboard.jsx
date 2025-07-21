@@ -49,12 +49,12 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       />
 
       {/* Main content */}
-      <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] 2xl:px-[10vw] w-full overflow-auto py-6">
+      <main className="px-[1vw] sm:px-[2vw] md:px-[3vw] lg:px-[4vw] w-full overflow-auto py-4">
         {/* Header */}
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex justify-between items-start mb-2">
           <div>
             <div className="text-xl font-semibold text-gray-800">
-              Welcome Dr. {userInfo.last_name}
+              Welcome, Dr. {userInfo.last_name}
             </div>
             <div className="text-sm text-gray-500">
               Last visit: 6 Nov 2025, 3:16PM (static)
@@ -67,7 +67,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           </div>
         </div>
         {/* Notifications Section */}
-        <div className="py-6 mb-4 grid lg:grid-cols-[6fr_4fr] md:grid-cols-1 sm:grid-cols-1 gap-x-4">
+        <div className="py-2 mb-4 grid lg:grid-cols-[6fr_4fr] md:grid-cols-1 sm:grid-cols-1 gap-x-4">
           {/* User Notification Section */}
           <div className="mb-4">
             <h1 className="text-lg font-semibold">Overview</h1>
@@ -363,8 +363,8 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         </div>
 
         {/* 📈 Publication Chart Section */}
-        <div className="mb-8 border border-black border-opacity-20 rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Analytics</h2>
+        <div className="mb-8 border border-black border-opacity-20 rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-2 mx-2">Analytics</h2>
           <Dashboard userInfo={userInfo} />
         </div>
 

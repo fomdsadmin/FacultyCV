@@ -366,7 +366,7 @@ const Dashboard = ({ userInfo }) => {
 
   // Summary Cards Component
   const SummaryCards = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-6 mb-4 mt-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-2 mb-2 mt-2">
       <AnalyticsCard title="Total Publications" value={totalPublications} />
       <AnalyticsCard title="Total Grants" value={totalGrants} />
       <AnalyticsCard title="Total Funding" value={totalFunding} />
