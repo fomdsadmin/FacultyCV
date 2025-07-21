@@ -22,8 +22,10 @@ const Header = ({ userInfo, getCognitoUser }) => {
   // Determine if user has multiple roles and which roles to show
   const isAdmin = userRole === "Admin";
   const isDepartmentAdmin = userRole.startsWith("Admin-");
+  const isFacultyAdmin = userRole.startsWith("FacultyAdmin-");
   const department = isDepartmentAdmin ? userRole.split("Admin-")[1] : "";
-  const hasMultipleRoles = isAdmin || isDepartmentAdmin;
+  const faculty = isFacultyAdmin ? userRole.split("FacultyAdmin-")[1] : "";
+  const hasMultipleRoles = isAdmin || isDepartmentAdmin || isFacultyAdmin;
 
   const availableRoles = getAvailableRoles();
 
@@ -31,10 +33,12 @@ const Header = ({ userInfo, getCognitoUser }) => {
   useEffect(() => {
     let newViewRole = currentViewRole;
 
-    if (location.pathname.includes("/admin") && !location.pathname.includes("/department-admin")) {
+    if (location.pathname.includes("/admin") && !location.pathname.includes("/department-admin") && !location.pathname.includes("/faculty-admin")) {
       newViewRole = "Admin";
     } else if (location.pathname.includes("/department-admin")) {
       newViewRole = isDepartmentAdmin ? userRole : "Admin-All";
+    } else if (location.pathname.includes("/faculty-admin")) {
+      newViewRole = isFacultyAdmin ? userRole : (userRole === "Admin" ? `FacultyAdmin-All` : userRole);
     } else if (location.pathname.includes("/faculty")) {
       newViewRole = "Faculty";
     } else if (location.pathname.startsWith("/assistant")) {
@@ -45,7 +49,7 @@ const Header = ({ userInfo, getCognitoUser }) => {
     if (newViewRole !== currentViewRole) {
       setCurrentViewRole(newViewRole);
     }
-  }, [location.pathname, isDepartmentAdmin, userRole]);
+  }, [location.pathname, isDepartmentAdmin, isFacultyAdmin, userRole]);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);

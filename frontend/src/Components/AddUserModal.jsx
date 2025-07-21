@@ -9,9 +9,12 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [vpp, setVpp] = useState("");
   const [role, setRole] = useState("Faculty");
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
+  const [isFacultyAdmin, setIsFacultyAdmin] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedFaculty, setSelectedFaculty] = useState("");
   const [department, setDepartment] = useState("");
   const [departments, setDepartments] = useState([]);
+  const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [existingUser, setExistingUser] = useState(null);
@@ -20,23 +23,28 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [successMessage, setSuccessMessage] = useState("");
   const [createdUser, setCreatedUser] = useState(null);
 
-  // Fetch departments when component mounts
+  // Fetch departments and faculties when component mounts
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchUniversityInfo = async () => {
       try {
         const universityInfo = await getAllUniversityInfo();
         const departmentList = universityInfo
           .filter((item) => item.type === "Department")
           .map((item) => item.value)
           .sort();
+        const facultyList = universityInfo
+          .filter((item) => item.type === "Faculty")
+          .map((item) => item.value)
+          .sort();
         setDepartments(departmentList);
+        setFaculties(facultyList);
       } catch (error) {
-        console.error("Error fetching departments:", error);
+        console.error("Error fetching university info:", error);
       }
     };
 
     if (isOpen) {
-      fetchDepartments();
+      fetchUniversityInfo();
     }
   }, [isOpen]);
 
@@ -45,8 +53,13 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     const selectedRole = event.target.value;
     if (selectedRole === "Department Admin") {
       setIsDepartmentAdmin(true);
+      setIsFacultyAdmin(false);
+    } else if (selectedRole === "Faculty Admin") {
+      setIsFacultyAdmin(true);
+      setIsDepartmentAdmin(false);
     } else {
       setIsDepartmentAdmin(false);
+      setIsFacultyAdmin(false);
       setRole(selectedRole);
     }
   };
@@ -55,6 +68,12 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     const departmentName = event.target.value;
     setSelectedDepartment(departmentName);
     setRole(`Admin-${departmentName}`);
+  };
+
+  const handleFacultyInputChange = (event) => {
+    const facultyName = event.target.value;
+    setSelectedFaculty(facultyName);
+    setRole(`FacultyAdmin-${facultyName}`);
   };
 
   const handleSignUp = async (event) => {
@@ -71,6 +90,11 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
 
     if (!department) {
       setError("Please select a department");
+      return;
+    }
+
+    if (isFacultyAdmin && !selectedFaculty) {
+      setError("Please select a faculty");
       return;
     }
 
@@ -103,8 +127,16 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
 
       // Step 2: Add user to Cognito user group
       console.log("First adding user to Cognito group and checking if user in Cognito pool");
-      const result2 = await addToUserGroup(username, role);
-      const result2str = JSON.stringify(result2).split(",")[0].split("{")[1];
+      let result2
+      let result2str = "";
+      if (role.includes("FacultyAdmin")) {
+        result2 = await addToUserGroup(username, "FacultyAdmin");
+        result2str = JSON.stringify(result2).split(",")[0].split("{")[1];
+      } else {
+        result2 = await addToUserGroup(username, role);
+        result2str = JSON.stringify(result2).split(",")[0].split("{")[1];
+      }
+
       // const result2obj = JSON.parse(result2str);
 
       // Check if there was an error with Cognito
@@ -132,7 +164,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         });
         const result = await addUser(firstName, lastName, username, role, cwlChecked, vppChecked);
         console.log("User added to database successfully");
-        
+
         // Step 3: Update user with department information
         if (department) {
           console.log("Updating user with department information:", department);
@@ -187,7 +219,9 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       setVpp("");
       setRole("Faculty");
       setIsDepartmentAdmin(false);
+      setIsFacultyAdmin(false);
       setSelectedDepartment("");
+      setSelectedFaculty("");
       setDepartment("");
       setError("");
 
@@ -216,7 +250,9 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     setVpp("");
     setRole("Faculty");
     setIsDepartmentAdmin(false);
+    setIsFacultyAdmin(false);
     setSelectedDepartment("");
+    setSelectedFaculty("");
     setDepartment("");
     setError("");
     setExistingUser(null);
@@ -409,6 +445,19 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   <div className="flex items-center">
                     <input
                       type="radio"
+                      id="faculty-admin"
+                      name="role"
+                      value="Faculty Admin"
+                      checked={isFacultyAdmin}
+                      onChange={handleRoleChange}
+                    />
+                    <label htmlFor="faculty-admin" className="ml-2 text-sm">
+                      Faculty Admin
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
                       id="admin"
                       name="role"
                       value="Admin"
@@ -439,6 +488,26 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                     ))}
                   </select>
                   <p className="text-xs text-gray-500 mt-1">Select the department for this admin role</p>
+                </div>
+              )}
+
+              {isFacultyAdmin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Faculty</label>
+                  <select
+                    className="input input-bordered w-full text-sm"
+                    value={selectedFaculty}
+                    onChange={handleFacultyInputChange}
+                    required
+                  >
+                    <option value="">Select a faculty...</option>
+                    {faculties.map((faculty, index) => (
+                      <option key={index} value={faculty}>
+                        {faculty}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Select the faculty for this admin role</p>
                 </div>
               )}
 

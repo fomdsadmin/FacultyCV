@@ -74,9 +74,9 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-6">
+    <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-2 mt-4">
+      <div className="flex items-center gap-4">
         <button onClick={handleBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4">
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
@@ -86,19 +86,17 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
       {/* User Info */}
       <div className="bg-white rounded-lg shadow px-12 py-8 flex flex-col gap-1">
         <div className="flex items-center justify-between gap-1">
-          <h3 className="text-xl font-semibold text-zinc-700">
+          <h3 className="text-xl font-semibold text-zinc-700 mb-2">
             {currentUser.first_name} {currentUser.last_name}
           </h3>
           <div className="text-zinc-500 text-sm">
             Joined: {currentUser.joined_timestamp ? new Date(currentUser.joined_timestamp).toLocaleDateString() : "N/A"}
           </div>
         </div>
-        <div className="flex items-center justify-between gap-1">
-          <h3 className="text-sm text-zinc-500 mb-2"></h3>
-          <div className="text-zinc-500 text-sm mb-2"></div>
-        </div>
         <div className="text-zinc-500 text-sm mb-2">{currentUser.email}</div>
-        <div className="text-zinc-500 text-sm">Role: {currentUser.role}</div>
+        <div className="text-zinc-500 text-sm mb-2">Role: {currentUser.role}</div>
+        <div className="text-zinc-500 text-sm mb-2">Faculty: {currentUser.primary_faculty}</div>
+        <div className="text-zinc-500 text-sm mb-2">Primary Department: {currentUser.primary_department}</div>
         <div className="flex flex-wrap justify-end gap-2">
           <button onClick={handleUpdateUser} className="btn btn-primary h-9 px-5 text-white font-semibold">
             Update User
@@ -148,7 +146,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-4">
             <span className="text-lg text-zinc-600">Loading...</span>
           </div>
         ) : (
@@ -156,7 +154,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
             {(currentUser.role === "Faculty" || currentUser.role === "Assistant") && (
               <>
                 {pendingConnections.length === 0 && confirmedConnections.length === 0 ? (
-                  <div className="text-center my-8 text-lg text-zinc-500">No connections found.</div>
+                  <div className="text-center py-4 text-lg text-zinc-500">No connections found.</div>
                 ) : (
                   <>
                     {pendingConnections.length > 0 && (
