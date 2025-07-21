@@ -363,7 +363,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         </div>
 
         {/* 📈 Publication Chart Section */}
-        <div className="mb-8 border border-black border-opacity-20 rounded-lg p-4">
+        <div className="mb-8 border border-black border-opacity-20 rounded-lg p-4 w-full">
           <h2 className="text-lg font-semibold mb-2 mx-2">Analytics</h2>
           <Dashboard userInfo={userInfo} />
         </div>
