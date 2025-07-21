@@ -34,7 +34,8 @@ import DepartmentAdminUsers from "./Views/DepartmentAdminUsers.jsx";
 import DepartmentAdminHomePage from "./Views/DepartmentAdminHomePage.jsx";
 import DepartmentAdminUserInsights from "./Views/DepartmentAdminUserInsights.jsx";
 import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
-import DepartmentAdminSections from "./Views/DepartmentAdminSections.jsx";
+import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
+import AdminGenerateCV from "./Views/AdminGenerateCV.jsx";
 import DepartmentAdminArchivedSections from "./Views/DepartmentAdminArchivedSections.jsx";
 import { getJWT } from "./getAuthToken.js";
 import { NotificationProvider } from "./Contexts/NotificationContext.jsx";
@@ -181,6 +182,17 @@ const AppContent = () => {
           element={
             user && userInfo.role === "Admin" && currentViewRole === "Admin" ? (
               <AdminUsers userInfo={userInfo} getCognitoUser={getCognitoUser} />
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+
+        <Route
+          path="/admin/generate"
+          element={
+            user && userInfo.role === "Admin" && currentViewRole === "Admin" ? (
+              <AdminGenerateCV userInfo={userInfo} getCognitoUser={getCognitoUser} />
             ) : (
               <Navigate to="/auth" />
             )
@@ -435,10 +447,10 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/department-admin/sections"
+          path="/department-admin/generate"
           element={
             user ? (
-              <DepartmentAdminSections
+              <DepartmentAdminGenerateCV
                 userInfo={userInfo}
                 getCognitoUser={getCognitoUser}
                 department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
@@ -448,7 +460,7 @@ const AppContent = () => {
             )
           }
         />
-        <Route
+        {/* <Route
           path="/department-admin/archived-sections"
           element={
             user ? (
@@ -461,7 +473,7 @@ const AppContent = () => {
               <Navigate to="/auth" />
             )
           }
-        />
+        /> */}
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

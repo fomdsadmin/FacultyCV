@@ -69,7 +69,9 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
           <Link to="/department-admin/users">
             <FaUsers className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/users" ? "font-bold" : ""}`}>Users</p>
+              <p className={`ml-2 ${location.pathname === "/department-admin/users" ? "font-bold" : ""}`}>
+                Users
+              </p>
             )}
           </Link>
         </li>
@@ -95,16 +97,16 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             )}
           </Link>
         </li>
-        {/* <li className={`mb-2 ${location.pathname === "/department-admin/sections" ? "bg-gray-200 rounded-lg" : ""}`}>
-          <Link to="/department-admin/sections">
+        <li className={`mb-2 ${location.pathname === "/department-admin/generate" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/department-admin/generate">
             <FaFileAlt className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/sections" ? "font-bold" : ""}`}>
-                Sections
+              <p className={`ml-2 ${location.pathname === "/department-admin/generate" ? "font-bold" : ""}`}>
+                Generate CV
               </p>
             )}
           </Link>
-        </li> */}
+        </li>
         {/* <li
           className={`mb-6 ${
             location.pathname === "/department-admin/archived-sections" ? "bg-gray-200 rounded-lg" : ""
