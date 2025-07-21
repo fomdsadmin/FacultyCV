@@ -1,20 +1,22 @@
-import React, { useState, useEffect, useRef} from 'react';
-import { getAllSections, getUserCVData } from '../../graphql/graphqlHelpers';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
+import React, { useState, useEffect, useRef } from "react";
+import { getAllSections, getUserCVData } from "../../graphql/graphqlHelpers";
+import { Line } from "react-chartjs-2";
+import { Chart as ChartJS, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { WordCloudController, WordElement } from "chartjs-chart-wordcloud";
+
+// Register chart.js components and plugins
+ChartJS.register(
   LineElement,
   PointElement,
   LinearScale,
   CategoryScale,
   Tooltip,
   Legend,
-} from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { WordCloudController, WordElement } from 'chartjs-chart-wordcloud';
-
-// Register chart.js components and plugins
-ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, ChartDataLabels,WordCloudController,WordElement);
+  ChartDataLabels,
+  WordCloudController,
+  WordElement
+);
 
 const Dashboard = ({ userInfo }) => {
   const [user, setUser] = useState(userInfo);
@@ -25,7 +27,7 @@ const Dashboard = ({ userInfo }) => {
   const wordCloudCanvasRef = useRef(null);
   const [totalGrants, setTotalGrants] = useState(0);
   const [showAllKeywords, setShowAllKeywords] = useState(false);
-  
+
   const formatCAD = (value) =>
     new Intl.NumberFormat("en-CA", {
       style: "currency",
@@ -38,34 +40,50 @@ const Dashboard = ({ userInfo }) => {
 
     const fetchData = async () => {
       try {
-            let dataSections = [];
+        let dataSections = [];
         try {
           dataSections = await getAllSections();
-        } catch (error) {
-          
-        }
-      
-      const section1 = 'Publications';
-      const publicationSectionId = dataSections.find(section => section.title === section1)?.data_section_id;
+        } catch (error) {}
 
-      const section2 = "Research or Equivalent Grants";
-      const secureFundingSectionId = dataSections.find(section => section.title.includes(section2))?.data_section_id;
+        const section1 = "Publication";
+        const publicationSectionId = dataSections.find(
+          (section) => section.title.includes(section1) && !section.title.includes("Other")
+        )?.data_section_id;
 
-      const pubSectionId = publicationSectionId;
-        
-      const pubData = await getUserCVData(user.user_id, pubSectionId);
-      const parsedPubs = pubData.map((d) => ({
-          ...d,
+        const section1Other = "Publication";
+        const otherPublicationSectionId = dataSections.find(
+          (section) => section.title.includes(section1Other) && section.title.includes("Other")
+        )?.data_section_id;
+
+        const section2 = "Research or Equivalent Grants";
+        const secureFundingSectionId = dataSections.find((section) =>
+          section.title.includes(section2)
+        )?.data_section_id;
+
+        const pubSectionId = publicationSectionId;
+
+        const pubData = await getUserCVData(user.user_id, pubSectionId);
+        const parsedPubs = pubData.map((d) => ({
+          data_details: JSON.parse(d.data_details),
+        }));
+
+        const otherPubData = await getUserCVData(user.user_id, otherPublicationSectionId);
+        const parsedOtherPubs = otherPubData.map((d) => ({
           data_details: JSON.parse(d.data_details),
         }));
 
         const keywordCounts = {};
         parsedPubs.forEach((item) => {
           const keywords = item.data_details?.keywords || [];
-          keywords.forEach((kw) => {
-            const lower = kw.toLowerCase();
-            keywordCounts[lower] = (keywordCounts[lower] || 0) + 1;
-          });
+          // Ensure keywords exists and is an array before calling forEach
+          if (Array.isArray(keywords) && keywords.length > 0) {
+            keywords.forEach((kw) => {
+              if (kw && typeof kw === "string") {
+                const lower = kw.toLowerCase();
+                keywordCounts[lower] = (keywordCounts[lower] || 0) + 1;
+              }
+            });
+          }
         });
 
         const wordCloudData = Object.entries(keywordCounts)
@@ -82,7 +100,18 @@ const Dashboard = ({ userInfo }) => {
             pubTotal++;
           }
         });
-
+        parsedOtherPubs.forEach((item) => {
+          const dates = item.data_details?.dates;
+          if (dates) {
+            let year = dates.split("-")[1];
+            // do for all except the ones with 'Current'
+            if (year.split(",")[1]) {
+              year = year.split(",")[1];
+              pubYearCounts[year] = (pubYearCounts[year] || 0) + 1;
+              pubTotal++;
+            }
+          }
+        });
         const sortedPubYears = Object.keys(pubYearCounts).sort();
         setTotalPublications(pubTotal);
 
@@ -189,10 +218,7 @@ const Dashboard = ({ userInfo }) => {
           {
             label: "Keywords",
             data: keywordData.map((d) => {
-              const ratio =
-                maxValue === minValue
-                  ? 1
-                  : (d.value - minValue) / (maxValue - minValue);
+              const ratio = maxValue === minValue ? 1 : (d.value - minValue) / (maxValue - minValue);
               return minSize + (maxSize - minSize) * ratio;
             }),
           },
@@ -254,7 +280,7 @@ const Dashboard = ({ userInfo }) => {
     plugins: {
       datalabels: {
         // Only display labels when hovering
-        display: function(context) {
+        display: function (context) {
           return false; // Hide all datalabels by default
         },
         color: "#333",
@@ -270,22 +296,20 @@ const Dashboard = ({ userInfo }) => {
       },
       tooltip: {
         enabled: true,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        titleColor: '#333',
-        bodyColor: '#333',
-        borderColor: '#ccc',
+        backgroundColor: "rgba(255, 255, 255, 0.9)",
+        titleColor: "#333",
+        bodyColor: "#333",
+        borderColor: "#ccc",
         borderWidth: 1,
         padding: 10,
         displayColors: false,
         callbacks: {
-          label: function(context) {
-            const label = context.dataset.label || '';
+          label: function (context) {
+            const label = context.dataset.label || "";
             const value = context.parsed.y;
-            return label.includes("Funding") ? 
-              `${label}: ${formatCAD(value)}` : 
-              `${label}: ${value}`;
-          }
-        }
+            return label.includes("Funding") ? `${label}: ${formatCAD(value)}` : `${label}: ${value}`;
+          },
+        },
       },
       legend: {
         display: true,
@@ -317,15 +341,12 @@ const Dashboard = ({ userInfo }) => {
           {/* Publications Chart */}
           {publicationChartData && (
             <div className="flex-1 min-w-0 flex flex-col items-center">
-              <h3 className="text-lg font-semibold mb-4 text-center">
-                Publications Over Time
-              </h3>
+              <h3 className="text-lg font-semibold mb-4 text-center">Publications Over Time</h3>
               <div className="h-64 w-full">
                 <Line data={publicationChartData} options={chartOptions} />
               </div>
               <div className="text-md font-medium text-gray-700 text-center">
-                Total Published Papers:{" "}
-                <span className="font-bold">{totalPublications}</span>
+                Total Published Papers: <span className="font-bold">{totalPublications}</span>
               </div>
             </div>
           )}
@@ -333,9 +354,7 @@ const Dashboard = ({ userInfo }) => {
           {/* Funding Chart */}
           {fundingChartData && (
             <div className="flex-1 min-w-0 flex flex-col items-center">
-              <h3 className="text-lg font-semibold mb-4 text-center">
-                Research Funding Over Time
-              </h3>
+              <h3 className="text-lg font-semibold mb-4 text-center">Research Funding Over Time</h3>
               <div className="h-64 w-full">
                 <Line data={fundingChartData} options={chartOptions} />
               </div>
@@ -347,24 +366,16 @@ const Dashboard = ({ userInfo }) => {
         </div>
       </div>
       {/* Keywords Section */}
-      <h3 className="text-lg font-semibold mb-2 mt-10">
-        Keywords From Publications
-      </h3>
+      <h3 className="text-lg font-semibold mb-2 mt-10">Keywords From Publications</h3>
       <div className="flex flex-col gap-6 p-2 rounded-lg shadow-md bg-zinc-50">
         {keywordData.length > 0 && (
           <div className="flex-1 min-w-0 p-4">
             <div className="">
               <div className="flex flex-wrap gap-3">
                 {(() => {
-                  const sortedKeywords = [...keywordData].sort(
-                    (a, b) => b.value - a.value
-                  );
-                  const maxValue = Math.max(
-                    ...sortedKeywords.map((k) => k.value || 0)
-                  );
-                  const displayKeywords = showAllKeywords
-                    ? sortedKeywords
-                    : sortedKeywords.slice(0, 10);
+                  const sortedKeywords = [...keywordData].sort((a, b) => b.value - a.value);
+                  const maxValue = Math.max(...sortedKeywords.map((k) => k.value || 0));
+                  const displayKeywords = showAllKeywords ? sortedKeywords : sortedKeywords.slice(0, 10);
 
                   const keywordElements = displayKeywords.map((item, index) => {
                     const isMax = item.value === maxValue && maxValue > 0;
