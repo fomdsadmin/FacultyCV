@@ -37,6 +37,9 @@ import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
 import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
 import AdminGenerateCV from "./Views/AdminGenerateCV.jsx";
 import DepartmentAdminArchivedSections from "./Views/DepartmentAdminArchivedSections.jsx";
+import FacultyAdminHomePage from "./Views/FacultyAdminHomePage.jsx";
+import FacultyAdminUsers from "./Views/FacultyAdminUsers.jsx";
+import FacultyAdminGenerateCV from "./Views/FacultyAdminGenerateCV.jsx";
 import { getJWT } from "./getAuthToken.js";
 import { NotificationProvider } from "./Contexts/NotificationContext.jsx";
 import Notification from "./Components/Notification.jsx";
@@ -78,6 +81,7 @@ const AppContent = () => {
     setLoading,
     currentViewRole,
     setCurrentViewRole,
+    toggleViewMode,
   } = useApp();
 
   // Initialize view mode for redirects and route access
@@ -139,6 +143,10 @@ const AppContent = () => {
             user ? (
               Object.keys(userInfo).length !== 0 && userInfo.role === "Admin" ? (
                 <Navigate to="/admin/home" />
+              ) : Object.keys(userInfo).length !== 0 &&
+                typeof userInfo.role === "string" &&
+                userInfo.role.startsWith("FacultyAdmin-") ? (
+                <Navigate to="/faculty-admin/home" />
               ) : Object.keys(userInfo).length !== 0 &&
                 typeof userInfo.role === "string" &&
                 userInfo.role.startsWith("Admin-") ? (
@@ -228,11 +236,28 @@ const AppContent = () => {
         />
 
         <Route
+          path="/faculty-admin/home"
+          element={
+            user &&
+            typeof userInfo.role === "string" &&
+            (userInfo.role.startsWith("FacultyAdmin-") || userInfo.role === "Admin") ? (
+              <FacultyAdminHomePage
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+                toggleViewMode={toggleViewMode}
+              />
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+
+        <Route
           path="/faculty/home"
           element={
             user &&
             typeof userInfo.role === "string" &&
-            (userInfo.role === "Faculty" || userInfo.role.startsWith("Admin-") || userInfo.role === "Admin") &&
+            (userInfo.role === "Faculty" || userInfo.role.startsWith("Admin-") || userInfo.role.startsWith("FacultyAdmin-") || userInfo.role === "Admin") &&
             currentViewRole === "Faculty" ? (
               <FacultyHomePage
                 userInfo={{ ...userInfo, role: "Faculty" }} // Use Faculty role in view
@@ -474,6 +499,42 @@ const AppContent = () => {
             )
           }
         /> */}
+
+        {/* Faculty Admin Routes */}
+        <Route
+          path="/faculty-admin/users"
+          element={
+            user &&
+            typeof userInfo.role === "string" &&
+            (userInfo.role.startsWith("FacultyAdmin-") || userInfo.role === "Admin") ? (
+              <FacultyAdminUsers
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+                toggleViewMode={toggleViewMode}
+              />
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+
+        <Route
+          path="/faculty-admin/generate-cv"
+          element={
+            user &&
+            typeof userInfo.role === "string" &&
+            (userInfo.role.startsWith("FacultyAdmin-") || userInfo.role === "Admin") ? (
+              <FacultyAdminGenerateCV
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+                toggleViewMode={toggleViewMode}
+              />
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -99,17 +99,25 @@ export const AppProvider = ({ children }) => {
         
         const isAdmin = userInfo.role === "Admin";
         const isDepartmentAdmin = userInfo.role.startsWith("Admin-");
+        const isFacultyAdmin = userInfo.role.startsWith("FacultyAdmin-");
         const department = isDepartmentAdmin ? userInfo.role.split("Admin-")[1] : "";
+        const faculty = isFacultyAdmin ? userInfo.role.split("FacultyAdmin-")[1] : "";
         
         if (isAdmin) {
             return [
                 { label: "Admin", value: "Admin", route: "/admin/home" },
                 { label: `Department Admin - ${department || "All"}`, value: `Admin-${department || "All"}`, route: "/department-admin/home" },
+                { label: `Faculty Admin - ${faculty || "All"}`, value: `FacultyAdmin-${faculty || "All"}`, route: "/faculty-admin/home" },
                 { label: "Faculty", value: "Faculty", route: "/faculty/home" },
             ];
         } else if (isDepartmentAdmin) {
             return [
                 { label: `Department Admin - ${department}`, value: `Admin-${department}`, route: "/department-admin/home" },
+                { label: "Faculty", value: "Faculty", route: "/faculty/home" }
+            ];
+        } else if (isFacultyAdmin) {
+            return [
+                { label: `Faculty Admin - ${faculty}`, value: `FacultyAdmin-${faculty}`, route: "/faculty-admin/home" },
                 { label: "Faculty", value: "Faculty", route: "/faculty/home" }
             ];
         } else {
@@ -126,6 +134,21 @@ export const AppProvider = ({ children }) => {
         return userInfo && userInfo.role && userInfo.role.startsWith("Admin-") 
             ? userInfo.role.split("-")[1] 
             : ""
+    }
+
+    // Toggle between admin view and faculty view
+    const toggleViewMode = () => {
+        const availableRoles = getAvailableRoles();
+        if (availableRoles.length > 1) {
+            // Find the next role to switch to
+            const currentIndex = availableRoles.findIndex(role => role.value === currentViewRole);
+            const nextIndex = (currentIndex + 1) % availableRoles.length;
+            const nextRole = availableRoles[nextIndex];
+            
+            setCurrentViewRole(nextRole.value);
+            // Navigate to the new role's route
+            window.location.href = nextRole.route;
+        }
     }
 
     // Context value
@@ -150,6 +173,7 @@ export const AppProvider = ({ children }) => {
         getUserInfo,
         getCognitoUser,
         getDepartment,
+        toggleViewMode,
     }
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>
