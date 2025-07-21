@@ -97,9 +97,20 @@ const Affiliations = () => {
       );
 
       // update userInfo for primary faculty and primary Department
-      console.log(facultyData.primary_faculty, userInfo.primary_faculty);
+      // Determine primary department: either from userInfo or from academic unit with 100% appointment
+      let primaryDepartment = userInfo.primary_department;
+      let primaryUnit = ''
+      let fullTimeUnit = false
+      if (!primaryDepartment || primaryDepartment === "" || primaryDepartment == null || primaryDepartment.includes("null")) {
+        // Look for academic unit
+        console.log(academicUnits);
+        fullTimeUnit = academicUnits[0]
+        if (fullTimeUnit) {
+          primaryUnit = fullTimeUnit.unit;
+        }
+      }
       await updateUser(userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.preferred_name, userInfo.email, userInfo.role,
-        userInfo.bio, userInfo.rank, userInfo.institution, userInfo.primary_department, userInfo.secondary_department,
+        userInfo.bio, userInfo.rank, userInfo.institution, fullTimeUnit ? primaryUnit : primaryDepartment, userInfo.secondary_department,
         facultyData.primary_faculty, userInfo.secondary_faculty, "", "", userInfo.campus, '', '', '', '', '', ''
       );
 
