@@ -38,32 +38,9 @@ import DepartmentAdminSections from "./Views/DepartmentAdminSections.jsx";
 import DepartmentAdminArchivedSections from "./Views/DepartmentAdminArchivedSections.jsx";
 import { getJWT } from "./getAuthToken.js";
 import { NotificationProvider } from "./Contexts/NotificationContext.jsx";
-import Notification from "./Components/Notification.jsx";
-import { cognitoUserPoolsTokenProvider } from "aws-amplify/auth/cognito";
-import { CookieStorage } from "aws-amplify/utils";
 import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
 import { ToastContainer } from "react-toastify";
-
-Amplify.configure({
-  API: {
-    GraphQL: {
-      endpoint: process.env.REACT_APP_APPSYNC_ENDPOINT,
-      region: process.env.REACT_APP_AWS_REGION,
-      defaultAuthMode: "userPool",
-    },
-  },
-  Auth: {
-    Cognito: {
-      region: process.env.REACT_APP_AWS_REGION,
-      userPoolClientId: process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID,
-      userPoolId: process.env.REACT_APP_COGNITO_USER_POOL_ID,
-      allowGuestAccess: false,
-    },
-  },
-});
-
-cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
 
 const AppContent = () => {
   const {
@@ -80,15 +57,16 @@ const AppContent = () => {
   } = useApp();
 
   // Initialize view mode for redirects and route access
-  useEffect(() => {
+/*   useEffect(() => {
     if (user && userInfo && userInfo.role && !currentViewRole) {
       setCurrentViewRole(userInfo.role);
     }
-  }, [user, userInfo]);
+  }, [user, userInfo]); */
 
-  const getUserInfo = async (email) => {
+   const getUserInfo = async (email) => {
     try {
       const userInformation = await getUser(email);
+      console.log("userInformation, none because we don't add user...", userInformation)
       if (userInformation.role === "Assistant") {
         setAssistantUserInfo(userInformation);
         setUserInfo(userInformation);
@@ -100,7 +78,7 @@ const AppContent = () => {
       setLoading(false);
     }
   };
-
+ 
   if (loading) {
     return (
       <PageContainer>
@@ -132,6 +110,11 @@ const AppContent = () => {
       {console.log("Assistant User Info:", assistantUserInfo)} */}
       <Routes>
         {/* Main home route - redirects based on role */}
+        <Route
+          path="/auth"
+          element={<AuthPage getCognitoUser={getCognitoUser} />}
+        />
+
         <Route
           path="/home"
           element={
@@ -235,7 +218,7 @@ const AppContent = () => {
         />
 
         {/* Auth route remains the same */}
-        <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage getCognitoUser={getCognitoUser} />} />
+        {/* <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage getCognitoUser={getCognitoUser} />} /> */}
 
         {/* Faculty dashboard */}
         <Route
