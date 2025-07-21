@@ -268,6 +268,18 @@ const AppContent = () => {
           }
         />
         <Route
+          path="/faculty/declarations/:action"
+          element={
+            user ? <Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />
+          }
+        />
+        <Route
+          path="/faculty/declarations/:action/:year"
+          element={
+            user ? <Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />
+          }
+        />
+        <Route
           path="/reports"
           element={user ? <Reports userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
         />

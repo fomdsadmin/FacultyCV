@@ -20,16 +20,17 @@ const EntryList = () => {
     <div>
       {fieldData.map((entry, index) => (
         <GenericEntry
-          isArchived={false}
-          key={index}
-          onEdit={() => handleEdit(entry)}
-          field1={entry.field1}
-          field2={entry.field2}
-          data_details={entry.data_details}
-          onArchive={() => handleArchive(entry)}
-          onRestore={undefined}
+        isArchived={false}
+        key={index}
+        onEdit={() => handleEdit(entry)}
+        field1={entry.field1}
+        field2={entry.field2}
+        data_details={entry.data_details}
+        onArchive={() => handleArchive(entry)}
+        onRestore={undefined}
         />
       ))}
+      {console.log(fieldData)}
     </div>
   );
 };

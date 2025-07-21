@@ -10,6 +10,7 @@ import { DbFetchStack } from '../lib/dbfetch-stack';
 import { DataFetchStack } from '../lib/datafetch-stack';
 import { CVGenStack } from '../lib/cvgen-stack';
 import { GrantDataStack } from '../lib/grantdata-stack';
+import { UserImportStack } from '../lib/userimport-stack';
 import { PatentDataStack } from '../lib/patentdata-stack';
 import { ResolverStack } from '../lib/resolver-stack';
 import { Resolver2Stack } from '../lib/resolver2-stack';
@@ -36,11 +37,22 @@ const apiStack = new ApiStack(app, `${resourcePrefix}-ApiStack`, databaseStack, 
    {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
+const userImportStack = new UserImportStack(app, `${resourcePrefix}-UserImportStack`, vpcStack, databaseStack, {
+  userPoolId: apiStack.getUserPoolId(),
+  psycopgLayer: apiStack.getLayers()['psycopg2'],
+  databaseConnectLayer: apiStack.getLayers()['databaseConnect'],
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
+});
+
 const resolverStack = new ResolverStack(app, `${resourcePrefix}-ResolverStack`, apiStack, databaseStack, cvGenStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
-const resolver2Stack = new Resolver2Stack(app, `${resourcePrefix}-Resolver2Stack`, apiStack, databaseStack, cvGenStack,
+const grantDataStack = new GrantDataStack(app, `${resourcePrefix}-GrantDataStack`, vpcStack, databaseStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
+
+const resolver2Stack = new Resolver2Stack(app, `${resourcePrefix}-Resolver2Stack`, apiStack, databaseStack, cvGenStack, userImportStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
@@ -57,10 +69,6 @@ const dbFetchStack = new DbFetchStack(app, `${resourcePrefix}-DbFetchStack`, dat
 );
 
 const dataFetchStack = new DataFetchStack(app, `${resourcePrefix}-DataFetchStack`, databaseStack, apiStack,
-  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
-);
-
-const grantDataStack = new GrantDataStack(app, `${resourcePrefix}-GrantDataStack`, vpcStack, databaseStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 

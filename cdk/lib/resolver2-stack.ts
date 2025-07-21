@@ -9,9 +9,11 @@ import {
   Runtime,
 } from "aws-cdk-lib/aws-lambda";
 import { Role } from "aws-cdk-lib/aws-iam";
+import * as iam from "aws-cdk-lib/aws-iam";
 import { DatabaseStack } from "./database-stack";
 import { CVGenStack } from "./cvgen-stack";
 import { ApiStack } from "./api-stack";
+import { UserImportStack } from "./userimport-stack";
 
 export class Resolver2Stack extends cdk.Stack {
   constructor(
@@ -20,6 +22,7 @@ export class Resolver2Stack extends cdk.Stack {
     apiStack: ApiStack,
     databaseStack: DatabaseStack,
     cvGenStack: CVGenStack,
+    userImportStack: UserImportStack,
     props?: cdk.StackProps
   ) {
     super(scope, id, props);
@@ -34,6 +37,8 @@ export class Resolver2Stack extends cdk.Stack {
     const requestsLayer = apiStack.getLayers()["requests"];
     const awsJwtVerifyLayer = apiStack.getLayers()["aws-jwt-verify"];
     const resolverRole = apiStack.getResolverRole();
+
+    // Note: S3 permissions for user import bucket will be handled separately
 
     // GraphQL Resolvers
     const assignResolver = (
@@ -309,6 +314,7 @@ export class Resolver2Stack extends cdk.Stack {
       "Query",
       {
         BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
+        USER_IMPORT_BUCKET_NAME: userImportStack.getUserImportBucketName(),
         USER_POOL_ISS: `https://cognito-idp.${
           this.region
         }.amazonaws.com/${apiStack.getUserPoolId()}`,

@@ -100,7 +100,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
       rankedData.sort((a, b) => {
         const isDateOrYear = (key) =>
           key &&
-          (key.toLowerCase().includes("dates") ||
+          (key.toLowerCase().includes("date") ||
             key.toLowerCase().includes("year"));
 
         const dateA = isDateOrYear(a.key1)

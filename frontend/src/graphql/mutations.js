@@ -64,12 +64,14 @@ export const ADD_SECTION = `
 `;
 
 export const ADD_USER = `
-    mutation AddUser($first_name: String!, $last_name: String!, $email: String!, $role: String!, $cwl: String!, $vpp: String!) {
+    mutation AddUser($first_name: String!, $last_name: String!, $email: String!, $role: String!, $pending: Boolean!, $approved: Boolean! $cwl: String!, $vpp: String!) {
         addUser(
             first_name: $first_name,
             last_name: $last_name,
             email: $email,
             role: $role,
+            pending: $pending,
+            approved: $approved,
             cwl: $cwl,
             vpp: $vpp
         )

@@ -545,11 +545,12 @@ export const getPatentMatches = async (first_name, last_name) => {
  * jwt - the jwt session token
  * fileKey - the key of the file to get the presigned URL for (assume that the S3 bucket is being used only by one tenant, partitions are handled by the resolver)
  * type - the type of operation (PUT or GET)
+ * purpose - optional purpose parameter to specify bucket ("cv" or "user-import")
  * Return value:
  * String - the presigned URL
  */
-export const getPresignedUrl = async (jwt, fileKey, type) => {
-  const results = await runGraphql(getPresignedUrlQuery(jwt, fileKey, type));
+export const getPresignedUrl = async (jwt, fileKey, type, purpose = "cv") => {
+  const results = await runGraphql(getPresignedUrlQuery(jwt, fileKey, type, purpose));
   return results["data"]["getPresignedUrl"];
 };
 
@@ -697,6 +698,8 @@ export const addUser = async (first_name, last_name, email, role, cwl, vpp) => {
     last_name,
     email,
     role,
+    pending: true, // Default to pending
+    approved: false, // Default to not approved
     cwl,
     vpp,
   });
