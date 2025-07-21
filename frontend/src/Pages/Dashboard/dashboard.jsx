@@ -67,11 +67,11 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           </div>
         </div>
         {/* Notifications Section */}
-        <div className="bg-gray-50 p-6 rounded-lg shadow-md mb-10 grid lg:grid-cols-[6fr_4fr] md:grid-cols-1 sm:grid-cols-1 gap-x-4">
+        <div className="py-6 mb-4 grid lg:grid-cols-[6fr_4fr] md:grid-cols-1 sm:grid-cols-1 gap-x-4">
           {/* User Notification Section */}
-          <div className="mb-10">
-            <h1 className="text-lg font-semibold mb-3">Overview</h1>
-            <div className="relative flex flex-col items-center rounded-xl shadow-md px-4 py-2 bg-stone-100">
+          <div className="mb-4">
+            <h1 className="text-lg font-semibold">Overview</h1>
+            <div className="relative flex flex-col items-center">
               {/* Declarations Section - existing code */}
               {declarations &&
               declarations.some((d) => d.year === new Date().getFullYear()) ? (
@@ -342,7 +342,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
           {/* System Notifications */}
           <div className="rounded-lg">
-            <h2 className="text-lg font-semibold mb-3">System Notifications</h2>
+            <h2 className="text-lg font-semibold mb-4">System Notifications</h2>
             <div className="bg-gray-50 p-4 rounded-lg shadow-md max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (
                 <p className="text-gray-500">No new notifications.</p>
@@ -363,7 +363,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         </div>
 
         {/* 📈 Publication Chart Section */}
-        <div className="mb-15">
+        <div className="mb-8 border border-black border-opacity-20 rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4">Analytics</h2>
           <Dashboard userInfo={userInfo} />
         </div>
