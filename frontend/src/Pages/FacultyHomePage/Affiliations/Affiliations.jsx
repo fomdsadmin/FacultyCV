@@ -415,7 +415,7 @@ const Affiliations = () => {
     if (userInfo?.user_id) {
       fetchAffiliations();
     }
-  }, [userInfo]);
+  }, []);
 
   // Effect to update local form state when userInfo changes (e.g., after save)
   useEffect(() => {
