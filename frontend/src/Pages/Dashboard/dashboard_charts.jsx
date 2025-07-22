@@ -382,7 +382,7 @@ const Dashboard = ({ userInfo }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">      
+    <div className="max-w-full mx-auto">      
       <SummaryCards />
       
       {/* Graph Carousel Section */}
