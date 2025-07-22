@@ -14,6 +14,8 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [departments, setDepartments] = useState([]);
+  const [faculties, setFaculties] = useState([]);
+  const [selectedFaculty, setSelectedFaculty] = useState("");
   const [departmentUsers, setDepartmentUsers] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [templates, setTemplates] = useState([]);
@@ -46,6 +48,13 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
         .map((info) => info.value)
         .sort();
       setDepartments(departmentList);
+
+      // Load faculties
+      const facultyList = universityInfo
+        .filter((info) => info.type === "Faculty")
+        .map((info) => info.value)
+        .sort();
+      setFaculties(facultyList);
     } catch (error) {
       console.error("Error loading data:", error);
     }
@@ -78,6 +87,16 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     setDownloadUrlDocx(null);
     loadUsersForDepartment(department);
   };
+
+  const handleFacultySelect = (event) => {
+    const faculty = event.target.value;
+    setSelectedFaculty(faculty);
+    setSelectedDepartment("");
+    setSelectedUser("");
+    setSelectedTemplate("");
+    setDownloadUrl(null);
+    setDownloadUrlDocx(null);
+  }
 
   const handleUserSelect = (event) => {
     setSelectedUser(event.target.value);
@@ -165,6 +184,23 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
         ) : (
           <div className="px-4">
             <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Generate CV</h1>
+
+            {/* Faculty Selection */}
+            <div className="m-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty</label>
+              <select
+                className="select select-bordered w-full max-w-md"
+                value={selectedFaculty}
+                onChange={handleFacultySelect}
+              >
+                <option value="">Choose a faculty...</option>
+                {faculties.map((faculty) => (
+                  <option key={faculty} value={faculty}>
+                    {faculty}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Department Selection */}
             <div className="m-4">
@@ -330,7 +366,6 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
 
               {selectedTemplate && (
                 <div className="mt-auto">
-
                   {/* Generate Button */}
                   <button
                     className="w-full btn btn-primary my-4"
