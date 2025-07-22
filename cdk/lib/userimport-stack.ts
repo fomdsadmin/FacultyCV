@@ -105,8 +105,8 @@ export class UserImportStack extends Stack {
     const createManualUploadFolders = new triggers.TriggerFunction(this, "facultyCV-createManualUploadFolders", {
       runtime: lambda.Runtime.PYTHON_3_9,
       functionName: `${resourcePrefix}-createManualUploadFolders`,
-      handler: "createUserImportFolders.lambda_handler", // reuse same handler
-      code: lambda.Code.fromAsset("lambda/create-user-import-folders"),
+      handler: "createManualUploadFolders.lambda_handler", // reuse same handler
+      code: lambda.Code.fromAsset("lambda/create-manual-upload-folders"),
       timeout: cdk.Duration.minutes(1),
       memorySize: 512,
       vpc: vpcStack.vpc,
