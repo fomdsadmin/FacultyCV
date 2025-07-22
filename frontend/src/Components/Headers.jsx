@@ -4,7 +4,7 @@ import { signOut } from "aws-amplify/auth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../Contexts/AppContext";
 
-const Header = ({ userInfo, getCognitoUser }) => {
+const Header = ({ userInfo, assistantUserInfo, getCognitoUser }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -15,9 +15,12 @@ const Header = ({ userInfo, getCognitoUser }) => {
 
   const { currentViewRole, setCurrentViewRole, getAvailableRoles } = useApp();
 
-  const userEmail = userInfo?.email || "Error";
-  const userRole = userInfo?.role || "Error";
-  const firstName = userInfo?.first_name || "User";
+  // Use assistantUserInfo for Assistant role if available, else fallback to userInfo
+  const isAssistantView = currentViewRole === "Assistant";
+  const activeUserInfo = isAssistantView && assistantUserInfo && Object.keys(assistantUserInfo).length > 0 ? assistantUserInfo : userInfo;
+  const userEmail = activeUserInfo?.email || "Error";
+  const userRole = activeUserInfo?.role || "Error";
+  const firstName = activeUserInfo?.first_name || "User";
 
   // Determine if user has multiple roles and which roles to show
   const isAdmin = userRole === "Admin";
@@ -154,6 +157,7 @@ const Header = ({ userInfo, getCognitoUser }) => {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
               <FaUserCircle className="text-gray-700 text-xl" />
+              {/* Show name for Assistant if available, else fallback */}
               <span className="font-medium text-gray-700">{firstName}</span>
               <svg
                 className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
@@ -177,6 +181,7 @@ const Header = ({ userInfo, getCognitoUser }) => {
                   <p className="text-xs text-gray-500 truncate">{userEmail}</p>
                 </div>
 
+                {/* Show profile/help only for Faculty, not Assistant */}
                 {(currentViewRole === "Faculty" || userInfo?.role === "Faculty") && (
                   <>
                     <button
