@@ -101,32 +101,36 @@ const Header = ({ userInfo, assistantUserInfo, getCognitoUser }) => {
   };
 
   return (
-    <div className="pt-[9vh]">
+    <div className="pt-[9vh] ">
       <header className="fixed top-0 left-0 right-0 z-20 bg-white shadow-md h-[9vh] flex items-center px-4">
+        {/* Logo and name for md and above, only logo for below md */}
         <div className="flex items-center gap-4">
           <img
             src="https://med-fom-mednet.sites.olt.ubc.ca/files/2022/10/Faculty-of-Medicine-Unit-Signature-940x157.jpeg"
             alt="UBC Faculty of Medicine Logo"
-            className="h-12 w-auto object-contain"
+            className="h-11 w-auto object-contain my-2 cursor-pointer"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           />
-          <span className="ml-4 text-2xl flex flex-col font-bold text-gray-800 tracking-tight">
-            Faculty360 <span className="font-normal text-sm text-gray-600">Faculty Activity Reporting</span>
+          {/* Name and subtitle only on md and above */}
+          <span className="mb-1 mx-4 text-xl flex flex-col font-bold text-gray-800 tracking-tight hidden md:flex">
+            Faculty360 <span className="font-normal text-sm text-gray-600 ">Faculty Activity Reporting</span>
           </span>
         </div>
         <div className="flex-1" />
+        {/* Dropdown for md and above: logo+name, for below md: logo only */}
         <div className="flex items-center gap-4">
-          {/* Role selector or label */}
+          {/* Role selector or label (unchanged) */}
           <div className="relative" ref={roleDropdownRef}>
             {hasMultipleRoles ? (
               <button
                 onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                className="flex items-center gap-2 px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
               >
                 <span className="text-xs font-semibold uppercase tracking-wide">{getCurrentRoleDisplay()}</span>
                 <FaChevronDown className="text-xs" />
               </button>
             ) : (
-              <div className="px-3 py-1 rounded bg-blue-100 text-blue-700 text-xs font-semibold uppercase tracking-wide">
+              <div className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-semibold uppercase tracking-wide">
                 {getCurrentRoleDisplay()}
               </div>
             )}
@@ -150,15 +154,15 @@ const Header = ({ userInfo, assistantUserInfo, getCognitoUser }) => {
             )}
           </div>
 
-          {/* User profile dropdown */}
+          {/* User profile dropdown: show name only on md and above */}
           <div className="relative" ref={dropdownRef}>
             <button
               className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
               <FaUserCircle className="text-gray-700 text-xl" />
-              {/* Show name for Assistant if available, else fallback */}
-              <span className="font-medium text-gray-700">{firstName}</span>
+              {/* Show name for Assistant if available, else fallback, only on md and above */}
+              <span className="font-medium text-gray-700 hidden md:inline">{firstName}</span>
               <svg
                 className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
                   isDropdownOpen ? "rotate-180" : ""
