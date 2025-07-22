@@ -149,7 +149,7 @@ export class UserImportStack extends Stack {
         runtime: lambda.Runtime.PYTHON_3_9,
         functionName: `${resourcePrefix}-processManualUpload`,
         handler: "lambda_function.lambda_handler",
-        code: lambda.Code.fromAsset("lambda/processUserImport"), // reuse same code
+        code: lambda.Code.fromAsset("lambda/processManualUpload"), // reuse same code
         timeout: cdk.Duration.minutes(5),
         memorySize: 512,
         environment: {
@@ -279,7 +279,7 @@ export class UserImportStack extends Stack {
         s3.EventType.OBJECT_CREATED_PUT,
         new s3n.LambdaDestination(processManualUpload),
         {
-        prefix: "import/",
+        prefix: "manual/",
         suffix: ".csv",
         }
     );
@@ -288,7 +288,7 @@ export class UserImportStack extends Stack {
         s3.EventType.OBJECT_CREATED_PUT,
         new s3n.LambdaDestination(processManualUpload),
         {
-        prefix: "import/",
+        prefix: "manual/",
         suffix: ".xlsx",
         }
     );
