@@ -12,6 +12,7 @@ import { DatabaseStack } from "./database-stack";
 import { Effect, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { LayerVersion } from "aws-cdk-lib/aws-lambda";
 
+
 export interface UserImportStackProps extends StackProps {
   userPoolId: string;
   psycopgLayer: LayerVersion;
@@ -36,6 +37,14 @@ export class UserImportStack extends Stack {
     userImportProps: UserImportStackProps
   ) {
     super(scope, id, userImportProps);
+
+    // Add AWS Data Wrangler (AWSSDKPandas) Lambda Layer for Python 3.9 (us-west-2)
+    // See: https://github.com/awslabs/aws-data-wrangler/blob/main/layers/arns.md
+    const pandasLayer = lambda.LayerVersion.fromLayerVersionArn(
+      this,
+      "AWSSDKPandasLayer39",
+      "arn:aws:lambda:ca-central-1:336392948345:layer:AWSSDKPandas-Python39:32"
+    );
 
     let resourcePrefix = this.node.tryGetContext('prefix');
     if (!resourcePrefix)
@@ -141,7 +150,7 @@ export class UserImportStack extends Stack {
         vpcSubnets: {
             subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
-        layers: [userImportProps.psycopgLayer, userImportProps.databaseConnectLayer]
+        layers: [pandasLayer, userImportProps.psycopgLayer, userImportProps.databaseConnectLayer]
     });
 
     // Lambda function to process manual uploads (same code/config as user import, but points to manualUploadS3Bucket)
@@ -161,7 +170,7 @@ export class UserImportStack extends Stack {
         vpcSubnets: {
             subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         },
-        layers: [userImportProps.psycopgLayer, userImportProps.databaseConnectLayer]
+        layers: [pandasLayer, userImportProps.psycopgLayer, userImportProps.databaseConnectLayer]
     });
     
     // Add S3 permissions for the user import Lambda
