@@ -29,8 +29,8 @@ def addUserToDatabase(row, conn, cursor):
         # Insert new user
         cursor.execute("""
             INSERT INTO users (
-                first_name, last_name, email, primary_department, role, institution, pending, approved
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                first_name, last_name, email, primary_department, role, institution, primary_faculty, pending, approved
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             row['first_name'], 
             row['last_name'], 
@@ -38,6 +38,7 @@ def addUserToDatabase(row, conn, cursor):
             row['department'], 
             row['role'], 
             row['institution'], 
+            row['faculty'],
             False,  # pending
             True   # approved
         ))
@@ -84,7 +85,7 @@ def validate_row(row):
     """
     Validates that a row has all required fields
     """
-    required_fields = ['first_name', 'last_name', 'email', 'department', 'role', 'institution']
+    required_fields = ['first_name', 'last_name', 'email', 'department', 'role', 'institution', 'faculty']
     for field in required_fields:
         if field not in row or not row[field] or row[field].strip() == '':
             return False, f"Missing or empty field: {field}"
