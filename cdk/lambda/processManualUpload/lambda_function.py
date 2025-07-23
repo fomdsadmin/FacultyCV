@@ -21,36 +21,27 @@ Fetch the raw csv data from s3
 :return StringIO file-like object
 """
 def fetchFromS3(bucket, key):
-
-    # get the raw csv file from S3
     s3 = boto3.resource('s3')
     s3_bucket_raw = s3.Object(bucket, key)
     response = s3_bucket_raw.get()
-
-    # extract the raw data from the response Body
-    raw_data_from_s3 = response["Body"]
-
-    return io.StringIO(raw_data_from_s3.read().decode("utf-8"))
+    file_bytes = response["Body"].read()
+    return file_bytes
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations.
     """
-
-    df["first_name"] =  df["Legal Name - First Name"].str.strip()
-    df["last_name"] =  df["Legal Name - Last Name"].str.strip()
     # 7-8 digit number, need to ensure empty/NaN/0 value errors
     df["employee_id"] = df["Employee ID"].astype(str).str.strip()
 
+    df["last_name"] =  df["Legal Name - Last Name"].str.strip()
+    df["first_name"] =  df["Legal Name - First Name"].str.strip()
+
     df["academic_rank"] = df["Academic Rank"].str.strip()
     df["academic_unit"] = df["Academic Unit"].str.strip()
-    df["academic_apt_start_date"] = pd.to_datetime(df["Academic Appointment Start Date"], errors='coerce').dt.strftime('%Y-%m-%d')
-    df["academic_apt_end_date"] = pd.to_datetime(df["Academic Appointment End Date"], errors='coerce').dt.strftime('%Y-%m-%d')
-    df["roster_percent"] = df["Roster % (For Joint Appt)"].astype(float).fillna(0).astype(int)
 
     # Drop all other columns except the cleaned ones
-    df = df[["first_name", "last_name", "employee_id", "academic_rank", "academic_unit",
-             "academic_apt_start_date", "academic_apt_end_date", "roster_percent"]]
+    df = df[["employee_id", "last_name", "first_name", "academic_rank", "academic_unit"]]
     return df
 
 def lambda_handler(event, context):
@@ -66,23 +57,22 @@ def lambda_handler(event, context):
 
         print(f"Processing manual upload file: {file_key} from bucket: {bucket_name}")
 
-        raw_data = fetchFromS3(bucket=bucket_name, key=file_key)
+        # Fetch file from S3 (as bytes)
+        file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
+        print("Data fetched successfully.")
 
-        # # Read file into pandas DataFrame
-        # if file_key.lower().endswith('.xlsx'):
-        #     df = pd.read_excel(io.BytesIO(file_stream))
-        # elif file_key.lower().endswith('.csv'):
-        #     df = pd.read_csv(io.BytesIO(file_stream), encoding="utf-8-sig")
-        # else:
-        #     return {
-        #         'statusCode': 400,
-        #         'status': 'FAILED',
-        #         'error': 'Unsupported file type. Only CSV and XLSX are supported.'
-        #     }
-        # print(f"Loaded {len(df)} rows from file.")
-
-        # read raw data into a pandas DataFrame
-        df = pd.read_csv(raw_data, skiprows=0, header=0)
+        if file_key.lower().endswith('.xlsx'):
+            # For Excel, read as bytes
+            df = pd.read_excel(io.BytesIO(file_bytes))
+        elif file_key.lower().endswith('.csv'):
+            # For CSV, decode bytes to text
+            df = pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        else:
+            return {
+                'statusCode': 400,
+                'status': 'FAILED',
+                'error': 'Unsupported file type. Only CSV and XLSX are supported.'
+            }
         print("Data loaded successfully.")
         print(df.head())
 
