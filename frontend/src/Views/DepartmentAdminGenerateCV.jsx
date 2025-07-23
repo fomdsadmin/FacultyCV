@@ -22,30 +22,88 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [downloadUrlDocx, setDownloadUrlDocx] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState(""); // for super admin
+  const [allDepartments, setAllDepartments] = useState([]); // for super admin
+  const [allUsers, setAllUsers] = useState([]); // store all users for filtering
   const { setNotification } = useNotification();
 
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
 
   useEffect(() => {
-    loadData();
+    // Initial load: templates and all users
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const templatesData = await getAllTemplates();
+        setTemplates(templatesData);
+
+        const users = await getAllUsers();
+        setAllUsers(users);
+
+        if (userInfo && userInfo.role === "Admin") {
+          const departments = Array.from(
+            new Set(
+              users
+                .filter((u) => u.primary_department)
+                .map((u) => u.primary_department)
+            )
+          ).sort();
+          setAllDepartments(departments);
+          // Add "All" option for super admin
+          if (!selectedDepartment) {
+            setSelectedDepartment("All");
+          }
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+      setLoading(false);
+    };
+    fetchInitialData();
+    // eslint-disable-next-line
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      // Load templates
-      const templatesData = await getAllTemplates();
-      setTemplates(templatesData);
-
-      // Load all users and filter by department
-      const allUsers = await getAllUsers();
-      const usersInDepartment = allUsers.filter((user) => user.primary_department === userInfo.primary_department);
+  // Filter department users when selectedDepartment or allUsers changes (for super admin)
+  useEffect(() => {
+    if (userInfo && userInfo.role === "Admin" && allUsers.length > 0 && selectedDepartment) {
+      let usersInDepartment;
+      if (selectedDepartment === "All") {
+        usersInDepartment = allUsers.filter(
+          (user) =>
+            (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
+        );
+      } else {
+        usersInDepartment = allUsers.filter(
+          (user) =>
+            user.primary_department === selectedDepartment &&
+            (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
+        );
+      }
       setDepartmentUsers(usersInDepartment);
-    } catch (error) {
-      console.error("Error loading data:", error);
+      setSelectedUser(""); // reset user selection when department changes
+      setDownloadUrl(null);
+      setDownloadUrlDocx(null);
     }
-    setLoading(false);
-  };
+    // eslint-disable-next-line
+  }, [selectedDepartment, allUsers]);
+
+  // For department admin, filter users once after allUsers is loaded
+  useEffect(() => {
+    if (
+      userInfo &&
+      userInfo.role &&
+      userInfo.role.startsWith("Admin-") &&
+      allUsers.length > 0
+    ) {
+      const usersInDepartment = allUsers.filter(
+        (user) =>
+          user.primary_department === userInfo.primary_department &&
+          (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
+      );
+      setDepartmentUsers(usersInDepartment);
+    }
+    // eslint-disable-next-line
+  }, [allUsers, userInfo]);
 
   const handleUserSelect = (event) => {
     setSelectedUser(event.target.value);
@@ -125,28 +183,43 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   return (
     <PageContainer>
       <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4">
+      <main className="px-16 overflow-auto custom-scrollbar w-full mb-4">
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
           </div>
         ) : (
-          <div className="px-4">
-            <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Generate CV</h1>
+          <div className="">
+            <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">Generate CV</h1>
 
             {/* Department Field */}
-            <div className="m-4">
+            <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-md bg-gray-100"
-                value={userInfo.primary_department || ""}
-                disabled
-              />
+              {userInfo.role === "Admin" ? (
+                <select
+                  className="select select-bordered w-full max-w-md"
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                >
+                  <option value="All">All</option>
+                  {allDepartments.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  className="input input-bordered w-full max-w-md bg-gray-100"
+                  value={userInfo.primary_department}
+                  disabled
+                />
+              )}
             </div>
 
             {/* User Selection Dropdown */}
-            <div className="m-4">
+            <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
               <select
                 className="select select-bordered w-full max-w-md"
@@ -162,7 +235,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
               </select>
             </div>
 
-            <div className="flex flex-col w-full h-full px-4 pb-8">
+            <div className="flex flex-col w-full h-full pb-8">
               {/* Left Panel: Template List */}
               <div className="flex flex-col h-full">
                 <h2 className="text-sm font-medium text-gray-700 mb-2">Templates</h2>
@@ -219,7 +292,6 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                         ))}
                       </select>
                     </div>
-
 
                     {/* Download Buttons */}
                     {(downloadUrl || downloadUrlDocx) && (

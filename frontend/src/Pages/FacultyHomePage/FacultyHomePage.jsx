@@ -21,11 +21,11 @@ const FacultyHomePageContent = (user) => {
       />
 
       <main
-        className="px-[1vw] md:px-[2vw] lg:px-[3vw] xl:px-[4vw]
+        className="
         overflow-y-auto custom-scrollbar w-full relative"
       >
         {/* Single container with consistent width */}
-        <div className="mx-auto w-full" style={{ maxWidth: "calc(100% - 2rem)" }}>
+        <div className="mx-auto w-full">
           {/* Save button positioned absolutely at the top right
           <div className="flex justify-end mt-6 mr-4">
             <SaveButton />

@@ -674,8 +674,8 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   return (
     <PageContainer>
       <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className="px-5 lg:px-8 xl:px-12 py-4 w-full min-h-screen bg-zinc-50 mb-16">
-        <div className="max-w-7xl mx-auto">
+      <main className="px-16 py-4 w-full min-h-screen bg-zinc-50 mb-16">
+        <div className="mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-zinc-700 mb-1 mt-2">Department Analytics</h1>
           <h2 className="text-xl font-semibold text-blue-700 mb-6 mt-2">{department}</h2>
           {loading ? (
