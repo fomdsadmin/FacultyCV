@@ -11,7 +11,6 @@ import { useEffect } from 'react';
 const AuthPage = () => {
 
   const {
-    getCognitoUser,
     setIsUserLoggedIn,
     isUserLoggedIn,
     loading,
@@ -38,19 +37,6 @@ const AuthPage = () => {
     }
     helper();
   }, [isUserLoggedIn, userExistsInSqlDatabase])
-
-  //useEffect(() => {
-  //getUser(emaio)
-  // note: user is automatically added to cognito when logging in from cwl
-  // if user does not exist in cognito and userprofile table and pending status is false then update group membership in cognito to faculty
-  // if user exists in cognito and exists in the userprofile table and pending status is false then dont do anything.
-  // if user exists in cognito and does not exist in user profile table then redirect them to the signup form, it should be prefiled in with all attributes from jwt, they can select roles [faculty, assistant], then just let them know the request was submitted
-  // if user exists in cognito and and pending status is true then tell them to wait on the ui
-
-  //catch {
-  //redirect to form
-  // }
-  // })
 
   const submitRequest = async () => {
     setLoading(true);

@@ -90,7 +90,7 @@ export const AppProvider = ({ children }) => {
             try {
               await getUserInfo(email)
             } catch {
-                const { given_name } = await fetchUserAttributes();
+                const { given_name } = attributes;
                 // Set basic user info for header display
                 setUserInfo({
                     first_name: given_name,
@@ -120,14 +120,12 @@ export const AppProvider = ({ children }) => {
                     setIsUserApproved(false);
                     setLoading(false);
                     return;
-                } else {
-                  getCognitoUser();
                 }
 
-                // User is logged in with Cognito
+                // User has a valid token - set up user
                 setIsUserLoggedIn(true);
-
-                // Step 2: Get user attributes to check email
+                
+                // Get user attributes to check email
                 const { email } = await fetchUserAttributes();
 
                 if (!email) {
@@ -138,18 +136,52 @@ export const AppProvider = ({ children }) => {
                     return;
                 }
 
-                // Step 3: Check if user exists in SQL database
+                // Check if user exists in SQL database
                 try {
                     const userData = await getUser(email);
                     setUserExistsInSqlDatabase(true);
                     setIsUserPending(userData.pending);
                     setIsUserApproved(userData.approved);
+                    
+                    // If user is approved, set up full user context
+                    if (userData.approved && !userData.pending) {
+                        // Set up full user context (inline getCognitoUser logic)
+                        try {
+                            const userData = await getCurrentUser();
+                            setUser(userData);
+                            
+                            const attributes = await fetchUserAttributes();
+                            const userEmail = attributes.email;
+                            
+                            const userGroup = await getUserGroup();
+                            setUserGroup(userGroup);
+                            
+                            try {
+                                await getUserInfo(userEmail);
+                            } catch {
+                                const { given_name } = attributes;
+                                // Set basic user info for header display
+                                setUserInfo({
+                                    first_name: given_name,
+                                });
+                            }
+                            console.log("User context setup completed");
+                        } catch (error) {
+                            console.error("Error setting up user context:", error);
+                        }
+                    }
                 } catch (error) {
                     console.error("Error fetching user data:", error);
                     // User does not exist in SQL database
                     setUserExistsInSqlDatabase(false);
                     setIsUserPending(false);
                     setIsUserApproved(false);
+                    
+                    // Still set up basic user info for header display
+                    const { given_name } = await fetchUserAttributes();
+                    setUserInfo({
+                        first_name: given_name || "",
+                    });
                 }
 
             } catch (error) {
