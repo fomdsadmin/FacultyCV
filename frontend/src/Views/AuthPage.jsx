@@ -1,30 +1,43 @@
 import React from 'react';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
-import { useEffect } from 'react';
-import { getCurrentUser } from 'aws-amplify/auth';
-import { fetchAuthSession } from 'aws-amplify/auth';
 import { fetchUserAttributes } from 'aws-amplify/auth';
 import { signInWithRedirect } from 'aws-amplify/auth';
 import { useApp } from 'Contexts/AppContext.jsx';
-import { getUser } from 'graphql/graphqlHelpers.js';
-import { updateUser } from 'graphql/graphqlHelpers.js';
 import { addUser } from 'graphql/graphqlHelpers.js';
 import { useState } from 'react';
+import { useEffect } from 'react';
 
-const AuthPage = ({ getCognitoUser }) => {
+const AuthPage = () => {
 
-  const { setUser } = useApp();
-  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
-  const [userExistsInSqlDatabase, setUserExistsInSqlDatabase] = useState(false);
-  const [isUserPending, setIsUserPending] = useState(false);
-  const [isUserApproved, setIsUserApproved] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const {
+    getCognitoUser,
+    setIsUserLoggedIn,
+    isUserLoggedIn,
+    loading,
+    setLoading,
+    userExistsInSqlDatabase,
+    setUserExistsInSqlDatabase,
+    isUserPending,
+    setIsUserPending,
+    isUserApproved,
+    setIsUserApproved
+  } = useApp();
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    role: "faculty"
+    role: "Faculty"
   });
+
+  useEffect(() => {
+    const helper = async () => {
+      if (isUserLoggedIn && !userExistsInSqlDatabase) {
+        await setUpForm();
+      }
+    }
+    helper();
+  }, [isUserLoggedIn, userExistsInSqlDatabase])
 
   //useEffect(() => {
   //getUser(emaio)
@@ -38,66 +51,6 @@ const AuthPage = ({ getCognitoUser }) => {
   //redirect to form
   // }
   // })
-
-  useEffect(() => {
-    const initializeAuth = async () => {
-      setLoading(true);
-      try {
-        // Step 1: Check authentication session
-        const session = await fetchAuthSession();
-        console.log(session);
-        const token = session.tokens?.idToken?.toString();
-
-        if (!token) {
-          // User is not logged in
-          setIsUserLoggedIn(false);
-          setUserExistsInSqlDatabase(false);
-          setIsUserPending(false);
-          setIsUserApproved(false);
-          return;
-        }
-
-        // Step 2: Set up form with user attributes
-        await setUpForm();
-        setIsUserLoggedIn(true);
-
-        // Step 3: Get user attributes to check email
-        const { email } = await fetchUserAttributes();
-        
-        if (!email) {
-          setUserExistsInSqlDatabase(false);
-          setIsUserPending(false);
-          setIsUserApproved(false);
-          return;
-        }
-
-        // Step 4: Check if user exists in SQL database
-        try {
-          const userData = await getUser(email);
-          setUserExistsInSqlDatabase(true);
-          setIsUserPending(userData.pending);
-          setIsUserApproved(userData.approved);
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          // User does not exist in SQL database
-          setUserExistsInSqlDatabase(false);
-          setIsUserPending(false);
-          setIsUserApproved(false);
-        }
-
-      } catch (error) {
-        console.error("Error checking auth session:", error);
-        setIsUserLoggedIn(false);
-        setUserExistsInSqlDatabase(false);
-        setIsUserPending(false);
-        setIsUserApproved(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, [])
 
   const submitRequest = async () => {
     setLoading(true);
@@ -127,7 +80,7 @@ const AuthPage = ({ getCognitoUser }) => {
       email: email,
       first_name: given_name,
       last_name: family_name,
-      role: "faculty"
+      role: "Faculty"
     })
   }
 
@@ -211,8 +164,8 @@ const AuthPage = ({ getCognitoUser }) => {
                     <input
                       type="radio"
                       name="role"
-                      value="faculty"
-                      checked={formData.role === "faculty"}
+                      value="Faculty"
+                      checked={formData.role === "Faculty"}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     />
                     Faculty
@@ -221,8 +174,8 @@ const AuthPage = ({ getCognitoUser }) => {
                     <input
                       type="radio"
                       name="role"
-                      value="assistant"
-                      checked={formData.role === "assistant"}
+                      value="Assistant"
+                      checked={formData.role === "Assistant"}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     />
                     Assistant
@@ -251,6 +204,14 @@ const AuthPage = ({ getCognitoUser }) => {
             <div className="text-center p-4 m-4 bg-green-100 border border-green-400 text-green-700 rounded">
               <h2 className="text-lg font-bold">Your account has been approved!</h2>
               <p className="mt-2">You can now access all features. Welcome aboard!</p>
+              <button
+                className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none"
+                onClick={async () => {
+                  window.location.href = "/home";
+                }}
+              >
+                Continue to Dashboard
+              </button>
             </div>
           )}
 

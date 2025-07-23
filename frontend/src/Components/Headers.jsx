@@ -4,7 +4,8 @@ import { signOut } from "aws-amplify/auth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../Contexts/AppContext";
 
-const Header = ({ userInfo, assistantUserInfo, getCognitoUser }) => {
+const Header = ({ assistantUserInfo }) => {
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -13,7 +14,9 @@ const Header = ({ userInfo, assistantUserInfo, getCognitoUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { currentViewRole, setCurrentViewRole, getAvailableRoles } = useApp();
+  const { currentViewRole, setCurrentViewRole, getAvailableRoles, userInfo } = useApp();
+
+  console.log(userInfo)
 
   // Use assistantUserInfo for Assistant role if available, else fallback to userInfo
   const isAssistantView = currentViewRole === "Assistant";
