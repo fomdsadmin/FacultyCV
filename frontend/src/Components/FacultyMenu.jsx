@@ -140,15 +140,15 @@ const FacultyMenu = ({
           </li>
           <li
             className={`mb-2 ${
-              location.pathname === "/reports" ? "bg-gray-200 rounded-lg" : ""
+              location.pathname === "/faculty/reports" ? "bg-gray-200 rounded-lg" : ""
             }`}
           >
-            <Link to="/reports">
+            <Link to="/faculty/reports">
               <TiDownloadOutline className="h-5 w-5" />
               {showText && !isCollapsed && (
                 <p
                   className={`ml-2 ${
-                    location.pathname === "/reports" ? "font-bold" : ""
+                    location.pathname === "/faculty/reports" ? "font-bold" : ""
                   }`}
                 >
                   Reports

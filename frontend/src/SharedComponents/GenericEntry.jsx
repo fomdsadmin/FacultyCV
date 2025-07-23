@@ -104,7 +104,7 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
   }, [data_details, field1, field2]);
 
   return (
-    <div className="min-h-8 shadow-glow mx-4 my-2 px-4 py-4 flex items-center bg-white rounded-lg">
+    <div className="min-h-8 shadow-glow my-2 px-4 py-4 flex items-center bg-white rounded-lg">
       <div className="flex-1 w-full">
         {updatedField1 && (
           <h1 className="text-gray-800 font-bold break-words">

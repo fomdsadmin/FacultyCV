@@ -3,7 +3,7 @@ import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import AnalyticsCard from "../Components/AnalyticsCard.jsx";
 import { getUserCVData, getUserConnections, getAllSections } from "../graphql/graphqlHelpers.js";
-import BarChartComponent from "../Components/BarChart.jsx";
+import GraphCarousel from "../Components/GraphCarousel.jsx";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const DepartmentAdminUserInsights = ({ user, department }) => {
@@ -38,32 +38,42 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
     setLoading(true);
     try {
       const sectionIds = {
-        Publications: dataSections.find((s) => s.title.includes("Publications"))?.data_section_id,
+        Publications: dataSections.find((s) => s.title.includes("Publications") && !s.title.includes("Other"))?.data_section_id,
+        OtherPublications: dataSections.find((s) => s.title.includes("Publications") && s.title.includes("Other"))?.data_section_id,
         Grants: dataSections.find((s) => s.title.includes("Research or Equivalent Grants"))?.data_section_id,
-        Patents: dataSections.find((s) => s.title === "Patents")?.data_section_id,
+        Patents: dataSections.find((s) => s.title.includes("Patents"))?.data_section_id,
       };
 
       const publications = sectionIds.Publications ? await getUserCVData(user.user_id, sectionIds.Publications) : [];
+      const otherPublications = sectionIds.OtherPublications ? await getUserCVData(user.user_id, sectionIds.OtherPublications) : [];
       const grants = sectionIds.Grants ? await getUserCVData(user.user_id, sectionIds.Grants) : [];
       const patents = sectionIds.Patents ? await getUserCVData(user.user_id, sectionIds.Patents) : [];
+
+      // Combine regular publications and other publications
+      const allPublications = [...publications, ...otherPublications];
 
       let grantMoneyRaised = [];
       for (const data of grants) {
         try {
           const dataDetails = JSON.parse(data.data_details);
-          if (dataDetails.year) {
-            grantMoneyRaised.push({
-              amount: parseInt(dataDetails.amount),
-              years: parseInt(dataDetails.year),
-            });
+          if (dataDetails.year && dataDetails.amount) {
+            const amount = parseFloat(dataDetails.amount);
+            const year = parseInt(dataDetails.year);
+            // Only add grants with valid numeric amounts and years
+            if (!isNaN(amount) && !isNaN(year) && amount > 0) {
+              grantMoneyRaised.push({
+                amount: amount,
+                years: year,
+              });
+            }
           }
         } catch (error) {
-          // ignore
+          // ignore invalid data
         }
       }
 
       setUserCVData({
-        publications,
+        publications: allPublications, // Now includes both regular and other publications
         grants,
         patents,
         grantMoneyRaised,
@@ -83,7 +93,8 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
     const data = [];
     const yearlyDataMap = new Map();
     (userCVData.grantMoneyRaised || []).forEach((grant) => {
-      if (grant.amount && grant.years) {
+      // Validate that both amount and years are valid numbers
+      if (grant.amount && grant.years && !isNaN(grant.amount) && !isNaN(grant.years) && grant.amount > 0) {
         const year = grant.years;
         if (yearlyDataMap.has(year)) {
           yearlyDataMap.get(year).Funding += grant.amount;
@@ -108,24 +119,98 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
       try {
         const dataDetails = JSON.parse(publication.data_details);
         const currentYear = new Date().getFullYear();
-        const fiveYearsago = currentYear - 5;
-        if (
-          dataDetails.year_published &&
-          Number(dataDetails.year_published) > fiveYearsago &&
-          Number(dataDetails.year_published) <= currentYear
-        ) {
-          const year = dataDetails.year_published.toString();
-          if (yearlyDataMap.has(year)) {
-            yearlyDataMap.get(year).Publications += 1;
-          } else {
-            yearlyDataMap.set(year, {
-              year: year,
-              Publications: 1,
-            });
+        const fiveYearsAgo = currentYear - 5;
+
+        // Handle regular publications with year_published (same as Department Admin)
+        if (dataDetails.year_published) {
+          const year = parseInt(dataDetails.year_published);
+          if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
+            const yearStr = year.toString();
+            if (yearlyDataMap.has(yearStr)) {
+              yearlyDataMap.get(yearStr).Publications += 1;
+            } else {
+              yearlyDataMap.set(yearStr, {
+                year: yearStr,
+                Publications: 1,
+              });
+            }
+          }
+        }
+
+        // Handle other publications with dates field (same as Department Admin)
+        if (dataDetails.dates && typeof dataDetails.dates === 'string') {
+          const dateParts = dataDetails.dates.split("-");
+          if (dateParts.length > 1) {
+            let yearPart = dateParts[1];
+            if (yearPart && yearPart.includes(",")) {
+              const yearCommaparts = yearPart.split(",");
+              if (yearCommaparts.length > 1) {
+                const year = parseInt(yearCommaparts[1].trim());
+                if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
+                  const yearStr = year.toString();
+                  if (yearlyDataMap.has(yearStr)) {
+                    yearlyDataMap.get(yearStr).Publications += 1;
+                  } else {
+                    yearlyDataMap.set(yearStr, {
+                      year: yearStr,
+                      Publications: 1,
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Fallback: Handle legacy year and years fields for backward compatibility
+        if (!dataDetails.year_published && !dataDetails.dates) {
+          if (dataDetails.year) {
+            const year = parseInt(dataDetails.year);
+            if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
+              const yearStr = year.toString();
+              if (yearlyDataMap.has(yearStr)) {
+                yearlyDataMap.get(yearStr).Publications += 1;
+              } else {
+                yearlyDataMap.set(yearStr, {
+                  year: yearStr,
+                  Publications: 1,
+                });
+              }
+            }
+          } else if (dataDetails.years) {
+            if (Array.isArray(dataDetails.years)) {
+              dataDetails.years.forEach(yearValue => {
+                const year = parseInt(yearValue);
+                if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
+                  const yearStr = year.toString();
+                  if (yearlyDataMap.has(yearStr)) {
+                    yearlyDataMap.get(yearStr).Publications += 1;
+                  } else {
+                    yearlyDataMap.set(yearStr, {
+                      year: yearStr,
+                      Publications: 1,
+                    });
+                  }
+                }
+              });
+            } else {
+              const year = parseInt(dataDetails.years);
+              if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
+                const yearStr = year.toString();
+                if (yearlyDataMap.has(yearStr)) {
+                  yearlyDataMap.get(yearStr).Publications += 1;
+                } else {
+                  yearlyDataMap.set(yearStr, {
+                    year: yearStr,
+                    Publications: 1,
+                  });
+                }
+              }
+            }
           }
         }
       } catch (error) {
-        // ignore
+        // ignore invalid data
       }
     });
     yearlyDataMap.forEach((value) => data.push(value));
@@ -138,21 +223,26 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
     const pubCount = userCVData.publications ? userCVData.publications.length : 0;
     const grantCount = userCVData.grants ? userCVData.grants.length : 0;
     const patentCount = userCVData.patents ? userCVData.patents.length : 0;
-    const Funding = (userCVData.grantMoneyRaised || [])
-      .reduce((total, g) => total + g.amount, 0)
-      .toLocaleString("en-US", { style: "currency", currency: "USD" });
+    const totalFunding = (userCVData.grantMoneyRaised || [])
+      .reduce((total, g) => {
+        // Check if amount exists and is a valid number
+        const amount = g && g.amount && !isNaN(g.amount) ? parseFloat(g.amount) : 0;
+        return total + amount;
+      }, 0);
+    const Funding = totalFunding > 0 
+      ? totalFunding.toLocaleString("en-US", { style: "currency", currency: "USD" })
+      : "$0";
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
         <AnalyticsCard title="Publications" value={pubCount} />
         <AnalyticsCard title="Grants" value={grantCount} />
         <AnalyticsCard title="Patents" value={patentCount} />
         <AnalyticsCard title="Grant Funding" value={Funding} />
-        <AnalyticsCard title="Connections" value={userConnections.length} />
       </div>
     );
   };
 
-  // Reusable graph container component
+  // Reusable graph container component (kept for compatibility if needed)
   const GraphContainer = ({ title, children }) => (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-4 w-full h-full flex flex-col">
       <h3 className="text-lg font-semibold text-zinc-700 mb-6">{title}</h3>
@@ -160,9 +250,59 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
     </div>
   );
 
+  // Graph configuration for the carousel
+  const graphsConfig = () => {
+    const graphs = [];
+
+    // Grant funding graph (only if there's data)
+    const grantData = getGrantMoneyGraphData();
+    if (grantData.length > 0) {
+      graphs.push({
+        title: "Yearly Grant Funding",
+        data: grantData,
+        dataKey: "Funding",
+        xAxisKey: "date",
+        xAxisLabel: "Year",
+        yAxisLabel: "Grant Funding ($)",
+        barColor: "#10b981",
+        showLegend: false,
+        formatTooltip: (value, name) => [`$${value.toLocaleString()}`, 'Grant Funding ($)'],
+        formatYAxis: (value) => {
+          if (value >= 1000000) {
+            return `$${(value / 1000000).toFixed(1)}M`;
+          } else if (value >= 1000) {
+            return `$${(value / 1000).toFixed(0)}K`;
+          }
+          return `$${value.toLocaleString()}`;
+        },
+        formatXAxis: (value) => value
+      });
+    }
+
+    // Publications graph (only if there's data)
+    const publicationsData = getYearlyPublicationsGraphData();
+    if (publicationsData.length > 0) {
+      graphs.push({
+        title: "Yearly Publications (Last 5 Years)",
+        data: publicationsData,
+        dataKey: "Publications",
+        xAxisKey: "year",
+        xAxisLabel: "Year",
+        yAxisLabel: "Number of Publications",
+        barColor: "#8b5cf6",
+        showLegend: false,
+        formatTooltip: (value, name) => [`${value} ${value === 1 ? 'Publication' : 'Publications'}`, name],
+        formatYAxis: (value) => value.toString(),
+        formatXAxis: (value) => value
+      });
+    }
+
+    return graphs;
+  };
+
   return (
-    <div className="py-8 px-12 bg-white rounded-lg shadow w-full">
-      <h2 className="text-xl font-bold text-zinc-700 mb-6">User Analytics</h2>
+    <div className="py-4 px-12 bg-white rounded-lg shadow w-full">
+      <h2 className="text-xl font-bold text-zinc-700 my-4">User Analytics</h2>
       {loading && (
         <div className="flex items-center justify-center w-full mt-8">
           <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -171,27 +311,9 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
       {!loading && user && (
         <>
           <UserSummaryCards />
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-4">
-            <GraphContainer title="Yearly Grant Funding">
-              <BarChartComponent
-                data={getGrantMoneyGraphData()}
-                dataKey="Funding"
-                xAxisKey="date"
-                barColor="#82ca9d"
-                margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
-                minHeight={350}
-              />
-            </GraphContainer>
-            <GraphContainer title="Yearly Publications (Last 5 Years)">
-              <BarChartComponent
-                data={getYearlyPublicationsGraphData()}
-                dataKey="Publications"
-                xAxisKey="year"
-                barColor="#8884d8"
-                margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
-                minHeight={350}
-              />
-            </GraphContainer>
+          {/* Graph Carousel Section */}
+          <div className="mt-8">
+            <GraphCarousel graphs={graphsConfig()} />
           </div>
         </>
       )}

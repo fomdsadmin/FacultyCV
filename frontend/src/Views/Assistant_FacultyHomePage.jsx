@@ -137,7 +137,7 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
       {/* <AssistantMenu getCognitoUser={getCognitoUser} userName={assistantUserInfo.preferred_name || assistantUserInfo.first_name}></AssistantMenu> */}
       <AssistantPageContainer>
         <Assistant_FacultyMenu userInfo={userInfo} assistantUserInfo={assistantUserInfo}></Assistant_FacultyMenu>
-        <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4 relative'>
+        <main className='px-[2vw] md:px-[3vw] lg:px-[5vw] overflow-auto custom-scrollbar w-full mb-4 relative'>
         
         <div className="flex items-center justify-between mt-4 mb-4">
           <h1 className="text-4xl ml-4 font-bold text-zinc-600">Profile</h1>
@@ -207,18 +207,6 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
                   readOnly 
                 />
               </div>
-            </div>
-
-            <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Bio</h2>
-            <div className="col-span-1 sm:col-span-2 md:col-span-4">
-              <textarea 
-                id="bio" 
-                name="bio" 
-                value={userInfo.bio || ''} 
-                maxLength={500}
-                className="w-full rounded text-sm px-3 py-2 border border-gray-300" 
-                onChange={handleInputChange} 
-              ></textarea>
             </div>
 
             <h2 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Institution</h2>
@@ -342,96 +330,9 @@ const Assistant_FacultyHomePage = ({ assistantUserInfo, userInfo, setUserInfo, g
               </div>
             </div>
 
-            <h2 className="text-lg font-bold mb-2 text-zinc-500">Identifications</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm">Scopus ID(s):</label>
-                  {scopusId && (
-                    <button
-                      type="button"
-                      className="btn btn-xs btn-warning text-white font-bold"
-                      onClick={handleClearScopusId}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2">
-                  {scopusId && scopusId.split(',').map((id, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      className="btn btn-sm btn-secondary text-white py-1 px-2"
-                      onClick={() => window.open(`https://www.scopus.com/authid/detail.uri?authorId=${id}`, '_blank')}
-                    >
-                      {id}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={handleScopusIdClick}
-                    className="btn btn-sm btn-success text-white py-1 px-2 w-full"
-                  >
-                    Add Scopus ID
-                    </button>
-                    <button
-                    type="button"
-                    onClick={() => {
-                      setActiveModal('ManualScopus'); // Set to manual entry mode
-                      setModalOpen(true);
-                    }}
-                    className="btn btn-sm btn-secondary text-white py-1 px-2 w-full mt-2"
-                  >
-                    Add Scopus ID Manually
-                  </button>
-                </div>
-              </div>
-              <div>
-                <div className='flex flex-wrap justify-between mb-2'>
-                  <label className="block text-sm">ORCID ID:</label>
-                  {orcidId && ( 
-                    <button
-                      type="button"
-                      className="btn btn-xs btn-warning text-white ml-2 font-bold"
-                      onClick={handleClearOrcidId}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => orcidId ? window.open(`https://orcid.org/${orcidId}`, '_blank') : handleOrcidIdClick()}
-                  className={`btn btn-sm ${orcidId ? 'btn-secondary' : 'btn-success'} text-white py-1 px-2 w-full`}
-                >
-                  {orcidId ? `${orcidId}` : "Add ORCID ID"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveModal('ManualOrcid'); // Set to manual ORCID entry mode
-                    setModalOpen(true);
-                  }}
-                  className="btn btn-sm btn-secondary text-white py-1 px-2 w-full mt-2"
-                >
-                  Add ORCID ID Manually
-               </button>
-              </div>
-            </div>
           </form>
         )}
       </main>
-      {modalOpen && (
-        <ProfileLinkModal 
-          user={userInfo}
-          activeModal={activeModal}
-          setClose={handleCloseModal} 
-          setOrcidId={handleOrcidLink} 
-          setScopusId={handleScopusLink} 
-          institution={userInfo.institution}
-        />
-      )}
       </AssistantPageContainer>
     </div>
     

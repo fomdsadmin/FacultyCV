@@ -7,9 +7,7 @@ import GenericSection from "../SharedComponents/GenericSection/GenericSection.js
 import SecureFundingSection from "../Components/SecureFundingSection.jsx";
 import PublicationsSection from "../Components/PublicationsSection.jsx";
 import PatentsSection from "../Components/PatentsSection.jsx";
-import InvitedPresentationSection from "../Components/InvitedPresentationSection.jsx";
 import { getAllSections } from "../graphql/graphqlHelpers.js";
-import EntryModal from "../SharedComponents/EntryModal/EntryModal.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 
 // Natural sort function for titles/categories with leading numbers
@@ -164,7 +162,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
 
   // When user clicks a section, update the URL
   const handleManageClick = (value) => {
-    const section = dataSections.find((section) => section.data_section_id == value);
+    const section = dataSections.find((section) => section.data_section_id === value);
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
@@ -209,8 +207,11 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   const searchedSections = dataSections.filter((entry) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
+    const info = entry.info || "";
     const search = searchTerm.toLowerCase();
-    const matchesSearch = section.toLowerCase().includes(search) || category.toLowerCase().includes(search);
+    const matchesSearch = section.toLowerCase().includes(search) || 
+                         category.toLowerCase().includes(search) || 
+                         info.toLowerCase().includes(search);
     const matchesFilter = !activeTab || category === activeTab;
     return matchesSearch && matchesFilter;
   });
