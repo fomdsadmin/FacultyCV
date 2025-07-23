@@ -32,6 +32,10 @@ export const getUserQuery = `
             scopus_id
             orcid_id
             joined_timestamp   
+            cwl
+            vpp
+            pending
+            approved
         }
     }
 `;
@@ -508,13 +512,12 @@ export const getPatentMatchesQuery = (first_name, last_name) => `
     }
 `;
 
-export const getPresignedUrlQuery = (jwt, fileKey, type, purpose) => `
+export const getPresignedUrlQuery = (jwt, fileKey, type) => `
     query GetPresignedUrl {
         getPresignedUrl (
-            jwt: "${jwt}"
-            key: "${fileKey}"
+            jwt: "${jwt}",
+            key: "${fileKey}",
             type: "${type}"
-            purpose: "${purpose}"
         )
     }
 `;

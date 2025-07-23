@@ -11,12 +11,12 @@ import { CookieStorage } from 'aws-amplify/utils';
 Amplify.configure({
   Auth: {
     Cognito: {
-      userPoolClientId: '35ies7u543bt5j2tu52r1o6ui3',
-      userPoolId: 'ca-central-1_BO47RpLGu',
+      userPoolClientId: '10shpk39hmqk6iros3mn3q88l4',
+      userPoolId: 'ca-central-1_4QA5peGTF',
       loginWith: { // Optional
         oauth: {
-          domain: 'ca-central-1bo47rplgu.auth.ca-central-1.amazoncognito.com',
-          scopes: ['openid', 'email', 'profile', 'aws.cognito.signin.user.admin'],
+          domain: 'ca-central-14qa5pegtf.auth.ca-central-1.amazoncognito.com',
+          scopes: ['aws.cognito.signin.user.admin', 'email', 'openid', 'profile'],
           redirectSignIn: ['http://localhost:3000/auth'],
           redirectSignOut: ['http://localhost:3000/auth'],
           responseType: 'code',
