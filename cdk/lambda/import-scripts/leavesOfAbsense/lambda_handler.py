@@ -56,6 +56,7 @@ def cleanData(df):
 def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
     """
     Store the cleaned DataFrame into the database.
+    Returns updated rows_processed and rows_added_to_db.
     """
     for i, row in df.iterrows():
         row_dict = row.to_dict()
@@ -76,6 +77,7 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             rows_processed += 1
             connection.commit()
             print(f"Processed row {i + 1}/{len(df)}")
+    return rows_processed, rows_added_to_db
 
 """
 Fetch the raw csv data from s3
@@ -146,7 +148,7 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
+        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
 
         cursor.close()
         connection.close()
