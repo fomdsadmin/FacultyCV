@@ -97,6 +97,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
         <div className="text-zinc-500 text-sm mb-2">Role: {currentUser.role}</div>
         <div className="text-zinc-500 text-sm mb-2">Faculty: {currentUser.primary_faculty}</div>
         <div className="text-zinc-500 text-sm mb-2">Primary Department: {currentUser.primary_department}</div>
+        <div className="text-zinc-500 text-sm mb-2">Institution: {currentUser.institution}</div>
         <div className="flex flex-wrap justify-end gap-2">
           <button onClick={handleUpdateUser} className="btn btn-primary h-9 px-5 text-white font-semibold">
             Update User

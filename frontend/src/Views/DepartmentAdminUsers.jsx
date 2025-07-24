@@ -131,7 +131,7 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
         toggleViewMode={toggleViewMode}
         viewMode="department-admin"
       />
-      <main className="px-12 overflow-auto custom-scrollbar w-full mb-4 mt-4">
+      <main className="px-16 overflow-auto custom-scrollbar w-full mb-4 mt-4">
         {loading ? (
           <div className="flex items-center justify-center w-full">
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -140,8 +140,8 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
           <div>
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">{department} Users</h1>
-                <div className="m-4 flex">
+                <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">{department} Users</h1>
+                <div className="my-4 flex">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
                       type="text"

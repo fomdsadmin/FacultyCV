@@ -617,7 +617,7 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         toggleViewMode={toggleViewMode}
       />
 
-      <main className="px-[1vw] sm:px-[2vw] md:px-[3vw] lg:px-[4vw] w-full overflow-auto py-4">
+      <main className="px-16 w-full overflow-auto py-4">
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
