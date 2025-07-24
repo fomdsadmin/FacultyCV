@@ -12,6 +12,7 @@ export const AUDIT_ACTIONS = {
     EDIT_SECTION_DETAILS: 'Update section details', //admin
     UPDATE_SECTION_ATTRIBUTES: 'Update section attributes', // admin
     ARCHIVE_SECTION: 'Archive section', // admin
+    DELETE_SECTION_DATA: 'Delete section Data', // admin
     SEND_CONNECTION_INVITE: 'Send connection invite', // admin
     DELETE_CONNECTION: 'Delete connection', // admin
     ACCEPT_CONNECTION: 'Accept connection', // admin

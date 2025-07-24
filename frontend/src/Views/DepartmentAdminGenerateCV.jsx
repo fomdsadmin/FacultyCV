@@ -142,7 +142,9 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const handleGenerateAll = () => {
     // TODO: Implement actual logic
     setShowGenerateAllModal(false);
+    // last thing, notification
     setNotification(true);
+    
     alert("Department-wide CV generation is not implemented yet.");
   };
 

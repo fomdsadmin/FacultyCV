@@ -3,6 +3,7 @@ import {
   getAllSectionsQuery,
   getArchivedSectionsQuery,
   getUserCVDataQuery,
+  getAllSectionCVDataQuery,
   getUserQuery,
   getAllUsersQuery,
   getAllUniversityInfoQuery,
@@ -59,6 +60,7 @@ import {
   UPDATE_USER_CV_DATA,
   UPDATE_SECTION,
   DELETE_USER_CV_SECTION_DATA,
+  DELETE_SECTION_CV_DATA,
   addAuditViewMutation,
   ADD_TEMPLATE,
   UPDATE_TEMPLATE,
@@ -270,6 +272,11 @@ export const getUserCVData = async (user_id, data_section_ids) => {
 
   // console.log(results["data"]["getUserCVData"]);
   return results["data"]["getUserCVData"];
+};
+
+export const getAllSectionCVData = async (data_section_id, data_section_ids) => {
+  const results = await runGraphql(getAllSectionCVDataQuery(data_section_id, data_section_ids));
+  return results["data"]["getAllSectionCVData"];
 };
 
 export const getUserAffiliations = async (user_id, first_name, last_name) => {
@@ -1140,6 +1147,13 @@ export const deleteUserCVSectionData = async (input) => {
     data_section_id: input.data_section_id,
   });
   return results["data"]["deleteUserCVSectionData"];
+};
+
+export const deleteSectionCVData = async (data_section_id) => {
+  const results = await executeGraphql(DELETE_SECTION_CV_DATA, {
+    data_section_id: data_section_id,
+  });
+  return results["data"]["deleteSectionCVData"];
 };
 
 /**

@@ -319,6 +319,14 @@ export const DELETE_USER_CV_SECTION_DATA = `
   }
 `;
 
+export const DELETE_SECTION_CV_DATA = `
+    mutation DeleteSectionCVData($data_section_id: String!) {
+      deleteSectionCVData(
+        data_section_id: $data_section_id
+    )
+  }
+`;
+
 
 export const updateUserCVDataArchiveMutation = (
     user_cv_data_id,
