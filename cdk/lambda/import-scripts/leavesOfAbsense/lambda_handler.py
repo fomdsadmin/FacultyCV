@@ -52,6 +52,31 @@ def cleanData(df):
     df = df.replace({np.nan: ''})
     return df
 
+
+def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
+    """
+    Store the cleaned DataFrame into the database.
+    """
+    for i, row in df.iterrows():
+        row_dict = row.to_dict()
+        data_details_JSON = json.dumps(row_dict)
+        
+        try:
+            cursor.execute(
+                """
+                INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (row_dict['obgyn_user_id'], 'leave', data_details_JSON, True)
+            )
+            rows_added_to_db += 1
+        except Exception as e:
+            errors.append(f"Error inserting row {i}: {str(e)}")
+        finally:
+            rows_processed += 1
+            connection.commit()
+            print(f"Processed row {i + 1}/{len(df)}")
+
 """
 Fetch the raw csv data from s3
 :param bucket: str, the name of the target bucket
@@ -121,26 +146,14 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        # for i, row in df.iterrows():
-        #     row_dict = row.to_dict()
-        #     # Validate row
-        #     is_valid, error_message = validate_row(row_dict)
-        #     if not is_valid:
-        #         errors.append(f"Row {i+2}: {error_message}")
-        #         continue
-        #     rows_processed += 1
-
-        #     # Add to database
-        #     if addUserToDatabase(row_dict, connection, cursor):
-        #         rows_added_to_db += 1
-        #     else:
-        #         errors.append(f"Row {i+2}: Failed to add {row_dict.get('email', '')} to database")
+        storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
 
         cursor.close()
         connection.close()
 
         # Clean up - delete the processed file
         s3_client.delete_object(Bucket=bucket_name, Key=file_key)
+
 
         result = {
             'statusCode': 200,
