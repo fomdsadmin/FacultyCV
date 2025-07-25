@@ -1,7 +1,7 @@
 import React from 'react';
 import PageContainer from './PageContainer.jsx';
 import '../CustomStyles/scrollbar.css';
-import { fetchUserAttributes } from 'aws-amplify/auth';
+import { fetchUserAttributes, fetchAuthSession } from 'aws-amplify/auth';
 import { signInWithRedirect } from 'aws-amplify/auth';
 import { useApp } from 'Contexts/AppContext.jsx';
 import { addUser } from 'graphql/graphqlHelpers.js';
@@ -70,11 +70,34 @@ const AuthPage = () => {
     })
   }
 
+  useEffect(() => {
+    const helper = async () => {
+
+      if (!loading && !isUserLoggedIn) {
+        signIn();
+      }
+    }
+    helper();
+  }, [loading, isUserLoggedIn])
+
+  useEffect(() => {
+    if (!loading && isUserLoggedIn && isUserApproved && !isUserPending) {
+      window.location.href = "/home";
+    }
+  }, [isUserApproved, isUserLoggedIn, isUserPending, loading])
+
   const signIn = async () => {
+    console.log("Filter: User redirected to keycloak page")
     await signInWithRedirect({
       provider: {
         custom: 'facultycv-prod'
-      }
+      },
+      options: {
+        loginHint: 'someone@gmail.com',
+        lang: 'en',
+        nonce: '88388838883',
+        prompt: 'login'
+      },
     });
     await setUpForm();
     setIsUserLoggedIn(true);
@@ -89,15 +112,6 @@ const AuthPage = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
               <p className="text-gray-600">Loading...</p>
             </div>
-          )}
-
-          {!loading && !isUserLoggedIn && (
-            <button
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 focus:outline-none mt-4"
-              onClick={() => signIn()}
-            >
-              Login with CWL
-            </button>
           )}
 
           {!loading && isUserLoggedIn && !userExistsInSqlDatabase && (
@@ -185,22 +199,6 @@ const AuthPage = () => {
               <p className="mt-2">It will be processed in a few days. Thank you for your patience.</p>
             </div>
           )}
-
-          {!loading && isUserLoggedIn && userExistsInSqlDatabase && !isUserPending && isUserApproved && (
-            <div className="text-center p-4 m-4 bg-green-100 border border-green-400 text-green-700 rounded">
-              <h2 className="text-lg font-bold">Your account has been approved!</h2>
-              <p className="mt-2">You can now access all features. Welcome aboard!</p>
-              <button
-                className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none"
-                onClick={async () => {
-                  window.location.href = "/home";
-                }}
-              >
-                Continue to Dashboard
-              </button>
-            </div>
-          )}
-
           {!loading && isUserLoggedIn && userExistsInSqlDatabase && !isUserPending && !isUserApproved && (
             <div className="text-center p-4 m-4 bg-red-100 border border-red-400 text-red-700 rounded">
               <h2 className="text-lg font-bold">Account not approved</h2>

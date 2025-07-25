@@ -1,11 +1,8 @@
-import { Amplify } from "aws-amplify";
 import "./App.css";
 import "@aws-amplify/ui-react/styles.css";
-import React, { useEffect, useState } from "react";
 import Header from "./Components/Headers.jsx";
 import Footer from "./Components/Footer.jsx";
-import { fetchUserAttributes, signOut, fetchAuthSession } from "aws-amplify/auth";
-import { BrowserRouter as Router, Routes, Route, Navigate, redirect, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "./Views/AuthPage";
 import Dashboard from "./Pages/Dashboard/dashboard.jsx";
 import Support from "./Views/support.jsx";
@@ -14,7 +11,7 @@ import AcademicWork from "./Views/AcademicWork.jsx";
 import Declarations from "./Pages/Declarations/Declarations.jsx";
 import Reports from "./Pages/ReportsPage/ReportsPage.jsx";
 import Assistants from "./Views/Assistants.jsx";
-import { getPresignedUrl, getUser } from "./graphql/graphqlHelpers.js";
+import { getUser } from "./graphql/graphqlHelpers.js";
 import PageContainer from "./Views/PageContainer.jsx";
 import AdminUsers from "./Views/AdminUsers.jsx";
 import Archive from "./Views/Archive.jsx";
@@ -31,19 +28,17 @@ import { AuditLoggerProvider } from "./Contexts/AuditLoggerContext.jsx";
 import ArchivedSections from "./Views/ArchivedSections.jsx";
 import DepartmentAdminUsers from "./Views/DepartmentAdminUsers.jsx";
 import DepartmentAdminHomePage from "./Views/DepartmentAdminHomePage.jsx";
-import DepartmentAdminUserInsights from "./Views/DepartmentAdminUserInsights.jsx";
 import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
 import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
 import AdminGenerateCV from "./Views/AdminGenerateCV.jsx";
-import DepartmentAdminArchivedSections from "./Views/DepartmentAdminArchivedSections.jsx";
 import FacultyAdminHomePage from "./Views/FacultyAdminHomePage.jsx";
 import FacultyAdminUsers from "./Views/FacultyAdminUsers.jsx";
 import FacultyAdminGenerateCV from "./Views/FacultyAdminGenerateCV.jsx";
-import { getJWT } from "./getAuthToken.js";
 import { NotificationProvider } from "./Contexts/NotificationContext.jsx";
 import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
 import { ToastContainer } from "react-toastify";
+import KeycloakLogout from "Components/KeycloakLogout";
 
 const AppContent = () => {
   const {
@@ -57,6 +52,9 @@ const AppContent = () => {
     setLoading,
     currentViewRole,
     toggleViewMode,
+    isUserLoggedIn,
+    isUserPending,
+    isUserApproved,
   } = useApp();
 
   // Initialize view mode for redirects and route access
@@ -111,15 +109,24 @@ const AppContent = () => {
         {/* {console.log("Current View Role:", currentViewRole)}
       {console.log("User Info:", userInfo)}
       {console.log("Assistant User Info:", assistantUserInfo)} */}
-        {!user ? (
+        {!isUserLoggedIn ? (
           <Routes>
+            <Route path="/keycloak-logout" element={<KeycloakLogout />} />
+            <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
+            <Route path="/*" element={<Navigate to="/auth" />}/>
+          </Routes>
+        ) : isUserPending || !isUserApproved ? (
+          // User is logged in but pending approval - only allow access to auth page
+          <Routes>
+            <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
             <Route path="/*" element={<Navigate to="/auth" />}/>
           </Routes>
         ) : (
+          // User is logged in and approved - allow access to all routes
           <Routes>
+            <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             {/* Main home route - redirects based on role */}
-            {console.log(userInfo.role, "userinfo")}
             <Route
               path="/home"
               element={
@@ -142,7 +149,6 @@ const AppContent = () => {
                 )
               }
             />
-            {console.log(userInfo)}
           <Route
             path="/assistant/home"
             element={
@@ -155,7 +161,7 @@ const AppContent = () => {
                   getCognitoUser={getCognitoUser}
                 />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -166,7 +172,7 @@ const AppContent = () => {
               userInfo.role === "Admin" && currentViewRole === "Admin" ? (
                 <AdminUsers userInfo={userInfo} getCognitoUser={getCognitoUser} />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -177,7 +183,7 @@ const AppContent = () => {
               userInfo.role === "Admin" && currentViewRole === "Admin" ? (
                 <AdminGenerateCV userInfo={userInfo} getCognitoUser={getCognitoUser} />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -204,7 +210,7 @@ const AppContent = () => {
                   }
                 />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -220,7 +226,7 @@ const AppContent = () => {
                   toggleViewMode={toggleViewMode}
                 />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -241,21 +247,21 @@ const AppContent = () => {
                   getUser={getUserInfo}
                 />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
 
-          {/* Auth route - allow access even when authenticated */}
+          {/* Auth route - allow access for registration/approval flow */}
           <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
 
-          {/* Faculty dashboard */}
+          {/* Faculty dashboard - no restrictions for approved users */}
           <Route
             path="/faculty/dashboard"
             element={<Dashboard userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
 
-          {/* Other existing routes */}
+          {/* Other routes - no restrictions for approved users */}
           <Route
             path="/faculty/home/affiliations"
             element={<FacultyHomePage tab="affiliations" />}

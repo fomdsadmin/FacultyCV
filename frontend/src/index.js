@@ -11,11 +11,11 @@ import { CookieStorage } from 'aws-amplify/utils';
 Amplify.configure({
   Auth: {
     Cognito: {
-      userPoolClientId: '10shpk39hmqk6iros3mn3q88l4',
-      userPoolId: 'ca-central-1_4QA5peGTF',
+      userPoolClientId: process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID,
+      userPoolId: process.env.REACT_APP_COGNITO_USER_POOL_ID,
       loginWith: { // Optional
         oauth: {
-          domain: 'ca-central-14qa5pegtf.auth.ca-central-1.amazoncognito.com',
+          domain: process.env.REACT_APP_COGNITO_DOMAIN,
           scopes: ['aws.cognito.signin.user.admin', 'email', 'openid', 'profile'],
           redirectSignIn: ['http://localhost:3000/auth'],
           redirectSignOut: ['http://localhost:3000/auth'],
@@ -26,7 +26,7 @@ Amplify.configure({
   },
   API: {
     GraphQL: {
-      endpoint: 'https://b52u3hajhfejlapwe3exmv2vce.appsync-api.ca-central-1.amazonaws.com/graphql',
+      endpoint: process.env.REACT_APP_GRAPHQL_ENDPOINT,
       region: 'ca-central-1',
       defaultAuthMode: 'userPool'
     },

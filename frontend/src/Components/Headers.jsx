@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaUserCircle, FaCog, FaUser, FaQuestionCircle, FaSignOutAlt, FaChevronDown } from "react-icons/fa";
-import { signOut } from "aws-amplify/auth";
+import { signOut, fetchAuthSession } from "aws-amplify/auth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../Contexts/AppContext";
 
@@ -61,11 +61,16 @@ const Header = ({ assistantUserInfo }) => {
     setIsSigningOut(true);
     try {
       await signOut();
-      // Add this line to update the authentication state
-      // getCognitoUser();
-      window.location.href = "/auth";
+
+      const clientId = process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID;
+      const logoutUri = "http://localhost:3000/keycloak-logout"; // Make sure this URL is registered in your Cognito App Client's "Sign out URLs"
+      const cognitoDomain = "https://" + process.env.REACT_APP_COGNITO_DOMAIN;
+
+      window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
     } catch (error) {
       console.error("Error signing out:", error);
+      // Fallback on error
+      window.location.href = "/auth";
     } finally {
       setIsSigningOut(false);
     }
@@ -144,11 +149,10 @@ const Header = ({ assistantUserInfo }) => {
                   <button
                     key={role.value}
                     onClick={() => handleRoleChange(role)}
-                    className={`flex w-full items-center px-4 py-2 text-sm ${
-                      role.value === currentViewRole
-                        ? "bg-blue-50 text-blue-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
+                    className={`flex w-full items-center px-4 py-2 text-sm ${role.value === currentViewRole
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-700 hover:bg-gray-100"
+                      }`}
                   >
                     {role.label}
                   </button>
@@ -167,9 +171,8 @@ const Header = ({ assistantUserInfo }) => {
               {/* Show name for Assistant if available, else fallback, only on md and above */}
               <span className="font-medium text-gray-700 hidden md:inline">{firstName}</span>
               <svg
-                className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
+                  }`}
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
