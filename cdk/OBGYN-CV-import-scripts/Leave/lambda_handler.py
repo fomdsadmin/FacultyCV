@@ -26,7 +26,7 @@ def cleanData(df):
     df["details"] =  df["Details"].fillna('').str.strip()
     df["type_of_leave"] =  df["Type"].fillna('').str.strip()
     df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
+    df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
     df["highlight"] = df["Highlight"].astype(bool)
 
     # If Type is "Other:", set type_of_leave to "Other ({type_other})"
@@ -55,7 +55,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "details", "type_of_leave", "highlight_-_notes", "highlight", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
@@ -159,14 +159,14 @@ def lambda_handler(event, context):
         # Load data into DataFrame
         try:
             df = loadData(file_bytes, file_key)
+            print("Data loaded successfully.")
         except ValueError as e:
-            
+            print(f"Error loading data: {str(e)}")
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
                 'error': str(e)
             }
-        print("Data loaded successfully.")
 
         # Clean the DataFrame
         df = cleanData(df)
