@@ -219,6 +219,11 @@ type UserCVData {
   editable: Boolean
 }
 
+type CVData {
+  data_section_id: String!
+  data_details: AWSJSON!
+}
+
 type UserConnection {
   user_connection_id: String!
   faculty_user_id: String!
@@ -244,6 +249,8 @@ type Mutation {
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   deleteUserCVSectionData(user_id: String!, data_section_id: String!): String
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  deleteSectionCVData(data_section_id: String!): String
+    @aws_auth(cognito_groups: ["Admin"])
   updateUserDeclaration(first_name: String!, last_name: String!, reporting_year: Int!, other_data: AWSJSON!): String
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   addToUserGroup(userName: String!, userGroup: String!): String
@@ -379,6 +386,8 @@ type Query {
   getArchivedSections: [DataSection] @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
   getUserCVData(user_id: String!, data_section_id: String, data_section_id_list: [String]): [UserCVData]
     @aws_auth(cognito_groups: ["Faculty", "Assistant", "FacultyAdmin", "Admin", "DepartmentAdmin"])
+  getAllSectionCVData(data_section_id: String, data_section_id_list: [String]): [CVData]
+    @aws_auth(cognito_groups: ["Admin"])
   getArchivedUserCVData(user_id: String!): [UserCVData] @aws_auth(cognito_groups: ["Faculty", "Assistant"])
   getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ElsevierAuthorProfile]!
     @aws_auth(cognito_groups: ["Faculty", "Assistant"])

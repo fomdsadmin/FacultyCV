@@ -3,10 +3,10 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import AdminMenu from "../Components/AdminMenu.jsx";
 import { getAllSections } from "../graphql/graphqlHelpers.js";
-import Filters from "../Components/Filters.jsx";
 import WorkSection from "../Components/WorkSection.jsx";
 import ManageSection from "../Components/ManageSection.jsx";
 import NewSection from "../Components/NewSection.jsx";
+import CVDataSection from "../Components/CVDataSection.jsx";
 
 const Sections = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,7 +64,6 @@ const Sections = ({ getCognitoUser, userInfo }) => {
     setSearchTerm(event.target.value);
   };
 
-
   // Tab bar for categories
   const SectionTabs = ({ filters, activeFilter, onSelect }) => (
     <div className="flex flex-wrap gap-4 mb-6 px-4 max-w-full">
@@ -108,8 +107,44 @@ const Sections = ({ getCognitoUser, userInfo }) => {
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
+      let categorySlugClean = "";
+      if (categorySlug.split("-")[0].match(/\d/)) {
+        categorySlugClean = categorySlug.split("-").slice(1).join("-");
+      } else {
+        categorySlugClean = categorySlug;
+      }
       const titleSlug = slugify(section.title);
-      navigate(`/sections/${categorySlug}/${titleSlug}`);
+      let titleSlugClean = "";
+      if (titleSlug.split("-")[0].match(/\d/)) {
+        titleSlugClean = titleSlug.split("-").slice(1).join("-");
+      } else {
+        titleSlugClean = titleSlug;
+      }
+      navigate(`/sections/${categorySlugClean}/${titleSlugClean}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  // When user clicks a section, update the URL
+  const handleManageDataClick = (value) => {
+    const section = dataSections.find((section) => section.data_section_id == value);
+    setActiveSection(section);
+    if (section) {
+      const categorySlug = slugify(section.data_type);
+      let categorySlugClean = "";
+      if (categorySlug.split("-")[0].match(/\d/)) {
+        categorySlugClean = categorySlug.split("-").slice(1).join("-");
+      } else {
+        categorySlugClean = categorySlug;
+      }
+      const titleSlug = slugify(section.title);
+      let titleSlugClean = "";
+      if (titleSlug.split("-")[0].match(/\d/)) {
+        titleSlugClean = titleSlug.split("-").slice(1).join("-");
+      } else {
+        titleSlugClean = titleSlug;
+      }
+      navigate(`/sections/${categorySlugClean}/${titleSlugClean}/data`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -119,13 +154,10 @@ const Sections = ({ getCognitoUser, userInfo }) => {
     const category = entry.data_type || "";
     const search = searchTerm.toLowerCase();
 
-    const matchesSearch =
-      section.toLowerCase().includes(search) ||
-      category.toLowerCase().includes(search);
+    const matchesSearch = section.toLowerCase().includes(search) || category.toLowerCase().includes(search);
 
     const matchesFilter =
-      (!activeTab || category === activeTab) &&
-      (activeFilters.length === 0 || !activeFilters.includes(category));
+      (!activeTab || category === activeTab) && (activeFilters.length === 0 || !activeFilters.includes(category));
 
     return matchesSearch && matchesFilter;
   });
@@ -219,13 +251,13 @@ const Sections = ({ getCognitoUser, userInfo }) => {
       // 3. If one has bracket and the other is a single letter
       if (A.bracket && B.letter) {
         // If B.letter is in A.bracket range, bracket comes first
-        const [start, end] = A.bracket.split("-").map(s => s.trim());
+        const [start, end] = A.bracket.split("-").map((s) => s.trim());
         if (B.letter >= start && (!end || B.letter <= end)) return -1;
         // Otherwise, sort by letter
         return A.letterIndex.localeCompare(B.letter);
       }
       if (A.letter && B.bracket) {
-        const [start, end] = B.bracket.split("-").map(s => s.trim());
+        const [start, end] = B.bracket.split("-").map((s) => s.trim());
         if (A.letter >= start && (!end || A.letter <= end)) return 1;
         return A.letter.localeCompare(B.letterIndex);
       }
@@ -290,26 +322,29 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                   </label>
                 </div>
                 <SectionTabs filters={filters} activeFilter={activeTab} onSelect={handleTabSelect} />
-                {/* <Filters
-                  activeFilters={activeFilters}
-                  onFilterChange={setActiveFilters}
-                  filters={filters}
-                /> */}
                 {[...searchedSections].sort(sectionTitleSort).map((section) => (
                   <WorkSection
                     onClick={handleManageClick}
+                    onDataClick={handleManageDataClick}
                     key={section.data_section_id}
                     id={section.data_section_id}
                     title={section.title}
                     category={section.data_type}
                     info={section.info}
+                    userInfo={userInfo}
                   />
                 ))}
               </div>
             ) : (
-              <div className="!overflow-auto !h-full custom-scrollbar">
-                <ManageSection section={activeSection} onBack={handleBack} getDataSections={getDataSections} />
-              </div>
+              <>
+                <div className="!overflow-auto !h-full custom-scrollbar">
+                  {location.pathname.endsWith("/data") ? (
+                    <CVDataSection section={activeSection} onBack={handleBack} getDataSections={getDataSections} />
+                  ) : (
+                    <ManageSection section={activeSection} onBack={handleBack} getDataSections={getDataSections} />
+                  )}
+                </div>
+              </>
             )}
           </>
         )}

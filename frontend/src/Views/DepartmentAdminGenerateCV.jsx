@@ -142,7 +142,9 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const handleGenerateAll = () => {
     // TODO: Implement actual logic
     setShowGenerateAllModal(false);
+    // last thing, notification
     setNotification(true);
+
     alert("Department-wide CV generation is not implemented yet.");
   };
 
@@ -252,7 +254,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                   disabled={isDepartmentWide}
                 >
                   <option value="">Choose a faculty member...</option>
-                  <option value="All">All</option>
+                  {userInfo.role.startsWith("Admin-") && <option value="All">All</option>}
                   {departmentUsers.map((user) => (
                     <option key={user.user_id} value={user.user_id}>
                       {user.preferred_name || user.first_name} {user.last_name} ({user.email})
@@ -260,15 +262,17 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                   ))}
                 </select>
                 {/* checkbox for department-wide cv (all fac members) */}
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={isDepartmentWide}
-                    onChange={(e) => setIsDepartmentWide(e.target.checked)}
-                  />
-                  <label className="ml-2">Generate for all department members</label>
-                </div>
+                {userInfo.role.startsWith("Admin-") && (
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-primary"
+                      checked={isDepartmentWide}
+                      onChange={(e) => setIsDepartmentWide(e.target.checked)}
+                    />
+                    <label className="ml-2">Generate for all department members</label>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -281,7 +285,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                 <div className="mb-4">
                   <select
                     className={`select select-bordered w-full max-w-md ${
-                      (!selectedUser && !isDepartmentWide) ? "select-disabled bg-gray-100" : ""
+                      !selectedUser && !isDepartmentWide ? "select-disabled bg-gray-100" : ""
                     }`}
                     value={selectedTemplate?.template_id || ""}
                     onChange={(e) => {
