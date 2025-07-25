@@ -14,20 +14,29 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-# TODO
 SECTION_TITLE = ""
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
+    # Only keep rows where UserID is a string of expected length (e.g., 32)
     df["user_id"] = df["UserID"].str.strip()
+    df["details"] =  df["Details"].fillna('').str.strip()
+    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
+    df["highlight"] = df["Highlight"].astype(bool)
+
+    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
+    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
+    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
+    mask_other = df["Type"].str.strip() == "Other:"
+    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+
+    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
     df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
     df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
     df["start_date"] = df["start_date"].fillna('').str.strip()
     df["end_date"] = df["end_date"].fillna('').str.strip()
-
     # Combine start and end dates into a single 'dates' column:
     def combine_dates(row):
         if row["start_date"] and row["end_date"]:
@@ -40,9 +49,9 @@ def cleanData(df):
             return ""
     df["dates"] = df.apply(combine_dates, axis=1)
 
-    # Keep only the cleaned columns
-    df = df[["user_id", "dates"]]
 
+    # Keep only the cleaned columns
+    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
@@ -58,10 +67,10 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
         cursor.execute(
             """
             SELECT data_section_id FROM data_sections
-            WHERE LOWER(title) LIKE %s
+            WHERE title = %s
             LIMIT 1
             """,
-            ('%' + SECTION_TITLE.lower() + '%',)
+            (SECTION_TITLE,)
         )
         result = cursor.fetchone()
         if result:
@@ -73,25 +82,30 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
         errors.append(f"Error fetching data_section_id: {str(e)}")
         data_section_id = None
 
+    if not data_section_id:
+        errors.append("Skipping insert: data_section_id not found.")
+        return rows_processed, rows_added_to_db
+
     for i, row in df.iterrows():
         row_dict = row.to_dict()
+        # Remove user_id from data_details
+        row_dict.pop('user_id', None)
         data_details_JSON = json.dumps(row_dict)
-        
         try:
             cursor.execute(
                 """
                 INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
                 VALUES (%s, %s, %s, %s)
                 """,
-                (row_dict.get('user_id'), data_section_id, data_details_JSON, True)
+                (row['user_id'], data_section_id, data_details_JSON, True)
             )
             rows_added_to_db += 1
         except Exception as e:
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            connection.commit()
             print(f"Processed row {i + 1}/{len(df)}")
+    connection.commit()
     return rows_processed, rows_added_to_db
 
 """
@@ -131,7 +145,7 @@ def lambda_handler(event, context):
         bucket_name = s3_event["bucket"]["name"]
         file_key = s3_event["object"]["key"]
 
-        print(f"Processing data migration file for section: {file_key}, bucket: {bucket_name}")
+        print(f"Processing manual upload file: {file_key} from bucket: {bucket_name}")
 
         # Fetch file from S3 (as bytes)
         file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
@@ -141,13 +155,13 @@ def lambda_handler(event, context):
         try:
             df = loadData(file_bytes, file_key)
         except ValueError as e:
+            
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
                 'error': str(e)
             }
         print("Data loaded successfully.")
-        print(df.to_string())
 
         # Clean the DataFrame
         df = cleanData(df)
@@ -164,12 +178,13 @@ def lambda_handler(event, context):
         errors = []
 
         rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
-
+        print("Data stored successfully.")
         cursor.close()
         connection.close()
 
         # Clean up - delete the processed file
         s3_client.delete_object(Bucket=bucket_name, Key=file_key)
+        print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
 
 
         result = {
@@ -191,3 +206,4 @@ def lambda_handler(event, context):
             'status': 'FAILED',
             'error': str(e)
         }
+
