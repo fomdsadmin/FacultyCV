@@ -248,7 +248,7 @@ type Mutation {
   deleteUserDeclaration(first_name: String!, last_name: String!, reporting_year: Int!): String
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   deleteUserCVSectionData(user_id: String!, data_section_id: String!): String
-    @aws_auth(cognito_groups: ["Admin"])
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   deleteSectionCVData(data_section_id: String!): String
     @aws_auth(cognito_groups: ["Admin"])
   updateUserDeclaration(first_name: String!, last_name: String!, reporting_year: Int!, other_data: AWSJSON!): String

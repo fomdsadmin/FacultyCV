@@ -388,7 +388,7 @@ export class UserImportStack extends Stack {
         runtime: lambda.Runtime.PYTHON_3_9,
         functionName: `${resourcePrefix}-obgyn-${subfolder}-import`,
         handler: "lambda_handler.lambda_handler",
-        code: lambda.Code.fromAsset(`lambda/OBGYN-CV-import-scripts/${subfolder}`),
+        code: lambda.Code.fromAsset(`OBGYN-CV-import-scripts/${subfolder}`),
         timeout: cdk.Duration.minutes(5),
         memorySize: 512,
         environment: {

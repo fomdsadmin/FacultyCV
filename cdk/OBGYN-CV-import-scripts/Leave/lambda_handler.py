@@ -81,6 +81,10 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
         errors.append(f"Error fetching data_section_id: {str(e)}")
         data_section_id = None
 
+    if not data_section_id:
+        errors.append("Skipping insert: data_section_id not found.")
+        return rows_processed, rows_added_to_db
+
     for i, row in df.iterrows():
         row_dict = row.to_dict()
         data_details_JSON = json.dumps(row_dict)
@@ -97,8 +101,8 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            connection.commit()
             print(f"Processed row {i + 1}/{len(df)}")
+    connection.commit()
     return rows_processed, rows_added_to_db
 
 """
@@ -171,12 +175,13 @@ def lambda_handler(event, context):
         errors = []
 
         rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
-
+        print("Data stored successfully.")
         cursor.close()
         connection.close()
 
         # Clean up - delete the processed file
         s3_client.delete_object(Bucket=bucket_name, Key=file_key)
+        print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
 
 
         result = {
@@ -198,4 +203,4 @@ def lambda_handler(event, context):
             'status': 'FAILED',
             'error': str(e)
         }
-        }
+
