@@ -14,18 +14,24 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = "Leaves of Absense"
+SECTION_TITLE = "7a. Leaves of Absence"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
+    # Only keep rows where UserID is a string of expected length (e.g., 32)
+
     df["user_id"] = df["UserID"].str.strip()
-    df["details"] =  df["Details"].str.strip()
-    df["type"] =  df["Type"].str.strip()
-    df["type_other"] =  df["TypeOther"].str.strip()
-    df["highlight_notes"] =  df["Notes"].str.strip()
+    df["details"] =  df["Details"].fillna('').str.strip()
+    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
+    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
+    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
     df["highlight"] = df["Highlight"].astype(bool)
+
+    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
+    mask_other = df["Type"].str.strip() == "Other:"
+    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
 
     # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
     df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
@@ -49,7 +55,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type", "type_other", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
@@ -66,10 +72,10 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
         cursor.execute(
             """
             SELECT data_section_id FROM data_sections
-            WHERE LOWER(title) LIKE %s
+            WHERE title = %s
             LIMIT 1
             """,
-            ('%' + SECTION_TITLE.lower() + '%',)
+            (SECTION_TITLE,)
         )
         result = cursor.fetchone()
         if result:
@@ -158,7 +164,6 @@ def lambda_handler(event, context):
                 'error': str(e)
             }
         print("Data loaded successfully.")
-        print(df.to_string())
 
         # Clean the DataFrame
         df = cleanData(df)
