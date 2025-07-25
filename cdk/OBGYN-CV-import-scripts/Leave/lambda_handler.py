@@ -93,6 +93,8 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
 
     for i, row in df.iterrows():
         row_dict = row.to_dict()
+        # Remove user_id from data_details
+        row_dict.pop('user_id', None)
         data_details_JSON = json.dumps(row_dict)
         try:
             cursor.execute(
@@ -100,7 +102,7 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
                 INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
                 VALUES (%s, %s, %s, %s)
                 """,
-                (row_dict.get('user_id'), data_section_id, data_details_JSON, True)
+                (row['user_id'], data_section_id, data_details_JSON, True)
             )
             rows_added_to_db += 1
         except Exception as e:
