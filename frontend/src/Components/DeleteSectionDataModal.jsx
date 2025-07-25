@@ -24,7 +24,7 @@ const DeleteSectionDataModal = ({ setIsModalOpen, section, onBack, getSectionDat
   }
 
   return (
-    <dialog className="modal-dialog" open>
+    <dialog className="modal-dialog ml-2" open>
       <div className="modal-content">
         <div>
           <button
