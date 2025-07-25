@@ -254,7 +254,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                   disabled={isDepartmentWide}
                 >
                   <option value="">Choose a faculty member...</option>
-                  <option value="All">All</option>
+                  {/* <option value="All">All</option> */}
                   {departmentUsers.map((user) => (
                     <option key={user.user_id} value={user.user_id}>
                       {user.preferred_name || user.first_name} {user.last_name} ({user.email})
@@ -262,7 +262,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                   ))}
                 </select>
                 {/* checkbox for department-wide cv (all fac members) */}
-                <div className="flex items-center">
+                {/* <div className="flex items-center">
                   <input
                     type="checkbox"
                     className="checkbox checkbox-primary"
@@ -270,7 +270,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                     onChange={(e) => setIsDepartmentWide(e.target.checked)}
                   />
                   <label className="ml-2">Generate for all department members</label>
-                </div>
+                </div> */}
               </div>
             </div>
 

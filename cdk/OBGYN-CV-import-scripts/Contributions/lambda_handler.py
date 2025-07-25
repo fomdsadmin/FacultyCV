@@ -14,26 +14,20 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
+SECTION_TITLE = "Professional Contributions"
+
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    df["details"] =  df["Details"].str.strip()
-    df["type"] =  df["Type"].str.strip()
-    df["type_other"] =  df["TypeOther"].str.strip()
-    df["highlight_notes"] =  df["Notes"].str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
-
     # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
+    df["user_id"] = df["UserID"].str.strip()
     df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
     df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
     df["start_date"] = df["start_date"].fillna('').str.strip()
     df["end_date"] = df["end_date"].fillna('').str.strip()
 
     # Combine start and end dates into a single 'dates' column:
-    # - If both empty: ''
-    # - If only one present: show that
-    # - If both present: 'Start Date - End Date'
     def combine_dates(row):
         if row["start_date"] and row["end_date"]:
             return f"{row['start_date']} - {row['end_date']}"
@@ -46,7 +40,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["details", "type", "type_other", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
@@ -58,6 +52,26 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
     Store the cleaned DataFrame into the database.
     Returns updated rows_processed and rows_added_to_db.
     """
+    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
+    try:
+        cursor.execute(
+            """
+            SELECT data_section_id FROM data_sections
+            WHERE LOWER(title) LIKE %s
+            LIMIT 1
+            """,
+            ('%' + SECTION_TITLE.lower() + '%',)
+        )
+        result = cursor.fetchone()
+        if result:
+            data_section_id = result[0]
+        else:
+            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
+            data_section_id = None
+    except Exception as e:
+        errors.append(f"Error fetching data_section_id: {str(e)}")
+        data_section_id = None
+
     for i, row in df.iterrows():
         row_dict = row.to_dict()
         data_details_JSON = json.dumps(row_dict)
@@ -68,7 +82,7 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
                 INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
                 VALUES (%s, %s, %s, %s)
                 """,
-                (row_dict['obgyn_user_id'], 'leave', data_details_JSON, True)
+                (row_dict.get('user_id'), data_section_id, data_details_JSON, True)
             )
             rows_added_to_db += 1
         except Exception as e:
@@ -116,7 +130,7 @@ def lambda_handler(event, context):
         bucket_name = s3_event["bucket"]["name"]
         file_key = s3_event["object"]["key"]
 
-        print(f"Processing manual upload file: {file_key} from bucket: {bucket_name}")
+        print(f"Processing data migration file for section: {file_key}, bucket: {bucket_name}")
 
         # Fetch file from S3 (as bytes)
         file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
