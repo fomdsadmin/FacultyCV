@@ -160,6 +160,7 @@ def lambda_handler(event, context):
         try:
             df = loadData(file_bytes, file_key)
         except ValueError as e:
+            
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
