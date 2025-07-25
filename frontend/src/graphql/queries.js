@@ -191,6 +191,19 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
     }`;
 };
 
+
+export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
+    if (data_section_id) 
+        return `query GetAllSectionCVData {
+        getAllSectionCVData (
+            data_section_id: "${data_section_id}"
+        ) {
+            data_section_id
+            data_details
+        }
+    }`;
+};
+
 export const getArchivedUserCVDataQuery = (user_id) => `
     query GetArchivedUserCVData {
         getArchivedUserCVData (

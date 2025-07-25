@@ -26,6 +26,9 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
   const [downloadUrlDocx, setDownloadUrlDocx] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [faculty, setFaculty] = useState('');
+  const [allUsers, setAllUsers] = useState([]);
+  const [allFaculties, setAllFaculties] = useState([]);
+  const [selectedFaculty, setSelectedFaculty] = useState(""); // for super admin/faculty admin
   const { setNotification } = useNotification();
 
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
@@ -41,70 +44,132 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
     }
   }, [userInfo]);
 
+  // Load all users, faculties, and departments on mount
   useEffect(() => {
-    loadData();
-  }, [faculty]);
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const templatesData = await getAllTemplates();
+        setTemplates(templatesData);
 
-  const loadData = async () => {
-    if (!faculty) return;
-    
-    setLoading(true);
-    try {
-      // Load templates
-      const templatesData = await getAllTemplates();
-      setTemplates(templatesData);
+        const universityInfo = await getAllUniversityInfo();
+        const facultyList = universityInfo
+          .filter((info) => info.type === "Faculty")
+          .map((info) => info.value)
+          .sort();
+        setAllFaculties(facultyList);
 
-      // Load departments
-      const universityInfo = await getAllUniversityInfo();
-      const departmentList = universityInfo
-        .filter((info) => info.type === "Department")
-        .map((info) => info.value)
-        .sort();
-      setDepartments(departmentList);
+        const departmentList = universityInfo
+          .filter((info) => info.type === "Department")
+          .map((info) => info.value)
+          .sort();
+        setDepartments(departmentList);
 
-      // Load users in this faculty
-      const allUsers = await getAllUsers();
-      let usersInFaculty;
-      
-      if (userInfo.role === 'Admin') {
-        // Admin can see all users
-        usersInFaculty = allUsers.filter(user => user.email !== userInfo.email);
-      } else if (userInfo.role.startsWith('FacultyAdmin-')) {
-        // FacultyAdmin can only see users in their faculty
-        const facultyName = userInfo.role.split('FacultyAdmin-')[1];
-        usersInFaculty = allUsers.filter(user => 
-          user.email !== userInfo.email &&
-          (user.primary_faculty === facultyName || user.secondary_faculty === facultyName)
-        );
+        const users = await getAllUsers();
+        setAllUsers(users);
+
+        // Set faculty selection
+        if (userInfo?.role === "Admin") {
+          setSelectedFaculty(facultyList[0] || "");
+        } else if (userInfo?.role?.startsWith("FacultyAdmin-")) {
+          setSelectedFaculty(userInfo.role.split("FacultyAdmin-")[1]);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
       }
-      
-      setFacultyUsers(usersInFaculty);
-    } catch (error) {
-      console.error("Error loading data:", error);
-    }
-    setLoading(false);
-  };
+      setLoading(false);
+    };
+    fetchInitialData();
+    // eslint-disable-next-line
+  }, []);
 
-  const filterUsersByDepartment = (department) => {
-    if (!department) {
-      setDepartmentUsers(facultyUsers);
+  // Filter facultyUsers when selectedFaculty changes
+  useEffect(() => {
+    if (userInfo?.role === "Admin" && selectedFaculty === "") {
+      // All faculties
+      const usersInFaculty = allUsers.filter(
+        (user) => (user.email !== userInfo.email && user.role.toLowerCase().includes("faculty")) ||
+          (user.role.toLowerCase().includes("admin-"))
+      );
+      setFacultyUsers(usersInFaculty);
+
+      // All departments with users
+      const deptsWithUsers = Array.from(
+        new Set(
+          usersInFaculty
+            .map((u) => u.primary_department)
+            .filter(Boolean)
+        )
+      ).sort();
+      setDepartments(deptsWithUsers);
+
+      setSelectedDepartment("");
+      setDepartmentUsers(usersInFaculty);
+      setSelectedUser("");
+      setSelectedTemplate("");
+      setDownloadUrl(null);
+      setDownloadUrlDocx(null);
       return;
     }
-
-    const usersInDepartment = facultyUsers.filter(
-      (user) => user.primary_department === department || user.secondary_department === department
+    if (!selectedFaculty) {
+      setFacultyUsers([]);
+      setSelectedDepartment("");
+      setDepartmentUsers([]);
+      return;
+    }
+    // Filter users in selected faculty (primary or secondary)
+    const usersInFaculty = allUsers.filter(
+      (user) =>
+        (user.primary_faculty === selectedFaculty || user.secondary_faculty === selectedFaculty) &&
+        user.email !== userInfo.email
     );
-    setDepartmentUsers(usersInDepartment);
-  };
+    setFacultyUsers(usersInFaculty);
 
-  const handleDepartmentSelect = (event) => {
-    const department = event.target.value;
-    setSelectedDepartment(department);
+    // Find departments with at least one user in this faculty
+    const deptsWithUsers = Array.from(
+      new Set(
+        usersInFaculty
+          .map((u) => u.primary_department)
+          .filter(Boolean)
+      )
+    ).sort();
+    setDepartments(deptsWithUsers);
+
+    // Reset department/user/template selection
+    setSelectedDepartment("");
+    setDepartmentUsers(usersInFaculty);
     setSelectedUser("");
     setSelectedTemplate("");
     setDownloadUrl(null);
     setDownloadUrlDocx(null);
-    filterUsersByDepartment(department);
+    // eslint-disable-next-line
+  }, [selectedFaculty, allUsers]);
+
+  // Filter departmentUsers when selectedDepartment changes
+  useEffect(() => {
+    if (!selectedDepartment) {
+      setDepartmentUsers(facultyUsers);
+    } else {
+      const usersInDept = facultyUsers.filter(
+        (user) =>
+          user.primary_department === selectedDepartment ||
+          user.secondary_department === selectedDepartment
+      );
+      setDepartmentUsers(usersInDept);
+    }
+    setSelectedUser("");
+    setSelectedTemplate("");
+    setDownloadUrl(null);
+    setDownloadUrlDocx(null);
+    // eslint-disable-next-line
+  }, [selectedDepartment, facultyUsers]);
+
+  const handleFacultySelect = (event) => {
+    setSelectedFaculty(event.target.value);
+  };
+
+  const handleDepartmentSelect = (event) => {
+    setSelectedDepartment(event.target.value);
   };
 
   const handleUserSelect = (event) => {
@@ -192,38 +257,53 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
         userInfo={userInfo}
         toggleViewMode={toggleViewMode}
       />
-      <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4">
+      <main className="px-16 overflow-auto custom-scrollbar w-full mb-4">
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
           </div>
         ) : (
-          <div className="px-4">
-            <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Generate CV</h1>
+          <div className="">
+            <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">Generate CV</h1>
 
-            {/* Fixed Faculty Display */}
-            <div className="m-4">
+            {/* Faculty Field */}
+            <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Faculty</label>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-md bg-gray-100"
-                value={faculty}
-                disabled
-                readOnly
-              />
+              {userInfo.role === "Admin" ? (
+                <select
+                  className="select select-bordered w-full max-w-md"
+                  value={selectedFaculty}
+                  onChange={handleFacultySelect}
+                >
+                  <option value="">All</option>
+                  {allFaculties.map((faculty) => (
+                    <option key={faculty} value={faculty}>
+                      {faculty}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  className="input input-bordered w-full max-w-md bg-gray-100"
+                  value={selectedFaculty}
+                  disabled
+                  readOnly
+                />
+              )}
             </div>
 
-            {/* Department Selection (Optional) */}
-            <div className="m-4">
+            {/* Department Selection */}
+            <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Department (leave empty to see all faculty users)
+                Select Department (or choose "All" to see all faculty users)
               </label>
               <select
                 className="select select-bordered w-full max-w-md"
                 value={selectedDepartment}
                 onChange={handleDepartmentSelect}
               >
-                <option value="">-</option>
+                <option value="">All</option>
                 {departments.map((department) => (
                   <option key={department} value={department}>
                     {department}
@@ -233,7 +313,7 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
             </div>
 
             {/* User Selection Dropdown */}
-            <div className="m-4">
+            <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
               <select
                 className="select select-bordered w-full max-w-md"
@@ -241,7 +321,7 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
                 onChange={handleUserSelect}
               >
                 <option value="">Choose a faculty member...</option>
-                {(selectedDepartment ? departmentUsers : facultyUsers).map((user) => (
+                {departmentUsers.map((user) => (
                   <option key={user.user_id} value={user.user_id}>
                     {user.preferred_name || user.first_name} {user.last_name} ({user.email})
                     {user.primary_department && ` - ${user.primary_department}`}
@@ -250,7 +330,7 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
               </select>
             </div>
 
-            <div className="flex flex-col w-full h-full px-4 pb-8">
+            <div className="flex flex-col w-full h-full pb-8">
               {/* Left Panel: Template List */}
               <div className="flex flex-col h-full">
                 <h2 className="text-sm font-medium text-gray-700 mb-2">Templates</h2>

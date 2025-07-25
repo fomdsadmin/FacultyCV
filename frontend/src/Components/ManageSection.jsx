@@ -38,8 +38,6 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
       attributesType = {};
     }
   }
-  console.log("Attributes:", attributes);
-  console.log("Attributes Type:", attributesType);
 
   return (
     <div className="">

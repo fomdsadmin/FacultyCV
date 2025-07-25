@@ -9,6 +9,7 @@ import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
 import PDFViewer from "../Components/PDFViewer.jsx";
+import DepartmentGenerateAllConfirmModal from "../Components/DepartmentGenerateAllConfirmModal.jsx";
 
 const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [selectedUser, setSelectedUser] = useState("");
@@ -22,36 +23,104 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [downloadUrlDocx, setDownloadUrlDocx] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState(""); // for super admin
+  const [allDepartments, setAllDepartments] = useState([]); // for super admin
+  const [isDepartmentWide, setIsDepartmentWide] = useState(false); // for department-wide CV generation
+  const [allUsers, setAllUsers] = useState([]); // store all users for filtering
+  const [showGenerateAllModal, setShowGenerateAllModal] = useState(false);
   const { setNotification } = useNotification();
 
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
 
   useEffect(() => {
-    loadData();
+    // Initial load: templates and all users
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const templatesData = await getAllTemplates();
+        setTemplates(templatesData);
+
+        const users = await getAllUsers();
+        setAllUsers(users);
+
+        if (userInfo && userInfo.role === "Admin") {
+          const departments = Array.from(
+            new Set(users.filter((u) => u.primary_department).map((u) => u.primary_department))
+          ).sort();
+          setAllDepartments(departments);
+          // Add "All" option for super admin
+          if (!selectedDepartment) {
+            setSelectedDepartment("All");
+          }
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+      setLoading(false);
+    };
+    fetchInitialData();
+    // eslint-disable-next-line
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      // Load templates
-      const templatesData = await getAllTemplates();
-      setTemplates(templatesData);
-
-      // Load all users and filter by department
-      const allUsers = await getAllUsers();
-      const usersInDepartment = allUsers.filter((user) => user.primary_department === userInfo.primary_department);
+  // Filter department users when selectedDepartment or allUsers changes (for super admin)
+  useEffect(() => {
+    if (userInfo && userInfo.role === "Admin" && allUsers.length > 0 && selectedDepartment) {
+      let usersInDepartment;
+      if (selectedDepartment === "All") {
+        usersInDepartment = allUsers.filter(
+          (user) => user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-")
+        );
+      } else {
+        usersInDepartment = allUsers.filter(
+          (user) =>
+            user.primary_department === selectedDepartment &&
+            (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
+        );
+      }
       setDepartmentUsers(usersInDepartment);
-    } catch (error) {
-      console.error("Error loading data:", error);
+      setSelectedUser(""); // reset user selection when department changes
+      setDownloadUrl(null);
+      setDownloadUrlDocx(null);
     }
-    setLoading(false);
-  };
+    // eslint-disable-next-line
+  }, [selectedDepartment, allUsers]);
+
+  // For department admin, filter users once after allUsers is loaded
+  useEffect(() => {
+    if (userInfo && userInfo.role && userInfo.role.startsWith("Admin-") && allUsers.length > 0) {
+      const usersInDepartment = allUsers.filter(
+        (user) =>
+          user.primary_department === userInfo.primary_department &&
+          (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
+      );
+      setDepartmentUsers(usersInDepartment);
+    }
+    // eslint-disable-next-line
+  }, [allUsers, userInfo]);
+
+  // When isDepartmentWide changes, update selectedUser accordingly
+  useEffect(() => {
+    if (isDepartmentWide) {
+      setSelectedUser("All");
+      setDownloadUrl(null);
+      setDownloadUrlDocx(null);
+    } else {
+      setSelectedUser("");
+      setSelectedTemplate("");
+      setDownloadUrl(null);
+      setDownloadUrlDocx(null);
+    }
+    // eslint-disable-next-line
+  }, [isDepartmentWide]);
 
   const handleUserSelect = (event) => {
     setSelectedUser(event.target.value);
-    // Reset download URLs when user changes
+    setIsDepartmentWide(event.target.value === "All");
     setDownloadUrl(null);
     setDownloadUrlDocx(null);
+    if (event.target.value === "") {
+      setSelectedTemplate("");
+    }
   };
 
   const handleTemplateSelect = (template) => {
@@ -69,7 +138,21 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     .filter((template) => template.title.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => a.title.localeCompare(b.title));
 
+  // Stub for department-wide generation
+  const handleGenerateAll = () => {
+    // TODO: Implement actual logic
+    setShowGenerateAllModal(false);
+    // last thing, notification
+    setNotification(true);
+
+    alert("Department-wide CV generation is not implemented yet.");
+  };
+
   const handleGenerate = async () => {
+    if (isDepartmentWide) {
+      setShowGenerateAllModal(true);
+      return;
+    }
     if (!selectedUser || !selectedTemplate) {
       alert("Please select both a user and a template");
       return;
@@ -125,44 +208,75 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   return (
     <PageContainer>
       <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className="ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4">
+      <main className="px-16 overflow-auto custom-scrollbar w-full mb-4">
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
           </div>
         ) : (
-          <div className="px-4">
-            <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Generate CV</h1>
+          <div className="">
+            <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">Generate CV</h1>
 
             {/* Department Field */}
-            <div className="m-4">
+            <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-md bg-gray-100"
-                value={userInfo.primary_department || ""}
-                disabled
-              />
+              {userInfo.role === "Admin" ? (
+                <select
+                  className="select select-bordered w-full max-w-md"
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                >
+                  <option value="All">All</option>
+                  {allDepartments.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  className="input input-bordered w-full max-w-md bg-gray-100"
+                  value={userInfo.primary_department}
+                  disabled
+                />
+              )}
             </div>
 
             {/* User Selection Dropdown */}
-            <div className="m-4">
+            <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
-              <select
-                className="select select-bordered w-full max-w-md"
-                value={selectedUser}
-                onChange={handleUserSelect}
-              >
-                <option value="">Choose a faculty member...</option>
-                {departmentUsers.map((user) => (
-                  <option key={user.user_id} value={user.user_id}>
-                    {user.preferred_name || user.first_name} {user.last_name} ({user.email})
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-col gap-4">
+                <select
+                  className="select select-bordered w-full max-w-md"
+                  value={selectedUser}
+                  onChange={handleUserSelect}
+                  disabled={isDepartmentWide}
+                >
+                  <option value="">Choose a faculty member...</option>
+                  {userInfo.role.startsWith("Admin-") && <option value="All">All</option>}
+                  {departmentUsers.map((user) => (
+                    <option key={user.user_id} value={user.user_id}>
+                      {user.preferred_name || user.first_name} {user.last_name} ({user.email})
+                    </option>
+                  ))}
+                </select>
+                {/* checkbox for department-wide cv (all fac members) */}
+                {userInfo.role.startsWith("Admin-") && (
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-primary"
+                      checked={isDepartmentWide}
+                      onChange={(e) => setIsDepartmentWide(e.target.checked)}
+                    />
+                    <label className="ml-2">Generate for all department members</label>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col w-full h-full px-4 pb-8">
+            <div className="flex flex-col w-full h-full pb-8">
               {/* Left Panel: Template List */}
               <div className="flex flex-col h-full">
                 <h2 className="text-sm font-medium text-gray-700 mb-2">Templates</h2>
@@ -171,7 +285,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                 <div className="mb-4">
                   <select
                     className={`select select-bordered w-full max-w-md ${
-                      !selectedUser ? "select-disabled bg-gray-100" : ""
+                      !selectedUser && !isDepartmentWide ? "select-disabled bg-gray-100" : ""
                     }`}
                     value={selectedTemplate?.template_id || ""}
                     onChange={(e) => {
@@ -179,7 +293,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                       const template = searchedTemplates.find((t) => t.template_id === templateId);
                       handleTemplateSelect(template || "");
                     }}
-                    disabled={!selectedUser}
+                    disabled={!selectedUser && !isDepartmentWide}
                   >
                     <option value="">Choose a template...</option>
                     {searchedTemplates.map((template) => (
@@ -219,7 +333,6 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                         ))}
                       </select>
                     </div>
-
 
                     {/* Download Buttons */}
                     {(downloadUrl || downloadUrlDocx) && (
@@ -295,6 +408,17 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                 </div>
               )}
             </div>
+
+            <DepartmentGenerateAllConfirmModal
+              open={showGenerateAllModal}
+              onClose={() => setShowGenerateAllModal(false)}
+              onConfirm={handleGenerateAll}
+              department={userInfo.role === "Admin" ? selectedDepartment : userInfo.primary_department}
+              members={departmentUsers}
+              template={selectedTemplate}
+              startYear={startYear}
+              endYear={endYear}
+            />
           </div>
         )}
       </main>

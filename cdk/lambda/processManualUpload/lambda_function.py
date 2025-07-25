@@ -42,6 +42,9 @@ def cleanData(df):
 
     # Drop all other columns except the cleaned ones
     df = df[["employee_id", "last_name", "first_name", "academic_rank", "academic_unit"]]
+
+    # Replace NaN with empty string for all columns
+    df = df.replace({np.nan: ''})
     return df
 
 def lambda_handler(event, context):
@@ -74,12 +77,12 @@ def lambda_handler(event, context):
                 'error': 'Unsupported file type. Only CSV and XLSX are supported.'
             }
         print("Data loaded successfully.")
-        print(df.head())
+        print(df.to_string())
 
         # Clean the DataFrame
         df = cleanData(df)
         print("Data cleaned successfully.")
-        print(df.head())
+        print(df.to_string())
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)

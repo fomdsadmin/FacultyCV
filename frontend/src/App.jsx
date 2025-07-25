@@ -398,6 +398,10 @@ const AppContent = () => {
             element={<Sections userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
+            path="/sections/:category/:title/data"
+            element={user ? <Sections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+          />
+          <Route
             path="/archived-sections"
             element={<ArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />

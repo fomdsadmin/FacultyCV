@@ -23,11 +23,14 @@ export class UserImportStack extends Stack {
 
   public readonly userImportS3Bucket: s3.Bucket;
   public readonly manualUploadS3Bucket: s3.Bucket;
+  public readonly dataMigrationObgynS3Bucket: s3.Bucket;
 
   public getUserImportBucketName = () => this.userImportS3Bucket.bucketName;
   public getUserImportBucketArn = () => this.userImportS3Bucket.bucketArn;
   public getManualUploadBucketName = () => this.manualUploadS3Bucket.bucketName;
   public getManualUploadBucketArn = () => this.manualUploadS3Bucket.bucketArn;
+  public getDataMigrationObgynBucketName = () => this.dataMigrationObgynS3Bucket.bucketName;
+  public getDataMigrationObgynBucketArn = () => this.dataMigrationObgynS3Bucket.bucketArn;
   
   constructor(
     scope: Construct,
@@ -86,6 +89,24 @@ export class UserImportStack extends Stack {
       }]
     });
 
+    // Create S3 bucket for data migration of obgyn data
+    this.dataMigrationObgynS3Bucket = new s3.Bucket(this, "facultyCV-data-migration-obgyn-s3-bucket", {
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      versioned: true,
+      publicReadAccess: false,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      bucketName: `${resourcePrefix}-${Stack.of(this).account}-data-migration-obgyn-s3-bucket`,
+      cors: [{
+        allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.POST, s3.HttpMethods.DELETE, s3.HttpMethods.HEAD],
+        allowedOrigins: ["http://localhost:3000", "https://dev.360.med.ubc.ca"],
+        allowedHeaders: ["*"],
+        exposedHeaders: ["ETag"],
+        maxAge: 3000
+      }]
+    });
+
 
     // Create folder structure for the user to upload user import files
     const createUserImportFolders = new triggers.TriggerFunction(this, "facultyCV-createUserImportFolders", {
@@ -132,6 +153,28 @@ export class UserImportStack extends Stack {
       })
     );
     createManualUploadFolders.executeAfter(this.manualUploadS3Bucket);
+
+    // Create folder structure for data migration of obgyn data
+    const createDataMigrationObgynFolders = new triggers.TriggerFunction(this, "facultyCV-createDataMigrationObgynFolders", {
+      runtime: lambda.Runtime.PYTHON_3_9,
+      functionName: `${resourcePrefix}-createDataMigrationObgynFolders`,
+      handler: "createDataMigrationObgynFolders.lambda_handler", // reuse same handler  
+      code: lambda.Code.fromAsset("lambda/create-data-migration-obgyn-folders"),
+      timeout: cdk.Duration.minutes(1),
+      memorySize: 512,
+      vpc: vpcStack.vpc,
+      environment: {
+        BUCKET_NAME: this.dataMigrationObgynS3Bucket.bucketName,
+      },
+    });
+    createDataMigrationObgynFolders.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+        resources: [`arn:aws:s3:::${this.dataMigrationObgynS3Bucket.bucketName}/*`],
+      })
+    );
+    createDataMigrationObgynFolders.executeAfter(this.dataMigrationObgynS3Bucket);
 
     // Lambda function to process user import files
     const processUserImport = new lambda.Function(this, "facultyCV-processUserImport", {
@@ -307,5 +350,107 @@ export class UserImportStack extends Stack {
     createManualUploadFolders.applyRemovalPolicy(RemovalPolicy.DESTROY);
     processUserImport.applyRemovalPolicy(RemovalPolicy.DESTROY);
     processManualUpload.applyRemovalPolicy(RemovalPolicy.DESTROY);
+
+    // List of obgyn subfolders and their corresponding Lambda code paths
+    const obgynSubfolders = [
+      "AuthorshipStatement",
+      "Awards",
+      "ClinicalTeaching",
+      "CME",
+      "CommunityService",
+      "ContinuingEducation",
+      "Contributions",
+      "Education",
+      "Grants",
+      "Leave",
+      "order",
+      "OtherProfessionalAct",
+      "OtherRelevantInfo",
+      "OtherSpecializedTraining",
+      "OtherTeachingUGGPG",
+      "PositionHeld",
+      "Presentations",
+      "ProfessionalQuals",
+      "Publications",
+      "Publications_order",
+      "SpecialInterests",
+      "SupervisoryExperience",
+      "TeachingInterests",
+      "UBCCourses",
+      "VisitOtherTeaching",
+      "Doctors",
+      "Users"
+    ];
+
+    // For each subfolder, create a Lambda and add S3 event notification
+    obgynSubfolders.forEach(subfolder => {
+      const lambdaFn = new lambda.Function(this, `facultyCV-obgyn-${subfolder}-import`, {
+        runtime: lambda.Runtime.PYTHON_3_9,
+        functionName: `${resourcePrefix}-obgyn-${subfolder}-import`,
+        handler: "lambda_handler.lambda_handler",
+        code: lambda.Code.fromAsset(`OBGYN-CV-import-scripts/${subfolder}`),
+        timeout: cdk.Duration.minutes(5),
+        memorySize: 512,
+        environment: {
+          'DB_PROXY_ENDPOINT': databaseStack.rdsProxyEndpoint,
+          'USER_POOL_ID': userImportProps.userPoolId,
+          'BUCKET_NAME': this.dataMigrationObgynS3Bucket.bucketName
+        },
+        vpc: vpcStack.vpc,
+        vpcSubnets: {
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+        },
+        layers: [pandasLayer, userImportProps.psycopgLayer, userImportProps.databaseConnectLayer]
+      });
+
+      // S3 permissions for Lambda
+      lambdaFn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: [
+            "s3:GetObject",
+            "s3:DeleteObject",
+            "s3:ListBucketVersions",
+            "s3:ListBucket",
+            "s3:ListObjectsV2",
+            "s3:ListMultipartUploadParts",
+            "s3:ListObjectVersions",
+          ],
+          resources: [
+            `arn:aws:s3:::${this.dataMigrationObgynS3Bucket.bucketName}`,
+            `arn:aws:s3:::${this.dataMigrationObgynS3Bucket.bucketName}/*`
+          ],
+        })
+      );
+
+      // SecretsManager permissions
+      lambdaFn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ["secretsmanager:GetSecretValue"],
+          resources: [`arn:aws:secretsmanager:${Stack.of(this).region}:${Stack.of(this).account}:secret:facultyCV/credentials/*`]
+        })
+      );
+
+      // S3 invoke permissions
+      lambdaFn.addPermission(`s3-invoke-obgyn-${subfolder}`, {
+        principal: new iam.ServicePrincipal("s3.amazonaws.com"),
+        action: "lambda:InvokeFunction",
+        sourceAccount: Stack.of(this).account,
+        sourceArn: this.dataMigrationObgynS3Bucket.bucketArn,
+      });
+
+      // Removal policy
+      lambdaFn.applyRemovalPolicy(RemovalPolicy.DESTROY);
+
+      // S3 event notification for this subfolder
+      this.dataMigrationObgynS3Bucket.addEventNotification(
+        s3.EventType.OBJECT_CREATED_PUT,
+        new s3n.LambdaDestination(lambdaFn),
+        {
+          prefix: `obgyn/${subfolder}/`,
+        }
+      );
+    });
   }
 }

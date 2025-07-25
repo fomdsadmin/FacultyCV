@@ -92,7 +92,7 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
       const timestamp = Date.now();
       const fileName = selectedFile.name.split(".")[0];
       const fileExtension = selectedFile.name.split(".")[1];
-      const fileKey = selectedFile.name
+      const fileKey = selectedFile.name;
 
       console.log("File Key:", selectedFile.name);
 
@@ -174,8 +174,8 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 className="font-semibold text-blue-900 mb-2">File Upload Instructions</h3>
             <p className="text-blue-800 text-sm mb-2">
-              Upload a CSV file to import multiple users into the application. The file should contain the
-              following columns:
+              Upload a CSV file to import multiple users into the application. The file should contain the following
+              columns:
             </p>
             <ul className="text-blue-800 text-sm space-y-1 ml-4">
               <li>
@@ -194,7 +194,10 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
                 • <strong>role</strong> - User's role ('Faculty', 'Assistant', 'Admin', 'DepartmentAdmin')
               </li>
               <li>
-                • <strong>institution</strong> - Set to 'The University of British Columbia'
+                • <strong>institution</strong> - Set to 'University of British Columbia'
+              </li>
+              <li>
+                • <strong>faculty</strong> - Users faculty name ('Medicine', 'Obstretrics & Gynecology')
               </li>
             </ul>
             <p className="text-blue-800 text-sm mt-2">
@@ -234,13 +237,7 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
               >
                 Select File
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                onChange={handleFileInputChange}
-                className="hidden"
-              />
+              <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileInputChange} className="hidden" />
             </div>
           )}
 
