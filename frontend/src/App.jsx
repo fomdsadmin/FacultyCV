@@ -64,9 +64,9 @@ const AppContent = () => {
     }
   }, [user, userInfo]); */
 
-   const getUserInfo = async (email) => {
+   const getUserInfo = async (username) => {
     try {
-      const userInformation = await getUser(email);
+      const userInformation = await getUser(username);
       console.log("userInformation, none because we don't add user...", userInformation)
       if (userInformation.role === "Assistant") {
         setAssistantUserInfo(userInformation);

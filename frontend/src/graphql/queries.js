@@ -8,9 +8,9 @@ export const GET_BIO_RESPONSE_DATA = `
 `
 
 export const getUserQuery = `
-    query GetUser($email: String!) {
+    query GetUser($username: String!) {
         getUser(
-            email: $email
+            username: $username
         ){
             user_id
             first_name
@@ -32,10 +32,9 @@ export const getUserQuery = `
             scopus_id
             orcid_id
             joined_timestamp   
-            cwl
-            vpp
             pending
             approved
+            username
         }
     }
 `;

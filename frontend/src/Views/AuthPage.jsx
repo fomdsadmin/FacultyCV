@@ -46,8 +46,7 @@ const AuthPage = () => {
         formData.last_name,
         formData.email,
         formData.role,
-        "",
-        ""
+        formData.username
       );
       setUserExistsInSqlDatabase(true);
       setIsUserPending(true);
@@ -63,7 +62,7 @@ const AuthPage = () => {
     console.log(await fetchUserAttributes());
     const { given_name, family_name, email, name } = await fetchUserAttributes();
     setFormData({
-      name: name,
+      username: name,
       email: email,
       first_name: given_name,
       last_name: family_name,
@@ -120,7 +119,7 @@ const AuthPage = () => {
                   type="text"
                   id="name"
                   name="username"
-                  value={formData.name}
+                  value={formData.username}
                   readOnly
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 />

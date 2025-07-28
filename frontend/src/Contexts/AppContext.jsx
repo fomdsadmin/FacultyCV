@@ -58,9 +58,9 @@ export const AppProvider = ({ children }) => {
     }
 
     // Get user info from database
-    async function getUserInfo(email) {
+    async function getUserInfo(username) {
         try {
-            const userInformation = await getUser(email)
+            const userInformation = await getUser(username)
             if (userInformation.role === "Assistant") {
                 setAssistantUserInfo(userInformation)
             } else {
@@ -82,13 +82,13 @@ export const AppProvider = ({ children }) => {
             setUser(userData)
             
             const attributes = await fetchUserAttributes()
-            const email = attributes.email
+            const username = attributes.name
             
             const userGroup = await getUserGroup()
             setUserGroup(userGroup)
             
             try {
-              await getUserInfo(email)
+              await getUserInfo(username)
             } catch {
                 const { given_name } = attributes;
                 // Set basic user info for header display
@@ -111,6 +111,7 @@ export const AppProvider = ({ children }) => {
                 // Step 1: Check authentication session
                 const session = await fetchAuthSession();
                 const token = session.tokens?.idToken?.toString();
+                console.log("token: ", token );
 
                 if (!token) {
                     // User is not logged in
@@ -125,10 +126,10 @@ export const AppProvider = ({ children }) => {
                 // User has a valid token - set up user
                 setIsUserLoggedIn(true);
                 
-                // Get user attributes to check email
-                const { email } = await fetchUserAttributes();
+                // Get user attributes to check username
+                const { name: username } = await fetchUserAttributes();
 
-                if (!email) {
+                if (!username) {
                     setUserExistsInSqlDatabase(false);
                     setIsUserPending(false);
                     setIsUserApproved(false);
@@ -138,7 +139,7 @@ export const AppProvider = ({ children }) => {
 
                 // Check if user exists in SQL database
                 try {
-                    const userData = await getUser(email);
+                    const userData = await getUser(username);
                     setUserExistsInSqlDatabase(true);
                     setIsUserPending(userData.pending);
                     setIsUserApproved(userData.approved);
@@ -151,13 +152,13 @@ export const AppProvider = ({ children }) => {
                             setUser(userData);
                             
                             const attributes = await fetchUserAttributes();
-                            const userEmail = attributes.email;
+                            const username = attributes.name;
                             
                             const userGroup = await getUserGroup();
                             setUserGroup(userGroup);
                             
                             try {
-                                await getUserInfo(userEmail);
+                                await getUserInfo(username);
                             } catch {
                                 const { given_name } = attributes;
                                 // Set basic user info for header display

@@ -63,7 +63,7 @@ const Header = ({ assistantUserInfo }) => {
       await signOut();
 
       const clientId = process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID;
-      const logoutUri = `http://${process.env.REACT_APP_AMPLIFY_DOMAIN}/keycloak-logout`; // Make sure this URL is registered in your Cognito App Client's "Sign out URLs"
+      const logoutUri = `${process.env.REACT_APP_AMPLIFY_DOMAIN}/keycloak-logout`; // Make sure this URL is registered in your Cognito App Client's "Sign out URLs"
       const cognitoDomain = "https://" + process.env.REACT_APP_COGNITO_DOMAIN;
 
       window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
