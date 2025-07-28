@@ -202,10 +202,9 @@ type User {
   scopus_id: String
   orcid_id: String
   joined_timestamp: String
-  cwl: String
-  vpp: String
   pending: Boolean
   approved: Boolean
+  username: String
 }
 
 type UserCVData {
@@ -264,9 +263,8 @@ type Mutation {
     role: String!
     pending: Boolean!
     approved: Boolean!
-    cwl: String
-    vpp: String
-  ): String @aws_auth(cognito_groups: ["Admin"])
+    username: String!
+  ): String @aws_auth(cognito_groups: ["Admin", "NewlyRegistered"])
   removeUser(user_id: String!, email: String!, first_name: String!, last_name: String!): String
     @aws_auth(cognito_groups: ["Admin"])
   updateUser(
@@ -378,7 +376,7 @@ type Query {
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   GetAIResponse(user_input: String!): LambdaAIResponse
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-  getUser(email: String!): User @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getUser(username: String!): User @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant", "NewlyRegistered"])
   getExistingUser(institution_user_id: String!): User
     @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   getAllSections: [DataSection]

@@ -1,11 +1,8 @@
-import { Amplify } from "aws-amplify";
 import "./App.css";
 import "@aws-amplify/ui-react/styles.css";
-import React, { useEffect, useState } from "react";
 import Header from "./Components/Headers.jsx";
 import Footer from "./Components/Footer.jsx";
-import { fetchUserAttributes, signOut, fetchAuthSession } from "aws-amplify/auth";
-import { BrowserRouter as Router, Routes, Route, Navigate, redirect, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "./Views/AuthPage";
 import Dashboard from "./Pages/Dashboard/dashboard.jsx";
 import Support from "./Views/support.jsx";
@@ -14,7 +11,7 @@ import AcademicWork from "./Views/AcademicWork.jsx";
 import Declarations from "./Pages/Declarations/Declarations.jsx";
 import Reports from "./Pages/ReportsPage/ReportsPage.jsx";
 import Assistants from "./Views/Assistants.jsx";
-import { getPresignedUrl, getUser } from "./graphql/graphqlHelpers.js";
+import { getUser } from "./graphql/graphqlHelpers.js";
 import PageContainer from "./Views/PageContainer.jsx";
 import AdminUsers from "./Views/AdminUsers.jsx";
 import Archive from "./Views/Archive.jsx";
@@ -31,42 +28,17 @@ import { AuditLoggerProvider } from "./Contexts/AuditLoggerContext.jsx";
 import ArchivedSections from "./Views/ArchivedSections.jsx";
 import DepartmentAdminUsers from "./Views/DepartmentAdminUsers.jsx";
 import DepartmentAdminHomePage from "./Views/DepartmentAdminHomePage.jsx";
-import DepartmentAdminUserInsights from "./Views/DepartmentAdminUserInsights.jsx";
 import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
 import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
 import AdminGenerateCV from "./Views/AdminGenerateCV.jsx";
-import DepartmentAdminArchivedSections from "./Views/DepartmentAdminArchivedSections.jsx";
 import FacultyAdminHomePage from "./Views/FacultyAdminHomePage.jsx";
 import FacultyAdminUsers from "./Views/FacultyAdminUsers.jsx";
 import FacultyAdminGenerateCV from "./Views/FacultyAdminGenerateCV.jsx";
-import { getJWT } from "./getAuthToken.js";
 import { NotificationProvider } from "./Contexts/NotificationContext.jsx";
-import Notification from "./Components/Notification.jsx";
-import { cognitoUserPoolsTokenProvider } from "aws-amplify/auth/cognito";
-import { CookieStorage } from "aws-amplify/utils";
 import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
 import { ToastContainer } from "react-toastify";
-
-Amplify.configure({
-  API: {
-    GraphQL: {
-      endpoint: process.env.REACT_APP_APPSYNC_ENDPOINT,
-      region: process.env.REACT_APP_AWS_REGION,
-      defaultAuthMode: "userPool",
-    },
-  },
-  Auth: {
-    Cognito: {
-      region: process.env.REACT_APP_AWS_REGION,
-      userPoolClientId: process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID,
-      userPoolId: process.env.REACT_APP_COGNITO_USER_POOL_ID,
-      allowGuestAccess: false,
-    },
-  },
-});
-
-cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
+import KeycloakLogout from "Components/KeycloakLogout";
 
 const AppContent = () => {
   const {
@@ -79,20 +51,23 @@ const AppContent = () => {
     loading,
     setLoading,
     currentViewRole,
-    setCurrentViewRole,
     toggleViewMode,
+    isUserLoggedIn,
+    isUserPending,
+    isUserApproved,
   } = useApp();
 
   // Initialize view mode for redirects and route access
-  useEffect(() => {
+/*   useEffect(() => {
     if (user && userInfo && userInfo.role && !currentViewRole) {
       setCurrentViewRole(userInfo.role);
     }
-  }, [user, userInfo]);
+  }, [user, userInfo]); */
 
-  const getUserInfo = async (email) => {
+   const getUserInfo = async (username) => {
     try {
-      const userInformation = await getUser(email);
+      const userInformation = await getUser(username);
+      console.log("userInformation, none because we don't add user...", userInformation)
       if (userInformation.role === "Assistant") {
         setAssistantUserInfo(userInformation);
         setUserInfo(userInformation);
@@ -104,7 +79,7 @@ const AppContent = () => {
       setLoading(false);
     }
   };
-
+ 
   if (loading) {
     return (
       <PageContainer>
@@ -130,16 +105,31 @@ const AppContent = () => {
           pauseOnHover
           theme="light"
         />
-        {user && <Header userInfo={userInfo} assistantUserInfo={assistantUserInfo} getCognitoUser={getCognitoUser} />}
+        {isUserLoggedIn && <Header assistantUserInfo={assistantUserInfo} />}
         {/* {console.log("Current View Role:", currentViewRole)}
       {console.log("User Info:", userInfo)}
       {console.log("Assistant User Info:", assistantUserInfo)} */}
-        <Routes>
-          {/* Main home route - redirects based on role */}
-          <Route
-            path="/home"
-            element={
-              user ? (
+        {!isUserLoggedIn ? (
+          <Routes>
+            <Route path="/keycloak-logout" element={<KeycloakLogout />} />
+            <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
+            <Route path="/*" element={<Navigate to="/auth" />}/>
+          </Routes>
+        ) : isUserPending || !isUserApproved ? (
+          // User is logged in but pending approval - only allow access to auth page
+          <Routes>
+            <Route path="/keycloak-logout" element={<KeycloakLogout />} />
+            <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
+            <Route path="/*" element={<Navigate to="/auth" />}/>
+          </Routes>
+        ) : (
+          // User is logged in and approved - allow access to all routes
+          <Routes>
+            <Route path="/keycloak-logout" element={<KeycloakLogout />} />
+            {/* Main home route - redirects based on role */}
+            <Route
+              path="/home"
+              element={
                 Object.keys(userInfo).length !== 0 && userInfo.role === "Admin" ? (
                   <Navigate to="/admin/home" />
                 ) : Object.keys(userInfo).length !== 0 &&
@@ -155,22 +145,14 @@ const AppContent = () => {
                 ) : Object.keys(userInfo).length !== 0 && userInfo.role === "Faculty" ? (
                   <Navigate to="/faculty/home" />
                 ) : (
-                  <PageContainer>
-                    <div className="flex items-center justify-center w-full">
-                      <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-                    </div>
-                  </PageContainer>
+                  <Navigate to="/auth" />
                 )
-              ) : (
-                <Navigate to="/auth" />
-              )
-            }
-          />
-
+              }
+            />
           <Route
             path="/assistant/home"
             element={
-              user && assistantUserInfo.role === "Assistant" && currentViewRole === "Assistant" ? (
+              assistantUserInfo.role === "Assistant" && currentViewRole === "Assistant" ? (
                 <Assistant_FacultyHomePage
                   assistantUserInfo={assistantUserInfo}
                   userInfo={assistantUserInfo}
@@ -179,7 +161,7 @@ const AppContent = () => {
                   getCognitoUser={getCognitoUser}
                 />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -187,10 +169,10 @@ const AppContent = () => {
           <Route
             path="/admin/users"
             element={
-              user && userInfo.role === "Admin" && currentViewRole === "Admin" ? (
+              userInfo.role === "Admin" && currentViewRole === "Admin" ? (
                 <AdminUsers userInfo={userInfo} getCognitoUser={getCognitoUser} />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -198,25 +180,22 @@ const AppContent = () => {
           <Route
             path="/admin/generate"
             element={
-              user && userInfo.role === "Admin" && currentViewRole === "Admin" ? (
+              userInfo.role === "Admin" && currentViewRole === "Admin" ? (
                 <AdminGenerateCV userInfo={userInfo} getCognitoUser={getCognitoUser} />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
 
           <Route
             path="/admin/home"
-            element={
-              user ? <AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />
-            }
+            element={<AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
 
           <Route
             path="/department-admin/home"
             element={
-              user &&
               typeof userInfo.role === "string" &&
               (userInfo.role.startsWith("Admin-") || userInfo.role === "Admin") &&
               typeof currentViewRole === "string" &&
@@ -231,7 +210,7 @@ const AppContent = () => {
                   }
                 />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -239,7 +218,6 @@ const AppContent = () => {
           <Route
             path="/faculty-admin/home"
             element={
-              user &&
               typeof userInfo.role === "string" &&
               (userInfo.role.startsWith("FacultyAdmin-") || userInfo.role === "Admin") ? (
                 <FacultyAdminHomePage
@@ -248,7 +226,7 @@ const AppContent = () => {
                   toggleViewMode={toggleViewMode}
                 />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -256,7 +234,6 @@ const AppContent = () => {
           <Route
             path="/faculty/home"
             element={
-              user &&
               typeof userInfo.role === "string" &&
               (userInfo.role === "Faculty" ||
                 userInfo.role.startsWith("Admin-") ||
@@ -275,188 +252,150 @@ const AppContent = () => {
             }
           />
 
-          {/* Auth route remains the same */}
-          <Route path="/auth" element={user ? <Navigate to="/home" /> : <AuthPage getCognitoUser={getCognitoUser} />} />
+          {/* Auth route - allow access for registration/approval flow */}
+          <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
 
-          {/* Faculty dashboard */}
+          {/* Faculty dashboard - no restrictions for approved users */}
           <Route
             path="/faculty/dashboard"
-            element={user ? <Dashboard userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+            element={<Dashboard userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
 
-          {/* Other existing routes remain unchanged */}
+          {/* Other routes - no restrictions for approved users */}
           <Route
             path="/faculty/home/affiliations"
-            element={user ? <FacultyHomePage tab="affiliations" /> : <Navigate to="/auth" />}
+            element={<FacultyHomePage tab="affiliations" />}
           />
           <Route
             path="/faculty/home/employment"
-            element={user ? <FacultyHomePage tab="employment" /> : <Navigate to="/auth" />}
+            element={<FacultyHomePage tab="employment" />}
           />
           <Route
             path="/faculty/home/education"
-            element={user ? <FacultyHomePage tab="education" /> : <Navigate to="/auth" />}
+            element={<FacultyHomePage tab="education" />}
           />
           <Route
             path="/support"
-            element={user ? <Support userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+            element={<Support userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/faculty/academic-work"
-            element={
-              user ? <AcademicWork getCognitoUser={getCognitoUser} userInfo={userInfo} /> : <Navigate to="/auth" />
-            }
+            element={<AcademicWork getCognitoUser={getCognitoUser} userInfo={userInfo} />}
           />
           <Route
             path="/faculty/academic-work/:category"
-            element={
-              user ? <AcademicWork getCognitoUser={getCognitoUser} userInfo={userInfo} /> : <Navigate to="/auth" />
-            }
+            element={<AcademicWork getCognitoUser={getCognitoUser} userInfo={userInfo} />}
           />
           <Route
             path="/faculty/academic-work/:category/:title"
-            element={
-              user ? <AcademicWork getCognitoUser={getCognitoUser} userInfo={userInfo} /> : <Navigate to="/auth" />
-            }
+            element={<AcademicWork getCognitoUser={getCognitoUser} userInfo={userInfo} />}
           />
           <Route
             path="/faculty/declarations"
-            element={
-              user ? <Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />
-            }
+            element={<Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/faculty/declarations/:action"
-            element={
-              user ? <Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />
-            }
+            element={<Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/faculty/declarations/:action/:year"
-            element={
-              user ? <Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />
-            }
+            element={<Declarations userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/faculty/reports"
-            element={user ? <Reports userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+            element={<Reports userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/faculty/assistants"
-            element={
-              user ? <Assistants userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />
-            }
+            element={<Assistants userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/archive"
-            element={user ? <Archive userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+            element={<Archive userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/assistant/academic-work"
             element={
-              user ? (
-                <Assistant_AcademicWork
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <Assistant_AcademicWork
+                assistantUserInfo={assistantUserInfo}
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+              />
             }
           />
           <Route
             path="/assistant/academic-work/:category"
             element={
-              user ? (
-                <Assistant_AcademicWork
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <Assistant_AcademicWork
+                assistantUserInfo={assistantUserInfo}
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+              />
             }
           />
           <Route
             path="/assistant/academic-work/:category/:title"
             element={
-              user ? (
-                <Assistant_AcademicWork
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <Assistant_AcademicWork
+                assistantUserInfo={assistantUserInfo}
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+              />
             }
           />
           <Route
             path="/assistant/reports"
             element={
-              user ? (
-                <Assistant_Reports
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <Assistant_Reports
+                assistantUserInfo={assistantUserInfo}
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+              />
             }
           />
           <Route
             path="/assistant/connections"
             element={
-              user ? (
-                <AssistantConnections
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={assistantUserInfo}
-                  setUserInfo={setAssistantUserInfo}
-                  getUser={getUserInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <AssistantConnections
+                assistantUserInfo={assistantUserInfo}
+                userInfo={assistantUserInfo}
+                setUserInfo={setAssistantUserInfo}
+                getUser={getUserInfo}
+                getCognitoUser={getCognitoUser}
+              />
             }
           />
           <Route
             path="/assistant/archive"
             element={
-              user ? (
-                <Assistant_Archive
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <Assistant_Archive
+                assistantUserInfo={assistantUserInfo}
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+              />
             }
           />
           <Route
             path="/audit"
-            element={user ? <AuditPage userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+            element={<AuditPage userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
-          <Route path="/templates" element={user ? <TemplatesPage /> : <Navigate to="/auth" />} />
+          <Route path="/templates" element={<TemplatesPage />} />
           <Route
             path="/sections"
-            element={user ? <Sections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+            element={<Sections userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/sections/manage"
-            element={user ? <Sections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+            element={<Sections userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/sections/:category"
-            element={user ? <Sections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+            element={<Sections userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/sections/:category/:title"
-            element={user ? <Sections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />}
+            element={<Sections userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/sections/:category/:title/data"
@@ -464,100 +403,63 @@ const AppContent = () => {
           />
           <Route
             path="/archived-sections"
-            element={
-              user ? <ArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} /> : <Navigate to="/auth" />
-            }
+            element={<ArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} />}
           />
           <Route
             path="/department-admin/users"
             element={
-              user ? (
-                <DepartmentAdminUsers
-                  userInfo={{ ...userInfo, role: currentViewRole }}
-                  getCognitoUser={getCognitoUser}
-                  department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <DepartmentAdminUsers
+                userInfo={{ ...userInfo, role: currentViewRole }}
+                getCognitoUser={getCognitoUser}
+                department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
+              />
             }
           />
           <Route
             path="/department-admin/users/:userId"
             element={
-              user ? (
-                <DepartmentAdminUsers
-                  userInfo={{ ...userInfo, role: currentViewRole }}
-                  getCognitoUser={getCognitoUser}
-                  department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <DepartmentAdminUsers
+                userInfo={{ ...userInfo, role: currentViewRole }}
+                getCognitoUser={getCognitoUser}
+                department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
+              />
             }
           />
           <Route
             path="/department-admin/analytics"
             element={
-              user ? (
-                <DepartmentAdminHomePage
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                  department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <DepartmentAdminHomePage
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+                department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
+              />
             }
           />
           <Route
             path="/department-admin/templates"
             element={
-              user ? (
-                <DepartmentAdminTemplates
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                  department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
+              <DepartmentAdminTemplates
+                userInfo={userInfo}
+                getCognitoUser={getCognitoUser}
+                department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
+              />
             }
           />
           <Route
             path="/department-admin/generate"
             element={
-              user ? (
-                <DepartmentAdminGenerateCV
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                  department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
-            }
-          />
-          {/* <Route
-          path="/department-admin/archived-sections"
-          element={
-            user ? (
-              <DepartmentAdminArchivedSections
+              <DepartmentAdminGenerateCV
                 userInfo={userInfo}
                 getCognitoUser={getCognitoUser}
                 department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
               />
-            ) : (
-              <Navigate to="/auth" />
-            )
-          }
-        /> */}
+            }
+          />
 
           {/* Faculty Admin Routes */}
           <Route
             path="/faculty-admin/users"
             element={
-              user &&
               typeof userInfo.role === "string" &&
               (userInfo.role.startsWith("FacultyAdmin-") || userInfo.role === "Admin") ? (
                 <FacultyAdminUsers
@@ -566,7 +468,7 @@ const AppContent = () => {
                   toggleViewMode={toggleViewMode}
                 />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
@@ -574,7 +476,6 @@ const AppContent = () => {
           <Route
             path="/faculty-admin/generate-cv"
             element={
-              user &&
               typeof userInfo.role === "string" &&
               (userInfo.role.startsWith("FacultyAdmin-") || userInfo.role === "Admin") ? (
                 <FacultyAdminGenerateCV
@@ -583,15 +484,16 @@ const AppContent = () => {
                   toggleViewMode={toggleViewMode}
                 />
               ) : (
-                <Navigate to="/auth" />
+                <Navigate to="/home" />
               )
             }
           />
 
-          <Route path="/" element={<Navigate to="/home" />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        {user && <Footer />}
+            <Route path="/" element={<Navigate to="/home" />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        )}
+        {isUserLoggedIn && <Footer />}
       </AuditLoggerProvider>
     </Router>
   );

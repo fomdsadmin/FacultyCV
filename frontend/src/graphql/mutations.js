@@ -64,7 +64,7 @@ export const ADD_SECTION = `
 `;
 
 export const ADD_USER = `
-    mutation AddUser($first_name: String!, $last_name: String!, $email: String!, $role: String!, $pending: Boolean!, $approved: Boolean! $cwl: String!, $vpp: String!) {
+    mutation AddUser($first_name: String!, $last_name: String!, $email: String!, $role: String!, $pending: Boolean!, $approved: Boolean!, $username: String!) {
         addUser(
             first_name: $first_name,
             last_name: $last_name,
@@ -72,8 +72,7 @@ export const ADD_USER = `
             role: $role,
             pending: $pending,
             approved: $approved,
-            cwl: $cwl,
-            vpp: $vpp
+            username: $username
         )
     }
 `;

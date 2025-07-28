@@ -185,8 +185,8 @@ export const getArchivedSections = async () => {
  *      orcid_id
  *   }
  */
-export const getUser = async (email) => {
-  const results = await executeGraphql(getUserQuery, { email: email });
+export const getUser = async (username) => {
+  const results = await executeGraphql(getUserQuery, { username: username });
   console.log(results);
   return results["data"]["getUser"];
 };
@@ -699,7 +699,7 @@ export const addSection = async (title, description, data_type, attributes) => {
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUser = async (first_name, last_name, email, role, cwl, vpp) => {
+export const addUser = async (first_name, last_name, email, role, username) => {
   const results = await executeGraphql(ADD_USER, {
     first_name,
     last_name,
@@ -707,8 +707,7 @@ export const addUser = async (first_name, last_name, email, role, cwl, vpp) => {
     role,
     pending: true, // Default to pending
     approved: false, // Default to not approved
-    cwl,
-    vpp,
+    username
   });
   return results["data"]["addUser"];
 };

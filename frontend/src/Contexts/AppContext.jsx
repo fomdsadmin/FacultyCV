@@ -22,8 +22,12 @@ export const AppProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [userInfo, setUserInfo] = useState({})
     const [assistantUserInfo, setAssistantUserInfo] = useState({})
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true) // Start with loading true
     const [userGroup, setUserGroup] = useState(null)
+    const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+    const [userExistsInSqlDatabase, setUserExistsInSqlDatabase] = useState(false);
+    const [isUserPending, setIsUserPending] = useState(false);
+    const [isUserApproved, setIsUserApproved] = useState(false);
     
     // Role management state
     const [actualRole, setActualRole] = useState("") // User's actual assigned role (permissions)
@@ -31,6 +35,7 @@ export const AppProvider = ({ children }) => {
 
     // Initialize actual role when userInfo changes
     useEffect(() => {
+      console.log('userinfo: ', userInfo)
         if (userInfo && userInfo.role) {
             setActualRole(userInfo.role);
             // Only set currentViewRole initially if not already set
@@ -38,7 +43,7 @@ export const AppProvider = ({ children }) => {
                 setCurrentViewRole(userInfo.role);
             }
         }
-    }, [userInfo]);
+    }, [userInfo, currentViewRole]);
 
     // Get user group from Cognito
     async function getUserGroup() {
@@ -53,9 +58,9 @@ export const AppProvider = ({ children }) => {
     }
 
     // Get user info from database
-    async function getUserInfo(email) {
+    async function getUserInfo(username) {
         try {
-            const userInformation = await getUser(email)
+            const userInformation = await getUser(username)
             if (userInformation.role === "Assistant") {
                 setAssistantUserInfo(userInformation)
             } else {
@@ -63,6 +68,7 @@ export const AppProvider = ({ children }) => {
             }
             setLoading(false)
         } catch (error) {
+          console.log("user info failed to set")
             setLoading(false)
             console.error("Error fetching user info:", error)
         }
@@ -76,12 +82,21 @@ export const AppProvider = ({ children }) => {
             setUser(userData)
             
             const attributes = await fetchUserAttributes()
-            const email = attributes.email
+            const username = attributes.name
             
             const userGroup = await getUserGroup()
             setUserGroup(userGroup)
             
-            await getUserInfo(email)
+            try {
+              await getUserInfo(username)
+            } catch {
+                const { given_name } = attributes;
+                // Set basic user info for header display
+                setUserInfo({
+                    first_name: given_name,
+                });
+            }
+            console.log("Get user info ran")
         } catch (error) {
             setLoading(false)
             console.error("Error getting Cognito user:", error)
@@ -90,7 +105,98 @@ export const AppProvider = ({ children }) => {
 
     // Initialize user on component mount
     useEffect(() => {
-        getCognitoUser()
+        const initializeAuth = async () => {
+            setLoading(true);
+            try {
+                // Step 1: Check authentication session
+                const session = await fetchAuthSession();
+                const token = session.tokens?.idToken?.toString();
+                console.log("token: ", token );
+
+                if (!token) {
+                    // User is not logged in
+                    setIsUserLoggedIn(false);
+                    setUserExistsInSqlDatabase(false);
+                    setIsUserPending(false);
+                    setIsUserApproved(false);
+                    setLoading(false);
+                    return;
+                }
+
+                // User has a valid token - set up user
+                setIsUserLoggedIn(true);
+                
+                // Get user attributes to check username
+                const { name: username } = await fetchUserAttributes();
+
+                if (!username) {
+                    setUserExistsInSqlDatabase(false);
+                    setIsUserPending(false);
+                    setIsUserApproved(false);
+                    setLoading(false);
+                    return;
+                }
+
+                // Check if user exists in SQL database
+                try {
+                    const userData = await getUser(username);
+                    setUserExistsInSqlDatabase(true);
+                    setIsUserPending(userData.pending);
+                    setIsUserApproved(userData.approved);
+                    
+                    // If user is approved, set up full user context
+                    if (userData.approved && !userData.pending) {
+                        // Set up full user context (inline getCognitoUser logic)
+                        try {
+                            const userData = await getCurrentUser();
+                            setUser(userData);
+                            
+                            const attributes = await fetchUserAttributes();
+                            const username = attributes.name;
+                            
+                            const userGroup = await getUserGroup();
+                            setUserGroup(userGroup);
+                            
+                            try {
+                                await getUserInfo(username);
+                            } catch {
+                                const { given_name } = attributes;
+                                // Set basic user info for header display
+                                setUserInfo({
+                                    first_name: given_name,
+                                });
+                            }
+                            console.log("User context setup completed");
+                        } catch (error) {
+                            console.error("Error setting up user context:", error);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                    // User does not exist in SQL database
+                    setUserExistsInSqlDatabase(false);
+                    setIsUserPending(false);
+                    setIsUserApproved(false);
+                    
+                    // Still set up basic user info for header display
+                    const { given_name } = await fetchUserAttributes();
+                    setUserInfo({
+                        first_name: given_name || "",
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error checking auth session:", error);
+                setIsUserLoggedIn(false);
+                setUserExistsInSqlDatabase(false);
+                setIsUserPending(false);
+                setIsUserApproved(false);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initializeAuth();
     }, [])
 
     // Get available roles based on user's permission level
@@ -162,6 +268,14 @@ export const AppProvider = ({ children }) => {
         loading,
         userGroup,
         setLoading,
+        setIsUserLoggedIn,
+        isUserLoggedIn,
+        userExistsInSqlDatabase,
+        setUserExistsInSqlDatabase,
+        isUserPending,
+        setIsUserPending,
+        isUserApproved,
+        setIsUserApproved,
         
         // Role management
         actualRole,
@@ -174,6 +288,7 @@ export const AppProvider = ({ children }) => {
         getCognitoUser,
         getDepartment,
         toggleViewMode,
+        setUser,
     }
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>
