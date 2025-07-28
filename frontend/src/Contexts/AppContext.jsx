@@ -110,11 +110,13 @@ export const AppProvider = ({ children }) => {
             try {
                 // Step 1: Check authentication session
                 const session = await fetchAuthSession();
+                console.log("Filter: Authentication session fetrched")
                 const token = session.tokens?.idToken?.toString();
-                console.log("token: ", token );
+                console.log("Filter: Token: ", token)
 
                 if (!token) {
                     // User is not logged in
+                    console.log("Filter: User not logged in");
                     setIsUserLoggedIn(false);
                     setUserExistsInSqlDatabase(false);
                     setIsUserPending(false);
@@ -123,6 +125,8 @@ export const AppProvider = ({ children }) => {
                     return;
                 }
 
+                console.log("Filter: User logged in");
+
                 // User has a valid token - set up user
                 setIsUserLoggedIn(true);
                 
@@ -130,6 +134,7 @@ export const AppProvider = ({ children }) => {
                 const { name: username } = await fetchUserAttributes();
 
                 if (!username) {
+                    console.log("Filter: Username not able to be fetched from user attributes");
                     setUserExistsInSqlDatabase(false);
                     setIsUserPending(false);
                     setIsUserApproved(false);
@@ -143,6 +148,8 @@ export const AppProvider = ({ children }) => {
                     setUserExistsInSqlDatabase(true);
                     setIsUserPending(userData.pending);
                     setIsUserApproved(userData.approved);
+
+                    console.log("Filter: User exists in SQL database");
                     
                     // If user is approved, set up full user context
                     if (userData.approved && !userData.pending) {
@@ -173,6 +180,7 @@ export const AppProvider = ({ children }) => {
                     }
                 } catch (error) {
                     console.error("Error fetching user data:", error);
+                    console.log("Filter: User does not exist in SQL database");
                     // User does not exist in SQL database
                     setUserExistsInSqlDatabase(false);
                     setIsUserPending(false);

@@ -111,6 +111,7 @@ const AppContent = () => {
       {console.log("Assistant User Info:", assistantUserInfo)} */}
         {!isUserLoggedIn ? (
           <Routes>
+            {console.log("Filter: User is not logged in, will only have access to the auth page")}
             <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
             <Route path="/*" element={<Navigate to="/auth" />}/>
@@ -118,6 +119,7 @@ const AppContent = () => {
         ) : isUserPending || !isUserApproved ? (
           // User is logged in but pending approval - only allow access to auth page
           <Routes>
+            {console.log("Filter: User is logged in but pending approval - only allow access to auth page")}
             <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
             <Route path="/*" element={<Navigate to="/auth" />}/>
@@ -125,6 +127,7 @@ const AppContent = () => {
         ) : (
           // User is logged in and approved - allow access to all routes
           <Routes>
+            {console.log("Filter: User is logged in and approved")}
             <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             {/* Main home route - redirects based on role */}
             <Route
