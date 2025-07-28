@@ -105,7 +105,7 @@ const AppContent = () => {
           pauseOnHover
           theme="light"
         />
-        {user && <Header assistantUserInfo={assistantUserInfo} />}
+        {isUserLoggedIn && <Header assistantUserInfo={assistantUserInfo} />}
         {/* {console.log("Current View Role:", currentViewRole)}
       {console.log("User Info:", userInfo)}
       {console.log("Assistant User Info:", assistantUserInfo)} */}
@@ -493,7 +493,7 @@ const AppContent = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         )}
-        {user && <Footer />}
+        {isUserLoggedIn && <Footer />}
       </AuditLoggerProvider>
     </Router>
   );

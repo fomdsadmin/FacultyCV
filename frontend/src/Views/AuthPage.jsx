@@ -61,8 +61,9 @@ const AuthPage = () => {
 
   const setUpForm = async () => {
     console.log(await fetchUserAttributes());
-    const { given_name, family_name, email } = await fetchUserAttributes();
+    const { given_name, family_name, email, name } = await fetchUserAttributes();
     setFormData({
+      name: name,
       email: email,
       first_name: given_name,
       last_name: family_name,
@@ -90,14 +91,8 @@ const AuthPage = () => {
     console.log("Filter: User redirected to keycloak page")
     await signInWithRedirect({
       provider: {
-        custom: 'facultycv-prod'
-      },
-      options: {
-        loginHint: 'someone@gmail.com',
-        lang: 'en',
-        nonce: '88388838883',
-        prompt: 'login'
-      },
+        custom: process.env.REACT_APP_COGNITO_CLIENT_NAME
+      }
     });
     await setUpForm();
     setIsUserLoggedIn(true);
@@ -107,6 +102,7 @@ const AuthPage = () => {
     <PageContainer>
       <div className="flex w-full rounded-lg mx-auto shadow-lg overflow-hidden bg-gray-100">
         <div className="w-3/5 flex flex-col items-center justify-center overflow-auto custom-scrollbar">
+          <div className="text-2xl text-gray-500 font-bold align-left">Signup Page</div>
           {loading && (
             <div className="text-center p-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
@@ -116,6 +112,19 @@ const AuthPage = () => {
 
           {!loading && isUserLoggedIn && !userExistsInSqlDatabase && (
             <form className="w-full max-w-md">
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="username"
+                  value={formData.name}
+                  readOnly
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
                   Email
@@ -178,7 +187,7 @@ const AuthPage = () => {
                       checked={formData.role === "Assistant"}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     />
-                    Assistant
+                    Delegate
                   </label>
                 </div>
               </div>
