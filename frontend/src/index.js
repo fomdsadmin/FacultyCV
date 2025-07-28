@@ -17,8 +17,8 @@ Amplify.configure({
         oauth: {
           domain: process.env.REACT_APP_COGNITO_DOMAIN,
           scopes: ['aws.cognito.signin.user.admin', 'email', 'openid', 'profile'],
-          redirectSignIn: ["http://localhost:3000/auth", "https://360.med.ubc.ca/auth", `https://dev.360.med.ubc.ca/auth`],
-          redirectSignOut: ["http://localhost:3000/auth", "https://360.med.ubc.ca/auth", `https://dev.360.med.ubc.ca/auth`],
+          redirectSignIn: [process.env.REACT_APP_REDIRECT_URL],
+          redirectSignOut: [process.env.REACT_APP_REDIRECT_URL],
           responseType: 'code',
         }
       }
