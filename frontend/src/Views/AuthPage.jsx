@@ -93,6 +93,7 @@ const AuthPage = () => {
         custom: process.env.REACT_APP_COGNITO_CLIENT_NAME
       }
     });
+    console.log("Filter: User redirected back from keycloak page")
     await setUpForm();
     setIsUserLoggedIn(true);
   };

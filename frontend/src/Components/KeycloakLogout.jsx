@@ -10,6 +10,7 @@ const KeycloakLogout = () => {
 
         const redirectUrl = `${KEYCLOAK_LOGOUT_URL}?client_id=${KEYCLOAK_CLIENT_ID}`;
 
+        console.log("Filter: User redirected to keycloak logout page");
         window.location.href = redirectUrl;
     }, []);
 
