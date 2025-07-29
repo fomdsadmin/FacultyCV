@@ -67,7 +67,6 @@ export const normalizeDeclarations = (rawDeclarations) => {
 const fetchDeclarations = async (user_id) => {
   try {
     const result = await getUserDeclarations(user_id);
-    console.log(result)
     // Normalize the API response to match the UI's expected format
     return normalizeDeclarations(result);
   } catch (error) {
@@ -113,10 +112,10 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       }
       setLoading(false);
     };
-    if (userInfo?.first_name && userInfo?.last_name) {
+    if (userInfo?.user_id) {
       fetchData();
     }
-  }, [userInfo?.first_name, userInfo?.last_name]);
+  }, [userInfo?.user_id]);
   // Find the biggest/latest year
   const currentYear = declarations.length > 0 ? Math.max(...declarations.map((d) => d.year)) : null;
 
@@ -175,14 +174,14 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   // Handler for delete button
   const handleDelete = async (year) => {
     try {
-      await deleteUserDeclaration(userInfo.first_name, userInfo.last_name, year);
+      await deleteUserDeclaration(userInfo.user_id, year);
       // Log the deletion action
       await logAction(AUDIT_ACTIONS.DELETE_USER_DECLARATION);
       toast.success("Declaration deleted successfully!", {
         autoClose: 2000,
         theme: "light",
       }); // <-- Add this line
-      const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
+      const data = await fetchDeclarations(userInfo.user_id);
       setDeclarations(data);
     } catch (error) {
       alert("Failed to delete declaration.");
@@ -292,8 +291,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
     // Build the input object for the mutation
     const input = {
-      first_name: userInfo.first_name,
-      last_name: userInfo.last_name,
+      user_id: userInfo.user_id,
       reporting_year: Number(editYear || year),
       created_by: userInfo.email || userInfo.first_name,
       other_data: JSON.stringify({
@@ -342,7 +340,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setSupportAnticipated("");
       setValidationErrors({});
       // Refresh declarations
-      const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
+      const data = await fetchDeclarations(userInfo.user_id);
       setDeclarations(data);
       // Scroll to top of page
       window.scrollTo({ top: 0, behavior: "smooth" });

@@ -13,7 +13,7 @@ def getUserDeclarations(arguments):
     cursor = connection.cursor()
     cursor.execute(
         'SELECT reporting_year, other_data, created_by, created_on FROM declarations WHERE user_id = %s',
-        (arguments['user_id'])
+        (arguments['user_id'],)
     )
     results = cursor.fetchall()
     cursor.close()
