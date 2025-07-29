@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaUserCircle, FaCog, FaUser, FaQuestionCircle, FaSignOutAlt, FaChevronDown } from "react-icons/fa";
-import { signOut } from "aws-amplify/auth";
+import { signOut, fetchAuthSession } from "aws-amplify/auth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../Contexts/AppContext";
 
-const Header = ({ userInfo, getCognitoUser }) => {
+const Header = ({ assistantUserInfo }) => {
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -13,17 +14,24 @@ const Header = ({ userInfo, getCognitoUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { currentViewRole, setCurrentViewRole, getAvailableRoles } = useApp();
+  const { currentViewRole, setCurrentViewRole, getAvailableRoles, userInfo } = useApp();
 
-  const userEmail = userInfo?.email || "Error";
-  const userRole = userInfo?.role || "Error";
-  const firstName = userInfo?.first_name || "User";
+  console.log(userInfo)
+
+  // Use assistantUserInfo for Assistant role if available, else fallback to userInfo
+  const isAssistantView = currentViewRole === "Assistant";
+  const activeUserInfo = isAssistantView && assistantUserInfo && Object.keys(assistantUserInfo).length > 0 ? assistantUserInfo : userInfo;
+  const userEmail = activeUserInfo?.email || "Error";
+  const userRole = activeUserInfo?.role || "Error";
+  const firstName = activeUserInfo?.first_name || "User";
 
   // Determine if user has multiple roles and which roles to show
   const isAdmin = userRole === "Admin";
   const isDepartmentAdmin = userRole.startsWith("Admin-");
+  const isFacultyAdmin = userRole.startsWith("FacultyAdmin-");
   const department = isDepartmentAdmin ? userRole.split("Admin-")[1] : "";
-  const hasMultipleRoles = isAdmin || isDepartmentAdmin;
+  const faculty = isFacultyAdmin ? userRole.split("FacultyAdmin-")[1] : "";
+  const hasMultipleRoles = isAdmin || isDepartmentAdmin || isFacultyAdmin;
 
   const availableRoles = getAvailableRoles();
 
@@ -31,10 +39,12 @@ const Header = ({ userInfo, getCognitoUser }) => {
   useEffect(() => {
     let newViewRole = currentViewRole;
 
-    if (location.pathname.includes("/admin") && !location.pathname.includes("/department-admin")) {
+    if (location.pathname.includes("/admin") && !location.pathname.includes("/department-admin") && !location.pathname.includes("/faculty-admin")) {
       newViewRole = "Admin";
     } else if (location.pathname.includes("/department-admin")) {
       newViewRole = isDepartmentAdmin ? userRole : "Admin-All";
+    } else if (location.pathname.includes("/faculty-admin")) {
+      newViewRole = isFacultyAdmin ? userRole : (userRole === "Admin" ? `FacultyAdmin-All` : userRole);
     } else if (location.pathname.includes("/faculty")) {
       newViewRole = "Faculty";
     } else if (location.pathname.startsWith("/assistant")) {
@@ -45,17 +55,22 @@ const Header = ({ userInfo, getCognitoUser }) => {
     if (newViewRole !== currentViewRole) {
       setCurrentViewRole(newViewRole);
     }
-  }, [location.pathname, isDepartmentAdmin, userRole]);
+  }, [location.pathname, isDepartmentAdmin, isFacultyAdmin, userRole]);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
     try {
       await signOut();
-      // Add this line to update the authentication state
-      // getCognitoUser();
-      window.location.href = "/auth";
+
+      const clientId = process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID;
+      const logoutUri = `${process.env.REACT_APP_AMPLIFY_DOMAIN}/keycloak-logout`; // Make sure this URL is registered in your Cognito App Client's "Sign out URLs"
+      const cognitoDomain = "https://" + process.env.REACT_APP_COGNITO_DOMAIN;
+
+      window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
     } catch (error) {
       console.error("Error signing out:", error);
+      // Fallback on error
+      window.location.href = "/auth";
     } finally {
       setIsSigningOut(false);
     }
@@ -94,32 +109,36 @@ const Header = ({ userInfo, getCognitoUser }) => {
   };
 
   return (
-    <div className="pt-[9vh]">
+    <div className="pt-[9vh] ">
       <header className="fixed top-0 left-0 right-0 z-20 bg-white shadow-md h-[9vh] flex items-center px-4">
+        {/* Logo and name for md and above, only logo for below md */}
         <div className="flex items-center gap-4">
           <img
             src="https://med-fom-mednet.sites.olt.ubc.ca/files/2022/10/Faculty-of-Medicine-Unit-Signature-940x157.jpeg"
             alt="UBC Faculty of Medicine Logo"
-            className="h-12 w-auto object-contain"
+            className="h-11 w-auto object-contain my-2 cursor-pointer"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           />
-          <span className="ml-4 text-2xl flex flex-col font-bold text-gray-800 tracking-tight">
-            Faculty360 <span className="font-normal text-sm text-gray-600">Faculty Activity Reporting</span>
+          {/* Name and subtitle only on md and above */}
+          <span className="mb-1 mx-4 text-xl flex flex-col font-bold text-gray-800 tracking-tight hidden md:flex">
+            Faculty360 <span className="font-normal text-sm text-gray-600 ">Faculty Activity Reporting</span>
           </span>
         </div>
         <div className="flex-1" />
+        {/* Dropdown for md and above: logo+name, for below md: logo only */}
         <div className="flex items-center gap-4">
-          {/* Role selector or label */}
+          {/* Role selector or label (unchanged) */}
           <div className="relative" ref={roleDropdownRef}>
             {hasMultipleRoles ? (
               <button
                 onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                className="flex items-center gap-2 px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
               >
                 <span className="text-xs font-semibold uppercase tracking-wide">{getCurrentRoleDisplay()}</span>
                 <FaChevronDown className="text-xs" />
               </button>
             ) : (
-              <div className="px-3 py-1 rounded bg-blue-100 text-blue-700 text-xs font-semibold uppercase tracking-wide">
+              <div className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-semibold uppercase tracking-wide">
                 {getCurrentRoleDisplay()}
               </div>
             )}
@@ -130,11 +149,10 @@ const Header = ({ userInfo, getCognitoUser }) => {
                   <button
                     key={role.value}
                     onClick={() => handleRoleChange(role)}
-                    className={`flex w-full items-center px-4 py-2 text-sm ${
-                      role.value === currentViewRole
-                        ? "bg-blue-50 text-blue-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
+                    className={`flex w-full items-center px-4 py-2 text-sm ${role.value === currentViewRole
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-700 hover:bg-gray-100"
+                      }`}
                   >
                     {role.label}
                   </button>
@@ -143,18 +161,18 @@ const Header = ({ userInfo, getCognitoUser }) => {
             )}
           </div>
 
-          {/* User profile dropdown */}
+          {/* User profile dropdown: show name only on md and above */}
           <div className="relative" ref={dropdownRef}>
             <button
               className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
               <FaUserCircle className="text-gray-700 text-xl" />
-              <span className="font-medium text-gray-700">{firstName}</span>
+              {/* Show name for Assistant if available, else fallback, only on md and above */}
+              <span className="font-medium text-gray-700 hidden md:inline">{firstName}</span>
               <svg
-                className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
+                  }`}
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -173,6 +191,7 @@ const Header = ({ userInfo, getCognitoUser }) => {
                   <p className="text-xs text-gray-500 truncate">{userEmail}</p>
                 </div>
 
+                {/* Show profile/help only for Faculty, not Assistant */}
                 {(currentViewRole === "Faculty" || userInfo?.role === "Faculty") && (
                   <>
                     <button

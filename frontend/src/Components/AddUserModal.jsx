@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { addUser, getUser, getAllUniversityInfo, addToUserGroup } from "../graphql/graphqlHelpers.js";
+import { addUser, getUser, getAllUniversityInfo, addToUserGroup, updateUser } from "../graphql/graphqlHelpers.js";
 
 const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
@@ -9,8 +9,14 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [vpp, setVpp] = useState("");
   const [role, setRole] = useState("Faculty");
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
+  const [isFacultyAdmin, setIsFacultyAdmin] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedFaculty, setSelectedFaculty] = useState("");
+  const [institution, setInstitution] = useState("University of British Columbia"); // NEW: institution state
+  const [department, setDepartment] = useState("");
+  const [faculty, setFaculty] = useState(""); // NEW: faculty state
   const [departments, setDepartments] = useState([]);
+  const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [existingUser, setExistingUser] = useState(null);
@@ -19,23 +25,28 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [successMessage, setSuccessMessage] = useState("");
   const [createdUser, setCreatedUser] = useState(null);
 
-  // Fetch departments when component mounts
+  // Fetch departments and faculties when component mounts
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchUniversityInfo = async () => {
       try {
         const universityInfo = await getAllUniversityInfo();
         const departmentList = universityInfo
           .filter((item) => item.type === "Department")
           .map((item) => item.value)
           .sort();
+        const facultyList = universityInfo
+          .filter((item) => item.type === "Faculty")
+          .map((item) => item.value)
+          .sort();
         setDepartments(departmentList);
+        setFaculties(facultyList);
       } catch (error) {
-        console.error("Error fetching departments:", error);
+        console.error("Error fetching university info:", error);
       }
     };
 
     if (isOpen) {
-      fetchDepartments();
+      fetchUniversityInfo();
     }
   }, [isOpen]);
 
@@ -44,8 +55,13 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     const selectedRole = event.target.value;
     if (selectedRole === "Department Admin") {
       setIsDepartmentAdmin(true);
+      setIsFacultyAdmin(false);
+    } else if (selectedRole === "Faculty Admin") {
+      setIsFacultyAdmin(true);
+      setIsDepartmentAdmin(false);
     } else {
       setIsDepartmentAdmin(false);
+      setIsFacultyAdmin(false);
       setRole(selectedRole);
     }
   };
@@ -54,6 +70,16 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     const departmentName = event.target.value;
     setSelectedDepartment(departmentName);
     setRole(`Admin-${departmentName}`);
+  };
+
+  const handleFacultyInputChange = (event) => {
+    const facultyName = event.target.value;
+    setSelectedFaculty(facultyName);
+    setRole(`FacultyAdmin-${facultyName}`);
+  };
+
+  const handleFacultyChange = (e) => {
+    setFaculty(e.target.value);
   };
 
   const handleSignUp = async (event) => {
@@ -65,6 +91,16 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
 
     if (!usernameRegex.test(username) && !username2Regex.test(username)) {
       setError("Email must end with @ubc.ca or @[department].ubc.ca");
+      return;
+    }
+
+    if (!department) {
+      setError("Please select a department");
+      return;
+    }
+
+    if (isFacultyAdmin && !selectedFaculty) {
+      setError("Please select a faculty");
       return;
     }
 
@@ -97,8 +133,16 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
 
       // Step 2: Add user to Cognito user group
       console.log("First adding user to Cognito group and checking if user in Cognito pool");
-      const result2 = await addToUserGroup(username, role);
-      const result2str = JSON.stringify(result2).split(",")[0].split("{")[1];
+      let result2;
+      let result2str = "";
+      if (role.includes("FacultyAdmin")) {
+        result2 = await addToUserGroup(username, "FacultyAdmin");
+        result2str = JSON.stringify(result2).split(",")[0].split("{")[1];
+      } else {
+        result2 = await addToUserGroup(username, role);
+        result2str = JSON.stringify(result2).split(",")[0].split("{")[1];
+      }
+
       // const result2obj = JSON.parse(result2str);
 
       // Check if there was an error with Cognito
@@ -124,8 +168,39 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
           cwlChecked,
           vppChecked,
         });
-        const result = await addUser(firstName, lastName, username, role, pending, approved, cwlChecked, vppChecked);
+        const result = await addUser(firstName, lastName, username, role, cwlChecked, vppChecked);
         console.log("User added to database successfully");
+
+        // Step 3: Update user with department and faculty information
+        if (department || faculty) {
+          console.log("Updating user with department/faculty information:", department, faculty);
+          const userDetails = await getUser(username);
+          await updateUser(
+            userDetails.user_id,
+            firstName,
+            lastName,
+            "", // preferred_name
+            username,
+            role,
+            "", // bio
+            "", // rank
+            "", // institution
+            department, // primary_department
+            "", // secondary_department
+            faculty, // primary_faculty
+            "", // secondary_faculty
+            "", // primary_affiliation
+            "", // secondary_affiliation
+            "", // campus
+            "", // keywords
+            "", // institution_user_id
+            "", // scopus_id
+            "", // orcid_id
+            cwlChecked,
+            vppChecked
+          );
+          console.log("User department/faculty updated successfully");
+        }
       }
 
       setLoading(false);
@@ -139,6 +214,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         cwl: cwl,
         vpp: vpp,
         role: role,
+        department: department,
+        faculty: faculty, // NEW: add faculty to createdUser
       });
 
       // Clear form fields but keep success message
@@ -149,7 +226,11 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       setVpp("");
       setRole("Faculty");
       setIsDepartmentAdmin(false);
+      setIsFacultyAdmin(false);
       setSelectedDepartment("");
+      setSelectedFaculty("");
+      setDepartment("");
+      setFaculty(""); // NEW: reset faculty
       setError("");
 
       // Notify parent component of success
@@ -161,6 +242,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         cwl: cwl,
         vpp: vpp,
         role: role,
+        department: department,
+        faculty: faculty, // NEW: add faculty to onSuccess
       });
     } catch (error) {
       console.error("Error creating user:", error);
@@ -176,7 +259,11 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     setVpp("");
     setRole("Faculty");
     setIsDepartmentAdmin(false);
+    setIsFacultyAdmin(false);
     setSelectedDepartment("");
+    setSelectedFaculty("");
+    setDepartment("");
+    setFaculty(""); // NEW: reset faculty
     setError("");
     setExistingUser(null);
     setShowUpdateRole(false);
@@ -222,7 +309,10 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   <strong>Email:</strong> {createdUser.username}
                 </p>
                 <p>
-                  <strong>Department:</strong> {createdUser.username}
+                  <strong>Department:</strong> {createdUser.department}
+                </p>
+                <p>
+                  <strong>Faculty:</strong> {createdUser.faculty}
                 </p>
                 {createdUser.cwl && (
                   <p>
@@ -286,21 +376,55 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
               {/* TODO: Ask about primary and joint*/}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                <input
-                  className="input input-bordered w-full text-sm"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Department"
-                  type="department"
+                <select
+                  className="input input-sm input-bordered w-full text-sm "
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
                   required
-                />
+                >
+                  <option value="">Select a department...</option>
+                  {departments.map((dept, index) => (
+                    <option key={index} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* NEW: Faculty dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Faculty</label>
+                <select
+                  className="input input-sm input-bordered w-full text-sm"
+                  value={faculty}
+                  onChange={handleFacultyChange}
+                  required
+                >
+                  <option value="">Select a faculty...</option>
+                  {faculties.map((fac, index) => (
+                    <option key={index} value={fac}>
+                      {fac}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Institution</label>
+                  <input
+                    className="input input-sm input-bordered w-full text-sm"
+                    value={institution || ""}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    placeholder="Institution"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">CWL</label>
                   <input
-                    className="input input-bordered w-full text-sm"
+                    className="input input-sm input-bordered w-full text-sm"
                     value={cwl || ""}
                     onChange={(e) => setCwl(e.target.value)}
                     placeholder="CWL (optional)"
@@ -310,7 +434,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">VPP</label>
                   <input
-                    className="input input-bordered w-full text-sm"
+                    className="input input-sm input-bordered w-full text-sm"
                     value={vpp || ""}
                     onChange={(e) => setVpp(e.target.value)}
                     placeholder="VPP (optional)"
@@ -363,6 +487,19 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   <div className="flex items-center">
                     <input
                       type="radio"
+                      id="faculty-admin"
+                      name="role"
+                      value="Faculty Admin"
+                      checked={isFacultyAdmin}
+                      onChange={handleRoleChange}
+                    />
+                    <label htmlFor="faculty-admin" className="ml-2 text-sm">
+                      Faculty Admin
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
                       id="admin"
                       name="role"
                       value="Admin"
@@ -393,6 +530,26 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                     ))}
                   </select>
                   <p className="text-xs text-gray-500 mt-1">Select the department for this admin role</p>
+                </div>
+              )}
+
+              {isFacultyAdmin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Faculty</label>
+                  <select
+                    className="input input-bordered w-full text-sm"
+                    value={selectedFaculty}
+                    onChange={handleFacultyInputChange}
+                    required
+                  >
+                    <option value="">Select a faculty...</option>
+                    {faculties.map((faculty, index) => (
+                      <option key={index} value={faculty}>
+                        {faculty}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Select the faculty for this admin role</p>
                 </div>
               )}
 

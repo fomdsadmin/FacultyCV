@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import AnalyticsCard from "../Components/AnalyticsCard.jsx";
+import GraphCarousel from "../Components/GraphCarousel.jsx";
 import {
   getAllUsers,
   getUserCVData,
@@ -10,7 +11,6 @@ import {
   getAllSections,
   getNumberOfGeneratedCVs,
 } from "../graphql/graphqlHelpers.js";
-import { formatDateToLongString } from "../utils/time.js";
 import { LineGraph } from "../Components/LineGraph.jsx";
 import BarChartComponent from "../Components/BarChart.jsx";
 import ChartJS from "chart.js/auto";
@@ -39,202 +39,260 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
   const TIME_RANGE = 50;
 
+  // Consolidated data loading
   useEffect(() => {
-    fetchUsers();
-    fetchGeneratedCVs();
-  }, []);
+    loadAllData();
+  }, [department]);
 
-  async function fetchUsers() {
+  const loadAllData = useCallback(async () => {
     setLoading(true);
     try {
-      const users = await getAllUsers();
-      let filteredFacultyUsers = [];
-      if (department === "All") {
-        filteredFacultyUsers = users.filter(
-          (user) =>
-            (user.role === "Faculty" || user.role.startsWith("Admin-")) 
-        );
-      } else {
-        filteredFacultyUsers = users.filter(
-          (user) =>
-            (user.role === "Faculty" || user.role.startsWith("Admin-")) &&
-            (user.primary_department === department || user.secondary_department === department)
-        );
-      }
+      // Fetch all basic data in parallel
+      const [users, dataSections, generatedCVs] = await Promise.all([
+        getAllUsers(),
+        getAllSections(),
+        department === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
+      ]);
 
-      let filteredAssistantUsers = [];
-      if (department === "All") {
-        filteredAssistantUsers = users.filter(
-          (user) =>
-            user.role === "Assistant" 
-        );
-      } else {
-        filteredAssistantUsers = users.filter(
-          (user) =>
-            user.role === "Assistant" &&
-            (user.primary_department === department || user.secondary_department === department)
-        );
-      }
-      const facultyTimestamps = filteredFacultyUsers
-        .map((user) => new Date(user.joined_timestamp))
-        .sort((a, b) => a - b)
-        .map((timestamp) => {
-          timestamp.setHours(0, 0, 0, 0);
-          return timestamp;
-        });
-      const allTimestamps = users
-        .map((user) => new Date(user.joined_timestamp))
-        .sort((a, b) => a - b)
-        .map((timestamp) => {
-          timestamp.setHours(0, 0, 0, 0);
-          return timestamp;
-        });
+      setTotalCVsGenerated(generatedCVs);
+
+      // Filter users based on department
+      const { filteredFacultyUsers, filteredAssistantUsers } = filterUsersByDepartment(users, department);
+      
       setFacultyUsers(filteredFacultyUsers);
       setAssistantUsers(filteredAssistantUsers);
-      setFacultyUserTimestamps(facultyTimestamps);
-      setAllUserTimestamps(allTimestamps);
+      setFacultyUserTimestamps(processUserTimestamps(filteredFacultyUsers));
+      setAllUserTimestamps(processUserTimestamps(users));
 
-      fetchAllUserCVData(filteredFacultyUsers);
-      fetchFacultyConnections(filteredAssistantUsers);
+      // Fetch CV data and connections in parallel
+      await Promise.all([
+        fetchAllUserCVData(filteredFacultyUsers, dataSections),
+        fetchFacultyConnections(filteredAssistantUsers)
+      ]);
+
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error loading data:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }
+  }, [department]);
 
-  async function fetchGeneratedCVs() {
-    setLoading(true);
+  // Helper function to filter users by department
+  const filterUsersByDepartment = useCallback((users, dept) => {
+    if (dept === "All") {
+      return {
+        filteredFacultyUsers: users.filter((user) => user.role === "Faculty" || user.role.startsWith("Admin-")),
+        filteredAssistantUsers: users.filter((user) => user.role === "Assistant")
+      };
+    } else {
+      return {
+        filteredFacultyUsers: users.filter(
+          (user) =>
+            (user.role === "Faculty" || user.role.startsWith("Admin-")) &&
+            (user.primary_department === dept || user.secondary_department === dept)
+        ),
+        filteredAssistantUsers: users.filter(
+          (user) =>
+            user.role === "Assistant" &&
+            (user.primary_department === dept || user.secondary_department === dept)
+        )
+      };
+    }
+  }, []);
+
+  // Helper function to process user timestamps
+  const processUserTimestamps = useCallback((users) => {
+    return users
+      .map((user) => new Date(user.joined_timestamp))
+      .sort((a, b) => a - b)
+      .map((timestamp) => {
+        timestamp.setHours(0, 0, 0, 0);
+        return timestamp;
+      });
+  }, []);
+
+  const fetchAllUserCVData = useCallback(async (users, dataSections) => {
+    if (users.length === 0) return;
+
     try {
-      if (department === "All") {
-        const generatedCVs = await getNumberOfGeneratedCVs();
-        setTotalCVsGenerated(generatedCVs);
-      } else {
-        const generatedCVs = await getNumberOfGeneratedCVs(department);
-        setTotalCVsGenerated(generatedCVs);
-      }
+      // Find section IDs
+      const publicationSectionId = dataSections.find(
+        (section) => section.title.includes("Publication") && !section.title.includes("Other")
+      )?.data_section_id;
+      const otherPublicationSectionId = dataSections.find(
+        (section) => section.title.includes("Publication") && section.title.includes("Other")
+      )?.data_section_id;
+      const secureFundingSectionId = dataSections.find((section) =>
+        section.title.includes("Research or Equivalent Grants and Contracts")
+      )?.data_section_id;
+      const patentSectionId = dataSections.find((section) => section.title.includes("Patent"))?.data_section_id;
+
+      // Create all promises for parallel execution
+      const allPromises = [];
+      
+      users.forEach((user) => {
+        if (publicationSectionId) {
+          allPromises.push(
+            getUserCVData(user.user_id, publicationSectionId)
+              .then(data => ({ type: 'publication', data, userId: user.user_id }))
+              .catch(() => ({ type: 'publication', data: [], userId: user.user_id }))
+          );
+        }
+        if (otherPublicationSectionId) {
+          allPromises.push(
+            getUserCVData(user.user_id, otherPublicationSectionId)
+              .then(data => ({ type: 'otherPublication', data, userId: user.user_id }))
+              .catch(() => ({ type: 'otherPublication', data: [], userId: user.user_id }))
+          );
+        }
+        if (secureFundingSectionId) {
+          allPromises.push(
+            getUserCVData(user.user_id, secureFundingSectionId)
+              .then(data => ({ type: 'grant', data, userId: user.user_id }))
+              .catch(() => ({ type: 'grant', data: [], userId: user.user_id }))
+          );
+        }
+        if (patentSectionId) {
+          allPromises.push(
+            getUserCVData(user.user_id, patentSectionId)
+              .then(data => ({ type: 'patent', data, userId: user.user_id }))
+              .catch(() => ({ type: 'patent', data: [], userId: user.user_id }))
+          );
+        }
+      });
+
+      // Execute all promises in parallel
+      const results = await Promise.all(allPromises);
+
+      // Process results
+      const publicationsData = [];
+      const otherPublicationsData = [];
+      const grantsData = [];
+      const patentsData = [];
+
+      results.forEach(result => {
+        switch (result.type) {
+          case 'publication':
+            publicationsData.push(...result.data);
+            break;
+          case 'otherPublication':
+            otherPublicationsData.push(...result.data);
+            break;
+          case 'grant':
+            grantsData.push(...result.data);
+            break;
+          case 'patent':
+            patentsData.push(...result.data);
+            break;
+        }
+      });
+      console.log(patentsData);
+      // Combine publications and process grant money
+      const allPublicationsData = [...publicationsData, ...otherPublicationsData];
+      const processedGrantMoney = processGrantMoney(grantsData);
+
+      // Update state in batch
+      setPublications(allPublicationsData);
+      setGrants(grantsData);
+      setPatents(patentsData);
+      setGrantMoneyRaised(processedGrantMoney);
+
     } catch (error) {
-      console.error("Error fetching generated CVs:", error);
+      console.error("Error fetching CV data:", error);
     }
-    setLoading(false);
-  }
+  }, []);
 
-  async function fetchAllUserCVData(users) {
-    setLoading(true);
-    let dataSections = [];
-    try {
-      dataSections = await getAllSections();
-    } catch (error) {
-      console.error("Error fetching data sections:", error);
-    }
-
-    const publicationSectionId = dataSections.find((section) => section.title.includes("Publications"))?.data_section_id;
-    const secureFundingSectionId = dataSections.find(
-      (section) => section.title.includes("Research or Equivalent Grants and Contracts")
-    )?.data_section_id;
-    const patentSectionId = dataSections.find((section) => section.title === "Patents")?.data_section_id;
-
-    // Fetch all publications, grants, and patents in parallel for all users
-    const publicationPromises = users.map((user) =>
-      getUserCVData(user.user_id, publicationSectionId).catch((e) => {
-        console.error("Error fetching publications:", e);
-        return [];
-      })
-    );
-    const grantPromises = users.map((user) =>
-      getUserCVData(user.user_id, secureFundingSectionId).catch((e) => {
-        console.error("Error fetching grants:", e);
-        return [];
-      })
-    );
-    const patentPromises = users.map((user) =>
-      getUserCVData(user.user_id, patentSectionId).catch((e) => {
-        console.error("Error fetching patents:", e);
-        return [];
-      })
-    );
-
-    // Await all in parallel
-    const [publicationsResults, grantsResults, patentsResults] = await Promise.all([
-      Promise.all(publicationPromises),
-      Promise.all(grantPromises),
-      Promise.all(patentPromises),
-    ]);
-
-    // Flatten results
-    const publicationsData = publicationsResults.flat();
-    const grantsData = grantsResults.flat();
-    const patentsData = patentsResults.flat();
-
-    // Grant money
-    let totalGrantMoneyRaised = [];
+  const processGrantMoney = useCallback((grantsData) => {
+    const totalGrantMoneyRaised = [];
     for (const data of grantsData) {
       try {
         const dataDetails = JSON.parse(data.data_details);
-        if (dataDetails.year) {
-          totalGrantMoneyRaised.push({
-            amount: parseInt(dataDetails.amount),
-            user_id: data.user_id,
-            years: parseInt(dataDetails.year),
-          });
+        if (dataDetails.year && dataDetails.amount) {
+          const amount = parseInt(dataDetails.amount);
+          const year = parseInt(dataDetails.year);
+          
+          // Only add if both amount and year are valid numbers and amount is greater than 0
+          if (!isNaN(amount) && !isNaN(year) && amount > 0 && year > 1900 && year <= new Date().getFullYear() + 10) {
+            totalGrantMoneyRaised.push({
+              amount: amount,
+              user_id: data.user_id,
+              years: year,
+            });
+          }
         }
       } catch (error) {
         console.error("Error parsing grant data:", error);
       }
     }
+    return totalGrantMoneyRaised;
+  }, []);
 
-    setPublications(publicationsData);
-    setGrants(grantsData);
-    setPatents(patentsData);
-    setGrantMoneyRaised(totalGrantMoneyRaised);
-
-    setLoading(false);
-  }
-
-  async function fetchFacultyConnections(users) {
-    setLoading(true);
-    let connections = [];
-    for (const user of users) {
-      try {
-        const newConnections = await getUserConnections(user.user_id, false);
-        connections = [...connections, ...newConnections];
-      } catch (error) {
-        console.error("Error fetching connections:", error);
-      }
+  const fetchFacultyConnections = useCallback(async (users) => {
+    if (users.length === 0) {
+      setFacultyConnections([]);
+      return;
     }
-    setFacultyConnections(connections);
-    setLoading(false);
-  }
 
-  const filteredPublications = publications.filter((publication) =>
-    facultyUsers.some((user) => user.user_id === publication.user_id)
+    try {
+      const connectionPromises = users.map((user) =>
+        getUserConnections(user.user_id, false).catch((error) => {
+          console.error("Error fetching connections:", error);
+          return [];
+        })
+      );
+      
+      const connectionsResults = await Promise.all(connectionPromises);
+      const allConnections = connectionsResults.flat();
+      setFacultyConnections(allConnections);
+    } catch (error) {
+      console.error("Error fetching faculty connections:", error);
+    }
+  }, []);
+
+  // Memoized filtered data to avoid recalculations on every render
+  const filteredPublications = useMemo(() =>
+    department === "All"
+      ? publications
+      : publications.filter((publication) =>
+          facultyUsers.some((user) => user.user_id === publication.user_id)
+        ), [publications, facultyUsers, department]
   );
 
-  const filteredGrants =
+  const filteredGrants = useMemo(() =>
     department === "All"
       ? grants
-      : grants.filter((grant) =>
-          facultyUsers.some((user) => user.user_id === grant.user_id)
-        );
+      : grants.filter((grant) => facultyUsers.some((user) => user.user_id === grant.user_id)),
+    [grants, facultyUsers, department]
+  );
 
-  const filteredPatents = patents.filter((patent) => facultyUsers.some((user) => user.user_id === patent.user_id));
+  const filteredPatents = useMemo(() =>
+    department === "All"
+      ? patents
+      : patents.filter((patent) => facultyUsers.some((user) => user.user_id === patent.user_id)),
+    [patents, facultyUsers, department]
+  );
 
-  // Filter the grantMoneyRaised array similar to how you filter grants
-  const filteredGrantMoney = department === "All" 
-    ? grantMoneyRaised
-    : grantMoneyRaised.filter((grant) => 
-        facultyUsers.some((user) => user.user_id === grant.user_id)
-      );
+  // Memoized grant money filtering and calculation
+  const filteredGrantMoney = useMemo(() =>
+    department === "All"
+      ? grantMoneyRaised
+      : grantMoneyRaised.filter((grant) => facultyUsers.some((user) => user.user_id === grant.user_id)),
+    [grantMoneyRaised, facultyUsers, department]
+  );
 
-  // Add safeguards to handle NaN values when calculating the total
-  const totalGrantMoneyRaised = filteredGrantMoney
-    .reduce((total, grant) => {
-      // Make sure amount is a valid number
-      const amount = Number(grant.amount);
-      return total + (isNaN(amount) ? 0 : amount);
-    }, 0)
-    .toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const totalGrantMoneyRaised = useMemo(() =>
+    filteredGrantMoney
+      .reduce((total, grant) => {
+        // Make sure amount is a valid number and greater than 0
+        const amount = Number(grant.amount);
+        return total + (isNaN(amount) || amount <= 0 ? 0 : amount);
+      }, 0)
+      .toLocaleString("en-US", { style: "currency", currency: "USD" }),
+    [filteredGrantMoney]
+  );
 
-  const getGraphData = () => {
+  // Memoized graph data functions to avoid expensive recalculations
+  const graphData = useMemo(() => {
     const data = [];
     const endDate = new Date();
     endDate.setHours(0, 0, 0, 0);
@@ -242,20 +300,43 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     startDate.setHours(0, 0, 0, 0);
     startDate.setDate(startDate.getDate() - TIME_RANGE);
 
-    // Create a map to aggregate user counts by month
+    // Create a map to aggregate user counts by month and role
     const monthlyDataMap = new Map();
 
-    facultyUserTimestamps.forEach((timestamp) => {
+    // Get all users with their roles and timestamps
+    const allUsersWithRoles = department === "All" 
+      ? [...facultyUsers, ...assistantUsers]
+      : [...facultyUsers, ...assistantUsers]; // Already filtered by department
+
+    allUsersWithRoles.forEach((user) => {
+      const timestamp = new Date(user.joined_timestamp);
+      timestamp.setHours(0, 0, 0, 0);
+      
       if (timestamp >= startDate && timestamp <= endDate) {
         const monthKey = `${timestamp.getFullYear()}-${timestamp.getMonth()}`; // e.g., "2024-9" for Oct 2024
         const formattedDate = timestamp.toLocaleString("default", { month: "short", year: "numeric" });
 
+        // Normalize role names for consistent grouping
+        let roleKey = user.role;
+        if (user.role === "Faculty") {
+          roleKey = "Faculty";
+        } else if (user.role === "Assistant") {
+          roleKey = "Assistant";
+        } else if (user.role.startsWith("Admin-")) {
+          roleKey = "Dept Admin";
+        } else if (user.role === "Admin") {
+          roleKey = "System Admin";
+        } else {
+          roleKey = "Other";
+        }
+
         if (monthlyDataMap.has(monthKey)) {
-          monthlyDataMap.get(monthKey).Users += 1;
+          const monthData = monthlyDataMap.get(monthKey);
+          monthData[roleKey] = (monthData[roleKey] || 0) + 1;
         } else {
           monthlyDataMap.set(monthKey, {
             date: formattedDate,
-            Users: 1,
+            [roleKey]: 1,
           });
         }
       }
@@ -269,8 +350,20 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
       if (!monthlyDataMap.has(monthKey)) {
         monthlyDataMap.set(monthKey, {
           date: formattedDate,
-          Users: 0, // No users for this month
+          Faculty: 0,
+          Assistant: 0,
+          "Dept Admin": 0,
+          "System Admin": 0,
+          Other: 0,
         });
+      } else {
+        // Ensure all role keys exist with default value 0
+        const monthData = monthlyDataMap.get(monthKey);
+        monthData.Faculty = monthData.Faculty || 0;
+        monthData.Assistant = monthData.Assistant || 0;
+        monthData["Dept Admin"] = monthData["Dept Admin"] || 0;
+        monthData["System Admin"] = monthData["System Admin"] || 0;
+        monthData.Other = monthData.Other || 0;
       }
     }
 
@@ -283,16 +376,18 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     return data;
-  };
+  }, [facultyUsers, assistantUsers, department, TIME_RANGE]);
 
-  const getGrantMoneyGraphData = () => {
+  const grantMoneyGraphData = useMemo(() => {
     const data = [];
-
-    // Create a map to aggregate grant money by year
     const yearlyDataMap = new Map();
 
-    grantMoneyRaised.forEach((grant) => {
-      if (grant.amount && grant.years) {
+    // Use filtered grant money data based on department
+    filteredGrantMoney.forEach((grant) => {
+      // Add guards to ensure valid data
+      if (grant.amount && grant.years && 
+          !isNaN(grant.amount) && !isNaN(grant.years) && 
+          grant.amount > 0 && grant.years > 1900 && grant.years <= new Date().getFullYear() + 10) {
         const year = grant.years;
         if (yearlyDataMap.has(year)) {
           yearlyDataMap.get(year).GrantFunding += grant.amount;
@@ -302,8 +397,6 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
             GrantFunding: grant.amount,
           });
         }
-      } else {
-        console.warn("Invalid year or amount in grant data:", grant);
       }
     });
 
@@ -313,39 +406,62 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     });
 
     data.sort((a, b) => parseInt(a.date) - parseInt(b.date));
-
-    // console.log("Final data for graph:", data);
     return data;
-  };
+  }, [filteredGrantMoney]);
 
-  const getYearlyPublicationsGraphData = () => {
+  const yearlyPublicationsGraphData = useMemo(() => {
     const data = [];
-
-    // Create a map to aggregate publications by year
     const yearlyDataMap = new Map();
 
-    publications.forEach((publication) => {
+    // Use filtered publications based on department
+    filteredPublications.forEach((publication) => {
       try {
         const dataDetails = JSON.parse(publication.data_details);
         const currentYear = new Date().getFullYear();
-        const fiveYearsago = currentYear - 5; // to get publications only for last 5 years
-        if (
-          dataDetails.year_published &&
-          Number(dataDetails.year_published) > fiveYearsago &&
-          Number(dataDetails.year_published) <= currentYear
-        ) {
-          const year = dataDetails.year_published.toString();
-          if (yearlyDataMap.has(year)) {
-            yearlyDataMap.get(year).Publications += 1;
-          } else {
-            yearlyDataMap.set(year, {
-              year: year,
-              Publications: 1,
-            });
+        
+        // Handle regular publications with year_published
+        if (dataDetails.year_published) {
+          const year = parseInt(dataDetails.year_published);
+          if (!isNaN(year) && year > 1900 && year <= currentYear) {
+            const yearStr = year.toString();
+            if (yearlyDataMap.has(yearStr)) {
+              yearlyDataMap.get(yearStr).Publications += 1;
+            } else {
+              yearlyDataMap.set(yearStr, {
+                year: yearStr,
+                Publications: 1,
+              });
+            }
+          }
+        }
+        
+        // Handle other publications with dates field
+        if (dataDetails.dates && typeof dataDetails.dates === 'string') {
+          const dateParts = dataDetails.dates.split("-");
+          if (dateParts.length > 1) {
+            let yearPart = dateParts[1];
+            // do for all except the ones with 'Current'
+            if (yearPart && yearPart.includes(",")) {
+              const yearCommaparts = yearPart.split(",");
+              if (yearCommaparts.length > 1) {
+                const year = parseInt(yearCommaparts[1].trim());
+                if (!isNaN(year) && year > 1900 && year <= currentYear) {
+                  const yearStr = year.toString();
+                  if (yearlyDataMap.has(yearStr)) {
+                    yearlyDataMap.get(yearStr).Publications += 1;
+                  } else {
+                    yearlyDataMap.set(yearStr, {
+                      year: yearStr,
+                      Publications: 1,
+                    });
+                  }
+                }
+              }
+            }
           }
         }
       } catch (error) {
-        console.error("Error parsing publication data:", error);
+        console.error("Error parsing publication data:", error, publication);
       }
     });
 
@@ -356,10 +472,8 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
     // Sort data by year to ensure chronological order
     data.sort((a, b) => parseInt(a.year) - parseInt(b.year));
-
-    // console.log("Final data for yearly publications graph:", data);
     return data;
-  };
+  }, [filteredPublications]);
 
   const SummaryCards = () => (
     <>
@@ -377,35 +491,102 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     </>
   );
 
-  // Minimal graph container
-  const GraphContainer = ({ title, children }) => (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-8 w-full h-full flex flex-col">
-      <h2 className="text-lg font-semibold text-zinc-700 mb-4">{title}</h2>
-      <div className="w-full flex-1 min-h-[300px]">{children}</div>
-    </div>
-  );
-
-  // Add effect to compute keywords after publications are loaded
-  useEffect(() => {
-    // Compute department-wide keywords from all publications
+  // Memoized keyword computation
+  const computedKeywordData = useMemo(() => {
+    // Compute department-wide keywords from filtered publications (including other publications)
     const keywordCounts = {};
-    publications.forEach((pub) => {
+    filteredPublications.forEach((pub) => {
       try {
         const details = JSON.parse(pub.data_details);
         const keywords = details.keywords || [];
-        keywords.forEach((kw) => {
-          const lower = kw.toLowerCase();
-          keywordCounts[lower] = (keywordCounts[lower] || 0) + 1;
-        });
-      } catch (e) {}
+        // Ensure keywords is an array and contains valid strings
+        if (Array.isArray(keywords) && keywords.length > 0) {
+          keywords.forEach((kw) => {
+            if (kw && typeof kw === 'string' && kw.trim().length > 0) {
+              const lower = kw.toLowerCase().trim();
+              keywordCounts[lower] = (keywordCounts[lower] || 0) + 1;
+            }
+          });
+        }
+      } catch (e) {
+        console.error("Error parsing publication data for keywords:", e, pub);
+      }
     });
     // Only keep top 25 keywords
     const sorted = Object.entries(keywordCounts)
       .map(([text, value]) => ({ text, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 25);
-    setKeywordData(sorted);
-  }, [publications]);
+    return sorted;
+  }, [filteredPublications]);
+
+  // Memoized graphs configuration for the carousel
+  const graphsConfig = useMemo(() => {
+    const graphs = [];
+
+    // Users joined graph with multiple bars for different roles
+    graphs.push({
+      title: department === "All" ? "All Users Joined Over Time" : "Users Joined Over Time",
+      data: graphData,
+      dataKeys: ["Faculty", "Assistant"],
+      barColors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"],
+      xAxisKey: "date",
+      xAxisLabel: "Time Period",
+      yAxisLabel: "Number of Users",
+      showLegend: false,
+      formatTooltip: (value, name) => [`${value} ${value === 1 ? 'User' : 'Users'}`, name],
+      formatYAxis: (value) => value.toString(),
+      formatXAxis: (value) => value
+    });
+
+    // Grant funding graph (only if there's data)
+    if (grantMoneyGraphData.length > 0) {
+      graphs.push({
+        title: "Yearly Grant Funding",
+        data: grantMoneyGraphData,
+        dataKey: "GrantFunding",
+        xAxisKey: "date",
+        xAxisLabel: "Year",
+        yAxisLabel: "Grant Funding ($)",
+        barColor: "#10b981",
+        showLegend: false,
+        formatTooltip: (value, name) => [`$${value.toLocaleString()}`, 'Grant Funding ($)'],
+        formatYAxis: (value) => {
+          if (value >= 1000000) {
+            return `$${(value / 1000000).toFixed(1)}M`;
+          } else if (value >= 1000) {
+            return `$${(value / 1000).toFixed(0)}K`;
+          }
+          return `$${value.toLocaleString()}`;
+        },
+        formatXAxis: (value) => value
+      });
+    }
+
+    // Publications graph (only if there's data)
+    if (yearlyPublicationsGraphData.length > 0) {
+      graphs.push({
+        title: "Yearly Publications",
+        data: yearlyPublicationsGraphData,
+        dataKey: "Publications",
+        xAxisKey: "year",
+        xAxisLabel: "Year",
+        yAxisLabel: "Number of Publications",
+        barColor: "#8b5cf6",
+        showLegend: false,
+        formatTooltip: (value, name) => [`${value} ${value === 1 ? 'Publication' : 'Publications'}`, name],
+        formatYAxis: (value) => value.toString(),
+        formatXAxis: (value) => value
+      });
+    }
+
+    return graphs;
+  }, [graphData, grantMoneyGraphData, yearlyPublicationsGraphData, department]);
+
+  // Set keyword data when it changes
+  useEffect(() => {
+    setKeywordData(computedKeywordData);
+  }, [computedKeywordData]);
 
   // Word cloud rendering effect
   useEffect(() => {
@@ -493,8 +674,8 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   return (
     <PageContainer>
       <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className="px-5 lg:px-8 xl:px-12 py-4 w-full min-h-screen bg-zinc-50 mb-16">
-        <div className="max-w-7xl mx-auto">
+      <main className="px-16 py-4 w-full min-h-screen bg-zinc-50 mb-16">
+        <div className="mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-zinc-700 mb-1 mt-2">Department Analytics</h1>
           <h2 className="text-xl font-semibold text-blue-700 mb-6 mt-2">{department}</h2>
           {loading ? (
@@ -504,35 +685,22 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
           ) : (
             <>
               <SummaryCards />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <GraphContainer title="Users Joined Over Time">
-                  <BarChartComponent 
-                    data={getGraphData()} 
-                    dataKey="Users" 
-                    xAxisKey="date" 
-                    barColor="#ff8042"
-                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                      minHeight={300}
-                      minWidth={500}
-                  />
-                </GraphContainer>
-                <GraphContainer title="Yearly Grant Funding">
-                  <BarChartComponent
-                    data={getGrantMoneyGraphData()}
-                    dataKey="GrantFunding"
-                    xAxisKey="date"
-                    barColor="#82ca9d"
-                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                    minHeight={300}
-                  />
-                </GraphContainer>
+              
+              {/* Graph Carousel Section */}
+              <div className="mb-8">
+                <GraphCarousel 
+                  graphs={graphsConfig} 
+                />
               </div>
+
               {/* Department Keywords Section */}
-              <div className="mt-10">
-                <div className="flex flex-col gap-6 p-2 rounded-lg shadow-md bg-zinc-50">
-                  <h2 className="text-lg font-semibold mb-2 p-4">
-                    Keywords From Publications (Department-wide, Top 25)
-                  </h2>
+              <div className="mt-8">
+                <div className="flex flex-col gap-2 p-2 rounded-lg shadow-md bg-zinc-50">
+                    <h2 className="text-lg font-semibold p-4">
+                      {department === "All" ?
+                        "Top Keywords From Publications (All Departments)"
+                        : "Top Keywords From Publications (Department-wide, Top 25)"}
+                    </h2>
                   {keywordData.length > 0 && (
                     <div className="flex-1 min-w-0 p-4">
                       <div className="flex flex-wrap gap-2">
@@ -585,18 +753,6 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                     )}
                   </div>
                 </div>
-              </div>
-              <div className="mt-6 mb-8">
-                <GraphContainer title="Yearly Publications (Last 5 Years)">
-                  <BarChartComponent
-                    data={getYearlyPublicationsGraphData()}
-                    dataKey="Publications"
-                    xAxisKey="year"
-                    barColor="#8884d8"
-                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                    minHeight={300}
-                  />
-                </GraphContainer>
               </div>
             </>
           )}

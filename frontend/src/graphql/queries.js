@@ -8,9 +8,9 @@ export const GET_BIO_RESPONSE_DATA = `
 `
 
 export const getUserQuery = `
-    query GetUser($email: String!) {
+    query GetUser($username: String!) {
         getUser(
-            email: $email
+            username: $username
         ){
             user_id
             first_name
@@ -32,8 +32,9 @@ export const getUserQuery = `
             scopus_id
             orcid_id
             joined_timestamp   
-            cwl
-            vpp
+            pending
+            approved
+            username
         }
     }
 `;
@@ -185,6 +186,19 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
             data_section_id
             data_details
             editable
+        }
+    }`;
+};
+
+
+export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
+    if (data_section_id) 
+        return `query GetAllSectionCVData {
+        getAllSectionCVData (
+            data_section_id: "${data_section_id}"
+        ) {
+            data_section_id
+            data_details
         }
     }`;
 };
@@ -510,13 +524,12 @@ export const getPatentMatchesQuery = (first_name, last_name) => `
     }
 `;
 
-export const getPresignedUrlQuery = (jwt, fileKey, type, purpose) => `
+export const getPresignedUrlQuery = (jwt, fileKey, type) => `
     query GetPresignedUrl {
         getPresignedUrl (
-            jwt: "${jwt}"
-            key: "${fileKey}"
+            jwt: "${jwt}",
+            key: "${fileKey}",
             type: "${type}"
-            purpose: "${purpose}"
         )
     }
 `;

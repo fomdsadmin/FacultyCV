@@ -19,8 +19,8 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
 
     // Check file type
     const fileName = file.name.toLowerCase();
-    if (!fileName.endsWith(".csv") && !fileName.endsWith(".xlsx")) {
-      setError("Please select a CSV (.csv) or Excel (.xlsx) file");
+    if (!fileName.endsWith(".csv")) {
+      setError("Please select a CSV (.csv) file");
       return;
     }
 
@@ -89,13 +89,12 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const jwt = await getJWT();
       // Generate a unique file key with timestamp to avoid conflicts
-      // Use import/ prefix to match S3 trigger configuration
       const timestamp = Date.now();
       const fileName = selectedFile.name.split(".")[0];
       const fileExtension = selectedFile.name.split(".")[1];
-      const fileKey = `${fileName}_${fileExtension}`;
+      const fileKey = selectedFile.name;
 
-      console.log("File Key:", fileKey);
+      console.log("File Key:", selectedFile.name);
 
       // Get presigned URL for S3 upload
       const url = await getPresignedUrl(jwt, fileKey, "PUT", "user-import");
@@ -104,18 +103,18 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
       // Update progress to 10% after getting presigned URL
       setUploadProgress(10);
 
-      //   // Upload file to S3 using presigned URL
-      //   const uploadResponse = await fetch(url, {
-      //     method: "PUT",
-      //     body: selectedFile,
-      //     headers: {
-      //       "Content-Type": selectedFile.type || "text/csv",
-      //     },
-      //   });
+      // Upload file to S3 using presigned URL
+      const uploadResponse = await fetch(url, {
+        method: "PUT",
+        body: selectedFile,
+        headers: {
+          "Content-Type": selectedFile.type || "text/csv",
+        },
+      });
 
-      //   if (!uploadResponse.ok) {
-      //     throw new Error(`Upload failed: ${uploadResponse.statusText}`);
-      //   }
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+      }
 
       console.log("File uploaded successfully to S3");
 
@@ -124,10 +123,11 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
 
       // The Lambda function will be triggered automatically by S3
       // Simulate processing time while the Lambda runs
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
       // Complete the progress
       setUploadProgress(100);
+      console.log("File processing complete");
 
       // Show success for a moment then close
       setTimeout(() => {
@@ -174,8 +174,8 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 className="font-semibold text-blue-900 mb-2">File Upload Instructions</h3>
             <p className="text-blue-800 text-sm mb-2">
-              Upload a CSV or Excel file to import multiple users into the application. The file should contain the
-              following columns:
+              Upload a CSV file to import multiple users into the application. The file should contain the following
+              columns:
             </p>
             <ul className="text-blue-800 text-sm space-y-1 ml-4">
               <li>
@@ -194,12 +194,15 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
                 • <strong>role</strong> - User's role ('Faculty', 'Assistant', 'Admin', 'DepartmentAdmin')
               </li>
               <li>
-                • <strong>institution</strong> - Set to 'UBC'
+                • <strong>institution</strong> - Set to 'University of British Columbia'
+              </li>
+              <li>
+                • <strong>faculty</strong> - Users faculty name ('Medicine', 'Obstretrics & Gynecology')
               </li>
             </ul>
             <p className="text-blue-800 text-sm mt-2">
-              <strong>Note:</strong> Please ensure that the column names in the file match the above exactly. Both CSV
-              (.csv) and Excel (.xlsx) files are accepted.
+              <strong>Note:</strong> Please ensure that the column names in the file match the above exactly. Only CSV
+              (.csv) files are accepted.
             </p>
           </div>
 
@@ -234,13 +237,7 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
               >
                 Select File
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv,.xlsx"
-                onChange={handleFileInputChange}
-                className="hidden"
-              />
+              <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileInputChange} className="hidden" />
             </div>
           )}
 

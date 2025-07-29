@@ -1,7 +1,77 @@
+type Affiliations {
+  data_details: AWSJSON!
+}
+
+input AuditViewInput {
+  logged_user_first_name: String!
+  logged_user_last_name: String!
+  ip: String
+  browser_version: String
+  page: String
+  session_id: String
+  assistant: Boolean
+  profile_record: String
+  logged_user_role: String
+  logged_user_email: String
+  logged_user_action: String
+}
+
+type AuditViewRecord {
+  log_view_id: Int!
+  ts: String!
+  logged_user_id: String!
+  logged_user_first_name: String!
+  logged_user_last_name: String!
+  ip: String
+  browser_version: String
+  page: String
+  session_id: String
+  assistant: Boolean
+  profile_record: String
+  logged_user_role: String
+  logged_user_email: String
+  logged_user_action: String
+}
+
 # Get Bio from OpenAI
 type BioResponse {
   answer: String
   error: String
+}
+
+type DataSection {
+  data_section_id: String!
+  title: String!
+  info: String!
+  description: String!
+  data_type: String
+  attributes: AWSJSON!
+  # JSON
+  attributes_type: AWSJSON
+  # JSON
+  archive: Boolean
+}
+
+type Declaration {
+  reporting_year: String!
+  other_data: AWSJSON!
+  created_by: String!
+  created_on: String!
+}
+
+type ElsevierAuthorProfile {
+  last_name: String!
+  first_name: String!
+  name_variants: String
+  subjects: String
+  current_affiliation: String
+  scopus_id: String!
+  orcid: String
+}
+
+type InsertResponse {
+  id: Int!
+  created_on: String!
 }
 
 # This is for OpenAI
@@ -11,9 +81,103 @@ type LambdaAIResponse {
   error: String
 }
 
+type Notification {
+  record_id: ID!
+  title: String
+  description: String
+  date: AWSDate
+  archive: String
+  information_complete: String
+}
+
+type OrcidAuthorProfile {
+  last_name: String!
+  first_name: String!
+  credit_name: String
+  name_variants: String
+  keywords: String
+  researcher_urls: [String]
+  orcid_id: String!
+}
+
+type OrcidSectionOutput {
+  bio: String
+  keywords: String
+  publications: [Publication]
+  other_data: AWSJSON
+}
+
+type Patent {
+  patent_id: String!
+  first_name: String!
+  last_name: String!
+  data_details: AWSJSON!
+}
+
+type Publication {
+  publication_id: String!
+  # type: String!
+  title: String!
+  cited_by: Int
+  keywords: [String]
+  journal: String
+  link: String
+  doi: String
+  year_published: String
+  author_names: [String]!
+  author_ids: [String]!
+}
+
+type PublicationMatches {
+  publications: [Publication]
+  total_results: Int!
+  total_pages: Int!
+  current_page: Int!
+}
+
 type ResearchKeywordCategory {
   category: String
   keywords: [String]
+}
+
+type RiseData {
+  rise_data_id: String!
+  first_name: String!
+  last_name: String!
+  data_details: AWSJSON!
+}
+
+type SecureFunding {
+  secure_funding_id: String!
+  first_name: String!
+  last_name: String!
+  data_details: AWSJSON!
+}
+
+type TeachingData {
+  teaching_data_id: String!
+  data_details: AWSJSON!
+  #JSON
+  institution_user_id: String!
+}
+
+type Template {
+  template_id: String!
+  title: String!
+  template_structure: AWSJSON!
+  start_year: String
+  end_year: String
+}
+
+type TotalOrcidPublications {
+  total_results: Int!
+  put_codes: [Int]!
+}
+
+type UniversityInfo {
+  university_info_id: String!
+  type: String
+  value: String
 }
 
 type User {
@@ -38,67 +202,25 @@ type User {
   scopus_id: String
   orcid_id: String
   joined_timestamp: String
-  cwl: String
-  vpp: String
   pending: Boolean
   approved: Boolean
-}
-
-type DataSection {
-  data_section_id: String!
-  title: String!
-  info: String!
-  description: String!
-  data_type: String
-  attributes: AWSJSON! # JSON
-  attributes_type: AWSJSON # JSON
-  archive: Boolean
-
-}
-
-type Notification {
-  record_id: ID!
-  title: String
-  description: String
-  date: AWSDate
-  archive: String
-  information_complete: String
+  username: String
 }
 
 type UserCVData {
   user_cv_data_id: String!
   user_id: String!
   data_section_id: String!
-  data_details: AWSJSON! #JSON
+  data_details: AWSJSON!
+  #JSON
   archive: Boolean
   archive_timestamp: String
   editable: Boolean
 }
 
-type ElsevierAuthorProfile {
-  last_name: String!
-  first_name: String!
-  name_variants: String
-  subjects: String
-  current_affiliation: String
-  scopus_id: String!
-  orcid: String
-}
-
-type OrcidAuthorProfile {
-  last_name: String!
-  first_name: String!
-  credit_name: String
-  name_variants: String
-  keywords: String
-  researcher_urls: [String]
-  orcid_id: String!
-}
-
-type UniversityInfo {
-  university_info_id: String!
-  type: String
-  value: String
+type CVData {
+  data_section_id: String!
+  data_details: AWSJSON!
 }
 
 type UserConnection {
@@ -114,262 +236,6 @@ type UserConnection {
   status: String!
 }
 
-type Template {
-  template_id: String!
-  title: String!
-  template_structure: AWSJSON!
-  start_year: String
-  end_year: String
-}
-
-type TeachingData {
-  teaching_data_id: String!
-  data_details: AWSJSON! #JSON
-  institution_user_id: String!
-}
-
-type Publication {
-  publication_id: String!
-  # type: String!
-  title: String!
-  cited_by: Int
-  keywords: [String]
-  journal: String
-  link: String
-  doi: String
-  year_published: String
-  author_names: [String]!
-  author_ids: [String]!
-}
-
-type PublicationMatches {
-  publications: [Publication]
-  total_results: Int!
-  total_pages: Int!
-  current_page: Int!
-}
-
-type SecureFunding {
-  secure_funding_id: String!
-  first_name: String!
-  last_name: String!
-  data_details: AWSJSON! #JSON
-}
-
-type RiseData {
-  rise_data_id: String!
-  first_name: String!
-  last_name: String!
-  data_details: AWSJSON! #JSON
-}
-
-type Patent {
-  patent_id: String!
-  first_name: String!
-  last_name: String!
-  data_details: AWSJSON! #JSON
-}
-
-type OrcidSectionOutput {
-  bio: String
-  keywords: String
-  publications: [Publication]
-  other_data: AWSJSON
-}
-
-type TotalOrcidPublications {
-  total_results: Int!
-  put_codes: [Int]!
-}
-
-type Affiliations {
-  data_details: AWSJSON! # JSON
-}
-
-type Declaration {
-  reporting_year: String!
-  other_data: AWSJSON!
-  created_by: String!
-  created_on: String!
-}
-
-type InsertResponse {
-  id: Int!
-  created_on: String!
-}
-
-input AuditViewInput {
-	logged_user_first_name: String!
-	logged_user_last_name: String!
-	ip: String
-	browser_version: String
-	page: String
-	session_id: String
-	assistant: Boolean
-	profile_record: String
-	logged_user_role: String
-	logged_user_email: String
-	logged_user_action: String
-}
-
-type AuditViewRecord {
-	log_view_id: Int!
-	ts: String!
-	logged_user_id: String!
-	logged_user_first_name: String!
-	logged_user_last_name: String!
-	ip: String
-	browser_version: String
-	page: String
-	session_id: String
-	assistant: Boolean
-	profile_record: String
-	logged_user_role: String
-	logged_user_email: String
-	logged_user_action: String
-}
-
-type Query {
-  getBioResponseData(username_input: String!): BioResponse
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-  GetAIResponse(user_input: String!): LambdaAIResponse
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getUser(email: String!): User
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getExistingUser(institution_user_id: String!): User
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getAllSections: [DataSection]
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getArchivedSections: [DataSection]
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-
-  getUserCVData(
-    user_id: String!
-    data_section_id: String
-    data_section_id_list: [String]
-  ): [UserCVData]
-    @aws_auth(
-      cognito_groups: ["Faculty", "Assistant", "Admin", "DepartmentAdmin"]
-    )
-
-  getArchivedUserCVData(user_id: String!): [UserCVData]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getElsevierAuthorMatches(
-    first_name: String!
-    last_name: String!
-    institution_name: String
-  ): [ElsevierAuthorProfile]!
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  GetNotifications: [Notification]
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getUserDeclarations(first_name: String!, last_name: String!): [Declaration!]
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-  
-  getUserAffiliations(user_id: String!, first_name: String!, last_name: String!): [Affiliations!]
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getOrcidSections(orcidId: String!, section: String!): OrcidSectionOutput
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getTotalOrcidPublications(orcid_id: String!): TotalOrcidPublications
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getOrcidPublication(orcid_id: String!, put_codes: [Int]!): OrcidSectionOutput
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getOrcidAuthorMatches(
-    first_name: String!
-    last_name: String!
-    institution_name: String
-  ): [OrcidAuthorProfile]! @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getAllUniversityInfo: [UniversityInfo]
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getUserConnections(
-    faculty_user_id: String
-    assistant_user_id: String
-  ): [UserConnection]
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getAllTemplates: [Template]
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getTeachingDataMatches(institution_user_id: String!): [TeachingData]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getPublicationMatches(
-    scopus_id: String!
-    page_number: Int!
-    results_per_page: Int!
-  ): PublicationMatches @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getSecureFundingMatches(
-    first_name: String!
-    last_name: String!
-  ): [SecureFunding] @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getAllUsers: [User] @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-
-  getPatentMatches(first_name: String!, last_name: String!): [Patent]
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  getPresignedUrl(jwt: String!, key: String!, type: String, purpose: String): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  getNumberOfGeneratedCVs(department: String): Int!
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-
-  cvIsUpToDate(
-    cognito_user_id: String!
-    user_id: String!
-    template_id: String!
-  ): Boolean
-
-  getLatexConfiguration: String!
-    @aws_auth(cognito_groups: ["Faculty", "Assistant", "Admin"])
-
-  getAuditView(logged_user_id: Int): [AuditViewRecord]
-    @aws_auth(cognito_groups: ["Admin"])
-
-}
-
-
-
 type Mutation {
   addUserDeclaration(
     first_name: String!
@@ -377,44 +243,19 @@ type Mutation {
     reporting_year: Int!
     created_by: String!
     other_data: AWSJSON!
-  ): InsertResponse!
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  deleteUserDeclaration(
-    first_name: String!
-    last_name: String!
-    reporting_year: Int!
-  ): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
+  ): InsertResponse! @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  deleteUserDeclaration(first_name: String!, last_name: String!, reporting_year: Int!): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   deleteUserCVSectionData(user_id: String!, data_section_id: String!): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  updateUserDeclaration(
-    first_name: String!
-    last_name: String!
-    reporting_year: Int!
-    other_data: AWSJSON!
-  ): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  deleteSectionCVData(data_section_id: String!): String
+    @aws_auth(cognito_groups: ["Admin"])
+  updateUserDeclaration(first_name: String!, last_name: String!, reporting_year: Int!, other_data: AWSJSON!): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   addToUserGroup(userName: String!, userGroup: String!): String
-
   removeFromUserGroup(userName: String!, userGroup: String!): String
-
   generatePDF(first_name: String!): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   addUser(
     first_name: String!
     last_name: String!
@@ -422,23 +263,10 @@ type Mutation {
     role: String!
     pending: Boolean!
     approved: Boolean!
-    cwl: String
-    vpp: String
-  ): String
-    @aws_auth(
-      cognito_groups: ["Admin"]
-    )
-
-  removeUser(
-    user_id: String!
-    email: String!
-    first_name: String!
-    last_name: String!
-  ): String
-    @aws_auth(
-      cognito_groups: ["Admin"]
-    )
-
+    username: String!
+  ): String @aws_auth(cognito_groups: ["Admin", "NewlyRegistered"])
+  removeUser(user_id: String!, email: String!, first_name: String!, last_name: String!): String
+    @aws_auth(cognito_groups: ["Admin"])
   updateUser(
     first_name: String
     last_name: String
@@ -463,39 +291,20 @@ type Mutation {
     vpp: String
     user_id: String!
     cognito_user_id: String
-  ): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-  
-  updateUserPermissions(
-    user_id: String!
-    pending: Boolean
-    approved: Boolean
-  ): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-  
-  updateUserAffiliations(
-    user_id: String!
-    first_name: String
-    last_name: String
-    affiliations: AWSJSON
   ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
-
-  addSection(
-    title: String!
-    description: String!
-    data_type: String
-    attributes: AWSJSON! # JSON
-  ): String @aws_auth(cognito_groups: ["Admin"])
-
+  updateUserPermissions(user_id: String!, pending: Boolean, approved: Boolean): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+  updateUserAffiliations(user_id: String!, first_name: String, last_name: String, affiliations: AWSJSON): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  addSection(title: String!, description: String!, data_type: String, attributes: AWSJSON!): String
+    @aws_auth(cognito_groups: ["Admin"])
   updateSection(
     data_section_id: String!
     archive: Boolean
-    attributes: AWSJSON # JSON
-    attributes_type: AWSJSON # JSON
+    attributes: AWSJSON
+    # JSON
+    attributes_type: AWSJSON
   ): String @aws_auth(cognito_groups: ["Admin"])
-
   editSectionDetails(
     data_section_id: String!
     title: String!
@@ -503,37 +312,30 @@ type Mutation {
     description: String
     info: String
   ): String @aws_auth(cognito_groups: ["Admin"])
-
   addUserCVData(
     user_id: String!
     data_section_id: String!
-    data_details: AWSJSON! # JSON
+    data_details: AWSJSON!
+    # JSON
     editable: Boolean!
     cognito_user_id: String
   ): String @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
   addBatchedUserCVData(
     user_id: String!
     data_section_id: String!
     data_section_title: String!
     data_details_list: [AWSJSON!]
     editable: Boolean!
-  ): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
+  ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   updateUserCVData(
     user_cv_data_id: String!
-    data_details: AWSJSON # JSON
+    data_details: AWSJSON
+    # JSON
     archive: Boolean
     archive_timestamp: String
     cognito_user_id: String
   ): String @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  addUniversityInfo(type: String!, value: String!): String
-    @aws_auth(cognito_groups: ["Admin"])
-
+  addUniversityInfo(type: String!, value: String!): String @aws_auth(cognito_groups: ["Admin"])
   addUserConnection(
     faculty_user_id: String!
     faculty_first_name: String!
@@ -544,40 +346,18 @@ type Mutation {
     assistant_last_name: String!
     assistant_email: String!
     status: String!
-  ): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
+  ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   updateUserConnection(user_connection_id: String!, status: String!): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
   deleteUserConnection(user_connection_id: String!): String
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
-
-  updateUniversityInfo(
-    university_info_id: String!
-    type: String
-    value: String
-  ): String @aws_auth(cognito_groups: ["Admin"])
-
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  updateUniversityInfo(university_info_id: String!, type: String, value: String): String
+    @aws_auth(cognito_groups: ["Admin"])
   linkScopusId(user_id: String!, scopus_id: String!, orcid_id: String): String
     @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  linkOrcid(user_id: String!, orcid_id: String!): String
-    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
-
-  addTemplate(
-    title: String!
-    template_structure: AWSJSON!
-    start_year: String
-    end_year: String
-  ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-
+  linkOrcid(user_id: String!, orcid_id: String!): String @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  addTemplate(title: String!, template_structure: AWSJSON!, start_year: String, end_year: String): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
   updateTemplate(
     template_id: String!
     title: String
@@ -585,15 +365,63 @@ type Mutation {
     start_year: String
     end_year: String
   ): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-
-  deleteTemplate(template_id: String!): String
-    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
-
-  updateLatexConfiguration(vspace: Float, margin: Float, font: String): String
-    @aws_auth(cognito_groups: ["Admin"])
-
+  deleteTemplate(template_id: String!): String @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+  updateLatexConfiguration(vspace: Float, margin: Float, font: String): String @aws_auth(cognito_groups: ["Admin"])
   addAuditView(input: AuditViewInput!): AuditViewRecord
-    @aws_auth(
-      cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"]
-    )
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+}
+
+type Query {
+  getBioResponseData(username_input: String!): BioResponse
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  GetAIResponse(user_input: String!): LambdaAIResponse
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getUser(username: String!): User @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant", "NewlyRegistered"])
+  getExistingUser(institution_user_id: String!): User
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getAllSections: [DataSection]
+    @aws_auth(cognito_groups: ["Admin", "FacultyAdmin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getArchivedSections: [DataSection] @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+  getUserCVData(user_id: String!, data_section_id: String, data_section_id_list: [String]): [UserCVData]
+    @aws_auth(cognito_groups: ["Faculty", "Assistant", "FacultyAdmin", "Admin", "DepartmentAdmin"])
+  getAllSectionCVData(data_section_id: String, data_section_id_list: [String]): [CVData]
+    @aws_auth(cognito_groups: ["Admin"])
+  getArchivedUserCVData(user_id: String!): [UserCVData] @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ElsevierAuthorProfile]!
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  GetNotifications: [Notification] @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getUserDeclarations(first_name: String!, last_name: String!): [Declaration!]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getUserAffiliations(user_id: String!, first_name: String!, last_name: String!): [Affiliations!]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getOrcidSections(orcidId: String!, section: String!): OrcidSectionOutput
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getTotalOrcidPublications(orcid_id: String!): TotalOrcidPublications
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getOrcidPublication(orcid_id: String!, put_codes: [Int]!): OrcidSectionOutput
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [OrcidAuthorProfile]!
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getAllUniversityInfo: [UniversityInfo] @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getUserConnections(faculty_user_id: String, assistant_user_id: String): [UserConnection]
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getAllTemplates: [Template] @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getTeachingDataMatches(institution_user_id: String!): [TeachingData]
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getPublicationMatches(scopus_id: String!, page_number: Int!, results_per_page: Int!): PublicationMatches
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getSecureFundingMatches(first_name: String!, last_name: String!): [SecureFunding]
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getAllUsers: [User] @aws_auth(cognito_groups: ["Admin", "FacultyAdmin", "DepartmentAdmin"])
+  getPatentMatches(first_name: String!, last_name: String!): [Patent]
+    @aws_auth(cognito_groups: ["Faculty", "Assistant"])
+  getPresignedUrl(jwt: String!, key: String!, type: String, purpose: String): String
+    @aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "Faculty", "Assistant"])
+  getNumberOfGeneratedCVs(department: String): Int!
+    @aws_auth(cognito_groups: ["Admin", "FacultyAdmin", "DepartmentAdmin"])
+  cvIsUpToDate(cognito_user_id: String!, user_id: String!, template_id: String!): Boolean
+  getLatexConfiguration: String! @aws_auth(cognito_groups: ["Faculty", "Assistant", "Admin"])
+  getAuditView(logged_user_id: Int): [AuditViewRecord] @aws_auth(cognito_groups: ["Admin"])
 }

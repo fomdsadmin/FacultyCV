@@ -1,14 +1,9 @@
 import * as appsync from "aws-cdk-lib/aws-appsync";
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import {
-  Architecture,
-  Code,
-  Function,
-  LayerVersion,
-  Runtime,
-} from "aws-cdk-lib/aws-lambda";
+import { Architecture, Code, Function, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
 import { Role } from "aws-cdk-lib/aws-iam";
+import * as iam from "aws-cdk-lib/aws-iam";
 import { DatabaseStack } from "./database-stack";
 import { CVGenStack } from "./cvgen-stack";
 import { ApiStack } from "./api-stack";
@@ -36,6 +31,8 @@ export class Resolver2Stack extends cdk.Stack {
     const requestsLayer = apiStack.getLayers()["requests"];
     const awsJwtVerifyLayer = apiStack.getLayers()["aws-jwt-verify"];
     const resolverRole = apiStack.getResolverRole();
+
+    // Note: S3 permissions for user import bucket will be handled separately
 
     // GraphQL Resolvers
     const assignResolver = (
@@ -83,32 +80,31 @@ export class Resolver2Stack extends cdk.Stack {
         vpc: databaseStack.dbCluster.vpc, // Same VPC as the database
       });
 
-      const lambdaDataSource = new appsync.LambdaDataSource(
-        this,
-        `${directory}-data-source`,
-        {
-          api: api,
-          lambdaFunction: resolver,
-          name: `${directory}-data-source`,
-        }
-      );
+      const lambdaDataSource = new appsync.LambdaDataSource(this, `${directory}-data-source`, {
+        api: api,
+        lambdaFunction: resolver,
+        name: `${directory}-data-source`,
+      });
 
-      fieldNames.forEach((field) =>
-        assignResolver(
-          api,
-          field,
-          lambdaDataSource,
-          typeName,
-          resolverCode,
-          jsRuntime
-        )
-      );
+      fieldNames.forEach((field) => assignResolver(api, field, lambdaDataSource, typeName, resolverCode, jsRuntime));
     };
 
     createResolver(
       apiStack.getApi(),
       "getUserCVData",
       ["getUserCVData"],
+      "Query",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "getAllSectionCVData",
+      ["getAllSectionCVData"],
       "Query",
       {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
@@ -152,15 +148,9 @@ export class Resolver2Stack extends cdk.Stack {
       [requestsLayer]
     );
 
-    createResolver(
-      apiStack.getApi(),
-      "getOrcidSections",
-      ["getOrcidSections"],
-      "Query",
-      {},
-      resolverRole,
-      [requestsLayer]
-    );
+    createResolver(apiStack.getApi(), "getOrcidSections", ["getOrcidSections"], "Query", {}, resolverRole, [
+      requestsLayer,
+    ]);
 
     createResolver(
       apiStack.getApi(),
@@ -172,25 +162,13 @@ export class Resolver2Stack extends cdk.Stack {
       [requestsLayer]
     );
 
-    createResolver(
-      apiStack.getApi(),
-      "getOrcidPublication",
-      ["getOrcidPublication"],
-      "Query",
-      {},
-      resolverRole,
-      [requestsLayer]
-    );
+    createResolver(apiStack.getApi(), "getOrcidPublication", ["getOrcidPublication"], "Query", {}, resolverRole, [
+      requestsLayer,
+    ]);
 
-    createResolver(
-      apiStack.getApi(),
-      "GetNotifications",
-      ["GetNotifications"],
-      "Query",
-      {},
-      resolverRole,
-      [requestsLayer]
-    );
+    createResolver(apiStack.getApi(), "GetNotifications", ["GetNotifications"], "Query", {}, resolverRole, [
+      requestsLayer,
+    ]);
 
     createResolver(
       apiStack.getApi(),
@@ -311,10 +289,8 @@ export class Resolver2Stack extends cdk.Stack {
       "Query",
       {
         BUCKET_NAME: cvGenStack.cvS3Bucket.bucketName,
-        USER_IMPORT_BUCKET_NAME: userImportStack.userImportS3Bucket.bucketName,
-        USER_POOL_ISS: `https://cognito-idp.${
-          this.region
-        }.amazonaws.com/${apiStack.getUserPoolId()}`,
+        USER_IMPORT_BUCKET_NAME: userImportStack.getUserImportBucketName(),
+        USER_POOL_ISS: `https://cognito-idp.${this.region}.amazonaws.com/${apiStack.getUserPoolId()}`,
         CLIENT_ID: apiStack.getUserPoolClientId(),
       },
       resolverRole,
@@ -409,15 +385,9 @@ export class Resolver2Stack extends cdk.Stack {
       [psycopgLayer, databaseConnectLayer]
     );
 
-    createResolver(
-      apiStack.getApi(),
-      "getOrcidAuthorMatches",
-      ["getOrcidAuthorMatches"],
-      "Query",
-      {},
-      resolverRole,
-      [requestsLayer]
-    );
+    createResolver(apiStack.getApi(), "getOrcidAuthorMatches", ["getOrcidAuthorMatches"], "Query", {}, resolverRole, [
+      requestsLayer,
+    ]);
 
     createResolver(
       apiStack.getApi(),

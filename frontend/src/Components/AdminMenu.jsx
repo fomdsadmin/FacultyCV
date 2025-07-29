@@ -96,6 +96,24 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
         </li>
         <li
           className={`mb-2 ${
+            location.pathname === "/admin/generate" ? "bg-gray-200 rounded-lg" : ""
+          }`}
+        >
+          <Link to="/admin/generate">
+            <FaFileAlt className="h-5 w-5" />
+            {showText && !isCollapsed && (
+              <p
+                className={`ml-2 ${
+                  location.pathname === "/admin/generate" ? "font-bold" : ""
+                }`}
+              >
+                Generate CV
+              </p>
+            )}
+          </Link>
+        </li>
+        <li
+          className={`mb-2 ${
             location.pathname === "/templates" ? "bg-gray-200 rounded-lg" : ""
           }`}
         >
