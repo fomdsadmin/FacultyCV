@@ -35,8 +35,6 @@ const EmploymentModal = ({
 
     try {
       const response = await getOrcidSections(user.orcid_id, "employment");
-      console.log(response);
-
       if (response?.other_data) {
         const otherData =
           typeof response.other_data === "string"
@@ -44,7 +42,6 @@ const EmploymentModal = ({
             : response.other_data;
 
         const employmentList = otherData?.employment_list || [];
-        console.log(employmentList);
 
         // Transform fields into the required escaped JSON format
         const transformedData = employmentList.map((employment) => {
@@ -115,7 +112,6 @@ const EmploymentModal = ({
       const existingData = existingEmployment.map((entry) =>
         JSON.stringify(entry.data_details)
       );
-
       for (const employment of employmentData) {
         // Skip if the data already exists
         if (existingData.includes(employment)) {
@@ -197,7 +193,7 @@ const EmploymentModal = ({
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
+            <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
           {employmentData.length > 0 ? (
             <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
               <p className="mb-4">Employment data fetched successfully.</p>
