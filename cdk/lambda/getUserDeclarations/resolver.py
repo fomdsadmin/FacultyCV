@@ -12,8 +12,8 @@ def getUserDeclarations(arguments):
     print("Connected to Database")
     cursor = connection.cursor()
     cursor.execute(
-        'SELECT reporting_year, other_data, created_by, created_on FROM declarations WHERE first_name = %s AND last_name = %s',
-        (arguments['first_name'], arguments['last_name'])
+        'SELECT reporting_year, other_data, created_by, created_on FROM declarations WHERE user_id = %s',
+        (arguments['user_id'])
     )
     results = cursor.fetchall()
     cursor.close()
@@ -26,7 +26,6 @@ def getUserDeclarations(arguments):
         other_data = result[1]  # JSONB field
         created_by = result[2]
         created_on = result[3]
-
         match = {
             'reporting_year': year,
             'other_data': other_data,
