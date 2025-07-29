@@ -37,9 +37,9 @@ export class AmplifyStack extends cdk.Stack {
             paths:
               - 'node_modules/**/*'
           redirects:
-              - source: </^[^.]+$|.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>
-                target: /
-                status: 404
+              - source: </^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>
+                target: /index.html
+                status: 200
     `);
 
     const username = cdk.aws_ssm.StringParameter.valueForStringParameter(this, 'facultycv-owner-name');
