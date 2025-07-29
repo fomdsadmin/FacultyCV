@@ -6,11 +6,15 @@ const Contact = () => {
   const { userInfo } = useApp();
 
   const handleNullValues = (value) => {
-    if (value && (value !== "null" || value !== "undefined")) {
-      return value;
+    if (
+      value === null ||
+      value === undefined ||
+      value === "null" ||
+      value === "undefined"
+    ) {
+      return "";
     }
-
-    return "";
+    return value;
   }
 
   return (
@@ -48,7 +52,7 @@ const Contact = () => {
             name="last_name"
             type="text"
             maxLength={100}
-            value={userInfo.last_name || ""}
+            value={handleNullValues(userInfo.last_name) || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300"
             onChange={handleInputChange}
           />
@@ -59,7 +63,7 @@ const Contact = () => {
             id="email"
             name="email"
             type="text"
-            value={userInfo?.email || ""}
+            value={handleNullValues(userInfo?.email) || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
             readOnly
           />
@@ -70,7 +74,7 @@ const Contact = () => {
             id="username"
             name="username"
             type="text"
-            value={userInfo?.username || ""}
+            value={handleNullValues(userInfo?.username) || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
             readOnly
           />
