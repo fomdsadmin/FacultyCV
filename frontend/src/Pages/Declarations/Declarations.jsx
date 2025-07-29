@@ -64,9 +64,10 @@ export const normalizeDeclarations = (rawDeclarations) => {
   });
 };
 
-const fetchDeclarations = async (first_name, last_name) => {
+const fetchDeclarations = async (user_id) => {
   try {
-    const result = await getUserDeclarations(first_name, last_name);
+    const result = await getUserDeclarations(user_id);
+    console.log(result)
     // Normalize the API response to match the UI's expected format
     return normalizeDeclarations(result);
   } catch (error) {
@@ -104,7 +105,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setLoading(true);
       setFetchError(null);
       try {
-        const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
+        const data = await fetchDeclarations(userInfo.user_id);
         setDeclarations(data);
       } catch (err) {
         setFetchError("Could not load declarations.");
@@ -181,7 +182,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         autoClose: 2000,
         theme: "light",
       }); // <-- Add this line
-      const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
+      const data = await fetchDeclarations(userInfo.user_id);
       setDeclarations(data);
     } catch (error) {
       alert("Failed to delete declaration.");
@@ -341,7 +342,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setSupportAnticipated("");
       setValidationErrors({});
       // Refresh declarations
-      const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
+      const data = await fetchDeclarations(userInfo.user_id);
       setDeclarations(data);
       // Scroll to top of page
       window.scrollTo({ top: 0, behavior: "smooth" });

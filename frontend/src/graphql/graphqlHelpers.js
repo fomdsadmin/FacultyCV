@@ -326,8 +326,8 @@ export const GetNotifications = async () => {
   return results["data"]["GetNotifications"];
 };
 
-export const getUserDeclarations = async (first_name, last_name) => {
-  const results = await runGraphql(getUserDeclarationsQuery(first_name, last_name));
+export const getUserDeclarations = async (user_id) => {
+  const results = await runGraphql(getUserDeclarationsQuery(user_id));
   return results["data"]["getUserDeclarations"];
 };
 

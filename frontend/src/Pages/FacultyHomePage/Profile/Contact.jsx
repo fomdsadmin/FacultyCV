@@ -5,6 +5,18 @@ const Contact = () => {
   const { handleInputChange } = useFaculty();
   const { userInfo } = useApp();
 
+  const handleNullValues = (value) => {
+    if (
+      value === null ||
+      value === undefined ||
+      value === "null" ||
+      value === "undefined"
+    ) {
+      return "";
+    }
+    return value;
+  }
+
   return (
     <div>
       <h2 className="text-lg font-bold mt-2 mb-2 text-zinc-500">Contact</h2>
@@ -16,7 +28,7 @@ const Contact = () => {
             name="first_name"
             type="text"
             maxLength={100}
-            value={userInfo.first_name || ""}
+            value={handleNullValues(userInfo.first_name) || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300"
             onChange={handleInputChange}
           />
@@ -28,7 +40,7 @@ const Contact = () => {
             name="preferred_name"
             type="text"
             maxLength={100}
-            value={userInfo?.preferred_name || ""}
+            value={handleNullValues(userInfo?.preferred_name) || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300"
             onChange={handleInputChange}
           />
@@ -40,7 +52,7 @@ const Contact = () => {
             name="last_name"
             type="text"
             maxLength={100}
-            value={userInfo.last_name || ""}
+            value={handleNullValues(userInfo.last_name) || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300"
             onChange={handleInputChange}
           />
@@ -51,7 +63,7 @@ const Contact = () => {
             id="email"
             name="email"
             type="text"
-            value={userInfo?.email || ""}
+            value={handleNullValues(userInfo?.email) || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
             readOnly
           />
@@ -62,7 +74,7 @@ const Contact = () => {
             id="username"
             name="username"
             type="text"
-            value={userInfo?.username || ""}
+            value={handleNullValues(userInfo?.username) || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
             readOnly
           />

@@ -29,8 +29,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     async function fetchDeclarations() {
       if (userInfo?.first_name && userInfo?.last_name) {
         const data = await getUserDeclarations(
-          userInfo.first_name,
-          userInfo.last_name
+          userInfo.user_id
         );
         setDeclarations(normalizeDeclarations(data));
       }
