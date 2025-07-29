@@ -196,8 +196,6 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
             "", // institution_user_id
             "", // scopus_id
             "", // orcid_id
-            cwlChecked,
-            vppChecked
           );
           console.log("User department/faculty updated successfully");
         }

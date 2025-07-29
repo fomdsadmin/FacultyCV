@@ -23,7 +23,7 @@ def getAllUsers(arguments):
         'user_id', 'first_name', 'last_name', 'preferred_name', 'email',
         'role', 'bio', 'rank', 'institution', 'primary_department', 'secondary_department',
         'primary_faculty', 'secondary_faculty', 'primary_affiliation', 'secondary_affiliation', 'campus', 'keywords',
-        'institution_user_id', 'scopus_id', 'orcid_id', 'joined_timestamp', 'cwl', 'vpp', 'pending', 'approved'
+        'institution_user_id', 'scopus_id', 'orcid_id', 'joined_timestamp','pending', 'approved' , 'username'
     ]
     
     # Convert query results to a list of dictionaries

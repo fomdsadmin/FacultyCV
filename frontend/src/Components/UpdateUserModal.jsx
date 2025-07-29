@@ -62,11 +62,9 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
         existingUser.institution_user_id || "",
         existingUser.scopus_id || "",
         existingUser.orcid_id || "",
-        cwl || "",
-        vpp || ""
       );
 
-      const newResult = await getUser(existingUser.email);
+      const newResult = await getUser(existingUser.username);
       console.log("User updated successfully:", newResult);
       
       // Store the updated user data

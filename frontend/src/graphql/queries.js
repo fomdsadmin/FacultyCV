@@ -90,10 +90,9 @@ export const getAllUsersQuery = () => `
             scopus_id
             orcid_id
             joined_timestamp
-            cwl
-            vpp
             pending
             approved
+            username
         }
     }
 `;
