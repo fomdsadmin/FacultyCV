@@ -182,7 +182,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         autoClose: 2000,
         theme: "light",
       }); // <-- Add this line
-      const data = await fetchDeclarations(userInfo.user_id);
+      const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
       setDeclarations(data);
     } catch (error) {
       alert("Failed to delete declaration.");
@@ -342,7 +342,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       setSupportAnticipated("");
       setValidationErrors({});
       // Refresh declarations
-      const data = await fetchDeclarations(userInfo.user_id);
+      const data = await fetchDeclarations(userInfo.first_name, userInfo.last_name);
       setDeclarations(data);
       // Scroll to top of page
       window.scrollTo({ top: 0, behavior: "smooth" });

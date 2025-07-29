@@ -100,8 +100,6 @@ const EmploymentSection = ({ user, section, onBack }) => {
         user.user_id,
         section.data_section_id
       );
-      console.log(user.user_id, section.data_section_id);
-      console.log("Retrieved data:", retrievedData);
       const parsedData = retrievedData.map((data) => ({
         ...data,
         data_details: JSON.parse(data.data_details),
