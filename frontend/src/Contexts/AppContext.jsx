@@ -35,7 +35,7 @@ export const AppProvider = ({ children }) => {
 
     // Initialize actual role when userInfo changes
     useEffect(() => {
-      console.log('userinfo: ', userInfo)
+      // console.log('userinfo: ', userInfo)
         if (userInfo && userInfo.role) {
             setActualRole(userInfo.role);
             // Only set currentViewRole initially if not already set
@@ -61,9 +61,9 @@ export const AppProvider = ({ children }) => {
     async function getUserInfo(username) {
         try {
             if (username && username !== "") {
-                console.log("Fetching user info for:", username);
+                // ("Fetching user info for:", username);
                 const userInformation = await getUser(username)
-                console.log("User info fetched:", userInformation)
+                // console.log("User info fetched:", userInformation)
                 if (userInformation.role === "Assistant") {
                     setAssistantUserInfo(userInformation)
                 } else {
@@ -99,7 +99,7 @@ export const AppProvider = ({ children }) => {
                     first_name: given_name,
                 });
             }
-            console.log("Get user info ran")
+            // console.log("Get user info ran")
         } catch (error) {
             setLoading(false)
             console.error("Error getting Cognito user:", error)
@@ -113,9 +113,9 @@ export const AppProvider = ({ children }) => {
             try {
                 // Step 1: Check authentication session
                 const session = await fetchAuthSession();
-                console.log("Filter: Authentication session fetrched")
+                // ("Filter: Authentication session fetrched")
                 const token = session.tokens?.idToken?.toString();
-                console.log("Filter: Token: ", token)
+                // console.log("Filter: Token: ", token)
 
                 if (!token) {
                     // User is not logged in
@@ -128,7 +128,7 @@ export const AppProvider = ({ children }) => {
                     return;
                 }
 
-                console.log("Filter: User logged in");
+                // console.log("Filter: User logged in");
 
                 // User has a valid token - set up user
                 setIsUserLoggedIn(true);
@@ -152,7 +152,7 @@ export const AppProvider = ({ children }) => {
                     setIsUserPending(userData.pending);
                     setIsUserApproved(userData.approved);
 
-                    console.log("Filter: User exists in SQL database");
+                    // console.log("Filter: User exists in SQL database");
                     
                     // If user is approved, set up full user context
                     if (userData.approved && !userData.pending) {
@@ -176,14 +176,14 @@ export const AppProvider = ({ children }) => {
                                     first_name: given_name,
                                 });
                             }
-                            console.log("User context setup completed");
+                            // console.log("User context setup completed");
                         } catch (error) {
                             console.error("Error setting up user context:", error);
                         }
                     }
                 } catch (error) {
                     console.error("Error fetching user data:", error);
-                    console.log("Filter: User does not exist in SQL database");
+                    // console.log("Filter: User does not exist in SQL database");
                     // User does not exist in SQL database
                     setUserExistsInSqlDatabase(false);
                     setIsUserPending(false);

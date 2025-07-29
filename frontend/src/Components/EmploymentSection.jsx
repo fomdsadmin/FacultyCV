@@ -7,6 +7,7 @@ import {
   getUserCVData,
   updateUserCVDataArchive,
   deleteUserCVSectionData,
+  getAllSections,
 } from "../graphql/graphqlHelpers";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
@@ -112,7 +113,8 @@ const EmploymentSection = ({ user, section, onBack }) => {
 
   useEffect(() => {
     fetchData();
-  }, [searchTerm, section.data_section_id]);
+    // Only fetch when section changes, not on search term
+  }, [section.data_section_id]);
 
   // Add a function to sort employment entries
   const sortEmploymentEntries = (entries) => {
@@ -216,6 +218,14 @@ const EmploymentSection = ({ user, section, onBack }) => {
     onBack();
   };
 
+  // Filter fieldData by search term (case-insensitive, checks university/organization and dates)
+  const filteredData = fieldData.filter((entry) => {
+    const org = entry.data_details["university/organization"]?.toLowerCase() || "";
+    const dates = entry.data_details["dates"]?.toLowerCase() || "";
+    const search = searchTerm.toLowerCase();
+    return org.includes(search) || dates.includes(search);
+  });
+
   return (
     <div>
       <div>
@@ -285,8 +295,8 @@ const EmploymentSection = ({ user, section, onBack }) => {
       ) : (
         <div>
           <div>
-            {fieldData.length > 0 ? (
-              sortEmploymentEntries(fieldData).map((entry, index) => (
+            {filteredData.length > 0 ? (
+              sortEmploymentEntries(filteredData).map((entry, index) => (
                 <GenericEntry
                   key={index}
                   onEdit={() => handleEdit(entry)}
