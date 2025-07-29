@@ -272,7 +272,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                 </button>
                 <button
                   onClick={() => setIsImportUsersModalOpen(true)}
-                  className="btn btn-primary ml-4"
+                  className="btn btn-primary m-4"
                   title={`Import Users`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

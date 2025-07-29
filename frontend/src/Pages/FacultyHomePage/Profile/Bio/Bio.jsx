@@ -5,19 +5,6 @@ import OrcidBioImportButton from "./OrcidBioImportButton"
 const Bio = () => {
   const { userInfo, setUserInfo } = useApp();
 
-
-  const handleNullValues = (value) => {
-    if (
-      value === null ||
-      value === undefined ||
-      value === "null" ||
-      value === "undefined"
-    ) {
-      return "";
-    }
-    return value;
-  };
-
   const handleBioChange = (e) => {
     setUserInfo((prevUserInfo) => ({ ...prevUserInfo, bio: e.target.value }));
   };
@@ -31,7 +18,7 @@ const Bio = () => {
           name="bio"
           maxLength={3000}
           rows={7}
-          value={handleNullValues(userInfo.bio) || ""}
+          value={userInfo.bio || ""}
           className="w-full rounded text-sm px-3 py-2 border border-gray-300 resize-y"
           onChange={handleBioChange}
         />

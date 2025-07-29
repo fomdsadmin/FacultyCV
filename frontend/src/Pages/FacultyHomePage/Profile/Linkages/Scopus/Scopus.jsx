@@ -10,20 +10,7 @@ const Scopus = () => {
   const [showManualModal, setShowManualModal] = useState(false);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
 
-
-  const handleNullValues = (value) => {
-    if (
-      value === null ||
-      value === undefined ||
-      value === "null" ||
-      value === "undefined"
-    ) {
-      return "";
-    }
-    return value;
-  };
-
-  const scopusId = handleNullValues(userInfo.scopus_id);
+  const scopusId = userInfo.scopus_id;
 
   const handleAddScopusClick = (event) => {
     event?.preventDefault();
@@ -64,9 +51,9 @@ const Scopus = () => {
           Scopus ID(s)
         </h3>
 
-        {scopusId ? (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {scopusId.split(",").map((id, i) => (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {scopusId &&
+            scopusId.split(",").map((id, i) => (
               <button
                 key={i}
                 type="button"
@@ -81,8 +68,7 @@ const Scopus = () => {
                 {id}
               </button>
             ))}
-          </div>
-        ) : null}
+        </div>
 
         <div className="flex flex-wrap gap-3">
           <button
@@ -92,7 +78,7 @@ const Scopus = () => {
             Add Scopus ID
           </button>
 
-          {scopusId && (
+          {userInfo.scopus_id && (
             <button
               onClick={handleClearScopusId}
               className="btn btn-sm btn-warning text-white"

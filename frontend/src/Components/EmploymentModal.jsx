@@ -115,6 +115,7 @@ const EmploymentModal = ({
       const existingData = existingEmployment.map((entry) =>
         JSON.stringify(entry.data_details)
       );
+      console.log("Existing employment data:", existingEmployment);
 
       for (const employment of employmentData) {
         // Skip if the data already exists
@@ -197,7 +198,8 @@ const EmploymentModal = ({
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
+            <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
+              {console.log(section)}
           {employmentData.length > 0 ? (
             <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
               <p className="mb-4">Employment data fetched successfully.</p>

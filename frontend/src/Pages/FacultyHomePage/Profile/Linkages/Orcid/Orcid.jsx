@@ -12,20 +12,7 @@ const Orcid = () => {
   const [showManualModal, setShowManualModal] = useState(false);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
 
-
-  const handleNullValues = (value) => {
-    if (
-      value === null ||
-      value === undefined ||
-      value === "null" ||
-      value === "undefined"
-    ) {
-      return "";
-    }
-    return value;
-  };
-
-  const orcidId = handleNullValues(userInfo.orcid_id);
+  const orcidId = userInfo.orcid_id;
 
   const handleClearOrcidId = () => {
     setUserInfo((prev) => ({
@@ -72,7 +59,6 @@ const Orcid = () => {
     <>
       <div className="p-4 border border-gray-200 rounded-md bg-gray-50 shadow-sm">
         <h3 className="text-md font-semibold text-zinc-700 mb-2">ORCID ID</h3>
-
 
         <div className="flex flex-wrap gap-3 mb-3">
           {orcidId && (
