@@ -241,10 +241,10 @@ export const getAllNotificationsQuery = () => `
     }
 `;
 
-export const getUserDeclarationsQuery = (first_name, last_name) => `
+export const getUserDeclarationsQuery = (user_id) => `
     query getUserDeclarations {
         getUserDeclarations (
-            first_name: "${first_name}", last_name: "${last_name}"
+            user_id: "${user_id}"
         ) {
             reporting_year
             other_data
