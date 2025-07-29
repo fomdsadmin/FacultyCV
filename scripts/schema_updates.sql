@@ -1,5 +1,6 @@
 CREATE TABLE declarations (
     id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     reporting_year INT NOT NULL,
@@ -61,3 +62,6 @@ ADD COLUMN IF NOT EXISTS pending BOOLEAN DEFAULT true;
 
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT false;
+
+ALTER TABLE declarations
+ADD COLUMN IF NOT EXISTS user_id TEXT NOT NULL

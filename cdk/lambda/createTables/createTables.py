@@ -204,8 +204,7 @@ def lambda_handler(event, context):
     # Create Declarations Table
     columns = []
     columns.append(createColumn('id', 'serial', 'PRIMARY KEY', False))
-    columns.append(createColumn('first_name', 'text', 'NOT NULL', False))
-    columns.append(createColumn('last_name', 'text', 'NOT NULL', False))
+    columns.append(createColumn('user_id', 'text', 'NOT NULL', False))
     columns.append(createColumn('reporting_year', 'int', 'NOT NULL', False))
     columns.append(createColumn('created_by', 'text', 'NOT NULL', False))
     columns.append(createColumn('created_on', 'timestamp', 'DEFAULT CURRENT_TIMESTAMP', False))

@@ -1,8 +1,7 @@
 export const ADD_USER_DECLARATION = `
-  mutation AddUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!, $created_by: String!, $other_data: AWSJSON!) {
+  mutation AddUserDeclaration($user_id: String!, $reporting_year: Int!, $created_by: String!, $other_data: AWSJSON!) {
     addUserDeclaration(
-      first_name: $first_name,
-      last_name: $last_name,
+      user_id: $user_id,
       reporting_year: $reporting_year,
       created_by: $created_by,
       other_data: $other_data
@@ -14,20 +13,18 @@ export const ADD_USER_DECLARATION = `
 `;
 
 export const DELETE_USER_DECLARATION = `
-    mutation DeleteUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!) {
+    mutation DeleteUserDeclaration($user_id: String!, $reporting_year: Int!) {
         deleteUserDeclaration(
-            first_name: $first_name,
-            last_name: $last_name,
+            user_id: $user_id,
             reporting_year: $reporting_year
         )
     }
 `;
 
 export const UPDATE_USER_DECLARATION = `
-    mutation UpdateUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!, $other_data: AWSJSON!) {
+    mutation UpdateUserDeclaration($user_id: String!, $reporting_year: Int!, $other_data: AWSJSON!) {
         updateUserDeclaration(
-            first_name: $first_name,
-            last_name: $last_name,
+            user_id: $user_id,
             reporting_year: $reporting_year
             other_data: $other_data
         )
