@@ -11,8 +11,8 @@ def deleteUserDeclaration(arguments):
     connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
     print("Connected to Database")
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM declarations WHERE first_name = %s AND last_name = %s AND reporting_year = %s"
-                   , (arguments['first_name'], arguments['last_name'], arguments['reporting_year']))
+    cursor.execute("DELETE FROM declarations WHERE user_id = %s AND reporting_year = %s"
+                   , (arguments['user_id'], arguments['reporting_year']))
     cursor.close()
     connection.commit()
     connection.close()

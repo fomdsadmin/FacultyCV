@@ -1175,8 +1175,7 @@ export const deleteTemplate = async (template_id) => {
 
 export const addUserDeclaration = async (input) => {
   const results = await executeGraphql(ADD_USER_DECLARATION, {
-    first_name: input.first_name,
-    last_name: input.last_name,
+    user_id: input.user_id,
     reporting_year: input.reporting_year,
     created_by: input.created_by,
     other_data: input.other_data,
@@ -1186,7 +1185,7 @@ export const addUserDeclaration = async (input) => {
 
 export const updateUserDeclaration = async (input) => {
   const results = await executeGraphql(UPDATE_USER_DECLARATION, {
-    first_name: input.first_name,
+    user_id: input.user_id,
     last_name: input.last_name,
     reporting_year: input.reporting_year,
     other_data: input.other_data,
@@ -1194,10 +1193,9 @@ export const updateUserDeclaration = async (input) => {
   return results["data"]["updateUserDeclaration"];
 };
 
-export const deleteUserDeclaration = async (first_name, last_name, reporting_year) => {
+export const deleteUserDeclaration = async (user_id, reporting_year) => {
   const results = await executeGraphql(DELETE_USER_DECLARATION, {
-    first_name: first_name,
-    last_name: last_name,
+    user_id: user_id,
     reporting_year: reporting_year,
   });
   return results["data"]["deleteUserDeclaration"];

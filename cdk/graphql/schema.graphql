@@ -238,22 +238,20 @@ type UserConnection {
 
 type Mutation {
 	addUserDeclaration(
-		first_name: String!,
-		last_name: String!,
+		user_id: String!,
 		reporting_year: Int!,
 		created_by: String!,
 		other_data: AWSJSON!
 	): InsertResponse!
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
-	deleteUserDeclaration(first_name: String!, last_name: String!, reporting_year: Int!): String
+	deleteUserDeclaration(user_id: String!, reporting_year: Int!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	deleteUserCVSectionData(user_id: String!, data_section_id: String!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	deleteSectionCVData(data_section_id: String!): String
 		@aws_auth(cognito_groups: ["Admin"])
 	updateUserDeclaration(
-		first_name: String!,
-		last_name: String!,
+		user_id: String!,
 		reporting_year: Int!,
 		other_data: AWSJSON!
 	): String
