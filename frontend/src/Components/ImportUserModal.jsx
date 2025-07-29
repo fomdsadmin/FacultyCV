@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { addUser, getUser, getAllUniversityInfo, addToUserGroup } from "../graphql/graphqlHelpers.js";
+import { addUser, getUser, getAllUniversityInfo } from "../graphql/graphqlHelpers.js";
 import { getJWT } from "../getAuthToken";
 import { getPresignedUrl } from "../graphql/graphqlHelpers";
 

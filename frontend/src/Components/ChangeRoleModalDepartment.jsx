@@ -18,10 +18,10 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
     //put user in user group
     try {
       if (newRole.startsWith('Admin-')) {
-        const result = await addToUserGroup(userInfo.email, 'DepartmentAdmin');
+        const result = await addToUserGroup(userInfo.username, 'DepartmentAdmin');
         
       } else {
-        const result = await addToUserGroup(userInfo.email, newRole);
+        const result = await addToUserGroup(userInfo.username, newRole);
         
       }
     } catch (error) {

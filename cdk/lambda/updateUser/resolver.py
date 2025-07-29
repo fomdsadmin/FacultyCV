@@ -36,9 +36,7 @@ def updateUser(arguments):
         keywords = %s, 
         institution_user_id = %s, 
         scopus_id = %s, 
-        orcid_id = %s,
-        cwl = %s,
-        vpp = %s
+        orcid_id = %s
     WHERE user_id = %s
     """
 
@@ -63,8 +61,6 @@ def updateUser(arguments):
         arguments['institution_user_id'] if 'institution_user_id' in arguments else '',
         arguments['scopus_id'] if 'scopus_id' in arguments else '',
         arguments['orcid_id'] if 'orcid_id' in arguments else '',
-        arguments['cwl'] if 'cwl' in arguments else '',
-        arguments['vpp'] if 'vpp' in arguments else '',
         arguments['user_id']
     ))
 

@@ -86,7 +86,7 @@ const SaveButton = ({ affiliationsData }) => {
       );
       
       // Get updated user info and update context
-      const updatedUser = await getUser(userInfo.email);
+      const updatedUser = await getUser(userInfo.username);
       if (updatedUser) {
         setUserInfo(updatedUser);
         // Update prevUserInfo with the NEW user data, not the old one

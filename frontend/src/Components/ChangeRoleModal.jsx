@@ -74,10 +74,10 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
       //put user in user group
       try {
         if (updatedRole.startsWith('Admin-')) {
-          const result = await addToUserGroup(userInfo.email, 'DepartmentAdmin');
+          const result = await addToUserGroup(userInfo.username, 'DepartmentAdmin');
           
         } else {
-          const result = await addToUserGroup(userInfo.email, updatedRole);
+          const result = await addToUserGroup(userInfo.username, updatedRole);
           
         }
         
@@ -89,10 +89,10 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
       //remove user from user group
       try {
         if (userInfo.role.startsWith('Admin-')) {
-          const result = await removeFromUserGroup(userInfo.email, 'DepartmentAdmin');
+          const result = await removeFromUserGroup(userInfo.username, 'DepartmentAdmin');
           
         } else {
-          const result = await removeFromUserGroup(userInfo.email, userInfo.role);
+          const result = await removeFromUserGroup(userInfo.username, userInfo.role);
           
         }
       } catch (error) {
@@ -120,8 +120,6 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
         userInfo.institution_user_id,
         userInfo.scopus_id,
         userInfo.orcid_id,
-        userInfo.cwl,
-        userInfo.vpp
       );
       
       fetchAllUsers();
@@ -129,8 +127,8 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
       // Log the role change action
       await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, userInfo.email);
      
-    } catch {
-      console.error('Error changing role');
+    } catch (error) {
+      console.error('Error changing role', error);
     }
     setChangingRole(false);
   }
