@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { updateUserPermissions } from "graphql/graphqlHelpers";
+import { addToUserGroup, updateUserPermissions } from "graphql/graphqlHelpers";
 
 const PendingRequestsModal = ({
   isOpen,
@@ -12,11 +12,15 @@ const PendingRequestsModal = ({
 }) => {
   const [showRejected, setShowRejected] = useState(false);
 
-  const handleAccept = async (userId) => {
+  const handleAccept = async (userId, user) => {
     // TODO: Implement accept logic
-    console.log("Accepting user:", userId);
+    console.log("Accepting user:", userId, user.email);
     // Remove from pending list
     setPendingUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
+    let userName = user.username
+    console.log("Adding user to Faculty group:", userName);
+    const result = await addToUserGroup(userName, "Faculty");
+    console.log("Add to Faculty group result:", result);
     await updateUserPermissions(userId, false, true);
     refreshUsers();
   };
@@ -216,7 +220,7 @@ const PendingRequestsModal = ({
                       ) : (
                         <>
                           <button
-                            onClick={() => handleAccept(user.user_id)}
+                            onClick={() => handleAccept(user.user_id, user)}
                             className="btn btn-success flex items-center gap-2"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

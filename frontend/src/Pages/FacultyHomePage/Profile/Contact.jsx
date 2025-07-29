@@ -57,25 +57,14 @@ const Contact = () => {
           />
         </div>
         <div>
-          <label className="block text-sm mb-1">CWL</label>
+          <label className="block text-sm mb-1">Username</label>
           <input
-            id="cwl"
-            name="cwl"
+            id="username"
+            name="username"
             type="text"
-            value={userInfo?.cwl || ""}
-            className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-            onChange={handleInputChange}
-          />
-        </div>
-        <div>
-          <label className="block text-sm mb-1">VPP Login ID</label>
-          <input
-            id="vpp"
-            name="vpp"
-            type="text"
-            value={userInfo?.vpp || ""}
-            className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-            onChange={handleInputChange}
+            value={userInfo?.username || ""}
+            className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
+            readOnly
           />
         </div>
       </div>

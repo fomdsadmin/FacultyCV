@@ -144,7 +144,7 @@ const Affiliations = () => {
         userInfo.vpp
       );
 
-      const res = await getUser(userInfo.email); // Refresh user info after update
+      const res = await getUser(userInfo.username); // Refresh user info after update
       console.log("Updated user info:", res);
       console.log("Current facultyData before update:", facultyData);
       console.log("Current institutionData before update:", institutionData);
@@ -308,7 +308,7 @@ const Affiliations = () => {
             );
             
             // Update the context with the new user info
-            const refreshedUser = await getUser(userInfo.email);
+            const refreshedUser = await getUser(userInfo.username);
             if (refreshedUser) {
               setUserInfo(refreshedUser);
             }
@@ -391,7 +391,7 @@ const Affiliations = () => {
             );
             
             // Update the context with the new user info
-            const refreshedUser = await getUser(userInfo.email);
+            const refreshedUser = await getUser(userInfo.username);
             if (refreshedUser) {
               setUserInfo(refreshedUser);
             }

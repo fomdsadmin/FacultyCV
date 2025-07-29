@@ -60,17 +60,20 @@ export const AppProvider = ({ children }) => {
     // Get user info from database
     async function getUserInfo(username) {
         try {
-            const userInformation = await getUser(username)
-            if (userInformation.role === "Assistant") {
-                setAssistantUserInfo(userInformation)
-            } else {
-                setUserInfo(userInformation)
+            if (username && username !== "") {
+                console.log("Fetching user info for:", username);
+                const userInformation = await getUser(username)
+                console.log("User info fetched:", userInformation)
+                if (userInformation.role === "Assistant") {
+                    setAssistantUserInfo(userInformation)
+                } else {
+                    setUserInfo(userInformation)
+                }
+                setLoading(false)
             }
-            setLoading(false)
         } catch (error) {
-          console.log("user info failed to set")
+          console.log("user info failed to set", error)
             setLoading(false)
-            console.error("Error fetching user info:", error)
         }
     }
 

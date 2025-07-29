@@ -2,16 +2,34 @@ import os
 import json
 import boto3
 
+def get_sub_by_email(user_pool_id, username):
+    client = boto3.client('cognito-idp')
+    response = client.list_users(
+        UserPoolId=user_pool_id,
+        Filter=f'name = "{username}"'
+    )
+    users = response.get('Users', [])
+    # print(users)
+    if not users:
+        return None
+    for attr in users[0]['Attributes']:
+        if attr['Name'] == 'sub':
+            return attr['Value']
+    return None
+
 def addUserToGroup(arguments):
     user_name = arguments['userName']
     user_pool_id = os.environ['USER_POOL_ID']
     user_group = arguments['userGroup']
 
+    # Usage:
+    sub_id = get_sub_by_email(user_pool_id, user_name)
+
     try:
         client = boto3.client('cognito-idp')
         response = client.admin_add_user_to_group(
             UserPoolId=user_pool_id,
-            Username=user_name,
+            Username=sub_id,
             GroupName=user_group
         )
         return response
