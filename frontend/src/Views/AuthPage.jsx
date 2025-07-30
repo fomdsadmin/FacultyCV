@@ -1,15 +1,13 @@
-import React from 'react';
-import PageContainer from './PageContainer.jsx';
-import '../CustomStyles/scrollbar.css';
-import { fetchUserAttributes, fetchAuthSession } from 'aws-amplify/auth';
-import { signInWithRedirect } from 'aws-amplify/auth';
-import { useApp } from 'Contexts/AppContext.jsx';
-import { addUser } from 'graphql/graphqlHelpers.js';
-import { useState } from 'react';
-import { useEffect } from 'react';
+import React from "react";
+import PageContainer from "./PageContainer.jsx";
+import "../CustomStyles/scrollbar.css";
+import { fetchUserAttributes, fetchAuthSession } from "aws-amplify/auth";
+import { signInWithRedirect } from "aws-amplify/auth";
+import { useApp } from "Contexts/AppContext.jsx";
+import { addUser, getAllUniversityInfo } from "graphql/graphqlHelpers.js";
+import { useState, useEffect } from "react";
 
 const AuthPage = () => {
-
   const {
     setIsUserLoggedIn,
     isUserLoggedIn,
@@ -20,34 +18,65 @@ const AuthPage = () => {
     isUserPending,
     setIsUserPending,
     isUserApproved,
-    setIsUserApproved
+    setIsUserApproved,
   } = useApp();
 
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    role: "Faculty"
+    role: "Faculty",
+    primary_department: "",
+    primary_faculty: "",
   });
+
+  const [departments, setDepartments] = useState([]);
+  const [faculties, setFaculties] = useState([]);
+  const [formError, setFormError] = useState(""); // Add error state
 
   useEffect(() => {
     const helper = async () => {
       if (isUserLoggedIn && !userExistsInSqlDatabase) {
         await setUpForm();
       }
-    }
+    };
     helper();
-  }, [isUserLoggedIn, userExistsInSqlDatabase])
+  }, [isUserLoggedIn, userExistsInSqlDatabase]);
+
+  // Fetch university info when userInfo changes
+  useEffect(() => {
+    sortUniversityInfo();
+  }, []);
+
+  // Sort university info
+  const sortUniversityInfo = () => {
+    getAllUniversityInfo().then((result) => {
+      const depts = [];
+      const facs = [];
+
+      result.forEach((element) => {
+        if (element.type === "Department") {
+          depts.push(element.value);
+        } else if (element.type === "Faculty") {
+          facs.push(element.value);
+        }
+      });
+      setDepartments(depts.sort());
+      setFaculties(facs.sort());
+      setLoading(false);
+    });
+  };
 
   const submitRequest = async () => {
+    // Check for required department and faculty
+    if (!formData.primary_department || !formData.primary_faculty) {
+      setFormError("Please select both a department and a faculty.");
+      return;
+    }
+    setFormError(""); // Clear error if present
     setLoading(true);
+    console.log("Submitting request with formData:", formData);
     try {
-      await addUser(
-        formData.first_name,
-        formData.last_name,
-        formData.email,
-        formData.role,
-        formData.username
-      );
+      await addUser(formData.first_name, formData.last_name, formData.email, formData.role, formData.username);
       setUserExistsInSqlDatabase(true);
       setIsUserPending(true);
       setIsUserApproved(false);
@@ -56,44 +85,45 @@ const AuthPage = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   const setUpForm = async () => {
-    console.log(await fetchUserAttributes());
+    // console.log(await fetchUserAttributes());
     const { given_name, family_name, email, name } = await fetchUserAttributes();
     setFormData({
       username: name,
       email: email,
       first_name: given_name,
       last_name: family_name,
-      role: "Faculty"
-    })
-  }
+      role: "Faculty",
+      primary_department: "",
+      primary_faculty: "",
+    });
+  };
 
   useEffect(() => {
     const helper = async () => {
-
       if (!loading && !isUserLoggedIn) {
         signIn();
       }
-    }
+    };
     helper();
-  }, [loading, isUserLoggedIn])
+  }, [loading, isUserLoggedIn]);
 
   useEffect(() => {
     if (!loading && isUserLoggedIn && isUserApproved && !isUserPending) {
       window.location.href = "/home";
     }
-  }, [isUserApproved, isUserLoggedIn, isUserPending, loading])
+  }, [isUserApproved, isUserLoggedIn, isUserPending, loading]);
 
   const signIn = async () => {
-    console.log("Filter: User redirected to keycloak page")
+    // console.log("Filter: User redirected to keycloak page");
     await signInWithRedirect({
       provider: {
-        custom: process.env.REACT_APP_COGNITO_CLIENT_NAME
-      }
+        custom: process.env.REACT_APP_COGNITO_CLIENT_NAME,
+      },
     });
-    console.log("Filter: User redirected back from keycloak page")
+    // console.log("Filter: User redirected back from keycloak page");
     await setUpForm();
     setIsUserLoggedIn(true);
   };
@@ -102,7 +132,7 @@ const AuthPage = () => {
     <PageContainer>
       <div className="flex w-full rounded-lg mx-auto shadow-lg overflow-hidden bg-gray-100">
         <div className="w-3/5 flex flex-col items-center justify-center overflow-auto custom-scrollbar">
-          <div className="text-2xl text-gray-500 font-bold align-left">Signup Page</div>
+          <div className="text-2xl text-gray-500 font-bold m-4">Signup Page</div>
           {loading && (
             <div className="text-center p-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
@@ -165,26 +195,69 @@ const AuthPage = () => {
                 />
               </div>
               <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primary_department">
+                  Primary Department
+                </label>
+                <select
+                  id="primary_department"
+                  name="primary_department"
+                  value={formData.primary_department}
+                  onChange={(e) => setFormData({ ...formData, primary_department: e.target.value })}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept, idx) => (
+                    <option key={idx} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primary_faculty">
+                  Primary Faculty
+                </label>
+                <select
+                  id="primary_faculty"
+                  name="primary_faculty"
+                  value={formData.primary_faculty}
+                  onChange={(e) => setFormData({ ...formData, primary_faculty: e.target.value })}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                >
+                  <option value="">Select Faculty</option>
+                  {faculties.map((fac, idx) => (
+                    <option key={idx} value={fac}>
+                      {fac}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {formError && (
+                <div className="mb-4 text-red-600 text-sm">{formError}</div>
+              )}
+              <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
                   Role
                 </label>
-                <div className="flex items-center">
-                  <label className="mr-4">
+                <div className="flex items-center gap-4">
+                  <label className="">
                     <input
                       type="radio"
                       name="role"
                       value="Faculty"
                       checked={formData.role === "Faculty"}
+                      className="m-2"
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     />
                     Faculty
                   </label>
-                  <label>
+                  <label className="">
                     <input
                       type="radio"
                       name="role"
                       value="Assistant"
                       checked={formData.role === "Assistant"}
+                      className="m-2"
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     />
                     Delegate
@@ -211,11 +284,16 @@ const AuthPage = () => {
           {!loading && isUserLoggedIn && userExistsInSqlDatabase && !isUserPending && !isUserApproved && (
             <div className="text-center p-4 m-4 bg-red-100 border border-red-400 text-red-700 rounded">
               <h2 className="text-lg font-bold">Account not approved</h2>
-              <p className="mt-2">Your account has not been approved. Please contact the administrator for assistance.</p>
+              <p className="mt-2">
+                Your account has not been approved. Please contact the administrator for assistance.
+              </p>
             </div>
           )}
         </div>
-        <div className="w-2/5" style={{ backgroundImage: "url(/UBC.jpg)", backgroundRepeat: "no-repeat", backgroundSize: "cover" }}></div>
+        <div
+          className="w-2/5"
+          style={{ backgroundImage: "url(/UBC.jpg)", backgroundRepeat: "no-repeat", backgroundSize: "cover" }}
+        ></div>
       </div>
     </PageContainer>
   );

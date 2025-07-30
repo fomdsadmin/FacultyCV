@@ -699,7 +699,7 @@ export const addSection = async (title, description, data_type, attributes) => {
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUser = async (first_name, last_name, email, role, username) => {
+export const addUser = async (first_name, last_name, email, role, username, primary_department, primary_faculty) => {
   const results = await executeGraphql(ADD_USER, {
     first_name,
     last_name,
@@ -707,7 +707,9 @@ export const addUser = async (first_name, last_name, email, role, username) => {
     role,
     pending: true, // Default to pending
     approved: false, // Default to not approved
-    username
+    username,
+    primary_department,
+    primary_faculty
   });
   return results["data"]["addUser"];
 };

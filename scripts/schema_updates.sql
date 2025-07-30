@@ -1,8 +1,6 @@
 CREATE TABLE declarations (
     id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
     reporting_year INT NOT NULL,
     created_by TEXT NOT NULL,
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
