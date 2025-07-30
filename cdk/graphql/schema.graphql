@@ -250,11 +250,7 @@ type Mutation {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	deleteSectionCVData(data_section_id: String!): String
 		@aws_auth(cognito_groups: ["Admin"])
-	updateUserDeclaration(
-		user_id: String!,
-		reporting_year: Int!,
-		other_data: AWSJSON!
-	): String
+	updateUserDeclaration(user_id: String!, reporting_year: Int!, other_data: AWSJSON!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	addToUserGroup(userName: String!, userGroup: String!): String
 	removeFromUserGroup(userName: String!, userGroup: String!): String
@@ -267,7 +263,9 @@ type Mutation {
 		role: String!,
 		pending: Boolean!,
 		approved: Boolean!,
-		username: String!
+		username: String!,
+		primary_department: String!,
+		primary_faculty: String!
 	): String
 		@aws_auth(cognito_groups: ["Admin","NewlyRegistered"])
 	removeUser(
@@ -442,7 +440,7 @@ type Query {
 	getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [OrcidAuthorProfile]!
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getAllUniversityInfo: [UniversityInfo]
-		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+		@aws_auth(cognito_groups: ["Admin","NewlyRegistered"])
 	getUserConnections(faculty_user_id: String, assistant_user_id: String): [UserConnection]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getAllTemplates: [Template]
