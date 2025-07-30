@@ -76,7 +76,8 @@ const AuthPage = () => {
     setLoading(true);
     console.log("Submitting request with formData:", formData);
     try {
-      await addUser(formData.first_name, formData.last_name, formData.email, formData.role, formData.username);
+      await addUser(formData.first_name, formData.last_name, formData.email, formData.role, formData.username,
+        formData.primary_department, formData.primary_faculty);
       setUserExistsInSqlDatabase(true);
       setIsUserPending(true);
       setIsUserApproved(false);
