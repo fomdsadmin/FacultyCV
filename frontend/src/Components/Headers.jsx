@@ -16,7 +16,6 @@ const Header = ({ assistantUserInfo }) => {
 
   const { currentViewRole, setCurrentViewRole, getAvailableRoles, userInfo } = useApp();
 
-  console.log(userInfo)
 
   // Use assistantUserInfo for Assistant role if available, else fallback to userInfo
   const isAssistantView = currentViewRole === "Assistant";
