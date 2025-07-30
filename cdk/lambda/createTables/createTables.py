@@ -47,7 +47,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('role', 'varchar', '', False))
     columns.append(createColumn('bio', 'varchar', '', False))
     columns.append(createColumn('rank', 'varchar', '', False))
-    columns.append(createColumn('institution', 'varchar', '', False))
+    columns.append(createColumn('institution', 'varchar', 'DEFAULT \'University of British Columbia\'', False))
     columns.append(createColumn('primary_department', 'varchar', '', False))
     columns.append(createColumn('secondary_department', 'varchar', '', False))
     columns.append(createColumn('primary_faculty', 'varchar', '', False))
