@@ -18,6 +18,7 @@ export class OidcAuthStack extends cdk.Stack {
   public getUserPoolClient = () => this.userPoolClient;
   public getUserPoolClientId = () => this.userPoolClient.userPoolClientId;
   public getUserPoolDomain = () => this.userPoolDomain;
+  public getUserPoolDomainUrl = () => `${this.userPoolDomain.domainName}.auth.${this.region}.amazoncognito.com`;
 
   // Method to configure AppSync with OIDC authentication
   public getAppSyncAuthConfig(): appsync.AuthorizationConfig {
@@ -311,8 +312,8 @@ def handler(event, context):
     });
 
     new cdk.CfnOutput(this, "OidcCognitoDomain", {
-      value: this.userPoolDomain.domainName,
-      description: "OIDC Cognito Domain",
+      value: `${this.userPoolDomain.domainName}.auth.${this.region}.amazoncognito.com`,
+      description: "OIDC Cognito Domain URL",
     });
 
     new cdk.CfnOutput(this, "TokenSigningKeyUrl", {

@@ -194,7 +194,8 @@ export class ApiStack extends cdk.Stack {
         "cognito-idp:AdminGetUser",
         "cognito-idp:ListUsers",
         "cognito-idp:AdminRemoveUserFromGroup",
-        "cognito-idp:AdminAddUserToGroup"
+        "cognito-idp:AdminAddUserToGroup",
+        "cognito-idp:AdminListGroupsForUser"
       ],
       resources: [
         `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${oidcStack.getUserPoolId()}`,
