@@ -4,11 +4,10 @@ import { BuildSpec } from 'aws-cdk-lib/aws-codebuild';
 import { Construct } from 'constructs';
 import * as yaml from 'yaml';
 import { ApiStack } from './api-stack';
-
-
+import { OidcAuthStack } from './oidc-auth-stack';
 
 export class AmplifyStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, apiStack: ApiStack, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, apiStack: ApiStack, oidcStack: OidcAuthStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
     let resourcePrefix = this.node.tryGetContext('prefix');
@@ -55,9 +54,14 @@ export class AmplifyStack extends cdk.Stack {
       }),
       environmentVariables: {
         'REACT_APP_AWS_REGION': this.region,
-        'REACT_APP_COGNITO_USER_POOL_ID': apiStack.getUserPoolId(),
-        'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': apiStack.getUserPoolClientId(),
-        'REACT_APP_APPSYNC_ENDPOINT': apiStack.getEndpointUrl()
+        'REACT_APP_COGNITO_USER_POOL_ID': oidcStack.getUserPoolId(),
+        'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': oidcStack.getUserPoolClientId(),
+        'REACT_APP_APPSYNC_ENDPOINT': apiStack.getEndpointUrl(),
+        'REACT_APP_AMPLIFY_DOMAIN': 'https://dev.360.med.ubc.ca',
+        'REACT_APP_COGNITO_CLIENT_NAME': oidcStack.getUserPoolClient().userPoolClientName || 'oidc-client',
+        'REACT_APP_COGNITO_DOMAIN': oidcStack.getUserPoolDomain().domainName,
+        'REACT_APP_KEYCLOAK_LOGOUT_URL': 'https://broker.id.ubc.ca/auth/realms/idb2/protocol/openid-connect/logout',
+        'REACT_APP_REDIRECT_URL': 'https://dev.360.med.ubc.ca/auth'
       },
       buildSpec: BuildSpec.fromObjectToYaml(amplifyYaml),
     });
