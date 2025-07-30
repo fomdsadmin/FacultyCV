@@ -440,7 +440,7 @@ type Query {
 	getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [OrcidAuthorProfile]!
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getAllUniversityInfo: [UniversityInfo]
-		@aws_auth(cognito_groups: ["Admin","NewlyRegistered"])
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
 	getUserConnections(faculty_user_id: String, assistant_user_id: String): [UserConnection]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getAllTemplates: [Template]

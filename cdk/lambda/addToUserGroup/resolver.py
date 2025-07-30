@@ -22,11 +22,26 @@ def addUserToGroup(arguments):
     user_pool_id = os.environ['USER_POOL_ID']
     user_group = arguments['userGroup']
 
-    # Usage:
     sub_id = get_sub_by_email(user_pool_id, user_name)
 
     try:
         client = boto3.client('cognito-idp')
+        response = client.admin_list_groups_for_user(
+            UserPoolId=user_pool_id,
+            Username=sub_id
+        )
+        groups = response['Groups']
+        group_names = [g['GroupName'] for g in groups]
+        # Remove from 'NewlyRegistered' if present
+        if 'NewlyRegistered' in group_names:
+            client.admin_remove_user_from_group(
+                UserPoolId=user_pool_id,
+                Username=sub_id,
+                GroupName='NewlyRegistered'
+            )
+        # Check if user is already in the target group
+        if user_group in group_names:
+            return f'User already in group {user_group}'
         response = client.admin_add_user_to_group(
             UserPoolId=user_pool_id,
             Username=sub_id,

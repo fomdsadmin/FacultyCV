@@ -63,3 +63,9 @@ ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT false;
 
 ALTER TABLE declarations
 ADD COLUMN IF NOT EXISTS user_id TEXT NOT NULL
+
+ALTER TABLE users
+ALTER COLUMN institution SET DEFAULT 'University of British Columbia';
+
+UPDATE users
+SET institution = 'University of British Columbia'
