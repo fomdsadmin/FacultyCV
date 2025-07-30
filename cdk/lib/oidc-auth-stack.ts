@@ -43,8 +43,8 @@ export class OidcAuthStack extends cdk.Stack {
       secretName: `${resourcePrefix}-ubc-oidc-client-secret`,
       description: 'UBC OIDC Client Secret for Faculty CV',
       secretStringValue: cdk.SecretValue.unsafePlainText(
-        process.env.UBC_OIDC_CLIENT_SECRET || 
-        this.node.tryGetContext('oidcClientSecret') || 
+        process.env.UBC_OIDC_CLIENT_SECRET ||
+        this.node.tryGetContext('oidcClientSecret') ||
         'placeholder-secret'
       ),
     });
@@ -167,6 +167,11 @@ export class OidcAuthStack extends cdk.Stack {
 
     const newlyRegisteredGroup = new cognito.CfnUserPoolGroup(this, 'NewlyRegisteredGroup', {
       groupName: 'NewlyRegistered',
+      userPoolId: this.userPool.userPoolId,
+    });
+
+    const facultyAdminGroup = new cognito.CfnUserPoolGroup(this, 'FacultyAdminGroup', {
+      groupName: 'FacultyAdmin',
       userPoolId: this.userPool.userPoolId,
     });
 
