@@ -270,6 +270,15 @@ export const UPDATE_SECTION = `
     }
 `;
 
+export const CHANGE_USERNAME = `
+    mutation ChangeUsername($user_id: String!, $username: String!) {
+        changeUsername(
+            user_id: $user_id,
+            username: $username
+        )
+    }
+`;
+
 export const UPDATE_USER_AFFILIATIONS = `
     mutation UpdateUserAffiliations($user_id: String!, $first_name: String, $last_name: String, $affiliations: AWSJSON) {
         updateUserAffiliations(

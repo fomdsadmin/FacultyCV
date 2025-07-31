@@ -20,8 +20,8 @@ const Header = ({ assistantUserInfo }) => {
   // Use assistantUserInfo for Assistant role if available, else fallback to userInfo
   const isAssistantView = currentViewRole === "Assistant";
   const activeUserInfo = isAssistantView && assistantUserInfo && Object.keys(assistantUserInfo).length > 0 ? assistantUserInfo : userInfo;
-  const userEmail = activeUserInfo?.email || "Error";
-  const userRole = activeUserInfo?.role || "Error";
+  const userName = activeUserInfo?.username || "User";
+  const userRole = activeUserInfo?.role || "";
   const firstName = activeUserInfo?.first_name || "User";
 
   // Determine if user has multiple roles and which roles to show
@@ -187,7 +187,7 @@ const Header = ({ assistantUserInfo }) => {
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                 <div className="px-4 py-2 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-900 truncate">{firstName}</p>
-                  <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+                  <p className="text-xs text-gray-500 truncate">{userName}</p>
                 </div>
 
                 {/* Show profile/help only for Faculty, not Assistant */}

@@ -6,6 +6,7 @@ import { signInWithRedirect } from "aws-amplify/auth";
 import { useApp } from "Contexts/AppContext.jsx";
 import { addUser, getAllUniversityInfo } from "graphql/graphqlHelpers.js";
 import { useState, useEffect } from "react";
+import { signOut } from "aws-amplify/auth";
 
 const AuthPage = () => {
   const {
@@ -19,6 +20,7 @@ const AuthPage = () => {
     setIsUserPending,
     isUserApproved,
     setIsUserApproved,
+    doesUserNeedToReLogin, // Use this here
   } = useApp();
 
   const [formData, setFormData] = useState({
@@ -69,15 +71,22 @@ const AuthPage = () => {
   const submitRequest = async () => {
     // Check for required department and faculty
     if (!formData.primary_department || !formData.primary_faculty) {
-      setFormError("Please select both a department and a faculty.");
-      return;
+      formData.primary_department = "";
+      formData.primary_faculty = "";
     }
     setFormError(""); // Clear error if present
     setLoading(true);
     console.log("Submitting request with formData:", formData);
     try {
-      await addUser(formData.first_name, formData.last_name, formData.email, formData.role, formData.username,
-        formData.primary_department, formData.primary_faculty);
+      await addUser(
+        formData.first_name,
+        formData.last_name,
+        formData.email,
+        formData.role,
+        formData.username,
+        formData.primary_department,
+        formData.primary_faculty
+      );
       setUserExistsInSqlDatabase(true);
       setIsUserPending(true);
       setIsUserApproved(false);
@@ -102,6 +111,20 @@ const AuthPage = () => {
     });
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      const clientId = process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID;
+      const logoutUri = `${process.env.REACT_APP_AMPLIFY_DOMAIN}/keycloak-logout`;
+      const cognitoDomain = "https://" + process.env.REACT_APP_COGNITO_DOMAIN;
+      window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
+        logoutUri
+      )}`;
+    } catch (error) {
+      window.location.href = "/auth";
+    }
+  };
+
   useEffect(() => {
     const helper = async () => {
       if (!loading && !isUserLoggedIn) {
@@ -112,10 +135,10 @@ const AuthPage = () => {
   }, [loading, isUserLoggedIn]);
 
   useEffect(() => {
-    if (!loading && isUserLoggedIn && isUserApproved && !isUserPending) {
+    if (!loading && isUserLoggedIn && isUserApproved && !isUserPending && !doesUserNeedToReLogin) {
       window.location.href = "/home";
     }
-  }, [isUserApproved, isUserLoggedIn, isUserPending, loading]);
+  }, [isUserApproved, isUserLoggedIn, isUserPending, loading, doesUserNeedToReLogin]);
 
   const signIn = async () => {
     // console.log("Filter: User redirected to keycloak page");
@@ -133,7 +156,6 @@ const AuthPage = () => {
     <PageContainer>
       <div className="flex w-full rounded-lg mx-auto shadow-lg overflow-hidden bg-gray-100">
         <div className="w-3/5 flex flex-col items-center justify-center overflow-auto custom-scrollbar">
-          <div className="text-2xl text-gray-500 font-bold m-4">Signup Page</div>
           {loading && (
             <div className="text-center p-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
@@ -143,6 +165,7 @@ const AuthPage = () => {
 
           {!loading && isUserLoggedIn && !userExistsInSqlDatabase && (
             <form className="w-full max-w-md">
+              <div className="text-2xl text-gray-500 font-bold m-4">Signup Page</div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
                   Username
@@ -196,25 +219,6 @@ const AuthPage = () => {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primary_department">
-                  Primary Department
-                </label>
-                <select
-                  id="primary_department"
-                  name="primary_department"
-                  value={formData.primary_department}
-                  onChange={(e) => setFormData({ ...formData, primary_department: e.target.value })}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((dept, idx) => (
-                    <option key={idx} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primary_faculty">
                   Primary Faculty
                 </label>
@@ -233,9 +237,26 @@ const AuthPage = () => {
                   ))}
                 </select>
               </div>
-              {formError && (
-                <div className="mb-4 text-red-600 text-sm">{formError}</div>
-              )}
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primary_department">
+                  Primary Department
+                </label>
+                <select
+                  id="primary_department"
+                  name="primary_department"
+                  value={formData.primary_department}
+                  onChange={(e) => setFormData({ ...formData, primary_department: e.target.value })}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept, idx) => (
+                    <option key={idx} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {formError && <div className="mb-4 text-blue-600 text-sm">{formError}</div>}
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
                   Role
@@ -276,20 +297,48 @@ const AuthPage = () => {
             </form>
           )}
 
-          {!loading && isUserLoggedIn && userExistsInSqlDatabase && isUserPending && (
-            <div className="text-center p-4 m-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+          {!loading && isUserLoggedIn && userExistsInSqlDatabase && isUserPending && !doesUserNeedToReLogin && (
+            <div className="flex flex-col justify-center text-center p-4 m-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
               <h2 className="text-lg font-bold">Your request has been received!</h2>
               <p className="mt-2">It will be processed in a few days. Thank you for your patience.</p>
             </div>
           )}
-          {!loading && isUserLoggedIn && userExistsInSqlDatabase && !isUserPending && !isUserApproved && (
-            <div className="text-center p-4 m-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              <h2 className="text-lg font-bold">Account not approved</h2>
-              <p className="mt-2">
-                Your account has not been approved. Please contact the administrator for assistance.
-              </p>
-            </div>
-          )}
+          {!loading &&
+            isUserLoggedIn &&
+            userExistsInSqlDatabase &&
+            !isUserPending &&
+            !isUserApproved &&
+            !doesUserNeedToReLogin && (
+              <div className="text-center p-4 m-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                <h2 className="text-lg font-bold">Account not approved</h2>
+                <p className="mt-2">
+                  Your account has not been approved. Please contact the administrator for assistance.
+                </p>
+              </div>
+            )}
+          {!loading &&
+            isUserLoggedIn &&
+            userExistsInSqlDatabase &&
+            isUserPending &&
+            !isUserApproved &&
+            doesUserNeedToReLogin && (
+              <div className="w-3/5 flex flex-col items-center justify-center overflow-auto custom-scrollbar">
+                <div className="flex flex-col justify-center text-center p-4 m-4 bg-blue-100 border border-blue-400 text-blue-700 rounded">
+                  <h2 className="text-lg font-bold">Account Approved</h2>
+                  <p className="mt-2">
+                    Your account has been approved and your permissions have been updated.
+                    <br />
+                    Please sign out and sign in again to continue.
+                  </p>
+                  {/* <button
+                    onClick={handleSignOut}
+                    className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none transition disabled:opacity-50"
+                  >
+                    Sign Out &amp; Sign In Again
+                  </button> */}
+                </div>
+              </div>
+            )}
         </div>
         <div
           className="w-2/5"

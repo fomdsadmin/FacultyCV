@@ -201,6 +201,19 @@ export class ResolverStack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "changeUsername",
+      ["changeUsername"],
+      "Mutation",
+      {
+        TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "updateUserPermissions",
       ["updateUserPermissions"],
       "Mutation",

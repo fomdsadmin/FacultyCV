@@ -29,6 +29,7 @@ export const AppProvider = ({ children }) => {
   const [userExistsInSqlDatabase, setUserExistsInSqlDatabase] = useState(false);
   const [isUserPending, setIsUserPending] = useState(false);
   const [isUserApproved, setIsUserApproved] = useState(false);
+  const [doesUserNeedToReLogin, setDoesUserNeedToReLogin] = useState(false);
 
   // Role management state
   const [actualRole, setActualRole] = useState(""); // User's actual assigned role (permissions)
@@ -184,9 +185,15 @@ export const AppProvider = ({ children }) => {
           // Add user to Cognito group if they are approved if not already a member
           if (userData.approved && !userData.pending) {
             if (userData.role && userData.role !== "") {
-              console.log(username, userData.role);
+              console.log("Username: ", username, "Role: ", userData.role);
               const result = await addToUserGroup(username, userData.role);
-              console.log("Adding cognito group membership", result);
+              console.log(result)
+              if (result.includes("SUCCESS")) {
+                setDoesUserNeedToReLogin(true)
+                setIsUserApproved(false)
+                setIsUserPending(true)
+                console.log("Added cognito group membership", result);
+              } 
             }
           }
         } catch (error) {
@@ -198,9 +205,12 @@ export const AppProvider = ({ children }) => {
           setIsUserApproved(false);
 
           // Still set up basic user info for header display
-          const { given_name } = await fetchUserAttributes();
+          const { given_name, family_name, email, name } = await fetchUserAttributes();
           setUserInfo({
             first_name: given_name || "",
+            last_name: family_name || "",
+            email: email || "",
+            username: name || "",
           });
         }
       } catch (error) {
@@ -315,6 +325,10 @@ export const AppProvider = ({ children }) => {
     getDepartment,
     toggleViewMode,
     setUser,
+
+    // Re-login state for group memberships
+    doesUserNeedToReLogin,
+    setDoesUserNeedToReLogin,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

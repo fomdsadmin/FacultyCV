@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { getUser, updateUser } from "../graphql/graphqlHelpers.js";
+import { changeUsername, getUser, updateUser } from "../graphql/graphqlHelpers.js";
 import { get } from "aws-amplify/api";
 
 const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSuccess }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
-  const [cwl, setCwl] = useState("");
-  const [vpp, setVpp] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -16,9 +15,8 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
     if (existingUser) {
       setFirstName(existingUser.first_name || "");
       setLastName(existingUser.last_name || "");
-      setUsername(existingUser.username || existingUser.email);
-      setCwl(existingUser.cwl ? existingUser.cwl : "");
-      setVpp(existingUser.vpp ? existingUser.vpp : "");
+      setUsername(existingUser.username);
+      setEmail(existingUser.email || "");
       setError("");
       // Don't clear success message here to allow it to persist after update
     }
@@ -46,7 +44,7 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
         firstName,
         lastName,
         existingUser.preferred_name || "",
-        existingUser.email,
+        email,
         existingUser.role, // Keep existing role
         existingUser.bio || "",
         existingUser.rank || "",
@@ -61,18 +59,18 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
         existingUser.keywords || "",
         existingUser.institution_user_id || "",
         existingUser.scopus_id || "",
-        existingUser.orcid_id || "",
+        existingUser.orcid_id || ""
       );
+
+      await changeUsername(existingUser.user_id, username);
 
       const newResult = await getUser(existingUser.username);
       console.log("User updated successfully:", newResult);
-      
+
       // Store the updated user data
       onUpdateSuccess(newResult);
       // Set success message after updating the user data
       setSuccessMessage("User Successfully Updated");
-      
-      
     } catch (error) {
       console.error("Error updating user:", error);
       setError("An error occurred while updating user. Please try again.");
@@ -137,33 +135,21 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 className="input input-bordered w-full text-sm bg-gray-50"
-                value={username}
-                disabled
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
                 type="email"
               />
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">CWL</label>
-                <input
-                  className="input input-bordered w-full text-sm"
-                  value={cwl ? cwl : ""}
-                  onChange={(e) => setCwl(e.target.value)}
-                  placeholder="CWL (optional)"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">VPP</label>
-                <input
-                  className="input input-bordered w-full text-sm"
-                  value={vpp ? vpp : ""}
-                  onChange={(e) => setVpp(e.target.value)}
-                  placeholder="VPP (optional)"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <input
+                className="input input-bordered w-full text-sm bg-gray-50"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Username"
+                type="username"
+              />
             </div>
 
             {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
