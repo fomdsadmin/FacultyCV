@@ -41,6 +41,7 @@ import { ToastContainer } from "react-toastify";
 import KeycloakLogout from "Components/KeycloakLogout";
 import Html2CanvasTest from "Views/PDFTableGenerator";
 import ReactPDFGenerator from "Views/ReactPDFGenerator";
+import GotenbergPDFConverter from "Components/GotenbergPDFConverter";
 
 const AppContent = () => {
   const {
@@ -93,7 +94,7 @@ const AppContent = () => {
   }
 
   return(
-    <Html2CanvasTest />
+    <GotenbergPDFConverter />
   )
 
   return (

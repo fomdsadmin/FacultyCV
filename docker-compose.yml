@@ -1,0 +1,28 @@
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8.11.1
+    container_name: facultycv-gotenberg
+    ports:
+      - "3000:3000"
+    environment:
+      - GOTENBERG_API_PORT=3000
+      - GOTENBERG_LOG_LEVEL=info
+      - GOTENBERG_CHROMIUM_DISABLE_WEB_SECURITY=true
+      - GOTENBERG_CHROMIUM_ALLOW_LIST=file:///*
+      - GOTENBERG_CHROMIUM_IGNORE_CERTIFICATE_ERRORS=true
+    command:
+      - "gotenberg"
+      - "--chromium-disable-web-security"
+      - "--chromium-allow-list=file:///*"
+      - "--chromium-ignore-certificate-errors"
+      - "--api-port=3000"
+      - "--log-level=info"
+      - "--api-enable-basic-auth=false"
+      - "--api-timeout=300s"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
