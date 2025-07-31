@@ -19,25 +19,25 @@ def addUserToDatabase(row, conn, cursor):
     """
     try:
         # Check if user already exists
-        cursor.execute("SELECT user_id FROM users WHERE email = %s", (row['email'],))
+        cursor.execute("SELECT user_id FROM users WHERE username = %s", (row['username'],))
         existing_user = cursor.fetchone()
         
         if existing_user:
-            print(f"User {row['email']} already exists, skipping")
+            print(f"User {row['username']} already exists, skipping")
             return 0
-            
+
         # Insert new user
         cursor.execute("""
             INSERT INTO users (
-                first_name, last_name, email, primary_department, role, institution, primary_faculty, pending, approved
+                first_name, last_name, email, username, primary_department, role, primary_faculty, pending, approved
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             row['first_name'], 
             row['last_name'], 
             row['email'], 
+            row['username'],
             row['department'], 
             row['role'], 
-            row['institution'], 
             row['faculty'],
             False,  # pending
             True   # approved
@@ -52,40 +52,11 @@ def addUserToDatabase(row, conn, cursor):
         conn.rollback()
         return 0
 
-def addUserToCognitoGroup(row):
-    """
-    Adds a user to Cognito User Pool
-    Returns True if successful, False otherwise
-    """
-    try:
-        # Add user to appropriate group based on role
-        user_group = 'Faculty'  # Default group
-        if row['role'].startswith('Admin'):
-            user_group = 'DepartmentAdmin'
-        elif row['role'] == 'Assistant':
-            user_group = 'Assistant'
-            
-        cognito_client.admin_add_user_to_group(
-            UserPoolId=USER_POOL_ID,
-            Username=row['email'],
-            GroupName=user_group
-        )
-        
-        print(f"Successfully added user to Cognito: {row['email']}")
-        return True
-        
-    except cognito_client.exceptions.UsernameExistsException:
-        print(f"User {row['email']} already exists in Cognito")
-        return True  # User exists, that's okay
-    except Exception as e:
-        print(f"Error adding user to Cognito {row['email']}: {str(e)}")
-        return False
-
 def validate_row(row):
     """
     Validates that a row has all required fields
     """
-    required_fields = ['first_name', 'last_name', 'email', 'department', 'role', 'institution', 'faculty']
+    required_fields = ['first_name', 'last_name', 'email', 'department', 'role', 'faculty']
     for field in required_fields:
         if field not in row or not row[field] or row[field].strip() == '':
             return False, f"Missing or empty field: {field}"
@@ -156,14 +127,8 @@ def lambda_handler(event, context):
             # Add to database
             if addUserToDatabase(row, connection, cursor):
                 rows_added_to_db += 1
-                
-                # Add to Cognito
-                # if addUserToCognitoGroup(row):
-                #     rows_added_to_cognito += 1
-                # else:
-                #     errors.append(f"Row {i+2}: Failed to add {row['email']} to Cognito")
             else:
-                errors.append(f"Row {i+2}: Failed to add {row['email']} to database")
+                errors.append(f"Row {i+2}: Failed to add {row['username']} to database")
         
         cursor.close()
         connection.close()

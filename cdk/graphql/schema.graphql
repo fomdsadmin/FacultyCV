@@ -301,6 +301,8 @@ type Mutation {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	updateUserPermissions(user_id: String!, pending: Boolean, approved: Boolean): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
+	changeUsername(user_id: String!, username: String!): String
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	updateUserAffiliations(
 		user_id: String!,
 		first_name: String,

@@ -188,16 +188,16 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
                 • <strong>email</strong> - User's email address
               </li>
               <li>
-                • <strong>department</strong> - User's primary department
+                • <strong>username</strong> - User's username (for login)
               </li>
               <li>
                 • <strong>role</strong> - User's role ('Faculty', 'Assistant', 'Admin', 'DepartmentAdmin')
               </li>
               <li>
-                • <strong>institution</strong> - Set to 'University of British Columbia'
+                • <strong>faculty</strong> - Users faculty name ('Medicine', 'Obstretrics & Gynecology')
               </li>
               <li>
-                • <strong>faculty</strong> - Users faculty name ('Medicine', 'Obstretrics & Gynecology')
+                • <strong>department</strong> - User's primary department
               </li>
             </ul>
             <p className="text-blue-800 text-sm mt-2">

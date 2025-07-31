@@ -5,8 +5,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
-  const [cwl, setCwl] = useState("");
-  const [vpp, setVpp] = useState("");
+  const [email, setEmail] = useState("");
   const [role, setRole] = useState("Faculty");
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
   const [isFacultyAdmin, setIsFacultyAdmin] = useState(false);
@@ -89,13 +88,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     const usernameRegex = /@[\w-]+\.ubc\.ca$/;
     const username2Regex = /@ubc\.ca$/;
 
-    if (!usernameRegex.test(username) && !username2Regex.test(username)) {
+    if (!usernameRegex.test(email) && !username2Regex.test(email)) {
       setError("Email must end with @ubc.ca or @[department].ubc.ca");
-      return;
-    }
-
-    if (!department) {
-      setError("Please select a department");
       return;
     }
 
@@ -134,94 +128,80 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       // Step 2: Add user to Cognito user group
       console.log("First adding user to Cognito group and checking if user in Cognito pool");
       let result2;
-      let result2str = "";
       if (role.includes("FacultyAdmin")) {
         result2 = await addToUserGroup(username, "FacultyAdmin");
-        result2str = JSON.stringify(result2).split(",")[0].split("{")[1];
       } else {
         result2 = await addToUserGroup(username, role);
-        result2str = JSON.stringify(result2).split(",")[0].split("{")[1];
       }
 
       // const result2obj = JSON.parse(result2str);
 
       // Check if there was an error with Cognito
-      if (result2str.includes("500")) {
+      if (result2.includes("FAILURE")) {
         console.log("Error adding user to Cognito group, statusCode 500");
         setError(`User not found in Cognito pool and was not added to database `);
         setLoading(false);
         return;
-      } else {
+      } else if (result2.includes("SUCCESS")) {
         // Step 2: Add user to database (since they don't exist)
         console.log("User found in pool, added to Cognito group, statusCode 200 OK");
-        const cwlChecked = cwl ? cwl : "";
-        const vppChecked = vpp ? vpp : "";
         const pending = true; // Default to pending
         const approved = false; // Default to not approved
         console.log("Adding user to database with details:", {
           firstName,
           lastName,
+          email,
           username,
           role,
           pending,
           approved,
-          cwlChecked,
-          vppChecked,
         });
-        const result = await addUser(firstName, lastName, username, role, cwlChecked, vppChecked);
+        const result = await addUser(firstName, lastName, email, role, username, department, faculty);
         console.log("User added to database successfully");
 
+        // Set success message and user details
+        setSuccessMessage("User has been successfully added to database");
+        setCreatedUser({
+          username: username,
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          role: role,
+          department: department,
+          faculty: faculty, // NEW: add faculty to createdUser
+        });
+        // Notify parent component of success
+        onSuccess({
+          type: "user_created",
+          username: username,
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          role: role,
+          department: department,
+          faculty: faculty, // NEW: add faculty to onSuccess
+        });
+
         // Step 3: Update user with department and faculty information
-        if (department || faculty) {
-          console.log("Updating user with department/faculty information:", department, faculty);
-          const userDetails = await getUser(username);
-          await updateUser(
-            userDetails.user_id,
-            firstName,
-            lastName,
-            "", // preferred_name
-            username,
-            role,
-            "", // bio
-            "", // rank
-            "", // institution
-            department, // primary_department
-            "", // secondary_department
-            faculty, // primary_faculty
-            "", // secondary_faculty
-            "", // primary_affiliation
-            "", // secondary_affiliation
-            "", // campus
-            "", // keywords
-            "", // institution_user_id
-            "", // scopus_id
-            "", // orcid_id
-          );
-          console.log("User department/faculty updated successfully");
-        }
+      } else if (result2.includes("ALREADY_EXISTS")) {
+        setError(
+          "User already exists in Cognito pool with correct group membership, but not in database.. Please remove the group membership in AWS to add to database"
+        );
+        setLoading(false);
+        return;
+      } else {
+        setError("Something went wrong while adding user to Cognito group. Please try again.");
+        setLoading(false);
+        return;
       }
 
       setLoading(false);
-
-      // Set success message and user details
-      setSuccessMessage("User has been successfully added to database");
-      setCreatedUser({
-        username: username,
-        firstName: firstName,
-        lastName: lastName,
-        cwl: cwl,
-        vpp: vpp,
-        role: role,
-        department: department,
-        faculty: faculty, // NEW: add faculty to createdUser
-      });
 
       // Clear form fields but keep success message
       setFirstName("");
       setLastName("");
       setUsername("");
-      setCwl("");
-      setVpp("");
+      setEmail("");
       setRole("Faculty");
       setIsDepartmentAdmin(false);
       setIsFacultyAdmin(false);
@@ -230,19 +210,6 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       setDepartment("");
       setFaculty(""); // NEW: reset faculty
       setError("");
-
-      // Notify parent component of success
-      onSuccess({
-        type: "user_created",
-        username: username,
-        firstName: firstName,
-        lastName: lastName,
-        cwl: cwl,
-        vpp: vpp,
-        role: role,
-        department: department,
-        faculty: faculty, // NEW: add faculty to onSuccess
-      });
     } catch (error) {
       console.error("Error creating user:", error);
       setLoading(false);
@@ -253,8 +220,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     setFirstName("");
     setLastName("");
     setUsername("");
-    setCwl("");
-    setVpp("");
+    setEmail("");
     setRole("Faculty");
     setIsDepartmentAdmin(false);
     setIsFacultyAdmin(false);
@@ -304,22 +270,19 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   <strong>Name:</strong> {createdUser.firstName} {createdUser.lastName}
                 </p>
                 <p>
-                  <strong>Email:</strong> {createdUser.username}
+                  <strong>Email:</strong> {createdUser.email}
                 </p>
                 <p>
-                  <strong>Department:</strong> {createdUser.department}
+                  <strong>Username:</strong> {createdUser.username}
                 </p>
-                <p>
-                  <strong>Faculty:</strong> {createdUser.faculty}
-                </p>
-                {createdUser.cwl && (
+                {department && (
                   <p>
-                    <strong>CWL:</strong> {createdUser.cwl}
+                    <strong>Department:</strong> {createdUser.department}
                   </p>
                 )}
-                {createdUser.vpp && (
+                {faculty && (
                   <p>
-                    <strong>VPP:</strong> {createdUser.vpp}
+                    <strong>Faculty:</strong> {createdUser.faculty}
                   </p>
                 )}
                 <p>
@@ -364,10 +327,21 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
                   className="input input-bordered w-full text-sm"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
                   type="email"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Username"
+                  type="username"
                   required
                 />
               </div>
@@ -378,7 +352,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   className="input input-sm input-bordered w-full text-sm "
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  required
+                  // removed required to make optional
                 >
                   <option value="">Select a department...</option>
                   {departments.map((dept, index) => (
@@ -395,7 +369,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   className="input input-sm input-bordered w-full text-sm"
                   value={faculty}
                   onChange={handleFacultyChange}
-                  required
+                  // removed required to make optional
                 >
                   <option value="">Select a faculty...</option>
                   {faculties.map((fac, index) => (
@@ -414,28 +388,6 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                     value={institution || ""}
                     onChange={(e) => setInstitution(e.target.value)}
                     placeholder="Institution"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">CWL</label>
-                  <input
-                    className="input input-sm input-bordered w-full text-sm"
-                    value={cwl || ""}
-                    onChange={(e) => setCwl(e.target.value)}
-                    placeholder="CWL (optional)"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">VPP</label>
-                  <input
-                    className="input input-sm input-bordered w-full text-sm"
-                    value={vpp || ""}
-                    onChange={(e) => setVpp(e.target.value)}
-                    placeholder="VPP (optional)"
                   />
                 </div>
               </div>

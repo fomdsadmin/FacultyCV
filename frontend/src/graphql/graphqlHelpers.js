@@ -66,6 +66,7 @@ import {
   UPDATE_TEMPLATE,
   EDIT_SECTION_DETAILS,
   UPDATE_USER_AFFILIATIONS,
+  CHANGE_USERNAME,
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -977,6 +978,14 @@ export const updateUserAffiliations = async (user_id, first_name, last_name, aff
     affiliations: affiliations,
   });
   return results["data"]["updateUserAffiliations"];
+};
+
+export const changeUsername = async (user_id, username) => {
+  const results = await executeGraphql(CHANGE_USERNAME, {
+    user_id: user_id,
+    username: username,
+  });
+  return results["data"]["changeUsername"];
 };
 
 /**
