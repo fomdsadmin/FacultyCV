@@ -39,6 +39,8 @@ import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
 import { ToastContainer } from "react-toastify";
 import KeycloakLogout from "Components/KeycloakLogout";
+import Html2CanvasTest from "Views/PDFTableGenerator";
+import ReactPDFGenerator from "Views/ReactPDFGenerator";
 
 const AppContent = () => {
   const {
@@ -89,6 +91,10 @@ const AppContent = () => {
       </PageContainer>
     );
   }
+
+  return(
+    <Html2CanvasTest />
+  )
 
   return (
     <Router>
