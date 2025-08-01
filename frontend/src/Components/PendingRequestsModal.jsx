@@ -17,9 +17,9 @@ const PendingRequestsModal = ({
     console.log("Accepting user:", userId, user.email);
     // Remove from pending list
     setPendingUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
-    console.log("Adding user to Faculty group:", user.userName);
-    const result = await addToUserGroup(user.userName, "Faculty");
-    console.log("Add to Faculty group result:", result);
+    // console.log("Adding user to Faculty group:", user.userName);
+    // const result = await addToUserGroup(user.userName, "Faculty");
+    // console.log("Add to Faculty group result:", result);
     await updateUserPermissions(userId, false, true);
     refreshUsers();
   };
@@ -43,9 +43,9 @@ const PendingRequestsModal = ({
     // Remove from rejected list
     setRejectedUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== user.user_id));
     let role = user.role || "Faculty";
-    console.log("Adding group for user:", user.userName);
-    const result = await addToUserGroup(user.userName, role);
-    console.log("Add to Faculty group result:", result);
+    // console.log("Adding group for user:", user.userName);
+    // const result = await addToUserGroup(user.userName, role);
+    // console.log("Add to Faculty group result:", result);
     await updateUserPermissions(user.user_id, false, true);
     refreshUsers();
   };

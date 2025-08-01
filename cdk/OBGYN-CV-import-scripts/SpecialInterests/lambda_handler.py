@@ -14,55 +14,74 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLES = {
+    "910": "9a. Areas of Special Interest and Accomplishments",
+    "1001": "10a. Areas of Special Interest and Accomplishments",
+    "1021": "11a. Areas of Special Interest and Accomplishments",
+    "1101": "12a. Areas of Special Interest and Accomplishments",
+}
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
+    Returns a dict of {section_title: cleaned_df}
     """
-    # Only keep rows where UserID is a string of expected length (e.g., 32)
-    df["user_id"] = df["UserID"].str.strip()
-    df["details"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
+    cleaned = {}
+    # Ensure relevant columns are string type before using .str methods
+    for col in ["FormType", "Type", "TypeOther", "PhysicianID", "Details", "Notes"]:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
 
-    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
-    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    mask_other = df["Type"].str.strip() == "Other:"
-    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+    for formtype, section_title in SECTION_TITLES.items():
+        subdf = df[df["FormType"].astype(str).str.strip() == formtype].copy()
+        if subdf.empty:
+            continue
+        subdf["user_id"] = subdf["PhysicianID"].str.strip()
+        subdf["details"] = subdf["Details"].fillna('').str.strip()
+        subdf["type"] = subdf["Type"].fillna('').str.strip()
+        subdf["type_other"] = subdf["TypeOther"].fillna('').str.strip()
+        subdf["highlight_notes"] = subdf["Notes"].fillna('').str.strip()
+        subdf["highlight"] = False
 
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["start_date"] = df["start_date"].fillna('').str.strip()
-    df["end_date"] = df["end_date"].fillna('').str.strip()
-    # Combine start and end dates into a single 'dates' column:
-    def combine_dates(row):
-        if row["start_date"] and row["end_date"]:
-            return f"{row['start_date']} - {row['end_date']}"
-        elif row["start_date"]:
-            return row["start_date"]
-        elif row["end_date"]:
-            return row["end_date"]
+        # If TypeOther is not empty, set type to "Other ({type_other})"
+        mask_other = subdf["type_other"].str.strip() != ""
+        subdf.loc[mask_other, "type"] = "Other (" + subdf.loc[mask_other, "type_other"] + ")"
+
+        # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
+        subdf["start_date"] = pd.to_datetime(subdf["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+        if "TDateEnd" in subdf.columns:
+            subdf["end_date"] = pd.to_datetime(subdf["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+            subdf["end_date"] = subdf["end_date"].fillna('').str.strip()
         else:
-            return ""
-    df["dates"] = df.apply(combine_dates, axis=1)
+            subdf["end_date"] = ""
+        subdf["start_date"] = subdf["start_date"].fillna('').str.strip()
+
+        def combine_dates(row):
+            if row["start_date"] and str(row["end_date"]).strip():
+                return f"{row['start_date']} - {row['end_date']}"
+            elif row["start_date"]:
+                return row["start_date"]
+            elif row["end_date"]:
+                return row["end_date"]
+            else:
+                return ""
+        subdf["dates"] = subdf.apply(combine_dates, axis=1)
+
+        subdf = subdf[["user_id", "details", "highlight_notes", "highlight", "dates", "type"]]
+        subdf = subdf.replace({np.nan: ''}).reset_index(drop=True)
+        print(f"Processed rows for {section_title}: ", len(subdf))
+        cleaned[section_title] = subdf
+        print(cleaned[section_title].head())
+
+    return cleaned
 
 
-    # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
-    # Replace NaN with empty string for all columns
-    df = df.replace({np.nan: ''})
-    return df
-
-
-def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
+def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
     """
-    Store the cleaned DataFrame into the database.
+    Store the cleaned DataFrame into the database for a given section title.
     Returns updated rows_processed and rows_added_to_db.
     """
-    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
+    # Query for the data_section_id where title contains section_title (case insensitive)
     try:
         cursor.execute(
             """
@@ -70,25 +89,24 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             WHERE title = %s
             LIMIT 1
             """,
-            (SECTION_TITLE,)
+            (section_title,)
         )
         result = cursor.fetchone()
         if result:
             data_section_id = result[0]
         else:
-            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
+            errors.append(f"No data_section_id found for '{section_title}'")
             data_section_id = None
     except Exception as e:
         errors.append(f"Error fetching data_section_id: {str(e)}")
         data_section_id = None
 
     if not data_section_id:
-        errors.append("Skipping insert: data_section_id not found.")
+        errors.append(f"Skipping insert: data_section_id not found for {section_title}.")
         return rows_processed, rows_added_to_db
 
     for i, row in df.iterrows():
         row_dict = row.to_dict()
-        # Remove user_id from data_details
         row_dict.pop('user_id', None)
         data_details_JSON = json.dumps(row_dict)
         try:
@@ -104,7 +122,7 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            print(f"Processed row {i + 1}/{len(df)}")
+
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -124,13 +142,30 @@ def fetchFromS3(bucket, key):
 def loadData(file_bytes, file_key):
     """
     Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
+    Handles CSV, JSON lines, and JSON array files.
     """
     if file_key.lower().endswith('.xlsx'):
-        # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
-        # For CSV, decode bytes to text
-        return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        # Try reading as regular CSV first
+        try:
+            return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        except Exception as csv_exc:
+            print(f"Failed to read as CSV: {csv_exc}")
+            # Try reading as JSON lines (NDJSON)
+            try:
+                return pd.read_json(io.StringIO(file_bytes.decode('utf-8')), lines=True)
+            except Exception as jsonl_exc:
+                print(f"Failed to read as JSON lines: {jsonl_exc}")
+                # Try reading as JSON array
+                try:
+                    return pd.read_json(io.StringIO(file_bytes.decode('utf-8')))
+                except Exception as json_exc:
+                    print(f"Failed to read as JSON array: {json_exc}")
+                    raise ValueError(
+                        f"Could not parse file as CSV, JSON lines, or JSON array. "
+                        f"CSV error: {csv_exc}, JSON lines error: {jsonl_exc}, JSON array error: {json_exc}"
+                    )
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
 
@@ -155,7 +190,6 @@ def lambda_handler(event, context):
         try:
             df = loadData(file_bytes, file_key)
         except ValueError as e:
-            
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
@@ -163,10 +197,9 @@ def lambda_handler(event, context):
             }
         print("Data loaded successfully.")
 
-        # Clean the DataFrame
-        df = cleanData(df)
+        # Clean the DataFrame (returns dict of section_title: df)
+        cleaned_dfs = cleanData(df)
         print("Data cleaned successfully.")
-        print(df.to_string())
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
@@ -177,7 +210,13 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
+        # Store for each section
+        for section_title, subdf in cleaned_dfs.items():
+            if not subdf.empty:
+                rows_processed, rows_added_to_db = storeData(
+                    subdf, connection, cursor, errors, rows_processed, rows_added_to_db, section_title
+                )
+
         print("Data stored successfully.")
         cursor.close()
         connection.close()
