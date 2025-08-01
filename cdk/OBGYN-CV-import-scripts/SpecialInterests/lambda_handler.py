@@ -14,48 +14,36 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLES = {
-    "910": "9a. Areas of Special Interest and Accomplishments",
-    "1001": "10a. Areas of Special Interest and Accomplishments",
-    "1021": "11a. Areas of Special Interest and Accomplishments",
-    "1101": "12a. Areas of Special Interest and Accomplishments",
-}
+SECTION_TITLE_INVITED = "9d. Invited Presentations"
+SECTION_TITLE_OTHER = "9g. Other Presentations"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
-    Returns a dict of {section_title: cleaned_df}
     """
-    cleaned = {}
     # Ensure relevant columns are string type before using .str methods
-    for col in ["FormType", "Type", "TypeOther", "PhysicianID", "Details", "Notes"]:
+    for col in ["Type", "TypeOther", "PhysicianID", "Scale", "Details", "Notes"]:
         if col in df.columns:
             df[col] = df[col].astype(str)
 
-    for formtype, section_title in SECTION_TITLES.items():
-        subdf = df[df["FormType"].astype(str).str.strip() == formtype].copy()
-        if subdf.empty:
-            continue
-        subdf["user_id"] = subdf["PhysicianID"].str.strip()
-        subdf["details"] = subdf["Details"].fillna('').str.strip()
-        subdf["type"] = subdf["Type"].fillna('').str.strip()
-        subdf["type_other"] = subdf["TypeOther"].fillna('').str.strip()
-        subdf["highlight_notes"] = subdf["Notes"].fillna('').str.strip()
-        subdf["highlight"] = False
+    # Split into invited and other presentations
+    invited_df = df[df["Type"].fillna('').str.strip() == "Invited Presentation"].copy()
+    other_df = df[df["Type"].fillna('').str.strip() == "Other Presentation:"].copy()
 
-        # If TypeOther is not empty, set type to "Other ({type_other})"
-        mask_other = subdf["type_other"].str.strip() != ""
-        subdf.loc[mask_other, "type"] = "Other (" + subdf.loc[mask_other, "type_other"] + ")"
-
-        # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-        subdf["start_date"] = pd.to_datetime(subdf["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-        if "TDateEnd" in subdf.columns:
-            subdf["end_date"] = pd.to_datetime(subdf["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-            subdf["end_date"] = subdf["end_date"].fillna('').str.strip()
+    # --- Invited Presentations ---
+    if not invited_df.empty:
+        invited_df.loc[:, "user_id"] = invited_df["PhysicianID"].str.strip()
+        invited_df.loc[:, "scale"] = invited_df["Scale"].fillna('').str.strip()
+        invited_df.loc[:, "details"] = invited_df["Details"].fillna('').str.strip()
+        invited_df.loc[:, "highlight_notes"] = invited_df["Notes"].fillna('').str.strip()
+        invited_df.loc[:, "highlight"] = False
+        invited_df.loc[:, "start_date"] = pd.to_datetime(invited_df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+        invited_df.loc[:, "start_date"] = invited_df["start_date"].fillna('').str.strip()
+        if "TDateEnd" in invited_df.columns:
+            invited_df.loc[:, "end_date"] = pd.to_datetime(invited_df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+            invited_df.loc[:, "end_date"] = invited_df["end_date"].fillna('').str.strip()
         else:
-            subdf["end_date"] = ""
-        subdf["start_date"] = subdf["start_date"].fillna('').str.strip()
-
+            invited_df.loc[:, "end_date"] = ""
         def combine_dates(row):
             if row["start_date"] and str(row["end_date"]).strip():
                 return f"{row['start_date']} - {row['end_date']}"
@@ -65,15 +53,47 @@ def cleanData(df):
                 return row["end_date"]
             else:
                 return ""
-        subdf["dates"] = subdf.apply(combine_dates, axis=1)
+        invited_df["dates"] = invited_df.apply(combine_dates, axis=1)
+        invited_df = invited_df[["user_id", "scale", "details", "highlight_notes", "highlight", "dates"]]
+        invited_df = invited_df.replace({np.nan: ''}).reset_index(drop=True)
+    print("Processed invited presentations: ", len(invited_df))
 
-        subdf = subdf[["user_id", "details", "highlight_notes", "highlight", "dates", "type"]]
-        subdf = subdf.replace({np.nan: ''}).reset_index(drop=True)
-        print(f"Processed rows for {section_title}: ", len(subdf))
-        cleaned[section_title] = subdf
-        print(cleaned[section_title].head())
+    # --- Other Presentations ---
+    if not other_df.empty:
+        other_df.loc[:, "user_id"] = other_df["PhysicianID"].str.strip()
+        other_df.loc[:, "scale"] = other_df["Scale"].fillna('').str.strip()
+        other_df.loc[:, "details"] = other_df["Details"].fillna('').str.strip()
+        other_df.loc[:, "highlight_notes"] = other_df["Notes"].fillna('').str.strip()
+        other_df.loc[:, "highlight"] = False
+        # Set type_of_presentation to "Other presentation" for all rows
+        other_df.loc[:, "type_of_presentation"] = "Other presentation"
+        # Set default values for extra columns (location, organization/institution/event, role)
+        other_df.loc[:, "location"] = ""
+        other_df.loc[:, "organization_/_institution_/_event"] = ""
+        other_df.loc[:, "role"] = ""
+        other_df.loc[:, "start_date"] = pd.to_datetime(other_df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+        other_df.loc[:, "start_date"] = other_df["start_date"].fillna('').str.strip()
+        if "TDateEnd" in other_df.columns:
+            other_df.loc[:, "end_date"] = pd.to_datetime(other_df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+            other_df.loc[:, "end_date"] = other_df["end_date"].fillna('').str.strip()
+        else:
+            other_df.loc[:, "end_date"] = ""
+        def combine_dates_other(row):
+            if row["start_date"] and str(row["end_date"]).strip():
+                return f"{row['start_date']} - {row['end_date']}"
+            elif row["start_date"]:
+                return row["start_date"]
+            elif row["end_date"]:
+                return row["end_date"]
+            else:
+                return ""
+        other_df["dates"] = other_df.apply(combine_dates_other, axis=1)
+        # Only keep the required columns
+        other_df = other_df[["user_id", "scale", "details", "highlight_notes", "highlight", "type_of_presentation", "location", "organization_/_institution_/_event", "role", "dates"]]
+        other_df = other_df.replace({np.nan: ''}).reset_index(drop=True)
+    print("Processed other presentations: ", len(other_df))
 
-    return cleaned
+    return invited_df, other_df
 
 
 def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
@@ -197,8 +217,8 @@ def lambda_handler(event, context):
             }
         print("Data loaded successfully.")
 
-        # Clean the DataFrame (returns dict of section_title: df)
-        cleaned_dfs = cleanData(df)
+        # Clean the DataFrame (returns two DataFrames)
+        invited_df, other_df = cleanData(df)
         print("Data cleaned successfully.")
 
         # Connect to database
@@ -210,12 +230,16 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        # Store for each section
-        for section_title, subdf in cleaned_dfs.items():
-            if not subdf.empty:
-                rows_processed, rows_added_to_db = storeData(
-                    subdf, connection, cursor, errors, rows_processed, rows_added_to_db, section_title
-                )
+        # Store invited presentations
+        if not invited_df.empty:
+            rows_processed, rows_added_to_db = storeData(
+                invited_df, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_INVITED
+            )
+        # Store other presentations
+        if not other_df.empty:
+            rows_processed, rows_added_to_db = storeData(
+                other_df, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_OTHER
+            )
 
         print("Data stored successfully.")
         cursor.close()
