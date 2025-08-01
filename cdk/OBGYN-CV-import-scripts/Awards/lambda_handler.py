@@ -14,26 +14,50 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLE = "13[a-d]. Awards and Distinctions"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
-    """
+    """  
     # Only keep rows where UserID is a string of expected length (e.g., 32)
+    
+    df["physician_id"] = df["PhysicianID"].astype(str).str.strip()
     df["user_id"] = df["UserID"].str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
     df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
     df["highlight"] = df["Highlight"].astype(bool)
 
     # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
+    # need to added the section number to the drop down 
+    df["type_original"]  =  df["Type"].fillna('').str.strip()
     df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    mask_other = df["Type"].str.strip() == "Other:"
-    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+    # mask_other = df["Type"].str.strip() == "Other:"
+    # df.loc[mask_other, "type"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+    
+    # Create a mapping dictionary for types
+    type_mapping = {
+        'Teaching': 'a. Teaching',
+        'Scholarship': 'b. Scholarship', 
+        'Service': 'c. Service',
+        'Research': 'd. Research',
+        'Salary Support Award': 'd. Salary Support',
+        'Other Academic / Professional': 'd. Other Academic/Professional',
+        'Other Awards:': 'd. Other'
+    }
+     # Apply the mapping
+    df["type"] = df["type_original"].map(type_mapping)
+    
+    # Handle "Other Awards:" case - combine with TypeOther
+    mask_other_awards = df["type_original"] == "Other Awards:"
+    df.loc[mask_other_awards, "type"] = "d. Other (" + df.loc[mask_other_awards, "type_other"] + ")"
+    
+    # Handle empty type (different from NaN)
+    mask_empty = df["type_original"] == ""
+    df.loc[mask_empty, "type"] = "d. Other"
 
     # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+    df["start_date"] = pd.to_datetime(df["Tdate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
     df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
     df["start_date"] = df["start_date"].fillna('').str.strip()
     df["end_date"] = df["end_date"].fillna('').str.strip()
@@ -51,7 +75,7 @@ def cleanData(df):
 
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
+    df = df[["physician_id", "user_id", "details", "type", "highlight_notes", "highlight", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
@@ -134,6 +158,7 @@ def loadData(file_bytes, file_key):
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
 
+
 def lambda_handler(event, context):
     """
     Processes manual upload file (CSV or Excel) uploaded to S3
@@ -148,62 +173,82 @@ def lambda_handler(event, context):
         print(f"Processing manual upload file: {file_key} from bucket: {bucket_name}")
 
         # Fetch file from S3 (as bytes)
-        file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
-        print("Data fetched successfully.")
-
-        # Load data into DataFrame
         try:
-            df = loadData(file_bytes, file_key)
-        except ValueError as e:
-            
+            file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
+            print("Data fetched successfully.")
+            print(f"File size: {len(file_bytes)} bytes")
+        except Exception as fetch_error:
+            print(f"Error fetching data from S3: {str(fetch_error)}")
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
-                'error': str(e)
+                'error': f"S3 fetch error: {str(fetch_error)}"
             }
-        print("Data loaded successfully.")
 
-        # Clean the DataFrame
-        df = cleanData(df)
-        print("Data cleaned successfully.")
-        print(df.to_string())
+        # Load and process data
+        try:
+            # Load data into DataFrame
+            df = loadData(file_bytes, file_key)
+            print("Data loaded successfully.")
+            print(f"DataFrame shape: {df.shape}")
+            print(f"DataFrame columns: {df.columns.tolist()}")
+            
+            # Check for required columns
+            required_columns = ["PhysicianID", "UserID", "Details", "Type"]
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                raise ValueError(f"Missing required columns: {missing_columns}")
+            
+            # Clean the DataFrame
+            df = cleanData(df)
+            print("Data cleaned successfully.")
+            
+            # Connect to database
+            connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
+            cursor = connection.cursor()
+            print("Connected to database")
 
-        # Connect to database
-        connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
-        cursor = connection.cursor()
-        print("Connected to database")
+            rows_processed = 0
+            rows_added_to_db = 0
+            errors = []
 
-        rows_processed = 0
-        rows_added_to_db = 0
-        errors = []
+            rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
+            print("Data stored successfully.")
+            cursor.close()
+            connection.close()
 
-        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
-        print("Data stored successfully.")
-        cursor.close()
-        connection.close()
+            # Clean up - delete the processed file
+            s3_client.delete_object(Bucket=bucket_name, Key=file_key)
+            print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
 
-        # Clean up - delete the processed file
-        s3_client.delete_object(Bucket=bucket_name, Key=file_key)
-        print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
+            result = {
+                'statusCode': 200,
+                'status': 'COMPLETED',
+                'total_rows': len(df),
+                'rows_processed': rows_processed,
+                'rows_added_to_database': rows_added_to_db,
+                'errors': errors[:10] if errors else []
+            }
 
-
-        result = {
-            'statusCode': 200,
-            'status': 'COMPLETED',
-            'total_rows': len(df),
-            'rows_processed': rows_processed,
-            'rows_added_to_database': rows_added_to_db,
-            'errors': errors[:10] if errors else []
-        }
-
-        print(f"Manual upload completed: {result}")
-        return result
+            print(f"Manual upload completed: {result}")
+            return result
+            
+        except Exception as load_error:
+            print(f"Error loading or processing data: {str(load_error)}")
+            return {
+                'statusCode': 400,
+                'status': 'FAILED',
+                'error': f"Data loading error: {str(load_error)}"
+            }
 
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
         print(f"Error processing manual upload: {str(e)}")
+        print(f"Traceback: {error_trace}")
         return {
             'statusCode': 500,
             'status': 'FAILED',
-            'error': str(e)
+            'error': str(e),
+            'traceback': error_trace
         }
-

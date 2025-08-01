@@ -14,48 +14,22 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLE = "Authorship Statement"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
     # Only keep rows where UserID is a string of expected length (e.g., 32)
+    df["physician_id"] = df["PhysicianID"].astype(str).str.strip()
     df["user_id"] = df["UserID"].str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
-
-    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
-    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    mask_other = df["Type"].str.strip() == "Other:"
-    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
-
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["start_date"] = df["start_date"].fillna('').str.strip()
-    df["end_date"] = df["end_date"].fillna('').str.strip()
-    # Combine start and end dates into a single 'dates' column:
-    def combine_dates(row):
-        if row["start_date"] and row["end_date"]:
-            return f"{row['start_date']} - {row['end_date']}"
-        elif row["start_date"]:
-            return row["start_date"]
-        elif row["end_date"]:
-            return row["end_date"]
-        else:
-            return ""
-    df["dates"] = df.apply(combine_dates, axis=1)
-
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
+    df = df[["physician_id", "user_id", "details"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
-
 
 def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
     """

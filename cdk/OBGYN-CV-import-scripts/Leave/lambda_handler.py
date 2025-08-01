@@ -22,7 +22,8 @@ def cleanData(df):
     """
     # Only keep rows where UserID is a string of expected length (e.g., 32)
 
-    df["user_id"] = df["UserID"].str.strip()
+    df["physician_id"] = df['PhysicianID'].str.strip()
+    df["user_id"] = df["UserID"].str.strip() # might be empty 
     df["details"] =  df["Details"].fillna('').str.strip()
     df["type_of_leave"] =  df["Type"].fillna('').str.strip()
     df["type_other"] =  df["TypeOther"].fillna('').str.strip()
@@ -55,7 +56,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_-_notes", "highlight", "dates"]]
+    df = df[["physician_id", "user_id", "details", "type_of_leave", "highlight_-_notes", "highlight", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
