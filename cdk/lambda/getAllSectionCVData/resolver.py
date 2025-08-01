@@ -13,12 +13,12 @@ def getAllSectionCVData(arguments):
     cursor = connection.cursor()
     if ('data_section_id_list' not in arguments):
         cursor.execute(
-            'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND archive != true LIMIT 100',
+            'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND archive != true',
             (arguments['data_section_id'],)
         )
     else:
         cursor.execute(
-            'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id IN %s AND archive != true LIMIT 100',
+            'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id IN %s AND archive != true',
             (tuple(arguments['data_section_id_list']),)
         )
     results = cursor.fetchall()
