@@ -14,6 +14,7 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
   const [isDeleteSectionModalOpen, setIsDeleteSectionModalOpen] = useState(false);
   const [dataRows, setDataRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalRows, setTotalRows] = useState(0); // Track total rows
 
   const { userInfo } = useApp();
 
@@ -21,6 +22,7 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
     let allRows = [];
     try {
       const rows = await getAllSectionCVData(section.data_section_id);
+      setTotalRows(rows.length); // Set total rows count
       const parsedRows = rows.map((row) => {
         let details = row.data_details;
         if (typeof details === "string") {
@@ -35,7 +37,8 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
           ...details,
         };
       });
-      allRows = allRows.concat(parsedRows);
+      // Only display first 1000 rows
+      allRows = allRows.concat(parsedRows.slice(0, 1000));
     } catch {
       // skip user if error
     }
@@ -110,8 +113,11 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
       {/* Total rows */}
       <div className="m-4">
         <span className="font-semibold text-lg text-zinc-700">
-          Total Data Rows: {loading ? "Loading..." : dataRows.length}
+          Total Data Rows: {loading ? "Loading..." : totalRows}
         </span>
+        {(!loading && totalRows > 1000) && (
+          <span className="ml-2 text-zinc-500 text-sm">(showing first 1000 rows)</span>
+        )}
       </div>
 
       {/* Data Table */}

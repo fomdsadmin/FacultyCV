@@ -72,7 +72,7 @@ const ResearchAffiliationSection = ({ researchAffiliations, setResearchAffiliati
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Research Center/Institute
+                        Research Centre/Institute
                       </th>
                       <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                         Division/Pillar (if applicable)

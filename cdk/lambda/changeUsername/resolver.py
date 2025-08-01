@@ -18,7 +18,7 @@ def changeUsername(arguments):
     # Prepare the UPDATE query
     query = """
     UPDATE users SET 
-        user_name = %s, 
+        username = %s, 
     WHERE user_id = %s
     """
 

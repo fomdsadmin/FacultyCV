@@ -14,55 +14,94 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLE_INVITED = "9d. Invited Presentations"
+SECTION_TITLE_OTHER = "9g. Other Presentations"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Only keep rows where UserID is a string of expected length (e.g., 32)
-    df["user_id"] = df["UserID"].str.strip()
-    df["details"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
+    # Ensure relevant columns are string type before using .str methods
+    for col in ["Type", "TypeOther", "PhysicianID", "Scale", "Details", "Notes"]:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
 
-    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
-    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    mask_other = df["Type"].str.strip() == "Other:"
-    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+    # Split into invited and other presentations
+    invited_df = df[df["Type"].fillna('').str.strip() == "Invited Presentation"].copy()
+    other_df = df[df["Type"].fillna('').str.strip() == "Other Presentation:"].copy()
 
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["start_date"] = df["start_date"].fillna('').str.strip()
-    df["end_date"] = df["end_date"].fillna('').str.strip()
-    # Combine start and end dates into a single 'dates' column:
-    def combine_dates(row):
-        if row["start_date"] and row["end_date"]:
-            return f"{row['start_date']} - {row['end_date']}"
-        elif row["start_date"]:
-            return row["start_date"]
-        elif row["end_date"]:
-            return row["end_date"]
+    # --- Invited Presentations ---
+    if not invited_df.empty:
+        invited_df.loc[:, "user_id"] = invited_df["PhysicianID"].str.strip()
+        invited_df.loc[:, "scale"] = invited_df["Scale"].fillna('').str.strip()
+        invited_df.loc[:, "details"] = invited_df["Details"].fillna('').str.strip()
+        invited_df.loc[:, "highlight_notes"] = invited_df["Notes"].fillna('').str.strip()
+        invited_df.loc[:, "highlight"] = False
+        invited_df.loc[:, "start_date"] = pd.to_datetime(invited_df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+        invited_df.loc[:, "start_date"] = invited_df["start_date"].fillna('').str.strip()
+        if "TDateEnd" in invited_df.columns:
+            invited_df.loc[:, "end_date"] = pd.to_datetime(invited_df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+            invited_df.loc[:, "end_date"] = invited_df["end_date"].fillna('').str.strip()
         else:
-            return ""
-    df["dates"] = df.apply(combine_dates, axis=1)
+            invited_df.loc[:, "end_date"] = ""
+        def combine_dates(row):
+            if row["start_date"] and str(row["end_date"]).strip():
+                return f"{row['start_date']} - {row['end_date']}"
+            elif row["start_date"]:
+                return row["start_date"]
+            elif row["end_date"]:
+                return row["end_date"]
+            else:
+                return ""
+        invited_df["dates"] = invited_df.apply(combine_dates, axis=1)
+        invited_df = invited_df[["user_id", "scale", "details", "highlight_notes", "highlight", "dates"]]
+        invited_df = invited_df.replace({np.nan: ''}).reset_index(drop=True)
+    print("Processed invited presentations: ", len(invited_df))
+
+    # --- Other Presentations ---
+    if not other_df.empty:
+        other_df.loc[:, "user_id"] = other_df["PhysicianID"].str.strip()
+        other_df.loc[:, "scale"] = other_df["Scale"].fillna('').str.strip()
+        other_df.loc[:, "details"] = other_df["Details"].fillna('').str.strip()
+        other_df.loc[:, "highlight_notes"] = other_df["Notes"].fillna('').str.strip()
+        other_df.loc[:, "highlight"] = False
+        # Set type_of_presentation to "Other presentation" for all rows
+        other_df.loc[:, "type_of_presentation"] = "Other presentation"
+        # Set default values for extra columns (location, organization/institution/event, role)
+        other_df.loc[:, "location"] = ""
+        other_df.loc[:, "organization_/_institution_/_event"] = ""
+        other_df.loc[:, "role"] = ""
+        other_df.loc[:, "start_date"] = pd.to_datetime(other_df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+        other_df.loc[:, "start_date"] = other_df["start_date"].fillna('').str.strip()
+        if "TDateEnd" in other_df.columns:
+            other_df.loc[:, "end_date"] = pd.to_datetime(other_df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+            other_df.loc[:, "end_date"] = other_df["end_date"].fillna('').str.strip()
+        else:
+            other_df.loc[:, "end_date"] = ""
+        def combine_dates_other(row):
+            if row["start_date"] and str(row["end_date"]).strip():
+                return f"{row['start_date']} - {row['end_date']}"
+            elif row["start_date"]:
+                return row["start_date"]
+            elif row["end_date"]:
+                return row["end_date"]
+            else:
+                return ""
+        other_df["dates"] = other_df.apply(combine_dates_other, axis=1)
+        # Only keep the required columns
+        other_df = other_df[["user_id", "scale", "details", "highlight_notes", "highlight", "type_of_presentation", "location", "organization_/_institution_/_event", "role", "dates"]]
+        other_df = other_df.replace({np.nan: ''}).reset_index(drop=True)
+    print("Processed other presentations: ", len(other_df))
+
+    return invited_df, other_df
 
 
-    # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
-    # Replace NaN with empty string for all columns
-    df = df.replace({np.nan: ''})
-    return df
-
-
-def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
+def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
     """
-    Store the cleaned DataFrame into the database.
+    Store the cleaned DataFrame into the database for a given section title.
     Returns updated rows_processed and rows_added_to_db.
     """
-    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
+    # Query for the data_section_id where title contains section_title (case insensitive)
     try:
         cursor.execute(
             """
@@ -70,25 +109,24 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             WHERE title = %s
             LIMIT 1
             """,
-            (SECTION_TITLE,)
+            (section_title,)
         )
         result = cursor.fetchone()
         if result:
             data_section_id = result[0]
         else:
-            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
+            errors.append(f"No data_section_id found for '{section_title}'")
             data_section_id = None
     except Exception as e:
         errors.append(f"Error fetching data_section_id: {str(e)}")
         data_section_id = None
 
     if not data_section_id:
-        errors.append("Skipping insert: data_section_id not found.")
+        errors.append(f"Skipping insert: data_section_id not found for {section_title}.")
         return rows_processed, rows_added_to_db
 
     for i, row in df.iterrows():
         row_dict = row.to_dict()
-        # Remove user_id from data_details
         row_dict.pop('user_id', None)
         data_details_JSON = json.dumps(row_dict)
         try:
@@ -104,7 +142,7 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            print(f"Processed row {i + 1}/{len(df)}")
+
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -124,13 +162,30 @@ def fetchFromS3(bucket, key):
 def loadData(file_bytes, file_key):
     """
     Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
+    Handles CSV, JSON lines, and JSON array files.
     """
     if file_key.lower().endswith('.xlsx'):
-        # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
-        # For CSV, decode bytes to text
-        return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        # Try reading as regular CSV first
+        try:
+            return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        except Exception as csv_exc:
+            print(f"Failed to read as CSV: {csv_exc}")
+            # Try reading as JSON lines (NDJSON)
+            try:
+                return pd.read_json(io.StringIO(file_bytes.decode('utf-8')), lines=True)
+            except Exception as jsonl_exc:
+                print(f"Failed to read as JSON lines: {jsonl_exc}")
+                # Try reading as JSON array
+                try:
+                    return pd.read_json(io.StringIO(file_bytes.decode('utf-8')))
+                except Exception as json_exc:
+                    print(f"Failed to read as JSON array: {json_exc}")
+                    raise ValueError(
+                        f"Could not parse file as CSV, JSON lines, or JSON array. "
+                        f"CSV error: {csv_exc}, JSON lines error: {jsonl_exc}, JSON array error: {json_exc}"
+                    )
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
 
@@ -155,7 +210,6 @@ def lambda_handler(event, context):
         try:
             df = loadData(file_bytes, file_key)
         except ValueError as e:
-            
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
@@ -163,10 +217,9 @@ def lambda_handler(event, context):
             }
         print("Data loaded successfully.")
 
-        # Clean the DataFrame
-        df = cleanData(df)
+        # Clean the DataFrame (returns two DataFrames)
+        invited_df, other_df = cleanData(df)
         print("Data cleaned successfully.")
-        print(df.to_string())
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
@@ -177,7 +230,17 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
+        # Store invited presentations
+        if not invited_df.empty:
+            rows_processed, rows_added_to_db = storeData(
+                invited_df, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_INVITED
+            )
+        # Store other presentations
+        if not other_df.empty:
+            rows_processed, rows_added_to_db = storeData(
+                other_df, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_OTHER
+            )
+
         print("Data stored successfully.")
         cursor.close()
         connection.close()
