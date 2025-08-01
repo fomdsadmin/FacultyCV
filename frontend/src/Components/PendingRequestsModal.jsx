@@ -16,7 +16,7 @@ const PendingRequestsModal = ({
     // TODO: Implement accept logic
     console.log("Accepting user:", userId, user.email);
     // Remove from pending list
-    // setPendingUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
+    setPendingUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
     // console.log("Adding user to Faculty group:", user.userName);
     // const result = await addToUserGroup(user.userName, "Faculty");
     // console.log("Add to Faculty group result:", result);
