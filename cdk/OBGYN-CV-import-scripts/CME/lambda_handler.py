@@ -21,7 +21,7 @@ def cleanData(df):
     Cleans the input DataFrame by performing various transformations:
     """
     # Only keep rows where UserID is a string of expected length (e.g., 32)
-    df["user_id"] = df["UserID"].str.strip()
+    df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["university/organization"] = df["University_Organization"].fillna('').str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
     df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
@@ -52,7 +52,7 @@ def cleanData(df):
 
 
     # Keep only the cleaned columns
-    df = df[["physician_id", "user_id", "university/organization", "details", "type", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "university/organization", "details", "type", "highlight_notes", "highlight", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df

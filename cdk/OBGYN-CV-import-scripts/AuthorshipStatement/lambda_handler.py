@@ -20,13 +20,11 @@ def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Only keep rows where UserID is a string of expected length (e.g., 32)
-    df["physician_id"] = df["PhysicianID"].astype(str).str.strip()
-    df["user_id"] = df["UserID"].str.strip()
+    df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
 
     # Keep only the cleaned columns
-    df = df[["physician_id", "user_id", "details"]]
+    df = df[["user_id", "details"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
