@@ -24,7 +24,7 @@ def cleanData(df):
     df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
     df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
+    df["highlight"] = df["Highlight"].str.strip().str.lower().map({'true': True, 'false': False})
 
     # If Type is "Other:", set type_of_leave to "Other ({type_other})"
     # need to added the section number to the drop down 
