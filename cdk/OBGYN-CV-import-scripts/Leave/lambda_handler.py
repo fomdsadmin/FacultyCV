@@ -20,17 +20,20 @@ def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Only keep rows where UserID is a string of expected length (e.g., 32)
+    # Ensure relevant columns are string type before using .str methods
+    for col in ["PhysicianID", "Details", "Type", "TypeOther", "Notes"]:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
 
-    df["user_id"] = df["UserID"].str.strip()
+    df["user_id"] = df["PhysicianID"].fillna('').str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
     df["type_of_leave"] =  df["Type"].fillna('').str.strip()
     df["type_other"] =  df["TypeOther"].fillna('').str.strip()
     df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
+    df["highlight"] = False
 
     # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    mask_other = df["Type"].str.strip() == "Other:"
+    mask_other = df["Type"].fillna('').str.strip() == "Other:"
     df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
 
     # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
