@@ -17,9 +17,8 @@ const PendingRequestsModal = ({
     console.log("Accepting user:", userId, user.email);
     // Remove from pending list
     setPendingUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
-    let userName = user.username
-    console.log("Adding user to Faculty group:", userName);
-    const result = await addToUserGroup(userName, "Faculty");
+    console.log("Adding user to Faculty group:", user.userName);
+    const result = await addToUserGroup(user.userName, "Faculty");
     console.log("Add to Faculty group result:", result);
     await updateUserPermissions(userId, false, true);
     refreshUsers();
@@ -38,12 +37,16 @@ const PendingRequestsModal = ({
     }
   };
 
-  const handleApprove = async (userId) => {
+  const handleApprove = async (user) => {
     // TODO: Implement approve logic for rejected users
-    console.log("Approving previously rejected user:", userId);
+    console.log("Approving previously rejected user:", user.userName);
     // Remove from rejected list
-    setRejectedUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
-    await updateUserPermissions(userId, false, true);
+    setRejectedUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== user.user_id));
+    let role = user.role || "Faculty";
+    console.log("Adding group for user:", user.userName);
+    const result = await addToUserGroup(user.userName, role);
+    console.log("Add to Faculty group result:", result);
+    await updateUserPermissions(user.user_id, false, true);
     refreshUsers();
   };
 
@@ -209,7 +212,7 @@ const PendingRequestsModal = ({
                     <div className="flex items-center gap-2">
                       {showRejected ? (
                         <button
-                          onClick={() => handleApprove(user.user_id)}
+                          onClick={() => handleApprove(user)}
                           className="btn btn-success flex items-center gap-2"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

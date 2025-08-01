@@ -9,7 +9,7 @@ import SaveButton from "./SaveButton.jsx";
 
 const FacultyHomePageContent = (user) => {
   const { loading, toggleViewMode } = useFaculty();
-  const { userInfo, getCognitoUser } = useApp();
+  const { userInfo, getCognitoUser} = useApp();
 
   return (
     <PageContainer>

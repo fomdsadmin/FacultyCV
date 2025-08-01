@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
+import 'dotenv/config';
 import * as cdk from 'aws-cdk-lib';
 import { AmplifyStack } from '../lib/amplify-stack';
 import { ApiStack } from '../lib/api-stack';
@@ -16,6 +17,7 @@ import { ResolverStack } from '../lib/resolver-stack';
 import { Resolver2Stack } from '../lib/resolver2-stack';
 import { Resolver3Stack } from '../lib/resolver3-stack';
 import { SupportFormStack } from '../lib/supportform-stack';
+import { OidcAuthStack } from '../lib/oidc-auth-stack';
 
 const app = new cdk.App();
 
@@ -33,12 +35,17 @@ const databaseStack = new DatabaseStack(app, `${resourcePrefix}-DatabaseStack`, 
 
 const cvGenStack = new CVGenStack(app,  `${resourcePrefix}-CVGenStack`, { env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }});
 
-const apiStack = new ApiStack(app, `${resourcePrefix}-ApiStack`, databaseStack, cvGenStack,
+// Create the new OIDC Auth Stack
+const oidcAuthStack = new OidcAuthStack(app, `${resourcePrefix}-OidcAuthStack`, {
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
+});
+
+const apiStack = new ApiStack(app, `${resourcePrefix}-ApiStack`, databaseStack, cvGenStack, oidcAuthStack,
    {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
 const userImportStack = new UserImportStack(app, `${resourcePrefix}-UserImportStack`, vpcStack, databaseStack, {
-  userPoolId: apiStack.getUserPoolId(),
+  userPoolId: oidcAuthStack.getUserPoolId(),
   psycopgLayer: apiStack.getLayers()['psycopg2'],
   databaseConnectLayer: apiStack.getLayers()['databaseConnect'],
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
@@ -60,7 +67,7 @@ const resolver3Stack = new Resolver3Stack(app, `${resourcePrefix}-Resolver3Stack
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
-const amplifyStack = new AmplifyStack(app, `${resourcePrefix}-AmplifyStack`, apiStack,
+const amplifyStack = new AmplifyStack(app, `${resourcePrefix}-AmplifyStack`, apiStack, oidcAuthStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 

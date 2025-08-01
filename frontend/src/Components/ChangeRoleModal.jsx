@@ -146,7 +146,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
   };
 
   return (
-    <dialog className="modal-dialog" open>
+    <dialog className="modal-dialog ml-4" open>
       <div className="modal-content">
         <div>
           <button
