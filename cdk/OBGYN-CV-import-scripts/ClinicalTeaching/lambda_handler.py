@@ -14,23 +14,66 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLE = "8b.3. Clinical Teaching"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Only keep rows where UserID is a string of expected length (e.g., 32)
-    df["user_id"] = df["UserID"].str.strip()
-    df["details"] =  df["Details"].fillna('').str.strip()
+    df["user_id"] = df["PhysicianID"].astype(str).str.strip()
+    df["description"] =  df["Details"].fillna('').str.strip()
     df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
     df["highlight"] = df["Highlight"].astype(bool)
 
-    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
-    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    mask_other = df["Type"].str.strip() == "Other:"
-    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+    df["duration_(eg:_8_weeks)"] = df["Duration"].fillna('').str.strip()
+    df["number_of_students"] = df["Class Size"].fillna('').str.strip() 
+ 
+    # Handle Total Hours as decimal
+    try:
+        df["total_hours"] = pd.to_numeric(df["Total Hours"], errors='coerce')
+        # Format as decimal with 2 decimal places when converting to string
+        df["total_hours"] = df["total_hours"].fillna(0).round(2).astype(str)
+    except Exception as e:
+        print(f"Error converting Total Hours to numeric: {str(e)}")
+        # Fallback to string if conversion fails
+        df["total_hours"] = df["Total Hours"].fillna('').astype(str).str.strip()
+    
+
+    df["student_level_original"] = df["Student Level"].fillna('').str.strip()
+    # Create a mapping dictionary for student levels with the specific categories
+    level_mapping = {
+        'Year 1': 'Year 1',
+        'Year 2': 'Year 2',
+        'Year 3': 'Year 3 (Clinical Clerkship)',  # Updated to match requirement
+        'Year 4': 'Year 4',
+        'Graduates': 'Graduates',  # Changed from "Graduate" to "Graduates"
+        'Graduate': 'Graduates',   # Maps to plural form
+        'Postgraduates': 'Postgraduates',  # Keep as plural
+        'Post graduate': 'Postgraduates',  
+        'Postgraduate': 'Postgraduates',
+        'Fellowship': 'Fellowship',  # New category
+        'Fellow': 'Fellowship',      # Map to Fellowship
+        'Fellows': 'Fellowship',     # Map to Fellowship
+        'External Trainees': 'External Trainees',  # New category
+        'External Trainee': 'External Trainees'
+    }
+    
+    # Apply the mapping for standard categories
+    df["student_level"] = df["student_level_original"].map(level_mapping)
+
+    # Handle "Other:" cases - combine with the text after "Other:"
+    mask_other = df["student_level_original"].str.startswith("Other:")
+    df.loc[mask_other, "student_level"] = "Other (" + df.loc[mask_other, "student_level_original"].str.replace("Other:", "").str.strip() + ")"
+
+    # Special case handling for common patterns
+    df.loc[df["student_level_original"].str.contains("Fellow", case=False, na=False), "student_level"] = "Fellowship"
+    df.loc[df["student_level_original"].str.contains("MSI-", case=False, na=False), "student_level"] = "Year 1"
+    df.loc[df["student_level_original"].str.contains("Medical Student", case=False, na=False), "student_level"] = "Other (Medical Student)"
+    df.loc[df["student_level_original"].str.contains("Medical students", case=False, na=False), "student_level"] = "Other (Medical Students)"
+
+    # Handle anything else that didn't match as "Other"
+    mask_unmapped = df["student_level"].isna()
+    df.loc[mask_unmapped, "student_level"] = "Other (" + df.loc[mask_unmapped, "student_level_original"] + ")"
 
     # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
     df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
@@ -51,7 +94,7 @@ def cleanData(df):
 
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "description", "student_level", "duration_(eg:_8_weeks)", "number_of_students", "total_hours", "highlight_notes", "highlight", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
@@ -148,62 +191,83 @@ def lambda_handler(event, context):
         print(f"Processing manual upload file: {file_key} from bucket: {bucket_name}")
 
         # Fetch file from S3 (as bytes)
-        file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
-        print("Data fetched successfully.")
-
-        # Load data into DataFrame
         try:
-            df = loadData(file_bytes, file_key)
-        except ValueError as e:
-            
+            file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
+            print("Data fetched successfully.")
+            print(f"File size: {len(file_bytes)} bytes")
+        except Exception as fetch_error:
+            print(f"Error fetching data from S3: {str(fetch_error)}")
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
-                'error': str(e)
+                'error': f"S3 fetch error: {str(fetch_error)}"
             }
-        print("Data loaded successfully.")
 
-        # Clean the DataFrame
-        df = cleanData(df)
-        print("Data cleaned successfully.")
-        print(df.to_string())
+        # Load and process data
+        try:
+            # Load data into DataFrame
+            df = loadData(file_bytes, file_key)
+            print("Data loaded successfully.")
+            print(f"DataFrame shape: {df.shape}")
+            print(f"DataFrame columns: {df.columns.tolist()}")
+            
+            # Check for required columns
+            required_columns = ["PhysicianID", "UserID", "Details", "Type"]
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                raise ValueError(f"Missing required columns: {missing_columns}")
+            
+            # Clean the DataFrame
+            df = cleanData(df)
+            print("Data cleaned successfully.")
+            
+            # Connect to database
+            connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
+            cursor = connection.cursor()
+            print("Connected to database")
 
-        # Connect to database
-        connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
-        cursor = connection.cursor()
-        print("Connected to database")
+            rows_processed = 0
+            rows_added_to_db = 0
+            errors = []
 
-        rows_processed = 0
-        rows_added_to_db = 0
-        errors = []
+            rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
+            print("Data stored successfully.")
+            cursor.close()
+            connection.close()
 
-        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
-        print("Data stored successfully.")
-        cursor.close()
-        connection.close()
+            # Clean up - delete the processed file
+            s3_client.delete_object(Bucket=bucket_name, Key=file_key)
+            print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
 
-        # Clean up - delete the processed file
-        s3_client.delete_object(Bucket=bucket_name, Key=file_key)
-        print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
+            result = {
+                'statusCode': 200,
+                'status': 'COMPLETED',
+                'total_rows': len(df),
+                'rows_processed': rows_processed,
+                'rows_added_to_database': rows_added_to_db,
+                'errors': errors[:10] if errors else []
+            }
 
-
-        result = {
-            'statusCode': 200,
-            'status': 'COMPLETED',
-            'total_rows': len(df),
-            'rows_processed': rows_processed,
-            'rows_added_to_database': rows_added_to_db,
-            'errors': errors[:10] if errors else []
-        }
-
-        print(f"Manual upload completed: {result}")
-        return result
+            print(f"Manual upload completed: {result}")
+            return result
+            
+        except Exception as load_error:
+            print(f"Error loading or processing data: {str(load_error)}")
+            return {
+                'statusCode': 400,
+                'status': 'FAILED',
+                'error': f"Data loading error: {str(load_error)}"
+            }
 
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
         print(f"Error processing manual upload: {str(e)}")
+        print(f"Traceback: {error_trace}")
         return {
             'statusCode': 500,
             'status': 'FAILED',
-            'error': str(e)
+            'error': str(e),
+            'traceback': error_trace
         }
 
