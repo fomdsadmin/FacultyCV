@@ -109,7 +109,6 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            print(f"Processed row {i + 1}/{len(df)}")
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -188,7 +187,6 @@ def lambda_handler(event, context):
         # Clean the DataFrame
         df = cleanData(df)
         print("Data cleaned successfully.")
-        print(df.to_string())
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
