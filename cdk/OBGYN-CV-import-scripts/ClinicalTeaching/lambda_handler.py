@@ -23,7 +23,7 @@ def cleanData(df):
     df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["description"] =  df["Details"].fillna('').str.strip()
     df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].str.strip().str.lower().map({'true': True, 'false': False})
+    df["highlight"] = df["Highlight"].astype(bool)
 
     df["duration_(eg:_8_weeks)"] = df["Duration"].fillna('').str.strip()
     df["number_of_students"] = df["Class Size"].fillna('').str.strip() 
