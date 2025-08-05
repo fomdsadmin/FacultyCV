@@ -14,40 +14,25 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = "8[f-i]. Other Teaching and Learning Activities"
+SECTION_TITLE = "placehoder"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Ensure relevant columns are string type before using .str methods
-    for col in ["PhysicianID", "Details", "Type", "TypeOther", "University_Organization", "Notes"]:
-        if col in df.columns:
-            df[col] = df[col].astype(str)
+    # Only keep rows where UserID is a string of expected length (e.g., 32)
 
-    df["user_id"] = df["PhysicianID"].fillna('').str.strip()
-    
-    # Map the different types from CSV to specific strings
-    type_mapping = {
-        'Visiting Lecturer': 'f. Visiting Lecturer',
-        'Educational Leadership': 'g. Educational Leadership',
-        'Curriculum Development & Innovation': 'h. Curriculum Development & Innovation',
-        'Other Teaching': 'i. Other',
-    }
-    
-    # Apply the mapping, defaulting to the original value if not found in mapping
-    df["type"] = df["Type"].fillna('').astype(str).map(type_mapping).fillna(df["Type"].fillna('').astype(str))
-    
-    # If Type is "Other Teaching", set type to "i. Other ({TypeOther})"
-    mask_other = df["Type"].fillna('').str.strip() == "Other Teaching"
-    df.loc[mask_other, "type"] = "i. Other (" + df.loc[mask_other, "TypeOther"].fillna('').str.strip() + ")"
-    
-    df["university/organization"] =  df["University_Organization"].fillna('').str.strip()
-    df["rank_or_title"] = df["Details"].fillna('').str.strip()
-    
+    df["physician_id"] = df['PhysicianID'].str.strip()
+    df["user_id"] = df["UserID"].str.strip() # might be empty 
     df["details"] =  df["Details"].fillna('').str.strip()
+    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
+    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
     df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = False
+    df["highlight"] = df["Highlight"].astype(bool)
+
+    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
+    mask_other = df["Type"].str.strip() == "Other:"
+    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
 
     # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
     df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
@@ -71,7 +56,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type", "university/organization", "highlight_-_notes", "highlight", "dates"]]
+    df = df[["physician_id", "user_id", "details", "type_of_leave", "highlight_-_notes", "highlight", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
@@ -125,6 +110,7 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
+            print(f"Processed row {i + 1}/{len(df)}")
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -144,30 +130,13 @@ def fetchFromS3(bucket, key):
 def loadData(file_bytes, file_key):
     """
     Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
-    Handles CSV, JSON lines, and JSON array files.
     """
     if file_key.lower().endswith('.xlsx'):
+        # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
-        # Try reading as regular CSV first
-        try:
-            return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
-        except Exception as csv_exc:
-            print(f"Failed to read as CSV: {csv_exc}")
-            # Try reading as JSON lines (NDJSON)
-            try:
-                return pd.read_json(io.StringIO(file_bytes.decode('utf-8')), lines=True)
-            except Exception as jsonl_exc:
-                print(f"Failed to read as JSON lines: {jsonl_exc}")
-                # Try reading as JSON array
-                try:
-                    return pd.read_json(io.StringIO(file_bytes.decode('utf-8')))
-                except Exception as json_exc:
-                    print(f"Failed to read as JSON array: {json_exc}")
-                    raise ValueError(
-                        f"Could not parse file as CSV, JSON lines, or JSON array. "
-                        f"CSV error: {csv_exc}, JSON lines error: {jsonl_exc}, JSON array error: {json_exc}"
-                    )
+        # For CSV, decode bytes to text
+        return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
 
@@ -203,6 +172,7 @@ def lambda_handler(event, context):
         # Clean the DataFrame
         df = cleanData(df)
         print("Data cleaned successfully.")
+        print(df.to_string())
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)

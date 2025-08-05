@@ -3,24 +3,11 @@ import "../CustomStyles/scrollbar.css";
 import "../CustomStyles/modal.css";
 import SecureFundingEntry from "./SecureFundingEntry";
 import { fetchAuthSession } from "aws-amplify/auth";
-import {
-  getSecureFundingMatches,
-  getRiseDataMatches,
-  addUserCVData,
-  getAllSections,
-} from "../graphql/graphqlHelpers";
+import { getSecureFundingMatches, getRiseDataMatches, addUserCVData, getAllSections } from "../graphql/graphqlHelpers";
 
-const SecureFundingModal = ({
-  user,
-  section,
-  onClose,
-  setRetrievingData,
-  fetchData,
-}) => {
+const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
   const [allSecureFundingData, setAllSecureFundingData] = useState([]);
-  const [selectedSecureFundingData, setSelectedSecureFundingData] = useState(
-    []
-  );
+  const [selectedSecureFundingData, setSelectedSecureFundingData] = useState([]);
   const [fetchingData, setFetchingData] = useState(true);
   const [initialRender, setInitialRender] = useState(true);
   const [addingData, setAddingData] = useState(false);
@@ -30,14 +17,8 @@ const SecureFundingModal = ({
     setFetchingData(true);
     setInitialRender(false);
     try {
-      const retrievedData = await getSecureFundingMatches(
-        user.first_name,
-        user.last_name
-      );
-      console.log(
-        "Retrieved secure funding data, Total: ",
-        retrievedData.length
-      );
+      const retrievedData = await getSecureFundingMatches(user.first_name, user.last_name);
+      console.log("Retrieved secure funding data, Total: ", retrievedData.length);
       const allDataDetails = [];
       const uniqueDataDetails = new Set();
 
@@ -63,10 +44,7 @@ const SecureFundingModal = ({
     setFetchingData(true);
     setInitialRender(false);
     try {
-      const retrievedData = await getRiseDataMatches(
-        user.first_name,
-        user.last_name
-      );
+      const retrievedData = await getRiseDataMatches(user.first_name, user.last_name);
       const allDataDetails = [];
       const uniqueDataDetails = new Set();
 
@@ -109,11 +87,11 @@ const SecureFundingModal = ({
     for (const data of tempData) {
       data.year = data.dates.split("-")[0];
       delete data.dates;
-      data.type = "Grant"
+      data.type = "Grant";
       fname = data.first_name || "";
       lname = data.last_name || "";
       if (fname) {
-        data.principal_investigator = fname
+        data.principal_investigator = fname;
       }
       if (lname) {
         data.principal_investigator += ` ${lname}`;
@@ -130,8 +108,8 @@ const SecureFundingModal = ({
 
       let dataSections = [];
       dataSections = await getAllSections();
-      const secureFundingSectionId = dataSections.find(
-        (section) => section.title.includes("Research or Equivalent Grants")
+      const secureFundingSectionId = dataSections.find((section) =>
+        section.title.includes("Research or Equivalent Grants")
       )?.data_section_id;
 
       const payload = {
@@ -142,11 +120,9 @@ const SecureFundingModal = ({
           editable: "false",
         },
       };
-      const baseUrl = window.location.hostname.startsWith("dev.")
-        ? "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev"
-        : "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev";
+      const baseUrl = process.env.REACT_APP_BATCH_API_BASE_URL || "";
 
-      const response = await fetch(`${baseUrl}/addBatchedData`, {
+      const response = await fetch(`${baseUrl}/batch/addBatchedData`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,11 +133,7 @@ const SecureFundingModal = ({
 
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
       else {
-        console.log(
-          "Added ",
-          payload.arguments.data_details_list.length,
-          "Grants Successfully | 200 OK"
-        );
+        console.log("Added ", payload.arguments.data_details_list.length, "Grants Successfully | 200 OK");
         setAddedSuccessfully(true);
       }
     } catch (error) {
@@ -208,35 +180,16 @@ const SecureFundingModal = ({
           <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
             <div className="text-center mb-4">
               <div className="mb-2">Fetch data from RISE:</div>
-              <button
-                type="button"
-                className="btn btn-secondary mt-5 mb-8"
-                onClick={fetchRiseData}
-              >
+              <button type="button" className="btn btn-secondary mt-5 mb-8" onClick={fetchRiseData}>
                 Fetch RISE Data
               </button>
-              <div className="mb-2">
-                Fetch data from the following external grant sources:
-              </div>
-              <div className="text-sm">
-                1. Canadian Institutes of Health Research (CIHR)
-              </div>
-              <div className="text-sm">
-                2. Natural Sciences and Engineering Research Council of Canada
-                (NSERC)
-              </div>
-              <div className="text-sm">
-                3. Social Sciences and Humanities Research Council (SSHRC)
-              </div>
-              <div className="text-sm">
-                4. Canada Foundation for Innovation (CFI)
-              </div>
+              <div className="mb-2">Fetch data from the following external grant sources:</div>
+              <div className="text-sm">1. Canadian Institutes of Health Research (CIHR)</div>
+              <div className="text-sm">2. Natural Sciences and Engineering Research Council of Canada (NSERC)</div>
+              <div className="text-sm">3. Social Sciences and Humanities Research Council (SSHRC)</div>
+              <div className="text-sm">4. Canada Foundation for Innovation (CFI)</div>
             </div>
-            <button
-              type="button"
-              className="btn btn-info mt-1"
-              onClick={fetchSecureFundingData}
-            >
+            <button type="button" className="btn btn-info mt-1" onClick={fetchSecureFundingData}>
               Fetch External Data
             </button>
           </div>
@@ -246,12 +199,9 @@ const SecureFundingModal = ({
           </div>
         ) : addedSuccessfully ? (
           <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
-            <div className="block text-lg font-bold mb-2 mt-6 text-green-600">
-              Grants Added Successfully!
-            </div>
+            <div className="block text-lg font-bold mb-2 mt-6 text-green-600">Grants Added Successfully!</div>
             <div className="text-sm text-gray-600 mt-1">
-              {selectedSecureFundingData.length} grants have been added to your
-              profile
+              {selectedSecureFundingData.length} grants have been added to your profile
             </div>
           </div>
         ) : (
@@ -263,9 +213,7 @@ const SecureFundingModal = ({
                 <>
                   <div className="flex items-center justify-between bg-gray-100 mt-4 mx-auto p-4 rounded-xl shadow mb-4 max-w-3xl w-full">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl font-semibold text-gray-700">
-                        Matched Grants
-                      </span>
+                      <span className="text-xl font-semibold text-gray-700">Matched Grants</span>
                       <span className="bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
                         {selectedSecureFundingData.length} selected
                       </span>
@@ -284,9 +232,7 @@ const SecureFundingModal = ({
                           onClick={addSecureFundingData}
                           disabled={addingData}
                         >
-                          {addingData
-                            ? "Adding grants data..."
-                            : "Add Grant Data"}
+                          {addingData ? "Adding grants data..." : "Add Grant Data"}
                         </button>
                       )}
                     </div>
@@ -297,9 +243,7 @@ const SecureFundingModal = ({
                         key={index}
                         secureFundingData={secureFundingData}
                         onSelect={handleSelect}
-                        selected={selectedSecureFundingData.includes(
-                          secureFundingData
-                        )}
+                        selected={selectedSecureFundingData.includes(secureFundingData)}
                       />
                     ))}
                   </div>

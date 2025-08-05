@@ -82,11 +82,9 @@ const PatentsModal = ({ user, section, onClose, setRetrievingData, fetchData }) 
           editable: "false",
         },
       };
-      const baseUrl = window.location.hostname.startsWith("dev.")
-        ? "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev"
-        : "https://02m9a64mzf.execute-api.ca-central-1.amazonaws.com/dev";
+      const baseUrl = process.env.REACT_APP_BATCH_API_BASE_URL || "";
 
-      const response = await fetch(`${baseUrl}/addBatchedData`, {
+      const response = await fetch(`${baseUrl}/batch/addBatchedData`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -14,30 +14,78 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLE = "8b.1. Courses Taught"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Only keep rows where UserID is a string of expected length (e.g., 32)
-    df["user_id"] = df["UserID"].str.strip()
-    df["details"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
+    # Ensure relevant columns are string type before using .str methods
+    for col in ["PhysicianID", "Session", "Course", "Footnote", "ShowFN", "Schedule hours per year", 
+                "Class Size","Lectures","Tutorials","Labs","Other", "Details", "Notes"]:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
 
-    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
-    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    mask_other = df["Type"].str.strip() == "Other:"
-    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+    df["user_id"] = df["PhysicianID"].fillna('').str.strip()
+    
+    # Map special cases of session to match frontend expectations
+    session_mapping = {
+        "Winter": "Winter Term 1 & 2 (Sept - Apr)",
+        "Winter 1 & 2": "Winter Term 1 & 2 (Sept - Apr)",
+        "2": "Winter Term 1 (Sept - Dec)",
+        "3": "Winter Term 2 (Jan - Apr)",
+        "4": "Summer Session (May - Aug)",
+        "5": "5th Year",
+        "6": "6th Year",
+        "7": "7th Year",
+        "8": "8th Year",
+        "9": "9th Year",
+        "10": "10th Year"
+    }
+    df["session"] = df["Session"].fillna('').str.strip().map(session_mapping)
+    
+    df["course"] = df["Course"].fillna('').str.strip()
+    df["footnote_-_notes"] = df["Footnote"].fillna('').str.strip()
+    if "ShowFN" in df.columns:
+        df["footnote"] = df["ShowFN"].fillna('').str.strip().str.upper() == 'TRUE'
+    else:
+        df["footnote"] = False
+    df["scheduled_hours_(per_year)"] = df["Schedule hours per year"].fillna('').str.strip()
+    df["scheduled_hours_(per_year)"] = df["scheduled_hours_(per_year)"].replace('0.00', '')
+    
+    df["class_size_(per_year)"] = df["Class Size"].fillna('').str.strip()
+    df["class_size_(per_year)"] = df["class_size_(per_year)"].replace('0.00', '')
+    
+    df["lecture_hours_(per_year)"] = df["Lectures"].fillna('').str.strip()
+    df["lecture_hours_(per_year)"] = df["lecture_hours_(per_year)"].replace('0.00', '')
+    
+    df["tutorial_hours_(per_year)"] = df["Tutorials"].fillna('').str.strip()
+    df["tutorial_hours_(per_year)"] = df["tutorial_hours_(per_year)"].replace('0.00', '')
+    
+    df["lab_hours_(per_year)"] = df["Labs"].fillna('').str.strip()
+    df["lab_hours_(per_year)"] = df["lab_hours_(per_year)"].replace('0.00', '')
+    
+    df["other_hours_(per_year)"] = df["Other"].fillna('').str.strip()
+    df["other_hours_(per_year)"] = df["other_hours_(per_year)"].replace('0.00', '')
+
+    df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
+    if "Highlight" in df.columns:
+        df["highlight"] = df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
+    else:
+        df["highlight"] = False
+        
+    df["details"] =  df["Details"].fillna('').str.strip()
 
     # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
     df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
     df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
     df["start_date"] = df["start_date"].fillna('').str.strip()
     df["end_date"] = df["end_date"].fillna('').str.strip()
+
     # Combine start and end dates into a single 'dates' column:
+    # - If both empty: ''
+    # - If only one present: show that
+    # - If both present: 'Start Date - End Date'
     def combine_dates(row):
         if row["start_date"] and row["end_date"]:
             return f"{row['start_date']} - {row['end_date']}"
@@ -49,9 +97,10 @@ def cleanData(df):
             return ""
     df["dates"] = df.apply(combine_dates, axis=1)
 
-
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "details", "session", "course", "footnote_-_notes", "footnote", "scheduled_hours_(per_year)", 
+             "class_size_(per_year)", "lecture_hours_(per_year)", "tutorial_hours_(per_year)", "lab_hours_(per_year)", "other_hours_(per_year)", "highlight_-_notes", "highlight", "dates"]]
+
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
@@ -104,7 +153,6 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            print(f"Processed row {i + 1}/{len(df)}")
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -124,13 +172,30 @@ def fetchFromS3(bucket, key):
 def loadData(file_bytes, file_key):
     """
     Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
+    Handles CSV, JSON lines, and JSON array files.
     """
     if file_key.lower().endswith('.xlsx'):
-        # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
-        # For CSV, decode bytes to text
-        return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        # Try reading as regular CSV first
+        try:
+            return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        except Exception as csv_exc:
+            print(f"Failed to read as CSV: {csv_exc}")
+            # Try reading as JSON lines (NDJSON)
+            try:
+                return pd.read_json(io.StringIO(file_bytes.decode('utf-8')), lines=True)
+            except Exception as jsonl_exc:
+                print(f"Failed to read as JSON lines: {jsonl_exc}")
+                # Try reading as JSON array
+                try:
+                    return pd.read_json(io.StringIO(file_bytes.decode('utf-8')))
+                except Exception as json_exc:
+                    print(f"Failed to read as JSON array: {json_exc}")
+                    raise ValueError(
+                        f"Could not parse file as CSV, JSON lines, or JSON array. "
+                        f"CSV error: {csv_exc}, JSON lines error: {jsonl_exc}, JSON array error: {json_exc}"
+                    )
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
 
@@ -154,19 +219,18 @@ def lambda_handler(event, context):
         # Load data into DataFrame
         try:
             df = loadData(file_bytes, file_key)
+            print("Data loaded successfully.")
         except ValueError as e:
-            
+            print(f"Error loading data: {str(e)}")
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
                 'error': str(e)
             }
-        print("Data loaded successfully.")
 
         # Clean the DataFrame
         df = cleanData(df)
         print("Data cleaned successfully.")
-        print(df.to_string())
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
