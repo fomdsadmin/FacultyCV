@@ -25,7 +25,6 @@ def cleanData(df):
     df["details"] =  df["Details"].fillna('').str.strip()
     df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
     df["highlight"] = df["Highlight"].astype(bool)
-
     # If Type is "Other:", set type_of_leave to "Other ({type_other})"
     # need to added the section number to the drop down 
     df["type_original"]  =  df["Type"].fillna('').str.strip()
@@ -73,7 +72,7 @@ def cleanData(df):
 
 
     # Keep only the cleaned columns
-    df = df[["physician_id", "user_id", "details", "type", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "details", "type", "highlight_notes", "highlight", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
