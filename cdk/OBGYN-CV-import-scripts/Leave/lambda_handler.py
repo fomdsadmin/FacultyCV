@@ -58,7 +58,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_-_notes", "highlight", "dates"]]
+    df = df[["physician_id", "user_id", "details", "type_of_leave", "highlight_-_notes", "highlight", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})

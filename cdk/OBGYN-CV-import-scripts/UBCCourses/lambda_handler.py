@@ -30,19 +30,25 @@ def cleanData(df):
     
     # Map special cases of session to match frontend expectations
     session_mapping = {
-        "Winter": "Winter Term 1 & 2 (Sept - Apr)",
         "Winter 1 & 2": "Winter Term 1 & 2 (Sept - Apr)",
-        "2": "Winter Term 1 (Sept - Dec)",
-        "3": "Winter Term 2 (Jan - Apr)",
-        "4": "Summer Session (May - Aug)",
-        "5": "5th Year",
-        "6": "6th Year",
-        "7": "7th Year",
-        "8": "8th Year",
-        "9": "9th Year",
-        "10": "10th Year"
+        "Winter 1": "Winter Term 1 (Sept - Dec)",
+        "Term 1": "Winter Term 1 (Sept - Dec)",
+        "Fall": "Winter Term 1 (Sept - Dec)",
+        "Winter 2": "Winter Term 2 (Jan - Apr)",
+        "Term 2": "Winter Term 2 (Jan - Apr)",
+        "Summer": "Summer Session (May - Aug)",
     }
-    df["session"] = df["Session"].fillna('').str.strip().map(session_mapping)
+    
+    def map_session(session_value):
+        if pd.isna(session_value) or session_value.strip() == '':
+            return ''
+        session_clean = session_value.strip()
+        if session_clean in session_mapping:
+            return session_mapping[session_clean]
+        else:
+            return f"Other ({session_clean})"
+    
+    df["session"] = df["Session"].apply(map_session)
     
     df["course"] = df["Course"].fillna('').str.strip()
     df["footnote_-_notes"] = df["Footnote"].fillna('').str.strip()
