@@ -120,7 +120,11 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
           editable: "false",
         },
       };
-      const baseUrl = process.env.REACT_APP_BATCH_API_BASE_URL || "";
+      let baseUrl = process.env.REACT_APP_BATCH_API_BASE_URL || "";
+      // omit the last '/' from baseUrl
+      if (baseUrl.endsWith("/")) {
+        baseUrl = baseUrl.slice(0, -1);
+      }
 
       const response = await fetch(`${baseUrl}/batch/addBatchedData`, {
         method: "POST",

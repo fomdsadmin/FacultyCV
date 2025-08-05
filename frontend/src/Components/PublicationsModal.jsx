@@ -26,7 +26,11 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
   const [fetchStage, setFetchStage] = useState(""); // "scopus", "orcid", "deduplicate", "add"
 
   const navigate = useNavigate();
-  const baseUrl = process.env.REACT_APP_BATCH_API_BASE_URL || "";
+  let baseUrl = process.env.REACT_APP_BATCH_API_BASE_URL || "";
+  // omit the last '/' from baseUrl
+  if (baseUrl.endsWith("/")) {
+    baseUrl = baseUrl.slice(0, -1);
+  }
 
   async function fetchPublicationsData() {
     setInitialRender(false);
@@ -404,7 +408,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
           editable: "false",
         },
       };
-      
+
       const response = await fetch(`${baseUrl}/batch/addBatchedData`, {
         method: "POST",
         headers: {

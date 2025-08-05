@@ -31,6 +31,20 @@ export class BatchApiGatewayStack extends Stack {
     if (!resourcePrefix)
       resourcePrefix = 'facultycv' // Default
 
+    // Get allowed origins from environment variables
+    const allowedOrigins = [];
+    
+    // Add origin
+    if (process.env.REACT_APP_AMPLIFY_DOMAIN) {
+      allowedOrigins.push(process.env.REACT_APP_AMPLIFY_DOMAIN);
+    }
+    
+    // If no environment variables are set, fall back to allowing all origins
+    const corsOrigins = allowedOrigins.length > 0 ? allowedOrigins : apigateway.Cors.ALL_ORIGINS;
+    
+    // For integration responses, use '*' if multiple origins, otherwise use the specific origin
+    const corsOriginValue = (allowedOrigins.length === 1) ? `'${allowedOrigins[0]}'` : "'*'";
+
     // Create an IAM role for API Gateway to write logs to CloudWatch
     const apiCloudwatchRole = new iam.Role(this, 'BatchApiGatewayCloudWatchRole', {
       roleName: `${resourcePrefix}-batch-api-cloudwatch-role`,
@@ -48,19 +62,6 @@ export class BatchApiGatewayStack extends Stack {
     this.api = new apigateway.RestApi(this, 'BatchDataAPI', {
       restApiName: `${resourcePrefix}-BatchDataAPI`,
       description: 'API Gateway for triggering batch/bulk data operations',
-      defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: ['POST', 'GET', 'OPTIONS'],
-        allowHeaders: [
-          'Content-Type', 
-          'X-Amz-Date',
-          'Authorization',
-          'X-Api-Key',
-          'X-Amz-Security-Token',
-          'X-Amz-User-Agent'
-        ],
-        allowCredentials: true,
-      },
       deployOptions: {
         stageName: 'facultycv-batching-stage',
         metricsEnabled: true,
@@ -98,149 +99,351 @@ export class BatchApiGatewayStack extends Stack {
     // Use the resolver role from ApiStack instead of creating a new one
     const batchLambdaRole = apiStack.getResolverRole();
 
-    // Create Lambda function for adding batched user CV data
-    const addBatchedUserCVDataFunction = new Function(this, 'AddBatchedUserCVDataFunction', {
-      runtime: Runtime.PYTHON_3_9,
-      code: Code.fromAsset('lambda/addBatchedUserCVData'),
-      handler: 'resolver.lambda_handler',
-      timeout: Duration.minutes(15),
-      memorySize: 1024,
-      role: batchLambdaRole,
-      layers: [
-        apiStack.getLayers()['psycopg2'],
-        apiStack.getLayers()['databaseConnect']
-      ],
-      environment: {
-        DB_PROXY_ENDPOINT: dbProxyEndpoint
-      }
-    });
+    // Reference existing Lambda functions instead of creating new ones
+    const addBatchedUserCVDataFunction = Function.fromFunctionName(
+      this, 
+      'AddBatchedUserCVDataFunction', 
+      `${resourcePrefix}-addBatchedUserCVData-resolver`
+    );
 
-    // Create Lambda function for getting batched ORCID publications
-    const getOrcidPublicationFunction = new Function(this, 'GetBatchedOrcidPublicationFunction', {
-      runtime: Runtime.PYTHON_3_9,
-      code: Code.fromAsset('lambda/getOrcidPublication'),
-      handler: 'resolver.lambda_handler',
-      timeout: Duration.minutes(15),
-      memorySize: 1024,
-      role: batchLambdaRole,
-      layers: [
-        apiStack.getLayers()['psycopg2'],
-        apiStack.getLayers()['databaseConnect'],
-        apiStack.getLayers()['requests']
-      ],
-      environment: {
-        DB_PROXY_ENDPOINT: dbProxyEndpoint
-      }
-    });
+    const getOrcidPublicationFunction = Function.fromFunctionName(
+      this, 
+      'GetBatchedOrcidPublicationFunction', 
+      `${resourcePrefix}-getOrcidPublication-resolver`
+    );
 
-    // Create Lambda function for getting batched Scopus publications
-    const getPublicationMatchesFunction = new Function(this, 'GetBatchedPublicationMatchesFunction', {
-      runtime: Runtime.PYTHON_3_9,
-      code: Code.fromAsset('lambda/getPublicationMatches'),
-      handler: 'resolver.lambda_handler',
-      timeout: Duration.minutes(15),
-      memorySize: 1024,
-      role: batchLambdaRole,
-      layers: [
-        apiStack.getLayers()['psycopg2'],
-        apiStack.getLayers()['databaseConnect'],
-        apiStack.getLayers()['requests']
-      ],
-      environment: {
-        DB_PROXY_ENDPOINT: dbProxyEndpoint
-      }
-    });
+    const getPublicationMatchesFunction = Function.fromFunctionName(
+      this, 
+      'GetBatchedPublicationMatchesFunction', 
+      `${resourcePrefix}-getPublicationMatches-resolver`
+    );
 
-    // Create Lambda function for getting total ORCID publications
-    const getTotalOrcidPublicationsFunction = new Function(this, 'GetTotalOrcidPublicationsFunction', {
-      runtime: Runtime.PYTHON_3_9,
-      code: Code.fromAsset('lambda/getTotalOrcidPublications'),
-      handler: 'resolver.lambda_handler',
-      timeout: Duration.minutes(15),
-      memorySize: 1024,
-      role: batchLambdaRole,
-      layers: [
-        apiStack.getLayers()['psycopg2'],
-        apiStack.getLayers()['databaseConnect'],
-        apiStack.getLayers()['requests']
-      ],
-      environment: {
-        DB_PROXY_ENDPOINT: dbProxyEndpoint
-      }
-    });
+    const getTotalOrcidPublicationsFunction = Function.fromFunctionName(
+      this, 
+      'GetTotalOrcidPublicationsFunction', 
+      `${resourcePrefix}-getTotalOrcidPublications-resolver`
+    );
 
-    // Create Lambda function for getting total Scopus publications
-    const getTotalScopusPublicationsFunction = new Function(this, 'GetTotalScopusPublicationsFunction', {
-      runtime: Runtime.PYTHON_3_9,
-      code: Code.fromAsset('lambda/getTotalScopusPublications'),
-      handler: 'resolver.lambda_handler',
-      timeout: Duration.minutes(15),
-      memorySize: 1024,
-      role: batchLambdaRole,
-      layers: [
-        apiStack.getLayers()['psycopg2'],
-        apiStack.getLayers()['databaseConnect'],
-        apiStack.getLayers()['requests']
-      ],
-      environment: {
-        DB_PROXY_ENDPOINT: dbProxyEndpoint
-      }
-    });
+    const getTotalScopusPublicationsFunction = Function.fromFunctionName(
+      this, 
+      'GetTotalScopusPublicationsFunction', 
+      `${resourcePrefix}-getTotalScopusPublications`
+    );
 
     // Add API Gateway methods and integrations
 
     // POST /batch/addBatchedData - Add batched CV data
     batchedCVDataResource.addMethod(
       'POST',
-      new apigateway.LambdaIntegration(addBatchedUserCVDataFunction),
+      new apigateway.LambdaIntegration(addBatchedUserCVDataFunction, {
+        proxy: false,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ]
+      }),
       {
         authorizer,
         authorizationType: apigateway.AuthorizationType.COGNITO,
-        requestValidator: new apigateway.RequestValidator(this, 'BatchCVDataRequestValidator', {
-          restApi: this.api,
-          validateRequestBody: true,
-          validateRequestParameters: false,
-        }),
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true
+            },
+            responseModels: {
+              'application/json': apigateway.Model.EMPTY_MODEL
+            }
+          }
+        ]
+      }
+    );
+
+    // OPTIONS /batch/addBatchedData - CORS preflight
+    batchedCVDataResource.addMethod(
+      'OPTIONS',
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              'method.response.header.Access-Control-Allow-Methods': "'OPTIONS,POST'",
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ],
+        requestTemplates: {
+          'application/json': '{"statusCode": 200}'
+        }
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Origin': true
+            }
+          }
+        ]
       }
     );
 
     // POST /batch/getBatchedOrcidPublications - Get batched ORCID publications
     orcidPublicationsResource.addMethod(
       'POST',
-      new apigateway.LambdaIntegration(getOrcidPublicationFunction),
+      new apigateway.LambdaIntegration(getOrcidPublicationFunction, {
+        proxy: false,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ]
+      }),
       {
         authorizer,
         authorizationType: apigateway.AuthorizationType.COGNITO,
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true
+            },
+            responseModels: {
+              'application/json': apigateway.Model.EMPTY_MODEL
+            }
+          }
+        ]
+      }
+    );
+
+    // OPTIONS /batch/getBatchedOrcidPublications - CORS preflight
+    orcidPublicationsResource.addMethod(
+      'OPTIONS',
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              'method.response.header.Access-Control-Allow-Methods': "'OPTIONS,POST'",
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ],
+        requestTemplates: {
+          'application/json': '{"statusCode": 200}'
+        }
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Origin': true
+            }
+          }
+        ]
       }
     );
 
     // POST /batch/getBatchedScopusPublications - Get batched Scopus publications
     scopusPublicationsResource.addMethod(
       'POST',
-      new apigateway.LambdaIntegration(getPublicationMatchesFunction),
+      new apigateway.LambdaIntegration(getPublicationMatchesFunction, {
+        proxy: false,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ]
+      }),
       {
         authorizer,
         authorizationType: apigateway.AuthorizationType.COGNITO,
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true
+            },
+            responseModels: {
+              'application/json': apigateway.Model.EMPTY_MODEL
+            }
+          }
+        ]
+      }
+    );
+
+    // OPTIONS /batch/getBatchedScopusPublications - CORS preflight
+    scopusPublicationsResource.addMethod(
+      'OPTIONS',
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              'method.response.header.Access-Control-Allow-Methods': "'OPTIONS,POST'",
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ],
+        requestTemplates: {
+          'application/json': '{"statusCode": 200}'
+        }
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Origin': true
+            }
+          }
+        ]
       }
     );
 
     // POST /batch/getTotalOrcidPublications - Get total ORCID publications
     totalOrcidPublicationsResource.addMethod(
       'POST',
-      new apigateway.LambdaIntegration(getTotalOrcidPublicationsFunction),
+      new apigateway.LambdaIntegration(getTotalOrcidPublicationsFunction, {
+        proxy: false,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ]
+      }),
       {
         authorizer,
         authorizationType: apigateway.AuthorizationType.COGNITO,
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true
+            },
+            responseModels: {
+              'application/json': apigateway.Model.EMPTY_MODEL
+            }
+          }
+        ]
+      }
+    );
+
+    // OPTIONS /batch/getTotalOrcidPublications - CORS preflight
+    totalOrcidPublicationsResource.addMethod(
+      'OPTIONS',
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              'method.response.header.Access-Control-Allow-Methods': "'OPTIONS,POST'",
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ],
+        requestTemplates: {
+          'application/json': '{"statusCode": 200}'
+        }
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Origin': true
+            }
+          }
+        ]
       }
     );
 
     // POST /batch/getTotalScopusPublications - Get total Scopus publications
     totalScopusPublicationsResource.addMethod(
       'POST',
-      new apigateway.LambdaIntegration(getTotalScopusPublicationsFunction),
+      new apigateway.LambdaIntegration(getTotalScopusPublicationsFunction, {
+        proxy: false,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ]
+      }),
       {
         authorizer,
         authorizationType: apigateway.AuthorizationType.COGNITO,
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true
+            },
+            responseModels: {
+              'application/json': apigateway.Model.EMPTY_MODEL
+            }
+          }
+        ]
+      }
+    );
+
+    // OPTIONS /batch/getTotalScopusPublications - CORS preflight
+    totalScopusPublicationsResource.addMethod(
+      'OPTIONS',
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              'method.response.header.Access-Control-Allow-Methods': "'OPTIONS,POST'",
+              'method.response.header.Access-Control-Allow-Origin': "'*'"
+            }
+          }
+        ],
+        requestTemplates: {
+          'application/json': '{"statusCode": 200}'
+        }
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Headers': true,
+              'method.response.header.Access-Control-Allow-Methods': true,
+              'method.response.header.Access-Control-Allow-Origin': true
+            }
+          }
+        ]
       }
     );
 
