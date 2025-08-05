@@ -17,6 +17,7 @@ import { ResolverStack } from '../lib/resolver-stack';
 import { Resolver2Stack } from '../lib/resolver2-stack';
 import { Resolver3Stack } from '../lib/resolver3-stack';
 import { SupportFormStack } from '../lib/supportform-stack';
+import { BatchApiGatewayStack } from '../lib/batch-apigateway-stack';
 import { OidcAuthStack } from '../lib/oidc-auth-stack';
 
 const app = new cdk.App();
@@ -67,7 +68,11 @@ const resolver3Stack = new Resolver3Stack(app, `${resourcePrefix}-Resolver3Stack
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 )
 
-const amplifyStack = new AmplifyStack(app, `${resourcePrefix}-AmplifyStack`, apiStack, oidcAuthStack,
+const batchApiGatewayStack = new BatchApiGatewayStack(app, `${resourcePrefix}-BatchApiGatewayStack`, apiStack, databaseStack, cvGenStack, oidcAuthStack, {
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
+});
+
+const amplifyStack = new AmplifyStack(app, `${resourcePrefix}-AmplifyStack`, apiStack, oidcAuthStack, batchApiGatewayStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 
