@@ -4,6 +4,10 @@ services:
     container_name: facultycv-gotenberg
     ports:
       - "3000:3000"
+    # Docker memory limits - optimized for 10,000 rows
+    mem_limit: 6g
+    memswap_limit: 6g
+    shm_size: 1g
     environment:
       - GOTENBERG_API_PORT=3000
       - GOTENBERG_LOG_LEVEL=info
@@ -18,7 +22,8 @@ services:
       - "--api-port=3000"
       - "--log-level=info"
       - "--api-enable-basic-auth=false"
-      - "--api-timeout=300s"
+      - "--api-timeout=600s"
+      - "--api-body-limit=200MB"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
