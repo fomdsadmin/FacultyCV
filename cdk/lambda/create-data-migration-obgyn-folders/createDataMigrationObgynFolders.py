@@ -11,6 +11,7 @@ def lambda_handler(event, context):
         'obgyn/Awards/',
         'obgyn/ClinicalTeaching/',
         'obgyn/CME/',
+        'obgyn/CommitteeService/',
         'obgyn/CommunityService/',
         'obgyn/ContinuingEducation/',
         'obgyn/Contributions/',

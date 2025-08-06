@@ -357,6 +357,7 @@ export class UserImportStack extends Stack {
       "Awards",
       "ClinicalTeaching",
       "CME",
+      "CommitteeService",
       "CommunityService",
       "ContinuingEducation",
       "Contributions",
