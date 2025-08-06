@@ -12,7 +12,6 @@ import Declarations from "./Pages/Declarations/Declarations.jsx";
 import Reports from "./Pages/ReportsPage/ReportsPage.jsx";
 import Assistants from "./Views/Assistants.jsx";
 import { getUser } from "./graphql/graphqlHelpers.js";
-import PageContainer from "./Views/PageContainer.jsx";
 import AdminUsers from "./Views/AdminUsers.jsx";
 import Archive from "./Views/Archive.jsx";
 import AssistantConnections from "./Views/AssistantConnections.jsx";
@@ -73,16 +72,6 @@ const AppContent = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <PageContainer>
-        <div className="flex items-center justify-center w-full">
-          <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-        </div>
-      </PageContainer>
-    );
-  }
-
   return (
     <Router>
       <AuditLoggerProvider userInfo={userInfo}>
@@ -99,7 +88,15 @@ const AppContent = () => {
           theme="light"
         />
         {isUserLoggedIn && <Header assistantUserInfo={assistantUserInfo} />}
-        {!isUserLoggedIn ? (
+        {loading ? (
+          // Show loading spinner while authentication state is being determined
+          <div className="flex items-center justify-center min-h-screen w-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <div className="text-lg text-zinc-600">Loading...</div>
+            </div>
+          </div>
+        ) : !isUserLoggedIn ? (
           <Routes>
             <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
