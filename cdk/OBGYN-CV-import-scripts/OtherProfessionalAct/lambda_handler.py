@@ -52,13 +52,26 @@ def cleanData(df):
         # If TypeOther is not empty, set type to "Other ({type_other})"
         mask_other = invited_df["type_other"].str.strip() != ""
         invited_df.loc[mask_other, "type"] = "Other (" + invited_df.loc[mask_other, "type_other"] + ")"
-        invited_df.loc[:, "start_date"] = pd.to_datetime(invited_df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-        invited_df.loc[:, "start_date"] = invited_df["start_date"].fillna('').str.strip()
-        if "TDateEnd" in invited_df.columns:
-            invited_df.loc[:, "end_date"] = pd.to_datetime(invited_df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-            invited_df.loc[:, "end_date"] = invited_df["end_date"].fillna('').str.strip()
+        
+        # Handle Dates field - convert Unix timestamps to date strings
+        if "TDate" in invited_df.columns:
+            invited_df["TDate_clean"] = pd.to_numeric(invited_df["TDate"], errors='coerce')
+            invited_df["start_date"] = invited_df["TDate_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
+            invited_df["start_date"] = invited_df["start_date"].fillna('').str.strip()
         else:
-            invited_df.loc[:, "end_date"] = ""
+            invited_df["start_date"] = ''
+        if "TDateEnd" in invited_df.columns:
+            invited_df["TDateEnd_clean"] = pd.to_numeric(invited_df["TDateEnd"], errors='coerce')
+            invited_df["end_date"] = invited_df["TDateEnd_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
+            invited_df["end_date"] = invited_df["end_date"].fillna('').str.strip()
+        else:
+            invited_df["end_date"] = ''
         invited_df["dates"] = invited_df.apply(combine_dates, axis=1)
         invited_df = invited_df[["user_id", "details", "highlight_notes", "highlight", "dates", "type"]]
         invited_df = invited_df.replace({np.nan: ''}).reset_index(drop=True)
@@ -71,13 +84,26 @@ def cleanData(df):
         conference_df.loc[:, "highlight_notes"] = conference_df["Notes"].fillna('').str.strip()
         conference_df.loc[:, "highlight"] = False
         conference_df.loc[:, "role"] = ""
-        conference_df.loc[:, "start_date"] = pd.to_datetime(conference_df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-        conference_df.loc[:, "start_date"] = conference_df["start_date"].fillna('').str.strip()
-        if "TDateEnd" in conference_df.columns:
-            conference_df.loc[:, "end_date"] = pd.to_datetime(conference_df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-            conference_df.loc[:, "end_date"] = conference_df["end_date"].fillna('').str.strip()
+        
+        # Handle Dates field - convert Unix timestamps to date strings
+        if "TDate" in conference_df.columns:
+            conference_df["TDate_clean"] = pd.to_numeric(conference_df["TDate"], errors='coerce')
+            conference_df["start_date"] = conference_df["TDate_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
+            conference_df["start_date"] = conference_df["start_date"].fillna('').str.strip()
         else:
-            conference_df.loc[:, "end_date"] = ""
+            conference_df["start_date"] = ''
+        if "TDateEnd" in conference_df.columns:
+            conference_df["TDateEnd_clean"] = pd.to_numeric(conference_df["TDateEnd"], errors='coerce')
+            conference_df["end_date"] = conference_df["TDateEnd_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
+            conference_df["end_date"] = conference_df["end_date"].fillna('').str.strip()
+        else:
+            conference_df["end_date"] = ''
         conference_df["dates"] = conference_df.apply(combine_dates, axis=1)
         conference_df = conference_df[["user_id", "details", "highlight_notes", "highlight", "role", "dates"]]
         conference_df = conference_df.replace({np.nan: ''}).reset_index(drop=True)

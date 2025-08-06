@@ -54,23 +54,44 @@ def cleanData(df):
         mask = df["type"].str.strip().str.lower() == obgyn_type.strip().lower()
         df.loc[mask, "type"] = fac360_type
 
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["start_date"] = df["start_date"].fillna('').str.strip()
-    df["end_date"] = df["end_date"].fillna('').str.strip()
-    # Combine start and end dates into a single 'dates' column:
+    # Handle Dates field - convert Unix timestamps to date strings
+    if "TDate" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values
+        df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
+        df["start_date"] = df["TDate_clean"].apply(lambda x:
+            '' if pd.isna(x) or x <= 0 else
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["start_date"] = df["start_date"].fillna('').str.strip()
+    else:
+        df["start_date"] = ''
+
+    if "TDateEnd" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
+        df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
+        df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
+            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["end_date"] = df["end_date"].fillna('').str.strip()
+    else:
+        df["end_date"] = ''
+
+    # Combine start and end dates into a single 'dates' column
+    # Only show ranges when both dates exist, avoid empty dashes
     def combine_dates(row):
-        if row["start_date"] and row["end_date"]:
-            return f"{row['start_date']} - {row['end_date']}"
-        elif row["start_date"]:
-            return row["start_date"]
-        elif row["end_date"]:
-            return row["end_date"]
+        start = row["start_date"].strip()
+        end = row["end_date"].strip()
+
+        if start and end:
+            return f"{start} - {end}"
+        elif start:
+            return start
+        elif end:
+            return end
         else:
             return ""
     df["dates"] = df.apply(combine_dates, axis=1)
-
 
     # Keep only the cleaned columns
     df = df[["user_id", "details", "type", "highlight_notes", "highlight", "dates"]]

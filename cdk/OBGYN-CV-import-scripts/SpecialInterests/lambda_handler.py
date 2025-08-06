@@ -47,22 +47,41 @@ def cleanData(df):
         mask_other = subdf["type_other"].str.strip() != ""
         subdf.loc[mask_other, "type"] = "Other (" + subdf.loc[mask_other, "type_other"] + ")"
 
-        # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-        subdf["start_date"] = pd.to_datetime(subdf["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+         # Handle Dates field with robust timestamp processing
+        if "TDate" in subdf.columns:
+            # Handle zero and negative timestamps - set as blank for invalid values
+            subdf["TDate_clean"] = pd.to_numeric(subdf["TDate"], errors='coerce')
+            subdf["start_date"] = subdf["TDate_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
+            subdf["start_date"] = subdf["start_date"].fillna('').str.strip()
+        else:
+            subdf["start_date"] = ''
+        
         if "TDateEnd" in subdf.columns:
-            subdf["end_date"] = pd.to_datetime(subdf["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
+            # Handle zero and negative timestamps - set as blank for invalid values (including zero)
+            subdf["TDateEnd_clean"] = pd.to_numeric(subdf["TDateEnd"], errors='coerce')
+            subdf["end_date"] = subdf["TDateEnd_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
             subdf["end_date"] = subdf["end_date"].fillna('').str.strip()
         else:
-            subdf["end_date"] = ""
-        subdf["start_date"] = subdf["start_date"].fillna('').str.strip()
-
+            subdf["end_date"] = ''
+    
+        # Combine start and end dates into a single 'dates' column
+        # Only show ranges when both dates exist, avoid empty dashes
         def combine_dates(row):
-            if row["start_date"] and str(row["end_date"]).strip():
-                return f"{row['start_date']} - {row['end_date']}"
-            elif row["start_date"]:
-                return row["start_date"]
-            elif row["end_date"]:
-                return row["end_date"]
+            start = row["start_date"].strip()
+            end = row["end_date"].strip()
+        
+            if start and end:
+                return f"{start} - {end}"
+            elif start:
+                return start
+            elif end:
+                return end
             else:
                 return ""
         subdf["dates"] = subdf.apply(combine_dates, axis=1)

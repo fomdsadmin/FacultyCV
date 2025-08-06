@@ -37,23 +37,46 @@ def cleanData(df):
         invited_df.loc[:, "details"] = invited_df["Details"].fillna('').str.strip()
         invited_df.loc[:, "highlight_notes"] = invited_df["Notes"].fillna('').str.strip()
         invited_df.loc[:, "highlight"] = False
-        invited_df.loc[:, "start_date"] = pd.to_datetime(invited_df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-        invited_df.loc[:, "start_date"] = invited_df["start_date"].fillna('').str.strip()
-        if "TDateEnd" in invited_df.columns:
-            invited_df.loc[:, "end_date"] = pd.to_datetime(invited_df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-            invited_df.loc[:, "end_date"] = invited_df["end_date"].fillna('').str.strip()
+        
+        # Robust date handling for invited_df
+        if "TDate" in invited_df.columns:
+            # Handle zero and negative timestamps - set as blank for invalid values
+            invited_df["TDate_clean"] = pd.to_numeric(invited_df["TDate"], errors='coerce')
+            invited_df["start_date"] = invited_df["TDate_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
+            invited_df["start_date"] = invited_df["start_date"].fillna('').str.strip()
         else:
-            invited_df.loc[:, "end_date"] = ""
+            invited_df["start_date"] = ''
+
+        if "TDateEnd" in invited_df.columns:
+            # Handle zero and negative timestamps - set as blank for invalid values (including zero)
+            invited_df["TDateEnd_clean"] = pd.to_numeric(invited_df["TDateEnd"], errors='coerce')
+            invited_df["end_date"] = invited_df["TDateEnd_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
+            invited_df["end_date"] = invited_df["end_date"].fillna('').str.strip()
+        else:
+            invited_df["end_date"] = ''
+
+        # Combine start and end dates into a single 'dates' column
+        # Only show ranges when both dates exist, avoid empty dashes
         def combine_dates(row):
-            if row["start_date"] and str(row["end_date"]).strip():
-                return f"{row['start_date']} - {row['end_date']}"
-            elif row["start_date"]:
-                return row["start_date"]
-            elif row["end_date"]:
-                return row["end_date"]
+            start = row["start_date"].strip()
+            end = row["end_date"].strip()
+        
+            if start and end:
+                return f"{start} - {end}"
+            elif start:
+                return start
+            elif end:
+                return end
             else:
                 return ""
         invited_df["dates"] = invited_df.apply(combine_dates, axis=1)
+        
         invited_df = invited_df[["user_id", "scale", "details", "highlight_notes", "highlight", "dates"]]
         invited_df = invited_df.replace({np.nan: ''}).reset_index(drop=True)
     print("Processed invited presentations: ", len(invited_df))
@@ -71,23 +94,46 @@ def cleanData(df):
         other_df.loc[:, "location"] = ""
         other_df.loc[:, "organization_/_institution_/_event"] = ""
         other_df.loc[:, "role"] = ""
-        other_df.loc[:, "start_date"] = pd.to_datetime(other_df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-        other_df.loc[:, "start_date"] = other_df["start_date"].fillna('').str.strip()
-        if "TDateEnd" in other_df.columns:
-            other_df.loc[:, "end_date"] = pd.to_datetime(other_df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-            other_df.loc[:, "end_date"] = other_df["end_date"].fillna('').str.strip()
+        
+        # Robust date handling for other_df
+        if "TDate" in other_df.columns:
+            # Handle zero and negative timestamps - set as blank for invalid values
+            other_df["TDate_clean"] = pd.to_numeric(other_df["TDate"], errors='coerce')
+            other_df["start_date"] = other_df["TDate_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
+            other_df["start_date"] = other_df["start_date"].fillna('').str.strip()
         else:
-            other_df.loc[:, "end_date"] = ""
+            other_df["start_date"] = ''
+
+        if "TDateEnd" in other_df.columns:
+            # Handle zero and negative timestamps - set as blank for invalid values (including zero)
+            other_df["TDateEnd_clean"] = pd.to_numeric(other_df["TDateEnd"], errors='coerce')
+            other_df["end_date"] = other_df["TDateEnd_clean"].apply(lambda x:
+                '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            )
+            other_df["end_date"] = other_df["end_date"].fillna('').str.strip()
+        else:
+            other_df["end_date"] = ''
+
+        # Combine start and end dates into a single 'dates' column
+        # Only show ranges when both dates exist, avoid empty dashes
         def combine_dates_other(row):
-            if row["start_date"] and str(row["end_date"]).strip():
-                return f"{row['start_date']} - {row['end_date']}"
-            elif row["start_date"]:
-                return row["start_date"]
-            elif row["end_date"]:
-                return row["end_date"]
+            start = row["start_date"].strip()
+            end = row["end_date"].strip()
+        
+            if start and end:
+                return f"{start} - {end}"
+            elif start:
+                return start
+            elif end:
+                return end
             else:
                 return ""
         other_df["dates"] = other_df.apply(combine_dates_other, axis=1)
+    
         # Only keep the required columns
         other_df = other_df[["user_id", "scale", "details", "highlight_notes", "highlight", "type_of_presentation", "location", "organization_/_institution_/_event", "role", "dates"]]
         other_df = other_df.replace({np.nan: ''}).reset_index(drop=True)
