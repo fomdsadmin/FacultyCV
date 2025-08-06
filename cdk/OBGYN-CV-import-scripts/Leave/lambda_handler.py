@@ -30,7 +30,10 @@ def cleanData(df):
     df["type_of_leave"] =  df["Type"].fillna('').str.strip()
     df["type_other"] =  df["TypeOther"].fillna('').str.strip()
     df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = False
+    if "Highlight" in df.columns:
+        df["highlight"] = df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
+    else:
+        df["highlight"] = False
 
     # If Type is "Other:", set type_of_leave to "Other ({type_other})"
     mask_other = df["Type"].fillna('').str.strip() == "Other:"
