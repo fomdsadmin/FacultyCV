@@ -102,7 +102,7 @@ def cleanData(df):
         courses_df["TDate_clean"] = pd.to_numeric(courses_df["TDate"], errors='coerce')
         courses_df["start_date"] = courses_df["TDate_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         courses_df["start_date"] = courses_df["start_date"].fillna('').str.strip()
     else:
@@ -113,11 +113,13 @@ def cleanData(df):
         courses_df["TDateEnd_clean"] = pd.to_numeric(courses_df["TDateEnd"], errors='coerce')
         courses_df["end_date"] = courses_df["TDateEnd_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         courses_df["end_date"] = courses_df["end_date"].fillna('').str.strip()
     else:
         courses_df["end_date"] = ''
+        
+    courses_df["dates"] = courses_df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns for courses
     courses_df = courses_df[["user_id", "details", "session", "course", "footnote_-_notes", "footnote", "scheduled_hours_(per_year)", 
@@ -138,31 +140,9 @@ def cleanData(df):
     else:
         descriptions_df["highlight"] = False
 
-    # Convert dates for descriptions section
-    if "TDate" in descriptions_df.columns:
-        # Handle zero and negative timestamps - set as blank for invalid values
-        descriptions_df["TDate_clean"] = pd.to_numeric(descriptions_df["TDate"], errors='coerce')
-        descriptions_df["start_date"] = descriptions_df["TDate_clean"].apply(lambda x:
-            '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
-        )
-        descriptions_df["start_date"] = descriptions_df["start_date"].fillna('').str.strip()
-    else:
-        descriptions_df["start_date"] = ''
-    
-    if "TDateEnd" in descriptions_df.columns:
-        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
-        descriptions_df["TDateEnd_clean"] = pd.to_numeric(descriptions_df["TDateEnd"], errors='coerce')
-        descriptions_df["end_date"] = descriptions_df["TDateEnd_clean"].apply(lambda x:
-            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
-        )
-        descriptions_df["end_date"] = descriptions_df["end_date"].fillna('').str.strip()
-    else:
-        descriptions_df["end_date"] = ''
 
     # Keep only the cleaned columns for descriptions
-    descriptions_df = descriptions_df[["user_id", "details", "course", "highlight_-_notes", "highlight", "dates"]]
+    descriptions_df = descriptions_df[["user_id", "details", "course", "highlight_-_notes", "highlight"]]
     descriptions_df = descriptions_df.replace({np.nan: ''}).reset_index(drop=True)
 
     # Filter out entries where both course and details are empty
@@ -170,9 +150,6 @@ def cleanData(df):
         (descriptions_df["course"].str.strip() != "") | 
         (descriptions_df["details"].str.strip() != "")
     ].reset_index(drop=True)
-
-    print("Processed courses: ", len(courses_df))
-    print("Processed descriptions: ", len(descriptions_df))
 
     return courses_df, descriptions_df
 

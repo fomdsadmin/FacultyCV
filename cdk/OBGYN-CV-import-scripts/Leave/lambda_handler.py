@@ -79,7 +79,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df["user_id", "details", "type_of_leave", "highlight_-_notes", "highlight", "dates"]
+    df = df[["user_id", "details", "type_of_leave", "highlight_-_notes", "highlight", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
@@ -159,7 +159,41 @@ def loadData(file_bytes, file_key):
     elif file_key.lower().endswith('.csv'):
         # Try reading as regular CSV first
         try:
-            return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+            df = pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+            
+            # Check if the first column name starts with '[{' - indicates JSON data in CSV
+            if len(df.columns) > 0 and df.columns[0].startswith('[{'):
+                print("Detected JSON data in CSV format, attempting to parse as JSON")
+                # Read the entire file content as text and try to parse as JSON
+                file_content = file_bytes.decode('utf-8').strip()
+                
+                # Try to parse as JSON array directly
+                try:
+                    import json
+                    json_data = json.loads(file_content)
+                    return pd.DataFrame(json_data)
+                except json.JSONDecodeError:
+                    # If that fails, try reading as JSON lines
+                    try:
+                        return pd.read_json(io.StringIO(file_content), lines=True)
+                    except:
+                        # Last resort - reconstruct the JSON from the broken CSV
+                        # Combine all columns back into a single JSON string
+                        combined_json = ''.join(df.columns.tolist())
+                        if len(df) > 0:
+                            # Add the data rows
+                            for _, row in df.iterrows():
+                                row_data = ' '.join([str(val) for val in row.values if pd.notna(val)])
+                                combined_json += ' ' + row_data
+                        
+                        try:
+                            json_data = json.loads(combined_json)
+                            return pd.DataFrame(json_data)
+                        except:
+                            raise ValueError("Could not parse malformed JSON in CSV file")
+            
+            return df
+            
         except Exception as csv_exc:
             print(f"Failed to read as CSV: {csv_exc}")
             # Try reading as JSON lines (NDJSON)
