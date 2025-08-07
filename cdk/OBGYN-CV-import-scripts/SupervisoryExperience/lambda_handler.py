@@ -38,6 +38,7 @@ def cleanData(df):
     df["type_original"] = df["Type"].fillna('').str.strip()
     df["type_other"] = df["TypeOther"].fillna('').str.strip()
     
+    
     # Map SQL database values to app categories
     type_mapping = {
         # obgyn : Fac360
@@ -70,8 +71,8 @@ def cleanData(df):
     
     # Handle "Other:" cases
     mask_other = df["type_original"] == "Other:"
-    df.loc[mask_other, "type"] = "Other (incl. all others)"
-    
+    df.loc[mask_other, "type"] = "Other: (" + df.loc[mask_other, "type_other"] + ")"
+
     # Handle unmapped values (fallback to Research Personnel Supervision or Other)
     mask_unmapped = df["type"].isna()
     df.loc[mask_unmapped, "type"] = "Other (incl. all others)"
