@@ -131,7 +131,7 @@ def cleanData(df):
     descriptions_df["user_id"] = descriptions_df["PhysicianID"].fillna('').str.strip()
     descriptions_df["details"] = descriptions_df["Details"].fillna('').str.strip()
     descriptions_df["course"] = descriptions_df["Course"].fillna('').str.strip()
-    descriptions_df["highlight_notes"] = descriptions_df["Notes"].fillna('').str.strip()
+    descriptions_df["highlight_-_notes"] = descriptions_df["Notes"].fillna('').str.strip()
     
     if "Highlight" in descriptions_df.columns:
         descriptions_df["highlight"] = descriptions_df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
@@ -162,7 +162,7 @@ def cleanData(df):
         descriptions_df["end_date"] = ''
 
     # Keep only the cleaned columns for descriptions
-    descriptions_df = descriptions_df[["user_id", "details", "course", "highlight_notes", "highlight", "dates"]]
+    descriptions_df = descriptions_df[["user_id", "details", "course", "highlight_-_notes", "highlight", "dates"]]
     descriptions_df = descriptions_df.replace({np.nan: ''}).reset_index(drop=True)
 
     # Filter out entries where both course and details are empty

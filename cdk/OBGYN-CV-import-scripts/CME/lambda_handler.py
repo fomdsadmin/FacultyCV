@@ -24,7 +24,7 @@ def cleanData(df):
     df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["university/organization"] = df["University_Organization"].fillna('').str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
+    df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
     df["highlight"] = df["Highlight"].fillna('').astype(str).str.strip().str.lower().map({'true': True, 'false': False})
     
     # If Type is "Other:", set type_of_leave to "Other ({type_other})"
@@ -67,7 +67,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "university/organization", "details", "type", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "university/organization", "details", "type", "highlight_-_notes", "highlight", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df

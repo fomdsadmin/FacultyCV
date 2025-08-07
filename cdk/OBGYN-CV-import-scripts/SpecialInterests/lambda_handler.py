@@ -40,7 +40,7 @@ def cleanData(df):
         subdf["details"] = subdf["Details"].fillna('').str.strip()
         subdf["type"] = subdf["Type"].fillna('').str.strip()
         subdf["type_other"] = subdf["TypeOther"].fillna('').str.strip()
-        subdf["highlight_notes"] = subdf["Notes"].fillna('').str.strip()
+        subdf["highlight_-_notes"] = subdf["Notes"].fillna('').str.strip()
         subdf["highlight"] = False
 
         # If TypeOther is not empty, set type to "Other ({type_other})"
@@ -86,7 +86,7 @@ def cleanData(df):
                 return ""
         subdf["dates"] = subdf.apply(combine_dates, axis=1)
 
-        subdf = subdf[["user_id", "details", "highlight_notes", "highlight", "dates", "type"]]
+        subdf = subdf[["user_id", "details", "highlight_-_notes", "highlight", "dates", "type"]]
         subdf = subdf.replace({np.nan: ''}).reset_index(drop=True)
         print(f"Processed rows for {section_title}: ", len(subdf))
         cleaned[section_title] = subdf

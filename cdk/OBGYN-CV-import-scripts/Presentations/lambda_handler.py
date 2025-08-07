@@ -35,7 +35,7 @@ def cleanData(df):
         invited_df.loc[:, "user_id"] = invited_df["PhysicianID"].str.strip()
         invited_df.loc[:, "scale"] = invited_df["Scale"].fillna('').str.strip()
         invited_df.loc[:, "details"] = invited_df["Details"].fillna('').str.strip()
-        invited_df.loc[:, "highlight_notes"] = invited_df["Notes"].fillna('').str.strip()
+        invited_df.loc[:, "highlight_-_notes"] = invited_df["Notes"].fillna('').str.strip()
         invited_df.loc[:, "highlight"] = False
         
         # Robust date handling for invited_df
@@ -77,7 +77,7 @@ def cleanData(df):
                 return ""
         invited_df["dates"] = invited_df.apply(combine_dates, axis=1)
         
-        invited_df = invited_df[["user_id", "scale", "details", "highlight_notes", "highlight", "dates"]]
+        invited_df = invited_df[["user_id", "scale", "details", "highlight_-_notes", "highlight", "dates"]]
         invited_df = invited_df.replace({np.nan: ''}).reset_index(drop=True)
     print("Processed invited presentations: ", len(invited_df))
 
@@ -86,7 +86,7 @@ def cleanData(df):
         other_df.loc[:, "user_id"] = other_df["PhysicianID"].str.strip()
         other_df.loc[:, "scale"] = other_df["Scale"].fillna('').str.strip()
         other_df.loc[:, "details"] = other_df["Details"].fillna('').str.strip()
-        other_df.loc[:, "highlight_notes"] = other_df["Notes"].fillna('').str.strip()
+        other_df.loc[:, "highlight_-_notes"] = other_df["Notes"].fillna('').str.strip()
         other_df.loc[:, "highlight"] = False
         # Set type_of_presentation to "Other presentation" for all rows
         other_df.loc[:, "type_of_presentation"] = "Other presentation"
@@ -135,7 +135,7 @@ def cleanData(df):
         other_df["dates"] = other_df.apply(combine_dates_other, axis=1)
     
         # Only keep the required columns
-        other_df = other_df[["user_id", "scale", "details", "highlight_notes", "highlight", "type_of_presentation", "location", "organization_/_institution_/_event", "role", "dates"]]
+        other_df = other_df[["user_id", "scale", "details", "highlight_-_notes", "highlight", "type_of_presentation", "location", "organization_/_institution_/_event", "role", "dates"]]
         other_df = other_df.replace({np.nan: ''}).reset_index(drop=True)
     print("Processed other presentations: ", len(other_df))
 

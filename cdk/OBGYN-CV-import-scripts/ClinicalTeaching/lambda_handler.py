@@ -22,7 +22,7 @@ def cleanData(df):
     """
     df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["description"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
+    df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
     df["highlight"] = df["Highlight"].astype(str).str.strip().str.lower().map({'true': True, 'false': False})
     df["duration_(eg:_8_weeks)"] = df["Duration"].fillna('').str.strip()
     
@@ -129,7 +129,7 @@ def cleanData(df):
 
 
     # Keep only the cleaned columns
-    df = df[["user_id", "description", "student_level", "duration_(eg:_8_weeks)", "number_of_students", "total_hours", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "description", "student_level", "duration_(eg:_8_weeks)", "number_of_students", "total_hours", "highlight_-_notes", "highlight", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df

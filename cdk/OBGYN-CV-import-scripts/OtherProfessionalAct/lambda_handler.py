@@ -46,7 +46,7 @@ def cleanData(df):
         invited_df.loc[:, "details"] = invited_df["Details"].fillna('').str.strip()
         invited_df.loc[:, "type"] = invited_df["Type"].fillna('').str.strip()
         invited_df.loc[:, "type_other"] = invited_df["TypeOther"].fillna('').str.strip()
-        invited_df.loc[:, "highlight_notes"] = invited_df["Notes"].fillna('').str.strip()
+        invited_df.loc[:, "highlight_-_notes"] = invited_df["Notes"].fillna('').str.strip()
         invited_df.loc[:, "highlight"] = False
 
         # If TypeOther is not empty, set type to "Other ({type_other})"
@@ -73,7 +73,7 @@ def cleanData(df):
         else:
             invited_df["end_date"] = ''
         invited_df["dates"] = invited_df.apply(combine_dates, axis=1)
-        invited_df = invited_df[["user_id", "details", "highlight_notes", "highlight", "dates", "type"]]
+        invited_df = invited_df[["user_id", "details", "highlight_-_notes", "highlight", "dates", "type"]]
         invited_df = invited_df.replace({np.nan: ''}).reset_index(drop=True)
     print("Processed invited participations: ", len(invited_df))
 
@@ -81,7 +81,7 @@ def cleanData(df):
     if not conference_df.empty:
         conference_df.loc[:, "user_id"] = conference_df["PhysicianID"].str.strip()
         conference_df.loc[:, "details"] = conference_df["Details"].fillna('').str.strip()
-        conference_df.loc[:, "highlight_notes"] = conference_df["Notes"].fillna('').str.strip()
+        conference_df.loc[:, "highlight_-_notes"] = conference_df["Notes"].fillna('').str.strip()
         conference_df.loc[:, "highlight"] = False
         conference_df.loc[:, "role"] = ""
         
@@ -105,7 +105,7 @@ def cleanData(df):
         else:
             conference_df["end_date"] = ''
         conference_df["dates"] = conference_df.apply(combine_dates, axis=1)
-        conference_df = conference_df[["user_id", "details", "highlight_notes", "highlight", "role", "dates"]]
+        conference_df = conference_df[["user_id", "details", "highlight_-_notes", "highlight", "role", "dates"]]
         conference_df = conference_df.replace({np.nan: ''}).reset_index(drop=True)
     print("Processed conference presentations: ", len(conference_df))
 
