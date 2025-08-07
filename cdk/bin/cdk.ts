@@ -72,7 +72,11 @@ const batchApiGatewayStack = new BatchApiGatewayStack(app, `${resourcePrefix}-Ba
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
 });
 
-const amplifyStack = new AmplifyStack(app, `${resourcePrefix}-AmplifyStack`, apiStack, oidcAuthStack, batchApiGatewayStack,
+const supportFormStack = new SupportFormStack(app, `${resourcePrefix}-SupportFormStack`, apiStack, {
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
+});
+
+const amplifyStack = new AmplifyStack(app, `${resourcePrefix}-AmplifyStack`, apiStack, oidcAuthStack, batchApiGatewayStack, supportFormStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 
@@ -87,9 +91,5 @@ const dataFetchStack = new DataFetchStack(app, `${resourcePrefix}-DataFetchStack
 const patentDataStack = new PatentDataStack(app, `${resourcePrefix}-PatentDataStack`, grantDataStack, databaseStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
-
-const supportFormStack = new SupportFormStack(app, `${resourcePrefix}-SupportFormStack`, apiStack, {
-  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
-});
 
 Tags.of(app).add("app", "Faculty-CV");

@@ -6,9 +6,10 @@ import * as yaml from 'yaml';
 import { ApiStack } from './api-stack';
 import { OidcAuthStack } from './oidc-auth-stack';
 import { BatchApiGatewayStack } from './batch-apigateway-stack';
+import { SupportFormStack } from './supportform-stack';
 
 export class AmplifyStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, apiStack: ApiStack, oidcStack: OidcAuthStack, batchApiStack: BatchApiGatewayStack, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, apiStack: ApiStack, oidcStack: OidcAuthStack, batchApiStack: BatchApiGatewayStack, supportFormStack: SupportFormStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
     let resourcePrefix = this.node.tryGetContext('prefix');
@@ -59,6 +60,7 @@ export class AmplifyStack extends cdk.Stack {
         'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': oidcStack.getUserPoolClientId(),
         'REACT_APP_APPSYNC_ENDPOINT': apiStack.getEndpointUrl(),
         'REACT_APP_BATCH_API_BASE_URL': batchApiStack.getApiUrl(),
+        'REACT_APP_SUPPORT_FORM_API_BASE_URL': supportFormStack.getApiUrl(),
         'REACT_APP_AMPLIFY_DOMAIN': 'https://dev.360.med.ubc.ca',
         'REACT_APP_COGNITO_CLIENT_NAME': 'facultycv-dev',
         'REACT_APP_COGNITO_DOMAIN': oidcStack.getUserPoolDomainUrl(),

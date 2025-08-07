@@ -14,44 +14,155 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLE = "9[b-c]. Research or Equivalent Grants and Contracts"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Only keep rows where UserID is a string of expected length (e.g., 32)
-    df["user_id"] = df["UserID"].str.strip()
-    df["details"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
+    # Ensure relevant columns are string type before using .str methods
+    for col in ["PhysicianID", "Granting Agency", "Under Review", "Details", "Funding Details", "COMP", "Amount", "Principal Investigator",
+                "CoInvestigators", "Type", "Notes", "Footnote", "Highlight", "ShowFN", "TDate", "TDateEnd"]:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
+        else:
+            print(f"Warning: Column '{col}' not found in DataFrame")
 
-    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
-    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    mask_other = df["Type"].str.strip() == "Other:"
-    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+    df["user_id"] = df["PhysicianID"].fillna('').str.strip()
 
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["start_date"] = df["start_date"].fillna('').str.strip()
-    df["end_date"] = df["end_date"].fillna('').str.strip()
-    # Combine start and end dates into a single 'dates' column:
+    # Handle Agency field 
+    if "Granting Agency" in df.columns:
+        df["agency"] = df["Granting Agency"].fillna('').str.strip()
+        df["agency_raw"] = df["Granting Agency"].fillna('').str.strip()
+        # Map agency - only do for non empty val
+        def map_agency(agency_val):
+            agency_original = agency_val
+            agency_val = agency_val.lower().strip()
+            if agency_val.strip() == '':
+                return ''
+            elif 'rise' in agency_val:
+                return 'Rise'
+            elif 'cfi' in agency_val or 'canadian foundation of innovation' in agency_val or 'canadian foundation for innovation' in agency_val:
+                return 'CFI'
+            elif 'cihr' in agency_val or 'canadian institutes of health research' in agency_val or 'canadian institute of health research' in agency_val:
+                return 'CIHR'
+            elif 'nserc' in agency_val or 'natural sciences and engineering research council' in agency_val or 'natural sciences and engineering research council of canada' in agency_val:
+                return 'NSERC'
+            elif 'sshrc' in agency_val or 'social sciences and humanities research council' in agency_val or 'social sciences and humanities research council of canada' in agency_val:
+                return 'SSHRC'
+            else:
+                return 'Other (' + agency_original + ')'
+        df["agency"] = df["agency_raw"].apply(map_agency)
+    else:
+        df["agency"] = ''  # Default to empty string
+
+    df["title"] = df["Details"].fillna('').str.strip()
+    
+    # Handle comp field - only allow C or NC values
+    df["comp_raw"] = df["COMP"].fillna('').str.strip()
+    def map_comp(comp_val):
+        comp_val = comp_val.upper().strip()
+        if comp_val == 'C':
+            return 'C'
+        elif comp_val == 'NC':
+            return 'NC'
+        else:
+            return ''  # Return empty string for invalid or empty values
+    df["comp"] = df["comp_raw"].apply(map_comp)
+    
+    # Handle amount field - convert 0 values to empty string
+    df["amount"] = df["Amount"].fillna('').str.strip()
+    df["amount"] = df["amount"].apply(lambda x: '' if str(x).strip() == '0' or str(x).strip() == '0.0' else x)
+    
+    df["principal_investigator"] = df["Principal Investigator"].fillna('').str.strip()
+    df["co-investigator"] = df["CoInvestigators"].fillna('').str.strip()
+    
+    if "Highlight" in df.columns:
+        df["highlight"] = df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
+    else:
+        df["highlight"] = False
+    df["highlight_-_notes"] = df["Funding Details"].fillna('').str.strip()
+    
+    if "ShowFN" in df.columns:
+        df["footnote"] = df["ShowFN"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
+    else:
+        df["footnote"] = False
+    df["footnote_-_notes"] = df["Footnote"].fillna('').str.strip()
+
+    # Handle Type field - map to grant or contract (MUST come before status processing)
+    if "Type" in df.columns:
+        df["type_raw"] = df["Type"].fillna('').str.strip()
+        # Map types to grant or contract
+        def map_agency_type(type_val):
+            type_val = type_val.lower().strip()
+            if type_val.strip() == '':
+                return ''
+            if 'grant' in type_val:
+                return 'Grant'
+            elif 'contract' in type_val:
+                return 'All Types Contract'
+            else:
+                return ''  # Default to empty string if unclear
+
+        df["type"] = df["type_raw"].apply(map_agency_type)
+    else:
+        df["type"] = ''
+        
+    # Handle Status field - Only for Grants (from Under Review column) - MUST come after type processing
+    if "Under Review" in df.columns:
+        # Convert Under Review to boolean and map to status
+        df["under_review_bool"] = df["Under Review"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
+        df["status_-_only_for_grants"] = df["under_review_bool"].apply(lambda x: "Under Review" if x else "Approved")
+        # Only keep status for grants, clear it for contracts
+        df.loc[df["type"] == 'All Types Contract', "status_-_only_for_grants"] = ''
+    else:
+        df["status_-_only_for_grants"] = ''
+
+    
+    # Handle Dates field - convert Unix timestamps to date strings
+    if "TDate" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values
+        df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
+        df["start_date"] = df["TDate_clean"].apply(lambda x: 
+            '' if pd.isna(x) or x <= 0 else 
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["start_date"] = df["start_date"].fillna('').str.strip()
+    else:
+        df["start_date"] = ''
+        
+    if "TDateEnd" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
+        df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
+        df["end_date"] = df["TDateEnd_clean"].apply(lambda x: 
+            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["end_date"] = df["end_date"].fillna('').str.strip()
+    else:
+        df["end_date"] = ''
+
+    # Combine start and end dates into a single 'dates' column
+    # Only show ranges when both dates exist, avoid empty dashes
     def combine_dates(row):
-        if row["start_date"] and row["end_date"]:
-            return f"{row['start_date']} - {row['end_date']}"
-        elif row["start_date"]:
-            return row["start_date"]
-        elif row["end_date"]:
-            return row["end_date"]
+        start = row["start_date"].strip()
+        end = row["end_date"].strip()
+        
+        if start and end:
+            return f"{start} - {end}"
+        elif start:
+            return start
+        elif end:
+            return end
         else:
             return ""
     df["dates"] = df.apply(combine_dates, axis=1)
 
-
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "agency", "title", "comp", "amount", "principal_investigator", 
+             "co-investigator", "type", "status_-_only_for_grants", "highlight", "highlight_-_notes", 
+             "footnote", "footnote_-_notes", "dates"]]
+
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
@@ -104,7 +215,6 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            print(f"Processed row {i + 1}/{len(df)}")
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -124,13 +234,64 @@ def fetchFromS3(bucket, key):
 def loadData(file_bytes, file_key):
     """
     Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
+    Handles CSV, JSON lines, and JSON array files.
     """
     if file_key.lower().endswith('.xlsx'):
-        # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
-        # For CSV, decode bytes to text
-        return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        # Try reading as regular CSV first
+        try:
+            df = pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+            
+            # Check if the first column name starts with '[{' - indicates JSON data in CSV
+            if len(df.columns) > 0 and df.columns[0].startswith('[{'):
+                print("Detected JSON data in CSV format, attempting to parse as JSON")
+                # Read the entire file content as text and try to parse as JSON
+                file_content = file_bytes.decode('utf-8').strip()
+                
+                # Try to parse as JSON array directly
+                try:
+                    import json
+                    json_data = json.loads(file_content)
+                    return pd.DataFrame(json_data)
+                except json.JSONDecodeError:
+                    # If that fails, try reading as JSON lines
+                    try:
+                        return pd.read_json(io.StringIO(file_content), lines=True)
+                    except:
+                        # Last resort - reconstruct the JSON from the broken CSV
+                        # Combine all columns back into a single JSON string
+                        combined_json = ''.join(df.columns.tolist())
+                        if len(df) > 0:
+                            # Add the data rows
+                            for _, row in df.iterrows():
+                                row_data = ' '.join([str(val) for val in row.values if pd.notna(val)])
+                                combined_json += ' ' + row_data
+                        
+                        try:
+                            json_data = json.loads(combined_json)
+                            return pd.DataFrame(json_data)
+                        except:
+                            raise ValueError("Could not parse malformed JSON in CSV file")
+            
+            return df
+            
+        except Exception as csv_exc:
+            print(f"Failed to read as CSV: {csv_exc}")
+            # Try reading as JSON lines (NDJSON)
+            try:
+                return pd.read_json(io.StringIO(file_bytes.decode('utf-8')), lines=True)
+            except Exception as jsonl_exc:
+                print(f"Failed to read as JSON lines: {jsonl_exc}")
+                # Try reading as JSON array
+                try:
+                    return pd.read_json(io.StringIO(file_bytes.decode('utf-8')))
+                except Exception as json_exc:
+                    print(f"Failed to read as JSON array: {json_exc}")
+                    raise ValueError(
+                        f"Could not parse file as CSV, JSON lines, or JSON array. "
+                        f"CSV error: {csv_exc}, JSON lines error: {jsonl_exc}, JSON array error: {json_exc}"
+                    )
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
 
@@ -154,19 +315,18 @@ def lambda_handler(event, context):
         # Load data into DataFrame
         try:
             df = loadData(file_bytes, file_key)
+            print("Data loaded successfully.")
         except ValueError as e:
-            
+            print(f"Error loading data: {str(e)}")
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
                 'error': str(e)
             }
-        print("Data loaded successfully.")
 
         # Clean the DataFrame
         df = cleanData(df)
         print("Data cleaned successfully.")
-        print(df.to_string())
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)

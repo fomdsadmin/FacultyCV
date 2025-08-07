@@ -44,6 +44,12 @@ type CVData {
 	data_details: AWSJSON!
 }
 
+type CVDataResponse {
+	data: [CVData!]!
+	total_count: Int!
+	returned_count: Int!
+}
+
 type DataSection {
 	data_section_id: String!
 	title: String!
@@ -421,7 +427,7 @@ type Query {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	getUserCVData(user_id: String!, data_section_id: String, data_section_id_list: [String]): [UserCVData]
 		@aws_auth(cognito_groups: ["Faculty","Assistant","FacultyAdmin","Admin","DepartmentAdmin"])
-	getAllSectionCVData(data_section_id: String, data_section_id_list: [String]): [CVData]
+	getAllSectionCVData(data_section_id: String, data_section_id_list: [String]): CVDataResponse
 		@aws_auth(cognito_groups: ["Admin"])
 	getArchivedUserCVData(user_id: String!): [UserCVData]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
