@@ -45,6 +45,8 @@ def cleanData(df):
 
     # --- Other Publications ---
     other_pubs_df = df.copy()
+    patents = df.copy()
+    
     other_pubs_df["user_id"] = other_pubs_df["PhysicianID"].fillna('').str.strip()
     other_pubs_df["authors"] = other_pubs_df["Authors"].fillna('').str.strip()
     other_pubs_df["title"] = other_pubs_df["Title"].fillna('').str.strip()
@@ -100,48 +102,35 @@ def cleanData(df):
     
     print(f"Publication types before filtering: {other_pubs_df['publication_type'].value_counts()}")
     
-    # Remove entries from df where Type is "Patents"
-    initial_count = len(other_pubs_df)
-    other_pubs_df = other_pubs_df[other_pubs_df["publication_type"] != "Patents"].reset_index(drop=True)
-    final_count = len(other_pubs_df)
-    print(f"Filtered out {initial_count - final_count} patents. Remaining other publications: {final_count}")
-    
     other_pubs_df["highlight_-_notes"] = other_pubs_df["Notes"].fillna('').str.strip()        
 
     # Handle Dates field - convert Unix timestamps to date strings
     if "TDate" in other_pubs_df.columns:
         # Handle zero and negative timestamps - set as blank for invalid values
         other_pubs_df["TDate_clean"] = pd.to_numeric(other_pubs_df["TDate"], errors='coerce')
-        other_pubs_df["start_date"] = other_pubs_df["TDate_clean"].apply(lambda x: 
+        other_pubs_df["year"] = other_pubs_df["TDate_clean"].apply(lambda x: 
             '' if pd.isna(x) or x <= 0 else 
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
-        other_pubs_df["start_date"] = other_pubs_df["start_date"].fillna('').str.strip()
+        other_pubs_df["year"] = other_pubs_df["year"].fillna('').str.strip()
     else:
-        other_pubs_df["start_date"] = ''
-    if "TDateEnd" in other_pubs_df.columns:
-        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
-        other_pubs_df["TDateEnd_clean"] = pd.to_numeric(other_pubs_df["TDateEnd"], errors='coerce')
-        other_pubs_df["end_date"] = other_pubs_df["TDateEnd_clean"].apply(lambda x: 
-            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
-        )
-        other_pubs_df["end_date"] = other_pubs_df["end_date"].fillna('').str.strip()
-    else:
-        other_pubs_df["end_date"] = ''
-
-    other_pubs_df["dates"] = other_pubs_df.apply(combine_dates, axis=1)
+        other_pubs_df["year"] = ''
 
     # Keep only the cleaned columns for other publications
     other_pubs_df = other_pubs_df[["user_id", "title", "citation", "role", "publication_type", "authors", 
-                                   "peer_reviewed", "publication_status", "highlight_-_notes", "dates"]]
+                                   "peer_reviewed", "publication_status", "highlight_-_notes", "year"]]
+    
+    # Remove entries from df where Type is "Patents"
+    initial_count = len(other_pubs_df)
+    other_pubs_df = other_pubs_df[other_pubs_df["publication_type"] != "Patents"].reset_index(drop=True)
+    final_count = len(other_pubs_df)
+    print(f"Filtered out {initial_count - final_count} patents. Remaining other publications: {final_count}")
 
     # Replace NaN with empty string for all columns
     other_pubs_df = other_pubs_df.replace({np.nan: ''}).reset_index(drop=True)
     
 
     # --- Patents  ---
-    patents = df.copy()
     # Filter to only include patents
     if "Type" in patents.columns:
         patents_initial_count = len(patents)
