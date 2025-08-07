@@ -41,7 +41,7 @@ def cleanData(df):
     df["rank_or_title"] = df["Details"].fillna('').str.strip()
     
     df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = False
+    df["highlight"] = df["Highlight"].astype(str).str.strip().str.lower().map({'true': True, 'false': False})
 
     # Handle Dates field - convert Unix timestamps to date strings
     if "TDate" in df.columns:
