@@ -75,7 +75,7 @@ export class OidcAuthStack extends cdk.Stack {
     const oidcProvider = new cognito.UserPoolIdentityProviderOidc(this, "UBCOidcProvider", {
       userPool: this.userPool,
       name: `${resourcePrefix}-${process.env.ENVIRONMENT}`,
-      clientId: process.env.OICD_CLIENT_ID || 'facultycv-dev',
+      clientId: process.env.OIDC_CLIENT_ID || 'facultycv-dev',
       clientSecret: oidcClientSecret.secretValue.unsafeUnwrap(),
       issuerUrl: 'https://broker.id.ubc.ca/auth/realms/idb2',
       scopes: ['openid', 'profile', 'email'],
