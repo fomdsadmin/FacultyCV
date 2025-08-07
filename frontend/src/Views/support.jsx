@@ -75,13 +75,17 @@ const ContactForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           content: base64
         }];
       }
-        // Determine the correct base URL based on the hostname
-    const baseUrl = window.location.hostname.startsWith("dev.")
-      ? "https://5h3jq97juf.execute-api.ca-central-1.amazonaws.com/prod"
-      : "https://0uex067hed.execute-api.ca-central-1.amazonaws.com/prod";
 
-    // Make the POST request to /send-email with Authorization header and payload
-    const response = await fetch(`${baseUrl}/send-email`, {
+      // Get the base URL from environment variable, with fallback logic
+      let baseUrl = process.env.REACT_APP_SUPPORT_FORM_API_BASE_URL || "";
+      
+      // Remove trailing slash if present
+      if (baseUrl.endsWith("/")) {
+        baseUrl = baseUrl.slice(0, -1);
+      }
+
+      // Make the POST request to /send-email with Authorization header and payload
+      const response = await fetch(`${baseUrl}/send-email`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -9,6 +9,8 @@ import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { ApiStack } from './api-stack';
 
 export class SupportFormStack extends Stack {
+  private api: apigateway.RestApi;
+
   constructor(scope: Construct, id: string, apiStack: ApiStack, props?: StackProps) {
     super(scope, id, props);
 
@@ -63,7 +65,7 @@ export class SupportFormStack extends Stack {
 
 
     // Create an API Gateway REST API with CORS support and enable CloudWatch metrics and logging + rate limiting
-    const api = new apigateway.RestApi(this, 'SupportFormSendEmailAPI', {
+    this.api = new apigateway.RestApi(this, 'SupportFormSendEmailAPI', {
       restApiName: `${resourcePrefix}-SupportFormSendEmailService`,
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
@@ -80,7 +82,7 @@ export class SupportFormStack extends Stack {
     });
 
     // Add dependency on the API Gateway account to ensure it is created before the deployment stage
-    api.deploymentStage.node.addDependency(gatewayAccount);
+    this.api.deploymentStage.node.addDependency(gatewayAccount);
 
 
     // Use the user pool from the passed ApiStack.ts
@@ -88,7 +90,7 @@ export class SupportFormStack extends Stack {
     const userPool = UserPool.fromUserPoolId(this, 'UserPool', cognito_userPoolId);
 
     // Create a /send-email path in the API
-    const emailResource = api.root.addResource('send-email');
+    const emailResource = this.api.root.addResource('send-email');
 
     const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'CognitoAuthorizer', {
       cognitoUserPools: [userPool],
@@ -107,5 +109,9 @@ export class SupportFormStack extends Stack {
       }
     );
 
+  }
+
+  public getApiUrl(): string {
+    return this.api.url;
   }
 }

@@ -19,23 +19,28 @@ import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import { DatabaseStack } from "./database-stack";
 import { CVGenStack } from "./cvgen-stack";
+import { OidcAuthStack } from "./oidc-auth-stack";
 
 export class ApiStack extends cdk.Stack {
   private readonly api: appsync.GraphqlApi;
-  private readonly userPool: cognito.UserPool;
-  private readonly userPoolClient: cognito.UserPoolClient;
   private readonly layerList: { [key: string]: LayerVersion };
   private readonly resolverRole: Role;
+  private readonly oidcStack: OidcAuthStack;
   public getEndpointUrl = () => this.api.graphqlUrl;
-  public getUserPoolId = () => this.userPool.userPoolId;
-  public getUserPoolClientId = () => this.userPoolClient.userPoolClientId;
+  public getUserPoolId = () => this.oidcStack.getUserPoolId();
+  public getUserPoolClientId = () => this.oidcStack.getUserPoolClientId();
+  public getUserPoolDomain = () => this.oidcStack.getUserPoolDomain().domainName;
+  public getUserPoolClientName = () => this.oidcStack.getUserPoolClient().userPoolClientName || 'oidc-client';
   public getApi = () => this.api;
   public getResolverRole = () => this.resolverRole;
   public addLayer = (name: string, layer: LayerVersion) =>
     (this.layerList[name] = layer);
   public getLayers = () => this.layerList;
-  constructor(scope: Construct, id: string, databaseStack: DatabaseStack, cvGenStack: CVGenStack, props?: cdk.StackProps) {
+  
+  constructor(scope: Construct, id: string, databaseStack: DatabaseStack, cvGenStack: CVGenStack, oidcStack: OidcAuthStack, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    this.oidcStack = oidcStack;
 
     let resourcePrefix = this.node.tryGetContext('prefix');
     if (!resourcePrefix)
@@ -77,7 +82,7 @@ export class ApiStack extends cdk.Stack {
       description: "Lambda layer containing the database connection",
       layerVersionName: `${resourcePrefix}-databaseConnectLayer`
     })
-   
+
     // OpenaAI layer for lambda functions
     const openailayer = new LayerVersion(this, "openaiLayer", {
       code: Code.fromAsset("./layers/openai.zip"),
@@ -93,78 +98,11 @@ export class ApiStack extends cdk.Stack {
     this.layerList["databaseConnect"] = databaseConnectLayer;
     this.layerList["openai"] = openailayer;
 
-    // Auth
-    this.userPool = new cognito.UserPool(this, "FacultyCVUserPool", {
-      userPoolName: `${resourcePrefix}-user-pool`,
-      signInAliases: { email: true },
-      autoVerify: {
-        email: true,
-      },
-      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
-      userVerification: {
-        emailSubject: "You need to verify your email",
-        emailBody:
-          "Thanks for signing up for Faculty CV. \n Your verification code is {####}",
-        emailStyle: cognito.VerificationEmailStyle.CODE,
-      },
-      passwordPolicy: {
-        minLength: 8,
-        requireLowercase: true,
-        requireUppercase: true,
-        requireDigits: true,
-        requireSymbols: false,
-      },
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.userPoolClient = new cognito.UserPoolClient(
-      this,
-      "FacultyCVUserPoolClient",
-      {
-        userPoolClientName: `${resourcePrefix}-user-pool-client`,
-        userPool: this.userPool,
-        supportedIdentityProviders: [
-          cognito.UserPoolClientIdentityProvider.COGNITO,
-        ],
-        authFlows: {
-          userSrp: true,
-        },
-      }
-    );
-
-    // User Groups
-    const facultyGroup = new cognito.CfnUserPoolGroup(this, 'FacultyGroup', {
-      groupName: 'Faculty',
-      userPoolId: this.userPool.userPoolId,
-    });
-
-    const assistantGroup = new cognito.CfnUserPoolGroup(this, 'AssistantGroup', {
-        groupName: 'Assistant',
-        userPoolId: this.userPool.userPoolId,
-    });
-
-    const adminGroup = new cognito.CfnUserPoolGroup(this, 'AdminGroup', {
-        groupName: 'Admin',
-        userPoolId: this.userPool.userPoolId,
-    });
-
-    const departmentAdminGroup = new cognito.CfnUserPoolGroup(this, 'DepartmentAdminGroup', {
-      groupName: 'DepartmentAdmin',
-      userPoolId: this.userPool.userPoolId,
-    });
-
     // AppSync API
     this.api = new appsync.GraphqlApi(this, "FacultyCVApi", {
       name: `${resourcePrefix}-api`,
       definition: appsync.Definition.fromFile("./graphql/schema.graphql"),
-      authorizationConfig: {
-        defaultAuthorization: {
-          authorizationType: appsync.AuthorizationType.USER_POOL,
-          userPoolConfig: {
-            userPool: this.userPool,
-          },
-        },
-      },
+      authorizationConfig: oidcStack.getAppSyncAuthConfig(),
       logConfig: {
         fieldLogLevel: appsync.FieldLogLevel.ALL,
       },
@@ -229,11 +167,11 @@ export class ApiStack extends cdk.Stack {
     this.resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
-          "iam:AddUserToGroup",
+        "iam:AddUserToGroup",
       ],
       resources: [
-          `arn:aws:iam::${this.account}:user/*`,
-          `arn:aws:iam::${this.account}:group/*`,
+        `arn:aws:iam::${this.account}:user/*`,
+        `arn:aws:iam::${this.account}:group/*`,
       ],
     }));
 
@@ -241,11 +179,11 @@ export class ApiStack extends cdk.Stack {
     this.resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
-          "cognito-idp:AdminAddUserToGroup",
-          "cognito-idp:AdminRemoveUserFromGroup",
+        "cognito-idp:AdminAddUserToGroup",
+        "cognito-idp:AdminRemoveUserFromGroup",
       ],
       resources: [
-          `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${this.userPool.userPoolId}`,
+        `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${oidcStack.getUserPoolId()}`,
       ],
     }));
 
@@ -253,10 +191,14 @@ export class ApiStack extends cdk.Stack {
     this.resolverRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
-          "cognito-idp:AdminGetUser",
+        "cognito-idp:AdminGetUser",
+        "cognito-idp:ListUsers",
+        "cognito-idp:AdminRemoveUserFromGroup",
+        "cognito-idp:AdminAddUserToGroup",
+        "cognito-idp:AdminListGroupsForUser"
       ],
       resources: [
-          `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${this.userPool.userPoolId}`,
+        `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${oidcStack.getUserPoolId()}`,
       ],
     }));
 
@@ -267,6 +209,19 @@ export class ApiStack extends cdk.Stack {
         "s3:ListBucket",
       ],
       resources: [cvGenStack.cvS3Bucket.bucketArn + "/*", cvGenStack.cvS3Bucket.bucketArn]
+    }));
+
+    // Grant S3 permissions for user import bucket (using constructed ARN to avoid circular dependency)
+    this.resolverRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "s3:*Object",
+        "s3:ListBucket",
+      ],
+      resources: [
+        `arn:aws:s3:::${resourcePrefix}-${this.account}-user-import-s3-bucket/*`,
+        `arn:aws:s3:::${resourcePrefix}-${this.account}-user-import-s3-bucket`
+      ]
     }));
 
     this.resolverRole.addToPolicy(new iam.PolicyStatement({
@@ -319,8 +274,8 @@ export class ApiStack extends cdk.Stack {
       description: 'waf for Faculty CV',
       scope: 'REGIONAL',
       defaultAction: { allow: {} },
-      visibilityConfig: { 
-        sampledRequestsEnabled: true, 
+      visibilityConfig: {
+        sampledRequestsEnabled: true,
         cloudWatchMetricsEnabled: true,
         metricName: 'facultyCV-firewall'
       },
@@ -334,7 +289,7 @@ export class ApiStack extends cdk.Stack {
               name: 'AWSManagedRulesCommonRuleSet',
             }
           },
-          overrideAction: { none: {}},
+          overrideAction: { none: {} },
           visibilityConfig: {
             sampledRequestsEnabled: true,
             cloudWatchMetricsEnabled: true,
@@ -359,7 +314,7 @@ export class ApiStack extends cdk.Stack {
             metricName: 'LimitRequests1000'
           }
         },
-    ]
+      ]
     })
     const wafAssociation = new wafv2.CfnWebACLAssociation(this, 'waf-association', {
       resourceArn: this.api.arn,

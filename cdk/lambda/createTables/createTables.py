@@ -47,7 +47,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('role', 'varchar', '', False))
     columns.append(createColumn('bio', 'varchar', '', False))
     columns.append(createColumn('rank', 'varchar', '', False))
-    columns.append(createColumn('institution', 'varchar', '', False))
+    columns.append(createColumn('institution', 'varchar', 'DEFAULT \'University of British Columbia\'', False))
     columns.append(createColumn('primary_department', 'varchar', '', False))
     columns.append(createColumn('secondary_department', 'varchar', '', False))
     columns.append(createColumn('primary_faculty', 'varchar', '', False))
@@ -59,7 +59,11 @@ def lambda_handler(event, context):
     columns.append(createColumn('institution_user_id', 'varchar', '', False))
     columns.append(createColumn('scopus_id', 'varchar', '', False))
     columns.append(createColumn('orcid_id', 'varchar', '', False))
-    columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', True))  # Add this line
+    columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', False))  
+    columns.append(createColumn('cwl', 'TEXT', '', False))  # Add this line
+    columns.append(createColumn('vpp', 'TEXT', '', False))  # Add this
+    columns.append(createColumn('pending', 'BOOLEAN', 'DEFAULT true', False))  # Add this
+    columns.append(createColumn('approved', 'BOOLEAN', 'DEFAULT false', True))  # Add this
     query = createQuery('users', columns)
     cursor.execute(query)
 
@@ -70,8 +74,23 @@ def lambda_handler(event, context):
     columns.append(createColumn('description', 'varchar', '', False))
     columns.append(createColumn('data_type', 'varchar', '', False))
     columns.append(createColumn('attributes', 'JSON', '', False))
-    columns.append(createColumn('archive', 'boolean', 'DEFAULT false', True))
+    columns.append(createColumn('archive', 'boolean', 'DEFAULT false', False))
+    columns.append(createColumn('attributes_types', 'JSON', '', False)) # Add this line
+    columns.append(createColumn('info', 'TEXT', '', True)) # Add this line
     query = createQuery('data_sections', columns)
+    cursor.execute(query)
+
+    # Create Affiliations Table
+    columns = []
+    columns.append(createColumn('user_id', 'TEXT', 'NOT NULL', False))
+    columns.append(createColumn('first_name', 'TEXT', '', False))
+    columns.append(createColumn('last_name', 'TEXT', '', False))
+    columns.append(createColumn('hospital_affiliations', 'JSON', '', False))
+    columns.append(createColumn('institution', 'JSON', '', False))
+    columns.append(createColumn('academic_units', 'JSON', '', False))
+    columns.append(createColumn('research_affiliations', 'JSON', '', False))
+    columns.append(createColumn('faculty', 'JSON', '', True))
+    query = createQuery('affiliations', columns)
     cursor.execute(query)
 
     # Create User CV Data Table
@@ -152,7 +171,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('program', 'varchar', '', False))
     columns.append(createColumn('title', 'varchar', '', False))
     columns.append(createColumn('amount', 'int', '', False))
-    columns.append(createColumn('dates', 'varchar', '', True))
+    columns.append(createColumn('dates', 'varchar', '', False))
+    columns.append(createColumn('sponsor', 'varchar', '', True)) # New column for rise sponsor
     query = createQuery('rise_data', columns)
     cursor.execute(query)
 
@@ -160,7 +180,7 @@ def lambda_handler(event, context):
     columns = []
     columns.append(createColumn('template_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
     columns.append(createColumn('title', 'varchar', '', False))
-    columns.append(createColumn('data_section_ids', 'varchar', '', False))
+    columns.append(createColumn('template_structure', 'varchar', '', False))
     columns.append(createColumn('start_year', 'varchar', '', False))
     columns.append(createColumn('end_year', 'varchar', '', True))
     query = createQuery('templates', columns)
@@ -179,6 +199,36 @@ def lambda_handler(event, context):
     columns.append(createColumn('kind_code', 'varchar', '', False))
     columns.append(createColumn('classification', 'varchar', '', True))
     query = createQuery('patents', columns)
+    cursor.execute(query)
+    
+    # Create Declarations Table
+    columns = []
+    columns.append(createColumn('id', 'serial', 'PRIMARY KEY', False))
+    columns.append(createColumn('user_id', 'text', 'NOT NULL', False))
+    columns.append(createColumn('reporting_year', 'int', 'NOT NULL', False))
+    columns.append(createColumn('created_by', 'text', 'NOT NULL', False))
+    columns.append(createColumn('created_on', 'timestamp', 'DEFAULT CURRENT_TIMESTAMP', False))
+    columns.append(createColumn('other_data', 'jsonb', 'NOT NULL', True))
+    query = createQuery('declarations', columns)
+    cursor.execute(query)
+    
+    # Create Audit View Table
+    columns = []
+    columns.append(createColumn('log_view_id', 'serial', 'PRIMARY KEY', False))
+    columns.append(createColumn('ts', 'timestamp', '', False))
+    columns.append(createColumn('logged_user_email', 'text', 'NOT NULL', False))
+    columns.append(createColumn('logged_user_id', 'integer', 'NOT NULL', False))
+    columns.append(createColumn('logged_user_first_name', 'text', 'NOT NULL', False))
+    columns.append(createColumn('logged_user_last_name', 'text', 'NOT NULL', False))
+    columns.append(createColumn('logged_user_role', 'text', '', False))
+    columns.append(createColumn('logged_user_action', 'text', '', False))
+    columns.append(createColumn('ip', 'text', '', False))
+    columns.append(createColumn('browser_version', 'text', '', False))
+    columns.append(createColumn('page', 'text', '', False))
+    columns.append(createColumn('session_id', 'text', '', False))
+    columns.append(createColumn('assistant', 'boolean', '', False))
+    columns.append(createColumn('profile_record', 'text', '', True))
+    query = createQuery('audit_view', columns)
     cursor.execute(query)
     
     cursor.close()

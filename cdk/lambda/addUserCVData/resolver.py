@@ -16,40 +16,30 @@ def addUserCVData(arguments):
 
     # Check if an entry with the same data_details, user_id, and data_section_id exists
     data_details_json = json.dumps(arguments['data_details'])
-    cursor.execute("SELECT COUNT(*) FROM user_cv_data WHERE data_details::jsonb = %s AND user_id = %s AND data_section_id = %s", (data_details_json, arguments['user_id'], arguments['data_section_id']))
-    existing_count = cursor.fetchone()[0]
+    cursor.execute("SELECT user_cv_data_id, archive FROM user_cv_data WHERE data_details::jsonb = %s AND user_id = %s AND data_section_id = %s", (data_details_json, arguments['user_id'], arguments['data_section_id']))
+    existing = cursor.fetchone()
 
-    if existing_count == 0:
+    if existing is None:
         # Insert the new entry
-        cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable) VALUES (%s, %s, %s, %s)", (arguments['user_id'], arguments['data_section_id'], data_details_json, arguments['editable'],))
-        data_section_id = arguments['data_section_id']
-        cursor.execute('SELECT template_id, data_section_ids FROM templates')
-        templates = cursor.fetchall()
-        # Get all template ids which have the data_section_id
-        filtered_template_ids = []
-        for template in templates:
-            if data_section_id in template[1]:
-                filtered_template_ids.append(template[0])
-        for template_id in filtered_template_ids:
-            # Update the key cognito_user_id/user_id/template_id to the current timestamp
-            # The above key works for assistants and faculty
-            user_logs = {
-                'logEntryId': {'S': f"{arguments['cognito_user_id']}/{arguments['user_id']}/{template_id}"},
-                'timestamp': {'N': f"{int(time.time())}"}
-            }
-            dynamodb.put_item(
-                TableName=os.environ['TABLE_NAME'],
-                Item=user_logs
-            )
-        print("Updated user logs")
+        cursor.execute("INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable, archive, archive_timestamp) VALUES (%s, %s, %s, %s, false, NULL)", (arguments['user_id'], arguments['data_section_id'], data_details_json, arguments['editable'],))
         connection.commit()
         cursor.close()
         connection.close()
         return "SUCCESS"
     else:
-        cursor.close()
-        connection.close()
-        return "Entry already exists"
+        user_cv_data_id, is_archived = existing
+        if is_archived:
+            # Unarchive and update data_details
+            cursor.execute("UPDATE user_cv_data SET archive = false, archive_timestamp = NULL, data_details = %s WHERE user_cv_data_id = %s", (data_details_json, user_cv_data_id))
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return "UNARCHIVED"
+        else:
+            # Entry already exists and is not archived, do nothing or return a message
+            cursor.close()
+            connection.close()
+            return "ALREADY_EXISTS"
 
 def lambda_handler(event, context):
     arguments = event['arguments']

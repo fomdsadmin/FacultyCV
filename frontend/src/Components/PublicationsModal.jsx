@@ -8,18 +8,13 @@ import {
   getOrcidSections,
   getTotalOrcidPublications,
   getOrcidPublication,
+  getAllSections,
 } from "../graphql/graphqlHelpers";
 import { useNavigate } from "react-router-dom";
+import { fetchAuthSession } from "aws-amplify/auth";
 
-const PublicationsModal = ({
-  user,
-  section,
-  onClose,
-  setRetrievingData,
-  fetchData,
-}) => {
+const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
   const [allFetchedPublications, setAllFetchedPublications] = useState([]);
-  const [pageSize, setPageSize] = useState(25); // Number of publications to fetch per page
   const [totalResults, setTotalResults] = useState("TBD");
   const [currentPage, setCurrentPage] = useState(0);
   const [fetchingData, setFetchingData] = useState(true);
@@ -31,11 +26,19 @@ const PublicationsModal = ({
   const [fetchStage, setFetchStage] = useState(""); // "scopus", "orcid", "deduplicate", "add"
 
   const navigate = useNavigate();
+  let baseUrl = process.env.REACT_APP_BATCH_API_BASE_URL || "";
+  // omit the last '/' from baseUrl
+  if (baseUrl.endsWith("/")) {
+    baseUrl = baseUrl.slice(0, -1);
+  }
 
   async function fetchPublicationsData() {
     setInitialRender(false);
     setFetchingData(true);
     let publications = [];
+    let failedScopusBatches = [];
+    let failedOrcidBatches = [];
+    let expectedTotalCount = 0;
 
     // Scopus
     const hasScopus = user.scopus_id && user.scopus_id.trim() !== "";
@@ -45,68 +48,275 @@ const PublicationsModal = ({
         .split(",")
         .map((id) => id.trim())
         .filter((id) => id !== "");
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken?.toString();
+      if (!idToken) throw new Error("Auth Error: No ID token found.");
+
       for (let scopusId of scopusIds) {
         setCurrentScopusId(scopusId);
-        let pageNumber = 0;
-        let totalPages = 1;
+        try {
+          // Get total publications with retry mechanism
+          let totalPublications = 0;
+          let retryCount = 0;
+          const maxRetries = 3;
 
-        while (pageNumber <= totalPages) {
-          const retrievedData = await getPublicationMatches(
-            scopusId,
-            pageNumber,
-            pageSize
-          );
+          while (retryCount < maxRetries) {
+            try {
+              const countPayload = {
+                arguments: {
+                  scopus_id: scopusId,
+                },
+              };
 
-          // Important defensive check
-          if (!retrievedData || !retrievedData.publications) {
-            console.warn("Scopus returned invalid data, skipping...");
-            break;
+              const countResponse = await fetch(`${baseUrl}/batch/getTotalScopusPublications`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify(countPayload),
+              });
+
+              if (!countResponse.ok) throw new Error(`Server error: ${countResponse.status}`);
+
+              const countData = await countResponse.json();
+              totalPublications = countData.total_results || 0;
+              expectedTotalCount += totalPublications;
+              setTotalResults(totalPublications);
+              console.log(`Total Scopus publications: ${totalPublications}`);
+              break; // Success, exit retry loop
+            } catch (error) {
+              retryCount++;
+              console.error(`Error fetching Scopus count (attempt ${retryCount}):`, error);
+              if (retryCount >= maxRetries) throw error; // Rethrow if max retries reached
+              await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+            }
           }
 
-          publications = [...publications, ...retrievedData.publications];
-          totalPages = retrievedData.total_pages ?? 0;
-          setTotalResults(retrievedData.total_results ?? 0);
-          pageNumber += 1;
+          // Now fetch in batches
+          const maxBatchSize = 100;
+          for (let startIndex = 0; startIndex < totalPublications; startIndex += maxBatchSize) {
+            const batchSize = Math.min(maxBatchSize, totalPublications - startIndex);
+
+            const batchPayload = {
+              arguments: {
+                scopus_id: scopusId,
+                start_index: startIndex,
+                batch_size: batchSize,
+              },
+            };
+
+            try {
+              const batchResponse = await fetch(`${baseUrl}/batch/getBatchedScopusPublications`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify(batchPayload),
+              });
+
+              if (!batchResponse.ok) throw new Error(`Server error: ${batchResponse.status}`);
+
+              const batchData = await batchResponse.json();
+              console.log(
+                `Fetched ${batchData.publications.length} publications from Scopus (batch starting at ${startIndex})`
+              );
+              publications = [...publications, ...batchData.publications];
+            } catch (error) {
+              console.error(`Error fetching Scopus batch (start: ${startIndex}):`, error);
+              // Add to failed batches queue
+              failedScopusBatches.push({
+                scopusId,
+                startIndex,
+                batchSize,
+                batchPayload,
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error in Scopus publication fetch process:", error);
         }
       }
     }
+    console.log("Total Scopus Publications fetched:", publications.length);
+    console.log("Failed Scopus batches:", failedScopusBatches.length);
 
     // ORCID
     const hasOrcid = user.orcid_id && user.orcid_id.trim() !== "";
     if (hasOrcid) {
       setFetchStage("orcid");
-      const totalOrcidPublications = await getTotalOrcidPublications(
-        user.orcid_id
-      );
-      console.log("Total ORCID Publications fetched:", totalOrcidPublications);
-      const putCodes = totalOrcidPublications.put_codes || [];
-      const batchSize = 250;
-      let orcidPublications = [];
 
-      for (let i = 0; i < putCodes.length; i += batchSize) {
-        const batch = putCodes.slice(i, i + batchSize);
-        if (!batch.length || batch.some((code) => code == null)) {
-          console.error("Skipping invalid or empty batch:", batch);
-          continue;
+      try {
+        const session = await fetchAuthSession();
+        const idToken = session.tokens?.idToken?.toString();
+        if (!idToken) throw new Error("Auth Error: No ID token found.");
+
+        // Get ORCID put codes with retry mechanism
+        let allPutCodes = [];
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+          try {
+            const putCodesPayload = {
+              arguments: {
+                orcid_id: user.orcid_id,
+              },
+            };
+
+            // Using POST for fetching put codes
+            const putCodesResponse = await fetch(`${baseUrl}/batch/getTotalOrcidPublications`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${idToken}`,
+              },
+              body: JSON.stringify(putCodesPayload),
+            });
+
+            if (!putCodesResponse.ok) throw new Error(`Server error: ${putCodesResponse.status}`);
+
+            const putCodesData = await putCodesResponse.json();
+            allPutCodes = putCodesData.put_codes || [];
+            const totalOrcidPublications = allPutCodes.length;
+            expectedTotalCount += totalOrcidPublications;
+
+            console.log(`Got ${totalOrcidPublications} put codes from ORCID`);
+            setTotalResults((prev) => prev + totalOrcidPublications);
+            break; // Success, exit retry loop
+          } catch (error) {
+            retryCount++;
+            console.error(`Error fetching ORCID put codes (attempt ${retryCount}):`, error);
+            if (retryCount >= maxRetries) throw error; // Rethrow if max retries reached
+            await new Promise((resolve) => setTimeout(resolve, 100 * retryCount)); // Exponential backoff
+          }
         }
-        const result = await getOrcidPublication(user.orcid_id, batch);
-        if (result && Array.isArray(result.publications)) {
-          orcidPublications = [...orcidPublications, ...result.publications];
-          console.log(
-            "Fetched ORCID Publications for batch:",
-            orcidPublications
-          );
+
+        // Now fetch in batches
+        const maxBatchSize = 200;
+        for (let startIndex = 0; startIndex < allPutCodes.length; startIndex += maxBatchSize) {
+          const batchPutCodes = allPutCodes.slice(startIndex, startIndex + maxBatchSize);
+
+          const batchPayload = {
+            arguments: {
+              orcid_id: user.orcid_id,
+              put_codes: batchPutCodes,
+            },
+          };
+
+          try {
+            const batchResponse = await fetch(`${baseUrl}/batch/getBatchedOrcidPublications`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${idToken}`,
+              },
+              body: JSON.stringify(batchPayload),
+            });
+
+            if (!batchResponse.ok) throw new Error(`Server error: ${batchResponse.status}`);
+
+            const batchData = await batchResponse.json();
+            console.log(
+              `Fetched ${batchData.publications.length} publications from ORCID (batch starting at ${startIndex})`
+            );
+
+            publications = [...publications, ...batchData.publications];
+          } catch (error) {
+            console.error(`Error fetching ORCID batch (start: ${startIndex}):`, error);
+            // Add to failed batches queue
+            failedOrcidBatches.push({
+              startIndex,
+              batchPutCodes,
+              batchPayload,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error in ORCID publication fetch process:", error);
+      }
+    }
+
+    console.log("Publications fetched before retry attempts:", publications.length);
+    console.log("Failed Scopus batches:", failedScopusBatches.length);
+    console.log("Failed ORCID batches:", failedOrcidBatches.length);
+
+    // Process failed batches
+    if (failedScopusBatches.length > 0 || failedOrcidBatches.length > 0) {
+      setFetchStage("retry");
+      console.log("Retrying failed batches...");
+
+      // Retry Scopus batches
+      if (failedScopusBatches.length > 0) {
+        const session = await fetchAuthSession();
+        const idToken = session.tokens?.idToken?.toString();
+
+        for (const batch of failedScopusBatches) {
+          try {
+            const batchResponse = await fetch(`${baseUrl}/batch/getBatchedScopusPublications`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${idToken}`,
+              },
+              body: JSON.stringify(batch.batchPayload),
+            });
+
+            if (!batchResponse.ok) throw new Error(`Server error: ${batchResponse.status}`);
+
+            const batchData = await batchResponse.json();
+            console.log(
+              `Retry successful: Fetched ${batchData.publications.length} publications from Scopus (batch starting at ${batch.startIndex})`
+            );
+            publications = [...publications, ...batchData.publications];
+          } catch (error) {
+            console.error(`Failed retry for Scopus batch (start: ${batch.startIndex}):`, error);
+          }
         }
       }
 
-      publications = [...publications, ...orcidPublications];
-      totalOrcidPublications.total_results += totalResults || 0;
-      setTotalResults(totalOrcidPublications.total_results ?? 0);
+      // Retry ORCID batches
+      if (failedOrcidBatches.length > 0) {
+        const session = await fetchAuthSession();
+        const idToken = session.tokens?.idToken?.toString();
+
+        for (const batch of failedOrcidBatches) {
+          try {
+            const batchResponse = await fetch(`${baseUrl}/batch/getBatchedOrcidPublications`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${idToken}`,
+              },
+              body: JSON.stringify(batch.batchPayload),
+            });
+
+            if (!batchResponse.ok) throw new Error(`Server error: ${batchResponse.status}`);
+
+            const batchData = await batchResponse.json();
+            console.log(
+              `Retry successful: Fetched ${batchData.publications.length} publications from ORCID (batch starting at ${batch.startIndex})`
+            );
+            publications = [...publications, ...batchData.publications];
+          } catch (error) {
+            console.error(`Failed retry for ORCID batch (start: ${batch.startIndex}):`, error);
+          }
+        }
+      }
     }
 
     // Handle empty case
     if (publications.length === 0) {
       console.warn("No publications fetched from either source");
+    } else {
+      // Validate total count
+      console.log(`Total publications fetched: ${publications.length}. Expected: ~${expectedTotalCount}`);
+      if (publications.length < expectedTotalCount * 0.9) {
+        console.warn(
+          `Warning: Only fetched ${publications.length} of approximately ${expectedTotalCount} expected publications`
+        );
+      }
     }
 
     // Deduplication
@@ -114,22 +324,24 @@ const PublicationsModal = ({
     publications = deduplicatePublications(publications);
 
     // Adding
-    setAllFetchedPublications(publications); // <-- set before adding!
+    setAllFetchedPublications(publications);
     setFetchStage("add");
     await addPublicationsData(publications);
 
     setFetchingData(false);
   }
 
+  // Uses a Map to track unique publications by a key of doi|title.
+  // If a duplicate is found (same DOI or title),
+  // it keeps the one with more non-null fields (i.e., more complete data).
+  // The result is an array of unique, most-complete publication objects.
   function deduplicatePublications(publications) {
     const seen = new Map();
 
     function countNonNullProperties(publication) {
       return Object.values(publication).reduce((count, value) => {
         if (Array.isArray(value)) {
-          return (
-            count + value.filter((item) => item !== null && item !== "").length
-          );
+          return count + value.filter((item) => item !== null && item !== "").length;
         }
         return count + (value !== null && value !== "" ? 1 : 0);
       }, 0);
@@ -169,38 +381,61 @@ const PublicationsModal = ({
     setAddingData(true);
     setCount(1);
 
-    const existingPublications = await getUserCVData(
-      user.user_id,
-      section.data_section_id
-    );
-    const existingData = existingPublications.map((pub) => pub.data_details);
-    console.log("Existing publications:", existingData);
+    try {
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken?.toString();
+      if (!idToken) throw new Error("Auth Error: No ID token found.");
 
-    for (const publication of publications) {
-      if (
-        existingData.includes(JSON.stringify(publication)) ||
-        existingData.includes(publication)
-      ) {
-        setCount((prevCount) => prevCount + 1);
-        continue;
+      let dataSections = [];
+      dataSections = await getAllSections();
+      const publicationsSectionId = dataSections.find((section) => section.title === "Publications")?.data_section_id;
+
+      // Add "Type: Journal" to each publication
+      publications = publications.map((pub) => {
+        return {
+          ...pub,
+          publication_type: "Journal", // Assuming all fetched publications are journal articles
+        };
+      });
+      console.log("Publications to be added:", publications);
+
+      const payload = {
+        arguments: {
+          data_details_list: publications,
+          user_id: user.user_id,
+          data_section_id: publicationsSectionId,
+          data_section_title: "Publications",
+          editable: "false",
+        },
+      };
+
+      const response = await fetch(`${baseUrl}/batch/addBatchedData`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      else {
+        console.log("Added ", payload.arguments.data_details_list.length, " Publications Successfully | 200 OK");
       }
-
-      publication.title = publication.title;
-      publication.journal = publication.journal;
-      const publicationJSON = JSON.stringify(publication);
-
-      try {
-        const result = await addUserCVData(
-          user.user_id,
-          section.data_section_id,
-          publicationJSON,
-          false
-        );
-      } catch (error) {
-        console.error("Error adding new entry:", error);
-      }
-      setCount((prevCount) => prevCount + 1);
+    } catch (error) {
+      console.error("Error adding publications:", error);
     }
+    // try {
+    //   const result = await addUserCVData(
+    //     user.user_id,
+    //     section.data_section_id,
+    //     publicationJSON,
+    //     false
+    //   );
+    // } catch (error) {
+    //   console.error("Error adding new entry:", error);
+    // }
+    console.log("Saved ", publications.length, " publications successfully");
     setAddingData(false);
     fetchData();
   }
@@ -211,10 +446,7 @@ const PublicationsModal = ({
 
   // Add this inside PublicationsModal, before the return statement
   const IdCard = ({ label, value, color, link }) => (
-    <div
-      className="bg-gray-50 rounded-lg p-4 border"
-      style={{ borderColor: color }}
-    >
+    <div className="bg-gray-50 rounded-lg p-4 border" style={{ borderColor: color }}>
       <div className="flex items-center justify-between">
         <div className={`text-sm font-bold`} style={{ color }}>
           {label}
@@ -230,12 +462,7 @@ const PublicationsModal = ({
                   rel="noopener noreferrer"
                   className="ml-2 text-blue-500 hover:text-blue-700"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                     <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                   </svg>
@@ -273,8 +500,7 @@ const PublicationsModal = ({
             <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
               <div className="text-center mb-6 w-full">
                 <h3 className="text-lg font-medium mb-8">
-                  Publications will be fetched from Elsevier and ORCID using
-                  these profiles:
+                  Publications will be fetched from Elsevier and ORCID using these profiles:
                 </h3>
                 <div className="grid grid-cols-1 gap-4 w-full max-w-md mx-auto">
                   <IdCard
@@ -282,20 +508,14 @@ const PublicationsModal = ({
                     value={user.scopus_id}
                     color="#ea580c"
                     link={
-                      user.scopus_id
-                        ? `https://www.scopus.com/authid/detail.uri?authorId=${user.scopus_id}`
-                        : undefined
+                      user.scopus_id ? `https://www.scopus.com/authid/detail.uri?authorId=${user.scopus_id}` : undefined
                     }
                   />
                   <IdCard
                     label="ORCID ID"
                     value={user.orcid_id}
                     color="#ea580c"
-                    link={
-                      user.orcid_id
-                        ? `https://orcid.org/${user.orcid_id}`
-                        : undefined
-                    }
+                    link={user.orcid_id ? `https://orcid.org/${user.orcid_id}` : undefined}
                   />
                 </div>
               </div>
@@ -310,14 +530,9 @@ const PublicationsModal = ({
           ) : (
             <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
               <div className="block text-m mb-1 mt-6 mr-5 ml-5 text-zinc-600 text-center">
-                Please enter your Scopus/ORCID ID in the Profile section to
-                fetch publications.
+                Please enter your Scopus/ORCID ID in the Profile section to fetch publications.
               </div>
-              <button
-                type="button"
-                className="btn btn-secondary text-white mt-6 "
-                onClick={() => navigateHome()}
-              >
+              <button type="button" className="btn btn-secondary text-white mt-6 " onClick={() => navigateHome()}>
                 Go to Profile Section
               </button>
             </div>
@@ -325,24 +540,18 @@ const PublicationsModal = ({
         ) : fetchingData ? (
           <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
             {fetchStage === "scopus" && (
-              <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
-                Fetching data from Scopus...
-              </div>
+              <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">Fetching data from Scopus...</div>
             )}
             {fetchStage === "orcid" && (
-              <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
-                Fetching data from ORCID...
-              </div>
+              <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">Fetching data from ORCID...</div>
             )}
             {fetchStage === "deduplicate" && (
-              <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
-                Removing duplicates...
-              </div>
+              <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">Removing duplicates...</div>
             )}
             {fetchStage === "add" && (
               <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
                 {addingData
-                  ? `Adding ${count} of ${allFetchedPublications.length} publications...`
+                  ? `Adding ${allFetchedPublications.length} publications...`
                   : allFetchedPublications.length === 0
                   ? "No Publications Found"
                   : "Publications Added!"}
@@ -353,7 +562,7 @@ const PublicationsModal = ({
           <div className="flex items-center justify-center w-full mt-5 mb-5">
             <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
               {addingData
-                ? `Adding ${count} of ${allFetchedPublications.length} publications...`
+                ? `Adding ${allFetchedPublications.length} publications...`
                 : allFetchedPublications.length === 0
                 ? "No Publications Found"
                 : "Publications Added!"}

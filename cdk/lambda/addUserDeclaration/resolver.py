@@ -15,25 +15,22 @@ def addUserDeclaration(arguments):
     cursor = connection.cursor()
 
     # Check if an entry with the same data_details, user_id, and data_section_id exists
-    cursor.execute("SELECT COUNT(*) FROM declarations WHERE first_name = %s AND last_name = %s"
-                   , (arguments['first_name'], arguments['last_name']))
+    cursor.execute("SELECT COUNT(*) FROM declarations WHERE user_id = %s", (arguments['user_id'],))
     existing_count = cursor.fetchone()[0]
 
     insert_query = '''
         INSERT INTO declarations (
-            first_name,
-            last_name,
+            user_id,
             reporting_year,
             created_by,
             other_data
-        ) VALUES (%s, %s, %s, %s, %s)
+        ) VALUES (%s, %s, %s, %s)
         RETURNING id, created_on;
     '''
 
         # Insert the new entry
     cursor.execute(insert_query, (
-        arguments['first_name'],
-        arguments['last_name'],
+        arguments['user_id'],
         arguments['reporting_year'],
         arguments['created_by'],
         json.dumps(arguments['other_data'])  # Convert dict to JSON string

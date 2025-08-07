@@ -45,15 +45,18 @@ def getOrcidPublication(arguments):
     """
     Fetch a specific section of the ORCID record based on arguments.
     Arguments should include:
-    - 'orcid_d': The ORCID ID
-    - 'put_codes': List of 100 put-codes to fetch publications
+    - 'orcid_id': The ORCID ID
+    - 'put_codes': List of put-codes to fetch publications
+    - 'get_put_codes_only': Bool to only return put codes without publications
     """
+    
     orcid_id = arguments.get("orcid_id")
-    put_codes = arguments.get("put_codes")
+    put_codes = arguments.get("put_codes", [])
+    get_put_codes_only = arguments.get("get_put_codes_only", False)
 
     # Validate inputs
-    if not orcid_id or not put_codes:
-        return {"error": "Missing required parameters: orcidId or put_codes"}
+    if not orcid_id:
+        return {"error": "Missing required parameters: orcid_id"}
 
     # Fetch the access token dynamically from Secrets Manager
     access_token = get_secret()
@@ -66,6 +69,32 @@ def getOrcidPublication(arguments):
         "Authorization": f"Bearer {access_token}",
         "Accept": "application/json"
     }
+
+    # First get all put codes if we don't have them or if specifically requested
+    if not put_codes or get_put_codes_only:
+        url = f"{base_url}/{orcid_id}/works"
+        response = requests.get(url, headers=headers)
+        all_put_codes = []
+        
+        if response.status_code == 200:
+            data = response.json()
+            for group in data.get('group', []):
+                work_summaries = group.get('work-summary', [])
+                for summary in work_summaries:
+                    put_code = summary.get('put-code')
+                    if put_code:
+                        all_put_codes.append(put_code)
+                        
+        # If we only need put codes, return them now
+        if get_put_codes_only:
+            return {
+                'put_codes': all_put_codes,
+                'publications': []
+            }
+        
+        # Otherwise use these put codes if none were provided
+        if not put_codes:
+            put_codes = all_put_codes
 
     # Join put codes with commas
     publications = []
@@ -92,10 +121,8 @@ def getOrcidPublication(arguments):
             continue
 
     return {
-        'bio': "",
-        'keywords': "",
         'publications': publications,
-        'other_data': {}
+        'put_codes': put_codes if get_put_codes_only else []
     }
 
 def lambda_handler(event, context):

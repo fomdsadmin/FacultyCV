@@ -2,33 +2,45 @@ export const rankFields = (entry) => {
   const importance = {
     title: 1,
     course: 2,
-    'university/organization': 3,
-    'university/organization/company': 4,
-    year: 5,
+    session: 3,
+    "university/organization": 4,
+    "university/organization/company": 5,
+    year: 6,
     dates: 6,
-    name: 7,
-    rank: 8,
-    role: 9,
-    department: 10,
-    type: 11,
-    publisher: 12,
-    journal: 13,
-    details: 14,
-    other: 15,
-    description: 16,
-    inventor: 17,
-    supervisor: 18
+    Dates: 6,
+    end: 7,
+    end_date: 8,
+    end_year: 8,   
+    start: 9,
+    start_date: 9,
+    start_year: 9,
+    degree: 10,
+    type: 10,
+    name: 11,
+    rank: 12,
+    role: 13,
+    department: 14,
+    physician: 15,
+    publisher: 16,
+    journal: 17,
+    scale: 17,
+    other: 18,
+    inventor: 21,
+    supervisor: 22,
+    details: 23,
   };
 
   const rankedFields = Object.entries(entry)
     .filter(([key]) => {
       const normalizedKey = key.toLowerCase().replace(/[_\s()]/g, ''); // Normalize keys
-      return !normalizedKey.includes('id') && Object.keys(importance).some(importantKey => normalizedKey.includes(importantKey));
+      return !normalizedKey.includes('id');
     })
     .sort((a, b) => {
       const aKey = Object.keys(importance).find(importantKey => a[0].toLowerCase().includes(importantKey));
       const bKey = Object.keys(importance).find(importantKey => b[0].toLowerCase().includes(importantKey));
-      return importance[aKey] - importance[bKey];
+      const aPriority = aKey ? importance[aKey] : 999; // If not found, assign very low priority
+      const bPriority = bKey ? importance[bKey] : 999; // If not found, assign very low priority
+      return aPriority - bPriority;
     });
 
   if (rankedFields.length === 0) {

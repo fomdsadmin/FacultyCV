@@ -51,8 +51,8 @@ const ArchivedSections = ({ getCognitoUser, userInfo }) => {
   const restoreSection = async (id, attributes) => {
     setLoading(true);
     try {
-      const attributesString = JSON.stringify(attributes).replace(/"/g, '\\"')
-      const result = await updateSection(id, false, `"${attributesString}"`);
+      const attributesString = JSON.stringify(attributes)
+      const result = await updateSection(id, false, attributesString);
       
     } catch (error) {
       console.error('Error restoring section:', error);
@@ -65,7 +65,7 @@ const ArchivedSections = ({ getCognitoUser, userInfo }) => {
   return (
     <PageContainer>
       <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
+      <main className='px-12 mt-4 overflow-auto custom-scrollbar w-full mb-4'>
         {loading ? (
           <div className='w-full h-full flex items-center justify-center'>
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>

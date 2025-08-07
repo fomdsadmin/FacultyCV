@@ -1,0 +1,85 @@
+/* GenericEntry HTML Content Styles */
+.html-content.inline {
+  display: block;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+.html-content.inline h1,
+.html-content.inline h2,
+.html-content.inline h3 {
+  display: block;
+  font-size: inherit;
+  font-weight: 600;
+  margin: 0.25rem 0;
+  line-height: inherit;
+}
+
+.html-content.inline p {
+  display: block;
+  margin: 0.25rem 0;
+}
+
+.html-content.inline ul,
+.html-content.inline ol {
+  display: block;
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+}
+
+.html-content.inline ul {
+  list-style-type: disc;
+}
+
+.html-content.inline ol {
+  list-style-type: decimal;
+}
+
+.html-content.inline li {
+  display: list-item;
+  margin: 0.125rem 0;
+}
+
+.html-content.inline blockquote {
+  display: block;
+  border-left: 4px solid #e5e7eb;
+  margin: 0.25rem 0;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.html-content.inline strong {
+  font-weight: 600;
+}
+
+.html-content.inline em {
+  font-style: italic;
+}
+
+.html-content.inline u {
+  text-decoration: underline;
+}
+
+.html-content.inline s {
+  text-decoration: line-through;
+}
+
+.html-content.inline sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+
+.html-content.inline sup {
+  vertical-align: super;
+  font-size: smaller;
+}
+
+.html-content.inline a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.html-content.inline br {
+  display: block;
+}

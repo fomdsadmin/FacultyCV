@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { updateSection } from '../graphql/graphqlHelpers';
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const DeleteSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }) => {
   const [deletingSection, setDeletingSection] = useState(false);
+  const { logAction } = useAuditLogger();
 
   async function deleteSection() {
     setDeletingSection(true);
@@ -18,10 +20,12 @@ const DeleteSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }
             attributes = section.attributes;
         }
         
-        const attributesString = JSON.stringify(attributes).replace(/"/g, '\\"');
+        const attributesString = JSON.stringify(attributes);
         
-        const result = await updateSection(section.data_section_id, true, `"${attributesString}"`);
-        
+      const result = await updateSection(section.data_section_id, true, attributesString);
+      // Log the section update action
+      await logAction(AUDIT_ACTIONS.ARCHIVE_SECTION);
+
     } catch (error) {
         console.error('Error deleting section: ', error);
     }

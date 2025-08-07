@@ -51,7 +51,7 @@ const AssociatedConnection = ({ connection, getUser }) => {
     }
 
     return (
-        <div className={`bg-base-100 p-3 pb-4 shadow-glow rounded-lg ${enteringProfile ? 'w-90' : 'w-72'}`}>
+        <div className={`bg-base-100 p-4 shadow-glow rounded-lg w-full ${enteringProfile ? 'w-90' : 'w-72'}`}>
             <div className="flex flex-col justify-center">
                 <div className="flex justify-between items-start">
                     <div>
@@ -61,8 +61,8 @@ const AssociatedConnection = ({ connection, getUser }) => {
                         <p className="truncate">{connection.faculty_email}</p>
                     </div>
                     {connection.status === "confirmed" && (
-                      <div className="flex justify-between w-full mt-2">
-                          <button onClick={enterProfile} disabled={enteringProfile} className="text-white btn btn-primary min-h-0 h-6 leading-tight">
+                      <div className="flex justify-between w-full ml-4 ">
+                          <button onClick={enterProfile} disabled={enteringProfile} className="text-white btn btn-primary h-8 p-4 leading-tight">
                             {enteringProfile ? "Entering Profile..." : "Manage"}
                           </button>
                       </div>

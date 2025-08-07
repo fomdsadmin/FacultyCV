@@ -1,8 +1,7 @@
 export const ADD_USER_DECLARATION = `
-  mutation AddUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!, $created_by: String!, $other_data: AWSJSON!) {
+  mutation AddUserDeclaration($user_id: String!, $reporting_year: Int!, $created_by: String!, $other_data: AWSJSON!) {
     addUserDeclaration(
-      first_name: $first_name,
-      last_name: $last_name,
+      user_id: $user_id,
       reporting_year: $reporting_year,
       created_by: $created_by,
       other_data: $other_data
@@ -14,20 +13,18 @@ export const ADD_USER_DECLARATION = `
 `;
 
 export const DELETE_USER_DECLARATION = `
-    mutation DeleteUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!) {
+    mutation DeleteUserDeclaration($user_id: String!, $reporting_year: Int!) {
         deleteUserDeclaration(
-            first_name: $first_name,
-            last_name: $last_name,
+            user_id: $user_id,
             reporting_year: $reporting_year
         )
     }
 `;
 
 export const UPDATE_USER_DECLARATION = `
-    mutation UpdateUserDeclaration($first_name: String!, $last_name: String!, $reporting_year: Int!, $other_data: AWSJSON!) {
+    mutation UpdateUserDeclaration($user_id: String!, $reporting_year: Int!, $other_data: AWSJSON!) {
         updateUserDeclaration(
-            first_name: $first_name,
-            last_name: $last_name,
+            user_id: $user_id,
             reporting_year: $reporting_year
             other_data: $other_data
         )
@@ -63,48 +60,29 @@ export const ADD_SECTION = `
     }
 `;
 
-export const addUserMutation = (
-    first_name,
-    last_name,
-    preferred_name,
-    email,
-    role,
-    bio,
-    rank,
-    institution,
-    primary_department,
-    secondary_department,
-    primary_faculty,
-    secondary_faculty,
-    primary_affiliation,
-    secondary_affiliation,
-    campus,
-    keywords,
-    institution_user_id,
-    scopus_id,
-    orcid_id
-) => `
-    mutation AddUser {
+export const ADD_USER = `
+    mutation AddUser($first_name: String!, $last_name: String!, $email: String!, $role: String!, $pending: Boolean!, $approved: Boolean!, $username: String!, $primary_department: String!, $primary_faculty: String!) {
         addUser(
-            first_name: "${first_name}"
-            last_name: "${last_name}"
-            preferred_name: "${preferred_name}"
-            email: "${email}"
-            role: "${role}"
-            bio: "${bio}"
-            rank: "${rank}"
-            institution: "${institution}"
-            primary_department: "${primary_department}"
-            secondary_department: "${secondary_department}"
-            primary_faculty: "${primary_faculty}"
-            secondary_faculty: "${secondary_faculty}"
-            primary_affiliation: "${primary_affiliation}"
-            secondary_affiliation: "${secondary_affiliation}"
-            campus: "${campus}"
-            keywords: "${keywords}"
-            institution_user_id: "${institution_user_id}"
-            scopus_id: "${scopus_id}"
-            orcid_id: "${orcid_id}"
+            first_name: $first_name,
+            last_name: $last_name,
+            email: $email,
+            role: $role,
+            pending: $pending,
+            approved: $approved,
+            username: $username,
+            primary_department: $primary_department,
+            primary_faculty: $primary_faculty
+        )
+    }
+`;
+
+export const REMOVE_USER = `
+    mutation RemoveUser($user_id: String!, $email: String!, $first_name: String!, $last_name: String!) {
+        removeUser(
+            user_id: $user_id,
+            email: $email,
+            first_name: $first_name,
+            last_name: $last_name
         )
     }
 `;
@@ -125,12 +103,14 @@ export const ADD_BATCHED_USER_CV_DATA = `
     mutation AddBatchedUserCVData(
         $user_id: String!,
         $data_section_id: String!,
+        $data_section_title: String!,
         $data_details_list: [AWSJSON!],
         $editable: Boolean!,
     ) {
         addBatchedUserCVData(
             user_id: $user_id,
             data_section_id: $data_section_id,
+            data_section_title: $data_section_title!,
             data_details_list: $data_details_list,
             editable: $editable,
         )
@@ -172,21 +152,16 @@ export const addUserConnectionMutation = (
     }
 `;
 
-export const addTemplateMutation = (
-    title,
-    data_section_ids,
-    start_year,
-    end_year
-) => `
-    mutation AddTemplate {
+export const ADD_TEMPLATE = `
+    mutation AddTemplate($title: String!, $template_structure: AWSJSON!, $start_year: String, $end_year: String) {
         addTemplate(
-            title: "${title}"
-            data_section_ids: "${data_section_ids}"
-            start_year: "${start_year}"
-            end_year: "${end_year}"
+            title: $title
+            template_structure: $template_structure
+            start_year: $start_year
+            end_year: $end_year
         )
     }
-`;
+`
 
 export const linkScopusIdMutation = (user_id, scopus_id, orcid_id) => {
     if (orcid_id) {
@@ -270,29 +245,91 @@ export const updateUserMutation = (
     }
 `;
 
-export const updateSectionMutation = (data_section_id, archive, attributes) => `
-    mutation UpdateSection {
-        updateSection(
-            data_section_id: "${data_section_id}"
-            archive: ${archive}
-            attributes: ${attributes}
+export const updateUserPermissionsMutation = (
+    user_id,
+    pending,
+    approved,
+) => `
+    mutation UpdateUserPermissions {
+        updateUserPermissions(
+            user_id: "${user_id}"
+            pending: ${pending}
+            approved: ${approved}
         )
     }
 `;
 
-export const updateUserCVDataMutation = (
-    user_cv_data_id,
-    data_details,
-    cognito_user_id
-) => `
-    mutation UpdateUserCVData {
-        updateUserCVData(
-            user_cv_data_id: "${user_cv_data_id}"
-            data_details: ${data_details},
-            cognito_user_id: "${cognito_user_id}"
+export const UPDATE_SECTION = `
+    mutation UpdateSection($data_section_id: String!, $archive: Boolean, $attributes: AWSJSON, $attributes_type: AWSJSON) {
+        updateSection(
+            data_section_id: $data_section_id
+            archive: $archive
+            attributes: $attributes
+            attributes_type: $attributes_type
         )
     }
 `;
+
+export const CHANGE_USERNAME = `
+    mutation ChangeUsername($user_id: String!, $username: String!) {
+        changeUsername(
+            user_id: $user_id,
+            username: $username
+        )
+    }
+`;
+
+export const UPDATE_USER_AFFILIATIONS = `
+    mutation UpdateUserAffiliations($user_id: String!, $first_name: String, $last_name: String, $affiliations: AWSJSON) {
+        updateUserAffiliations(
+            user_id: $user_id,
+            first_name: $first_name,
+            last_name: $last_name,
+            affiliations: $affiliations
+        )
+    }
+`;
+
+export const EDIT_SECTION_DETAILS = `
+    mutation EditSectionDetails($data_section_id: String!, $title: String!, $data_type: String!, $description: String, $info: String) {
+        editSectionDetails(
+            data_section_id: $data_section_id
+            title: $title
+            data_type: $data_type
+            description: $description
+            info: $info
+        )
+    }
+`;
+
+
+export const UPDATE_USER_CV_DATA = `
+    mutation UpdateUserCVData($user_cv_data_id: String!, $data_details: AWSJSON, $cognito_user_id: String) {
+      updateUserCVData(
+        user_cv_data_id: $user_cv_data_id
+        data_details: $data_details
+        cognito_user_id: $cognito_user_id
+    )
+  }
+`;
+
+export const DELETE_USER_CV_SECTION_DATA = `
+    mutation DeleteUserCVSectionData($user_id: String!, $data_section_id: String!) {
+      deleteUserCVSectionData(
+        user_id: $user_id
+        data_section_id: $data_section_id
+    )
+  }
+`;
+
+export const DELETE_SECTION_CV_DATA = `
+    mutation DeleteSectionCVData($data_section_id: String!) {
+      deleteSectionCVData(
+        data_section_id: $data_section_id
+    )
+  }
+`;
+
 
 export const updateUserCVDataArchiveMutation = (
     user_cv_data_id,
@@ -331,20 +368,14 @@ export const updateUserConnectionMutation = (user_connection_id, status) => `
     }
 `;
 
-export const updateTemplateMutation = (
-    template_id,
-    title,
-    data_section_ids,
-    start_year,
-    end_year
-) => `
-    mutation UpdateTemplate {
+export const UPDATE_TEMPLATE = `
+    mutation UpdateTemplate($template_id: String!, $title: String!, $template_structure: AWSJSON, $start_year: String, $end_year: String) {
         updateTemplate(
-            template_id: "${template_id}"
-            title: "${title}"
-            data_section_ids: "${data_section_ids}"
-            start_year: "${start_year}"
-            end_year: "${end_year}"
+            template_id: $template_id
+            title: $title
+            template_structure: $template_structure
+            start_year: $start_year
+            end_year: $end_year
         )
     }
 `;
@@ -372,5 +403,26 @@ export const updateLatexConfigurationMutation = (vspace, margin, font) => `
             margin: ${margin},
             font: "${font}"
         )
+    }
+`;
+
+export const addAuditViewMutation = `
+    mutation AddAuditView($input: AuditViewInput!) {
+        addAuditView(input: $input) {
+        log_view_id
+        ts
+        logged_user_id
+        logged_user_first_name
+        logged_user_last_name
+        ip
+        browser_version
+        page
+        session_id
+        assistant
+        profile_record
+        logged_user_role
+        logged_user_email
+        logged_user_action
+        }
     }
 `;

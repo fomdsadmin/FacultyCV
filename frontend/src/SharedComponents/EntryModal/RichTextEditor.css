@@ -1,0 +1,326 @@
+/* Rich Text Editor Styles */
+.rich-text-editor {
+  width: 100%;
+  min-height: 120px;
+}
+
+.rich-text-editor .ql-container {
+  font-size: 14px;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-top: none;
+  height: auto !important;
+  flex: 1;
+}
+
+.rich-text-editor .ql-toolbar {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  border-bottom: none;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.rich-text-editor .ql-editor {
+  min-height: 80px;
+  max-height: 250px;
+  padding: 12px;
+  overflow-y: auto;
+  height: auto !important;
+  line-height: 1.5;
+}
+
+.rich-text-editor .ql-editor.ql-blank::before {
+  font-style: italic;
+  color: #9CA3AF;
+  left: 12px;
+}
+
+/* Ensure the editor expands properly */
+.rich-text-editor .ql-container.ql-snow {
+  border: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+}
+
+.rich-text-editor .ql-editor p {
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .ql-editor p:last-child {
+  margin-bottom: 0;
+}
+
+/* HTML Display Styles */
+.html-content {
+  line-height: 1.6;
+  color: #374151;
+}
+
+.html-content h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.html-content h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.html-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.html-content p {
+  margin-bottom: 0.5rem;
+}
+
+.html-content ul {
+  list-style-type: disc;
+  margin-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.html-content ol {
+  list-style-type: decimal;
+  margin-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.html-content li {
+  margin-bottom: 0.25rem;
+}
+
+.html-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.html-content strong {
+  font-weight: 600;
+}
+
+.html-content em {
+  font-style: italic;
+}
+
+.html-content u {
+  text-decoration: underline;
+}
+
+.html-content s {
+  text-decoration: line-through;
+}
+
+.html-content sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+
+.html-content sup {
+  vertical-align: super;
+  font-size: smaller;
+}
+
+.html-content a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.html-content a:hover {
+  color: #1d4ed8;
+}
+
+.rich-text-editor .ql-editor p {
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .ql-editor h1,
+.rich-text-editor .ql-editor h2,
+.rich-text-editor .ql-editor h3 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .ql-editor ul,
+.rich-text-editor .ql-editor ol {
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-editor .ql-editor blockquote {
+  border-left: 4px solid #e5e7eb;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 16px;
+  font-style: italic;
+}
+
+.rich-text-editor .ql-editor .ql-strike {
+  text-decoration: line-through;
+}
+
+.rich-text-editor .ql-editor .ql-script {
+  font-size: 0.8em;
+}
+
+.rich-text-editor .ql-editor .ql-script[data-value="sub"] {
+  vertical-align: sub;
+}
+
+.rich-text-editor .ql-editor .ql-script[data-value="super"] {
+  vertical-align: super;
+}
+
+.rich-text-editor .ql-toolbar .ql-formats {
+  margin-right: 12px;
+}
+
+.rich-text-editor .ql-toolbar .ql-formats:last-child {
+  margin-right: 0;
+}
+
+.rich-text-editor .ql-snow .ql-tooltip {
+  z-index: 1000;
+}
+
+/* Tooltip styles for toolbar buttons */
+.rich-text-editor .ql-toolbar button[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #374151;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1001;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar button[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #374151;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar button[title] {
+  position: relative;
+}
+
+.rich-text-editor .ql-toolbar .ql-picker-label[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #374151;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1001;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar .ql-picker-label[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #374151;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar .ql-picker-label[title] {
+  position: relative;
+}
+
+/* Clear All button styling */
+.rich-text-editor .ql-toolbar .ql-clearAll {
+  background-color: transparent;
+  color: #444;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  position: relative;
+}
+
+.rich-text-editor .ql-toolbar .ql-clearAll:hover {
+  background-color: #06c;
+  color: #fff;
+}
+
+.rich-text-editor .ql-toolbar .ql-clearAll::before {
+  content: '🗑️';
+  font-size: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.rich-text-editor .ql-toolbar .ql-clearAll:after {
+  content: '';
+}
+
+/* Override tooltip positioning for clear all button */
+.rich-text-editor .ql-toolbar .ql-clearAll[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #374151;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1002;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.rich-text-editor .ql-toolbar .ql-clearAll[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #374151;
+  z-index: 1002;
+  pointer-events: none;
+}

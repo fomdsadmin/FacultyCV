@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import AssistantMenu from "../Components/AssistantMenu";
 import Assistant_FacultyMenu from "../Components/Assistant_FacultyMenu";
 import { rankFields } from '../utils/rankingUtils';
-import GenericEntry from "../Components/GenericEntry";
+import GenericEntry from "../SharedComponents/GenericEntry";
 import { getArchivedUserCVData, getAllSections, updateUserCVDataArchive } from "../graphql/graphqlHelpers";
-import AssistantPageContainer from "../Components/AssistantPageContainer";
+import PageContainer from "./PageContainer";
 
 const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -114,19 +114,18 @@ const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
 
     return (
       <div>
-        <AssistantMenu getCognitoUser={getCognitoUser} userName={assistantUserInfo.preferred_name || assistantUserInfo.first_name}></AssistantMenu>
-        <AssistantPageContainer>
+        <PageContainer>
           <Assistant_FacultyMenu userInfo={userInfo} assistantUserInfo={assistantUserInfo} />
-          <main className='ml-4 pr-5 overflow-auto custom-scrollbar w-full mb-4'>
-          <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
+          <main className='px-[2vw] md:px-[3vw] lg:px-[5vw] overflow-auto custom-scrollbar w-full mb-4'>
+          <h1 className="text-left mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
           {loading ? (
             <div className='flex items-center justify-center w-full'>
               <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
             </div>
           ) : (
             <>
-              <div className='m-4 flex'>
-                <label className="input input-bordered flex items-center gap-2 flex-1">
+              <div className='my-4 flex'>
+                <label className="input input-bordered flex items-center gap-y-2 flex-1">
                   <input
                     type="text"
                     className="grow"
@@ -149,7 +148,7 @@ const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
                 </label>
               </div>  
               {filteredEntries.length === 0 ? (
-                <div className="text-center m-4 text-lg text-zinc-600">No archived entries</div>
+                <div className="text-center my-4 text-lg text-zinc-600">No archived entries</div>
               ) : (
                 filteredEntries.map((entry, index) => {
                   const [fieldA, fieldB] = rankFields(entry.data_details);
@@ -169,7 +168,7 @@ const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
             </>
           )}
         </main>
-        </AssistantPageContainer>
+        </PageContainer>
       </div>
       
     )

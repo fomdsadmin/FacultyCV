@@ -8,9 +8,9 @@ export const GET_BIO_RESPONSE_DATA = `
 `
 
 export const getUserQuery = `
-    query GetUser($email: String!) {
+    query GetUser($username: String!) {
         getUser(
-            email: $email
+            username: $username
         ){
             user_id
             first_name
@@ -32,6 +32,9 @@ export const getUserQuery = `
             scopus_id
             orcid_id
             joined_timestamp   
+            pending
+            approved
+            username
         }
     }
 `;
@@ -87,6 +90,9 @@ export const getAllUsersQuery = () => `
             scopus_id
             orcid_id
             joined_timestamp
+            pending
+            approved
+            username
         }
     }
 `;
@@ -125,11 +131,13 @@ export const getAllSectionsQuery = () => `
     query GetAllSections {
         getAllSections {
             attributes
+            attributes_type
             data_section_id
             data_type
             description
             title
             archive
+            info
         }
     }
 `;
@@ -181,6 +189,37 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
     }`;
 };
 
+
+export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
+    if (data_section_id) 
+        return `query GetAllSectionCVData {
+        getAllSectionCVData (
+            data_section_id: "${data_section_id}"
+        ) {
+            data {
+                data_section_id
+                data_details
+            }
+            total_count
+            returned_count
+        }
+    }`;
+    
+    if (data_section_ids) 
+        return `query GetAllSectionCVData {
+        getAllSectionCVData (
+            data_section_id_list: [${data_section_ids.map(id => `"${id}"`).join(', ')}]
+        ) {
+            data {
+                data_section_id
+                data_details
+            }
+            total_count
+            returned_count
+        }
+    }`;
+};
+
 export const getArchivedUserCVDataQuery = (user_id) => `
     query GetArchivedUserCVData {
         getArchivedUserCVData (
@@ -220,10 +259,10 @@ export const getAllNotificationsQuery = () => `
     }
 `;
 
-export const getUserDeclarationsQuery = (first_name, last_name) => `
+export const getUserDeclarationsQuery = (user_id) => `
     query getUserDeclarations {
         getUserDeclarations (
-            first_name: "${first_name}", last_name: "${last_name}"
+            user_id: "${user_id}"
         ) {
             reporting_year
             other_data
@@ -232,6 +271,63 @@ export const getUserDeclarationsQuery = (first_name, last_name) => `
         }
     }
 `;
+
+export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
+    query getUserAffiliations {
+        getUserAffiliations (
+            first_name: "${first_name}", last_name: "${last_name}", user_id: "${user_id}"
+        ) {
+            data_details
+        }
+    }
+`;
+
+export const getAuditViewQuery = (logged_user_id) => {
+    if (logged_user_id !== undefined && logged_user_id !== null) {
+        return `
+            query getAuditView {
+                getAuditView(logged_user_id: ${logged_user_id}) {
+                    log_view_id
+                    ts
+                    logged_user_id
+                    logged_user_first_name
+                    logged_user_last_name
+                    ip
+                    browser_version
+                    page
+                    session_id
+                    assistant
+                    profile_record
+                    logged_user_role,
+                    logged_user_email,
+                    logged_user_action
+                }
+            }
+        `;
+    } else {
+        return `
+            query getAuditView {
+                getAuditView {
+                    log_view_id
+                    ts
+                    logged_user_id
+                    logged_user_first_name
+                    logged_user_last_name
+                    ip
+                    browser_version
+                    page
+                    session_id
+                    assistant
+                    profile_record
+                    logged_user_role,
+                    logged_user_email,
+                    logged_user_action
+                }
+            }
+        `;
+    }
+};
+
 
 export const getElsevierAuthorMatchesQuery = (
     first_name,
@@ -354,7 +450,7 @@ export const getAllTemplatesQuery = () => `
         getAllTemplates {
             template_id
             title
-            data_section_ids
+            template_structure
             start_year
             end_year
         }

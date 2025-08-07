@@ -3,6 +3,7 @@ import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { updateUser } from '../graphql/graphqlHelpers';
 import { addToUserGroup, removeFromUserGroup, getAllUniversityInfo } from '../graphql/graphqlHelpers';
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }) => {
   const [changingRole, setChangingRole] = useState(false);
@@ -18,6 +19,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
   );
   const [departments, setDepartments] = useState([]);
 
+  const { logAction } = useAuditLogger();
   useEffect(() => {
     fetchUniversityInfo();
   }, []);
@@ -72,12 +74,13 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
       //put user in user group
       try {
         if (updatedRole.startsWith('Admin-')) {
-          const result = await addToUserGroup(userInfo.email, 'DepartmentAdmin');
+          const result = await addToUserGroup(userInfo.username, 'DepartmentAdmin');
           
         } else {
-          const result = await addToUserGroup(userInfo.email, updatedRole);
+          const result = await addToUserGroup(userInfo.username, updatedRole);
           
         }
+        
       } catch (error) {
         
         return;
@@ -86,10 +89,10 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
       //remove user from user group
       try {
         if (userInfo.role.startsWith('Admin-')) {
-          const result = await removeFromUserGroup(userInfo.email, 'DepartmentAdmin');
+          const result = await removeFromUserGroup(userInfo.username, 'DepartmentAdmin');
           
         } else {
-          const result = await removeFromUserGroup(userInfo.email, userInfo.role);
+          const result = await removeFromUserGroup(userInfo.username, userInfo.role);
           
         }
       } catch (error) {
@@ -116,13 +119,16 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
         userInfo.keywords,
         userInfo.institution_user_id,
         userInfo.scopus_id,
-        userInfo.orcid_id
+        userInfo.orcid_id,
       );
       
       fetchAllUsers();
       handleBack();
-    } catch {
-      console.error('Error changing role');
+      // Log the role change action
+      await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, userInfo.email);
+     
+    } catch (error) {
+      console.error('Error changing role', error);
     }
     setChangingRole(false);
   }
@@ -140,7 +146,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
   };
 
   return (
-    <dialog className="modal-dialog" open>
+    <dialog className="modal-dialog ml-4" open>
       <div className="modal-content">
         <div>
           <button
