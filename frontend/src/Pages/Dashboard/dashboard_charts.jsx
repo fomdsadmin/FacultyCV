@@ -48,43 +48,45 @@ const Dashboard = ({ userInfo }) => {
     }
   }, [userInfo]);
 
-  const fetchUserCVData = useCallback(async (dataSections) => {
-    if (!userInfo?.user_id) return;
+  const fetchUserCVData = useCallback(
+    async (dataSections) => {
+      if (!userInfo?.user_id) return;
 
-    try {
-      // Find section IDs
-      const publicationSectionId = dataSections.find(
-        (section) => section.title.includes("Publication") && !section.title.includes("Other")
-      )?.data_section_id;
-      
-      const otherPublicationSectionId = dataSections.find(
-        (section) => section.title.includes("Publication") && section.title.includes("Other")
-      )?.data_section_id;
-      
-      const secureFundingSectionId = dataSections.find((section) =>
-        section.title.includes("Research or Equivalent Grants")
-      )?.data_section_id;
+      try {
+        // Find section IDs
+        const publicationSectionId = dataSections.find(
+          (section) => section.title.includes("Publications") && !section.title.includes("Other")
+        )?.data_section_id;
 
-      // Fetch data in parallel
-      const [pubData, otherPubData, fundData] = await Promise.all([
-        publicationSectionId ? getUserCVData(userInfo.user_id, publicationSectionId).catch(() => []) : [],
-        otherPublicationSectionId ? getUserCVData(userInfo.user_id, otherPublicationSectionId).catch(() => []) : [],
-        secureFundingSectionId ? getUserCVData(userInfo.user_id, secureFundingSectionId).catch(() => []) : []
-      ]);
+        const otherPublicationSectionId = dataSections.find(
+          (section) => section.title.includes("Publications") && section.title.includes("Other")
+        )?.data_section_id;
 
-      // Process publications data
-      const allPublications = [...pubData, ...otherPubData];
-      setPublications(allPublications);
-      setTotalPublications(allPublications.length);
+        const secureFundingSectionId = dataSections.find((section) =>
+          section.title.includes("Research or Equivalent Grants")
+        )?.data_section_id;
 
-      // Process grants data
-      setGrants(fundData);
-      setTotalGrants(fundData.length);
+        // Fetch data in parallel
+        const [pubData, otherPubData, fundData] = await Promise.all([
+          publicationSectionId ? getUserCVData(userInfo.user_id, publicationSectionId).catch(() => []) : [],
+          otherPublicationSectionId ? getUserCVData(userInfo.user_id, otherPublicationSectionId).catch(() => []) : [],
+          secureFundingSectionId ? getUserCVData(userInfo.user_id, secureFundingSectionId).catch(() => []) : [],
+        ]);
 
-    } catch (error) {
-      console.error("Error fetching CV data:", error);
-    }
-  }, [userInfo]);
+        // Process publications data
+        const allPublications = [...pubData, ...otherPubData];
+        setPublications(allPublications);
+        setTotalPublications(allPublications.length);
+
+        // Process grants data
+        setGrants(fundData);
+        setTotalGrants(fundData.length);
+      } catch (error) {
+        console.error("Error fetching CV data:", error);
+      }
+    },
+    [userInfo]
+  );
 
   // Memoized keyword computation
   const computedKeywordData = useMemo(() => {
@@ -95,7 +97,7 @@ const Dashboard = ({ userInfo }) => {
         const keywords = details.keywords || [];
         if (Array.isArray(keywords) && keywords.length > 0) {
           keywords.forEach((kw) => {
-            if (kw && typeof kw === 'string' && kw.trim().length > 0) {
+            if (kw && typeof kw === "string" && kw.trim().length > 0) {
               const lower = kw.toLowerCase().trim();
               keywordCounts[lower] = (keywordCounts[lower] || 0) + 1;
             }
@@ -105,7 +107,7 @@ const Dashboard = ({ userInfo }) => {
         console.error("Error parsing publication data for keywords:", e, pub);
       }
     });
-    
+
     const sorted = Object.entries(keywordCounts)
       .map(([text, value]) => ({ text, value }))
       .filter((item) => item.value > 1) // Filter out keywords with count <= 1
@@ -119,28 +121,15 @@ const Dashboard = ({ userInfo }) => {
     publications.forEach((pub) => {
       try {
         const details = JSON.parse(pub.data_details);
-        
-        // Handle regular publications with year_published
-        if (details.year_published) {
-          const year = parseInt(details.year_published);
-          if (!isNaN(year) && year > 1900 && year <= new Date().getFullYear()) {
-            pubYearCounts[year] = (pubYearCounts[year] || 0) + 1;
-          }
-        }
-        
+
         // Handle other publications with dates field
-        if (details.dates && typeof details.dates === 'string') {
-          const dateParts = details.dates.split("-");
-          if (dateParts.length > 1) {
-            let yearPart = dateParts[1];
-            if (yearPart && yearPart.includes(",")) {
-              const yearCommaparts = yearPart.split(",");
-              if (yearCommaparts.length > 1) {
-                const year = parseInt(yearCommaparts[1].trim());
-                if (!isNaN(year) && year > 1900 && year <= new Date().getFullYear()) {
-                  pubYearCounts[year] = (pubYearCounts[year] || 0) + 1;
-                }
-              }
+        if (details.end_date && typeof details.end_date === "string") {
+          const dateParts = details.end_date.trim().split(/\s+/); // Split by one or more whitespace
+          if (dateParts.length >= 1) {
+            const yearPart = dateParts[dateParts.length - 1]; // Take the last part as year
+            const year = parseInt(yearPart);
+            if (!isNaN(year) && year > 1900 && year <= new Date().getFullYear()) {
+              pubYearCounts[year] = (pubYearCounts[year] || 0) + 1;
             }
           }
         }
@@ -175,12 +164,31 @@ const Dashboard = ({ userInfo }) => {
     grants.forEach((grant) => {
       try {
         const details = JSON.parse(grant.data_details);
-        const year = details.year;
         const amount = parseFloat(details.amount || 0);
-        if (year && amount && !isNaN(amount) && amount > 0) {
-          const yearNum = parseInt(year);
-          if (!isNaN(yearNum) && yearNum > 1900 && yearNum <= new Date().getFullYear() + 10) {
-            fundYearSums[yearNum] = (fundYearSums[yearNum] || 0) + amount;
+
+        if (details.year) {
+          const yearNum = parseInt(details.year);
+          if (yearNum && amount && !isNaN(amount) && amount > 0) {
+            if (!isNaN(yearNum) && yearNum > 1900 && yearNum <= new Date().getFullYear() + 10) {
+              fundYearSums[yearNum] = (fundYearSums[yearNum] || 0) + amount;
+            }
+          }
+        }
+
+        // Handle other publications with dates field
+        if (details.dates && typeof details.dates === "string") {
+          const dateParts = details.dates.split("-");
+          if (dateParts.length > 1) {
+            let yearPart = dateParts[1];
+            if (yearPart && yearPart.includes(",")) {
+              const yearCommaparts = yearPart.split(",");
+              if (yearCommaparts.length > 1) {
+                const year = parseInt(yearCommaparts[1].trim());
+                if (!isNaN(year) && year > 1900 && year <= new Date().getFullYear()) {
+                  fundYearSums[year] = (fundYearSums[year] || 0) + 1;
+                }
+              }
+            }
           }
         }
       } catch (error) {
@@ -232,7 +240,7 @@ const Dashboard = ({ userInfo }) => {
         title: "Publications Over Time",
         data: publicationChartData.labels.map((year, index) => ({
           year: year,
-          Publications: publicationChartData.datasets[0].data[index]
+          Publications: publicationChartData.datasets[0].data[index],
         })),
         dataKey: "Publications",
         xAxisKey: "year",
@@ -240,9 +248,9 @@ const Dashboard = ({ userInfo }) => {
         yAxisLabel: "Number of Publications",
         barColor: "#4bc0c0",
         showLegend: false,
-        formatTooltip: (value, name) => [`${value} ${value === 1 ? 'Publication' : 'Publications'}`, name],
+        formatTooltip: (value, name) => [`${value} ${value === 1 ? "Publication" : "Publications"}`, name],
         formatYAxis: (value) => value.toString(),
-        formatXAxis: (value) => value
+        formatXAxis: (value) => value,
       });
     }
 
@@ -252,7 +260,7 @@ const Dashboard = ({ userInfo }) => {
         title: "Research Funding Over Time",
         data: fundingChartData.labels.map((year, index) => ({
           year: year,
-          Funding: fundingChartData.datasets[0].data[index]
+          Funding: fundingChartData.datasets[0].data[index],
         })),
         dataKey: "Funding",
         xAxisKey: "year",
@@ -260,7 +268,7 @@ const Dashboard = ({ userInfo }) => {
         yAxisLabel: "Funding Amount (CAD)",
         barColor: "#7e57c2",
         showLegend: false,
-        formatTooltip: (value, name) => [formatCAD(value), 'Research Funding (CAD)'],
+        formatTooltip: (value, name) => [formatCAD(value), "Research Funding (CAD)"],
         formatYAxis: (value) => {
           if (value >= 1000000) {
             return `$${(value / 1000000).toFixed(1)}M`;
@@ -269,7 +277,7 @@ const Dashboard = ({ userInfo }) => {
           }
           return `$${value.toLocaleString()}`;
         },
-        formatXAxis: (value) => value
+        formatXAxis: (value) => value,
       });
     }
 
@@ -382,9 +390,9 @@ const Dashboard = ({ userInfo }) => {
   }
 
   return (
-    <div className="max-w-full mx-auto">      
+    <div className="max-w-full mx-auto">
       <SummaryCards />
-      
+
       {/* Graph Carousel Section */}
       <div className="mb-4 mr-4">
         <GraphCarousel graphs={graphsConfig} />
@@ -393,9 +401,7 @@ const Dashboard = ({ userInfo }) => {
       {/* Keywords Section */}
       <div className="mt-2">
         <div className="flex flex-col gap-2 p-2 rounded-lg shadow-md bg-zinc-50">
-          <h2 className="text-lg font-semibold p-4">
-            Keywords From Your Publications
-          </h2>
+          <h2 className="text-lg font-semibold p-4">Keywords From Your Publications</h2>
           {keywordData.length > 0 && (
             <div className="flex-1 min-w-0 p-4">
               <div className="flex flex-wrap gap-2">
@@ -410,9 +416,7 @@ const Dashboard = ({ userInfo }) => {
                       <span
                         key={index}
                         className={`py-2 px-3 text-sm rounded-full ${
-                          isMax
-                            ? "bg-yellow-400 text-black font-bold"
-                            : "bg-gray-200 text-gray-800"
+                          isMax ? "bg-yellow-400 text-black font-bold" : "bg-gray-200 text-gray-800"
                         }`}
                       >
                         {item.text.toUpperCase()} {item.value !== 0 && `(${item.value})`}

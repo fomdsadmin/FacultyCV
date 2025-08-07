@@ -23,10 +23,10 @@ def parse_publication(data):
         "title": data.get('title', {}).get('title', {}).get('value', '') if data.get('title') else '',
         "cited_by": None,  # Assuming no cited_by data in the api response for ORCID
         "keywords": [],  # Assuming no keywords in the api response for ORCID
-        "journal": data.get('journal-title', {}).get('value', '') if data.get('journal-title') else '',
+        "journal_title": data.get('journal-title', {}).get('value', '') if data.get('journal-title') else '',
         "link": (data.get('url', {}) or {}).get('value', '') if data.get('url') else '',
         "doi": doi,
-        "year_published": data.get('publication-date', {}).get('year', {}).get('value', '') if data.get('publication-date') else '',
+        "end_date": data.get('publication-date', {}).get('year', {}).get('value', '') if data.get('publication-date') else '',
         "author_names": [
             contributor.get('credit-name', {}).get('value', '') 
             for contributor in data.get('contributors', {}).get('contributor', []) or []
@@ -107,6 +107,7 @@ def getOrcidPublication(arguments):
         response = requests.get(url, headers=headers)
         try:
             full_data = response.json()
+            print(full_data)
             for data in full_data.get('bulk', []):
                 work = data.get('work')
                 if work:
