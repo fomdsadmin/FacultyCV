@@ -196,8 +196,26 @@ export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
         getAllSectionCVData (
             data_section_id: "${data_section_id}"
         ) {
-            data_section_id
-            data_details
+            data {
+                data_section_id
+                data_details
+            }
+            total_count
+            returned_count
+        }
+    }`;
+    
+    if (data_section_ids) 
+        return `query GetAllSectionCVData {
+        getAllSectionCVData (
+            data_section_id_list: [${data_section_ids.map(id => `"${id}"`).join(', ')}]
+        ) {
+            data {
+                data_section_id
+                data_details
+            }
+            total_count
+            returned_count
         }
     }`;
 };

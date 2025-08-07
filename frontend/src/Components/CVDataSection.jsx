@@ -21,8 +21,15 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
   const fetchAllUserCVData = async () => {
     let allRows = [];
     try {
-      const rows = await getAllSectionCVData(section.data_section_id);
-      setTotalRows(rows.length); // Set total rows count
+      const response = await getAllSectionCVData(section.data_section_id);
+      console.log("Fetched response:", response);
+      
+      // Handle new response structure with total_count and data array
+      const rows = response.data || response; // Fallback for backward compatibility
+      const totalCount = response.total_count || rows.length;
+      
+      setTotalRows(totalCount); // Set total rows count from server
+      
       const parsedRows = rows.map((row) => {
         let details = row.data_details;
         if (typeof details === "string") {
@@ -37,10 +44,11 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
           ...details,
         };
       });
-      // Only display first 1000 rows
-      allRows = allRows.concat(parsedRows.slice(0, 1000));
-    } catch {
+      
+      allRows = parsedRows; // All rows are already limited to 1000 by the server
+    } catch (error) {
       // skip user if error
+      console.error("Error fetching CV data for section:", error);
     }
 
     setDataRows(allRows);
@@ -118,6 +126,9 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
         {(!loading && totalRows > 1000) && (
           <span className="ml-2 text-zinc-500 text-sm">(showing first 1000 rows)</span>
         )}
+        {(!loading && dataRows.length > 0 && totalRows <= 1000) && (
+          <span className="ml-2 text-zinc-500 text-sm">(showing all {dataRows.length} rows)</span>
+        )}
       </div>
 
       {/* Data Table */}
@@ -191,7 +202,7 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
               section={section}
               onBack={onBack}
               getSectionData={fetchAllUserCVData}
-              totalRows={dataRows.length} // Pass total rows count
+              totalRows={totalRows} // Pass actual total rows count from server
             />
           </div>
         </div>
