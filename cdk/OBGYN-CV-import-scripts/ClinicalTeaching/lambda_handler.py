@@ -22,12 +22,20 @@ def cleanData(df):
     """
     df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["description"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
-
+    df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
+    df["highlight"] = df["Highlight"].astype(str).str.strip().str.lower().map({'true': True, 'false': False})
     df["duration_(eg:_8_weeks)"] = df["Duration"].fillna('').str.strip()
-    df["number_of_students"] = df["Class Size"].fillna('').str.strip() 
- 
+    
+    # Clean number_of_students - handle NaN, trailing .0, and other unwanted values
+    df["number_of_students"] = df["Class Size"].fillna('').astype(str).str.strip()
+    # Remove unwanted values including trailing .0 and nan
+    df["number_of_students"] = df["number_of_students"].replace([
+        '0', '0.0', '0.00', 'nan', 'None', 'null', 'NaN'
+    ], '')
+    
+    # Remove trailing .0 from numbers (e.g., "15.0" becomes "15")
+    df["number_of_students"] = df["number_of_students"].str.replace(r'\.0+$', '', regex=True) 
+    
     # Handle Total Hours as decimal
     try:
         df["total_hours"] = pd.to_numeric(df["Total Hours"], errors='coerce')
@@ -64,6 +72,10 @@ def cleanData(df):
     # Handle "Other:" cases - combine with the text after "Other:"
     mask_other = df["student_level_original"].str.startswith("Other:")
     df.loc[mask_other, "student_level"] = "Other (" + df.loc[mask_other, "student_level_original"].str.replace("Other:", "").str.strip() + ")"
+    
+    # Handle truly empty or blank student levels as "Other (blank)"
+    mask_blank = df["student_level_original"].replace('', np.nan).isna()
+    df.loc[mask_blank, "student_level"] = "Other (blank)"
 
     # Special case handling for common patterns
     df.loc[df["student_level_original"].str.contains("Fellow", case=False, na=False), "student_level"] = "Fellowship"
@@ -74,27 +86,50 @@ def cleanData(df):
     # Handle anything else that didn't match as "Other"
     mask_unmapped = df["student_level"].isna()
     df.loc[mask_unmapped, "student_level"] = "Other (" + df.loc[mask_unmapped, "student_level_original"] + ")"
+    
 
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["start_date"] = df["start_date"].fillna('').str.strip()
-    df["end_date"] = df["end_date"].fillna('').str.strip()
-    # Combine start and end dates into a single 'dates' column:
+    # Handle Dates field - convert Unix timestamps to date strings
+    if "TDate" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values
+        df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
+        df["start_date"] = df["TDate_clean"].apply(lambda x:
+            '' if pd.isna(x) or x <= 0 else
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["start_date"] = df["start_date"].fillna('').str.strip()
+    else:
+        df["start_date"] = ''
+    
+    if "TDateEnd" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
+        df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
+        df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
+            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["end_date"] = df["end_date"].fillna('').str.strip()
+    else:
+        df["end_date"] = ''
+
+    # Combine start and end dates into a single 'dates' column
+    # Only show ranges when both dates exist, avoid empty dashes
     def combine_dates(row):
-        if row["start_date"] and row["end_date"]:
-            return f"{row['start_date']} - {row['end_date']}"
-        elif row["start_date"]:
-            return row["start_date"]
-        elif row["end_date"]:
-            return row["end_date"]
+        start = row["start_date"].strip()
+        end = row["end_date"].strip()
+    
+        if start and end:
+            return f"{start} - {end}"
+        elif start:
+            return start
+        elif end:
+            return end
         else:
             return ""
     df["dates"] = df.apply(combine_dates, axis=1)
 
 
     # Keep only the cleaned columns
-    df = df[["user_id", "description", "student_level", "duration_(eg:_8_weeks)", "number_of_students", "total_hours", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "description", "student_level", "duration_(eg:_8_weeks)", "number_of_students", "total_hours", "highlight_-_notes", "highlight", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
@@ -148,6 +183,8 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
         finally:
             rows_processed += 1
             print(f"Processed row {i + 1}/{len(df)}")
+            print(f"Row {i + 1}: number_of_students = '{row['number_of_students']}'")
+        
     connection.commit()
     return rows_processed, rows_added_to_db
 
