@@ -43,8 +43,7 @@ def cleanData(df):
     b = df.copy()
     
     # Ensure relevant columns are string type before using .str methods
-    for col in ["PhysicianID", "University_Organization", "Details","Supervisor",
-                "Type", "TypeOther", "Highlight", "Notes"]:
+    for col in ["PhysicianID", "University_Organization", "Details","Supervisor","Type", "TypeOther", "Highlight", "Notes"]:
         if col in a.columns:
             a[col] = a[col].astype(str)
         else:
@@ -104,7 +103,7 @@ def cleanData(df):
     a["dates"] = a.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    a = a[["user_id", "supervisor", "university/organization", "details", "highlight_-_notes", "degree", "dates"]]
+    a = a[["user_id", "supervisor", "university/organization", "details", "highlight","highlight_-_notes", "degree", "dates"]]
 
     # Replace NaN with empty string for all columns
     a = a.replace({np.nan: ''})
@@ -120,7 +119,7 @@ def cleanData(df):
 
     b["supervisor"] = b["Supervisor"].fillna('').str.strip()
     b["title_of_dissertation"] = b["Thesis Title"].fillna('').str.strip()
-
+    b["highlight"] = b["Highlight"].str.strip().str.lower().map({'true': True, 'false': False})
     b["highlight_-_notes"] = b["Notes"].fillna('').str.strip() 
 
     # Handle Dates field - convert Unix timestamps to date strings

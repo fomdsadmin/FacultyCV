@@ -48,7 +48,7 @@ def cleanData(df):
     df.loc[mask_other_awards, "type"] = "d. Other (" + df.loc[mask_other_awards, "type_other"] + ")"
     
     # Handle empty type (different from NaN)
-    mask_empty = df["type_original"] == "" or df["type_original"].isna()
+    mask_empty = (df["type_original"] == "") | (df["type_original"].isna())
     df.loc[mask_empty, "type"] = "d. Other ()"
 
     if "TDate" in df.columns:
