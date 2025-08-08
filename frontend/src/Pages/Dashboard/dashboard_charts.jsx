@@ -21,13 +21,6 @@ const Dashboard = ({ userInfo }) => {
   const [renderWordCloud, setRenderWordCloud] = useState(false);
   const wordCloudCanvasRef = useRef(null);
 
-  const formatCAD = (value) =>
-    new Intl.NumberFormat("en-CA", {
-      style: "currency",
-      currency: "CAD",
-      minimumFractionDigits: 0,
-    }).format(value);
-
   // Consolidated data loading
   useEffect(() => {
     setUser(userInfo);
@@ -63,7 +56,7 @@ const Dashboard = ({ userInfo }) => {
         )?.data_section_id;
 
         const secureFundingSectionId = dataSections.find((section) =>
-          section.title.includes("Research or Equivalent Grants")
+          section.title.includes("Research or Equivalent Grants and Contracts")
         )?.data_section_id;
 
         // Fetch data in parallel
@@ -160,34 +153,72 @@ const Dashboard = ({ userInfo }) => {
 
   // Memoized funding chart data
   const fundingChartData = useMemo(() => {
-    const fundYearSums = {};
+    const fundYearData = {};
+    
     grants.forEach((grant) => {
       try {
         const details = JSON.parse(grant.data_details);
         const amount = parseFloat(details.amount || 0);
+        const type = details.type ? details.type.trim() : '';
 
-        if (details.year) {
-          const yearNum = parseInt(details.year);
-          if (yearNum && amount && !isNaN(amount) && amount > 0) {
-            if (!isNaN(yearNum) && yearNum > 1900 && yearNum <= new Date().getFullYear() + 10) {
-              fundYearSums[yearNum] = (fundYearSums[yearNum] || 0) + amount;
+        // Determine funding category
+        let category = 'grants';
+        if (type === 'All Types Contract') {
+          category = 'contracts';
+        }
+
+        // Handle dates field which can be "January 2021 - February 2021" or "January 2021"
+        if (details.dates && typeof details.dates === "string") {
+          const dateStr = details.dates.trim();
+          let year = null;
+
+          if (dateStr.includes("-")) {
+            // Format: "January 2021 - February 2021"
+            // Extract year from the first date part
+            const firstDatePart = dateStr.split("-")[0].trim();
+            const yearMatch = firstDatePart.match(/\b(\d{4})\b/);
+            if (yearMatch) {
+              year = parseInt(yearMatch[1]);
+            }
+          } else {
+            // Format: "January 2021"
+            // Extract year directly
+            const yearMatch = dateStr.match(/\b(\d{4})\b/);
+            if (yearMatch) {
+              year = parseInt(yearMatch[1]);
+            }
+          }
+
+          // Add amount and count to the year if valid
+          if (year && !isNaN(year) && year > 1900 && year <= new Date().getFullYear() + 10) {
+            if (!fundYearData[year]) {
+              fundYearData[year] = {
+                grants: { amount: 0, count: 0 },
+                contracts: { amount: 0, count: 0 }
+              };
+            }
+            // Always count the item, but only add amount if it's valid and > 0
+            fundYearData[year][category].count += 1;
+            if (amount && !isNaN(amount) && amount > 0) {
+              fundYearData[year][category].amount += amount;
             }
           }
         }
 
-        // Handle other publications with dates field
-        if (details.dates && typeof details.dates === "string") {
-          const dateParts = details.dates.split("-");
-          if (dateParts.length > 1) {
-            let yearPart = dateParts[1];
-            if (yearPart && yearPart.includes(",")) {
-              const yearCommaparts = yearPart.split(",");
-              if (yearCommaparts.length > 1) {
-                const year = parseInt(yearCommaparts[1].trim());
-                if (!isNaN(year) && year > 1900 && year <= new Date().getFullYear()) {
-                  fundYearSums[year] = (fundYearSums[year] || 0) + 1;
-                }
-              }
+        // Fallback: Handle year field directly if dates field is not available
+        if (!details.dates && details.year) {
+          const yearNum = parseInt(details.year);
+          if (yearNum && !isNaN(yearNum) && yearNum > 1900 && yearNum <= new Date().getFullYear() + 10) {
+            if (!fundYearData[yearNum]) {
+              fundYearData[yearNum] = {
+                grants: { amount: 0, count: 0 },
+                contracts: { amount: 0, count: 0 }
+              };
+            }
+            // Always count the item, but only add amount if it's valid and > 0
+            fundYearData[yearNum][category].count += 1;
+            if (amount && !isNaN(amount) && amount > 0) {
+              fundYearData[yearNum][category].amount += amount;
             }
           }
         }
@@ -196,21 +227,24 @@ const Dashboard = ({ userInfo }) => {
       }
     });
 
-    const sortedYears = Object.keys(fundYearSums).sort();
+    const sortedYears = Object.keys(fundYearData).sort();
     return {
       labels: sortedYears,
+      fundYearData: fundYearData, // Store for tooltip formatting
       datasets: [
         {
-          label: "Funding Amount per Year (CAD)",
-          data: sortedYears.map((year) => fundYearSums[year]),
+          label: "Research Grants",
+          data: sortedYears.map((year) => fundYearData[year]?.grants?.amount || 0),
+          backgroundColor: "#7e57c2",
           borderColor: "#7e57c2",
-          backgroundColor: "rgba(126,87,194,0.2)",
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: "#7e57c2",
-          pointBorderColor: "#fff",
-          pointRadius: 5,
-          pointHoverRadius: 7,
+          borderWidth: 1,
+        },
+        {
+          label: "Contract Funding",
+          data: sortedYears.map((year) => fundYearData[year]?.contracts?.amount || 0),
+          backgroundColor: "#4bc0c0",
+          borderColor: "#4bc0c0",
+          borderWidth: 1,
         },
       ],
     };
@@ -221,13 +255,20 @@ const Dashboard = ({ userInfo }) => {
     const total = grants.reduce((sum, grant) => {
       try {
         const details = JSON.parse(grant.data_details);
-        const amount = parseFloat(details.amount || 0);
+        const amount = parseInt(details.amount || 0);
         return sum + (isNaN(amount) || amount <= 0 ? 0 : amount);
       } catch (error) {
         return sum;
       }
     }, 0);
-    return formatCAD(total);
+    
+    // Format the total as currency
+    if (total >= 1000000) {
+      return `$${(total / 1000000).toFixed(1)}M`;
+    } else if (total >= 1000) {
+      return `$${(total / 1000).toFixed(0)}K`;
+    }
+    return `$${total.toLocaleString()}`;
   }, [grants]);
 
   // Memoized graphs configuration for the carousel
@@ -260,15 +301,40 @@ const Dashboard = ({ userInfo }) => {
         title: "Research Funding Over Time",
         data: fundingChartData.labels.map((year, index) => ({
           year: year,
-          Funding: fundingChartData.datasets[0].data[index],
+          "Research Grants": fundingChartData.datasets[0].data[index],
+          "Contract Funding": fundingChartData.datasets[1].data[index],
+          // Include count data for tooltips
+          grantsCount: fundingChartData.fundYearData[year]?.grants?.count || 0,
+          contractsCount: fundingChartData.fundYearData[year]?.contracts?.count || 0,
         })),
-        dataKey: "Funding",
+        dataKeys: ["Research Grants", "Contract Funding"],
         xAxisKey: "year",
         xAxisLabel: "Year",
         yAxisLabel: "Funding Amount (CAD)",
-        barColor: "#7e57c2",
-        showLegend: false,
-        formatTooltip: (value, name) => [formatCAD(value), "Research Funding (CAD)"],
+        barColors: ["#7e57c2", "#4bc0c0"],
+        showLegend: true,
+        isMultiBar: true,
+        formatTooltip: (value, name, props) => {
+          const payload = props?.payload;
+          let count = 0;
+          
+          if (name === "Research Grants") {
+            count = payload?.grantsCount || 0;
+          } else if (name === "Contract Funding") {
+            count = payload?.contractsCount || 0;
+          }
+          
+          const formattedValue = (() => {
+            if (value >= 1000000) {
+              return `$${(value / 1000000).toFixed(1)}M`;
+            } else if (value >= 1000) {
+              return `$${(value / 1000).toFixed(0)}K`;
+            }
+            return `$${value.toLocaleString()}`;
+          })();
+          
+          return [`${formattedValue} (${count} ${count === 1 ? 'item' : 'items'})`, name];
+        },
         formatYAxis: (value) => {
           if (value >= 1000000) {
             return `$${(value / 1000000).toFixed(1)}M`;
