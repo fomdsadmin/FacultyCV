@@ -51,18 +51,15 @@ def cleanData(df):
 
     # Handle "Other" types with free text (already present)
     mask_univ_other = df["Type"].str.strip() == "University Other Service:"
-    df.loc[mask_univ_other & df["type_other"].ne(""), "type"] = (
-        "e. Other (" + df.loc[mask_univ_other & df["type_other"].ne(""), "type_other"] + ")"
-    )
+    df.loc[mask_univ_other, "type"] = ("e. Other (" + df.loc[mask_univ_other, "type_other"] + ")")
+    
     mask_hosp_other = df["Type"].str.strip() == "Hospital Other Service:"
-    df.loc[mask_hosp_other & df["type_other"].ne(""), "type"] = (
-        "d. Other (" + df.loc[mask_hosp_other & df["type_other"].ne(""), "type_other"] + ")"
-    )
+    df.loc[mask_hosp_other, "type"] = ("d. Other (" + df.loc[mask_hosp_other, "type_other"] + ")")
 
-    # Assign any remaining unknown types to a default "e. Other (Unknown: <original>)"
+    # Assign any remaining unknown types to a default "e. Other (<original>)"
     known_types = list(TYPE_SUBSECTION_MAPPING.values())
     mask_unknown = ~df["type"].isin(known_types) & ~mask_univ_other & ~mask_hosp_other
-    df.loc[mask_unknown, "type"] = "e. Other (Unknown: " + df.loc[mask_unknown, "Type"].astype(str).str.strip() + ")"
+    df.loc[mask_unknown, "type"] = "e. Other (" + df.loc[mask_unknown, "Type"].astype(str).str.strip() + ")"
 
     # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
     if "TDate" in df.columns:

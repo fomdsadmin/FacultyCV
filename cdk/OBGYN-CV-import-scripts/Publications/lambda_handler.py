@@ -14,6 +14,7 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
+SECTION_TITLE = "Publications"
 SECTION_TITLE_OTHER = "Other Publications"
 SECTION_TITLE_PATENTS = "Patents"
 
@@ -43,12 +44,12 @@ def cleanData(df):
         if col in df.columns:
             df[col] = df[col].astype(str)
 
-    # --- Other Publications ---
     other_pubs_df = df.copy()
     patents = df.copy()
-    
+   
+    # --- Other Publications ---
     other_pubs_df["user_id"] = other_pubs_df["PhysicianID"].fillna('').str.strip()
-    other_pubs_df["authors"] = other_pubs_df["Authors"].fillna('').str.strip()
+    other_pubs_df["author_names"] = other_pubs_df["Authors"].fillna('').str.strip()
     other_pubs_df["title"] = other_pubs_df["Title"].fillna('').str.strip()
     other_pubs_df["citation"] = other_pubs_df["Citation"].fillna('').str.strip()
     other_pubs_df["publication_status"] = other_pubs_df["Publication Status"].fillna('').str.strip()
@@ -69,7 +70,7 @@ def cleanData(df):
 
     # Map publication types to match frontend dropdown expectations
     pub_type_map = {
-        "Journals": "Journals",
+        "Journals": "Journal",
         "Conference Proceedings": "Conference Proceedings", 
         "Abstracts": "Abstract",
         "Books": "Books",
@@ -100,43 +101,44 @@ def cleanData(df):
     else:
         other_pubs_df["publication_type"] = ''
     
-    print(f"Publication types before filtering: {other_pubs_df['publication_type'].value_counts()}")
-    
     other_pubs_df["highlight_-_notes"] = other_pubs_df["Notes"].fillna('').str.strip()        
 
     # Handle Dates field - convert Unix timestamps to date strings
     if "TDate" in other_pubs_df.columns:
         # Handle zero and negative timestamps - set as blank for invalid values
         other_pubs_df["TDate_clean"] = pd.to_numeric(other_pubs_df["TDate"], errors='coerce')
-        other_pubs_df["year"] = other_pubs_df["TDate_clean"].apply(lambda x: 
+        other_pubs_df["end_date"] = other_pubs_df["TDate_clean"].apply(lambda x: 
             '' if pd.isna(x) or x <= 0 else 
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
-        other_pubs_df["year"] = other_pubs_df["year"].fillna('').str.strip()
+        other_pubs_df["end_date"] = other_pubs_df["end_date"].fillna('').str.strip()
     else:
-        other_pubs_df["year"] = ''
+        other_pubs_df["end_date"] = ''
 
-    # Keep only the cleaned columns for other publications
-    other_pubs_df = other_pubs_df[["user_id", "title", "citation", "role", "publication_type", "authors", 
-                                   "peer_reviewed", "publication_status", "highlight_-_notes", "year"]]
-    
     # Remove entries from df where Type is "Patents"
-    initial_count = len(other_pubs_df)
     other_pubs_df = other_pubs_df[other_pubs_df["publication_type"] != "Patents"].reset_index(drop=True)
-    final_count = len(other_pubs_df)
-    print(f"Filtered out {initial_count - final_count} patents. Remaining other publications: {final_count}")
-
+    
+    pubs_df = other_pubs_df.copy()
+    # Remove all Journal entries, and instead keep them in Publications section
+    pubs_df = pubs_df[pubs_df["publication_type"] == "Journal"].reset_index(drop=True)
+    other_pubs_df = other_pubs_df[other_pubs_df["publication_type"] != "Journal"].reset_index(drop=True)
+    
+    
+    # Keep only the cleaned columns for other publications
+    other_pubs_df = other_pubs_df[["user_id", "title", "citation", "role", "publication_type", "author_names", 
+                                   "peer_reviewed", "publication_status", "highlight_-_notes", "end_date"]]
+    # Keep only the cleaned columns for publications
+    pubs_df = pubs_df[["user_id", "title", "citation", "publication_type", "role", "author_names", 
+                                   "peer_reviewed", "publication_status", "highlight_-_notes", "end_date"]]
+    
     # Replace NaN with empty string for all columns
     other_pubs_df = other_pubs_df.replace({np.nan: ''}).reset_index(drop=True)
-    
+    pubs_df = pubs_df.replace({np.nan: ''}).reset_index(drop=True)
 
     # --- Patents  ---
     # Filter to only include patents
     if "Type" in patents.columns:
-        patents_initial_count = len(patents)
         patents = patents[patents["Type"].fillna('').str.strip() == "Patents"].reset_index(drop=True)
-        patents_final_count = len(patents)
-        print(f"Found {patents_final_count} patents out of {patents_initial_count} total records")
         
     patents["user_id"] = patents["PhysicianID"].fillna('').str.strip()
     patents["applicants"] = patents["Authors"].fillna('').str.strip()
@@ -166,7 +168,7 @@ def cleanData(df):
     patents = patents[["user_id", "title", "citation", "applicants", "peer_reviewed", "year"]]
     patents = patents.replace({np.nan: ''}).reset_index(drop=True)
     
-    return other_pubs_df, patents
+    return pubs_df, other_pubs_df, patents
 
 
 def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
@@ -326,7 +328,7 @@ def lambda_handler(event, context):
             }
 
         # Clean the DataFrame (returns two DataFrames)
-        other_pubs_df, patents_df = cleanData(df)
+        pubs_df, other_pubs_df, patents_df = cleanData(df)
         print("Data cleaned successfully.")
 
         # Connect to database
@@ -338,6 +340,12 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
+        # Store publications data
+        if not pubs_df.empty:
+            rows_processed, rows_added_to_db = storeData(
+                pubs_df, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE
+            )
+            
         # Store other publications data
         if not other_pubs_df.empty:
             rows_processed, rows_added_to_db = storeData(
@@ -349,6 +357,7 @@ def lambda_handler(event, context):
             rows_processed, rows_added_to_db = storeData(
                 patents_df, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_PATENTS
             )
+            
         print("Data stored successfully.")
         cursor.close()
         connection.close()

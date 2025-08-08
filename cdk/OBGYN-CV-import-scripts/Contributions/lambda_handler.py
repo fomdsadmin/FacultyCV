@@ -21,7 +21,7 @@ def cleanData(df):
     Cleans the input DataFrame by performing various transformations:
     """
     # Ensure relevant columns are string type before using .str methods
-    for col in ["PhysicianID", "Title", "Details", "Type", "TypeOther", "Notes"]:
+    for col in ["PhysicianID", "Title", "Details", "Type", "TypeOther", "Notes","Highlight"]:
         if col in df.columns:
             df[col] = df[col].astype(str)
         else:
@@ -32,6 +32,7 @@ def cleanData(df):
     # Handle Title field
     df["title"] = df["Title"].fillna('').str.strip()
     df["description_of_contribution_and_impact"] = df["Details"].fillna('').str.strip()
+    df["highlight"] = df["Highlight"].str.strip().str.lower().map({'true': True, 'false': False})
     df["highlight_-_notes"] = df["Notes"].fillna('').str.strip() 
     
     
@@ -91,7 +92,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "title", "description_of_contribution_and_impact", "highlight_-_notes", "type", "dates"]]
+    df = df[["user_id", "title", "description_of_contribution_and_impact", "highlight_-_notes", "type", "dates", "highlight"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})

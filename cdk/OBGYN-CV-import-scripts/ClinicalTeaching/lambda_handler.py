@@ -75,7 +75,7 @@ def cleanData(df):
     
     # Handle truly empty or blank student levels as "Other (blank)"
     mask_blank = df["student_level_original"].replace('', np.nan).isna()
-    df.loc[mask_blank, "student_level"] = "Other (blank)"
+    df.loc[mask_blank, "student_level"] = "Other ()"
 
     # Special case handling for common patterns
     df.loc[df["student_level_original"].str.contains("Fellow", case=False, na=False), "student_level"] = "Fellowship"

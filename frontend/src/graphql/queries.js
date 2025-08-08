@@ -402,6 +402,16 @@ export const getTotalOrcidPublicationsQuery = (orcid_id) => `
     }
 `;
 
+export const getTotalScopusPublicationsQuery = (scopus_id) => `
+    query GetTotalScopusPublications {
+        getTotalScopusPublications(scopus_id: "${scopus_id}") {
+            total_results
+            error
+        }
+    }
+`;
+
+
 export const getOrcidPublicationQuery = (orcid_id, put_codes) => `
     query getOrcidPublication {
         getOrcidPublication (
