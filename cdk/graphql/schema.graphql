@@ -185,6 +185,11 @@ type TotalOrcidPublications {
 	put_codes: [Int]!
 }
 
+type TotalScopusPublications {
+	total_results: Int!
+	error: String
+}
+
 type UniversityInfo {
 	university_info_id: String!
 	type: String
@@ -442,6 +447,8 @@ type Query {
 	getOrcidSections(orcidId: String!, section: String!): OrcidSectionOutput
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getTotalOrcidPublications(orcid_id: String!): TotalOrcidPublications
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+	getTotalScopusPublications(scopus_id: String!): TotalScopusPublications
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getOrcidPublication(orcid_id: String!, put_codes: [Int]!): OrcidSectionOutput
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])

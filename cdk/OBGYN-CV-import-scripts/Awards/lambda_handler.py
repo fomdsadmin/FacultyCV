@@ -48,8 +48,8 @@ def cleanData(df):
     df.loc[mask_other_awards, "type"] = "d. Other (" + df.loc[mask_other_awards, "type_other"] + ")"
     
     # Handle empty type (different from NaN)
-    mask_empty = df["type_original"] == ""
-    df.loc[mask_empty, "type"] = "d. Other"
+    mask_empty = (df["type_original"] == "") | (df["type_original"].isna())
+    df.loc[mask_empty, "type"] = "d. Other ()"
 
     if "TDate" in df.columns:
         # Handle zero and negative timestamps - set as blank for invalid values

@@ -71,11 +71,11 @@ def cleanData(df):
     
     # Handle "Other:" cases
     mask_other = df["type_original"] == "Other:"
-    df.loc[mask_other, "type"] = "Other: (" + df.loc[mask_other, "type_other"] + ")"
+    df.loc[mask_other, "type"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
 
     # Handle unmapped values (fallback to Research Personnel Supervision or Other)
     mask_unmapped = df["type"].isna()
-    df.loc[mask_unmapped, "type"] = "Other (incl. all others)"
+    df.loc[mask_unmapped, "type"] = "Other ()"
 
     # Handle Dates field - convert Unix timestamps to date strings
     if "TDate" in df.columns:

@@ -32,6 +32,23 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
         }
       }
 
+      // Filter out '-' from data_details.dates if date is like '2015-'
+      allDataDetails.forEach((data) => {
+        if (data.dates && data.dates.trim().endsWith("-")) {
+          data.dates = data.dates.replace(/-/g, "");
+        }
+
+        if (data.dates && data.dates.trim().startsWith("-")) {
+          data.dates = data.dates.replace(/-/g, "");
+        }
+
+        if (data.dates && data.dates.trim().split("-").length === 2) {
+          data.dates_0 = data.dates.trim().split("-")[0];
+          data.dates_1 = data.dates.trim().split("-")[1];
+          data.dates = `${data.dates_0} - ${data.dates_1}`;
+        }
+      });
+
       setAllSecureFundingData(allDataDetails);
       setSelectedSecureFundingData(allDataDetails);
     } catch (error) {
@@ -57,6 +74,19 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
           allDataDetails.push(data_details_json);
         }
       }
+
+      // Filter out '-' from data_details.dates if date is like '2015-'
+      allDataDetails.forEach((data) => {
+        if (data.dates && data.dates.trim().endsWith("-")) {
+          data.dates = data.dates.replace(/-/g, "");
+        }
+
+        if (data.dates && data.dates.trim().split("-").length === 2) {
+          data.dates_0 = data.dates.trim().split("-")[0];
+          data.dates_1 = data.dates.trim().split("-")[1];
+          data.dates = `${data.dates_0} - ${data.dates_1}`;
+        }
+      });
 
       console.log("Retrieved RISE data, Total: ", allDataDetails.length);
       setAllSecureFundingData(allDataDetails);

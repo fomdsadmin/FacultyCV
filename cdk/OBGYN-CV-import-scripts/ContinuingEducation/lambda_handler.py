@@ -63,10 +63,9 @@ def cleanData(df):
     
     # Handle "Other:" type with TypeOther
     mask_other = df["type_original"] == "Other:"
-    df.loc[mask_other & df["type_other"].ne(''), "type"] = "Other (" + df.loc[mask_other & df["type_other"].ne(''), "type_other"] + ")"
-    
+    df.loc[mask_other, "type"] = "Other (" + df.loc[mask_other, "type_other"] + ")" 
     # Handle empty types - set to default
-    df.loc[df["type"] == "", "type"] = "Other"
+    df.loc[df["type"] == "", "type"] = "Other ()"
 
    # Handle Dates field - convert Unix timestamps to date strings
     if "TDate" in df.columns:

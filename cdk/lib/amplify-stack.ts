@@ -61,11 +61,11 @@ export class AmplifyStack extends cdk.Stack {
         'REACT_APP_APPSYNC_ENDPOINT': apiStack.getEndpointUrl(),
         'REACT_APP_BATCH_API_BASE_URL': batchApiStack.getApiUrl(),
         'REACT_APP_SUPPORT_FORM_API_BASE_URL': supportFormStack.getApiUrl(),
-        'REACT_APP_AMPLIFY_DOMAIN': 'https://dev.360.med.ubc.ca',
-        'REACT_APP_COGNITO_CLIENT_NAME': 'facultycv-dev',
+        'REACT_APP_AMPLIFY_DOMAIN': process.env.REACT_APP_AMPLIFY_DOMAIN || 'https://dev.360.med.ubc.ca',
+        'REACT_APP_COGNITO_CLIENT_NAME': process.env.REACT_APP_COGNITO_CLIENT_NAME || 'facultycv-dev',
         'REACT_APP_COGNITO_DOMAIN': oidcStack.getUserPoolDomainUrl(),
         'REACT_APP_KEYCLOAK_LOGOUT_URL': 'https://broker.id.ubc.ca/auth/realms/idb2/protocol/openid-connect/logout',
-        'REACT_APP_REDIRECT_URL': 'https://dev.360.med.ubc.ca/auth'
+        'REACT_APP_REDIRECT_URL': process.env.REACT_APP_REDIRECT_URL || 'https://dev.360.med.ubc.ca/auth',
       },
       buildSpec: BuildSpec.fromObjectToYaml(amplifyYaml),
     });
