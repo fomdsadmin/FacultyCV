@@ -432,8 +432,12 @@ type Query {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	getUserCVData(user_id: String!, data_section_id: String, data_section_id_list: [String]): [UserCVData]
 		@aws_auth(cognito_groups: ["Faculty","Assistant","FacultyAdmin","Admin","DepartmentAdmin"])
-	getAllSectionCVData(data_section_id: String, data_section_id_list: [String]): CVDataResponse
-		@aws_auth(cognito_groups: ["Admin"])
+	getAllSectionCVData(data_section_id: String!, dept: String!, title: String): CVDataResponse
+		@aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "FacultyAdmin"])
+	getDepartmentCVData(data_section_id: String, data_section_id_list: [String]): CVDataResponse
+		@aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "FacultyAdmin"])
+	getFacultyWideData(data_section_id: String, data_section_id_list: [String]): CVDataResponse
+		@aws_auth(cognito_groups: ["Admin", "DepartmentAdmin", "FacultyAdmin"])
 	getArchivedUserCVData(user_id: String!): [UserCVData]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ElsevierAuthorProfile]!
@@ -469,6 +473,8 @@ type Query {
 	getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getAllUsers: [User]
+		@aws_auth(cognito_groups: ["Admin","FacultyAdmin","DepartmentAdmin"])
+	getAllUsersCount: Int!
 		@aws_auth(cognito_groups: ["Admin","FacultyAdmin","DepartmentAdmin"])
 	getPatentMatches(first_name: String!, last_name: String!): [Patent]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])

@@ -5,12 +5,9 @@ import AnalyticsCard from "../Components/AnalyticsCard.jsx";
 import GraphCarousel from "../Components/GraphCarousel.jsx";
 import {
   getAllUsers,
-  getFacultyUsersInDepartment,
-  getAssistantUsersInDepartment,
-  getDepartmentAdminUsersInDepartment,
-  getUserCVData,
   getAllSections,
   getNumberOfGeneratedCVs,
+  getFacultyWideCVData
 } from "../graphql/graphqlHelpers.js";
 
 const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
@@ -95,42 +92,43 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         )?.data_section_id;
         const patentSectionId = dataSections.find((section) => section.title.includes("Patent"))?.data_section_id;
 
-        // Create all promises for parallel execution
-        const allPromises = [];
-
-        users.forEach((user) => {
-          if (publicationSectionId) {
-            allPromises.push(
-              getUserCVData(user.user_id, publicationSectionId)
-                .then((data) => ({ type: "publication", data, userId: user.user_id }))
-                .catch(() => ({ type: "publication", data: [], userId: user.user_id }))
-            );
-          }
-          if (otherPublicationSectionId) {
-            allPromises.push(
-              getUserCVData(user.user_id, otherPublicationSectionId)
-                .then((data) => ({ type: "otherPublication", data, userId: user.user_id }))
-                .catch(() => ({ type: "otherPublication", data: [], userId: user.user_id }))
-            );
-          }
-          if (secureFundingSectionId) {
-            allPromises.push(
-              getUserCVData(user.user_id, secureFundingSectionId)
-                .then((data) => ({ type: "grant", data, userId: user.user_id }))
-                .catch(() => ({ type: "grant", data: [], userId: user.user_id }))
-            );
-          }
-          if (patentSectionId) {
-            allPromises.push(
-              getUserCVData(user.user_id, patentSectionId)
-                .then((data) => ({ type: "patent", data, userId: user.user_id }))
-                .catch(() => ({ type: "patent", data: [], userId: user.user_id }))
-            );
-          }
-        });
+        // Use getDepartmentCVData for efficient faculty-wide data fetching
+        const promises = [];
+        
+        if (publicationSectionId) {
+          promises.push(
+            getFacultyWideCVData(publicationSectionId, faculty, "Publication")
+              .then(response => ({ type: 'publication', data: response.data }))
+              .catch(() => ({ type: 'publication', data: [] }))
+          );
+        }
+        
+        if (otherPublicationSectionId) {
+          promises.push(
+            getFacultyWideCVData(otherPublicationSectionId, faculty, "Other Publication")
+              .then(response => ({ type: 'otherPublication', data: response.data }))
+              .catch(() => ({ type: 'otherPublication', data: [] }))
+          );
+        }
+        
+        if (secureFundingSectionId) {
+          promises.push(
+            getFacultyWideCVData(secureFundingSectionId, faculty, "Grant")
+              .then(response => ({ type: 'grant', data: response.data }))
+              .catch(() => ({ type: 'grant', data: [] }))
+          );
+        }
+        
+        if (patentSectionId) {
+          promises.push(
+            getFacultyWideCVData(patentSectionId, faculty, "Patent")
+              .then(response => ({ type: 'patent', data: response.data }))
+              .catch(() => ({ type: 'patent', data: [] }))
+          );
+        }
 
         // Execute all promises in parallel
-        const results = await Promise.all(allPromises);
+        const results = await Promise.all(promises);
 
         // Process results
         const publicationsData = [];
@@ -141,16 +139,31 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         results.forEach((result) => {
           switch (result.type) {
             case "publication":
-              publicationsData.push(...result.data);
+              // Convert CVData format to the expected format
+              publicationsData.push(...result.data.map(item => ({
+                data_section_id: item.data_section_id,
+                data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
+              })));
               break;
             case "otherPublication":
-              otherPublicationsData.push(...result.data);
+              otherPublicationsData.push(...result.data.map(item => ({
+                data_section_id: item.data_section_id,
+                data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
+              })));
               break;
             case "grant":
-              grantsData.push(...result.data);
+              grantsData.push(...result.data.map(item => ({
+                data_section_id: item.data_section_id,
+                data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
+              })));
               break;
             case "patent":
-              patentsData.push(...result.data);
+              patentsData.push(...result.data.map(item => ({
+                data_section_id: item.data_section_id,
+                data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
+              })));
+              break;
+            case "default":
               break;
           }
         });
@@ -184,7 +197,6 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           if (!isNaN(amount) && !isNaN(year) && amount > 0 && year > 1900 && year <= new Date().getFullYear() + 10) {
             totalGrantMoneyRaised.push({
               amount: amount,
-              user_id: data.user_id,
               years: year,
             });
           }
@@ -198,8 +210,6 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
   const facultyUsers = users.filter((user) => user.role === "Faculty");
   const assistantUsers = users.filter((user) => user.role === "Assistant");
-  const departmentAdminUsers = users.filter((user) => user.role.startsWith("Admin-"));
-  const facultyAdminUsers = users.filter((user) => user.role.startsWith("FacultyAdmin-"));
 
   // Memoized grant money calculation
   const totalGrantMoneyRaised = useMemo(

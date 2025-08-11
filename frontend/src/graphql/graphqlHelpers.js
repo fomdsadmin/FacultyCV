@@ -4,8 +4,11 @@ import {
   getArchivedSectionsQuery,
   getUserCVDataQuery,
   getAllSectionCVDataQuery,
+  getDepartmentCVDataQuery,
+  getFacultyWideCVDataQuery,
   getUserQuery,
   getAllUsersQuery,
+  getAllUsersCountQuery,
   getAllUniversityInfoQuery,
   getAllNotificationsQuery,
   getUserDeclarationsQuery,
@@ -126,6 +129,11 @@ const runGraphql = async (query) => {
 export const getAllUsers = async () => {
   const results = await runGraphql(getAllUsersQuery());
   return results["data"]["getAllUsers"];
+};
+
+export const getAllUsersCount = async () => {
+  const results = await runGraphql(getAllUsersCountQuery());
+  return results["data"]["getAllUsersCount"];
 };
 
 /**
@@ -279,6 +287,16 @@ export const getUserCVData = async (user_id, data_section_ids) => {
 export const getAllSectionCVData = async (data_section_id, data_section_ids) => {
   const results = await runGraphql(getAllSectionCVDataQuery(data_section_id, data_section_ids));
   return results["data"]["getAllSectionCVData"];
+};
+
+export const getDepartmentCVData = async (data_section_id, dept, title) => {
+  const results = await runGraphql(getDepartmentCVDataQuery(data_section_id, dept, title));
+  return results["data"]["getDepartmentCVData"];
+};
+
+export const getFacultyWideCVData = async (data_section_id, faculty, title) => {
+  const results = await runGraphql(getFacultyWideCVDataQuery(data_section_id, faculty, title));
+  return results["data"]["getFacultyWideCVData"];
 };
 
 export const getUserAffiliations = async (user_id, first_name, last_name) => {

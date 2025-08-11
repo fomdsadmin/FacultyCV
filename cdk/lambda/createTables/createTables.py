@@ -40,6 +40,7 @@ def lambda_handler(event, context):
     # Create Users Table
     columns = []
     columns.append(createColumn('user_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('employee_id', 'varchar', '', False))
     columns.append(createColumn('first_name', 'varchar', '', False))
     columns.append(createColumn('last_name', 'varchar', '', False))
     columns.append(createColumn('preferred_name', 'varchar', '', False))
@@ -60,8 +61,6 @@ def lambda_handler(event, context):
     columns.append(createColumn('scopus_id', 'varchar', '', False))
     columns.append(createColumn('orcid_id', 'varchar', '', False))
     columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', False))  
-    columns.append(createColumn('cwl', 'TEXT', '', False))  # Add this line
-    columns.append(createColumn('vpp', 'TEXT', '', False))  # Add this
     columns.append(createColumn('pending', 'BOOLEAN', 'DEFAULT true', False))  # Add this
     columns.append(createColumn('approved', 'BOOLEAN', 'DEFAULT false', True))  # Add this
     query = createQuery('users', columns)

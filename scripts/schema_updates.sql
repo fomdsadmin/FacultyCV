@@ -46,11 +46,6 @@ RENAME data_section_ids TO template_structure;
 ALTER TABLE data_sections
 ADD COLUMN IF NOT EXISTS attributes_type JSON;
 
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS cwl TEXT;
-
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS vpp TEXT;
 
 ALTER TABLE data_sections
 ADD COLUMN IF NOT EXISTS info TEXT DEFAULT 'Summary of section description';
@@ -69,3 +64,6 @@ ALTER COLUMN institution SET DEFAULT 'University of British Columbia';
 
 UPDATE users
 SET institution = 'University of British Columbia'
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS employee_id VARCHAR;
