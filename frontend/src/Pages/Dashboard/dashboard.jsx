@@ -8,10 +8,13 @@ import {
   getUserDeclarations,
 } from "../../graphql/graphqlHelpers.js";
 import { normalizeDeclarations } from "../Declarations/Declarations.jsx";
+import { getAuditViewData } from '../../graphql/graphqlHelpers.js';
 
 const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [notifications, setNotifications] = useState([]);
   const [declarations, setDeclarations] = useState([]);
+  const [lastVisit, setLastVisit] = useState(null);
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -37,6 +40,59 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     fetchDeclarations();
   }, [userInfo]);
 
+  useEffect(() => {
+    async function fetchLastVisit() {
+      try {
+        if (!userInfo?.user_id) return;
+
+        const response = await getAuditViewData({
+          logged_user_id: userInfo.user_id,
+          page_number: 1,
+          page_size: 1,
+        });
+
+        if (response?.records?.length > 0) {
+          setLastVisit(response.records[0].ts);
+        } else {
+          setLastVisit(null);
+        }
+      } catch (error) {
+        console.error("Error fetching last visit timestamp:", error);
+        setLastVisit(null);
+      }
+    }
+
+    fetchLastVisit();
+  }, [userInfo]);
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+
+    try {
+      let parsedTimestamp = timestamp;
+
+      if (typeof timestamp === 'string' && timestamp.includes(' ') && !timestamp.includes('T')) {
+        parsedTimestamp = timestamp.replace(' ', 'T') + 'Z';
+      }
+
+      const date = new Date(parsedTimestamp);
+
+      return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZoneName: 'short',
+      });
+    } catch {
+      return timestamp;
+    }
+  };
+
+
+
   return (
     <PageContainer>
       {/* Sidebar */}
@@ -56,8 +112,9 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
               Welcome, Dr. {userInfo.last_name}
             </div>
             <div className="text-sm text-gray-500">
-              Last visit: 6 Nov 2025, 3:16PM (static)
+              Last visit: {lastVisit ? formatTimestamp(lastVisit) : 'No record found'}
             </div>
+
           </div>
           <div>
             <Link to="/support">
