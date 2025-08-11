@@ -23,14 +23,12 @@ def cleanData(df):
     
     df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
+    df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
     df["highlight"] = df["Highlight"].astype(bool)
     # If Type is "Other:", set type_of_leave to "Other ({type_other})"
     # need to added the section number to the drop down 
     df["type_original"]  =  df["Type"].fillna('').str.strip()
     df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    # mask_other = df["Type"].str.strip() == "Other:"
-    # df.loc[mask_other, "type"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
     
     # Create a mapping dictionary for types
     type_mapping = {
@@ -50,29 +48,50 @@ def cleanData(df):
     df.loc[mask_other_awards, "type"] = "d. Other (" + df.loc[mask_other_awards, "type_other"] + ")"
     
     # Handle empty type (different from NaN)
-    mask_empty = df["type_original"] == ""
-    df.loc[mask_empty, "type"] = "d. Other"
+    mask_empty = (df["type_original"] == "") | (df["type_original"].isna())
+    df.loc[mask_empty, "type"] = "d. Other ()"
 
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["Tdate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["start_date"] = df["start_date"].fillna('').str.strip()
-    df["end_date"] = df["end_date"].fillna('').str.strip()
-    # Combine start and end dates into a single 'dates' column:
+    if "TDate" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values
+        df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
+        df["start_date"] = df["TDate_clean"].apply(lambda x:
+            '' if pd.isna(x) or x <= 0 else
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["start_date"] = df["start_date"].fillna('').str.strip()
+    else:
+        df["start_date"] = ''
+       
+    if "TDateEnd" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
+        df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
+        df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
+            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["end_date"] = df["end_date"].fillna('').str.strip()
+    else:
+        df["end_date"] = ''
+        
+    # Combine start and end dates into a single 'dates' column
+    # Only show ranges when both dates exist, avoid empty dashes
     def combine_dates(row):
-        if row["start_date"] and row["end_date"]:
-            return f"{row['start_date']} - {row['end_date']}"
-        elif row["start_date"]:
-            return row["start_date"]
-        elif row["end_date"]:
-            return row["end_date"]
+        start = row["start_date"].strip()
+        end = row["end_date"].strip()
+       
+        if start and end:
+            return f"{start} - {end}"
+        elif start:
+            return start
+        elif end:
+            return end
         else:
             return ""
     df["dates"] = df.apply(combine_dates, axis=1)
 
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type", "highlight_notes", "highlight", "dates"]]
+    df = df[["user_id", "details", "type", "highlight_-_notes", "highlight", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df

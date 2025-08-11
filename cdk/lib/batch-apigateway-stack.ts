@@ -108,13 +108,13 @@ export class BatchApiGatewayStack extends Stack {
 
     const getOrcidPublicationFunction = Function.fromFunctionName(
       this, 
-      'GetBatchedOrcidPublicationFunction', 
+      'GetOrcidPublicationFunction', 
       `${resourcePrefix}-getOrcidPublication-resolver`
     );
 
     const getPublicationMatchesFunction = Function.fromFunctionName(
       this, 
-      'GetBatchedPublicationMatchesFunction', 
+      'GetPublicationMatchesFunction', 
       `${resourcePrefix}-getPublicationMatches-resolver`
     );
 
@@ -127,7 +127,7 @@ export class BatchApiGatewayStack extends Stack {
     const getTotalScopusPublicationsFunction = Function.fromFunctionName(
       this, 
       'GetTotalScopusPublicationsFunction', 
-      `${resourcePrefix}-getTotalScopusPublications`
+      `${resourcePrefix}-getTotalScopusPublications-resolver`
     );
 
     // Add API Gateway methods and integrations

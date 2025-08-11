@@ -14,50 +14,124 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_8D1 = "8d.1. Students Supervised"
+SECTION_8D2 = "8d.2. Graduate Students Supervisory Committee"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Only keep rows where UserID is a string of expected length (e.g., 32)
-    df["user_id"] = df["UserID"].str.strip()
+    # Only keep rows where PhysicianID is a string of expected length (e.g., 32)
+    df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
+    df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
+    df["highlight"] = df["Highlight"].fillna('').astype(str).str.strip().str.lower().map({'true': True, 'false': False})
 
-    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
-    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    mask_other = df["Type"].str.strip() == "Other:"
-    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+    df["student_name"] = df["Student Name"].fillna('').str.strip()
+    df["program/department"] = df["Program"].fillna('').str.strip()
+    df["student_current_position"] = df["Current Position"].fillna('').str.strip()
+    df["awards_received_by_student"] = df["Awards"].fillna('').str.strip()
+    #Supervisory Role
+    df["supervisory_role"] = df["Supervisory Role"].fillna('').str.strip()
+    
+    # Handle Type field mapping
+    df["type_original"] = df["Type"].fillna('').str.strip()
+    df["type_other"] = df["TypeOther"].fillna('').str.strip()
+    
+    
+    # Map SQL database values to app categories
+    type_mapping = {
+        # obgyn : Fac360
+        # Undergraduate Students category
+        "BA": "Undergraduate Students (BA/BSc/Co-op/Directed Studies/MD/Summer Student)",
+        "BSc": "Undergraduate Students (BA/BSc/Co-op/Directed Studies/MD/Summer Student)",
+        "Co-op Student": "Undergraduate Students (BA/BSc/Co-op/Directed Studies/MD/Summer Student)",
+        "Directed Studies": "Undergraduate Students (BA/BSc/Co-op/Directed Studies/MD/Summer Student)",
+        "MD": "Undergraduate Students (BA/BSc/Co-op/Directed Studies/MD/Summer Student)",
+        "Summer Student": "Undergraduate Students (BA/BSc/Co-op/Directed Studies/MD/Summer Student)",
+        
+        # Graduate Students category
+        "MA": "Graduate Students (MA/MPH/MSc/PhD/Postdoctoral Study)",
+        "MPH": "Graduate Students (MA/MPH/MSc/PhD/Postdoctoral Study)",
+        "MSc": "Graduate Students (MA/MPH/MSc/PhD/Postdoctoral Study)",
+        "PhD": "Graduate Students (MA/MPH/MSc/PhD/Postdoctoral Study)",
+        "Postdoctoral Study": "Graduate Students (MA/MPH/MSc/PhD/Postdoctoral Study)",
+        
+        # Postgraduate Students category
+        "Fellowship": "Postgraduate Students (Fellowship/Residency)",
+        "Residency": "Postgraduate Students (Fellowship/Residency)",
+        
+        # Graduate Studies Examination Committees category
+        "Graduate Students Supervisory Committee": "Graduate Studies Examination Committees",
+        
+    }
+    
+    # Apply the mapping
+    df["type"] = df["type_original"].map(type_mapping)
+    
+    # Handle "Other:" cases
+    mask_other = df["type_original"] == "Other:"
+    df.loc[mask_other, "type"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
 
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["start_date"] = df["start_date"].fillna('').str.strip()
-    df["end_date"] = df["end_date"].fillna('').str.strip()
-    # Combine start and end dates into a single 'dates' column:
+    # Handle unmapped values (fallback to Research Personnel Supervision or Other)
+    mask_unmapped = df["type"].isna()
+    df.loc[mask_unmapped, "type"] = "Other ()"
+
+    # Handle Dates field - convert Unix timestamps to date strings
+    if "TDate" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values
+        df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
+        df["start_date"] = df["TDate_clean"].apply(lambda x:
+            '' if pd.isna(x) or x <= 0 else
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["start_date"] = df["start_date"].fillna('').str.strip()
+    else:
+        df["start_date"] = ''
+
+    if "TDateEnd" in df.columns:
+        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
+        df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
+        df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
+            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+        )
+        df["end_date"] = df["end_date"].fillna('').str.strip()
+    else:
+        df["end_date"] = ''
+        
+    # Combine start and end dates into a single 'dates' column
+    # Only show ranges when both dates exist, avoid empty dashes
     def combine_dates(row):
-        if row["start_date"] and row["end_date"]:
-            return f"{row['start_date']} - {row['end_date']}"
-        elif row["start_date"]:
-            return row["start_date"]
-        elif row["end_date"]:
-            return row["end_date"]
+        start = row["start_date"].strip()
+        end = row["end_date"].strip()
+        if start and end:
+            return f"{start} - {end}"
+        elif start:
+            return start
+        elif end:
+            return end
         else:
             return ""
     df["dates"] = df.apply(combine_dates, axis=1)
-
+    
+    # Split into two DataFrames based on Type
+    # Graduate Students Supervisory Committee goes to section 8d.2
+    supervisory_committee_df = df[df["type_original"] == "Graduate Students Supervisory Committee"].copy()
+    # All others go to section 8d.1
+    students_supervised_df = df[df["type_original"] != "Graduate Students Supervisory Committee"].copy()
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
+    cleaned_column = ["user_id", "details", "type", "highlight_-_notes", "highlight", "dates", "student_name","program/department", "student_current_position", "awards_received_by_student", "supervisory_role"]
+    
     # Replace NaN with empty string for all columns
-    df = df.replace({np.nan: ''})
-    return df
+    supervisory_committee_df = supervisory_committee_df[cleaned_column].replace({np.nan: ''})
+    students_supervised_df = students_supervised_df[cleaned_column].replace({np.nan: ''})
+    
+    return students_supervised_df, supervisory_committee_df
 
 
-def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
+def storeData(df, section_title, connection, cursor, errors, rows_processed, rows_added_to_db):
     """
     Store the cleaned DataFrame into the database.
     Returns updated rows_processed and rows_added_to_db.
@@ -70,13 +144,13 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             WHERE title = %s
             LIMIT 1
             """,
-            (SECTION_TITLE,)
+            (section_title,)
         )
         result = cursor.fetchone()
         if result:
             data_section_id = result[0]
         else:
-            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
+            errors.append(f"No data_section_id found for '{section_title}'")
             data_section_id = None
     except Exception as e:
         errors.append(f"Error fetching data_section_id: {str(e)}")
@@ -124,13 +198,30 @@ def fetchFromS3(bucket, key):
 def loadData(file_bytes, file_key):
     """
     Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
+    Handles CSV, JSON lines, and JSON array files.
     """
     if file_key.lower().endswith('.xlsx'):
-        # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
-        # For CSV, decode bytes to text
-        return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        # Try reading as regular CSV first
+        try:
+            return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        except Exception as csv_exc:
+            print(f"Failed to read as CSV: {csv_exc}")
+            # Try reading as JSON lines (NDJSON)
+            try:
+                return pd.read_json(io.StringIO(file_bytes.decode('utf-8')), lines=True)
+            except Exception as jsonl_exc:
+                print(f"Failed to read as JSON lines: {jsonl_exc}")
+                # Try reading as JSON array
+                try:
+                    return pd.read_json(io.StringIO(file_bytes.decode('utf-8')))
+                except Exception as json_exc:
+                    print(f"Failed to read as JSON array: {json_exc}")
+                    raise ValueError(
+                        f"Could not parse file as CSV, JSON lines, or JSON array. "
+                        f"CSV error: {csv_exc}, JSON lines error: {jsonl_exc}, JSON array error: {json_exc}"
+                    )
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
 
@@ -148,62 +239,90 @@ def lambda_handler(event, context):
         print(f"Processing manual upload file: {file_key} from bucket: {bucket_name}")
 
         # Fetch file from S3 (as bytes)
-        file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
-        print("Data fetched successfully.")
-
-        # Load data into DataFrame
         try:
-            df = loadData(file_bytes, file_key)
-        except ValueError as e:
-            
+            file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
+            print("Data fetched successfully.")
+            print(f"File size: {len(file_bytes)} bytes")
+        except Exception as fetch_error:
+            print(f"Error fetching data from S3: {str(fetch_error)}")
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
-                'error': str(e)
+                'error': f"S3 fetch error: {str(fetch_error)}"
             }
-        print("Data loaded successfully.")
 
-        # Clean the DataFrame
-        df = cleanData(df)
-        print("Data cleaned successfully.")
-        print(df.to_string())
+        # Load and process data
+        try:
+            # Load data into DataFrame
+            df = loadData(file_bytes, file_key)
+            print("Data loaded successfully.")
+            print(f"DataFrame shape: {df.shape}")
+            print(f"DataFrame columns: {df.columns.tolist()}")
+            
+            # Check for required columns
+            required_columns = ["PhysicianID", "UserID", "Details", "Type"]
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                raise ValueError(f"Missing required columns: {missing_columns}")
+            
+            students_supervised_df, supervisory_committee_df = cleanData(df)
+            print("Data cleaned successfully.")
+            
+            # Connect to database
+            connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
+            cursor = connection.cursor()
+            print("Connected to database")
 
-        # Connect to database
-        connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
-        cursor = connection.cursor()
-        print("Connected to database")
+            rows_processed = 0
+            rows_added_to_db = 0
+            errors = []
+            
+            if not students_supervised_df.empty:
+                rows_processed, rows_added_to_db = storeData(
+                    students_supervised_df, SECTION_8D1, connection, cursor, errors, rows_processed, rows_added_to_db
+                )
 
-        rows_processed = 0
-        rows_added_to_db = 0
-        errors = []
+            if not supervisory_committee_df.empty:
+                rows_processed, rows_added_to_db = storeData(
+                    supervisory_committee_df, SECTION_8D2, connection, cursor, errors, rows_processed, rows_added_to_db
+                )
+            print("Data stored successfully.")
+            cursor.close()
+            connection.close()
 
-        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
-        print("Data stored successfully.")
-        cursor.close()
-        connection.close()
+            # Clean up - delete the processed file
+            s3_client.delete_object(Bucket=bucket_name, Key=file_key)
+            print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
 
-        # Clean up - delete the processed file
-        s3_client.delete_object(Bucket=bucket_name, Key=file_key)
-        print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
+            result = {
+                'statusCode': 200,
+                'status': 'COMPLETED',
+                'total_rows': len(df),
+                'rows_processed': rows_processed,
+                'rows_added_to_database': rows_added_to_db,
+                'errors': errors[:10] if errors else []
+            }
 
-
-        result = {
-            'statusCode': 200,
-            'status': 'COMPLETED',
-            'total_rows': len(df),
-            'rows_processed': rows_processed,
-            'rows_added_to_database': rows_added_to_db,
-            'errors': errors[:10] if errors else []
-        }
-
-        print(f"Manual upload completed: {result}")
-        return result
+            print(f"Manual upload completed: {result}")
+            return result
+            
+        except Exception as load_error:
+            print(f"Error loading or processing data: {str(load_error)}")
+            return {
+                'statusCode': 400,
+                'status': 'FAILED',
+                'error': f"Data loading error: {str(load_error)}"
+            }
 
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
         print(f"Error processing manual upload: {str(e)}")
+        print(f"Traceback: {error_trace}")
         return {
             'statusCode': 500,
             'status': 'FAILED',
-            'error': str(e)
+            'error': str(e),
+            'traceback': error_trace
         }
 

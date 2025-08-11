@@ -191,10 +191,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
     // Handle date display - check for both display_date and end_date
     let formattedDate = "";
 
-    if (details.display_date) {
-      formattedDate = details.display_date.trim() + ", ";
-    } else if (details.end_date) {
-      formattedDate = details.end_date.trim() + ", ";
+    if (details.end_date) {
+      formattedDate = details.end_date.trim();
     }
     
     // Map author names, bold the one matching user's scopus_id
@@ -216,7 +214,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
           {formattedDate}
           {details.volume && (
             <>
-              <span className="font-normal">Volume: </span>
+              <span className="font-normal">, Volume: </span>
               {`${details.volume}`}
             </>
           )}
@@ -241,15 +239,9 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </p>
         )}
 
-        {keywordsList?.length > 0 && (
+        {keywordsList?.length > 0 && keywordsList.some(keyword => keyword && keyword.trim() !== '') && (
           <p className="text-sm text-gray-700 mb-1">
-            <span className="font-semibold">Keywords:</span> {keywordsList.join(", ")}
-          </p>
-        )}
-
-        {details.journal && (
-          <p className="text-sm text-gray-700 mb-1">
-            <span className="font-semibold">Journal:</span> {details.journal}
+            <span className="font-semibold">Keywords:</span> {keywordsList.filter(keyword => keyword && keyword.trim() !== '').join(", ")}
           </p>
         )}
 
@@ -268,11 +260,24 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </p>
         )}
 
-        {details.publication_type && (
-          <p className="text-sm text-gray-700 mb-1">
-            <span className="font-semibold">Type:</span> {details.publication_type}
-          </p>
-        )}
+        {/* Display all remaining fields that haven't been shown yet */}
+        {Object.entries(details)
+          .filter(([key, value]) => {
+            // Exclude fields that are already displayed above
+            const displayedFields = [
+              'title', 'end_date', 'volume', 'article_number', 'author_names', 
+              'author_ids', 'doi', 'keywords', 'link', 
+              'publication_id',
+            ];
+            return !displayedFields.includes(key) && value && value !== '' && value !== null;
+          })
+          .map(([key, value]) => (
+            <p key={key} className="text-sm text-gray-700 mb-1">
+              <span className="font-semibold">{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span>{' '}
+              {Array.isArray(value) ? value.join(', ') : String(value)}
+            </p>
+          ))}
+        
       </div>
     );
   };

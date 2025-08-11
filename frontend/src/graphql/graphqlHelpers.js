@@ -26,6 +26,7 @@ import {
   cvIsUpToDateQuery,
   getOrcidSectionsQuery,
   getTotalOrcidPublicationsQuery,
+  getTotalScopusPublicationsQuery,
   getOrcidPublicationQuery,
   getLatexConfigurationQuery,
   GET_BIO_RESPONSE_DATA,
@@ -388,6 +389,11 @@ export const getOrcidSections = async (orcidId, section) => {
 export const getTotalOrcidPublications = async (orcid_id) => {
   const results = await runGraphql(getTotalOrcidPublicationsQuery(orcid_id));
   return results["data"]["getTotalOrcidPublications"];
+};
+
+export const getTotalScopusPublications = async (scopus_id) => {
+  const results = await runGraphql(getTotalScopusPublicationsQuery(scopus_id));
+  return results["data"]["getTotalScopusPublications"];
 };
 
 export const getOrcidPublication = async (orcid_id, put_codes) => {
