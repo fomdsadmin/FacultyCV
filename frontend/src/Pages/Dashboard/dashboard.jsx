@@ -13,7 +13,9 @@ import { getAuditViewData } from '../../graphql/graphqlHelpers.js';
 const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [notifications, setNotifications] = useState([]);
   const [declarations, setDeclarations] = useState([]);
+  
   const [lastVisit, setLastVisit] = useState(null);
+  const [loadingLastVisit, setLoadingLastVisit] = useState(false); 
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -40,29 +42,45 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     fetchDeclarations();
   }, [userInfo]);
 
+  // fetch latest visit timestamp from the first page audit view data 
   useEffect(() => {
-    async function fetchLastVisit() {
+    async function fetchLastVisitAuth() {
+      if (!userInfo?.user_id) return;
+
+      setLoadingLastVisit(true);
+      let pageNumber = 1;
+      let found = null;
+
       try {
-        if (!userInfo?.user_id) return;
+        while (!found) {
+          const response = await getAuditViewData({
+            logged_user_id: userInfo.user_id,
+            page_number: pageNumber,
+            page_size: 50 // fetch in batches
+          });
 
-        const response = await getAuditViewData({
-          logged_user_id: userInfo.user_id,
-          page_number: 1,
-          page_size: 1,
-        });
+          const records = response?.records || [];
+          if (!records.length) break; // no more pages
 
-        if (response?.records?.length > 0) {
-          setLastVisit(response.records[0].ts);
-        } else {
-          setLastVisit(null);
+          // Look for /auth page in this batch
+          const match = records.find((r) => r.page === "/auth");
+          if (match) {
+            found = match.ts;
+            break;
+          }
+
+          pageNumber++;
         }
-      } catch (error) {
-        console.error("Error fetching last visit timestamp:", error);
-        setLastVisit(null);
+
+        setLastVisit(found);
+      } catch (err) {
+        console.error("Error fetching last visit:", err);
+      } finally {
+        setLoadingLastVisit(false); 
       }
     }
 
-    fetchLastVisit();
+    fetchLastVisitAuth();
   }, [userInfo]);
 
   const formatTimestamp = (timestamp) => {
@@ -112,7 +130,12 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
               Welcome, Dr. {userInfo.last_name}
             </div>
             <div className="text-sm text-gray-500">
-              Last visit: {lastVisit ? formatTimestamp(lastVisit) : 'No record found'}
+              Last visit: {loadingLastVisit
+                ? <span>Loading...</span>
+                : lastVisit
+                  ? formatTimestamp(lastVisit)
+                  : 'No record found'
+              }
             </div>
 
           </div>

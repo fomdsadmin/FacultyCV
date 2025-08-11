@@ -181,7 +181,7 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
                   location.pathname === "/audit" ? "font-bold" : ""
                 }`}
               >
-                Audit
+                Activity Log
               </p>
             )}
           </Link>

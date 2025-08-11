@@ -26,12 +26,11 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
     const [actionFilter, setActionFilter] = useState('');
 
     useEffect(() => {
+       setPageNumber(1); // reset if filter change 
+    }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter]);
 
-        if (page_number !== 1) {
-            setPageNumber(1); // reset if filter change 
-        } else {
-            fetchAuditViewData(); 
-        }
+    useEffect(() => {
+        fetchAuditViewData();
     }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter, page_number]);
 
     async function fetchAuditViewData() {
