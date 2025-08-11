@@ -7,14 +7,16 @@ import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem';
 
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
 import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
+import { set } from 'mongoose';
 
 const AuditPage = ({ getCognitoUser, userInfo }) => {
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
+    const [totalCount, setTotalCount] = useState(0);
 
 
     const PAGE_SIZE = 20;
-    const [page, setPage] = useState(1); // Current page number
+    const [page_number, setPageNumber] = useState(1); // Current page number
 
     const [emailFilter, setEmailFilter] = useState('');
     const [firstNameFilter, setFirstNameFilter] = useState('');
@@ -24,20 +26,41 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
     const [actionFilter, setActionFilter] = useState('');
 
     useEffect(() => {
-        fetchAuditViewData();
-    }, [page]);
+
+        if (page_number !== 1) {
+            setPageNumber(1); // reset if filter change 
+        } else {
+            fetchAuditViewData(); 
+        }
+    }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter, page_number]);
 
     async function fetchAuditViewData() {
         setLoading(true);
         try {
-            const auditViewData = await getAuditViewData();
-            auditViewData.sort((a, b) => new Date(b.ts) - new Date(a.ts)); // Sort by timestamp descending
-            setAuditViewData(auditViewData);
+            const response = await getAuditViewData({
+                page_number,
+                page_size: PAGE_SIZE,
+                email: emailFilter,
+                first_name: firstNameFilter,
+                last_name: lastNameFilter,
+                action: actionFilter,
+                start_date: startDate,
+                end_date: endDate,
+            });
+
+            const data = Array.isArray(response) ? response : (response.records || []);
+            data.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+
+            setAuditViewData(data);
+
+            // This should be total results from backend
+            setTotalCount(response.total_count ?? totalCount);
         } catch (error) {
             console.error("Error fetching audit view data:", error);
         }
         setLoading(false);
     }
+
 
     const handleRefresh = async () => {
         await fetchAuditViewData();
@@ -142,7 +165,6 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
     const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
 
     const pageViewData = auditViewData.filter(log => {
-        const matchesPage = log.page;
         const matchesEmail = log.logged_user_email?.toLowerCase().includes(emailFilter.toLowerCase());
         const matchesFirstName = log.logged_user_first_name?.toLowerCase().includes(firstNameFilter.toLowerCase());
         const matchesLastName = log.logged_user_last_name?.toLowerCase().includes(lastNameFilter.toLowerCase());
@@ -158,12 +180,12 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
             matchesEnd = new Date(log.ts) <= new Date(endDate);
         }
 
-        return matchesPage && matchesEmail && matchesFirstName && matchesLastName && matchesStart && matchesEnd && matchesAction;
+        return matchesEmail && matchesFirstName && matchesLastName && matchesStart && matchesEnd && matchesAction;
 
     });
     // Pagination logic
-    const totalPages = Math.ceil(pageViewData.length / PAGE_SIZE);
-    const pagedData = pageViewData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+    const pagedData = auditViewData; 
 
 
 
@@ -282,16 +304,17 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                     <div className="flex gap-2 items-center">
                         <button
                             className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
-                            onClick={() => setPage(page - 1)}
-                            disabled={page === 1}
+                            onClick={() => setPageNumber(page_number - 1)}
+                            disabled={page_number === 1}
                         >
                             Previous
                         </button>
-                        <span>Page {page} of {totalPages}</span>
+                        <span>Page {page_number} of {totalPages}</span>
+                        <span>Total Records: {totalCount}</span> 
                         <button
                             className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
-                            onClick={() => setPage(page + 1)}
-                            disabled={page === totalPages}
+                            onClick={() => setPageNumber(page_number + 1)}
+                            disabled={page_number === totalPages}
                         >
                             Next
                         </button>

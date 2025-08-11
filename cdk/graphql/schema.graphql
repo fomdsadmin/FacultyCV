@@ -33,6 +33,11 @@ type AuditViewRecord {
 	logged_user_action: String
 }
 
+type AuditViewResult {
+  records: [AuditViewRecord]
+  total_count: Int
+}
+
 # Get Bio from OpenAI
 type BioResponse {
 	answer: String
@@ -471,6 +476,6 @@ type Query {
 	cvIsUpToDate(cognito_user_id: String!, user_id: String!, template_id: String!): Boolean
 	getLatexConfiguration: String!
 		@aws_auth(cognito_groups: ["Faculty","Assistant","Admin"])
-	getAuditView(logged_user_id: Int): [AuditViewRecord]
-		@aws_auth(cognito_groups: ["Admin"])
+	getAuditView(logged_user_id: String, page_number: Int, page_size: Int, email: String, first_name: String, last_name: String, action: String, start_date: String,end_date: String): AuditViewResult
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 }

@@ -264,50 +264,40 @@ export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
     }
 `;
 
-export const getAuditViewQuery = (logged_user_id) => {
-    if (logged_user_id !== undefined && logged_user_id !== null) {
-        return `
-            query getAuditView {
-                getAuditView(logged_user_id: ${logged_user_id}) {
-                    log_view_id
-                    ts
-                    logged_user_id
-                    logged_user_first_name
-                    logged_user_last_name
-                    ip
-                    browser_version
-                    page
-                    session_id
-                    assistant
-                    profile_record
-                    logged_user_role,
-                    logged_user_email,
-                    logged_user_action
-                }
+export const getAuditViewQuery = (args = {}) => {
+    const argList = [];
+    if (args.logged_user_id) argList.push(`logged_user_id: "${args.logged_user_id}"`);
+    if (args.page_number) argList.push(`page_number: ${args.page_number}`);
+    if (args.page_size) argList.push(`page_size: ${args.page_size}`);
+    if (args.email) argList.push(`email: "${args.email}"`);
+    if (args.first_name) argList.push(`first_name: "${args.first_name}"`);
+    if (args.last_name) argList.push(`last_name: "${args.last_name}"`);
+    if (args.action) argList.push(`action: "${args.action}"`);
+    if (args.start_date) argList.push(`start_date: "${args.start_date}"`);
+    if (args.end_date) argList.push(`end_date: "${args.end_date}"`);
+
+    return `query getAuditView {
+        getAuditView(${argList.join(', ')}) {
+            records {
+                log_view_id
+                ts
+                logged_user_id
+                logged_user_first_name
+                logged_user_last_name
+                ip
+                browser_version
+                page
+                session_id
+                assistant
+                profile_record
+                logged_user_role
+                logged_user_email
+                logged_user_action
             }
-        `;
-    } else {
-        return `
-            query getAuditView {
-                getAuditView {
-                    log_view_id
-                    ts
-                    logged_user_id
-                    logged_user_first_name
-                    logged_user_last_name
-                    ip
-                    browser_version
-                    page
-                    session_id
-                    assistant
-                    profile_record
-                    logged_user_role,
-                    logged_user_email,
-                    logged_user_action
-                }
-            }
-        `;
+            total_count
     }
+}`;
+
 };
 
 
