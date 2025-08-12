@@ -46,9 +46,11 @@ RENAME data_section_ids TO template_structure;
 ALTER TABLE data_sections
 ADD COLUMN IF NOT EXISTS attributes_type JSON;
 
-
 ALTER TABLE data_sections
 ADD COLUMN IF NOT EXISTS info TEXT DEFAULT 'Summary of section description';
+
+ALTER TABLE declarations
+ADD COLUMN IF NOT EXISTS user_id TEXT NOT NULL
 
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS pending BOOLEAN DEFAULT true;
@@ -56,14 +58,11 @@ ADD COLUMN IF NOT EXISTS pending BOOLEAN DEFAULT true;
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT false;
 
-ALTER TABLE declarations
-ADD COLUMN IF NOT EXISTS user_id TEXT NOT NULL
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS username TEXT
 
 ALTER TABLE users
 ALTER COLUMN institution SET DEFAULT 'University of British Columbia';
-
-UPDATE users
-SET institution = 'University of British Columbia'
 
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS employee_id VARCHAR;
