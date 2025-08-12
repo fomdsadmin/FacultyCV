@@ -131,8 +131,23 @@ export const getAllUsers = async () => {
   return results["data"]["getAllUsers"];
 };
 
-export const getAllUsersCount = async () => {
-  const results = await runGraphql(getAllUsersCountQuery());
+/**
+ * Function to get all users count by role
+ * Arguments:
+ * department - Optional department filter (string)
+ * faculty - Optional faculty filter (string)
+ * Return value:
+ * {
+ *      total_count: Integer - total count of all users
+ *      faculty_count: Integer - count of Faculty users
+ *      assistant_count: Integer - count of Assistant users  
+ *      dept_admin_count: Integer - count of department admin users
+ *      admin_count: Integer - count of admin users
+ *      faculty_admin_count: Integer - count of faculty admin users
+ * }
+ */
+export const getAllUsersCount = async (department, faculty) => {
+  const results = await runGraphql(getAllUsersCountQuery(department, faculty));
   return results["data"]["getAllUsersCount"];
 };
 

@@ -22,7 +22,6 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
     let allRows = [];
     try {
       const response = await getAllSectionCVData(section.data_section_id);
-      console.log("Fetched response:", response);
       
       // Handle new response structure with total_count and data array
       const rows = response.data || response; // Fallback for backward compatibility

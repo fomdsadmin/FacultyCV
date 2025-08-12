@@ -11,30 +11,25 @@ def filter_data_by_section(data_details, section_title):
     """Filter data_details based on section title"""
     if not isinstance(data_details, dict):
         return data_details
-    
-    section_title_lower = section_title.lower() if section_title else ''
-    
-    if 'publication' in section_title_lower:
+
+    if 'Publication' in section_title:
         # Return specific fields for publications
         return {
             'end_date': data_details.get('end_date'),
         }
-    elif 'patent' in section_title_lower:
+    elif 'Patent' in section_title:
         # Return specific fields for patents
         return {
             'year': data_details.get('year'),
         }
-    elif 'grant' in section_title_lower:
+    elif 'Grant' in section_title:
         # Return specific fields for grants
         return {
             'dates': data_details.get('dates'),
             'amount': data_details.get('amount'),
         }
-    else:
-        # Return all data for other sections
-        return data_details
 
-def getFacultyWideCVData(arguments):
+def getDepartmentCVData(arguments):
     connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
     print("Connected to Database")
     cursor = connection.cursor()
@@ -47,33 +42,27 @@ def getFacultyWideCVData(arguments):
         raise ValueError("data_section_id is required")
     
     if faculty == 'All':
-        # Query all data for the given section_id
         cursor.execute(
             'SELECT COUNT(*) FROM user_cv_data WHERE data_section_id = %s AND archive != true',
             (data_section_id,)
         )
         total_count = cursor.fetchone()[0]
-        
         cursor.execute(
-            'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND archive != true LIMIT 2000',
+            'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND archive != true LIMIT 10000',
             (data_section_id,)
         )
     else:
-        # First get user_ids from users table where faculty matches
         cursor.execute(
             'SELECT user_id FROM users WHERE primary_faculty = %s',
             (faculty,)
         )
         user_ids = [row[0] for row in cursor.fetchall()]
-        
         if not user_ids:
             # No users found for this faculty
             total_count = 0
             results = []
         else:
-            # Use the user_ids to get CV data
             user_ids_placeholder = ','.join(['%s'] * len(user_ids))
-            
             # Get total count
             cursor.execute(
                 f'SELECT COUNT(*) FROM user_cv_data WHERE data_section_id = %s AND user_id IN ({user_ids_placeholder}) AND archive != true',
@@ -83,7 +72,7 @@ def getFacultyWideCVData(arguments):
             
             # Get the actual data
             cursor.execute(
-                f'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND user_id IN ({user_ids_placeholder}) AND archive != true LIMIT 2000',
+                f'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND user_id IN ({user_ids_placeholder}) AND archive != true',
                 [data_section_id] + user_ids
             )
         
@@ -112,4 +101,4 @@ def getFacultyWideCVData(arguments):
     }
 
 def lambda_handler(event, context):
-    return getFacultyWideCVData(event['arguments'])
+    return getDepartmentCVData(event['arguments'])

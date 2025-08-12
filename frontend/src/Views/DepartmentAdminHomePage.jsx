@@ -4,8 +4,7 @@ import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import AnalyticsCard from "../Components/AnalyticsCard.jsx";
 import GraphCarousel from "../Components/GraphCarousel.jsx";
 import {
-  getAllUsers,
-  getUserCVData,
+  getAllUsersCount,
   getAllSections,
   getNumberOfGeneratedCVs,
   getDepartmentCVData
@@ -13,8 +12,14 @@ import {
 
 const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   const [loading, setLoading] = useState(false);
-  const [facultyUsers, setFacultyUsers] = useState([]);
-  const [assistantUsers, setAssistantUsers] = useState([]);
+  const [userCounts, setUserCounts] = useState({
+    total_count: 0,
+    faculty_count: 0,
+    assistant_count: 0,
+    dept_admin_count: 0,
+    admin_count: 0,
+    faculty_admin_count: 0
+  });
   const [publications, setPublications] = useState([]);
   const [grants, setGrants] = useState([]);
   const [patents, setPatents] = useState([]);
@@ -32,24 +37,17 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     setLoading(true);
     try {
       // Fetch all basic data in parallel
-      const [users, dataSections, generatedCVs] = await Promise.all([
-        getAllUsers(),
+      const [userCounts, dataSections, generatedCVs] = await Promise.all([
+        department.trim() === "All" ? getAllUsersCount() : getAllUsersCount(department),
         getAllSections(),
-        department === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
+        department.trim() === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
       ]);
 
+      setUserCounts(userCounts);
       setTotalCVsGenerated(generatedCVs);
 
-      // Filter users based on department
-      const { filteredFacultyUsers, filteredAssistantUsers } = filterUsersByDepartment(users, department);
-      
-      setFacultyUsers(filteredFacultyUsers);
-      setAssistantUsers(filteredAssistantUsers);
-
-      // Fetch CV data and connections in parallel
-      await Promise.all([
-        fetchAllUserCVData(filteredFacultyUsers, dataSections),
-      ]);
+      // Fetch CV data
+      await fetchAllUserCVData(dataSections);
 
     } catch (error) {
       console.error("Error loading data:", error);
@@ -58,43 +56,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     }
   }, [department]);
 
-  // Helper function to filter users by department
-  const filterUsersByDepartment = useCallback((users, dept) => {
-    const filteredFacultyUsers = [];
-    const filteredAssistantUsers = [];
-    
-    if (dept === "All") {
-      // Single loop for "All" departments
-      users.forEach(user => {
-        if (user.role === "Faculty" || user.role.startsWith("Admin-")) {
-          filteredFacultyUsers.push(user);
-        } else if (user.role === "Assistant") {
-          filteredAssistantUsers.push(user);
-        }
-      });
-    } else {
-      // Single loop for specific department
-      users.forEach(user => {
-        const isInDepartment = user.primary_department === dept || user.secondary_department === dept;
-        
-        if (isInDepartment) {
-          if (user.role === "Faculty" || user.role.startsWith("Admin-")) {
-            filteredFacultyUsers.push(user);
-          } else if (user.role === "Assistant") {
-            filteredAssistantUsers.push(user);
-          }
-        }
-      });
-    }
-    
-    return {
-      filteredFacultyUsers,
-      filteredAssistantUsers
-    };
-  }, []);
-
-  const fetchAllUserCVData = useCallback(async (users, dataSections) => {
-    if (users.length === 0) return;
+  const fetchAllUserCVData = useCallback(async (dataSections) => {
 
     try {
       // Find section IDs
@@ -352,18 +314,72 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     return data;
   }, [filteredPublications]);
 
+  // Memoized patents graph data
+  const yearlyPatentsGraphData = useMemo(() => {
+    const data = [];
+    const yearlyDataMap = new Map();
+
+    // Use filtered patents based on department
+    filteredPatents.forEach((patent) => {
+      try {
+        const dataDetails = JSON.parse(patent.data_details);
+
+        // Handle patents with end_date field (same pattern as publications)
+        if (dataDetails.end_date) {
+          let year;
+          const endDateString = dataDetails.end_date.trim();
+          
+          if (endDateString.includes(' ')) {
+            // Format: "June 2019" - extract the year part
+            const parts = endDateString.split(' ');
+            const yearPart = parts[parts.length - 1]; // Get the last part (year)
+            year = parseInt(yearPart);
+          } else {
+            // Format: "2019" - direct year
+            year = parseInt(endDateString);
+          }
+          
+          // Only include valid years
+          if (!isNaN(year)) {
+            const yearStr = year.toString();
+            if (yearlyDataMap.has(yearStr)) {
+              yearlyDataMap.get(yearStr).Patents += 1;
+            } else {
+              yearlyDataMap.set(yearStr, {
+                year: yearStr,
+                Patents: 1,
+              });
+            }
+          }
+        }
+
+      } catch (error) {
+        console.error("Error parsing patent data:", error, patent);
+      }
+    });
+
+    // Convert the map to an array for the graph
+    yearlyDataMap.forEach((value) => {
+      data.push(value);
+    });
+
+    // Sort data by year to ensure chronological order
+    data.sort((a, b) => parseInt(a.year) - parseInt(b.year));
+    return data;
+  }, [filteredPatents]);
+
   const SummaryCards = () => (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 mt-4">
-        <AnalyticsCard title="Faculty Users" value={facultyUsers.length} />
-        <AnalyticsCard title="Assistant Users" value={assistantUsers.length} />
-        <AnalyticsCard title="CVs Generated" value={totalCVsGenerated} />
+        <AnalyticsCard title="Faculty" value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()} />
+        <AnalyticsCard title="Delegates" value={userCounts.assistant_count.toLocaleString()} />
+        <AnalyticsCard title="CVs Generated" value={totalCVsGenerated.toLocaleString()} />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 mt-4">
         <AnalyticsCard title="Grant Funding" value={totalGrantMoneyRaised} />
-        <AnalyticsCard title="Grants" value={filteredGrants.length} />
-        <AnalyticsCard title="Publications" value={filteredPublications.length} />
-        <AnalyticsCard title="Patents" value={filteredPatents.length} />
+        <AnalyticsCard title="Grants" value={filteredGrants.length.toLocaleString()} />
+        <AnalyticsCard title="Publications" value={filteredPublications.length.toLocaleString()} />
+        <AnalyticsCard title="Patents" value={filteredPatents.length.toLocaleString()} />
       </div>
     </>
   );
@@ -442,8 +458,25 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
       });
     }
 
+    // Patents graph (only if there's data)
+    if (yearlyPatentsGraphData.length > 0) {
+      graphs.push({
+        title: "Yearly Patents",
+        data: yearlyPatentsGraphData,
+        dataKey: "Patents",
+        xAxisKey: "year",
+        xAxisLabel: "Year",
+        yAxisLabel: "Number of Patents",
+        barColor: "#f59e0b",
+        showLegend: false,
+        formatTooltip: (value, name) => [`${value} ${value === 1 ? 'Patent' : 'Patents'}`, name],
+        formatYAxis: (value) => value.toString(),
+        formatXAxis: (value) => value
+      });
+    }
+
     return graphs;
-  }, [grantMoneyGraphData, yearlyPublicationsGraphData, department]);
+  }, [grantMoneyGraphData, yearlyPublicationsGraphData, yearlyPatentsGraphData, department]);
 
   // Set keyword data when it changes
   useEffect(() => {
