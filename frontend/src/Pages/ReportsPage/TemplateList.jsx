@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import DownloadButtons from './DownloadButtons.jsx';
+import { buildHtml } from './HtmlFunctions/HtmlBuilder.js';
 
 const TemplateList = ({ 
   templates, 
@@ -15,6 +16,7 @@ const TemplateList = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [startYear, setStartYear] = useState(new Date().getFullYear() - 10);
   const [endYear, setEndYear] = useState(new Date().getFullYear());
+  const [generatingHtml, setGeneratingHtml] = useState(false);
   
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
 
@@ -26,10 +28,38 @@ const TemplateList = ({
     template.title.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => a.title.localeCompare(b.title));
 
-  const handleGenerate = () => {
-    if (selectedTemplate) {
-      console.log(selectedTemplate);
-      onGenerate(selectedTemplate, startYear, endYear);
+  const handleGenerate = async () => {
+    if (selectedTemplate && user) {
+      console.log('Selected Template:', selectedTemplate);
+      
+      setGeneratingHtml(true);
+      
+      // Update template with selected date range
+      const templateWithDates = {
+        ...selectedTemplate,
+        start_year: startYear,
+        end_year: endYear
+      };
+      
+      try {
+        // Generate HTML using the HTML builder
+        const htmlContent = await buildHtml(user, templateWithDates);
+        
+        console.log('Generated HTML CV:');
+        console.log(htmlContent);
+        
+        // Optionally, you can also log it in a more readable format
+        console.log('='.repeat(80));
+        console.log('HTML CV CONTENT');
+        console.log('='.repeat(80));
+        console.log(htmlContent);
+        console.log('='.repeat(80));
+        
+      } catch (error) {
+        console.error('Error generating HTML CV:', error);
+      } finally {
+        setGeneratingHtml(false);
+      }
     }
   };
 
@@ -102,9 +132,9 @@ const TemplateList = ({
           <button
             className="w-full btn btn-primary mb-4"
             onClick={handleGenerate}
-            disabled={buildingLatex || switchingTemplates}
+            disabled={generatingHtml || switchingTemplates}
           >
-            {buildingLatex ? "Generating..." : "Generate"}
+            {generatingHtml ? "Generating HTML..." : "Generate HTML"}
           </button>
 
           {/* Use the existing DownloadButtons component */}
