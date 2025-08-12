@@ -11,73 +11,58 @@ def getAllUsersCount(arguments):
     connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
     cursor = connection.cursor()
     
-    # Simple filtering logic - handle undefined/null values
-    department = arguments.get('department', '')
-    faculty = arguments.get('faculty', '')
-
-    print("Received department:", department)
-    print("Received faculty:", faculty)
-
-    params = []
+    # Simple approach - just use standard SQL with conditional WHERE clauses
+    query = """
+        SELECT 
+            COUNT(*) as total_count,
+            COUNT(CASE WHEN role = 'Faculty' THEN 1 END) as faculty_count,
+            COUNT(CASE WHEN role = 'Assistant' THEN 1 END) as assistant_count,
+            COUNT(CASE WHEN role LIKE 'Admin-%' THEN 1 END) as dept_admin_count,
+            COUNT(CASE WHEN role = 'Admin' THEN 1 END) as admin_count,
+            COUNT(CASE WHEN role LIKE 'FacultyAdmin-%' THEN 1 END) as faculty_admin_count
+        FROM users
+    """
     
-    # Only filter if department is provided and not "All"
+    # Extract parameters
+    department = arguments.get('department', '') if arguments else ''
+    faculty = arguments.get('faculty', '') if arguments else ''
+    
+    # Add WHERE clause if needed - using direct string formatting as seen in other resolvers
     if department and department != "All":
-        query = f"""
-            SELECT 
-                COUNT(*) as total_count,
-                COUNT(CASE WHEN role = 'Faculty' THEN 1 END) as faculty_count,
-                COUNT(CASE WHEN role = 'Assistant' THEN 1 END) as assistant_count,
-                COUNT(CASE WHEN role LIKE 'Admin-%' THEN 1 END) as dept_admin_count,
-                COUNT(CASE WHEN role = 'Admin' THEN 1 END) as admin_count,
-                COUNT(CASE WHEN role LIKE 'FacultyAdmin-%' THEN 1 END) as faculty_admin_count
-            FROM users WHERE primary_department = %s
-        """
-        params.append(department)
-        cursor.execute(query, params)
+        query += f" WHERE primary_department = '{department}'"
     elif faculty and faculty != "All":
-        query = f"""
-            SELECT 
-                COUNT(*) as total_count,
-                COUNT(CASE WHEN role = 'Faculty' THEN 1 END) as faculty_count,
-                COUNT(CASE WHEN role = 'Assistant' THEN 1 END) as assistant_count,
-                COUNT(CASE WHEN role LIKE 'Admin-%' THEN 1 END) as dept_admin_count,
-                COUNT(CASE WHEN role = 'Admin' THEN 1 END) as admin_count,
-                COUNT(CASE WHEN role LIKE 'FacultyAdmin-%' THEN 1 END) as faculty_admin_count
-            FROM users WHERE primary_faculty = %s
-        """
-        params.append(faculty)
-        cursor.execute(query, params)
-    else:
-        # Single query to get all counts
-        query = f"""
-            SELECT 
-                COUNT(*) as total_count,
-                COUNT(CASE WHEN role = 'Faculty' THEN 1 END) as faculty_count,
-                COUNT(CASE WHEN role = 'Assistant' THEN 1 END) as assistant_count,
-                COUNT(CASE WHEN role LIKE 'Admin-%' THEN 1 END) as dept_admin_count,
-                COUNT(CASE WHEN role = 'Admin' THEN 1 END) as admin_count,
-                COUNT(CASE WHEN role LIKE 'FacultyAdmin-%' THEN 1 END) as faculty_admin_count
-            FROM users 
-        """
-
+        query += f" WHERE primary_faculty = '{faculty}'"
+    
+    # Execute without parameters - similar to how other resolvers are doing it
     cursor.execute(query)
-    counts = cursor.fetchall()[0]
+    counts = cursor.fetchone()
     
     cursor.close()
     connection.close()
     
-    # Convert to safe values (handle None)
-    counts = [count if count is not None else 0 for count in counts]
+    # Handle None values
+    if counts is None:
+        print("No data found, returning zero counts")
+        return {
+            "total_count": 0,
+            "faculty_count": 0,
+            "assistant_count": 0,
+            "dept_admin_count": 0,
+            "admin_count": 0,
+            "faculty_admin_count": 0
+        }
     
+    # Map results to output structure
     result = {
-        "total_count": counts[0],
-        "faculty_count": counts[1],
-        "assistant_count": counts[2],
-        "dept_admin_count": counts[3],
-        "admin_count": counts[4],
-        "faculty_admin_count": counts[5]
+        "total_count": counts[0] or 0,
+        "faculty_count": counts[1] or 0,
+        "assistant_count": counts[2] or 0,
+        "dept_admin_count": counts[3] or 0,
+        "admin_count": counts[4] or 0,
+        "faculty_admin_count": counts[5] or 0
     }
     
+    print("SUCCESS")
     return result
 
 def lambda_handler(event, context):

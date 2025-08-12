@@ -186,14 +186,20 @@ export const AppProvider = ({ children }) => {
           if (userData.approved && !userData.pending) {
             if (userData.role && userData.role !== "") {
               console.log("Username: ", username, "Role: ", userData.role);
-              const result = await addToUserGroup(username, userData.role);
-              console.log(result)
+              let result;
+              if (userData.role.startsWith("Admin-")) {
+                result = await addToUserGroup(username, "DepartmentAdmin");
+              } else {
+                result = await addToUserGroup(username, userData.role);
+              }
+
+              console.log(result);
               if (result.includes("SUCCESS")) {
-                setDoesUserNeedToReLogin(true)
-                setIsUserApproved(false)
-                setIsUserPending(true)
+                setDoesUserNeedToReLogin(true);
+                setIsUserApproved(false);
+                setIsUserPending(true);
                 console.log("Added cognito group membership", result);
-              } 
+              }
             }
           }
         } catch (error) {

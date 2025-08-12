@@ -24,7 +24,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   const [grants, setGrants] = useState([]);
   const [patents, setPatents] = useState([]);
   const [grantMoneyRaised, setGrantMoneyRaised] = useState([]);
-  const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
+  // const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
   const [keywordData, setKeywordData] = useState([]);
   const [showAllKeywords, setShowAllKeywords] = useState(false);
 
@@ -37,14 +37,15 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     setLoading(true);
     try {
       // Fetch all basic data in parallel
+      department = department.trim() || ""; 
       const [userCounts, dataSections, generatedCVs] = await Promise.all([
-        department.trim() === "All" ? getAllUsersCount() : getAllUsersCount(department),
+        department === "All" ? getAllUsersCount() : getAllUsersCount(department),
         getAllSections(),
-        department.trim() === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
+        // department === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
       ]);
 
       setUserCounts(userCounts);
-      setTotalCVsGenerated(generatedCVs);
+      // setTotalCVsGenerated(generatedCVs);
 
       // Fetch CV data
       await fetchAllUserCVData(dataSections);
@@ -373,7 +374,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 mt-4">
         <AnalyticsCard title="Faculty" value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()} />
         <AnalyticsCard title="Delegates" value={userCounts.assistant_count.toLocaleString()} />
-        <AnalyticsCard title="CVs Generated" value={totalCVsGenerated.toLocaleString()} />
+        {/* <AnalyticsCard title="CVs Generated" value={totalCVsGenerated.toLocaleString()} /> */}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 mt-4">
         <AnalyticsCard title="Grant Funding" value={totalGrantMoneyRaised} />
