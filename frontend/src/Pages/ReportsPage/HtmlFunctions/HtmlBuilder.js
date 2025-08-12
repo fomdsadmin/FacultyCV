@@ -551,12 +551,13 @@ const buildNotes = (preparedSection) => {
                 const associationValue = data.data_details[associationKey];
 
                 if (associationValue && associationValue.trim() !== '') {
-                    preparedSectionHtml += `<div style="margin-left: 20pt;"><strong>${sanitizeRichText(associationValue)}</strong>: ${sanitizeRichText(noteToShow)}</div>\n`;
+                    preparedSectionHtml += `<div style="margin-left: 20pt;"><strong>${sanitizeRichText(associationValue)}</strong>:</div>\n`;
+                    preparedSectionHtml += `<div style="margin-left: 40pt; background-color: #e9ecef; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; word-wrap: break-word; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto;">${sanitizeRichText(noteToShow)}</div>\n`;
                 }
             } else {
-                // Use bullet point format
+                // Use bullet point format with background on the note content
                 preparedSectionHtml += `<ul style="margin: 0; padding-left: 20px;">\n`;
-                preparedSectionHtml += `<li>${sanitizeRichText(String(noteToShow))}</li>\n`;
+                preparedSectionHtml += `<li><div style="background-color: #e9ecef; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; word-wrap: break-word; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; margin-top: 4px;">${sanitizeRichText(String(noteToShow))}</div></li>\n`;
                 preparedSectionHtml += `</ul>\n`;
             }
         });
