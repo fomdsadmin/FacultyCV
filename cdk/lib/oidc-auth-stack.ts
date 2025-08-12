@@ -99,6 +99,8 @@ export class OidcAuthStack extends cdk.Stack {
       },
     });
 
+    const url = process.env.ENVIRONMENT === 'prod' ? '360.med.ubc.ca' : process.env.ENVIRONMENT + '.360.med.ubc.ca';
+
     // Create User Pool Client with OIDC-only configuration
     this.userPoolClient = new cognito.UserPoolClient(
       this,
@@ -133,11 +135,11 @@ export class OidcAuthStack extends cdk.Stack {
           ],
           callbackUrls: [
             'http://localhost:3000/auth',
-            'https://dev.360.med.ubc.ca/auth',
+            `https://${url}/auth`,
           ],
           logoutUrls: [
             'http://localhost:3000/keycloak-logout',
-            'https://dev.360.med.ubc.ca/keycloak-logout',
+            `https://${url}/keycloak-logout`,
           ],
         },
         generateSecret: false,
