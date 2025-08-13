@@ -78,6 +78,7 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
 
 
         const auditInput = {
+            logged_user_id: userInfo?.user_id || 'Unknown',
             logged_user_first_name: userInfo?.first_name || 'Unknown',
             logged_user_last_name: userInfo?.last_name || 'Unknown',
             logged_user_role: userInfo?.role || 'Unknown',
@@ -94,7 +95,9 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
 
         // console.log('Audit Log Action:', actionType, auditInput);
         try {
+            
             await addAuditView(auditInput);
+            console.log('Adding: Audit Log Action:', actionType, auditInput);
         } catch (error) {
             console.error("Failed to log audit action:", error);
         }

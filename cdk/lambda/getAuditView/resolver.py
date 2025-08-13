@@ -17,13 +17,6 @@ def getAuditView(arguments, identity=None):
     page_size = int(arguments.get('page_size', 20))
     offset = (page_number - 1) * page_size
 
-    # Only Admins/DepartmentAdmins can see all logs
-    if logged_user_id is None and not (
-        "Admin" in user_groups or "DepartmentAdmin" in user_groups
-    ):
-        # return only users activity logs
-        raise Exception("Not authorized to view all logs.")
-    
     connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
     print("Connected to Database")
     cursor = connection.cursor()
@@ -31,6 +24,11 @@ def getAuditView(arguments, identity=None):
     filters = []
     params = []
     
+    # if id is in the argument 
+    if logged_user_id is not None:
+        filters.append("logged_user_id = %s")
+        params.append(logged_user_id)
+
     if arguments.get('email'):
         filters.append("logged_user_email ILIKE %s")
         params.append(f"%{arguments['email']}%")
@@ -92,45 +90,7 @@ def getAuditView(arguments, identity=None):
         "records": audit_view_records,
         "total_count": total_count
     }
-    # # Pagination parameters
-    # page = int(arguments.get('page', 1))
-    # page_size = int(arguments.get('page_size', 20))
-    # offset = (page - 1) * page_size
     
-    # # Only Admins/DepartmentAdmins can see all logs
-    # if logged_user_id is None and not (
-    #     "Admin" in user_groups or "DepartmentAdmin" in user_groups
-    # ):
-    #     raise Exception("Not authorized to view all logs.")
-    
-    # connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
-    # print("Connected to Database")
-    # cursor = connection.cursor()
-    
-    
-    # # # If logged_user_id is provided, filter by that user    
-    # # if logged_user_id is not None:
-    # #     cursor.execute(
-    # #         'SELECT * FROM audit_view WHERE logged_user_id = %s',
-    # #         (logged_user_id,)
-    # #     )
-    # # else:
-    # #     # If no logged_user_id is provided, fetch all logs
-    # #     cursor.execute('SELECT * FROM audit_view')
-    
-    # if logged_user_id is not None:
-    #     cursor.execute(
-    #         'SELECT * FROM audit_view WHERE logged_user_id = %s ORDER BY ts DESC LIMIT %s OFFSET %s',
-    #         (logged_user_id, page_size, offset)
-    #     )
-    # else:
-    #     cursor.execute(
-    #         'SELECT * FROM audit_view ORDER BY ts DESC LIMIT %s OFFSET %s',
-    #         (page_size, offset)
-    #     )
-
-    
-
 def lambda_handler(event, context):
     return getAuditView(event['arguments'],event.get('identity'))
     

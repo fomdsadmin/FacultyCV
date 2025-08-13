@@ -38,6 +38,7 @@ import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
 import { ToastContainer } from "react-toastify";
 import KeycloakLogout from "Components/KeycloakLogout";
+import YourActivityPage from "./Views/YourActivityPage.jsx";
 
 const AppContent = () => {
   const {
@@ -243,6 +244,18 @@ const AppContent = () => {
               path="/faculty/dashboard"
               element={<Dashboard userInfo={userInfo} getCognitoUser={getCognitoUser} />}
             />
+
+            <Route
+              path="/your-activities"
+              element={
+                currentViewRole !== "Admin" ? (
+                  <YourActivityPage userInfo={userInfo} getCognitoUser={getCognitoUser} />
+                ) : (
+                  <Navigate to="/home" />
+                )
+              }
+            />
+
 
             {/* Other routes - no restrictions for approved users */}
             <Route path="/faculty/home/affiliations" element={<FacultyHomePage tab="affiliations" />} />
