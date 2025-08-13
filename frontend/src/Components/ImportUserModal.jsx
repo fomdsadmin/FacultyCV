@@ -89,16 +89,12 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const jwt = await getJWT();
       // Generate a unique file key with timestamp to avoid conflicts
-      const timestamp = Date.now();
-      const fileName = selectedFile.name.split(".")[0];
-      const fileExtension = selectedFile.name.split(".")[1];
       const fileKey = selectedFile.name;
 
       console.log("File Key:", selectedFile.name);
 
       // Get presigned URL for S3 upload
       const url = await getPresignedUrl(jwt, fileKey, "PUT", "user-import");
-      console.log("Presigned URL:", url);
 
       // Update progress to 10% after getting presigned URL
       setUploadProgress(10);
@@ -115,8 +111,6 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
       if (!uploadResponse.ok) {
         throw new Error(`Upload failed: ${uploadResponse.statusText}`);
       }
-
-      console.log("File uploaded successfully to S3");
 
       // Update progress to 50% after successful upload
       setUploadProgress(50);
@@ -194,10 +188,10 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
                 • <strong>role</strong> - User's role ('Faculty', 'Assistant', 'Admin', 'DepartmentAdmin')
               </li>
               <li>
-                • <strong>faculty</strong> - Users faculty name ('Medicine', 'Obstretrics & Gynecology')
+                • <strong>faculty</strong> - Users faculty name ('Medicine')
               </li>
               <li>
-                • <strong>department</strong> - User's primary department
+                • <strong>department</strong> - User's primary department ('Obstetrics & Gynaecology')
               </li>
             </ul>
             <p className="text-blue-800 text-sm mt-2">

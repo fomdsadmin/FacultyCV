@@ -87,10 +87,6 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
       setUsers(approvedUsersList);
       setPendingUsers(pendingUsersList);
       setRejectedUsers(rejectedUsersList);
-
-      console.log("Pending users count:", pendingUsersList.length, pendingUsersList);
-      console.log("Rejected users count:", rejectedUsersList.length, rejectedUsersList);
-      console.log("Approved users count:", approvedUsersList.length, approvedUsersList);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
@@ -214,7 +210,6 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
             userToRemove.last_name
           );
 
-          console.log("User removal result:", result);
 
           // Refresh the users list
           fetchAllUsers();
