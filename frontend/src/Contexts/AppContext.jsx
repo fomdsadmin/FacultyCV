@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { fetchUserAttributes, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
-import { addToUserGroup, getUser } from "../graphql/graphqlHelpers.js";
+import { addToUserGroup, getUser, getUserProfileMatches, changeUsername } from "../graphql/graphqlHelpers.js";
 import { use } from "react";
 
 // Create the context
@@ -30,6 +30,9 @@ export const AppProvider = ({ children }) => {
   const [isUserPending, setIsUserPending] = useState(false);
   const [isUserApproved, setIsUserApproved] = useState(false);
   const [doesUserNeedToReLogin, setDoesUserNeedToReLogin] = useState(false);
+  const [userProfileMatches, setUserProfileMatches] = useState([]);
+  const [doesUserHaveAProfileInDatabase, setDoesUserHaveAProfileInDatabase] = useState(false);
+
 
   // Role management state
   const [actualRole, setActualRole] = useState(""); // User's actual assigned role (permissions)
@@ -205,8 +208,7 @@ export const AppProvider = ({ children }) => {
             }
           }
         } catch (error) {
-          console.error("Error fetching user data:", error);
-          // console.log("Filter: User does not exist in SQL database");
+          console.log("Filter: User does not exist in SQL database");
           // User does not exist in SQL database
           setUserExistsInSqlDatabase(false);
           setIsUserPending(false);
@@ -220,6 +222,24 @@ export const AppProvider = ({ children }) => {
             email: email || "",
             username: name || "",
           });
+
+          console.log("User info set for new user:", {
+            first_name: given_name || "",
+            last_name: family_name || "",
+            email: email || "",
+            username: name || "",
+          });
+
+          const result = await getUserProfileMatches(given_name, family_name);
+          console.log("User profile matches:", result);
+
+          if (result && Array.isArray(result) && result.length > 0) {
+            setUserProfileMatches(result);
+            setDoesUserHaveAProfileInDatabase(true);
+          } else {
+            setUserProfileMatches([]);
+            setDoesUserHaveAProfileInDatabase(false);
+          }
         }
       } catch (error) {
         console.error("Error checking auth session:", error);
@@ -337,6 +357,11 @@ export const AppProvider = ({ children }) => {
     // Re-login state for group memberships
     doesUserNeedToReLogin,
     setDoesUserNeedToReLogin,
+
+    doesUserHaveAProfileInDatabase,
+    setDoesUserHaveAProfileInDatabase,
+    userProfileMatches,
+    setUserProfileMatches,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

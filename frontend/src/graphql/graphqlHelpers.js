@@ -7,6 +7,7 @@ import {
   getDepartmentCVDataQuery,
   getFacultyWideCVDataQuery,
   getUserQuery,
+  getUserProfileMatchesQuery,
   getAllUsersQuery,
   getAllUsersCountQuery,
   getAllUniversityInfoQuery,
@@ -214,6 +215,11 @@ export const getUser = async (username) => {
   const results = await executeGraphql(getUserQuery, { username: username });
   console.log(results);
   return results["data"]["getUser"];
+};
+
+export const getUserProfileMatches = async (first_name, last_name) => {
+  const results = await executeGraphql(getUserProfileMatchesQuery, { first_name, last_name });
+  return results["data"]["getUserProfileMatches"];
 };
 
 /**
