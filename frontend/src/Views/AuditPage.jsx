@@ -25,7 +25,7 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
     const [actionFilter, setActionFilter] = useState('');
 
     useEffect(() => {
-       setPageNumber(1); // reset if filter change 
+        setPageNumber(1); // reset if filter change 
     }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter]);
 
     useEffect(() => {
@@ -157,7 +157,7 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
     ];
 
     // Create a default set of visible columns that excludes log_view_id
-    const defaultVisibleColumns = pageViewColumns.filter(col => col !== "log_view_id");
+    const defaultVisibleColumns = pageViewColumns.filter(col => col !== "log_view_id" && col !== "assistant" && col !== "profile_record");
 
     // Initialize state with the filtered columns
     const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
@@ -183,7 +183,29 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
     });
     // Pagination logic
     const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-    const pagedData = auditViewData; 
+    const pagedData = auditViewData;
+
+    // column name map 
+    const getColumnDisplayName = (columnName) => {
+        const columnMap = {
+            "ts": "Timestamp",
+            "logged_user_first_name": "First Name",
+            "logged_user_last_name": "Last Name",
+            "logged_user_email": "Email",
+            "logged_user_role": "Role",
+            "page": "Page",
+            "logged_user_action": "Action",
+            "log_view_id": "ID",
+            "logged_user_id": "User ID",
+            "assistant": "Assistant",
+            "profile_record": "Profile Record",
+            "session_id": "Session ID",
+            "ip": "IP Address",
+            "browser_version": "Browser"
+        };
+
+        return columnMap[columnName] || columnName;
+    };
 
 
 
@@ -308,7 +330,7 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                             Previous
                         </button>
                         <span>Page {page_number} of {totalPages}</span>
-                        <span>Total Records: {totalCount}</span> 
+                        <span>Total Records: {totalCount}</span>
                         <button
                             className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
                             onClick={() => setPageNumber(page_number + 1)}
@@ -337,32 +359,65 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
 
 
                 {loading ? (
-                    <div>Loading...</div>
+                    <div className="flex justify-center items-center py-10">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
                 ) : (
-                    <div className="overflow-x-auto" style={{ maxHeight: 600, minWidth: 500, overflowY: 'auto', overflowX: 'auto' }}>
-                        <table className="min-w-full border text-xs">
-                            <thead>
+                    <div className="overflow-x-auto rounded-lg shadow" style={{ maxHeight: 600, overflowY: 'auto' }}>
+                        <table className="min-w-full table-fixed divide-y divide-gray-200">
+                            <thead className="bg-gray-50 sticky top-0">
                                 <tr>
-                                    {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
-                                        <th key={col}>{col}</th>
-                                    ))}
+                                    {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => {
+                                        // Define column widths based on content type
+                                        let width = "30px";
+                                        if (col === "ts") width = "50px";
+                                        else if (col === "logged_user_action") width = "120px";
+                                        else if (col === "logged_user_email") width = "200px";
+                                        else if (col === "logged_user_first_name" || col === "logged_user_last_name") width = "40px";
+                                        else if (col === "logged_user_role") width = "150px";
+                                        else if (col === "log_view_id" || col === "logged_user_id" || col === "session_id") width = "50px";
+
+                                        return (
+                                            <th
+                                                key={col}
+                                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                style={{ width }}
+                                            >
+                                                {getColumnDisplayName(col)}
+                                            </th>
+                                        );
+                                    })}
                                 </tr>
                             </thead>
-                            <tbody>
-                                {pagedData.map((log, idx) => (
-                                    <tr key={log.log_view_id || idx}>
-                                        {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
-                                            <td key={col}>
-                                                {col === "ts"
-                                                    ? formatTimestamp(log[col])
-                                                    : typeof log[col] === "boolean"
-                                                        ? String(log[col])
-                                                        : log[col]}
-
-                                            </td>
-                                        ))}
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {pagedData.length > 0 ? (
+                                    pagedData.map((log, idx) => (
+                                        <tr key={log.log_view_id || idx} className="hover:bg-gray-50">
+                                            {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
+                                                <td
+                                                    key={col}
+                                                    className="px-6 py-4 text-sm text-gray-500"
+                                                >
+                                                    <div className="truncate" title={log[col] != null ? String(log[col]) : ""}>
+                                                        {col === "ts"
+                                                            ? formatTimestamp(log[col])
+                                                            : col === "logged_user_action"
+                                                                ? <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                                    {log[col]}
+                                                                </span>
+                                                                : log[col] || "-"}
+                                                    </div>
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={visibleColumns.length} className="px-6 py-4 text-center text-sm text-gray-500">
+                                            No audit data found
+                                        </td>
                                     </tr>
-                                ))}
+                                )}
                             </tbody>
                         </table>
                     </div>

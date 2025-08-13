@@ -86,7 +86,7 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             browser_version: navigator.userAgent,
             page: location.pathname,
             session_id: localStorage.getItem('session_id') || 'Unknown',
-            assistant: userInfo?.role === 'Assistant',
+            assistant: userInfo?.role === 'Assistant' ? "true" : "false",
             profile_record: profileRecord,
             logged_user_email: userInfo?.email || 'Unknown',
             logged_user_action: actionType,
