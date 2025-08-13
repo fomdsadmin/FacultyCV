@@ -95,7 +95,6 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
 
       // Get presigned URL for S3 upload
       const url = await getPresignedUrl(jwt, fileKey, "PUT", "user-import");
-      console.log("Presigned URL:", url);
 
       // Update progress to 10% after getting presigned URL
       setUploadProgress(10);
@@ -112,8 +111,6 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
       if (!uploadResponse.ok) {
         throw new Error(`Upload failed: ${uploadResponse.statusText}`);
       }
-
-      console.log("File uploaded successfully to S3", uploadResponse);
 
       // Update progress to 50% after successful upload
       setUploadProgress(50);
