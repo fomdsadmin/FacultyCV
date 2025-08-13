@@ -115,6 +115,30 @@ export class Resolver2Stack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "getDepartmentCVData",
+      ["getDepartmentCVData"],
+      "Query",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "getFacultyWideCVData",
+      ["getFacultyWideCVData"],
+      "Query",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "getArchivedUserCVData",
       ["getArchivedUserCVData"],
       "Query",

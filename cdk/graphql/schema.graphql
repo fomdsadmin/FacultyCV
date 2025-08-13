@@ -33,6 +33,20 @@ type AuditViewRecord {
 	logged_user_action: String
 }
 
+type AuditViewResult {
+	records: [AuditViewRecord]
+	total_count: Int
+}
+
+type UsersCountResult {
+	total_count: Int!
+	faculty_count: Int!
+	assistant_count: Int!
+	dept_admin_count: Int!
+	admin_count: Int!
+	faculty_admin_count: Int!
+}
+
 # Get Bio from OpenAI
 type BioResponse {
 	answer: String
@@ -434,6 +448,10 @@ type Query {
 		@aws_auth(cognito_groups: ["Faculty","Assistant","FacultyAdmin","Admin","DepartmentAdmin"])
 	getAllSectionCVData(data_section_id: String, data_section_id_list: [String]): CVDataResponse
 		@aws_auth(cognito_groups: ["Admin"])
+	getDepartmentCVData(data_section_id: String!, dept: String!, title: String): CVDataResponse
+		@aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+	getFacultyWideCVData(data_section_id: String!, faculty: String!, title: String): CVDataResponse
+		@aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
 	getArchivedUserCVData(user_id: String!): [UserCVData]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ElsevierAuthorProfile]!
@@ -470,6 +488,8 @@ type Query {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getAllUsers: [User]
 		@aws_auth(cognito_groups: ["Admin","FacultyAdmin","DepartmentAdmin"])
+	getAllUsersCount(department: String, faculty: String): UsersCountResult!
+		@aws_auth(cognito_groups: ["Admin","FacultyAdmin","DepartmentAdmin"])
 	getPatentMatches(first_name: String!, last_name: String!): [Patent]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getPresignedUrl(
@@ -484,6 +504,16 @@ type Query {
 	cvIsUpToDate(cognito_user_id: String!, user_id: String!, template_id: String!): Boolean
 	getLatexConfiguration: String!
 		@aws_auth(cognito_groups: ["Faculty","Assistant","Admin"])
-	getAuditView(logged_user_id: Int): [AuditViewRecord]
-		@aws_auth(cognito_groups: ["Admin"])
+	getAuditView(
+		logged_user_id: String,
+		page_number: Int,
+		page_size: Int,
+		email: String,
+		first_name: String,
+		last_name: String,
+		action: String,
+		start_date: String,
+		end_date: String
+	): AuditViewResult
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 }
