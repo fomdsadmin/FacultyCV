@@ -189,6 +189,8 @@ export const AppProvider = ({ children }) => {
               let result;
               if (userData.role.startsWith("Admin-")) {
                 result = await addToUserGroup(username, "DepartmentAdmin");
+              } else if (userData.role.startsWith("FacultyAdmin-")) {
+                result = await addToUserGroup(username, "FacultyAdmin");
               } else {
                 result = await addToUserGroup(username, userData.role);
               }
