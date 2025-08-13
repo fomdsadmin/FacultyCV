@@ -39,6 +39,25 @@ export const getUserQuery = `
     }
 `;
 
+export const getUserProfileMatchesQuery = `
+    query GetUserProfileMatches($first_name: String!, $last_name: String!) {
+        getUserProfileMatches(
+            first_name: $first_name,
+            last_name: $last_name
+        ){
+            user_id
+            first_name
+            last_name
+            email
+            role
+            primary_department
+            primary_faculty
+            pending
+            approved
+            username
+        }
+    }
+`;
 export const getUserInstitutionIdQuery = (email) => `
     query GetUser {
         getUser (

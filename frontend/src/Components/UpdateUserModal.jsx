@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { changeUsername, getUser, updateUser } from "../graphql/graphqlHelpers.js";
+import { changeUsername, getUser, updateUser, getAllUniversityInfo } from "../graphql/graphqlHelpers.js";
 import { get } from "aws-amplify/api";
 
 const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSuccess }) => {
@@ -7,6 +7,10 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [primaryDepartment, setPrimaryDepartment] = useState("");
+  const [primaryFaculty, setPrimaryFaculty] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -17,6 +21,8 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
       setLastName(existingUser.last_name || "");
       setUsername(existingUser.username);
       setEmail(existingUser.email || "");
+      setPrimaryDepartment(existingUser.primary_department || "");
+      setPrimaryFaculty(existingUser.primary_faculty || "");
       setError("");
       // Don't clear success message here to allow it to persist after update
     }
@@ -27,6 +33,34 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
     if (isOpen) {
       setSuccessMessage("");
       setError("");
+    }
+  }, [isOpen]);
+
+  // Fetch university info (departments and faculties)
+  useEffect(() => {
+    const fetchUniversityInfo = async () => {
+      try {
+        const result = await getAllUniversityInfo();
+        const depts = [];
+        const facs = [];
+
+        result.forEach((element) => {
+          if (element.type === "Department") {
+            depts.push(element.value);
+          } else if (element.type === "Faculty") {
+            facs.push(element.value);
+          }
+        });
+
+        setDepartments(depts.sort());
+        setFaculties(facs.sort());
+      } catch (error) {
+        console.error("Error fetching university info:", error);
+      }
+    };
+
+    if (isOpen) {
+      fetchUniversityInfo();
     }
   }, [isOpen]);
 
@@ -49,9 +83,9 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
         existingUser.bio || "",
         existingUser.rank || "",
         existingUser.institution || "",
-        existingUser.primary_department || "",
+        primaryDepartment,
         existingUser.secondary_department || "",
-        existingUser.primary_faculty || "",
+        primaryFaculty,
         existingUser.secondary_faculty || "",
         existingUser.primary_affiliation || "",
         existingUser.secondary_affiliation || "",
@@ -71,6 +105,7 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
       onUpdateSuccess(newResult);
       // Set success message after updating the user data
       setSuccessMessage("User Successfully Updated");
+      window.location.reload(); // Refresh the page on close
     } catch (error) {
       console.error("Error updating user:", error);
       setError("An error occurred while updating user. Please try again.");
@@ -91,7 +126,7 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-xl h-[500px] flex flex-col">
+      <div className="bg-white rounded-lg p-6 w-full max-w-xl  flex flex-col my-auto">
         <div className="flex justify-between items-center mb-4">
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-bold text-zinc-600">Update User</h2>
@@ -141,6 +176,40 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                 type="email"
               />
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Faculty</label>
+                <select
+                  className="select select-bordered w-full text-sm"
+                  value={primaryFaculty}
+                  onChange={(e) => setPrimaryFaculty(e.target.value)}
+                >
+                  <option value="">Select Faculty</option>
+                  {faculties.map((fac, idx) => (
+                    <option key={idx} value={fac}>
+                      {fac}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Department</label>
+                <select
+                  className="select select-bordered w-full text-sm"
+                  value={primaryDepartment}
+                  onChange={(e) => setPrimaryDepartment(e.target.value)}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept, idx) => (
+                    <option key={idx} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
               <input

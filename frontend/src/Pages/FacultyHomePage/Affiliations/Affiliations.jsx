@@ -115,7 +115,7 @@ const Affiliations = () => {
 
       // Determine institution: either from institutionData or userInfo
       let institution = institutionData.institution || userInfo.institution || "";
-      
+
       // Determine campus: either from institutionData or userInfo
       let campus = institutionData.campus || userInfo.campus || "";
 
@@ -148,17 +148,17 @@ const Affiliations = () => {
       console.log("Updated user info:", res);
       console.log("Current facultyData before update:", facultyData);
       console.log("Current institutionData before update:", institutionData);
-      
+
       // Update the context with the new user info to prevent form reset
       if (res) {
         setUserInfo(res);
-        
+
         // Also update local form state to ensure immediate UI consistency
         const newFacultyData = {
           primary_faculty: res.primary_faculty || facultyData.primary_faculty || "",
           secondary_faculty: res.secondary_faculty || facultyData.secondary_faculty || "",
         };
-        
+
         const newInstitutionData = {
           institution: res.institution || institutionData.institution || "",
           campus: res.campus || institutionData.campus || "",
@@ -207,13 +207,13 @@ const Affiliations = () => {
 
           // Objects - make sure we properly initialize with data
           setFacultyData({
-            primary_faculty: data.faculty?.primary_faculty || userInfo.primary_faculty || "",
-            secondary_faculty: data.faculty?.secondary_faculty || userInfo.secondary_faculty || "",
+            primary_faculty: userInfo.primary_faculty || data.faculty?.primary_faculty || "",
+            secondary_faculty: userInfo.secondary_faculty || data.faculty?.secondary_faculty || "",
           });
 
           setInstitutionData({
-            institution: data.institution?.institution || userInfo.institution || "",
-            campus: data.institution?.campus || userInfo.campus || "",
+            institution: userInfo.institution || data.institution?.institution || "",
+            campus: userInfo.campus || data.institution?.campus || "",
           });
 
           // Arrays of objects
@@ -241,13 +241,13 @@ const Affiliations = () => {
 
           // Check and update user info for any null/empty values even when existing data exists
           const currentFacultyData = {
-            primary_faculty: data.faculty?.primary_faculty || userInfo.primary_faculty || "",
-            secondary_faculty: data.faculty?.secondary_faculty || userInfo.secondary_faculty || "",
+            primary_faculty: userInfo.primary_faculty || data.faculty?.primary_faculty || "",
+            secondary_faculty: userInfo.secondary_faculty || data.faculty?.secondary_faculty || "",
           };
-          
+
           const currentInstitutionData = {
-            institution: data.institution?.institution || userInfo.institution || "",
-            campus: data.institution?.campus || userInfo.campus || "",
+            institution: userInfo.institution || "",
+            campus: userInfo.campus || "",
           };
 
           let needsUpdate = false;
@@ -258,7 +258,12 @@ const Affiliations = () => {
           };
 
           // Check primary faculty
-          if (!userInfo.primary_faculty || userInfo.primary_faculty === "" || userInfo.primary_faculty == null || userInfo.primary_faculty.includes("null")) {
+          if (
+            !userInfo.primary_faculty ||
+            userInfo.primary_faculty === "" ||
+            userInfo.primary_faculty == null ||
+            userInfo.primary_faculty.includes("null")
+          ) {
             if (currentFacultyData.primary_faculty && currentFacultyData.primary_faculty !== "") {
               updateData.primary_faculty = currentFacultyData.primary_faculty;
               needsUpdate = true;
@@ -266,7 +271,12 @@ const Affiliations = () => {
           }
 
           // Check institution
-          if (!userInfo.institution || userInfo.institution === "" || userInfo.institution == null || userInfo.institution.includes("null")) {
+          if (
+            !userInfo.institution ||
+            userInfo.institution === "" ||
+            userInfo.institution == null ||
+            userInfo.institution.includes("null")
+          ) {
             if (currentInstitutionData.institution && currentInstitutionData.institution !== "") {
               updateData.institution = currentInstitutionData.institution;
               needsUpdate = true;
@@ -274,7 +284,12 @@ const Affiliations = () => {
           }
 
           // Check campus
-          if (!userInfo.campus || userInfo.campus === "" || userInfo.campus == null || userInfo.campus.includes("null")) {
+          if (
+            !userInfo.campus ||
+            userInfo.campus === "" ||
+            userInfo.campus == null ||
+            userInfo.campus.includes("null")
+          ) {
             if (currentInstitutionData.campus && currentInstitutionData.campus !== "") {
               updateData.campus = currentInstitutionData.campus;
               needsUpdate = true;
@@ -291,22 +306,20 @@ const Affiliations = () => {
               userInfo.role,
               userInfo.bio,
               userInfo.rank,
-              updateData.institution,
+              userInfo.institution,
               userInfo.primary_department,
-              "",
+              userInfo.secondary_department,
               updateData.primary_faculty,
-              "",
-              "",
-              "",
+              updateData.secondary_faculty,
+              userInfo.primary_affiliation,
+              userInfo.secondary_affiliation,
               updateData.campus,
-              "",
-              "",
+              userInfo.keywords,
+              userInfo.institution_user_id,
               userInfo.scopus_id,
-              userInfo.orcid_id,
-              userInfo.cwl,
-              userInfo.vpp
+              userInfo.orcid_id
             );
-            
+
             // Update the context with the new user info
             const refreshedUser = await getUser(userInfo.username);
             if (refreshedUser) {
@@ -316,7 +329,7 @@ const Affiliations = () => {
         } else {
           console.log("No affiliations data found");
           // Initialize with defaults - autofill academic units with primary department
-          
+
           const defaultAcademicUnits = [];
           if (userInfo.primary_department) {
             defaultAcademicUnits.push({
@@ -346,15 +359,6 @@ const Affiliations = () => {
             isNull = true;
           }
 
-          // Handle institution and campus autofill
-          let institution = userInfo.institution;
-          let existingInstitution = "";
-          let institutionIsNull = false;
-          if (!institution || institution === "" || institution == null || institution.includes("null")) {
-            existingInstitution = "";
-            institutionIsNull = true;
-          }
-
           let campus = userInfo.campus;
           let existingCampus = "";
           let campusIsNull = false;
@@ -364,7 +368,7 @@ const Affiliations = () => {
           }
 
           // Only update user if there are null values to fix
-          if (isNull || institutionIsNull || campusIsNull) {
+          if (isNull || campusIsNull) {
             await updateUser(
               userInfo.user_id,
               userInfo.first_name,
@@ -374,20 +378,18 @@ const Affiliations = () => {
               userInfo.role,
               userInfo.bio,
               userInfo.rank,
-              institutionIsNull ? existingInstitution : userInfo.institution,
+              userInfo.institution,
               userInfo.primary_department,
-              "",
+              userInfo.secondary_department,
               isNull ? existingPrimaryFaculty : userInfo.primary_faculty,
-              "",
-              "",
-              "",
+              userInfo.secondary_faculty,
+              userInfo.primary_affiliation,
+              userInfo.secondary_affiliation,
               campusIsNull ? existingCampus : userInfo.campus,
-              "",
-              "",
+              userInfo.keywords,
+              userInfo.institution_user_id,
               userInfo.scopus_id,
-              userInfo.orcid_id,
-              userInfo.cwl,
-              userInfo.vpp
+              userInfo.orcid_id
             );
             
             // Update the context with the new user info
@@ -403,8 +405,8 @@ const Affiliations = () => {
           });
 
           setInstitutionData({
-            institution: existingInstitution || institution || "",
-            campus: existingCampus || campus || "",
+            institution: userInfo.institution|| "",
+            campus: userInfo.campus || "",
           });
         }
       } catch (error) {
