@@ -262,6 +262,8 @@ type UserConnection {
 }
 
 type Mutation {
+	createGotenbergPdf(form_data_base64: String!): String
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	addUserDeclaration(
 		user_id: String!,
 		reporting_year: Int!,

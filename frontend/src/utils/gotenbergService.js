@@ -1,5 +1,4 @@
-
-import { getGotenbergPdf } from '../graphql/graphqlHelpers.js';
+import { createGotenbergPdf } from "graphql/graphqlHelpers";
 
 export const convertHtmlToPdf = async (htmlContent, options = {}) => {
   // Fixed boundary (must match in Lambda)
@@ -82,7 +81,7 @@ export const convertHtmlToPdf = async (htmlContent, options = {}) => {
   const base64Body = btoa(unescape(encodeURIComponent(rawBody)));
 
   try {
-    const pdfBase64 = await getGotenbergPdf(base64Body);
+    const pdfBase64 = await createGotenbergPdf(base64Body);
     
     // Convert PDF Base64 → Blob
     const pdfBlob = base64ToBlob(pdfBase64, 'application/pdf');

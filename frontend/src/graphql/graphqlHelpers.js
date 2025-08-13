@@ -35,7 +35,6 @@ import {
   GET_BIO_RESPONSE_DATA,
   getAuditViewQuery,
   getUserAffiliationsQuery,
-  getGotenbergPdfQuery
 } from "./queries";
 import {
   ADD_USER,
@@ -72,6 +71,7 @@ import {
   EDIT_SECTION_DETAILS,
   UPDATE_USER_AFFILIATIONS,
   CHANGE_USERNAME,
+  CREATE_GOTENBERG_PDF
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
 
@@ -1259,9 +1259,9 @@ export const getBioResponseData = async (username_input) => {
   return results["data"]["getBioResponseData"];
 };
 
-export const getGotenbergPdf = async (form_data_base_64) => {
-  const results = await executeGraphql(getGotenbergPdfQuery, { form_data_base_64 });
+export const createGotenbergPdf = async (form_data_base64) => {
+  const results = await executeGraphql(CREATE_GOTENBERG_PDF, { form_data_base64 });
   console.log(results);
-  return results["data"]["getGotenbergPdf"];
+  return results["data"]["createGotenbergPdf"];
 };
 
