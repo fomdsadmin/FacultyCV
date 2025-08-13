@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaArchive, FaFolderOpen } from "react-icons/fa";
+import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaArchive, FaFolderOpen, FaRegClipboard } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 import { signOut } from "aws-amplify/auth";
 import { useNavigate } from "react-router-dom";
@@ -48,9 +48,8 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
 
   return (
     <div
-      className={`relative transition-all duration-150 ease-in-out py-2 border-r-2 border-neutral max-h-screen ${
-        isCollapsed ? "w-18" : "w-60"
-      }`}
+      className={`relative transition-all duration-150 ease-in-out py-2 border-r-2 border-neutral max-h-screen ${isCollapsed ? "w-18" : "w-60"
+        }`}
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
     >
@@ -106,6 +105,24 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
               </p>
             )}
           </Link>
+        </li>
+
+        <li
+          className={`mb-2 ${location.pathname === "/your-activities" ? "bg-gray-200 rounded-lg" : ""
+            }`}
+        >
+          <Link to="/your-activities">
+            <FaRegClipboard className="h-5 w-5" />
+            {showText && !isCollapsed && (
+              <p
+                className={`ml-2 ${location.pathname === "/your-activities" ? "font-bold" : ""
+                  }`}
+              >
+                Your Activities
+              </p>
+            )}
+          </Link>
+
         </li>
         {/* <li
           className={`mb-6 ${

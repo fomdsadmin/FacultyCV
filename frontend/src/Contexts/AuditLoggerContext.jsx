@@ -17,13 +17,13 @@ export const AUDIT_ACTIONS = {
     DELETE_CONNECTION: 'Delete connection', // admin
     ACCEPT_CONNECTION: 'Accept connection', // admin
     CHANGE_USER_ROLE: 'Change role', // admin
-    
-    FORM_CONNECTION: 'Form connection', 
-    
+
+    FORM_CONNECTION: 'Form connection',
+
     ADD_USER_DECLARATION: 'Add declaration',
     UPDATE_USER_DECLARATION: 'Update declaration',
     DELETE_USER_DECLARATION: 'Delete declaration',
-    
+
     ADD_CV_DATA: 'Add CV data',
     UPDATE_CV_DATA: 'Update CV data',
     DELETE_CV_DATA: 'Delete all CV data',
@@ -95,14 +95,11 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
 
         // console.log('Audit Log Action:', actionType, auditInput);
         try {
-            
             await addAuditView(auditInput);
-            console.log('Adding: Audit Log Action:', actionType, auditInput);
         } catch (error) {
             console.error("Failed to log audit action:", error);
         }
         return;
-
     };
 
     const contextValue = {

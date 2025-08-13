@@ -249,7 +249,7 @@ const AppContent = () => {
               path="/your-activities"
               element={
                 currentViewRole !== "Admin" ? (
-                  <YourActivityPage userInfo={userInfo} getCognitoUser={getCognitoUser} />
+                  <YourActivityPage userInfo={userInfo} getCognitoUser={getCognitoUser} currentViewRole={currentViewRole} />
                 ) : (
                   <Navigate to="/home" />
                 )

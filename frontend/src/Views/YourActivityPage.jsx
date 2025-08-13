@@ -1,14 +1,19 @@
 import React from 'react'
 import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
-import AdminMenu from '../Components/AdminMenu.jsx';
+
+import FacultyMenu from '../Components/FacultyMenu.jsx';
+import FacultyAdminMenu from '../Components/FacultyAdminMenu.jsx';
+import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
+
+
 import { Accordion } from '../SharedComponents/Accordion/Accordion.jsx';
 import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem.jsx';
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
 import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext.jsx';
 
 
-const YourActivityPage = ({ userInfo, getCognitoUser}) => {
+const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
@@ -20,13 +25,33 @@ const YourActivityPage = ({ userInfo, getCognitoUser}) => {
     const [endDate, setEndDate] = useState('');
     const [actionFilter, setActionFilter] = useState('');
 
+    // Determine which menu component to use based on the user role
+    const getMenuComponent = () => {
+        let role = userInfo?.role || '';
+        if (currentViewRole !== role) {
+            role = currentViewRole;
+        }
+
+        if (role === 'Faculty') {
+            
+        } else if (role.startsWith('Admin-')) {
+            return DepartmentAdminMenu;
+        } else if (role.startsWith('FacultyAdmin-')) {
+            return FacultyAdminMenu;
+        } else {
+            return FacultyMenu;
+        }
+    };
+
+    const MenuComponent = getMenuComponent();
+
     useEffect(() => {
         setPageNumber(1);
-    }, [startDate, endDate, actionFilter, page_number]);
+    }, [startDate, endDate, actionFilter]);
 
     useEffect(() => {
         fetchAuditViewData();
-    }, [startDate, endDate, actionFilter]);
+    }, [startDate, endDate, actionFilter, page_number]);
 
     async function fetchAuditViewData() {
         setLoading(true);
@@ -131,7 +156,8 @@ const YourActivityPage = ({ userInfo, getCognitoUser}) => {
 
     return (
         <PageContainer>
-            <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+            <MenuComponent getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+
 
             <main className='px-12 mt-4 overflow-auto custom-scrollbar w-full mb-4'>
                 <h1 className="text-left text-4xl font-bold text-zinc-600 mb-4">Your Activity</h1>

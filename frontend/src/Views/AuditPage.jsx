@@ -7,7 +7,6 @@ import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem';
 
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
 import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
-import { set } from 'mongoose';
 
 const AuditPage = ({ getCognitoUser, userInfo }) => {
     const [loading, setLoading] = useState(false);
