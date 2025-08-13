@@ -615,12 +615,13 @@ export const getPatentMatchesQuery = (first_name, last_name) => `
     }
 `;
 
-export const getPresignedUrlQuery = (jwt, fileKey, type) => `
+export const getPresignedUrlQuery = (jwt, fileKey, type, purpose) => `
     query GetPresignedUrl {
         getPresignedUrl (
             jwt: "${jwt}",
             key: "${fileKey}",
-            type: "${type}"
+            type: "${type}",
+            purpose: "${purpose}"
         )
     }
 `;
