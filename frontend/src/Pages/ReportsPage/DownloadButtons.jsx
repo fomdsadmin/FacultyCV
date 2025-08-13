@@ -1,19 +1,29 @@
 const DownloadButtons = ({ 
   downloadUrl, 
+  downloadBlob,
   downloadUrlDocx, 
   selectedTemplate, 
   user, 
   buildingLatex 
 }) => {
   const handleDownload_pdf = async () => {
-    if (!downloadUrl) {
-      console.error("No download URL available");
+    if (!downloadUrl && !downloadBlob) {
+      console.error("No download URL or blob available");
       return;
     }
 
     try {
-      const response = await fetch(downloadUrl, { mode: "cors" });
-      const blob = await response.blob();
+      let blob;
+      
+      if (downloadBlob) {
+        // Use the blob directly (from Gotenberg)
+        blob = downloadBlob;
+      } else {
+        // Fetch from URL (from S3)
+        const response = await fetch(downloadUrl, { mode: "cors" });
+        blob = await response.blob();
+      }
+      
       const url = window.URL.createObjectURL(blob);
 
       const element = document.createElement("a");
@@ -53,7 +63,7 @@ const DownloadButtons = ({
     }
   };
 
-  if (!downloadUrl) {
+  if (!downloadUrl && !downloadBlob) {
     return null;
   }
 

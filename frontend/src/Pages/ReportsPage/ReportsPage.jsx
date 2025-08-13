@@ -21,9 +21,11 @@ const ReportsPage = () => {
   const [latex, setLatex] = useState('');
   const [buildingLatex, setBuildingLatex] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
+  const [downloadBlob, setDownloadBlob] = useState(null);
   const [downloadUrlDocx, setDownloadUrlDocx] = useState(null);
   const { setNotification } = useNotification();
   const [switchingTemplates, setSwitchingTemplates] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   
 
   useEffect(() => {
@@ -89,8 +91,24 @@ const ReportsPage = () => {
     }
   };
 
-  const handleGenerate = (template, startYear, endYear) => {
-    createLatexFile(template, startYear, endYear);
+  const handleGenerate = (template, startYear, endYear, htmlPdfBlob = null) => {
+    if (htmlPdfBlob) {
+      // If we received a PDF blob from HTML conversion (Gotenberg), use it directly
+      setDownloadBlob(htmlPdfBlob);
+      setDownloadUrl(null); // Clear URL since we're using blob
+      setDownloadUrlDocx(null); // Clear DOCX URL since we're using HTML conversion
+      setGeneratingPdf(false); // Reset generating state
+    } else {
+      // Original LaTeX workflow
+      setDownloadBlob(null); // Clear blob since we're using URL
+      createLatexFile(template, startYear, endYear);
+    }
+  };
+
+  const handleGenerateStart = () => {
+    setGeneratingPdf(true);
+    setDownloadUrl(null); // Clear existing PDF
+    setDownloadBlob(null); // Clear existing blob
   };
 
   return (
@@ -110,9 +128,11 @@ const ReportsPage = () => {
             selectedTemplate={selectedTemplate}
             onTemplateSelect={handleTemplateSelect}
             onGenerate={handleGenerate}
+            onGenerateStart={handleGenerateStart}
             buildingLatex={buildingLatex}
             switchingTemplates={switchingTemplates}
             downloadUrl={downloadUrl}
+            downloadBlob={downloadBlob}
             downloadUrlDocx={downloadUrlDocx}
             user={user}
           />
@@ -123,6 +143,8 @@ const ReportsPage = () => {
               loading={loading}
               selectedTemplate={selectedTemplate}
               downloadUrl={downloadUrl}
+              downloadBlob={downloadBlob}
+              generatingPdf={generatingPdf}
             />
           </div>
         </div>

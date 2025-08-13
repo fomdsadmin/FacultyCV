@@ -638,6 +638,25 @@ const buildHtmlHeader = () => {
             background-color: white;
             color: black;
         }
+        @media print {
+            body {
+                margin: 0.2in;
+            }
+            table {
+                page-break-inside: auto;
+                -webkit-page-break-inside: auto;
+            }
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+                -webkit-page-break-inside: avoid;
+                -webkit-page-break-after: auto;
+            }
+            td {
+                page-break-inside: avoid;
+                -webkit-page-break-inside: avoid;
+            }
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -645,6 +664,14 @@ const buildHtmlHeader = () => {
             padding: 0;
             border-spacing: 0;
             table-layout: fixed;
+            page-break-inside: auto;
+            -webkit-page-break-inside: auto;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+            -webkit-page-break-inside: avoid;
+            -webkit-page-break-after: auto;
         }
         td {
             padding: 4px 6px;
@@ -660,6 +687,8 @@ const buildHtmlHeader = () => {
             box-sizing: border-box;
             max-width: 0;
             min-width: 0;
+            page-break-inside: avoid;
+            -webkit-page-break-inside: avoid;
         }
         .header-gray {
             background-color: #999999;

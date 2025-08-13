@@ -5,12 +5,22 @@ import { FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-const PDFViewer = ({ url }) => {
+const PDFViewer = ({ url, blob }) => {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const [error, setError] = useState(null);
+  
+  // Use blob if provided, otherwise use url
+  const fileSource = blob || url;
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
+    setError(null);
+  };
+
+  const onDocumentLoadError = (error) => {
+    console.error('Error loading PDF:', error);
+    setError('Failed to load PDF');
   };
 
   const goToPreviousPage = () => {
@@ -23,11 +33,33 @@ const PDFViewer = ({ url }) => {
 
   useEffect(() => {
     setPageNumber(1);
-  }, [url]);
+    setError(null);
+  }, [url, blob]);
+
+  // Cleanup blob URLs when component unmounts or URL changes
+  useEffect(() => {
+    return () => {
+      if (url && url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [url, blob]);
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center w-full h-full">
+        <span className="text-red-500 text-xl">{error}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="pdf-viewer-wrapper flex items-center justify-center overflow-auto w-full h-full">
-      <Document file={url} onLoadSuccess={onDocumentLoadSuccess}>
+      <Document 
+        file={fileSource} 
+        onLoadSuccess={onDocumentLoadSuccess}
+        onLoadError={onDocumentLoadError}
+      >
         <Page
           pageNumber={pageNumber}
           className="mx-auto"

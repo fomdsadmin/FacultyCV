@@ -32,6 +32,7 @@ import {
   GET_BIO_RESPONSE_DATA,
   getAuditViewQuery,
   getUserAffiliationsQuery,
+  getGotenbergPdfQuery
 } from "./queries";
 import {
   ADD_USER,
@@ -1224,3 +1225,10 @@ export const getBioResponseData = async (username_input) => {
   });
   return results["data"]["getBioResponseData"];
 };
+
+export const getGotenbergPdf = async (form_data_base_64) => {
+  const results = await executeGraphql(getGotenbergPdfQuery, { form_data_base_64 });
+  console.log(results);
+  return results["data"]["getGotenbergPdf"];
+};
+

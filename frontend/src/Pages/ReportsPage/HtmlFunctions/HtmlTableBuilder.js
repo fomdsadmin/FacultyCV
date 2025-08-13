@@ -59,7 +59,7 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
         }
 
         // Apply background color if specified
-        let cellStyle = `padding: 4px 6px; border: 1px solid #000; vertical-align: top; width: ${columnWidths[index] || 'auto'}; max-width: ${columnWidths[index] || 'auto'}; word-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; overflow-wrap: break-word;`;
+        let cellStyle = `padding: 4px 6px; border: 1px solid #000; vertical-align: top; width: ${columnWidths[index] || 'auto'}; max-width: ${columnWidths[index] || 'auto'}; word-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; overflow-wrap: break-word; page-break-inside: avoid;`;
         
         if (cellOption.color) {
             const colorMap = {
@@ -81,7 +81,7 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
             // Merge all cells including the first column
             const combinedContent = cellOptions.map(opt => textOptionsBuilder(opt.textOptions)).filter(content => content.trim() !== "").join(', ');
             const totalWidth = columnWidths.reduce((sum, width) => sum + parseFloat(width), 0);
-            const cellStyle = `padding: 4px 6px; border: 1px solid #000; vertical-align: top; width: ${totalWidth}%; max-width: ${totalWidth}%; word-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; overflow-wrap: break-word; box-sizing: border-box;`;
+            const cellStyle = `padding: 4px 6px; border: 1px solid #000; vertical-align: top; width: ${totalWidth}%; max-width: ${totalWidth}%; word-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; overflow-wrap: break-word; box-sizing: border-box; page-break-inside: avoid;`;
             let bgColor = '';
             if (cellOptions[0]?.color) {
                 const colorMap = {
@@ -97,7 +97,7 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
             const firstCell = cellsHtml[0];
             const restContent = cellOptions.slice(1).map(opt => textOptionsBuilder(opt.textOptions)).filter(content => content.trim() !== "").join(', ');
             const restWidth = columnWidths.slice(1).reduce((sum, width) => sum + parseFloat(width), 0);
-            const restCellStyle = `padding: 4px 6px; border: 1px solid #000; vertical-align: top; width: ${restWidth}%; max-width: ${restWidth}%; word-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; overflow-wrap: break-word; box-sizing: border-box;`;
+            const restCellStyle = `padding: 4px 6px; border: 1px solid #000; vertical-align: top; width: ${restWidth}%; max-width: ${restWidth}%; word-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; overflow-wrap: break-word; box-sizing: border-box; page-break-inside: avoid;`;
             let bgColor = '';
             if (cellOptions[1]?.color) {
                 const colorMap = {
@@ -112,8 +112,8 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
     }
 
     return `
-    <table style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; border-spacing: 0; table-layout: fixed;">
-        <tr>
+    <table style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; border-spacing: 0; table-layout: fixed; page-break-inside: auto;">
+        <tr style="page-break-inside: avoid; page-break-after: auto;">
             ${cellsHtml.join('')}
         </tr>
     </table>`;

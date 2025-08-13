@@ -1,22 +1,25 @@
 import { useState } from 'react';
 import DownloadButtons from './DownloadButtons.jsx';
 import { buildHtml } from './HtmlFunctions/HtmlBuilder.js';
+import { convertHtmlToPdf, defaultPdfOptions } from '../../utils/gotenbergService.js';
 
-const TemplateList = ({ 
-  templates, 
-  selectedTemplate, 
-  onTemplateSelect, 
-  onGenerate, 
-  buildingLatex, 
+const TemplateList = ({
+  templates,
+  selectedTemplate,
+  onTemplateSelect,
+  onGenerate,
+  onGenerateStart,
+  buildingLatex,
   switchingTemplates,
   downloadUrl,
+  downloadBlob,
   downloadUrlDocx,
   user
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [startYear, setStartYear] = useState(new Date().getFullYear() - 10);
   const [endYear, setEndYear] = useState(new Date().getFullYear());
-  const [generatingHtml, setGeneratingHtml] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
 
@@ -32,7 +35,9 @@ const TemplateList = ({
     if (selectedTemplate && user) {
       console.log('Selected Template:', selectedTemplate);
       
-      setGeneratingHtml(true);
+      // Notify parent that generation is starting
+      onGenerateStart();
+      setGeneratingPdf(true);
       
       // Update template with selected date range
       const templateWithDates = {
@@ -48,17 +53,20 @@ const TemplateList = ({
         console.log('Generated HTML CV:');
         console.log(htmlContent);
         
-        // Optionally, you can also log it in a more readable format
-        console.log('='.repeat(80));
-        console.log('HTML CV CONTENT');
-        console.log('='.repeat(80));
-        console.log(htmlContent);
-        console.log('='.repeat(80));
+        // Convert HTML to PDF using Gotenberg
+        console.log('Converting HTML to PDF using Gotenberg...');
+        const pdfResult = await convertHtmlToPdf(htmlContent, defaultPdfOptions);
+        
+        console.log('PDF conversion successful! Blob size:', pdfResult.blob.size);
+        
+        // Call the parent's onGenerate function to update the download blob
+        // This will make the PDF available in the ReportPreview component
+        onGenerate(selectedTemplate, startYear, endYear, pdfResult.blob);
         
       } catch (error) {
-        console.error('Error generating HTML CV:', error);
+        console.error('Error generating HTML CV or converting to PDF:', error);
       } finally {
-        setGeneratingHtml(false);
+        setGeneratingPdf(false);
       }
     }
   };
@@ -132,14 +140,15 @@ const TemplateList = ({
           <button
             className="w-full btn btn-primary mb-4"
             onClick={handleGenerate}
-            disabled={generatingHtml || switchingTemplates}
+            disabled={generatingPdf || switchingTemplates}
           >
-            {generatingHtml ? "Generating HTML..." : "Generate HTML"}
+            {generatingPdf ? "Generating PDF..." : "Generate PDF"}
           </button>
 
           {/* Use the existing DownloadButtons component */}
           <DownloadButtons
             downloadUrl={downloadUrl}
+            downloadBlob={downloadBlob}
             downloadUrlDocx={downloadUrlDocx}
             selectedTemplate={selectedTemplate}
             user={user}

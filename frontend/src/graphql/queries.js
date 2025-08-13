@@ -7,6 +7,14 @@ export const GET_BIO_RESPONSE_DATA = `
     }
 `
 
+export const getGotenbergPdfQuery = `
+    query GetGotenbergPdf($form_data_base_64: String!) {
+        getGotenbergPdf(
+            form_data_base_64: $form_data_base_64
+        )
+    }
+`;
+
 export const getUserQuery = `
     query GetUser($username: String!) {
         getUser(

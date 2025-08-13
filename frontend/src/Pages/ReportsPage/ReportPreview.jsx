@@ -3,21 +3,33 @@ import PDFViewer from '../../Components/PDFViewer.jsx';
 const ReportPreview = ({ 
   loading, 
   selectedTemplate, 
-  downloadUrl 
+  downloadUrl,
+  downloadBlob,
+  generatingPdf = false
 }) => {
-  if (!loading && selectedTemplate && downloadUrl) {
+  if (generatingPdf) {
     return (
-      <div className="my-2">
-        <PDFViewer url={downloadUrl} />
+      <div className="flex-1 flex items-center justify-center w-full h-full">
+        <span className="text-blue-500 text-xl font-medium">
+          Generating PDF...
+        </span>
       </div>
     );
   }
 
-  if (!loading && selectedTemplate && !downloadUrl) {
+  if (!loading && selectedTemplate && (downloadUrl || downloadBlob)) {
+    return (
+      <div className="my-2">
+        <PDFViewer url={downloadUrl} blob={downloadBlob} />
+      </div>
+    );
+  }
+
+  if (!loading && selectedTemplate && !downloadUrl && !downloadBlob) {
     return (
       <div className="flex-1 flex items-center justify-center w-full h-full">
         <span className="text-zinc-400 text-xl font-medium">
-          Click Generate to review your resume.
+          Click Generate PDF to review your resume.
         </span>
       </div>
     );
