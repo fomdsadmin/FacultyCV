@@ -60,10 +60,10 @@ def lambda_handler(event, context):
     columns.append(createColumn('scopus_id', 'varchar', '', False))
     columns.append(createColumn('orcid_id', 'varchar', '', False))
     columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', False))  
-    columns.append(createColumn('cwl', 'TEXT', '', False))  # Add this line
-    columns.append(createColumn('vpp', 'TEXT', '', False))  # Add this
     columns.append(createColumn('pending', 'BOOLEAN', 'DEFAULT true', False))  # Add this
-    columns.append(createColumn('approved', 'BOOLEAN', 'DEFAULT false', True))  # Add this
+    columns.append(createColumn('approved', 'BOOLEAN', 'DEFAULT false', False))  # Add this
+    columns.append(createColumn('username', 'varchar', '', False))
+    columns.append(createColumn('employee_id', 'varchar', '', True))
     query = createQuery('users', columns)
     cursor.execute(query)
 
@@ -75,7 +75,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('data_type', 'varchar', '', False))
     columns.append(createColumn('attributes', 'JSON', '', False))
     columns.append(createColumn('archive', 'boolean', 'DEFAULT false', False))
-    columns.append(createColumn('attributes_types', 'JSON', '', False)) # Add this line
+    columns.append(createColumn('attributes_type', 'JSON', '', False)) # Add this line
     columns.append(createColumn('info', 'TEXT', '', True)) # Add this line
     query = createQuery('data_sections', columns)
     cursor.execute(query)

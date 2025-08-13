@@ -2,10 +2,9 @@ import React from "react";
 import { useState, useEffect } from "react";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
-import Filters from "../Components/Filters.jsx";
-import ManageDepartmentUser from "../Components/ManageDepartmentUser.jsx";
 import UserCard from "../Components/UserCard.jsx";
 import { getAllUsers } from "../graphql/graphqlHelpers.js";
+import ManageUser from "Components/ManageUser.jsx";
 
 const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
   const [loading, setLoading] = useState(true);
@@ -31,10 +30,10 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
       } else {
         filteredUsers = users.filter(
           (user) =>
-            (user.primary_department === department ||
-              user.secondary_department === department ||
-              user.role === `Admin-${department}` ||
-              user.role === "Assistant")
+            user.primary_department === department ||
+            user.secondary_department === department ||
+            user.role === `Admin-${department}` ||
+            user.role === "Assistant"
         );
       }
 
@@ -67,9 +66,7 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
           <button
             key={filter}
             className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-              activeFilter === filter
-                ? "bg-blue-600 text-white shadow"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             onClick={() => onSelect(filter)}
           >
@@ -187,12 +184,18 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <ManageDepartmentUser
+                  {/* <ManageDepartmentUser
+                    user={activeUser}
+                    onBack={handleBack}
+                    fetchAllUsers={fetchAllUsers}
+                    department={department}
+                  ></ManageDepartmentUser> */}
+                <ManageUser
                   user={activeUser}
                   onBack={handleBack}
                   fetchAllUsers={fetchAllUsers}
                   department={department}
-                ></ManageDepartmentUser>
+                ></ManageUser>
               </div>
             )}
           </div>

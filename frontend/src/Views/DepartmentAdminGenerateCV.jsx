@@ -28,6 +28,8 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [isDepartmentWide, setIsDepartmentWide] = useState(false); // for department-wide CV generation
   const [allUsers, setAllUsers] = useState([]); // store all users for filtering
   const [showGenerateAllModal, setShowGenerateAllModal] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState(""); // New state for user search
+  const [dropdownOpen, setDropdownOpen] = useState(false); // Add this state to manage the dropdown visibility
   const { setNotification } = useNotification();
 
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
@@ -45,7 +47,17 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
 
         if (userInfo && userInfo.role === "Admin") {
           const departments = Array.from(
-            new Set(users.filter((u) => u.primary_department).map((u) => u.primary_department))
+            new Set(
+              users
+                .filter(
+                  (u) => 
+                    u.primary_department && 
+                    u.primary_department !== "null" && 
+                    u.primary_department !== "undefined" &&
+                    u.primary_department.trim() !== ""
+                )
+                .map((u) => u.primary_department)
+            )
           ).sort();
           setAllDepartments(departments);
           // Add "All" option for super admin
@@ -88,9 +100,10 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   // For department admin, filter users once after allUsers is loaded
   useEffect(() => {
     if (userInfo && userInfo.role && userInfo.role.startsWith("Admin-") && allUsers.length > 0) {
+      const departmentName = userInfo.role.split("-")[1];
       const usersInDepartment = allUsers.filter(
         (user) =>
-          user.primary_department === userInfo.primary_department &&
+          user.primary_department === departmentName &&
           (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
       );
       setDepartmentUsers(usersInDepartment);
@@ -134,9 +147,31 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     setSearchTerm(event.target.value);
   };
 
+  const handleUserSearchChange = (event) => {
+    setUserSearchTerm(event.target.value);
+    // Automatically open dropdown when user starts typing in search field
+    if (event.target.value && !dropdownOpen && !isDepartmentWide && !selectedUser) {
+      setDropdownOpen(true);
+    }
+    // Close dropdown if search field is emptied
+    if (!event.target.value && dropdownOpen) {
+      // Optional: you can comment this out if you prefer to keep the dropdown open when clearing search
+      // setDropdownOpen(false);
+    }
+  };
+
   const searchedTemplates = templates
     .filter((template) => template.title.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => a.title.localeCompare(b.title));
+
+  // Filter users based on search term
+  const filteredUsers = departmentUsers.filter(user => 
+    (user.preferred_name && user.preferred_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
+    (user.first_name && user.first_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
+    (user.last_name && user.last_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
+    (user.email && user.email.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
+    (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase()))
+  );
 
   // Stub for department-wide generation
   const handleGenerateAll = () => {
@@ -237,7 +272,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                 <input
                   type="text"
                   className="input input-bordered w-full max-w-md bg-gray-100"
-                  value={userInfo.primary_department}
+                  value={userInfo.role.startsWith("Admin-") ? userInfo.role.split("-")[1] : ""}
                   disabled
                 />
               )}
@@ -247,22 +282,114 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
             <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
               <div className="flex flex-col gap-4">
-                <select
-                  className="select select-bordered w-full max-w-md"
-                  value={selectedUser}
-                  onChange={handleUserSelect}
-                  disabled={isDepartmentWide}
-                >
-                  <option value="">Choose a faculty member...</option>
-                  {userInfo.role.startsWith("Admin-") && <option value="All">All</option>}
-                  {departmentUsers.map((user) => (
-                    <option key={user.user_id} value={user.user_id}>
-                      {user.preferred_name || user.first_name} {user.last_name} ({user.email})
-                    </option>
-                  ))}
-                </select>
+                {/* Search field for users */}
+                <input
+                  type="text"
+                  className="input input-bordered w-full max-w-md"
+                  placeholder="Search by name, email, or username..."
+                  value={userSearchTerm}
+                  onChange={handleUserSearchChange}
+                  disabled={isDepartmentWide || selectedUser !== ""} // Also disable when a user is selected
+                />
+                
+                {/* Custom dropdown */}
+                <div className="relative w-full max-w-md">
+                  <button
+                    type="button"
+                    className="select select-bordered w-full text-left flex items-center justify-between"
+                    onClick={() => !isDepartmentWide && setDropdownOpen(!dropdownOpen)}
+                    disabled={isDepartmentWide}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span>
+                        {selectedUser ? (
+                          selectedUser === "All" ? 
+                          "All Faculty Members" : 
+                          departmentUsers.find(u => u.user_id === selectedUser)?.preferred_name || 
+                          departmentUsers.find(u => u.user_id === selectedUser)?.first_name + " " + 
+                          departmentUsers.find(u => u.user_id === selectedUser)?.last_name
+                        ) : "Choose a faculty member..."}
+                      </span>
+                      <div className="flex items-center">
+                        {selectedUser && (
+                          <svg
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent dropdown from toggling
+                              setSelectedUser("");
+                              setIsDepartmentWide(false);
+                              setDownloadUrl(null);
+                              setDownloadUrlDocx(null);
+                              setSelectedTemplate("");
+                            }}
+                            className="w-4 h-4 mr-2 text-gray-500 hover:text-black cursor-pointer"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </button>
+                  
+                  {dropdownOpen && !isDepartmentWide && (
+                    <div className="absolute z-10 w-full bg-white shadow-lg max-h-[40vh] rounded-md py-1 mt-1 overflow-auto custom-scrollbar">
+                      <div 
+                        className="cursor-pointer hover:bg-gray-100 px-4 py-2"
+                        onClick={() => {
+                          setSelectedUser("");
+                          setDropdownOpen(false);
+                          setUserSearchTerm(""); // Clear search term
+                        }}
+                      >
+                        ...
+                      </div>
+                      
+                      {/* {userInfo.role.startsWith("Admin-") && (
+                        <div 
+                          className="cursor-pointer hover:bg-gray-100 px-4 py-2"
+                          onClick={() => {
+                            setSelectedUser("All");
+                            setIsDepartmentWide(true);
+                            setDropdownOpen(false);
+                            setUserSearchTerm(""); // Clear search term
+                          }}
+                        >
+                          All Faculty Members
+                        </div>
+                      )} */}
+                      
+                      {filteredUsers.map((user) => (
+                        <div 
+                          key={user.user_id}
+                          className="cursor-pointer hover:bg-gray-100 px-4 py-2"
+                          onClick={() => {
+                            setSelectedUser(user.user_id);
+                            setDropdownOpen(false);
+                            setUserSearchTerm(""); // Clear search term
+                          }}
+                        >
+                          <div className="font-medium">
+                            {(user.preferred_name || user.first_name) + " " + user.last_name}
+                          </div>
+                          {user.email && user.email.trim() !== "" && user.email !== "null" && user.email !== "undefined" && (
+                            <div className="text-sm text-gray-500">{user.email}</div>
+                          )}
+                          {user.username && user.username.trim() !== "" && user.username !== "null" && user.username !== "undefined" && (
+                            <div className="text-sm text-gray-500">{user.username}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
                 {/* checkbox for department-wide cv (all fac members) */}
-                {userInfo.role.startsWith("Admin-") && (
+                {/* {userInfo.role.startsWith("Admin-") && (
                   <div className="flex items-center">
                     <input
                       type="checkbox"
@@ -272,7 +399,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                     />
                     <label className="ml-2">Generate for all department members</label>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
 

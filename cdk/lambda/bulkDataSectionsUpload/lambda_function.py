@@ -20,10 +20,13 @@ def writeRowToDB(row, conn, cursor):
         title, 
         description, 
         data_type, 
-        attributes
-    ) VALUES (%s, %s, %s, %s)
+        attributes,
+        archive, 
+        attributes_type,
+        info
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
-    values = (row[0], row[1], row[2], row[3])
+    values = (row[0], row[1], row[2], row[3], row[4], row[5], row[6])
     cursor.execute(query, values)
     conn.commit()
     return 1

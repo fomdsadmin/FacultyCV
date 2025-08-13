@@ -9,7 +9,7 @@ import { getUserConnections } from "../graphql/graphqlHelpers";
 import { IoMdAddCircleOutline } from "react-icons/io";
 import DepartmentAdminUserInsights from "../Views/DepartmentAdminUserInsights"; // Use the same insights component
 
-const ManageUser = ({ user, onBack, fetchAllUsers }) => {
+const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
   const [currentUser, setCurrentUser] = useState(user);
   const [loading, setLoading] = useState(true);
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
@@ -74,17 +74,16 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-4">
+    <div className="max-w-7xl mx-auto px-4 py-2 flex flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center">
         <button onClick={handleBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4">
           <FaArrowLeft className="h-6 w-6 text-zinc-800" />
         </button>
-        <h2 className="text-2xl font-bold text-zinc-700">Manage User</h2>
       </div>
 
       {/* User Info */}
-      <div className="bg-white rounded-lg shadow px-12 py-8 flex flex-col gap-1">
+      <div className="bg-white rounded-lg shadow px-12 py-4 flex flex-col gap-1">
         <div className="flex items-center justify-between gap-1">
           <h3 className="text-xl font-semibold text-zinc-700 mb-2">
             {currentUser.first_name} {currentUser.last_name}
@@ -96,9 +95,8 @@ const ManageUser = ({ user, onBack, fetchAllUsers }) => {
         <div className="text-zinc-500 text-sm mb-2">{currentUser.email}</div>
         <div className="text-zinc-500 text-sm mb-2">Role: {currentUser.role}</div>
         <div className="text-zinc-500 text-sm mb-2">Faculty: {currentUser.primary_faculty}</div>
-        <div className="text-zinc-500 text-sm mb-2">Primary Department: {currentUser.primary_department}</div>
-        <div className="text-zinc-500 text-sm mb-2">Institution: {currentUser.institution}</div>
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="text-zinc-500 text-sm">Primary Department: {currentUser.primary_department}</div>
+        <div className="flex flex-wrap justify-end gap-x-2">
           <button onClick={handleUpdateUser} className="btn btn-primary h-9 px-5 text-white font-semibold">
             Update User
           </button>

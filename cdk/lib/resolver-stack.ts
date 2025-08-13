@@ -142,6 +142,18 @@ export class ResolverStack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "getAllUsersCount",
+      ["getAllUsersCount"],
+      "Query",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "getExistingUser",
       ["getExistingUser"],
       "Query",

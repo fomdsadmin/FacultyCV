@@ -56,19 +56,48 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
       for (const data of grants) {
         try {
           const dataDetails = JSON.parse(data.data_details);
-          if (dataDetails.year && dataDetails.amount) {
+          if (dataDetails.dates && dataDetails.amount) {
             const amount = parseFloat(dataDetails.amount);
-            const year = parseInt(dataDetails.year);
+            let year;
+            
+            // Handle both date formats: "July, 2008 - June, 2011" and "July, 2008"
+            const dateString = dataDetails.dates.trim();
+            
+            if (dateString.includes(' - ')) {
+              // Date range format: "July, 2008 - June, 2011"
+              // Extract the end date (second part after ' - ')
+              const endDate = dateString.split(' - ')[1].trim();
+              if (endDate.includes(',')) {
+                // Format: "June, 2011"
+                year = endDate.split(',')[1].trim();
+              } else {
+                // Fallback: try to extract year from end of string
+                const yearMatch = endDate.match(/\d{4}/);
+                year = yearMatch ? yearMatch[0] : null;
+              }
+            } else {
+              // Single date format: "July, 2008"
+              if (dateString.includes(',')) {
+                // Format: "July, 2008"
+                year = dateString.split(',')[1].trim();
+              } else {
+                // Fallback: try to extract year from string
+                const yearMatch = dateString.match(/\d{4}/);
+                year = yearMatch ? yearMatch[0] : null;
+              }
+            }
+          
             // Only add grants with valid numeric amounts and years
-            if (!isNaN(amount) && !isNaN(year) && amount > 0) {
+            if (!isNaN(amount) && year && !isNaN(year) && amount > 0) {
               grantMoneyRaised.push({
                 amount: amount,
-                years: year,
+                years: parseInt(year), // Convert to integer for consistency
               });
             }
           }
         } catch (error) {
           // ignore invalid data
+          console.error("Error parsing grant data details:", error);
         }
       }
 
@@ -118,13 +147,24 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
     (userCVData.publications || []).forEach((publication) => {
       try {
         const dataDetails = JSON.parse(publication.data_details);
-        const currentYear = new Date().getFullYear();
-        const fiveYearsAgo = currentYear - 5;
 
-        // Handle regular publications with year_published (same as Department Admin)
-        if (dataDetails.year_published) {
-          const year = parseInt(dataDetails.year_published);
-          if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
+        // Handle publications with end_date field
+        if (dataDetails.end_date) {
+          let year;
+          const endDateString = dataDetails.end_date.trim();
+          
+          if (endDateString.includes(' ')) {
+            // Format: "June 2019" - extract the year part
+            const parts = endDateString.split(' ');
+            const yearPart = parts[parts.length - 1]; // Get the last part (year)
+            year = parseInt(yearPart);
+          } else {
+            // Format: "2019" - direct year
+            year = parseInt(endDateString);
+          }
+          
+          // Only include publications from the last 5 years
+          if (!isNaN(year)) {
             const yearStr = year.toString();
             if (yearlyDataMap.has(yearStr)) {
               yearlyDataMap.get(yearStr).Publications += 1;
@@ -137,80 +177,9 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
           }
         }
 
-        // Handle other publications with dates field (same as Department Admin)
-        if (dataDetails.dates && typeof dataDetails.dates === 'string') {
-          const dateParts = dataDetails.dates.split("-");
-          if (dateParts.length > 1) {
-            let yearPart = dateParts[1];
-            if (yearPart && yearPart.includes(",")) {
-              const yearCommaparts = yearPart.split(",");
-              if (yearCommaparts.length > 1) {
-                const year = parseInt(yearCommaparts[1].trim());
-                if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
-                  const yearStr = year.toString();
-                  if (yearlyDataMap.has(yearStr)) {
-                    yearlyDataMap.get(yearStr).Publications += 1;
-                  } else {
-                    yearlyDataMap.set(yearStr, {
-                      year: yearStr,
-                      Publications: 1,
-                    });
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        // Fallback: Handle legacy year and years fields for backward compatibility
-        if (!dataDetails.year_published && !dataDetails.dates) {
-          if (dataDetails.year) {
-            const year = parseInt(dataDetails.year);
-            if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
-              const yearStr = year.toString();
-              if (yearlyDataMap.has(yearStr)) {
-                yearlyDataMap.get(yearStr).Publications += 1;
-              } else {
-                yearlyDataMap.set(yearStr, {
-                  year: yearStr,
-                  Publications: 1,
-                });
-              }
-            }
-          } else if (dataDetails.years) {
-            if (Array.isArray(dataDetails.years)) {
-              dataDetails.years.forEach(yearValue => {
-                const year = parseInt(yearValue);
-                if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
-                  const yearStr = year.toString();
-                  if (yearlyDataMap.has(yearStr)) {
-                    yearlyDataMap.get(yearStr).Publications += 1;
-                  } else {
-                    yearlyDataMap.set(yearStr, {
-                      year: yearStr,
-                      Publications: 1,
-                    });
-                  }
-                }
-              });
-            } else {
-              const year = parseInt(dataDetails.years);
-              if (!isNaN(year) && year > fiveYearsAgo && year <= currentYear) {
-                const yearStr = year.toString();
-                if (yearlyDataMap.has(yearStr)) {
-                  yearlyDataMap.get(yearStr).Publications += 1;
-                } else {
-                  yearlyDataMap.set(yearStr, {
-                    year: yearStr,
-                    Publications: 1,
-                  });
-                }
-              }
-            }
-          }
-        }
       } catch (error) {
         // ignore invalid data
+        console.error("Error parsing publication data details:", error);
       }
     });
     yearlyDataMap.forEach((value) => data.push(value));
@@ -242,13 +211,6 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
     );
   };
 
-  // Reusable graph container component (kept for compatibility if needed)
-  const GraphContainer = ({ title, children }) => (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-4 w-full h-full flex flex-col">
-      <h3 className="text-lg font-semibold text-zinc-700 mb-6">{title}</h3>
-      <div className="w-full flex-1 min-h-[350px]">{children}</div>
-    </div>
-  );
 
   // Graph configuration for the carousel
   const graphsConfig = () => {

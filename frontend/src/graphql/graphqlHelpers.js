@@ -4,8 +4,11 @@ import {
   getArchivedSectionsQuery,
   getUserCVDataQuery,
   getAllSectionCVDataQuery,
+  getDepartmentCVDataQuery,
+  getFacultyWideCVDataQuery,
   getUserQuery,
   getAllUsersQuery,
+  getAllUsersCountQuery,
   getAllUniversityInfoQuery,
   getAllNotificationsQuery,
   getUserDeclarationsQuery,
@@ -127,6 +130,26 @@ const runGraphql = async (query) => {
 export const getAllUsers = async () => {
   const results = await runGraphql(getAllUsersQuery());
   return results["data"]["getAllUsers"];
+};
+
+/**
+ * Function to get all users count by role
+ * Arguments:
+ * department - Optional department filter (string)
+ * faculty - Optional faculty filter (string)
+ * Return value:
+ * {
+ *      total_count: Integer - total count of all users
+ *      faculty_count: Integer - count of Faculty users
+ *      assistant_count: Integer - count of Assistant users  
+ *      dept_admin_count: Integer - count of department admin users
+ *      admin_count: Integer - count of admin users
+ *      faculty_admin_count: Integer - count of faculty admin users
+ * }
+ */
+export const getAllUsersCount = async (department, faculty) => {
+  const results = await runGraphql(getAllUsersCountQuery(department, faculty));
+  return results["data"]["getAllUsersCount"];
 };
 
 /**
@@ -280,6 +303,16 @@ export const getUserCVData = async (user_id, data_section_ids) => {
 export const getAllSectionCVData = async (data_section_id, data_section_ids) => {
   const results = await runGraphql(getAllSectionCVDataQuery(data_section_id, data_section_ids));
   return results["data"]["getAllSectionCVData"];
+};
+
+export const getDepartmentCVData = async (data_section_id, dept, title) => {
+  const results = await runGraphql(getDepartmentCVDataQuery(data_section_id, dept, title));
+  return results["data"]["getDepartmentCVData"];
+};
+
+export const getFacultyWideCVData = async (data_section_id, faculty, title) => {
+  const results = await runGraphql(getFacultyWideCVDataQuery(data_section_id, faculty, title));
+  return results["data"]["getFacultyWideCVData"];
 };
 
 export const getUserAffiliations = async (user_id, first_name, last_name) => {
@@ -564,7 +597,7 @@ export const getPatentMatches = async (first_name, last_name) => {
  * Return value:
  * String - the presigned URL
  */
-export const getPresignedUrl = async (jwt, fileKey, type, purpose = "cv") => {
+export const getPresignedUrl = async (jwt, fileKey, type, purpose) => {
   const results = await runGraphql(getPresignedUrlQuery(jwt, fileKey, type, purpose));
   return results["data"]["getPresignedUrl"];
 };
