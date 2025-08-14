@@ -2,7 +2,6 @@ import React from "react";
 import { useState, useEffect } from "react";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
-import UserCard from "../Components/UserCard.jsx";
 import { getAllUsers } from "../graphql/graphqlHelpers.js";
 import ManageUser from "Components/ManageUser.jsx";
 
@@ -115,6 +114,10 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
     setActiveUser(user[0]);
   };
 
+  const handleImpersonateClick = (value) => {
+    // TODO
+  };
+
   const handleBack = () => {
     setActiveUser(null);
   };
@@ -137,8 +140,8 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
           <div>
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">{department} Users</h1>
-                <div className="my-4 flex">
+                <h1 className="text-left my-4 text-4xl font-bold text-zinc-600  mx-4">{department} Users</h1>
+                <div className="my-4 flex  mx-4">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
                       type="text"
@@ -169,22 +172,81 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
                     <div className="block text-m mb-1 mt-6 text-zinc-600">No {department} Users Found</div>
                   </div>
                 ) : (
-                  searchedUsers.map((user) => (
-                    <UserCard
-                      onClick={handleManageClick}
-                      key={user.user_id}
-                      id={user.user_id}
-                      firstName={user.first_name}
-                      lastName={user.last_name}
-                      email={user.email}
-                      role={user.role}
-                    ></UserCard>
-                  ))
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mx-4">
+                    <table className="w-full">
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            User
+                          </th>
+                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            Role
+                          </th>
+                          {/* <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            Rank
+                          </th> */}
+                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {searchedUsers.map((user, index) => (
+                          <tr
+                            key={user.user_id}
+                            className={`transition-colors duration-150 hover:bg-blue-50/50 ${
+                              index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                            }`}
+                          >
+                            <td className="px-6 py-5">
+                              <div className="flex flex-col">
+                                <div className="text-sm font-semibold text-gray-900 mb-1">
+                                  {user.first_name} {user.last_name}
+                                </div>
+                                <div className="text-sm text-gray-500">{user.email}</div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-5 text-center">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                {user.role}
+                              </span>
+                            </td>
+                            {/* <td className="px-6 py-5 text-center">
+                              <span className="text-sm font-medium text-gray-700">
+                                {user.rank && user.rank !== 'null' && user.rank !== '' && user.rank.trim() !== '' ? (
+                                  user.rank
+                                ) : (
+                                  <span className="text-gray-400 italic">Not specified</span>
+                                )}
+                              </span>
+                            </td> */}
+                            <td className="px-6 py-5">
+                              <div className="flex justify-center gap-3">
+                                <button
+                                  onClick={() => handleImpersonateClick(user.user_id)}
+                                  className="btn btn-accent btn-sm text-white"
+                                >
+                                  Impersonate
+                                </button>
+                                <button
+                                  onClick={() => handleManageClick(user.user_id)}
+                                  className="btn btn-primary btn-sm text-white"
+                                >
+                                  Manage
+                                </button>
+                                {/* <button className="btn btn-error btn-sm text-white">Remove</button> */}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                  {/* <ManageDepartmentUser
+                {/* <ManageDepartmentUser
                     user={activeUser}
                     onBack={handleBack}
                     fetchAllUsers={fetchAllUsers}

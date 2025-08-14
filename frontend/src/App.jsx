@@ -29,6 +29,7 @@ import DepartmentAdminUsers from "./Views/DepartmentAdminUsers.jsx";
 import DepartmentAdminHomePage from "./Views/DepartmentAdminHomePage.jsx";
 import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
 import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
+import DepartmentAdminReporting from "Views/DepartmentAdminReporting";
 import AdminGenerateCV from "./Views/AdminGenerateCV.jsx";
 import FacultyAdminHomePage from "./Views/FacultyAdminHomePage.jsx";
 import FacultyAdminUsers from "./Views/FacultyAdminUsers.jsx";
@@ -428,6 +429,16 @@ const AppContent = () => {
               path="/department-admin/generate"
               element={
                 <DepartmentAdminGenerateCV
+                  userInfo={userInfo}
+                  getCognitoUser={getCognitoUser}
+                  department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
+                />
+              }
+            />
+            <Route
+              path="/department-admin/reporting"
+              element={
+                <DepartmentAdminReporting
                   userInfo={userInfo}
                   getCognitoUser={getCognitoUser}
                   department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
