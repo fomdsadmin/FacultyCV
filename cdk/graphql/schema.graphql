@@ -3,6 +3,7 @@ type Affiliations {
 }
 
 input AuditViewInput {
+	logged_user_id: String!
 	logged_user_first_name: String!
 	logged_user_last_name: String!
 	ip: String

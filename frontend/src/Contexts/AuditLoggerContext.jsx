@@ -17,13 +17,13 @@ export const AUDIT_ACTIONS = {
     DELETE_CONNECTION: 'Delete connection', // admin
     ACCEPT_CONNECTION: 'Accept connection', // admin
     CHANGE_USER_ROLE: 'Change role', // admin
-    
-    FORM_CONNECTION: 'Form connection', 
-    
+
+    FORM_CONNECTION: 'Form connection',
+
     ADD_USER_DECLARATION: 'Add declaration',
     UPDATE_USER_DECLARATION: 'Update declaration',
     DELETE_USER_DECLARATION: 'Delete declaration',
-    
+
     ADD_CV_DATA: 'Add CV data',
     UPDATE_CV_DATA: 'Update CV data',
     DELETE_CV_DATA: 'Delete all CV data',
@@ -78,6 +78,7 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
 
 
         const auditInput = {
+            logged_user_id: userInfo?.user_id || 'Unknown',
             logged_user_first_name: userInfo?.first_name || 'Unknown',
             logged_user_last_name: userInfo?.last_name || 'Unknown',
             logged_user_role: userInfo?.role || 'Unknown',
@@ -85,7 +86,7 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             browser_version: navigator.userAgent,
             page: location.pathname,
             session_id: localStorage.getItem('session_id') || 'Unknown',
-            assistant: userInfo?.role === 'Assistant',
+            assistant: userInfo?.role === 'Assistant' ? "true" : "false",
             profile_record: profileRecord,
             logged_user_email: userInfo?.email || 'Unknown',
             logged_user_action: actionType,
@@ -99,7 +100,6 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             console.error("Failed to log audit action:", error);
         }
         return;
-
     };
 
     const contextValue = {
