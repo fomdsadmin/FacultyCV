@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaArchive, FaFolderOpen } from "react-icons/fa";
+import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaArchive, FaFolderOpen, FaRegClipboard } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
@@ -80,6 +80,14 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
               <p className={`ml-2 ${location.pathname === "/department-admin/reporting" ? "font-bold" : ""}`}>
                 Reporting
               </p>
+            )}
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === "/loggings" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/loggings">
+            <FaRegClipboard className="h-5 w-5" />
+            {showText && !isCollapsed && (
+              <p className={`ml-2 ${location.pathname === "/loggings" ? "font-bold" : ""}`}>Loggings</p>
             )}
           </Link>
         </li>

@@ -8,10 +8,15 @@ import {
   getUserDeclarations,
 } from "../../graphql/graphqlHelpers.js";
 import { normalizeDeclarations } from "../Declarations/Declarations.jsx";
+import { getAuditViewData } from '../../graphql/graphqlHelpers.js';
 
 const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [notifications, setNotifications] = useState([]);
   const [declarations, setDeclarations] = useState([]);
+  
+  const [lastVisit, setLastVisit] = useState(null);
+  const [loadingLastVisit, setLoadingLastVisit] = useState(false); 
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -37,6 +42,75 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     fetchDeclarations();
   }, [userInfo]);
 
+  // fetch latest visit timestamp from the first page audit view data 
+  useEffect(() => {
+    async function fetchLastVisitAuth() {
+      if (!userInfo?.user_id) return;
+
+      setLoadingLastVisit(true);
+      let pageNumber = 1;
+      let found = null;
+
+      try {
+        while (!found) {
+          const response = await getAuditViewData({
+            logged_user_id: userInfo.user_id,
+            page_number: pageNumber,
+            page_size: 50 // fetch in batches
+          });
+
+          const records = response?.records || [];
+          if (!records.length) break; // no more pages
+
+          // Look for /auth page in this batch
+          const match = records.find((r) => r.page === "/auth");
+          if (match) {
+            found = match.ts;
+            break;
+          }
+
+          pageNumber++;
+        }
+
+        setLastVisit(found);
+      } catch (err) {
+        console.error("Error fetching last visit:", err);
+      } finally {
+        setLoadingLastVisit(false); 
+      }
+    }
+
+    fetchLastVisitAuth();
+  }, [userInfo]);
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+
+    try {
+      let parsedTimestamp = timestamp;
+
+      if (typeof timestamp === 'string' && timestamp.includes(' ') && !timestamp.includes('T')) {
+        parsedTimestamp = timestamp.replace(' ', 'T') + 'Z';
+      }
+
+      const date = new Date(parsedTimestamp);
+
+      return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZoneName: 'short',
+      });
+    } catch {
+      return timestamp;
+    }
+  };
+
+
+
   return (
     <PageContainer>
       {/* Sidebar */}
@@ -56,8 +130,14 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
               Welcome, Dr. {userInfo.last_name}
             </div>
             <div className="text-sm text-gray-500">
-              Last visit: 6 Nov 2025, 3:16PM (static)
+              Last visit: {loadingLastVisit
+                ? <span>Loading...</span>
+                : lastVisit
+                  ? formatTimestamp(lastVisit)
+                  : 'No record found'
+              }
             </div>
+
           </div>
           <div>
             <Link to="/support">

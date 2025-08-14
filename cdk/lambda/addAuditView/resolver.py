@@ -13,12 +13,8 @@ def addAuditView(arguments, identity=None):
 
     if "input" in arguments:
         arguments = arguments["input"]
-
-    # print("after ARGUMENTS:", arguments)
     
-    # Extract fields from arguments from cognito identity
-    logged_user_id = identity.get('sub') if identity else None
-    
+    logged_user_id = arguments.get('logged_user_id')
     logged_user_email = arguments.get('logged_user_email')
     logged_user_first_name = arguments.get('logged_user_first_name')
     logged_user_last_name = arguments.get('logged_user_last_name')
