@@ -241,13 +241,26 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   };
 
   // Filter users based on search term
-  const filteredUsers = departmentUsers.filter(user => 
-    (user.preferred_name && user.preferred_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
-    (user.first_name && user.first_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
-    (user.last_name && user.last_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
-    (user.email && user.email.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
-    (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase()))
-  );
+  const filteredUsers = departmentUsers
+    .filter(user => 
+      (user.preferred_name && user.preferred_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
+      (user.first_name && user.first_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
+      (user.last_name && user.last_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
+      (user.email && user.email.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
+      (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase()))
+    )
+    .sort((a, b) => {
+      // If selectAll is false and users are manually selected, sort selected users to the top
+      if (!selectAll) {
+        const aSelected = selectedUsers.includes(a.user_id);
+        const bSelected = selectedUsers.includes(b.user_id);
+        
+        if (aSelected && !bSelected) return -1; // a comes first
+        if (!aSelected && bSelected) return 1;  // b comes first
+        // If both selected or both unselected, maintain original order
+      }
+      return 0; // Maintain original order for other cases
+    });
 
   const handleGenerateReport = async () => {
     if (selectedUsers.length === 0 || !selectedReportType) {
@@ -281,12 +294,12 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
         } else if (userInfo.role.startsWith("Admin-")) {
           departmentForQuery = userInfo.role.split("-")[1];
         }
-        console.log("Fetching publications for entire department:", departmentForQuery);
+        // console.log("Fetching publications for entire department:", departmentForQuery);
       } else {
         // If specific users are selected, use user IDs approach
         departmentForQuery = ''; // Empty string when using user IDs
         userIdsForQuery = selectedUsers;
-        console.log("Fetching publications for specific users:", userIdsForQuery);
+        // console.log("Fetching publications for specific users:", userIdsForQuery);
       }
 
       // Create promises for both publication types
@@ -319,7 +332,7 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
         }
       });
 
-      console.log("Combined publications data received:", allPublications);
+      // onsole.log("Combined publications data received:", allPublications);
 
       // Convert to CSV
       const csvData = convertPublicationsToCSV(allPublications);

@@ -1,3 +1,5 @@
+import { Title } from "chart.js";
+
 export const GET_BIO_RESPONSE_DATA = `
     query GetBioResponseData($username_input: String!) {
         getBioResponseData(username_input: $username_input) {
@@ -302,7 +304,7 @@ export const getDepartmentCVDataQuery = (data_section_id, dept, title, user_ids)
             returned_count
         }
     }`;
-  } else if (title & !user_ids) {
+  } else if (title) {
     return `query GetDepartmentCVData {
         getDepartmentCVData (
             data_section_id: "${data_section_id}",
