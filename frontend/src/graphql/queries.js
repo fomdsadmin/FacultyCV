@@ -285,8 +285,9 @@ export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
     }`;
 };
 
-export const getDepartmentCVDataQuery = (data_section_id, dept, title = "") => `
-    query GetDepartmentCVData {
+export const getDepartmentCVDataQuery = (data_section_id, dept, title) => {
+  if (title) {
+    return `query GetDepartmentCVData {
         getDepartmentCVData (
             data_section_id: "${data_section_id}",
             dept: "${dept}",
@@ -300,6 +301,22 @@ export const getDepartmentCVDataQuery = (data_section_id, dept, title = "") => `
             returned_count
         }
     }`;
+  } else {
+      return `query GetDepartmentCVData {
+          getDepartmentCVData (
+              data_section_id: "${data_section_id}",
+              dept: "${dept}"
+          ) {
+              data {
+                  data_section_id
+                  data_details
+              }
+              total_count
+              returned_count
+          }
+      }`;
+  }
+};
 
 export const getFacultyWideCVDataQuery = (data_section_id, faculty, title = "") => `
     query GetFacultyWideCVData {

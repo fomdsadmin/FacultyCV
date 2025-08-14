@@ -7,7 +7,7 @@ import {
   getAllUsersCount,
   getAllSections,
   getNumberOfGeneratedCVs,
-  getDepartmentCVData
+  getDepartmentCVData,
 } from "../graphql/graphqlHelpers.js";
 
 const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
@@ -18,9 +18,10 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     assistant_count: 0,
     dept_admin_count: 0,
     admin_count: 0,
-    faculty_admin_count: 0
+    faculty_admin_count: 0,
   });
-  const [publications, setPublications] = useState([]);
+  const [journalPublications, setJournalPublications] = useState([]);
+  const [otherPublications, setOtherPublications] = useState([]);
   const [grants, setGrants] = useState([]);
   const [patents, setPatents] = useState([]);
   const [grantMoneyRaised, setGrantMoneyRaised] = useState([]);
@@ -37,7 +38,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     setLoading(true);
     try {
       // Fetch all basic data in parallel
-      department = department.trim() || ""; 
+      department = department.trim() || "";
       const [userCounts, dataSections, generatedCVs] = await Promise.all([
         department === "All" ? getAllUsersCount() : getAllUsersCount(department),
         getAllSections(),
@@ -49,7 +50,6 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
       // Fetch CV data
       await fetchAllUserCVData(dataSections);
-
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -57,109 +57,122 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     }
   }, [department]);
 
-  const fetchAllUserCVData = useCallback(async (dataSections) => {
+  const fetchAllUserCVData = useCallback(
+    async (dataSections) => {
+      try {
+        // Find section IDs
+        const publicationSectionId = dataSections.find(
+          (section) => section.title.includes("Publication") && !section.title.includes("Other")
+        )?.data_section_id;
+        const otherPublicationSectionId = dataSections.find(
+          (section) => section.title.includes("Publication") && section.title.includes("Other")
+        )?.data_section_id;
+        const secureFundingSectionId = dataSections.find((section) =>
+          section.title.includes("Research or Equivalent Grants and Contracts")
+        )?.data_section_id;
+        const patentSectionId = dataSections.find((section) => section.title.includes("Patent"))?.data_section_id;
 
-    try {
-      // Find section IDs
-      const publicationSectionId = dataSections.find(
-        (section) => section.title.includes("Publication") && !section.title.includes("Other")
-      )?.data_section_id;
-      const otherPublicationSectionId = dataSections.find(
-        (section) => section.title.includes("Publication") && section.title.includes("Other")
-      )?.data_section_id;
-      const secureFundingSectionId = dataSections.find((section) =>
-        section.title.includes("Research or Equivalent Grants and Contracts")
-      )?.data_section_id;
-      const patentSectionId = dataSections.find((section) => section.title.includes("Patent"))?.data_section_id;
+        // Create promises for parallel execution using getDepartmentCVData
+        const promises = [];
 
-      // Create promises for parallel execution using getDepartmentCVData
-      const promises = [];
-      
-      if (publicationSectionId) {
-        promises.push(
-          getDepartmentCVData(publicationSectionId, department, "Publication")
-            .then(response => ({ type: 'publication', data: response.data }))
-            .catch(() => ({ type: 'publication', data: [] }))
-        );
-      }
-      
-      if (otherPublicationSectionId) {
-        promises.push(
-          getDepartmentCVData(otherPublicationSectionId, department, "Other Publication")
-            .then(response => ({ type: 'otherPublication', data: response.data }))
-            .catch(() => ({ type: 'otherPublication', data: [] }))
-        );
-      }
-      
-      if (secureFundingSectionId) {
-        promises.push(
-          getDepartmentCVData(secureFundingSectionId, department, "Grant")
-            .then(response => ({ type: 'grant', data: response.data }))
-            .catch(() => ({ type: 'grant', data: [] }))
-        );
-      }
-      
-      if (patentSectionId) {
-        promises.push(
-          getDepartmentCVData(patentSectionId, department, "Patent")
-            .then(response => ({ type: 'patent', data: response.data }))
-            .catch(() => ({ type: 'patent', data: [] }))
-        );
-      }
-
-      // Execute all promises in parallel
-      const results = await Promise.all(promises);
-
-      // Process results
-      const publicationsData = [];
-      const otherPublicationsData = [];
-      const grantsData = [];
-      const patentsData = [];
-
-      results.forEach(result => {
-        switch (result.type) {
-          case 'publication':
-            // Convert CVData format to the expected format
-            publicationsData.push(...result.data.map(item => ({
-              data_section_id: item.data_section_id,
-              data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
-            })));
-            break;
-          case 'otherPublication':
-            otherPublicationsData.push(...result.data.map(item => ({
-              data_section_id: item.data_section_id,
-              data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
-            })));
-            break;
-          case 'grant':
-            grantsData.push(...result.data.map(item => ({
-              data_section_id: item.data_section_id,
-              data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
-            })));
-            break;
-          case 'patent':
-            patentsData.push(...result.data.map(item => ({
-              data_section_id: item.data_section_id,
-              data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
-            })));
-            break;
+        if (publicationSectionId) {
+          promises.push(
+            getDepartmentCVData(publicationSectionId, department, "Publication")
+              .then((response) => ({ type: "publication", data: response.data }))
+              .catch(() => ({ type: "publication", data: [] }))
+          );
         }
-      });
-      
-      // Combine publications and process grant money
-      const allPublicationsData = [...publicationsData, ...otherPublicationsData];
-      const processedGrantMoney = processGrantMoney(grantsData);
 
-      // Update state in batch
-      setPublications(allPublicationsData);
-      setGrants(grantsData);
-      setPatents(patentsData);
-      setGrantMoneyRaised(processedGrantMoney);
+        if (otherPublicationSectionId) {
+          promises.push(
+            getDepartmentCVData(otherPublicationSectionId, department, "Other")
+              .then((response) => ({ type: "otherPublication", data: response.data }))
+              .catch(() => ({ type: "otherPublication", data: [] }))
+          );
+        }
 
-    } catch (error) {
-      console.error("Error fetching CV data:", error);
-    }
-  }, [department]);
+        if (secureFundingSectionId) {
+          promises.push(
+            getDepartmentCVData(secureFundingSectionId, department, "Grant")
+              .then((response) => ({ type: "grant", data: response.data }))
+              .catch(() => ({ type: "grant", data: [] }))
+          );
+        }
+
+        if (patentSectionId) {
+          promises.push(
+            getDepartmentCVData(patentSectionId, department, "Patent")
+              .then((response) => ({ type: "patent", data: response.data }))
+              .catch(() => ({ type: "patent", data: [] }))
+          );
+        }
+
+        // Execute all promises in parallel
+        const results = await Promise.all(promises);
+
+        // Process results
+        const publicationsData = [];
+        const otherPublicationsData = [];
+        const grantsData = [];
+        const patentsData = [];
+
+        results.forEach((result) => {
+          switch (result.type) {
+            case "publication":
+              // Convert CVData format to the expected format
+              publicationsData.push(
+                ...result.data.map((item) => ({
+                  data_section_id: item.data_section_id,
+                  data_details:
+                    typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
+                }))
+              );
+              break;
+            case "otherPublication":
+              otherPublicationsData.push(
+                ...result.data.map((item) => ({
+                  data_section_id: item.data_section_id,
+                  data_details:
+                    typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
+                }))
+              );
+              break;
+            case "grant":
+              grantsData.push(
+                ...result.data.map((item) => ({
+                  data_section_id: item.data_section_id,
+                  data_details:
+                    typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
+                }))
+              );
+              break;
+            case "patent":
+              patentsData.push(
+                ...result.data.map((item) => ({
+                  data_section_id: item.data_section_id,
+                  data_details:
+                    typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
+                }))
+              );
+              break;
+          }
+        });
+
+        // Combine publications and process grant money
+        const processedGrantMoney = processGrantMoney(grantsData);
+
+        // Update state in batch
+        setJournalPublications(publicationsData);
+        setOtherPublications(otherPublicationsData);
+        setGrants(grantsData);
+        setPatents(patentsData);
+        setGrantMoneyRaised(processedGrantMoney);
+      } catch (error) {
+        console.error("Error fetching CV data:", error);
+      }
+    },
+    [department]
+  );
 
   const processGrantMoney = useCallback((grantsData) => {
     const totalGrantMoneyRaised = [];
@@ -169,17 +182,17 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         if (dataDetails.dates && dataDetails.amount) {
           const amount = parseFloat(dataDetails.amount);
           let year;
-          
+
           // Handle both date formats: "July, 2008 - June, 2011" and "July, 2008"
           const dateString = dataDetails.dates.trim();
-          
-          if (dateString.includes(' - ')) {
+
+          if (dateString.includes(" - ")) {
             // Date range format: "July, 2008 - June, 2011"
             // Extract the end date (second part after ' - ')
-            const endDate = dateString.split(' - ')[1].trim();
-            if (endDate.includes(',')) {
+            const endDate = dateString.split(" - ")[1].trim();
+            if (endDate.includes(",")) {
               // Format: "June, 2011"
-              year = endDate.split(',')[1].trim();
+              year = endDate.split(",")[1].trim();
             } else {
               // Fallback: try to extract year from end of string
               const yearMatch = endDate.match(/\d{4}/);
@@ -187,16 +200,16 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
             }
           } else {
             // Single date format: "July, 2008"
-            if (dateString.includes(',')) {
+            if (dateString.includes(",")) {
               // Format: "July, 2008"
-              year = dateString.split(',')[1].trim();
+              year = dateString.split(",")[1].trim();
             } else {
               // Fallback: try to extract year from string
               const yearMatch = dateString.match(/\d{4}/);
               year = yearMatch ? yearMatch[0] : null;
             }
           }
-        
+
           // Only add grants with valid numeric amounts and years
           if (!isNaN(amount) && year && !isNaN(year) && amount > 0) {
             totalGrantMoneyRaised.push({
@@ -212,23 +225,27 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     return totalGrantMoneyRaised;
   }, []);
 
-
   // Since data is already filtered by department in getDepartmentCVData, no need for frontend filtering
-  const filteredPublications = publications;
+  const filteredPublications = journalPublications;
   const filteredGrants = grants;
   const filteredPatents = patents;
   const filteredGrantMoney = grantMoneyRaised;
 
-  const totalGrantMoneyRaised = useMemo(() =>
-    filteredGrantMoney
-      .reduce((total, grant) => {
-        // Make sure amount is a valid number and greater than 0
-        const amount = Number(grant.amount);
-        return total + (isNaN(amount) || amount <= 0 ? 0 : amount);
-      }, 0)
-      .toLocaleString("en-US", { style: "currency", currency: "USD" }),
-    [filteredGrantMoney]
-  );
+  const totalGrantMoneyRaised = useMemo(() => {
+    const total = filteredGrantMoney.reduce((sum, grant) => {
+      // Make sure amount is a valid number and greater than 0
+      const amount = Number(grant.amount);
+      return sum + (isNaN(amount) || amount <= 0 ? 0 : amount);
+    }, 0);
+
+    // Format the total like dashboard charts
+    if (total >= 1000000) {
+      return `$${(total / 1000000).toFixed(1)}M`;
+    } else if (total >= 1000) {
+      return `$${(total / 1000).toFixed(0)}K`;
+    }
+    return `$${total.toLocaleString()}`;
+  }, [filteredGrantMoney]);
 
   // Memoized graph data functions to avoid expensive recalculations
   const grantMoneyGraphData = useMemo(() => {
@@ -238,9 +255,15 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     // Use filtered grant money data based on department
     filteredGrantMoney.forEach((grant) => {
       // Add guards to ensure valid data
-      if (grant.amount && grant.years && 
-          !isNaN(grant.amount) && !isNaN(grant.years) && 
-          grant.amount > 0 && grant.years > 1900 && grant.years <= new Date().getFullYear() + 10) {
+      if (
+        grant.amount &&
+        grant.years &&
+        !isNaN(grant.amount) &&
+        !isNaN(grant.years) &&
+        grant.amount > 0 &&
+        grant.years > 1900 &&
+        grant.years <= new Date().getFullYear() + 10
+      ) {
         const year = grant.years;
         if (yearlyDataMap.has(year)) {
           yearlyDataMap.get(year).GrantFunding += grant.amount;
@@ -275,17 +298,17 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         if (dataDetails.end_date) {
           let year;
           const endDateString = dataDetails.end_date.trim();
-          
-          if (endDateString.includes(' ')) {
+
+          if (endDateString.includes(" ")) {
             // Format: "June 2019" - extract the year part
-            const parts = endDateString.split(' ');
+            const parts = endDateString.split(" ");
             const yearPart = parts[parts.length - 1]; // Get the last part (year)
             year = parseInt(yearPart);
           } else {
             // Format: "2019" - direct year
             year = parseInt(endDateString);
           }
-          
+
           // Only include valid years
           if (!isNaN(year)) {
             const yearStr = year.toString();
@@ -299,7 +322,6 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
             }
           }
         }
-
       } catch (error) {
         console.error("Error parsing publication data:", error, publication);
       }
@@ -329,17 +351,17 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         if (dataDetails.end_date) {
           let year;
           const endDateString = dataDetails.end_date.trim();
-          
-          if (endDateString.includes(' ')) {
+
+          if (endDateString.includes(" ")) {
             // Format: "June 2019" - extract the year part
-            const parts = endDateString.split(' ');
+            const parts = endDateString.split(" ");
             const yearPart = parts[parts.length - 1]; // Get the last part (year)
             year = parseInt(yearPart);
           } else {
             // Format: "2019" - direct year
             year = parseInt(endDateString);
           }
-          
+
           // Only include valid years
           if (!isNaN(year)) {
             const yearStr = year.toString();
@@ -353,7 +375,6 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
             }
           }
         }
-
       } catch (error) {
         console.error("Error parsing patent data:", error, patent);
       }
@@ -371,19 +392,294 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
   const SummaryCards = () => (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 mt-4">
-        <AnalyticsCard title="Faculty" value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()} />
+      {/* User Statistics Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4 mt-2">
+        <AnalyticsCard
+          title="Faculty"
+          value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()}
+        />
         <AnalyticsCard title="Delegates" value={userCounts.assistant_count.toLocaleString()} />
         {/* <AnalyticsCard title="CVs Generated" value={totalCVsGenerated.toLocaleString()} /> */}
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 mt-4">
-        <AnalyticsCard title="Grant Funding" value={totalGrantMoneyRaised} />
-        <AnalyticsCard title="Grants" value={filteredGrants.length.toLocaleString()} />
-        <AnalyticsCard title="Publications" value={filteredPublications.length.toLocaleString()} />
-        <AnalyticsCard title="Patents" value={filteredPatents.length.toLocaleString()} />
+
+      {/* Research Metrics - 3 Column Layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+        {/* Faculty Ranks Section - First */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM9 17a4 4 0 004-4H5a4 4 0 004 4z" />
+            </svg>
+            Faculty Ranks
+          </h3>
+          <div className="space-y-4">
+            {/* Total Faculty Count
+            <AnalyticsCard 
+              title="Total Faculty" 
+              value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()} 
+              className="!bg-blue-50 !border-blue-200"
+            /> */}
+
+            {/* Faculty Ranks Breakdown */}
+            {facultyRanksCounts.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 mt-4">
+                <h4 className="text-sm font-semibold text-blue-800 mb-2">Rank Distribution</h4>
+                <div className="space-y-1">
+                  {facultyRanksCounts.map((rankData, index) => (
+                    <div key={index} className="flex justify-between items-center text-sm gap-y-1">
+                      <span className="text-blue-700 font-medium">{rankData.rank}</span>
+                      <span className="bg-blue-200 text-blue-800 p-2 rounded-md text-xs font-semibold min-w-[4rem] text-center">
+                        {rankData.count.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Publications Section - Second */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Publications
+          </h3>
+          <div className="space-y-4">
+            {/* Total Publications Count */}
+            <AnalyticsCard
+              title="Total Publications"
+              value={(filteredPublications.length + otherPublications.length).toLocaleString()}
+              className="!bg-purple-50 !border-purple-200"
+            />
+
+            {/* Publication Types Breakdown */}
+            {publicationTypesCounts.length > 0 && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-purple-800 mb-2">Publication Types</h4>
+                <div className="space-y-1">
+                  {publicationTypesCounts.map((typeData, index) => (
+                    <div key={index} className="flex justify-between items-center text-sm gap-y-1">
+                      <span className="text-purple-700 font-medium">{typeData.type}</span>
+                      <span className="bg-purple-200 text-purple-800 p-2 rounded-md text-xs font-semibold min-w-[4rem] text-center">
+                        {typeData.count.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Grants & Patents Section - Third (Merged) */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          {/* <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Grants & Patents
+          </h3> */}
+          <div className="space-y-4">
+            {/* Grants Section - Top Half */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-green-800 mb-3 flex items-center">
+                <svg className="w-4 h-4 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Grants and Contracts
+              </h4>
+              
+              {/* Total Funding */}
+              <AnalyticsCard
+                title="Total Funding"
+                value={totalGrantMoneyRaised}
+                className="!bg-green-50 !border-green-200"
+              />
+
+              {/* Funding Breakdown */}
+              <div className="space-y-2 mt-2">
+                {/* Grant funding breakdown - Show first */}
+                {grantTypesCounts.grant.count > 0 && (
+                  <div className="bg-white border border-green-300 rounded-md p-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-green-700 font-medium">Research Grants ({grantTypesCounts.grant.count.toLocaleString()})</span>
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
+                        {grantTypesCounts.grant.funding >= 1000000 
+                          ? `$${(grantTypesCounts.grant.funding / 1000000).toFixed(1)}M` 
+                          : grantTypesCounts.grant.funding >= 1000 
+                          ? `$${(grantTypesCounts.grant.funding / 1000).toFixed(0)}K` 
+                          : `$${grantTypesCounts.grant.funding.toLocaleString()}`}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Contract funding breakdown - Show second */}
+                {grantTypesCounts.contract.count > 0 && (
+                  <div className="bg-white border border-green-300 rounded-md p-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-green-700 font-medium">Research Contracts ({grantTypesCounts.contract.count.toLocaleString()})</span>
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
+                        {grantTypesCounts.contract.funding >= 1000000 
+                          ? `$${(grantTypesCounts.contract.funding / 1000000).toFixed(1)}M` 
+                          : grantTypesCounts.contract.funding >= 1000 
+                          ? `$${(grantTypesCounts.contract.funding / 1000).toFixed(0)}K` 
+                          : `$${grantTypesCounts.contract.funding.toLocaleString()}`}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Patents Section - Bottom Half */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-amber-800 mb-2 flex items-center">
+                <svg className="w-4 h-4 mr-1 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 010-2h4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Patents
+              </h4>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-amber-700 font-medium">Total Patents</span>
+                <span className="bg-amber-200 text-amber-800 p-1 rounded text-xs font-semibold">
+                  {filteredPatents.length.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
+
+  // Memoized faculty ranks computation
+  const facultyRanksCounts = useMemo(() => {
+    const rankCounts = {};
+
+    // Note: This would need to be populated with actual rank data from user profiles
+    // For now, we'll use the existing user counts as a foundation
+    // This assumes rank information would come from user profiles or HR data
+
+    // You might need to fetch additional data or modify the getAllUsersCount function
+    // to include rank information. For now, showing basic user types:
+    if (userCounts.faculty_count > 0) {
+      rankCounts["Adjunct Professor"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Assistant Professor & Assistant Professor of Teaching"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Associate Professor & Associate Professor of Teaching"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Clinical Faculty"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Clinical Fellow"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Emeritus Faculty"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Honorary Faculty"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Investigator"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Lecturer"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Professor & Professor of Teaching"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Research Associate"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Seasonal Lecturer"] = 0;
+    }
+    if (userCounts.dept_admin_count > 0) {
+      rankCounts["Visiting Faculty"] = 0;
+    }
+
+    // Convert to array and sort by count
+    return Object.entries(rankCounts)
+      .map(([rank, count]) => ({ rank, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [userCounts]);
+
+  // Memoized publication types computation
+  const publicationTypesCounts = useMemo(() => {
+    const typeCounts = {};
+
+    // Process other publications to get their types
+    otherPublications.forEach((pub) => {
+      try {
+        const details = JSON.parse(pub.data_details);
+        const type = details.type || "Other";
+        if (type && typeof type === "string" && type.trim().length > 0) {
+          const cleanType = type.trim();
+          typeCounts[cleanType] = (typeCounts[cleanType] || 0) + 1;
+        }
+      } catch (e) {
+        console.error("Error parsing other publication data for types:", e, pub);
+      }
+    });
+
+    // Add journal publications as a separate type
+    if (filteredPublications.length > 0) {
+      typeCounts["Journal Publications"] = filteredPublications.length;
+    }
+
+    // Convert to array and sort by count
+    return Object.entries(typeCounts)
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [otherPublications, filteredPublications]);
+
+  // Memoized grant types computation
+  const grantTypesCounts = useMemo(() => {
+    const typeData = {
+      contract: { count: 0, funding: 0 },
+      grant: { count: 0, funding: 0 }
+    };
+
+    filteredGrants.forEach((grant) => {
+      try {
+        const details = JSON.parse(grant.data_details);
+        const type = details.type || "";
+        const amount = parseFloat(details.amount) || 0;
+
+        if (type === "All Types Contract") {
+          typeData.contract.count += 1;
+          typeData.contract.funding += amount;
+        } else if (type === "Grant") {
+          typeData.grant.count += 1;
+          typeData.grant.funding += amount;
+        }
+      } catch (e) {
+        console.error("Error parsing grant data for types:", e, grant);
+      }
+    });
+
+    return typeData;
+  }, [filteredGrants]);
 
   // Memoized keyword computation
   const computedKeywordData = useMemo(() => {
@@ -396,7 +692,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         // Ensure keywords is an array and contains valid strings
         if (Array.isArray(keywords) && keywords.length > 0) {
           keywords.forEach((kw) => {
-            if (kw && typeof kw === 'string' && kw.trim().length > 0) {
+            if (kw && typeof kw === "string" && kw.trim().length > 0) {
               const lower = kw.toLowerCase().trim();
               keywordCounts[lower] = (keywordCounts[lower] || 0) + 1;
             }
@@ -412,7 +708,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
       .sort((a, b) => b.value - a.value)
       .slice(0, 25);
     return sorted;
-  }, [publications]);
+  }, [journalPublications]);
 
   // Memoized graphs configuration for the carousel
   const graphsConfig = useMemo(() => {
@@ -429,7 +725,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         yAxisLabel: "Grant Funding ($)",
         barColor: "#10b981",
         showLegend: false,
-        formatTooltip: (value, name) => [`$${value.toLocaleString()}`, 'Grant Funding ($)'],
+        formatTooltip: (value, name) => [`$${value.toLocaleString()}`, "Grant Funding ($)"],
         formatYAxis: (value) => {
           if (value >= 1000000) {
             return `$${(value / 1000000).toFixed(1)}M`;
@@ -438,7 +734,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
           }
           return `$${value.toLocaleString()}`;
         },
-        formatXAxis: (value) => value
+        formatXAxis: (value) => value,
       });
     }
 
@@ -453,9 +749,9 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         yAxisLabel: "Number of Publications",
         barColor: "#8b5cf6",
         showLegend: false,
-        formatTooltip: (value, name) => [`${value} ${value === 1 ? 'Publication' : 'Publications'}`, name],
+        formatTooltip: (value, name) => [`${value} ${value === 1 ? "Publication" : "Publications"}`, name],
         formatYAxis: (value) => value.toString(),
-        formatXAxis: (value) => value
+        formatXAxis: (value) => value,
       });
     }
 
@@ -470,9 +766,9 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         yAxisLabel: "Number of Patents",
         barColor: "#f59e0b",
         showLegend: false,
-        formatTooltip: (value, name) => [`${value} ${value === 1 ? 'Patent' : 'Patents'}`, name],
+        formatTooltip: (value, name) => [`${value} ${value === 1 ? "Patent" : "Patents"}`, name],
         formatYAxis: (value) => value.toString(),
-        formatXAxis: (value) => value
+        formatXAxis: (value) => value,
       });
     }
 
@@ -490,7 +786,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
       <main className="px-16 py-4 w-full min-h-screen bg-zinc-50 mb-16">
         <div className="mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-zinc-700 mb-1 mt-2">Department Analytics</h1>
-          <h2 className="text-xl font-semibold text-blue-700 mb-6 mt-2">{department}</h2>
+          <h2 className="text-xl font-semibold text-blue-700 mb-4 mt-2">{department}</h2>
           {loading ? (
             <div className="flex items-center justify-center w-full mt-16">
               <div className="text-lg text-zinc-500">Loading...</div>
@@ -498,20 +794,18 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
           ) : (
             <>
               <SummaryCards />
-              
+
               {/* Graph Carousel Section */}
               <div className="mb-8">
-                <GraphCarousel 
-                  graphs={graphsConfig} 
-                />
+                <GraphCarousel graphs={graphsConfig} />
               </div>
 
               {/* Department Keywords Section */}
               <div className="mt-8">
                 <div className="flex flex-col gap-2 p-2 rounded-lg shadow-md bg-zinc-50">
                   <h2 className="text-lg font-semibold p-4">
-                    {department === "All" ?
-                      "Top Keywords From Publications (All Departments)"
+                    {department === "All"
+                      ? "Top Keywords From Publications (All Departments)"
                       : "Top Keywords From Publications (Department-wide)"}
                   </h2>
                   {keywordData.length > 0 && (

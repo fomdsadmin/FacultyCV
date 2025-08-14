@@ -1,27 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaArchive, FaFolderOpen } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
-import { signOut } from "aws-amplify/auth";
 import { useNavigate } from "react-router-dom";
 
 const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showText, setShowText] = useState(true);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  // const handleSignOut = async () => {
-  //   setIsSigningOut(true);
-  //   try {
-  //     await signOut();
-  //     getCognitoUser();
-  //     navigate("/auth");
-  //   } catch (error) {
-  //   } finally {
-  //     setIsSigningOut(false);
-  //   }
-  // };
 
   const handleToggle = () => {
     // toggleViewMode(); // Call the toggle function passed as a prop
@@ -34,7 +19,6 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
 
   useEffect(() => {
     let timer;
-
     if (!isCollapsed) {
       timer = setTimeout(() => setShowText(true), 150);
     } else {
@@ -43,8 +27,6 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
 
     return () => clearTimeout(timer);
   }, [isCollapsed]);
-
-  const isHomePage = location.pathname === "/home";
 
   return (
     <div
@@ -59,9 +41,7 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
           <Link to="/department-admin/home">
             <FaChartLine className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/home" ? "font-bold" : ""}`}>
-                Home
-              </p>
+              <p className={`ml-2 ${location.pathname === "/department-admin/home" ? "font-bold" : ""}`}>Home</p>
             )}
           </Link>
         </li>
@@ -69,24 +49,10 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
           <Link to="/department-admin/users">
             <FaUsers className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/users" ? "font-bold" : ""}`}>
-                Users
-              </p>
+              <p className={`ml-2 ${location.pathname === "/department-admin/users" ? "font-bold" : ""}`}>Users</p>
             )}
           </Link>
         </li>
-        {/* <li
-          className={`mb-2 ${location.pathname === "/department-admin/user-insights" ? "bg-gray-200 rounded-lg" : ""}`}
-        >
-          <Link to="/department-admin/user-insights">
-            <FaUsersCog className="h-5 w-5" />
-            {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/user-insights" ? "font-bold" : ""}`}>
-                User Insights
-              </p>
-            )}
-          </Link>
-        </li> */}
         <li className={`mb-2 ${location.pathname === "/department-admin/templates" ? "bg-gray-200 rounded-lg" : ""}`}>
           <Link to="/department-admin/templates">
             <FaFolderOpen className="h-5 w-5" /> {/* Changed to folder icon */}
@@ -103,6 +69,16 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === "/department-admin/generate" ? "font-bold" : ""}`}>
                 Generate CV
+              </p>
+            )}
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === "/department-admin/reporting" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/department-admin/reporting">
+            <FaUsersCog className="h-5 w-5" />
+            {showText && !isCollapsed && (
+              <p className={`ml-2 ${location.pathname === "/department-admin/reporting" ? "font-bold" : ""}`}>
+                Reporting
               </p>
             )}
           </Link>

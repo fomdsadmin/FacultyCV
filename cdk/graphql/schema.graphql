@@ -3,6 +3,7 @@ type Affiliations {
 }
 
 input AuditViewInput {
+	logged_user_id: String!
 	logged_user_first_name: String!
 	logged_user_last_name: String!
 	ip: String
@@ -36,15 +37,6 @@ type AuditViewRecord {
 type AuditViewResult {
 	records: [AuditViewRecord]
 	total_count: Int
-}
-
-type UsersCountResult {
-	total_count: Int!
-	faculty_count: Int!
-	assistant_count: Int!
-	dept_admin_count: Int!
-	admin_count: Int!
-	faculty_admin_count: Int!
 }
 
 # Get Bio from OpenAI
@@ -261,6 +253,29 @@ type UserConnection {
 	status: String!
 }
 
+type UserProfileMatch {
+	user_id: String!
+	first_name: String
+	last_name: String
+	email: String
+	role: String
+	institution: String
+	primary_department: String
+	primary_faculty: String
+	pending: Boolean
+	approved: Boolean
+	username: String
+}
+
+type UsersCountResult {
+	total_count: Int!
+	faculty_count: Int!
+	assistant_count: Int!
+	dept_admin_count: Int!
+	admin_count: Int!
+	faculty_admin_count: Int!
+}
+
 type Mutation {
 	addUserDeclaration(
 		user_id: String!,
@@ -323,11 +338,11 @@ type Mutation {
 		user_id: String!,
 		cognito_user_id: String
 	): String
-		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant", "NewlyRegistered"])
 	updateUserPermissions(user_id: String!, pending: Boolean, approved: Boolean): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	changeUsername(user_id: String!, username: String!): String
-		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","NewlyRegistered"])
 	updateUserAffiliations(
 		user_id: String!,
 		first_name: String,
@@ -432,11 +447,15 @@ archive: Boolean,
 }
 
 type Query {
+	getGotenbergPdf(form_data_base_64: String!): String
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getBioResponseData(username_input: String!): BioResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	GetAIResponse(user_input: String!): LambdaAIResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getUser(username: String!): User
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
+	getUserProfileMatches(first_name: String!, last_name: String!): [UserProfileMatch]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
 	getExistingUser(institution_user_id: String!): User
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
@@ -449,9 +468,9 @@ type Query {
 	getAllSectionCVData(data_section_id: String, data_section_id_list: [String]): CVDataResponse
 		@aws_auth(cognito_groups: ["Admin"])
 	getDepartmentCVData(data_section_id: String!, dept: String!, title: String): CVDataResponse
-		@aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	getFacultyWideCVData(data_section_id: String!, faculty: String!, title: String): CVDataResponse
-		@aws_auth(cognito_groups: ["Admin", "DepartmentAdmin"])
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	getArchivedUserCVData(user_id: String!): [UserCVData]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getElsevierAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [ElsevierAuthorProfile]!

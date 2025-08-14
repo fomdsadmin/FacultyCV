@@ -10,7 +10,7 @@ import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
 import PDFViewer from "../Components/PDFViewer.jsx";
 
-const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
+const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   const [selectedUser, setSelectedUser] = useState("");
   const [departmentUsers, setDepartmentUsers] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
@@ -495,4 +495,4 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   );
 };
 
-export default DepartmentAdminGenerateCV;
+export default DepartmentAdminReporting;
