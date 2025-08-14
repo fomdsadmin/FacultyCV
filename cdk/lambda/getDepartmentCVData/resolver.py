@@ -12,7 +12,6 @@ def filter_data_by_section(data_details, section_title):
     if not isinstance(data_details, dict):
         return data_details
 
-    print("Filtering data for section:", section_title)
     if 'Publication' in section_title:
         # Return specific fields for publications
         return {
