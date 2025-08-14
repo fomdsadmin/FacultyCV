@@ -164,6 +164,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         // Update state in batch
         setJournalPublications(publicationsData);
         setOtherPublications(otherPublicationsData);
+        console.log(publicationsData);
         setGrants(grantsData);
         setPatents(patentsData);
         setGrantMoneyRaised(processedGrantMoney);
