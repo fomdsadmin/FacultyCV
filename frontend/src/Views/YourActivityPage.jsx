@@ -3,10 +3,7 @@ import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 
 import FacultyMenu from '../Components/FacultyMenu.jsx';
-import FacultyAdminMenu from '../Components/FacultyAdminMenu.jsx';
 import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
-
-
 import { Accordion } from '../SharedComponents/Accordion/Accordion.jsx';
 import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem.jsx';
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
@@ -29,13 +26,11 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
     const getMenuComponent = () => {
         let role = userInfo?.role || '';
         if (currentViewRole !== role) {
-            role = currentViewRole;
+            role = currentViewRole; // if current view is not user actual role
         }
 
         if (role.startsWith('Admin-')) {
             return DepartmentAdminMenu;
-        } else if (role.startsWith('FacultyAdmin-')) {
-            return FacultyAdminMenu;
         } else {
             return FacultyMenu;
         }
@@ -51,26 +46,49 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
         fetchAuditViewData();
     }, [startDate, endDate, actionFilter, page_number]);
 
+    // Update the fetchAuditViewData function
+
     async function fetchAuditViewData() {
         setLoading(true);
         try {
-            console.log("Fetching audit view data for user:", userInfo, userInfo.user_id, userInfo.email, "page:", page_number);
+            // Start with proper date formatting for both start and end dates
+            let formattedStartDate = startDate;
+            let formattedEndDate = endDate;
+
+            // Format start date if it exists
+            if (startDate) {
+                const startDateObj = new Date(startDate);
+                // Set to beginning of day for start date
+                startDateObj.setHours(0, 0, 0, 0);
+                formattedStartDate = startDateObj.toISOString().split('.')[0]; // Remove milliseconds
+                console.log("Formatted start date:", formattedStartDate);
+            }
+
+            // Format end date if it exists
+            if (endDate) {
+                const endDateObj = new Date(endDate);
+                // Set to end of day for end date
+                endDateObj.setHours(23, 59, 59, 999);
+                formattedEndDate = endDateObj.toISOString().split('.')[0]; // Remove milliseconds
+                console.log("Formatted end date:", formattedEndDate);
+            }
+
 
             const response = await getAuditViewData({
                 email: userInfo.email,
                 page_number,
                 page_size: PAGE_SIZE,
                 action: actionFilter || undefined,
-                start_date: startDate || undefined,
-                end_date: endDate || undefined
+                start_date: formattedStartDate,  // Use formatted date
+                end_date: formattedEndDate       // Use formatted date
             });
+
+            console.log("API response:", response);
 
             const data = Array.isArray(response) ? response : (response.records || []);
             data.sort((a, b) => new Date(b.ts) - new Date(a.ts));
 
             setAuditViewData(data);
-
-            // This should be total results from backend
             setTotalCount(response.total_count ?? data.length);
         } catch (error) {
             console.error("Error fetching audit view data:", error);
@@ -132,33 +150,12 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
         "logged_user_action",
     ];
 
-    // Filter the data directly on the client side for any filters not handled by the API
-    const filteredData = auditViewData.filter(log => {
-        let matchesStart = true;
-        let matchesEnd = true;
-        let matchesAction = true;
-
-        // Only apply client-side filtering if we're not sending these filters to the API
-        if (startDate && !fetchAuditViewData.toString().includes('start_date')) {
-            matchesStart = new Date(log.ts) >= new Date(startDate);
-        }
-
-        if (endDate && !fetchAuditViewData.toString().includes('end_date')) {
-            matchesEnd = new Date(log.ts) <= new Date(endDate);
-        }
-
-        if (actionFilter && !fetchAuditViewData.toString().includes('action')) {
-            matchesAction = log.logged_user_action === actionFilter;
-        }
-
-        return matchesStart && matchesEnd && matchesAction;
-    });
 
     // Use the filtered data for display
-    const pagedData = filteredData;
+    const pagedData = auditViewData;
 
     // Calculate total pages based on filtered data if no API pagination
-    const calculatedTotalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+    const calculatedTotalPages = Math.ceil(pagedData.length / PAGE_SIZE);
     const totalPages = totalCount ? Math.ceil(totalCount / PAGE_SIZE) : calculatedTotalPages;
 
     return (
@@ -167,7 +164,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
 
 
             <main className='px-12 mt-4 overflow-auto custom-scrollbar w-full mb-4'>
-                <h1 className="text-left text-4xl font-bold text-zinc-600 mb-4">Your Activity</h1>
+                <h1 className="text-left text-4xl font-bold text-zinc-600 mb-4">Your Activity Logs</h1>
 
                 <Accordion>
                     {/* Filters Section */}
@@ -228,11 +225,11 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                             Previous
                         </button>
                         <span>Page {page_number} of {totalPages || 1}</span>
-                        <span>Total Records: {filteredData.length}</span>
+                        <span>Total Records: {pagedData.length}</span>
                         <button
                             className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300"
                             onClick={() => setPageNumber(page_number + 1)}
-                            disabled={page_number === totalPages || filteredData.length === 0}
+                            disabled={page_number === totalPages || pagedData.length === 0}
                         >
                             Next
                         </button>
@@ -285,9 +282,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                                                     {col === "ts"
                                                         ? formatTimestamp(log[col])
                                                         : col === "logged_user_action"
-                                                            ? <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                                {log[col]}
-                                                            </span>
+                                                            ? log[col]
                                                             : typeof log[col] === "boolean"
                                                                 ? String(log[col])
                                                                 : log[col] || "-"}

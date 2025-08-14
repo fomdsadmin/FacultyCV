@@ -2,16 +2,34 @@ import React from 'react'
 import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import AdminMenu from '../Components/AdminMenu.jsx';
+import FacultyAdminMenu from '../Components/FacultyAdminMenu.jsx';
 import { Accordion } from '../SharedComponents/Accordion/Accordion';
 import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem';
 
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
 import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
 
-const AuditPage = ({ getCognitoUser, userInfo }) => {
+const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
+
+    // Determine which menu component to use based on the user role
+    const getMenuComponent = () => {
+        // Get the current role with fallback to empty string
+        let role = userInfo?.role || '';
+
+        // Use currentViewRole if available and different from user's role
+        if (currentViewRole && currentViewRole !== role) {
+            role = currentViewRole;
+        }
+
+        // Check if the role is for faculty admin
+        return (role && role.startsWith('FacultyAdmin-')) ?
+            FacultyAdminMenu :
+            AdminMenu;
+    };
+    const MenuComponent = getMenuComponent();
 
 
     const PAGE_SIZE = 20;
@@ -35,6 +53,29 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
     async function fetchAuditViewData() {
         setLoading(true);
         try {
+
+            // Start with proper date formatting for both start and end dates
+            let formattedStartDate = startDate;
+            let formattedEndDate = endDate;
+
+            // Format start date if it exists
+            if (startDate) {
+                const startDateObj = new Date(startDate);
+                // Set to beginning of day for start date
+                startDateObj.setHours(0, 0, 0, 0);
+                formattedStartDate = startDateObj.toISOString().split('.')[0]; // Remove milliseconds
+                console.log("Formatted start date:", formattedStartDate);
+            }
+
+            // Format end date if it exists
+            if (endDate) {
+                const endDateObj = new Date(endDate);
+                // Set to end of day for end date
+                endDateObj.setHours(23, 59, 59, 999);
+                formattedEndDate = endDateObj.toISOString().split('.')[0]; // Remove milliseconds
+                console.log("Formatted end date:", formattedEndDate);
+            }
+
             const response = await getAuditViewData({
                 page_number,
                 page_size: PAGE_SIZE,
@@ -42,8 +83,8 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                 first_name: firstNameFilter,
                 last_name: lastNameFilter,
                 action: actionFilter,
-                start_date: startDate,
-                end_date: endDate,
+                start_date: formattedStartDate,
+                end_date: formattedEndDate,
             });
 
             const data = Array.isArray(response) ? response : (response.records || []);
@@ -76,7 +117,6 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         pageViewData.forEach(log => {
             const rowData = columns.map(col => {
                 const val = log[col];
-                // Handle different data types and escape quotes/commas for CSV
                 if (val === null || val === undefined) return '';
                 if (typeof val === "boolean") return String(val);
                 if (typeof val === "string") return `"${val.replace(/"/g, '""')}"`;
@@ -115,7 +155,7 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
 
             // Create date object - now properly interpreting as UTC
             const date = new Date(parsedTimestamp);
-
+            // for debug
             // console.log("Original timestamp:", timestamp);
             // console.log("Parsed as UTC:", date.toISOString());
             // console.log("Local time:", date.toString());
@@ -156,31 +196,13 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         "browser_version",
     ];
 
-    // Create a default set of visible columns that excludes log_view_id
+    // Create a default set of visible columns that excludes log_view_id, assistant, and profile_record
     const defaultVisibleColumns = pageViewColumns.filter(col => col !== "log_view_id" && col !== "assistant" && col !== "profile_record");
 
     // Initialize state with the filtered columns
     const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
 
-    const pageViewData = auditViewData.filter(log => {
-        const matchesEmail = log.logged_user_email?.toLowerCase().includes(emailFilter.toLowerCase());
-        const matchesFirstName = log.logged_user_first_name?.toLowerCase().includes(firstNameFilter.toLowerCase());
-        const matchesLastName = log.logged_user_last_name?.toLowerCase().includes(lastNameFilter.toLowerCase());
-        const matchesAction = !actionFilter || log.logged_user_action === actionFilter;
-
-        // Date/time filtering
-        let matchesStart = true;
-        let matchesEnd = true;
-        if (startDate) {
-            matchesStart = new Date(log.ts) >= new Date(startDate);
-        }
-        if (endDate) {
-            matchesEnd = new Date(log.ts) <= new Date(endDate);
-        }
-
-        return matchesEmail && matchesFirstName && matchesLastName && matchesStart && matchesEnd && matchesAction;
-
-    });
+    const pageViewData = auditViewData;
     // Pagination logic
     const totalPages = Math.ceil(totalCount / PAGE_SIZE);
     const pagedData = auditViewData;
@@ -211,10 +233,10 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
 
     return (
         <PageContainer>
-            <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+            <MenuComponent getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
 
             <main className='px-12 mt-4 overflow-auto custom-scrollbar w-full mb-4'>
-                <h1 className="text-left text-4xl font-bold text-zinc-600 mb-4">Audit</h1>
+                <h1 className="text-left text-4xl font-bold text-zinc-600 mb-4">Activity Logs</h1>
 
                 <Accordion>
                     {/* Filters Section */}
@@ -401,11 +423,7 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                                                     <div className="truncate" title={log[col] != null ? String(log[col]) : ""}>
                                                         {col === "ts"
                                                             ? formatTimestamp(log[col])
-                                                            : col === "logged_user_action"
-                                                                ? <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                                    {log[col]}
-                                                                </span>
-                                                                : log[col] || "-"}
+                                                            : log[col] || "-"}
                                                     </div>
                                                 </td>
                                             ))}

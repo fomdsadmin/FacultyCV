@@ -71,17 +71,17 @@ const FacultyAdminMenu = ({ userName, getCognitoUser, userInfo, toggleViewMode }
           </Link>
         </li>
         <li
-          className={`mb-2 ${location.pathname === "/your-activities" ? "bg-gray-200 rounded-lg" : ""
+          className={`mb-2 ${location.pathname === "/audit" ? "bg-gray-200 rounded-lg" : ""
             }`}
         >
-          <Link to="/your-activities">
+          <Link to="/audit">
             <FaRegClipboard className="h-5 w-5" />
             {showText && !isCollapsed && (
               <p
-                className={`ml-2 ${location.pathname === "/your-activities" ? "font-bold" : ""
+                className={`ml-2 ${location.pathname === "/audit" ? "font-bold" : ""
                   }`}
               >
-                Your Activities
+                Activity Logs
               </p>
             )}
           </Link>
