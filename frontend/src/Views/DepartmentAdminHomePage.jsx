@@ -40,12 +40,13 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
       // Fetch all basic data in parallel
       department = department.trim() || "";
       const [userCounts, dataSections, generatedCVs] = await Promise.all([
-        department === "All" ? getAllUsersCount() : getAllUsersCount(department),
+        department === "All" ? getAllUsersCount() : getAllUsersCount(department, ""),
         getAllSections(),
         // department === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
       ]);
 
       setUserCounts(userCounts);
+      console.log(userCounts);
       // setTotalCVsGenerated(generatedCVs);
 
       // Fetch CV data
@@ -164,7 +165,6 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         // Update state in batch
         setJournalPublications(publicationsData);
         setOtherPublications(otherPublicationsData);
-        console.log(publicationsData);
         setGrants(grantsData);
         setPatents(patentsData);
         setGrantMoneyRaised(processedGrantMoney);
@@ -500,7 +500,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                 </svg>
                 Grants and Contracts
               </h4>
-              
+
               {/* Total Funding */}
               <AnalyticsCard
                 title="Total Funding"
@@ -514,12 +514,14 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                 {grantTypesCounts.grant.count > 0 && (
                   <div className="bg-white border border-green-300 rounded-md p-2">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-green-700 font-medium">Research Grants ({grantTypesCounts.grant.count.toLocaleString()})</span>
+                      <span className="text-green-700 font-medium">
+                        Research Grants ({grantTypesCounts.grant.count.toLocaleString()})
+                      </span>
                       <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
-                        {grantTypesCounts.grant.funding >= 1000000 
-                          ? `$${(grantTypesCounts.grant.funding / 1000000).toFixed(1)}M` 
-                          : grantTypesCounts.grant.funding >= 1000 
-                          ? `$${(grantTypesCounts.grant.funding / 1000).toFixed(0)}K` 
+                        {grantTypesCounts.grant.funding >= 1000000
+                          ? `$${(grantTypesCounts.grant.funding / 1000000).toFixed(1)}M`
+                          : grantTypesCounts.grant.funding >= 1000
+                          ? `$${(grantTypesCounts.grant.funding / 1000).toFixed(0)}K`
                           : `$${grantTypesCounts.grant.funding.toLocaleString()}`}
                       </span>
                     </div>
@@ -530,12 +532,14 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                 {grantTypesCounts.contract.count > 0 && (
                   <div className="bg-white border border-green-300 rounded-md p-2">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-green-700 font-medium">Research Contracts ({grantTypesCounts.contract.count.toLocaleString()})</span>
+                      <span className="text-green-700 font-medium">
+                        Research Contracts ({grantTypesCounts.contract.count.toLocaleString()})
+                      </span>
                       <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
-                        {grantTypesCounts.contract.funding >= 1000000 
-                          ? `$${(grantTypesCounts.contract.funding / 1000000).toFixed(1)}M` 
-                          : grantTypesCounts.contract.funding >= 1000 
-                          ? `$${(grantTypesCounts.contract.funding / 1000).toFixed(0)}K` 
+                        {grantTypesCounts.contract.funding >= 1000000
+                          ? `$${(grantTypesCounts.contract.funding / 1000000).toFixed(1)}M`
+                          : grantTypesCounts.contract.funding >= 1000
+                          ? `$${(grantTypesCounts.contract.funding / 1000).toFixed(0)}K`
                           : `$${grantTypesCounts.contract.funding.toLocaleString()}`}
                       </span>
                     </div>
@@ -581,41 +585,17 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     // to include rank information. For now, showing basic user types:
     if (userCounts.faculty_count > 0) {
       rankCounts["Adjunct Professor"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Assistant Professor & Assistant Professor of Teaching"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Associate Professor & Associate Professor of Teaching"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Clinical Faculty"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Clinical Fellow"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Emeritus Faculty"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Honorary Faculty"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Investigator"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Lecturer"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Professor & Professor of Teaching"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Research Associate"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Seasonal Lecturer"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
       rankCounts["Visiting Faculty"] = 0;
     }
 
@@ -658,7 +638,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   const grantTypesCounts = useMemo(() => {
     const typeData = {
       contract: { count: 0, funding: 0 },
-      grant: { count: 0, funding: 0 }
+      grant: { count: 0, funding: 0 },
     };
 
     filteredGrants.forEach((grant) => {
