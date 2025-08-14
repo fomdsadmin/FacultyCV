@@ -467,7 +467,7 @@ type Query {
 		@aws_auth(cognito_groups: ["Faculty","Assistant","FacultyAdmin","Admin","DepartmentAdmin"])
 	getAllSectionCVData(data_section_id: String, data_section_id_list: [String]): CVDataResponse
 		@aws_auth(cognito_groups: ["Admin"])
-	getDepartmentCVData(data_section_id: String!, dept: String!, title: String): CVDataResponse
+	getDepartmentCVData(data_section_id: String!, dept: String!, title: String, user_ids: [String]): CVDataResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	getFacultyWideCVData(data_section_id: String!, faculty: String!, title: String): CVDataResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])

@@ -285,8 +285,24 @@ export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
     }`;
 };
 
-export const getDepartmentCVDataQuery = (data_section_id, dept, title) => {
-  if (title) {
+export const getDepartmentCVDataQuery = (data_section_id, dept, title, user_ids) => {
+  if (user_ids) {
+    return `query GetDepartmentCVData {
+        getDepartmentCVData (
+            data_section_id: "${data_section_id}",
+            dept: "${dept}",
+            title: "${title}",
+            user_ids: [${user_ids.map((id) => `"${id}"`).join(", ")}]
+        ) {
+            data {
+                data_section_id
+                data_details
+            }
+            total_count
+            returned_count
+        }
+    }`;
+  } else if (title & !user_ids) {
     return `query GetDepartmentCVData {
         getDepartmentCVData (
             data_section_id: "${data_section_id}",
@@ -302,7 +318,7 @@ export const getDepartmentCVDataQuery = (data_section_id, dept, title) => {
         }
     }`;
   } else {
-      return `query GetDepartmentCVData {
+    return `query GetDepartmentCVData {
           getDepartmentCVData (
               data_section_id: "${data_section_id}",
               dept: "${dept}"
@@ -397,19 +413,19 @@ export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
 `;
 
 export const getAuditViewQuery = (args = {}) => {
-    const argList = [];
-    if (args.logged_user_id) argList.push(`logged_user_id: "${args.logged_user_id}"`);
-    if (args.page_number) argList.push(`page_number: ${args.page_number}`);
-    if (args.page_size) argList.push(`page_size: ${args.page_size}`);
-    if (args.email) argList.push(`email: "${args.email}"`);
-    if (args.first_name) argList.push(`first_name: "${args.first_name}"`);
-    if (args.last_name) argList.push(`last_name: "${args.last_name}"`);
-    if (args.action) argList.push(`action: "${args.action}"`);
-    if (args.start_date) argList.push(`start_date: "${args.start_date}"`);
-    if (args.end_date) argList.push(`end_date: "${args.end_date}"`);
+  const argList = [];
+  if (args.logged_user_id) argList.push(`logged_user_id: "${args.logged_user_id}"`);
+  if (args.page_number) argList.push(`page_number: ${args.page_number}`);
+  if (args.page_size) argList.push(`page_size: ${args.page_size}`);
+  if (args.email) argList.push(`email: "${args.email}"`);
+  if (args.first_name) argList.push(`first_name: "${args.first_name}"`);
+  if (args.last_name) argList.push(`last_name: "${args.last_name}"`);
+  if (args.action) argList.push(`action: "${args.action}"`);
+  if (args.start_date) argList.push(`start_date: "${args.start_date}"`);
+  if (args.end_date) argList.push(`end_date: "${args.end_date}"`);
 
-    return `query getAuditView {
-        getAuditView(${argList.join(', ')}) {
+  return `query getAuditView {
+        getAuditView(${argList.join(", ")}) {
             records {
                 log_view_id
                 ts
@@ -429,7 +445,6 @@ export const getAuditViewQuery = (args = {}) => {
             total_count
     }
 }`;
-
 };
 
 export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution_name) => `

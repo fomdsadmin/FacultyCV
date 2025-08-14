@@ -2,45 +2,43 @@ import React from "react";
 import { useState, useEffect } from "react";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
-import { getAllTemplates, getAllUsers } from "../graphql/graphqlHelpers.js";
+import { getAllUsers, getAllSections, getDepartmentCVData } from "../graphql/graphqlHelpers.js";
 import "../CustomStyles/scrollbar.css";
-import { getDownloadUrl, uploadLatexToS3 } from "../utils/reportManagement.js";
 import { useNotification } from "../Contexts/NotificationContext.jsx";
-import { getUserId } from "../getAuthToken.js";
-import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
-import PDFViewer from "../Components/PDFViewer.jsx";
 
 const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
-  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState([]); // Changed to array for multiple selection
   const [departmentUsers, setDepartmentUsers] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState("");
-  const [templates, setTemplates] = useState([]);
+  const [selectedReportType, setSelectedReportType] = useState(""); // publications or other
   const [loading, setLoading] = useState(true);
-  const [startYear, setStartYear] = useState(new Date().getFullYear() - 10);
-  const [endYear, setEndYear] = useState(new Date().getFullYear());
-  const [buildingLatex, setBuildingLatex] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
-  const [downloadUrlDocx, setDownloadUrlDocx] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState(""); // for super admin
   const [allDepartments, setAllDepartments] = useState([]); // for super admin
   const [allUsers, setAllUsers] = useState([]); // store all users for filtering
   const [userSearchTerm, setUserSearchTerm] = useState(""); // New state for user search
   const [dropdownOpen, setDropdownOpen] = useState(false); // Add this state to manage the dropdown visibility
+  const [selectAll, setSelectAll] = useState(true); // Track if all users are selected
+  const [dataSections, setDataSections] = useState([]); // Store data sections
   const { setNotification } = useNotification();
 
-  const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
+
+  const reportTypes = [
+    { value: "publications", label: "Publications Report" },
+  ];
 
   useEffect(() => {
-    // Initial load: templates and all users
+    // Initial load: all users and data sections
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const templatesData = await getAllTemplates();
-        setTemplates(templatesData);
-
-        const users = await getAllUsers();
+        const [users, sections] = await Promise.all([
+          getAllUsers(),
+          getAllSections()
+        ]);
+        
         setAllUsers(users);
+        setDataSections(sections);
 
         if (userInfo && userInfo.role === "Admin") {
           const departments = Array.from(
@@ -87,9 +85,10 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
         );
       }
       setDepartmentUsers(usersInDepartment);
-      setSelectedUser(""); // reset user selection when department changes
+      // Select all users by default
+      setSelectedUsers(usersInDepartment.map(user => user.user_id));
+      setSelectAll(true);
       setDownloadUrl(null);
-      setDownloadUrlDocx(null);
     }
     // eslint-disable-next-line
   }, [selectedDepartment, allUsers]);
@@ -104,57 +103,142 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
           (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
       );
       setDepartmentUsers(usersInDepartment);
+      // Select all users by default
+      setSelectedUsers(usersInDepartment.map(user => user.user_id));
+      setSelectAll(true);
     }
     // eslint-disable-next-line
   }, [allUsers, userInfo]);
 
-  // When isDepartmentWide changes, update selectedUser accordingly
+  // When isDepartmentWide changes, update selectedUsers accordingly
   useEffect(() => {
-    if (selectedUser === "All") {
-      setSelectedUser("");
-      setSelectedTemplate("");
-      setDownloadUrl(null);
-      setDownloadUrlDocx(null);
-    }
+    // Update selectAll state when selectedUsers changes
+    setSelectAll(selectedUsers.length === departmentUsers.length && departmentUsers.length > 0);
     // eslint-disable-next-line
-  }, []);
+  }, [selectedUsers, departmentUsers]);
 
-  const handleUserSelect = (event) => {
-    setSelectedUser(event.target.value);
+  const handleUserToggle = (userId) => {
+    setSelectedUsers(prev => {
+      if (prev.includes(userId)) {
+        return prev.filter(id => id !== userId);
+      } else {
+        return [...prev, userId];
+      }
+    });
     setDownloadUrl(null);
-    setDownloadUrlDocx(null);
-    if (event.target.value === "") {
-      setSelectedTemplate("");
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(departmentUsers.map(user => user.user_id));
     }
-  };
-
-  const handleTemplateSelect = (template) => {
-    setSelectedTemplate(template);
-    // Reset download URLs when template changes
     setDownloadUrl(null);
-    setDownloadUrlDocx(null);
   };
 
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
+  const handleReportTypeSelect = (reportType) => {
+    setSelectedReportType(reportType);
+    setDownloadUrl(null);
+  };
+
+  // Helper function to convert publication data to CSV
+  const convertPublicationsToCSV = (publicationsData) => {
+    if (!publicationsData || publicationsData.length === 0) {
+      return "No publications data found";
+    }
+
+    // Define CSV headers
+    const headers = [
+      "End Date",
+      "Doi",
+      "Link",
+      "Title",
+      "Journal Title",
+      "Keywords",
+      "Author Names", 
+      "Publication ID",
+      "Volume",
+      "Article Number",
+      "Citation",
+      "Role",
+      "Publication Type",
+      "Publication Status",
+      "Peer Reviewed"
+      
+    ];
+
+    // Create CSV rows
+    const csvRows = [headers.join(",")];
+
+    publicationsData.forEach((publication) => {
+      try {
+        const details = JSON.parse(publication.data_details);
+        
+        // Extract relevant fields, handling different data structures and empty values
+        const endDate = details.end_date || details.year_published || details.year || "";
+        const doi = details.doi || "";
+        const link = details.link || details.url || "";
+        const title = details.title || details.publication_title || "";
+        const journalTitle = details.journal_title || details.journal || details.publication_name || details.source || "";
+        const keywords = details.keywords || "";
+        const authorNames = details.author_names || details.authors || "";
+        const publicationId = details.publication_id || "";
+        const volume = details.volume || "";
+        const articleNumber = details.article_number || "";
+        const citation = details.citation || "";
+        const role = details.role || "";
+        const publicationType = details.publication_type || details.type || "";
+        const publicationStatus = details.publication_status || "";
+        const peerReviewed = details.peer_reviewed || "";
+
+        // Escape quotes and commas in CSV values
+        const escapeCSV = (value) => {
+          if (value == null || value === undefined) return "";
+          if (typeof value !== "string") value = String(value);
+          if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value;
+        };
+
+        const row = [
+          escapeCSV(endDate),
+          escapeCSV(doi),
+          escapeCSV(link),
+          escapeCSV(title),
+          escapeCSV(journalTitle),
+          escapeCSV(keywords),
+          escapeCSV(authorNames),
+          escapeCSV(publicationId),
+          escapeCSV(volume),
+          escapeCSV(articleNumber),
+          escapeCSV(citation),
+          escapeCSV(role),
+          escapeCSV(publicationType),
+          escapeCSV(publicationStatus),
+          escapeCSV(peerReviewed)
+        ];
+
+        csvRows.push(row.join(","));
+      } catch (error) {
+        console.error("Error parsing publication data:", error);
+        // Add empty row if parsing fails to maintain structure
+        const emptyRow = new Array(headers.length).fill("");
+        csvRows.push(emptyRow.join(","));
+      }
+    });
+
+    return csvRows.join("\n");
   };
 
   const handleUserSearchChange = (event) => {
     setUserSearchTerm(event.target.value);
     // Automatically open dropdown when user starts typing in search field
-    if (event.target.value && !dropdownOpen && !selectedUser) {
+    if (event.target.value && !dropdownOpen) {
       setDropdownOpen(true);
     }
-    // Close dropdown if search field is emptied
-    if (!event.target.value && dropdownOpen) {
-      // Optional: you can comment this out if you prefer to keep the dropdown open when clearing search
-      // setDropdownOpen(false);
-    }
   };
-
-  const searchedTemplates = templates
-    .filter((template) => template.title.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => a.title.localeCompare(b.title));
 
   // Filter users based on search term
   const filteredUsers = departmentUsers.filter(user => 
@@ -165,58 +249,105 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
     (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase()))
   );
 
-  // Stub for department-wide generation has been removed
-
-  const handleGenerate = async () => {
-    if (!selectedUser || !selectedTemplate) {
-      alert("Please select both a user and a template");
+  const handleGenerateReport = async () => {
+    if (selectedUsers.length === 0 || !selectedReportType) {
+      alert("Please select at least one faculty member and a report type");
       return;
     }
 
-    setBuildingLatex(true);
+    setGeneratingReport(true);
 
     try {
-      // Find the selected user object
-      const userObject = departmentUsers.find((user) => user.user_id === selectedUser);
+      // Find the publications section IDs (both regular and other publications)
+      const publicationSection = dataSections.find(
+        (section) => section.title.includes("Publication") && !section.title.includes("Other")
+      );
+      const otherPublicationSection = dataSections.find(
+        (section) => section.title.includes("Publication") && section.title.includes("Other")
+      );
 
-      // Update template with selected date range
-      const templateWithDates = {
-        ...selectedTemplate,
-        start_year: startYear,
-        end_year: endYear,
-      };
+      if (!publicationSection && !otherPublicationSection) {
+        throw new Error("No publications sections found");
+      }
 
-      const key = `${userObject.user_id}/${selectedTemplate.template_id}/resume.tex`;
+      // Determine department and user IDs for the query
+      let departmentForQuery;
+      let userIdsForQuery = null;
 
-      // Build LaTeX for the selected user
-      const latex = await buildLatex(userObject, templateWithDates);
+      if (selectAll) {
+        // If all users are selected, use department-wide approach
+        if (userInfo.role === "Admin") {
+          departmentForQuery = selectedDepartment === "All" ? 'All' : selectedDepartment;
+        } else if (userInfo.role.startsWith("Admin-")) {
+          departmentForQuery = userInfo.role.split("-")[1];
+        }
+        console.log("Fetching publications for entire department:", departmentForQuery);
+      } else {
+        // If specific users are selected, use user IDs approach
+        departmentForQuery = ''; // Empty string when using user IDs
+        userIdsForQuery = selectedUsers;
+        console.log("Fetching publications for specific users:", userIdsForQuery);
+      }
 
-      // Upload .tex to S3
-      await uploadLatexToS3(latex, key);
+      // Create promises for both publication types
+      const promises = [];
 
-      // Wait till URLs for both PDF and DOCX are available
-      const pdfUrl = await getDownloadUrl(key.replace("tex", "pdf"), 0);
-      const docxUrl = await getDownloadUrl(key.replace("tex", "docx"), 0);
+      if (publicationSection) {
+        promises.push(
+          getDepartmentCVData(publicationSection.data_section_id, departmentForQuery, "All", userIdsForQuery)
+            .then((response) => ({ type: "publication", data: response.data }))
+            .catch(() => ({ type: "publication", data: [] }))
+        );
+      }
 
+      if (otherPublicationSection) {
+        promises.push(
+          getDepartmentCVData(otherPublicationSection.data_section_id, departmentForQuery, "All", userIdsForQuery)
+            .then((response) => ({ type: "otherPublication", data: response.data }))
+            .catch(() => ({ type: "otherPublication", data: [] }))
+        );
+      }
+
+      // Execute all promises in parallel
+      const results = await Promise.all(promises);
+
+      // Combine all publications data
+      let allPublications = [];
+      results.forEach((result) => {
+        if (result.data && result.data.length > 0) {
+          allPublications.push(...result.data);
+        }
+      });
+
+      console.log("Combined publications data received:", allPublications);
+
+      // Convert to CSV
+      const csvData = convertPublicationsToCSV(allPublications);
+      
+      // Create download blob
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      setDownloadUrl(url);
       setNotification(true);
-      setDownloadUrl(pdfUrl);
-      setDownloadUrlDocx(docxUrl);
     } catch (error) {
-      console.error("Error generating CV:", error);
-      alert("Error generating CV. Please try again.");
+      console.error("Error generating report:", error);
+      alert(`Error generating report: ${error.message}`);
     }
 
-    setBuildingLatex(false);
+    setGeneratingReport(false);
   };
 
-  const handleDownload = (url, format) => {
-    if (url) {
+  const handleDownload = () => {
+    if (downloadUrl) {
       const link = document.createElement("a");
-      link.href = url;
-      link.download = `${selectedUser}_${selectedTemplate.title}_CV.${format}`;
+      link.href = downloadUrl;
+      link.download = `${selectedReportType}_report_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      // Clean up the URL
+      URL.revokeObjectURL(downloadUrl);
     }
   };
 
@@ -229,265 +360,190 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
             <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
           </div>
         ) : (
-          <div className="">
-            <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">Generate CV</h1>
+          <div className="max-w-7xl">
+            <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">Department Reports</h1>
 
-            {/* Department Field */}
-            <div className="my-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-              {userInfo.role === "Admin" ? (
-                <select
-                  className="select select-bordered w-full max-w-md"
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                >
-                  <option value="All">All</option>
-                  {allDepartments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  className="input input-bordered w-full max-w-md bg-gray-100"
-                  value={userInfo.role.startsWith("Admin-") ? userInfo.role.split("-")[1] : ""}
-                  disabled
-                />
-              )}
-            </div>
+            {/* Main Content Grid - Left and Right Sections */}
+            <div className="flex flex-col lg:flex-row gap-6 mb-8">
+              
+              {/* Left Section - Department and Report Type */}
+              <div className="flex-1 space-y-6 max-w-md">
+                {/* Department Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                  {userInfo.role === "Admin" ? (
+                    <select
+                      className="select select-bordered w-full"
+                      value={selectedDepartment}
+                      onChange={(e) => setSelectedDepartment(e.target.value)}
+                    >
+                      <option value="All">All Departments</option>
+                      {allDepartments.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      className="input input-bordered w-full bg-gray-100"
+                      value={userInfo.role.startsWith("Admin-") ? userInfo.role.split("-")[1] : ""}
+                      disabled
+                    />
+                  )}
+                </div>
 
-            {/* User Selection Dropdown */}
-            <div className="my-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
-              <div className="flex flex-col gap-4">
-                {/* Search field for users */}
-                <input
-                  type="text"
-                  className="input input-bordered w-full max-w-md"
-                  placeholder="Search by name, email, or username..."
-                  value={userSearchTerm}
-                  onChange={handleUserSearchChange}
-                  disabled={selectedUser !== ""} // Also disable when a user is selected
-                />
-                
-                {/* Custom dropdown */}
-                <div className="relative w-full max-w-md">
-                  <button
-                    type="button"
-                    className="select select-bordered w-full text-left flex items-center justify-between"
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span>
-                        {selectedUser ? (
-                          departmentUsers.find(u => u.user_id === selectedUser)?.preferred_name || 
-                          departmentUsers.find(u => u.user_id === selectedUser)?.first_name + " " + 
-                          departmentUsers.find(u => u.user_id === selectedUser)?.last_name
-                        ) : "Choose a faculty member..."}
-                      </span>
-                      <div className="flex items-center">
-                        {selectedUser && (
-                          <svg
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent dropdown from toggling
-                              setSelectedUser("");
-                              setDownloadUrl(null);
-                              setDownloadUrlDocx(null);
-                              setSelectedTemplate("");
-                            }}
-                            className="w-4 h-4 mr-2 text-gray-500 hover:text-black cursor-pointer"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        )}
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </button>
-                  
-                  {dropdownOpen && (
-                    <div className="absolute z-10 w-full bg-white shadow-lg max-h-[40vh] rounded-md py-1 mt-1 overflow-auto custom-scrollbar">
-                      <div 
-                        className="cursor-pointer hover:bg-gray-100 px-4 py-2"
-                        onClick={() => {
-                          setSelectedUser("");
-                          setDropdownOpen(false);
-                          setUserSearchTerm(""); // Clear search term
-                        }}
+                {/* Report Type Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
+                  <div className="space-y-3">
+                    {reportTypes.map((reportType) => (
+                      <div
+                        key={reportType.value}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          selectedReportType === reportType.value
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                        onClick={() => handleReportTypeSelect(reportType.value)}
                       >
-                        ...
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            className="radio radio-primary"
+                            checked={selectedReportType === reportType.value}
+                            readOnly
+                          />
+                          <div>
+                            <div className="text-sm font-medium text-gray-700">{reportType.label}</div>
+                          </div>
+                        </div>
                       </div>
-                      
-                      {filteredUsers.map((user) => (
-                        <div 
-                          key={user.user_id}
-                          className="cursor-pointer hover:bg-gray-100 px-4 py-2"
-                          onClick={() => {
-                            setSelectedUser(user.user_id);
-                            setDropdownOpen(false);
-                            setUserSearchTerm(""); // Clear search term
-                          }}
-                        >
-                          <div className="font-medium">
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Section - Faculty Selection */}
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Members</label>
+                
+                {/* Search and Select All Controls */}
+                <div className="space-y-4 mb-4">
+                  <input
+                    type="text"
+                    className="input input-bordered w-full text-sm font-medium"
+                    placeholder="Search by name, email, or username..."
+                    value={userSearchTerm}
+                    onChange={handleUserSearchChange}
+                  />
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAll}
+                    />
+                    <label className="text-sm font-medium text-gray-700">
+                      Select All ({departmentUsers.length} faculty members)
+                    </label>
+                  </div>
+                </div>
+
+                {/* Faculty List */}
+                <div className="border rounded-lg max-h-80 overflow-y-auto custom-scrollbar bg-white">
+                  {filteredUsers.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500">
+                      {userSearchTerm ? "No faculty members match your search" : "No faculty members found"}
+                    </div>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <div key={user.user_id} className="flex items-center gap-2 px-4 py-3 border-b hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm checkbox-secondary"
+                          checked={selectedUsers.includes(user.user_id)}
+                          onChange={() => handleUserToggle(user.user_id)}
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm text-gray-900">
                             {(user.preferred_name || user.first_name) + " " + user.last_name}
                           </div>
                           {user.email && user.email.trim() !== "" && user.email !== "null" && user.email !== "undefined" && (
-                            <div className="text-sm text-gray-500">{user.email}</div>
-                          )}
-                          {user.username && user.username.trim() !== "" && user.username !== "null" && user.username !== "undefined" && (
-                            <div className="text-sm text-gray-500">{user.username}</div>
+                            <div className="text-xs text-gray-500">{user.email}</div>
                           )}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))
                   )}
                 </div>
                 
-                {/* Removed checkbox for department-wide cv (all fac members) */}
+                {/* Selected Count */}
+                <div className="mt-2 text-sm text-gray-600 align-right text-right">
+                  {selectedUsers.length} / {departmentUsers.length} selected
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col w-full h-full pb-8">
-              {/* Left Panel: Template List */}
-              <div className="flex flex-col h-full">
-                <h2 className="text-sm font-medium text-gray-700 mb-2">Templates</h2>
-
-                {/* List of Templates as a select dropdown (same as above )*/}
-                <div className="mb-4">
-                  <select
-                    className={`select select-bordered w-full max-w-md ${
-                      !selectedUser ? "select-disabled bg-gray-100" : ""
-                    }`}
-                    value={selectedTemplate?.template_id || ""}
-                    onChange={(e) => {
-                      const templateId = e.target.value;
-                      const template = searchedTemplates.find((t) => t.template_id === templateId);
-                      handleTemplateSelect(template || "");
-                    }}
-                    disabled={!selectedUser}
-                  >
-                    <option value="">Choose a template...</option>
-                    {searchedTemplates.map((template) => (
-                      <option key={template.template_id} value={template.template_id}>
-                        {template.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Date Range Picker and Generate Button */}
-                {selectedTemplate && (
-                  <div className="mt-auto">
-                    <div className="flex space-x-2">
-                      <label className="block font-medium text-zinc-600 mt-4">Select Date Range (Year)</label>
-                      <select
-                        className="border rounded px-4 py-4"
-                        value={startYear}
-                        onChange={(e) => setStartYear(Number(e.target.value))}
-                      >
-                        {yearOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="self-center">to</span>
-                      <select
-                        className="border rounded px-4 py-4"
-                        value={endYear}
-                        onChange={(e) => setEndYear(Number(e.target.value))}
-                      >
-                        {yearOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Download Buttons */}
-                    {(downloadUrl || downloadUrlDocx) && (
-                      <div className="flex gap-x-2 mr-2 mt-4">
-                        {downloadUrl && (
-                          <button className="w-1/2 btn btn-success" onClick={() => handleDownload(downloadUrl, "pdf")}>
-                            Download PDF
-                          </button>
-                        )}
-                        {downloadUrlDocx && (
-                          <button
-                            className="w-1/2 btn btn-success"
-                            onClick={() => handleDownload(downloadUrlDocx, "docx")}
-                          >
-                            Download DOCX
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Right Panel: Preview/Info */}
-              <div
-                className="flex-1 flex flex-col items-center bg-gray-50 rounded-lg 
-                        shadow-md px-8 overflow-auto custom-scrollbar h-full mt-4"
+            {/* Generate Report Button */}
+            <div className="mb-6">
+              <button
+                className="btn btn-primary btn-md w-full max-w-md"
+                onClick={handleGenerateReport}
+                disabled={generatingReport || selectedUsers.length === 0 || !selectedReportType}
               >
-                <div className="w-full h-full max-w-2xl p-8">
-                  {!selectedUser ? (
-                    <div className="text-center text-gray-500">
-                      <p>Choose a faculty member from the dropdown above to get started.</p>
-                    </div>
-                  ) : !selectedTemplate ? (
-                    <div className="text-center text-gray-500">
-                      <p>Choose a template from the dropdown to continue.</p>
-                    </div>
-                  ) : downloadUrl || downloadUrlDocx ? (
-                    <div className="w-full h-full">
-                      <div className="text-center mb-4">
-                        <h3 className="text-xl font-semibold mb-2 text-green-600">CV Generated Successfully!</h3>
-                      </div>
-                      {downloadUrl && (
-                        <div className="w-full h-full">
-                          <PDFViewer url={downloadUrl} />
-                        </div>
-                      )}
-                    </div>
-                  ) : buildingLatex ? (
-                    <div className="text-center">
-                      <p className=" text-gray-600">
-                        Please wait while we generate the CV, you will be notified once it's ready.
+                {generatingReport ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Generating Report...
+                  </>
+                ) : (
+                  "Generate Report"
+                )}
+              </button>
+            </div>
+
+            {/* Report Status and Download Section */}
+            <div className="space-y-4">
+              {/* Report Ready Section */}
+              {downloadUrl && (
+                <div className="p-6 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-800">Report Ready!</h3>
+                      <p className="text-sm text-green-600">
+                        Your {reportTypes.find(rt => rt.value === selectedReportType)?.label} is ready for download.
                       </p>
                     </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className=" text-gray-600">Click "Generate" to create the CV with the selected parameters.</p>
-                    </div>
-                  )}
+                    <button
+                      className="btn btn-success btn-md"
+                      onClick={handleDownload}
+                      disabled={!downloadUrl}
+                    >
+                      Download CSV
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {selectedTemplate && (
-                <div className="mt-auto">
-                  {/* Generate Button */}
-                  <button
-                    className="w-full btn btn-primary my-4"
-                    onClick={handleGenerate}
-                    disabled={buildingLatex || !selectedUser || !selectedTemplate}
-                  >
-                    {buildingLatex ? "Generating..." : "Generate"}
-                  </button>
+              {/* Report Generating Section */}
+              {generatingReport && (
+                <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="loading loading-spinner loading-md text-blue-600"></span>
+                    <div>
+                      <h3 className="text-lg font-semibold text-blue-800">Generating Report...</h3>
+                      <p className="text-blue-700">
+                        Please wait while we compile the report for {selectedUsers.length} faculty member(s).
+                        This may take a few moments...
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-
-            {/* Removed DepartmentGenerateAllConfirmModal */}
           </div>
         )}
       </main>

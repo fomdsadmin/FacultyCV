@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import PageContainer from './PageContainer.jsx';
-import FacultyAdminMenu from '../Components/FacultyAdminMenu.jsx';
-import ManageUser from '../Components/ManageUser.jsx';
-import UserCard from '../Components/UserCard.jsx';
-import AddUserModal from '../Components/AddUserModal.jsx';
-import { getAllUsers } from '../graphql/graphqlHelpers.js';
+import React, { useState, useEffect } from "react";
+import PageContainer from "./PageContainer.jsx";
+import FacultyAdminMenu from "../Components/FacultyAdminMenu.jsx";
+import ManageUser from "../Components/ManageUser.jsx";
+import AddUserModal from "../Components/AddUserModal.jsx";
+import { getAllUsers } from "../graphql/graphqlHelpers.js";
 
 const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [users, setUsers] = useState([]);
@@ -13,16 +12,16 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [faculty, setFaculty] = useState('');
+  const [faculty, setFaculty] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   // Determine which faculty this admin manages
   useEffect(() => {
     if (userInfo?.role) {
-      if (userInfo.role === 'Admin') {
-        setFaculty('All');
-      } else if (userInfo.role.startsWith('FacultyAdmin-')) {
-        setFaculty(userInfo.role.split('FacultyAdmin-')[1]);
+      if (userInfo.role === "Admin") {
+        setFaculty("All");
+      } else if (userInfo.role.startsWith("FacultyAdmin-")) {
+        setFaculty(userInfo.role.split("FacultyAdmin-")[1]);
       }
     }
   }, [userInfo]);
@@ -35,23 +34,24 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setLoading(true);
     try {
       const allUsers = await getAllUsers();
-      
+
       let filteredUsers;
-      if (userInfo.role === 'Admin') {
+      if (userInfo.role === "Admin") {
         // Admin can see all users except themselves
         filteredUsers = allUsers.filter((user) => user.email !== userInfo.email);
-      } else if (userInfo.role.startsWith('FacultyAdmin-')) {
+      } else if (userInfo.role.startsWith("FacultyAdmin-")) {
         // FacultyAdmin can only see users in their faculty, excluding themselves
-        const facultyName = userInfo.role.split('FacultyAdmin-')[1];
-        filteredUsers = allUsers.filter(user => 
-          user.email !== userInfo.email &&
-          (user.primary_faculty === facultyName || user.secondary_faculty === facultyName)
+        const facultyName = userInfo.role.split("FacultyAdmin-")[1];
+        filteredUsers = allUsers.filter(
+          (user) =>
+            user.email !== userInfo.email &&
+            (user.primary_faculty === facultyName || user.secondary_faculty === facultyName)
         );
       }
-      
+
       setUsers(filteredUsers);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     } finally {
       setLoading(false);
     }
@@ -77,9 +77,7 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           <button
             key={filter}
             className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-              activeFilter === filter
-                ? "bg-blue-600 text-white shadow"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             onClick={() => onSelect(filter)}
           >
@@ -128,6 +126,10 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     setActiveUser(user[0]);
   };
 
+  const handleImpersonateClick = (value) => {
+    // TODO
+  };
+
   const handleBack = () => {
     setActiveUser(null);
   };
@@ -139,8 +141,8 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
   return (
     <PageContainer>
-      <FacultyAdminMenu 
-        getCognitoUser={getCognitoUser} 
+      <FacultyAdminMenu
+        getCognitoUser={getCognitoUser}
         userName={userInfo.preferred_name || userInfo.first_name}
         userInfo={userInfo}
         toggleViewMode={toggleViewMode}
@@ -154,9 +156,7 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           <div>
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">
-                  {faculty} Faculty Users
-                </h1>
+                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">{faculty} Faculty Users</h1>
                 <div className="m-4 flex">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
@@ -195,25 +195,74 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                     <div className="block text-m mb-1 mt-6 text-zinc-600">No {faculty} Faculty Users Found</div>
                   </div>
                 ) : (
-                  searchedUsers.map((user) => (
-                    <UserCard
-                      onClick={handleManageClick}
-                      key={user.user_id}
-                      id={user.user_id}
-                      firstName={user.first_name}
-                      lastName={user.last_name}
-                      email={user.email}
-                      role={user.role}
-                    />
-                  ))
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mx-4">
+                    <table className="w-full">
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            User
+                          </th>
+                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            Role
+                          </th>
+                          {/* <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            Rank
+                          </th> */}
+                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {searchedUsers.map((user, index) => (
+                          <tr
+                            key={user.user_id}
+                            className={`transition-colors duration-150 hover:bg-blue-50/50 ${
+                              index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                            }`}
+                          >
+                            <td className="px-6 py-5">
+                              <div className="flex flex-col">
+                                <div className="text-sm font-semibold text-gray-900 mb-1">
+                                  {user.first_name} {user.last_name}
+                                </div>
+                                <div className="text-sm text-gray-500">{user.email}</div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-5 text-center">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                {user.role}
+                              </span>
+                            </td>
+                            {/* <td className="px-6 py-5 text-center">
+                              <span className="text-sm font-medium text-gray-700">
+                                {user.rank && user.rank !== 'null' && user.rank !== '' && user.rank.trim() !== '' ? (
+                                  user.rank
+                                ) : (
+                                  <span className="text-gray-400 italic">Not specified</span>
+                                )}
+                              </span>
+                            </td> */}
+                            <td className="px-6 py-5">
+                              <div className="flex justify-center gap-3">
+                                <button
+                                  onClick={() => handleManageClick(user.user_id)}
+                                  className="btn btn-primary btn-sm text-white"
+                                >
+                                  Manage
+                                </button>
+                                <button className="btn btn-error btn-sm text-white">Remove</button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             ) : (
-              <ManageUser
-                user={activeUser}
-                fetchAllUsers={fetchAllUsers}
-                onBack={handleBack}
-              />
+              <ManageUser user={activeUser} fetchAllUsers={fetchAllUsers} onBack={handleBack} />
             )}
           </div>
         )}

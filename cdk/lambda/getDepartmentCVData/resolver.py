@@ -35,6 +35,8 @@ def filter_data_by_section(data_details, section_title):
             'amount': data_details.get('amount'),
             'type': data_details.get('type'),
         }
+    elif 'All' in section_title:
+        return data_details
 
 def getDepartmentCVData(arguments):
     connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
@@ -44,11 +46,30 @@ def getDepartmentCVData(arguments):
     data_section_id = arguments.get('data_section_id')
     dept = arguments.get('dept')
     section_title = arguments.get('title')
+    user_ids = arguments.get('user_ids')  # New parameter for specific user IDs
     
     if not data_section_id:
         raise ValueError("data_section_id is required")
     
-    if dept == 'All':
+    # If user_ids are provided, use them directly (highest priority)
+    if user_ids and len(user_ids) > 0:
+        print(f"Fetching data for specific user IDs: {user_ids}")
+        user_ids_placeholder = ','.join(['%s'] * len(user_ids))
+        # Get total count
+        cursor.execute(
+            f'SELECT COUNT(*) FROM user_cv_data WHERE data_section_id = %s AND user_id IN ({user_ids_placeholder}) AND archive != true',
+            [data_section_id] + user_ids
+        )
+        total_count = cursor.fetchone()[0]
+        
+        # Get the actual data
+        cursor.execute(
+            f'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND user_id IN ({user_ids_placeholder}) AND archive != true',
+            [data_section_id] + user_ids
+        )
+    # If dept is 'All' or empty string, get all data
+    elif dept == 'All' or dept == '' or dept is None:
+        print("Fetching data for all users")
         cursor.execute(
             'SELECT COUNT(*) FROM user_cv_data WHERE data_section_id = %s AND archive != true',
             (data_section_id,)
@@ -58,29 +79,31 @@ def getDepartmentCVData(arguments):
             'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND archive != true LIMIT 10000',
             (data_section_id,)
         )
+    # Otherwise, filter by department
     else:
+        print(f"Fetching data for department: {dept}")
         cursor.execute(
             'SELECT user_id FROM users WHERE primary_department = %s',
             (dept,)
         )
-        user_ids = [row[0] for row in cursor.fetchall()]
-        if not user_ids:
+        dept_user_ids = [row[0] for row in cursor.fetchall()]
+        if not dept_user_ids:
             # No users found for this department
             total_count = 0
             results = []
         else:
-            user_ids_placeholder = ','.join(['%s'] * len(user_ids))
+            user_ids_placeholder = ','.join(['%s'] * len(dept_user_ids))
             # Get total count
             cursor.execute(
                 f'SELECT COUNT(*) FROM user_cv_data WHERE data_section_id = %s AND user_id IN ({user_ids_placeholder}) AND archive != true',
-                [data_section_id] + user_ids
+                [data_section_id] + dept_user_ids
             )
             total_count = cursor.fetchone()[0]
             
             # Get the actual data
             cursor.execute(
                 f'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND user_id IN ({user_ids_placeholder}) AND archive != true',
-                [data_section_id] + user_ids
+                [data_section_id] + dept_user_ids
             )
         
     results = cursor.fetchall()
