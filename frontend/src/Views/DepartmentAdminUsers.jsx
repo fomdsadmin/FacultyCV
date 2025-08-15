@@ -69,7 +69,6 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
       }
     }
     
-    console.log('No primary rank found for user:', userId);
     return null;
   };
 

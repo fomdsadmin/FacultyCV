@@ -5,6 +5,13 @@ import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import { getAllUsers, getAllSections, getDepartmentCVData } from "../graphql/graphqlHelpers.js";
 import "../CustomStyles/scrollbar.css";
 import { useNotification } from "../Contexts/NotificationContext.jsx";
+import { 
+  reportTypes, 
+  csvFieldConfigs, 
+  getReportTypeConfig, 
+  isReportTypeSupported,
+  getCsvFieldConfig 
+} from "../Config/reportTypesConfig.js";
 
 const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   const [selectedUsers, setSelectedUsers] = useState([]); // Changed to array for multiple selection
@@ -21,11 +28,6 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   const [selectAll, setSelectAll] = useState(true); // Track if all users are selected
   const [dataSections, setDataSections] = useState([]); // Store data sections
   const { setNotification } = useNotification();
-
-
-  const reportTypes = [
-    { value: "publications", label: "Publications Report" },
-  ];
 
   useEffect(() => {
     // Initial load: all users and data sections
@@ -142,87 +144,46 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
     setDownloadUrl(null);
   };
 
-  // Helper function to convert publication data to CSV
-  const convertPublicationsToCSV = (publicationsData) => {
-    if (!publicationsData || publicationsData.length === 0) {
-      return "No publications data found";
+  // Generic CSV conversion function
+  const convertDataToCSV = (data, reportType) => {
+    if (!data || data.length === 0) {
+      return `No ${reportType} data found`;
     }
 
-    // Define CSV headers
-    const headers = [
-      "End Date",
-      "Doi",
-      "Link",
-      "Title",
-      "Journal Title",
-      "Keywords",
-      "Author Names", 
-      "Publication ID",
-      "Volume",
-      "Article Number",
-      "Citation",
-      "Role",
-      "Publication Type",
-      "Publication Status",
-      "Peer Reviewed"
-      
-    ];
+    const config = getCsvFieldConfig(reportType);
+    if (!config) {
+      return "Unsupported report type";
+    }
 
-    // Create CSV rows
+    const { headers, fieldMappings } = config;
     const csvRows = [headers.join(",")];
 
-    publicationsData.forEach((publication) => {
+    data.forEach((item) => {
       try {
-        const details = JSON.parse(publication.data_details);
+        const details = JSON.parse(item.data_details);
         
-        // Extract relevant fields, handling different data structures and empty values
-        const endDate = details.end_date || details.year_published || details.year || "";
-        const doi = details.doi || "";
-        const link = details.link || details.url || "";
-        const title = details.title || details.publication_title || "";
-        const journalTitle = details.journal_title || details.journal || details.publication_name || details.source || "";
-        const keywords = details.keywords || "";
-        const authorNames = details.author_names || details.authors || "";
-        const publicationId = details.publication_id || "";
-        const volume = details.volume || "";
-        const articleNumber = details.article_number || "";
-        const citation = details.citation || "";
-        const role = details.role || "";
-        const publicationType = details.publication_type || details.type || "";
-        const publicationStatus = details.publication_status || "";
-        const peerReviewed = details.peer_reviewed || "";
-
-        // Escape quotes and commas in CSV values
-        const escapeCSV = (value) => {
-          if (value == null || value === undefined) return "";
-          if (typeof value !== "string") value = String(value);
-          if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-            return `"${value.replace(/"/g, '""')}"`;
+        const row = fieldMappings.map(mapping => {
+          // Try each field in the mapping until we find a value
+          let value = "";
+          for (const field of mapping.fields) {
+            if (details[field] !== undefined && details[field] !== null && details[field] !== "") {
+              value = details[field];
+              break;
+            }
           }
-          return value;
-        };
-
-        const row = [
-          escapeCSV(endDate),
-          escapeCSV(doi),
-          escapeCSV(link),
-          escapeCSV(title),
-          escapeCSV(journalTitle),
-          escapeCSV(keywords),
-          escapeCSV(authorNames),
-          escapeCSV(publicationId),
-          escapeCSV(volume),
-          escapeCSV(articleNumber),
-          escapeCSV(citation),
-          escapeCSV(role),
-          escapeCSV(publicationType),
-          escapeCSV(publicationStatus),
-          escapeCSV(peerReviewed)
-        ];
+          
+          // Special case: For presentations, if "Type of Presentation" is empty, default to "Invited Presentation"
+          if (reportType === "presentations" && mapping.header === "Type of Presentation" && value === "") {
+            value = "Invited Presentation";
+          }
+          
+          // Preserve original formatting for date fields
+          return escapeCSV(value);
+        });
 
         csvRows.push(row.join(","));
       } catch (error) {
-        console.error("Error parsing publication data:", error);
+        console.error(`Error parsing ${reportType} data:`, error);
         // Add empty row if parsing fails to maintain structure
         const emptyRow = new Array(headers.length).fill("");
         csvRows.push(emptyRow.join(","));
@@ -230,6 +191,19 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
     });
 
     return csvRows.join("\n");
+  };
+
+  // Helper function to escape CSV values and preserve date formatting
+  const escapeCSV = (value) => {
+    if (value == null || value === undefined) return "";
+    if (typeof value !== "string") value = String(value);
+    
+    // Preserve original date format - don't let JavaScript parse dates
+    // This prevents "August 2005" from becoming "8/1/2005"
+    if (value.includes(',') || value.includes('"') || value.includes("\n")) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
   };
 
   const handleUserSearchChange = (event) => {
@@ -262,6 +236,66 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
       return 0; // Maintain original order for other cases
     });
 
+  // Generic function to fetch data for any report type
+  const fetchReportData = async (reportType, departmentForQuery, userIdsForQuery) => {
+    const reportConfig = getReportTypeConfig(reportType);
+    if (!reportConfig) {
+      throw new Error(`Unknown report type: ${reportType}`);
+    }
+
+    if (!isReportTypeSupported(reportType)) {
+      throw new Error(`Report type "${reportConfig.label}" is not yet implemented`);
+    }
+
+    // Find relevant sections based on the report type configuration
+    const relevantSections = dataSections.filter(section => 
+      reportConfig.sectionNames.some(sectionName => 
+        section.title.toLowerCase().includes(sectionName.toLowerCase())
+      )
+    );
+
+    if (relevantSections.length === 0) {
+      console.warn(`No sections found for ${reportConfig.label}. Available sections:`, dataSections.map(s => s.title));
+      throw new Error(`No relevant sections found for ${reportConfig.label}. Please ensure the data sections are properly configured.`);
+    }
+
+    // Create promises for all relevant sections
+    const promises = relevantSections.map(section =>
+      getDepartmentCVData(section.data_section_id, departmentForQuery, "All", userIdsForQuery)
+        .then((response) => ({ 
+          sectionId: section.data_section_id, 
+          sectionTitle: section.title,
+          data: response.data || []
+        }))
+        .catch((error) => {
+          console.warn(`Failed to fetch data for section ${section.title}:`, error);
+          return { 
+            sectionId: section.data_section_id, 
+            sectionTitle: section.title,
+            data: [] 
+          };
+        })
+    );
+
+    // Execute all promises in parallel
+    const results = await Promise.all(promises);
+
+    // Combine all data
+    let allData = [];
+    results.forEach((result) => {
+      if (result.data && result.data.length > 0) {
+        allData.push(...result.data);
+      }
+    });
+    console.log(allData);
+    return {
+      data: allData,
+      sections: results,
+      reportType: reportType,
+      reportConfig: reportConfig
+    };
+  };
+
   const handleGenerateReport = async () => {
     if (selectedUsers.length === 0 || !selectedReportType) {
       alert("Please select at least one faculty member and a report type");
@@ -271,18 +305,6 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
     setGeneratingReport(true);
 
     try {
-      // Find the publications section IDs (both regular and other publications)
-      const publicationSection = dataSections.find(
-        (section) => section.title.includes("Publication") && !section.title.includes("Other")
-      );
-      const otherPublicationSection = dataSections.find(
-        (section) => section.title.includes("Publication") && section.title.includes("Other")
-      );
-
-      if (!publicationSection && !otherPublicationSection) {
-        throw new Error("No publications sections found");
-      }
-
       // Determine department and user IDs for the query
       let departmentForQuery;
       let userIdsForQuery = null;
@@ -294,55 +316,23 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
         } else if (userInfo.role.startsWith("Admin-")) {
           departmentForQuery = userInfo.role.split("-")[1];
         }
-        // console.log("Fetching publications for entire department:", departmentForQuery);
       } else {
         // If specific users are selected, use user IDs approach
         departmentForQuery = ''; // Empty string when using user IDs
         userIdsForQuery = selectedUsers;
-        // console.log("Fetching publications for specific users:", userIdsForQuery);
       }
 
-      // Create promises for both publication types
-      const promises = [];
-
-      if (publicationSection) {
-        promises.push(
-          getDepartmentCVData(publicationSection.data_section_id, departmentForQuery, "All", userIdsForQuery)
-            .then((response) => ({ type: "publication", data: response.data }))
-            .catch(() => ({ type: "publication", data: [] }))
-        );
-      }
-
-      if (otherPublicationSection) {
-        promises.push(
-          getDepartmentCVData(otherPublicationSection.data_section_id, departmentForQuery, "All", userIdsForQuery)
-            .then((response) => ({ type: "otherPublication", data: response.data }))
-            .catch(() => ({ type: "otherPublication", data: [] }))
-        );
-      }
-
-      // Execute all promises in parallel
-      const results = await Promise.all(promises);
-
-      // Combine all publications data
-      let allPublications = [];
-      results.forEach((result) => {
-        if (result.data && result.data.length > 0) {
-          allPublications.push(...result.data);
-        }
-      });
-
-      // onsole.log("Combined publications data received:", allPublications);
-
-      // Convert to CSV
-      const csvData = convertPublicationsToCSV(allPublications);
+      // Fetch data using the generic function
+      const reportResult = await fetchReportData(selectedReportType, departmentForQuery, userIdsForQuery);
+      
+      // Convert to CSV using the generic function
+      const csvData = convertDataToCSV(reportResult.data, selectedReportType);
       
       // Create download blob
       const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       
       setDownloadUrl(url);
-      setNotification(true);
     } catch (error) {
       console.error("Error generating report:", error);
       alert(`Error generating report: ${error.message}`);
@@ -410,8 +400,11 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
                 {/* Report Type Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
-                  <div className="space-y-3">
-                    {reportTypes.map((reportType) => (
+                  <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                    {reportTypes
+                      .slice()
+                      .sort((a, b) => a.label.localeCompare(b.label))
+                      .map((reportType) => (
                       <div
                         key={reportType.value}
                         className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
@@ -421,15 +414,16 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
                         }`}
                         onClick={() => handleReportTypeSelect(reportType.value)}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-start gap-3">
                           <input
                             type="radio"
-                            className="radio radio-primary"
+                            className="radio radio-primary mt-1"
                             checked={selectedReportType === reportType.value}
                             readOnly
                           />
-                          <div>
-                            <div className="text-sm font-medium text-gray-700">{reportType.label}</div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-700 mb-1">{reportType.label}</div>
+                            <div className="text-xs text-gray-500">{reportType.description}</div>
                           </div>
                         </div>
                       </div>
