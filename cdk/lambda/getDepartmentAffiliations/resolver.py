@@ -16,12 +16,14 @@ def getDepartmentAffiliations(arguments):
     
     # If department is "All", get all affiliations, otherwise filter by department
     if department == "All":
+        print("For ALL")
         cursor.execute('''
             SELECT a.user_id, a.first_name, a.last_name, a.primary_unit, a.joint_units
             FROM affiliations a
             INNER JOIN users u ON a.user_id = u.user_id
         ''')
     else:
+        print(f"For department: {department}")
         cursor.execute('''
             SELECT a.user_id, a.first_name, a.last_name, a.primary_unit, a.joint_units
             FROM affiliations a
@@ -31,7 +33,7 @@ def getDepartmentAffiliations(arguments):
         ''', (department,))
 
     results = cursor.fetchall()
-    
+
     # Close connection
     cursor.close()
     connection.close()
@@ -43,12 +45,12 @@ def getDepartmentAffiliations(arguments):
         
         # Parse JSON fields, handle None values
         try:
-            primary_unit_data = json.loads(primary_unit) if primary_unit else {}
+            primary_unit_data = primary_unit if primary_unit else {}
         except (json.JSONDecodeError, TypeError):
             primary_unit_data = {}
         
         try:
-            joint_units_data = json.loads(joint_units) if joint_units else []
+            joint_units_data = joint_units if joint_units else []
         except (json.JSONDecodeError, TypeError):
             joint_units_data = []
         
@@ -56,8 +58,8 @@ def getDepartmentAffiliations(arguments):
             "user_id": user_id,
             "first_name": first_name,
             "last_name": last_name,
-            "primary_unit": json.dumps(primary_unit_data),
-            "joint_units": json.dumps(joint_units_data)
+            "primary_unit": primary_unit_data,
+            "joint_units": joint_units_data
         })
     
     return affiliations_list

@@ -109,6 +109,9 @@ def structureAffiliationsData(df, user_mapping):
     affiliations_data = {}
     errors = []
     
+    # Group data by user to handle multiple appointments per user
+    user_appointments = {}
+    
     for _, row in df.iterrows():
         employee_id = str(row['employee_id'])
         
@@ -120,16 +123,12 @@ def structureAffiliationsData(df, user_mapping):
         user_info = user_mapping[employee_id]
         user_id = user_info['user_id']
         
-        # Initialize user's affiliations if not exists
-        if user_id not in affiliations_data:
-            affiliations_data[user_id] = {
-                'user_id': user_id,
-                'first_name': user_info['first_name'],
-                'last_name': user_info['last_name'],
-                'primary_unit': {},
-                'joint_units': [],
-                'research_affiliations': [],
-                'hospital_affiliations': []
+        # Initialize user's appointments if not exists
+        if user_id not in user_appointments:
+            user_appointments[user_id] = {
+                'user_info': user_info,
+                'full_time': [],
+                'part_time': []
             }
         
         # Create unit object
@@ -147,22 +146,80 @@ def structureAffiliationsData(df, user_mapping):
             }
         }
         
-        # Assign to primary_unit or joint_units based on type
+        # Group by appointment type
         if row['type'].lower() == 'full time':
-            # For full time, we need to handle multiple entries
-            if not affiliations_data[user_id]['primary_unit']:
-                # First full-time entry goes to primary_unit
-                affiliations_data[user_id]['primary_unit'] = unit_data
-            else:
-                # Additional full-time entries go to joint_units
-                affiliations_data[user_id]['joint_units'].append(unit_data)
+            user_appointments[user_id]['full_time'].append(unit_data)
         elif row['type'].lower() == 'part time':
-            # Part-time entries always go to joint_units
-            affiliations_data[user_id]['joint_units'].append(unit_data)
+            user_appointments[user_id]['part_time'].append(unit_data)
         else:
             errors.append(f"Unknown type '{row['type']}' for employee {employee_id}. Expected 'Full time' or 'Part time'")
     
-    # After processing all rows, set percentage based on appointment structure
+    # Now process each user's appointments to assign primary vs joint
+    for user_id, appointments in user_appointments.items():
+        user_info = appointments['user_info']
+        full_time_appointments = appointments['full_time']
+        part_time_appointments = appointments['part_time']
+        
+        # Initialize user's affiliations
+        affiliations_data[user_id] = {
+            'user_id': user_id,
+            'first_name': user_info['first_name'],
+            'last_name': user_info['last_name'],
+            'primary_unit': {},
+            'joint_units': [],
+            'research_affiliations': [],
+            'hospital_affiliations': []
+        }
+        
+        # Handle full-time appointments
+        if len(full_time_appointments) == 1:
+            # Single full-time appointment goes to primary_unit
+            affiliations_data[user_id]['primary_unit'] = full_time_appointments[0]
+        elif len(full_time_appointments) == 2:
+            # Two full-time appointments: check if one is "Head" rank
+            head_appointment = None
+            other_appointment = None
+            
+            for appointment in full_time_appointments:
+                rank = appointment.get('rank', '').lower()
+                if 'head' in rank:
+                    head_appointment = appointment
+                else:
+                    other_appointment = appointment
+            
+            if head_appointment:
+                # If one is Head, put Head in primary and other in joint
+                affiliations_data[user_id]['primary_unit'] = head_appointment
+                affiliations_data[user_id]['joint_units'].append(other_appointment)
+            else:
+                # No Head rank, use original logic: first one to primary, second to joint
+                affiliations_data[user_id]['primary_unit'] = full_time_appointments[0]
+                affiliations_data[user_id]['joint_units'].append(full_time_appointments[1])
+        elif len(full_time_appointments) > 2:
+            # Multiple full-time appointments: prioritize Head rank for primary
+            head_appointment = None
+            other_appointments = []
+            
+            for appointment in full_time_appointments:
+                rank = appointment.get('rank', '').lower()
+                if 'head' in rank and head_appointment is None:  # Take first Head if multiple
+                    head_appointment = appointment
+                else:
+                    other_appointments.append(appointment)
+            
+            if head_appointment:
+                # Put Head in primary, rest in joint
+                affiliations_data[user_id]['primary_unit'] = head_appointment
+                affiliations_data[user_id]['joint_units'].extend(other_appointments)
+            else:
+                # No Head rank, first one to primary, rest to joint
+                affiliations_data[user_id]['primary_unit'] = full_time_appointments[0]
+                affiliations_data[user_id]['joint_units'].extend(full_time_appointments[1:])
+        
+        # Add all part-time appointments to joint_units
+        affiliations_data[user_id]['joint_units'].extend(part_time_appointments)
+    
+    # After processing all appointments, set percentage based on appointment structure
     for user_id, user_data in affiliations_data.items():
         has_primary = bool(user_data['primary_unit'])
         joint_count = len(user_data['joint_units'])

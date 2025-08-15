@@ -30,6 +30,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   const [keywordData, setKeywordData] = useState([]);
   const [showAllKeywords, setShowAllKeywords] = useState(false);
   const [affiliationsData, setAffiliationsData] = useState([]);
+  const [showAllRanks, setShowAllRanks] = useState(false);
 
   // Consolidated data loading
   useEffect(() => {
@@ -46,12 +47,11 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         getAllSections(),
         // department === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
         Promise.resolve(0), // Placeholder for generatedCVs
-        getDepartmentAffiliations(department === "" ? "All" : department)
+        getDepartmentAffiliations(department)
       ]);
 
       setUserCounts(userCounts);
       setAffiliationsData(affiliations);
-      console.log("Affiliations data:", affiliations);
       // setTotalCVsGenerated(generatedCVs);
 
       // Fetch CV data
@@ -416,67 +416,79 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
             <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM9 17a4 4 0 004-4H5a4 4 0 004 4z" />
             </svg>
-            Faculty Academic Units
+            Faculty Rank Distribution
           </h3>
           <div className="space-y-4">
-            {/* Total Faculty Count */}
-            <AnalyticsCard 
-              title="Total Faculty" 
-              value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()} 
-              className="!bg-blue-50 !border-blue-200"
-            />
-
             {/* Primary Units Section */}
-            {Object.keys(facultyRanksCounts.primaryRankCounts).length > 0 && (
+            {facultyRanksCounts.allRanks.length > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-                <h4 className="text-sm font-semibold text-blue-800 mb-3 flex items-center">
-                  <svg className="w-4 h-4 mr-1 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  Primary Appointments
-                </h4>
-                <div className="space-y-2">
-                  {Object.entries(facultyRanksCounts.primaryRankCounts)
-                    .sort(([,a], [,b]) => b - a)
-                    .map(([rank, count]) => (
-                    <div key={`primary-${rank}`} className="flex justify-between items-center text-sm">
-                      <span className="text-blue-700 font-medium">{rank}</span>
-                      <span className="bg-blue-200 text-blue-800 px-3 py-1 rounded-md text-xs font-semibold min-w-[3rem] text-center">
-                        {count}
-                      </span>
+                {/* Totals Header */}
+                <div className="mb-4">
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div className="bg-blue-100 border border-blue-300 rounded-md p-3 text-center">
+                      <div className="text-lg font-bold text-blue-800">{facultyRanksCounts.primaryTotal}</div>
+                      <div className="text-xs text-blue-600">Primary Appointments</div>
                     </div>
-                  ))}
+                    <div className="bg-indigo-100 border border-indigo-300 rounded-md p-3 text-center">
+                      <div className="text-lg font-bold text-indigo-800">{facultyRanksCounts.jointTotal}</div>
+                      <div className="text-xs text-indigo-600">Joint Appointments</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Joint Units Section */}
-            {Object.keys(facultyRanksCounts.jointRankCounts).length > 0 && (
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3">
-                <h4 className="text-sm font-semibold text-indigo-800 mb-3 flex items-center">
-                  <svg className="w-4 h-4 mr-1 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 010-2h4z" clipRule="evenodd" />
-                  </svg>
-                  Joint Appointments
-                </h4>
-                <div className="space-y-2">
-                  {Object.entries(facultyRanksCounts.jointRankCounts)
-                    .sort(([,a], [,b]) => b - a)
-                    .map(([rank, count]) => (
-                    <div key={`joint-${rank}`} className="flex justify-between items-center text-sm">
-                      <span className="text-indigo-700 font-medium">{rank}</span>
-                      <span className="bg-indigo-200 text-indigo-800 px-3 py-1 rounded-md text-xs font-semibold min-w-[3rem] text-center">
-                        {count}
-                      </span>
+                {/* Table Header */}
+                <div className="bg-gray-100 border border-gray-300 rounded-t-md px-3 py-2">
+                  <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-gray-700">
+                    <div>Rank</div>
+                    <div className="text-center">Primary</div>
+                    <div className="text-center">Joint</div>
+                  </div>
+                </div>
+
+                {/* Table Rows */}
+                <div className="border-l border-r border-b border-gray-300 rounded-b-md">
+                  {facultyRanksCounts.allRanks
+                    .slice(0, showAllRanks ? undefined : 6)
+                    .map((rankData, index) => (
+                    <div key={rankData.rank} className={`px-3 py-2 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div className="text-gray-800 font-medium">{rankData.rank}</div>
+                        <div className="text-center">
+                          {rankData.primaryCount > 0 ? (
+                            <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded-md text-xs font-semibold">
+                              {rankData.primaryCount}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </div>
+                        <div className="text-center">
+                          {rankData.jointCount > 0 ? (
+                            <span className="bg-indigo-200 text-indigo-800 px-2 py-1 rounded-md text-xs font-semibold">
+                              {rankData.jointCount}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                {facultyRanksCounts.allRanks.length > 6 && (
+                  <button
+                    className="mt-3 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                    onClick={() => setShowAllRanks(!showAllRanks)}
+                  >
+                    {showAllRanks ? 'Show Less (Top 6)' : `Show All ${facultyRanksCounts.allRanks.length} Ranks`}
+                  </button>
+                )}
               </div>
             )}
 
             {/* No Data Message */}
-            {Object.keys(facultyRanksCounts.primaryRankCounts).length === 0 && 
-             Object.keys(facultyRanksCounts.jointRankCounts).length === 0 && (
+            {facultyRanksCounts.allRanks.length === 0 && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
                 <p className="text-gray-500 text-sm">No affiliations data available</p>
                 <p className="text-gray-400 text-xs mt-1">Faculty rank distribution will appear here once affiliations data is imported</p>
@@ -648,7 +660,20 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
       }
     });
 
-    return { primaryRankCounts, jointRankCounts };
+    // Calculate totals
+    const primaryTotal = Object.values(primaryRankCounts).reduce((sum, count) => sum + count, 0);
+    const jointTotal = Object.values(jointRankCounts).reduce((sum, count) => sum + count, 0);
+
+    // Get all unique ranks from both primary and joint appointments
+    const allUniqueRanks = new Set([...Object.keys(primaryRankCounts), ...Object.keys(jointRankCounts)]);
+    const allRanks = Array.from(allUniqueRanks).map(rank => ({
+      rank,
+      primaryCount: primaryRankCounts[rank] || 0,
+      jointCount: jointRankCounts[rank] || 0,
+      totalCount: (primaryRankCounts[rank] || 0) + (jointRankCounts[rank] || 0)
+    })).sort((a, b) => b.totalCount - a.totalCount); // Sort by total count descending
+
+    return { primaryRankCounts, jointRankCounts, primaryTotal, jointTotal, allRanks };
   }, [affiliationsData]);
 
   // Memoized publication types computation

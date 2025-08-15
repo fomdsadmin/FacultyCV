@@ -3,7 +3,7 @@ import PageContainer from "./PageContainer.jsx";
 import FacultyAdminMenu from "../Components/FacultyAdminMenu.jsx";
 import ManageUser from "../Components/ManageUser.jsx";
 import AddUserModal from "../Components/AddUserModal.jsx";
-import { getAllUsers } from "../graphql/graphqlHelpers.js";
+import { getAllUsers, getDepartmentAffiliations } from "../graphql/graphqlHelpers.js";
 
 const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [users, setUsers] = useState([]);
@@ -14,6 +14,7 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [faculty, setFaculty] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [affiliations, setAffiliations] = useState([]);
 
   // Determine which faculty this admin manages
   useEffect(() => {
@@ -33,7 +34,18 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   async function fetchAllUsers() {
     setLoading(true);
     try {
-      const allUsers = await getAllUsers();
+      // Get faculty name for affiliations data
+      let facultyName = "All";
+      if (userInfo.role === "Admin") {
+        facultyName = "All";
+      } else if (userInfo.role.startsWith("FacultyAdmin-")) {
+        facultyName = userInfo.role.split("FacultyAdmin-")[1];
+      }
+
+      const [allUsers, affiliationsData] = await Promise.all([
+        getAllUsers(),
+        getDepartmentAffiliations(facultyName)
+      ]);
 
       let filteredUsers;
       if (userInfo.role === "Admin") {
@@ -50,12 +62,76 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       }
 
       setUsers(filteredUsers);
+      setAffiliations(affiliationsData || []);
     } catch (error) {
       console.error("Error fetching users:", error);
     } finally {
       setLoading(false);
     }
   }
+
+  // Helper function to get primary rank for a user
+  const getPrimaryRank = (userId) => {
+    const userAffiliations = affiliations.filter(
+      (affiliation) => affiliation.user_id === userId
+    );
+    
+    if (userAffiliations.length === 0) return null;
+    
+    for (const affiliation of userAffiliations) {
+      try {
+        let primaryUnit = affiliation.primary_unit;
+        
+        if (typeof primaryUnit === 'string') {
+          primaryUnit = JSON.parse(primaryUnit);
+        }
+        
+        if (primaryUnit && primaryUnit.rank) {
+          return primaryUnit.rank;
+        }
+      } catch (error) {
+        console.error('Error parsing primary_unit:', error);
+      }
+    }
+    
+    return null;
+  };
+
+  // Helper function to get joint ranks for a user
+  const getJointRanks = (userId) => {
+    const userAffiliations = affiliations.filter(
+      (affiliation) => affiliation.user_id === userId
+    );
+    
+    if (userAffiliations.length === 0) return null;
+    
+    let allJointRanks = [];
+    
+    for (const affiliation of userAffiliations) {
+      try {
+        let jointUnits = affiliation.joint_units;
+        
+        if (typeof jointUnits === 'string') {
+          jointUnits = JSON.parse(jointUnits);
+        }
+        
+        if (Array.isArray(jointUnits)) {
+          const jointRanks = jointUnits
+            .filter(unit => unit && unit.rank)
+            .map(unit => unit.rank);
+          allJointRanks.push(...jointRanks);
+        }
+      } catch (error) {
+        console.error('Error parsing joint_units:', error);
+      }
+    }
+    
+    // Remove duplicates and filter out primary rank if it exists in joint ranks
+    const primaryRank = getPrimaryRank(userId);
+    const uniqueJointRanks = [...new Set(allJointRanks)].filter(rank => rank !== primaryRank);
+    
+    return uniqueJointRanks.length > 0 ? uniqueJointRanks.join(', ') : null;
+  };
 
   // All unique roles for tabs and filters
   const filters = Array.from(new Set((users || []).map((user) => user.role)));
@@ -205,9 +281,12 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                           <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
                             Role
                           </th>
-                          {/* <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                            Rank
-                          </th> */}
+                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            Primary Rank
+                          </th>
+                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            Joint Ranks
+                          </th>
                           <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
                             Actions
                           </th>
@@ -234,15 +313,24 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                                 {user.role}
                               </span>
                             </td>
-                            {/* <td className="px-6 py-5 text-center">
+                            <td className="px-6 py-5 text-center">
                               <span className="text-sm font-medium text-gray-700">
-                                {user.rank && user.rank !== 'null' && user.rank !== '' && user.rank.trim() !== '' ? (
-                                  user.rank
+                                {getPrimaryRank(user.user_id) ? (
+                                  getPrimaryRank(user.user_id)
                                 ) : (
                                   <span className="text-gray-400 italic">Not specified</span>
                                 )}
                               </span>
-                            </td> */}
+                            </td>
+                            <td className="px-6 py-5 text-center">
+                              <span className="text-sm font-medium text-gray-700">
+                                {getJointRanks(user.user_id) ? (
+                                  getJointRanks(user.user_id)
+                                ) : (
+                                  <span className="text-gray-400 text-xs">-</span>
+                                )}
+                              </span>
+                            </td>
                             <td className="px-6 py-5">
                               <div className="flex justify-center gap-3">
                                 <button

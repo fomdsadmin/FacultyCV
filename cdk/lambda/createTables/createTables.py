@@ -88,8 +88,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('last_name', 'TEXT', '', False))
     columns.append(createColumn('primary_unit', 'JSON', '', False))
     columns.append(createColumn('joint_units', 'JSON', '', False))
-    columns.append(createColumn('research_affiliations', 'JSON', '', True))
-    columns.append(createColumn('hospital_affiliations', 'JSON', '', False))
+    columns.append(createColumn('research_affiliations', 'JSON', '', False))
+    columns.append(createColumn('hospital_affiliations', 'JSON', '', True))
     query = createQuery('affiliations', columns)
     cursor.execute(query)
 
