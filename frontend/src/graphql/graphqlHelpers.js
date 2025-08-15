@@ -36,6 +36,7 @@ import {
   GET_BIO_RESPONSE_DATA,
   getAuditViewQuery,
   getUserAffiliationsQuery,
+  getDepartmentAffiliationsQuery,
 } from "./queries";
 import {
   ADD_USER,
@@ -324,6 +325,12 @@ export const getUserAffiliations = async (user_id, first_name, last_name) => {
   const query = getUserAffiliationsQuery(user_id, first_name, last_name);
   const results = await executeGraphql(query);
   return results["data"]["getUserAffiliations"];
+};
+
+export const getDepartmentAffiliations = async (department) => {
+  const query = getDepartmentAffiliationsQuery(department);
+  const results = await executeGraphql(query);
+  return results["data"]["getDepartmentAffiliations"];
 };
 
 /**

@@ -2,6 +2,14 @@ type Affiliations {
 	data_details: AWSJSON!
 }
 
+type DepartmentAffiliation {
+	user_id: String!
+	first_name: String
+	last_name: String
+	primary_unit: AWSJSON
+	joint_units: AWSJSON
+}
+
 input AuditViewInput {
 	logged_user_id: String!
 	logged_user_first_name: String!
@@ -449,6 +457,8 @@ archive: Boolean,
 type Query {
 	getGotenbergPdf(form_data_base_64: String!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+	getPresignedGotenbergBucketUrl(key: String!, method: String!): String
+        @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getBioResponseData(username_input: String!): BioResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	GetAIResponse(user_input: String!): LambdaAIResponse
@@ -481,6 +491,8 @@ type Query {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getUserAffiliations(user_id: String!, first_name: String!, last_name: String!): [Affiliations!]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+	getDepartmentAffiliations(department: String!): [DepartmentAffiliation!]
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	getOrcidSections(orcidId: String!, section: String!): OrcidSectionOutput
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getTotalOrcidPublications(orcid_id: String!): TotalOrcidPublications

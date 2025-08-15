@@ -8,6 +8,7 @@ import {
   getAllSections,
   getNumberOfGeneratedCVs,
   getDepartmentCVData,
+  getDepartmentAffiliations,
 } from "../graphql/graphqlHelpers.js";
 
 const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
@@ -28,6 +29,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   // const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
   const [keywordData, setKeywordData] = useState([]);
   const [showAllKeywords, setShowAllKeywords] = useState(false);
+  const [affiliationsData, setAffiliationsData] = useState([]);
 
   // Consolidated data loading
   useEffect(() => {
@@ -39,14 +41,17 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     try {
       // Fetch all basic data in parallel
       department = department.trim() || "";
-      const [userCounts, dataSections, generatedCVs] = await Promise.all([
+      const [userCounts, dataSections, generatedCVs, affiliations] = await Promise.all([
         department === "All" ? getAllUsersCount() : getAllUsersCount(department, ""),
         getAllSections(),
         // department === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
+        Promise.resolve(0), // Placeholder for generatedCVs
+        getDepartmentAffiliations(department === "" ? "All" : department)
       ]);
 
       setUserCounts(userCounts);
-      console.log(userCounts);
+      setAffiliationsData(affiliations);
+      console.log("Affiliations data:", affiliations);
       // setTotalCVsGenerated(generatedCVs);
 
       // Fetch CV data
@@ -411,30 +416,70 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
             <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM9 17a4 4 0 004-4H5a4 4 0 004 4z" />
             </svg>
-            Faculty Ranks
+            Faculty Academic Units
           </h3>
           <div className="space-y-4">
-            {/* Total Faculty Count
+            {/* Total Faculty Count */}
             <AnalyticsCard 
               title="Total Faculty" 
               value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()} 
               className="!bg-blue-50 !border-blue-200"
-            /> */}
+            />
 
-            {/* Faculty Ranks Breakdown */}
-            {facultyRanksCounts.length > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 mt-4">
-                <h4 className="text-sm font-semibold text-blue-800 mb-2">Rank Distribution</h4>
-                <div className="space-y-1">
-                  {facultyRanksCounts.map((rankData, index) => (
-                    <div key={index} className="flex justify-between items-center text-sm gap-y-1">
-                      <span className="text-blue-700 font-medium">{rankData.rank}</span>
-                      <span className="bg-blue-200 text-blue-800 p-2 rounded-md text-xs font-semibold min-w-[4rem] text-center">
-                        {rankData.count.toLocaleString()}
+            {/* Primary Units Section */}
+            {Object.keys(facultyRanksCounts.primaryRankCounts).length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                <h4 className="text-sm font-semibold text-blue-800 mb-3 flex items-center">
+                  <svg className="w-4 h-4 mr-1 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Primary Appointments
+                </h4>
+                <div className="space-y-2">
+                  {Object.entries(facultyRanksCounts.primaryRankCounts)
+                    .sort(([,a], [,b]) => b - a)
+                    .map(([rank, count]) => (
+                    <div key={`primary-${rank}`} className="flex justify-between items-center text-sm">
+                      <span className="text-blue-700 font-medium">{rank}</span>
+                      <span className="bg-blue-200 text-blue-800 px-3 py-1 rounded-md text-xs font-semibold min-w-[3rem] text-center">
+                        {count}
                       </span>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Joint Units Section */}
+            {Object.keys(facultyRanksCounts.jointRankCounts).length > 0 && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3">
+                <h4 className="text-sm font-semibold text-indigo-800 mb-3 flex items-center">
+                  <svg className="w-4 h-4 mr-1 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 010-2h4z" clipRule="evenodd" />
+                  </svg>
+                  Joint Appointments
+                </h4>
+                <div className="space-y-2">
+                  {Object.entries(facultyRanksCounts.jointRankCounts)
+                    .sort(([,a], [,b]) => b - a)
+                    .map(([rank, count]) => (
+                    <div key={`joint-${rank}`} className="flex justify-between items-center text-sm">
+                      <span className="text-indigo-700 font-medium">{rank}</span>
+                      <span className="bg-indigo-200 text-indigo-800 px-3 py-1 rounded-md text-xs font-semibold min-w-[3rem] text-center">
+                        {count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Data Message */}
+            {Object.keys(facultyRanksCounts.primaryRankCounts).length === 0 && 
+             Object.keys(facultyRanksCounts.jointRankCounts).length === 0 && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                <p className="text-gray-500 text-sm">No affiliations data available</p>
+                <p className="text-gray-400 text-xs mt-1">Faculty rank distribution will appear here once affiliations data is imported</p>
               </div>
             )}
           </div>
@@ -575,35 +620,36 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
   // Memoized faculty ranks computation
   const facultyRanksCounts = useMemo(() => {
-    const rankCounts = {};
+    const primaryRankCounts = {};
+    const jointRankCounts = {};
 
-    // Note: This would need to be populated with actual rank data from user profiles
-    // For now, we'll use the existing user counts as a foundation
-    // This assumes rank information would come from user profiles or HR data
+    // Process affiliations data to count ranks
+    affiliationsData.forEach(affiliation => {
+      try {
+        // Parse primary unit
+        const primaryUnit = JSON.parse(affiliation.primary_unit || '{}');
+        if (primaryUnit.rank && primaryUnit.rank.trim()) {
+          const rank = primaryUnit.rank.trim();
+          primaryRankCounts[rank] = (primaryRankCounts[rank] || 0) + 1;
+        }
 
-    // You might need to fetch additional data or modify the getAllUsersCount function
-    // to include rank information. For now, showing basic user types:
-    if (userCounts.faculty_count > 0) {
-      rankCounts["Adjunct Professor"] = 0;
-      rankCounts["Assistant Professor & Assistant Professor of Teaching"] = 0;
-      rankCounts["Associate Professor & Associate Professor of Teaching"] = 0;
-      rankCounts["Clinical Faculty"] = 0;
-      rankCounts["Clinical Fellow"] = 0;
-      rankCounts["Emeritus Faculty"] = 0;
-      rankCounts["Honorary Faculty"] = 0;
-      rankCounts["Investigator"] = 0;
-      rankCounts["Lecturer"] = 0;
-      rankCounts["Professor & Professor of Teaching"] = 0;
-      rankCounts["Research Associate"] = 0;
-      rankCounts["Seasonal Lecturer"] = 0;
-      rankCounts["Visiting Faculty"] = 0;
-    }
+        // Parse joint units
+        const jointUnits = JSON.parse(affiliation.joint_units || '[]');
+        if (Array.isArray(jointUnits)) {
+          jointUnits.forEach(unit => {
+            if (unit.rank && unit.rank.trim()) {
+              const rank = unit.rank.trim();
+              jointRankCounts[rank] = (jointRankCounts[rank] || 0) + 1;
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing affiliation data:', error, affiliation);
+      }
+    });
 
-    // Convert to array and sort by count
-    return Object.entries(rankCounts)
-      .map(([rank, count]) => ({ rank, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [userCounts]);
+    return { primaryRankCounts, jointRankCounts };
+  }, [affiliationsData]);
 
   // Memoized publication types computation
   const publicationTypesCounts = useMemo(() => {

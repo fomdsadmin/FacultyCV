@@ -414,6 +414,20 @@ export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
     }
 `;
 
+export const getDepartmentAffiliationsQuery = (department) => `
+    query getDepartmentAffiliations {
+        getDepartmentAffiliations (
+            department: "${department}"
+        ) {
+            user_id
+            first_name
+            last_name
+            primary_unit
+            joint_units
+        }
+    }
+`;
+
 export const getAuditViewQuery = (args = {}) => {
   const argList = [];
   if (args.logged_user_id) argList.push(`logged_user_id: "${args.logged_user_id}"`);
