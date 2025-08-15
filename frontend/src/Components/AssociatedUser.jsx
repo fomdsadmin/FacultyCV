@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { TiDelete } from "react-icons/ti";
 import { updateUserConnection, deleteUserConnection } from '../graphql/graphqlHelpers.js';
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 
 const AssociatedUser = ({ connection, getAllUserConnections }) => {
@@ -9,6 +10,8 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
     const [truncationLength, setTruncationLength] = useState(25);
     const [isRemoving, setIsRemoving] = useState(false);
     const [isAccepting, setIsAccepting] = useState(false);
+
+    const { logAction } = useAuditLogger();
 
     const truncateString = (str, num) => {
         if (str.length <= num) {
@@ -46,7 +49,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
         // handle an actual removal here
         try {
             const response = await deleteUserConnection(connection.user_connection_id);
-            
+            await logAction(AUDIT_ACTIONS.DELETE_CONNECTION, connection.faculty_email);
         } catch (error) {
             console.error('Error:', error);
         }
@@ -58,7 +61,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
         setIsAccepting(true);
         try {
             const response = await updateUserConnection(connection.user_connection_id, 'confirmed');
-            
+            await logAction(AUDIT_ACTIONS.ACCEPT_CONNECTION, connection.faculty_email);
         } catch (error) {
             console.error('Error:', error);
         }

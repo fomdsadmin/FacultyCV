@@ -9,6 +9,7 @@ import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
 import PDFViewer from "../Components/PDFViewer.jsx";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
 
 const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   const [selectedUser, setSelectedUser] = useState("");
@@ -32,6 +33,8 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
   const { setNotification } = useNotification();
 
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
+
+  const { logAction } = useAuditLogger();
 
   // Determine which faculty this admin manages
   useEffect(() => {
@@ -230,12 +233,20 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
       setNotification(true);
       setDownloadUrl(pdfUrl);
       setDownloadUrlDocx(docxUrl);
+
+      await logAction(AUDIT_ACTIONS.GENERATE_CV, {
+        userId: userObject.user_id,
+        userName: `${userObject.first_name} ${userObject.last_name}`,
+        userEmail: userObject.email,
+        reportName: selectedTemplate.title,
+      });
     } catch (error) {
       console.error("Error generating CV:", error);
       alert("Error generating CV. Please try again.");
     }
 
     setBuildingLatex(false);
+
   };
 
   const handleDownload = (url, format) => {
@@ -251,8 +262,8 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
 
   return (
     <PageContainer>
-      <FacultyAdminMenu 
-        getCognitoUser={getCognitoUser} 
+      <FacultyAdminMenu
+        getCognitoUser={getCognitoUser}
         userName={userInfo.preferred_name || userInfo.first_name}
         userInfo={userInfo}
         toggleViewMode={toggleViewMode}
@@ -338,9 +349,8 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
                 {/* List of Templates as a select dropdown */}
                 <div className="mb-4">
                   <select
-                    className={`select select-bordered w-full max-w-md ${
-                      !selectedUser ? "select-disabled bg-gray-100" : ""
-                    }`}
+                    className={`select select-bordered w-full max-w-md ${!selectedUser ? "select-disabled bg-gray-100" : ""
+                      }`}
                     value={selectedTemplate?.template_id || ""}
                     onChange={(e) => {
                       const templateId = e.target.value;

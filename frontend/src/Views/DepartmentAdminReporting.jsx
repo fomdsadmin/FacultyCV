@@ -12,6 +12,7 @@ import {
   isReportTypeSupported,
   getCsvFieldConfig 
 } from "../Config/reportTypesConfig.js";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
 
 const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   const [selectedUsers, setSelectedUsers] = useState([]); // Changed to array for multiple selection
@@ -28,6 +29,12 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   const [selectAll, setSelectAll] = useState(true); // Track if all users are selected
   const [dataSections, setDataSections] = useState([]); // Store data sections
   const { setNotification } = useNotification();
+
+  const { logAction } = useAuditLogger();
+
+  const reportTypes = [
+    { value: "publications", label: "Publications Report" },
+  ];
 
   useEffect(() => {
     // Initial load: all users and data sections
@@ -333,6 +340,13 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
       const url = URL.createObjectURL(blob);
       
       setDownloadUrl(url);
+      setNotification(true);
+
+      await logAction(AUDIT_ACTIONS.GENERATE_DEPT_REPORT, {
+        department: departmentForQuery,
+        numUsers: selectedUsers ? selectedUsers.length : 0
+      });
+      
     } catch (error) {
       console.error("Error generating report:", error);
       alert(`Error generating report: ${error.message}`);

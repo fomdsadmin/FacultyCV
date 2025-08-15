@@ -6,6 +6,9 @@ import { toast } from "react-toastify"
 import { useTemplateModifier } from "./TemplateModifierContext"
 import { useTemplatePageContext } from "Pages/TemplatePages/TemplatesPage/TemplatePageContext"
 
+import { useAuditLogger } from '../../../../Contexts/AuditLoggerContext';
+import { AUDIT_ACTIONS } from '../../../../Contexts/AuditLoggerContext';
+
 const SaveTemplateButton = ({ templateId = null }) => {
     const {
         title,
@@ -18,6 +21,8 @@ const SaveTemplateButton = ({ templateId = null }) => {
     } = useTemplateModifier();
 
     const { fetchTemplates } = useTemplatePageContext();
+
+    const { logAction } = useAuditLogger();
 
     const [addingTemplate, setAddingTemplate] = useState(false)
 
@@ -42,8 +47,10 @@ const SaveTemplateButton = ({ templateId = null }) => {
         try {
             if (!templateId) {
                 await addTemplate(title, templateStructure, startYear, endYear)
+                await logAction(AUDIT_ACTIONS.ADD_NEW_TEMPLATE);
             } else {
                 await updateTemplate(templateId, title, templateStructure, startYear, endYear);
+                await logAction(AUDIT_ACTIONS.EDIT_CV_TEMPLATE);
             }
             toast.success("Template saved successfully!", { autoClose: 3000 })
             fetchTemplates();

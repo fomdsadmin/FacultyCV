@@ -9,6 +9,7 @@ import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
 import PDFViewer from "../Components/PDFViewer.jsx";
+import { AUDIT_ACTIONS, useAuditLogger } from "../Contexts/AuditLoggerContext.jsx";
 
 const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [selectedUser, setSelectedUser] = useState("");
@@ -31,6 +32,7 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
 
   const [allUsers, setAllUsers] = useState([]); // add this to store all users
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     const loadData = async () => {
@@ -138,7 +140,7 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
       const allUsers = await getAllUsers();
       const usersInDepartment = allUsers.filter(
         (user) =>
-          (user.primary_department === department &&
+        (user.primary_department === department &&
           (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-")))
       );
       console.log("Users in Department:", usersInDepartment);
@@ -218,6 +220,13 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
       setNotification(true);
       setDownloadUrl(pdfUrl);
       setDownloadUrlDocx(docxUrl);
+      // Log the action
+      await logAction(AUDIT_ACTIONS.GENERATE_CV, {
+        userId: userObject.user_id,
+        userName: `${userObject.first_name} ${userObject.last_name}`,
+        userEmail: userObject.email,
+        reportName: selectedTemplate.title,
+      });
     } catch (error) {
       console.error("Error generating CV:", error);
       alert("Error generating CV. Please try again.");
@@ -287,9 +296,8 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
             <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
               <select
-                className={`select select-bordered w-full max-w-md ${
-                  departmentUsers.length === 0 ? "select-disabled bg-gray-100" : ""
-                }`}
+                className={`select select-bordered w-full max-w-md ${departmentUsers.length === 0 ? "select-disabled bg-gray-100" : ""
+                  }`}
                 value={selectedUser}
                 onChange={handleUserSelect}
                 disabled={departmentUsers.length === 0}
@@ -311,9 +319,8 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                 {/* List of Templates as a select dropdown */}
                 <div className="mb-4">
                   <select
-                    className={`select select-bordered w-full max-w-md ${
-                      !selectedUser ? "select-disabled bg-gray-100" : ""
-                    }`}
+                    className={`select select-bordered w-full max-w-md ${!selectedUser ? "select-disabled bg-gray-100" : ""
+                      }`}
                     value={selectedTemplate?.template_id || ""}
                     onChange={(e) => {
                       const templateId = e.target.value;

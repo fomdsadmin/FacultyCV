@@ -4,7 +4,7 @@ import '../CustomStyles/modal.css';
 import { addUserConnection, getUser } from '../graphql/graphqlHelpers';
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
-const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen, admin = false, departmentAdmin = false, department='' }) => {
+const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen, admin = false, departmentAdmin = false, department = '' }) => {
   const [email, setEmail] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
   const [error, setError] = useState('');
@@ -46,7 +46,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     try {
       // Call the addUserConnection function with the necessary parameters
       const result = await addUserConnection(facultyMember.user_id, facultyMember.first_name, facultyMember.last_name, facultyMember.email, userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, 'pending');
-      
+
       if (result === 'connection already exists') {
         setError('Connection already exists');
         setSendingInvite(false);
@@ -54,7 +54,11 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
       }
       getAllUserConnections();
       // Log the invite action
-      await logAction(AUDIT_ACTIONS.FORM_CONNECTION, userInfo.email);
+      await logAction(AUDIT_ACTIONS.FORM_CONNECTION, {
+        facultyMemberId: facultyMember.user_id,
+        facultyMemberName: `${facultyMember.first_name} ${facultyMember.last_name}`,
+        facultyEmail: facultyMember.email
+      });
       setIsModalOpen(false); // Close the modal on success
     } catch (error) {
       console.error('Error sending invite:', error);
@@ -84,7 +88,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     try {
       // Get member by email
       member = await getUser(email);
-      
+
     } catch (error) {
       console.error('Error finding user:', error);
       setError('No user exists. Please enter valid email');
@@ -92,21 +96,21 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
       return;
     }
 
-    if (userInfo.role==='Assistant' && member.role !== 'Faculty') {
+    if (userInfo.role === 'Assistant' && member.role !== 'Faculty') {
       setError('Assistants can only form connections with faculty members');
       setSendingInvite(false);
       return;
     }
 
-    if (userInfo.role==='Faculty' && member.role !== 'Assistant') {
+    if (userInfo.role === 'Faculty' && member.role !== 'Assistant') {
       setError('Faculty can only form connections with assistants');
       setSendingInvite(false);
       return;
     }
 
     if (departmentAdmin) {
-      
-      if (userInfo.role==='Assistant' && member.primary_department !== department && member.secondary_department !== department) {
+
+      if (userInfo.role === 'Assistant' && member.primary_department !== department && member.secondary_department !== department) {
         setError('You can only form connections with faculty in your department');
         setSendingInvite(false);
         return;
@@ -121,8 +125,8 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
         // Call the addUserConnection function with the necessary parameters
         result = await addUserConnection(member.user_id, member.first_name, member.last_name, member.email, userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, 'confirmed');
       }
-      
-      
+
+
       if (result === 'connection already exists') {
         setError('Connection already exists');
         setSendingInvite(false);
@@ -131,7 +135,11 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
       getAllUserConnections();
       setIsModalOpen(false); // Close the modal on success
       // Log the invite action
-      await logAction(AUDIT_ACTIONS.SEND_CONNECTION_INVITE, userInfo.email);
+      await logAction(AUDIT_ACTIONS.SEND_CONNECTION_INVITE, {
+        memberId: member.user_id,
+        memberName: `${member.first_name} ${member.last_name}`,
+        memberEmail: member.email
+      });
     } catch (error) {
       console.error('Error sending invite:', error);
       setError('Error sending invite. Please try again.');
@@ -144,11 +152,11 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     <dialog className="modal-dialog ml-4" open>
       <div className="modal-content">
         <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" onClick={() => setIsModalOpen(false)}>✕</button>
-        
+
         <h2 className="text-xl font-bold mb-4">
           {admin ? 'Create Connection' : 'Send Connection Invite'}
         </h2>
-        
+
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">User Email</label>
           <input
@@ -159,14 +167,14 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
-        
+
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        
+
         <div className="flex justify-end">
-          <button 
-            type="submit" 
-            onClick={admin ? formConnection : sendInvite} 
-            className="btn btn-accent text-white mt-1 py-1 px-2 w-1/5 min-h-0 leading-tight" 
+          <button
+            type="submit"
+            onClick={admin ? formConnection : sendInvite}
+            className="btn btn-accent text-white mt-1 py-1 px-2 w-1/5 min-h-0 leading-tight"
             disabled={sendingInvite}
           >
             {sendingInvite ? 'Processing...' : admin ? 'Create Connection' : 'Send Invite'}
@@ -174,7 +182,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
         </div>
       </div>
     </dialog>
-  );  
+  );
 };
 
 export default ConnectionInviteModal;

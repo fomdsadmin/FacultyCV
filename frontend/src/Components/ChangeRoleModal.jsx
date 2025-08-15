@@ -63,6 +63,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
   };
 
   async function changeRole() {
+    const oldRole = userInfo.role;
     const updatedRole =
       newRole === "Admin-"
         ? `${newRole}${selectedDepartment}`
@@ -125,8 +126,16 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
 
       fetchAllUsers();
       handleBack();
+      
       // Log the role change action
-      await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, userInfo.email);
+      const roleChangeInfo = JSON.stringify({
+        from: oldRole,
+        to: updatedRole,
+        userId: userInfo.user_id,
+        username: userInfo.username,
+        email: userInfo.email
+      });
+      await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, roleChangeInfo);
     } catch (error) {
       console.error("Error changing role", error);
     }

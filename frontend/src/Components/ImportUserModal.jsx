@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { addUser, getUser, getAllUniversityInfo } from "../graphql/graphqlHelpers.js";
 import { getJWT } from "../getAuthToken";
 import { getPresignedUrl } from "../graphql/graphqlHelpers";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -11,6 +12,7 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
+  const { logAction } = useAuditLogger();
 
   if (!isOpen) return null;
 
@@ -133,6 +135,14 @@ const ImportUserModal = ({ isOpen, onClose, onSuccess }) => {
         setUploadProgress(0);
         setError("");
       }, 500);
+      // Log the import action
+      await logAction(
+        AUDIT_ACTIONS.IMPORT_USER,
+        JSON.stringify({
+          fileName: selectedFile.name,
+          fileSize: selectedFile.size,
+        })
+      );
     } catch (error) {
       console.error("Upload error:", error);
       setError("Failed to upload file. Please try again.");

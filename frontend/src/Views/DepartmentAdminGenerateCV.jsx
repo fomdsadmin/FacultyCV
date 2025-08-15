@@ -9,6 +9,7 @@ import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
 import PDFViewer from "../Components/PDFViewer.jsx";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx"; 
 
 const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [selectedUser, setSelectedUser] = useState("");
@@ -28,6 +29,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [userSearchTerm, setUserSearchTerm] = useState(""); // New state for user search
   const [dropdownOpen, setDropdownOpen] = useState(false); // Add this state to manage the dropdown visibility
   const { setNotification } = useNotification();
+  const { logAction } = useAuditLogger();
 
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
 
@@ -201,6 +203,14 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
       setNotification(true);
       setDownloadUrl(pdfUrl);
       setDownloadUrlDocx(docxUrl);
+
+      await logAction(AUDIT_ACTIONS.GENERATE_CV, {
+              userId: userObject.user_id,
+              userName: `${userObject.first_name} ${userObject.last_name}`,
+              userEmail: userObject.email,
+              reportName: selectedTemplate.title,
+            });
+      
     } catch (error) {
       console.error("Error generating CV:", error);
       alert("Error generating CV. Please try again.");
