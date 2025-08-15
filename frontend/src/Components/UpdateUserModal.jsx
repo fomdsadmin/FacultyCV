@@ -106,13 +106,17 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
       const newResult = await getUser(existingUser.username);
       console.log("User updated successfully:", newResult);
 
-      // Log the user update action to audit logs
-      await logAction(AUDIT_ACTIONS.UPDATE_USER_PROFILE, existingUser.user_id);
-
       // Store the updated user data
       onUpdateSuccess(newResult);
       // Set success message after updating the user data
       setSuccessMessage("User Successfully Updated");
+      // Log the user update action to audit logs
+      await logAction(AUDIT_ACTIONS.UPDATE_USER, 
+        {
+          userID: existingUser.user_id,
+          firstName, lastName
+        }
+      );
       window.location.reload(); // Refresh the page on close
     } catch (error) {
       console.error("Error updating user:", error);

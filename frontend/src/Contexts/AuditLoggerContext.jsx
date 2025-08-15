@@ -21,8 +21,8 @@ export const AUDIT_ACTIONS = {
     DELETE_CV_DATA: 'Delete all CV data',
     ARCHIVE_CV_DATA: 'Archive CV data',
     RETRIEVE_EXTERNAL_DATA: 'Retrieve external data',
-    GENERATE_CV: 'Generate CV', 
-    
+    GENERATE_CV: 'Generate CV',
+
     // admin actions
     GENERATE_DEPT_REPORT: 'Generate department report', // department Admin 
 
@@ -41,7 +41,7 @@ export const AUDIT_ACTIONS = {
     DELETE_CV_TEMPLATE: 'Delete CV template',
     EDIT_REPORT_FORMAT: 'Edit report format',
     ADD_USER: 'Add user',
-    UPDATE_USER_PROFILE: 'Update user profile',
+    UPDATE_USER: 'Update user profile',
     IMPORT_USER: 'Import user',
     APPROVE_USER: 'Approve user',
     REJECT_USER: 'Reject user',
@@ -64,7 +64,7 @@ export const ACTION_CATEGORIES = {
         AUDIT_ACTIONS.DELETE_CV_TEMPLATE,
         AUDIT_ACTIONS.EDIT_REPORT_FORMAT,
         AUDIT_ACTIONS.ADD_USER,
-        AUDIT_ACTIONS.UPDATE_USER_PROFILE,
+        AUDIT_ACTIONS.UPDATE_USER,
         AUDIT_ACTIONS.IMPORT_USER,
         AUDIT_ACTIONS.APPROVE_USER,
         AUDIT_ACTIONS.REJECT_USER,
