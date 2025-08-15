@@ -287,7 +287,7 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
         allData.push(...result.data);
       }
     });
-    console.log(allData);
+    // console.log(allData);
     return {
       data: allData,
       sections: results,
