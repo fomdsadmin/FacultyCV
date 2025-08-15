@@ -7,7 +7,8 @@ import { Accordion } from '../SharedComponents/Accordion/Accordion';
 import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem';
 
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
-import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
+import { AUDIT_ACTIONS, ACTION_CATEGORIES } from '../Contexts/AuditLoggerContext';
+
 
 const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     const [loading, setLoading] = useState(false);
@@ -41,6 +42,9 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [actionFilter, setActionFilter] = useState('');
+
+    const [actionCategory, setActionCategory] = useState('ALL');
+
 
     useEffect(() => {
         setPageNumber(1); // reset if filter change 
@@ -279,32 +283,58 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                                     placeholder="End Date/Time"
                                 />
                             </div>
-                            <select
-                                className="border px-2 py-1 rounded"
-                                value={actionFilter}
-                                onChange={e => setActionFilter(e.target.value)}
-                            >
-                                <option value="">All Actions</option>
-                                {Object.values(AUDIT_ACTIONS).map(action => (
-                                    <option key={action} value={action}>
-                                        {action}
-                                    </option>
-                                ))}
-                            </select>
+                            {/* Action category selector */}
+                            <div className="flex flex-col gap-2 w-full">
+                                <div className="flex gap-2">
+                                    <select
+                                        className="border px-2 py-1 rounded"
+                                        value={actionCategory}
+                                        onChange={e => {
+                                            setActionCategory(e.target.value);
+                                            setActionFilter(''); // Reset action filter when category changes
+                                        }}
+                                    >
+                                        <option value="ALL">All Action Types</option>
+                                        <option value="ADMIN_ACTIONS">Admin Actions</option>
+                                        <option value="OTHER_ACTIONS">Other Actions</option>
+                                    </select>
 
-                            <button
-                                className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
-                                onClick={() => {
-                                    setEmailFilter('');
-                                    setFirstNameFilter('');
-                                    setLastNameFilter('');
-                                    setStartDate('');
-                                    setEndDate('');
-                                    setActionFilter('');
-                                }}
-                            >
-                                Clear Filters
-                            </button>
+                                    <select
+                                        className="border px-2 py-1 rounded flex-grow"
+                                        value={actionFilter}
+                                        onChange={e => setActionFilter(e.target.value)}
+                                    >
+                                        <option value="">
+                                            {actionCategory === 'ADMIN_ACTIONS' ? 'All Admin Actions' :
+                                                actionCategory === 'OTHER_ACTIONS' ? 'All Other Actions' :
+                                                    'All Actions'}
+                                        </option>
+                                        {(actionCategory === 'ALL'
+                                            ? Object.values(AUDIT_ACTIONS)
+                                            : ACTION_CATEGORIES[actionCategory] || []
+                                        ).map(action => (
+                                            <option key={action} value={action}>
+                                                {action}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                                        onClick={() => {
+                                            setEmailFilter('');
+                                            setFirstNameFilter('');
+                                            setLastNameFilter('');
+                                            setStartDate('');
+                                            setEndDate('');
+                                            setActionFilter('');
+                                        }}
+                                    >
+                                        Clear Filters
+                                    </button>
+                                </div>
+
+
+                            </div>
                         </div>
                     </AccordionItem>
 
@@ -392,7 +422,7 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                                     {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => {
                                         // Define column widths based on content type
                                         let width = "30px";
-                                        if (col === "ts") width = "50px";
+                                        if (col === "ts") width = "30px";
                                         else if (col === "logged_user_action") width = "120px";
                                         else if (col === "logged_user_email") width = "200px";
                                         else if (col === "logged_user_first_name" || col === "logged_user_last_name") width = "40px";

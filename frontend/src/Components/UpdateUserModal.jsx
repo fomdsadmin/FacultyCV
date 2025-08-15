@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { changeUsername, getUser, updateUser, getAllUniversityInfo } from "../graphql/graphqlHelpers.js";
+import { useAuditLogger } from "../Contexts/AuditLoggerContext";
+import { AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 import { get } from "aws-amplify/api";
 
 const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSuccess }) => {
@@ -14,6 +16,9 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  //audit logger
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     if (existingUser) {
@@ -100,6 +105,9 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
 
       const newResult = await getUser(existingUser.username);
       console.log("User updated successfully:", newResult);
+
+      // Log the user update action to audit logs
+      await logAction(AUDIT_ACTIONS.UPDATE_USER_PROFILE, existingUser.user_id);
 
       // Store the updated user data
       onUpdateSuccess(newResult);

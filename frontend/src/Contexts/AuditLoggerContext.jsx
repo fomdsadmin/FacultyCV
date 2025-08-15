@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { addAuditView } from '../graphql/graphqlHelpers';
+import { ADD_USER, UPDATE_USER_AFFILIATIONS } from 'graphql/mutations';
+import { reject } from 'bcrypt/promises';
 
 const AuditLoggerContext = createContext(null);
 
@@ -9,15 +11,7 @@ export const AUDIT_ACTIONS = {
     UPDATE_PROFILE: 'Update profile',
     UPDATE_AFFILIATIONS: 'Update affiliations',
 
-    EDIT_SECTION_DETAILS: 'Update section details', //admin
-    UPDATE_SECTION_ATTRIBUTES: 'Update section attributes', // admin
-    ARCHIVE_SECTION: 'Archive section', // admin
-    DELETE_SECTION_DATA: 'Delete section Data', // admin
-    SEND_CONNECTION_INVITE: 'Send connection invite', // admin
-    DELETE_CONNECTION: 'Delete connection', // admin
-    ACCEPT_CONNECTION: 'Accept connection', // admin
-    CHANGE_USER_ROLE: 'Change role', // admin
-
+    
     FORM_CONNECTION: 'Form connection',
 
     ADD_USER_DECLARATION: 'Add declaration',
@@ -29,8 +23,60 @@ export const AUDIT_ACTIONS = {
     DELETE_CV_DATA: 'Delete all CV data',
     ARCHIVE_CV_DATA: 'Archive CV data',
     RETRIEVE_EXTERNAL_DATA: 'Retrieve external data',
+
+    GENERATE_REPORT: 'Generate report', // TODO 
+    DOWNLOAD_REPORT: 'Download report', // TODO
     // TODO add more actions
+
+    // admin actions
+    EDIT_SECTION_DETAILS: 'Update section details',
+    UPDATE_SECTION_ATTRIBUTES: 'Update section attributes',
+    ARCHIVE_SECTION: 'Archive section',
+    DELETE_SECTION_DATA: 'Delete section Data',
+    SEND_CONNECTION_INVITE: 'Send connection invite',
+    DELETE_CONNECTION: 'Delete connection',
+    ACCEPT_CONNECTION: 'Accept connection',
+    CHANGE_USER_ROLE: 'Change role',
+    EDIT_CV_TEMPLATE: 'Edit CV template',
+    ADD_NEW_TEMPLATE: 'Add new template',
+    DELETE_CV_TEMPLATE: 'Delete CV template', 
+    EDIT_REPORT_FORMAT: 'Edit report format', 
+    // TODO
+    ADD_USER: 'Add user',
+    UPDATE_USER_PROFILE: 'Update user profile', // DONE
+    IMPORT_USER: 'Import user',
+    APPROVE_USER: 'Approve user',
+    REJECT_USER: 'Reject user', 
+
+
 };
+
+export const ACTION_CATEGORIES = {
+    ADMIN_ACTIONS: [
+        AUDIT_ACTIONS.EDIT_SECTION_DETAILS,
+        AUDIT_ACTIONS.UPDATE_SECTION_ATTRIBUTES,
+        AUDIT_ACTIONS.ARCHIVE_SECTION,
+        AUDIT_ACTIONS.DELETE_SECTION_DATA,
+        AUDIT_ACTIONS.SEND_CONNECTION_INVITE,
+        AUDIT_ACTIONS.DELETE_CONNECTION,
+        AUDIT_ACTIONS.ACCEPT_CONNECTION,
+        AUDIT_ACTIONS.CHANGE_USER_ROLE,
+        AUDIT_ACTIONS.EDIT_CV_TEMPLATE,
+        AUDIT_ACTIONS.ADD_NEW_TEMPLATE,
+        AUDIT_ACTIONS.EDIT_REPORT_FORMAT,
+        AUDIT_ACTIONS.ADD_USER,
+        AUDIT_ACTIONS.UPDATE_USER_PROFILE,
+        AUDIT_ACTIONS.IMPORT_USER,
+        AUDIT_ACTIONS.APPROVE_USER,
+        AUDIT_ACTIONS.REJECT_USER
+    ],
+
+};
+
+// All actions that aren't admin actions
+ACTION_CATEGORIES.OTHER_ACTIONS = Object.values(AUDIT_ACTIONS).filter(
+    action => !ACTION_CATEGORIES.ADMIN_ACTIONS.includes(action)
+);
 
 export const AuditLoggerProvider = ({ children, userInfo }) => {
     const [ip, setIp] = useState('Unknown');

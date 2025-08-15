@@ -2,15 +2,20 @@ import React, { useState } from 'react';
 import '../CustomStyles/scrollbar.css';
 import '../CustomStyles/modal.css';
 import { deleteTemplate } from '../graphql/graphqlHelpers';
+import { useAuditLogger } from '../Contexts/AuditLoggerContext';
+import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
 
 const DeleteTemplateModal = ({ setIsModalOpen, template, onBack, fetchTemplates }) => {
   const [deletingTemplate, setDeletingTemplate] = useState(false);
+
+  const { logAction } = useAuditLogger();
 
   async function removeTemplate() {
     setDeletingTemplate(true);
     try {
       const result = await deleteTemplate(template.template_id);
       
+
     } catch (error) {
       console.error('Error deleting template: ', error);
     }
@@ -18,6 +23,9 @@ const DeleteTemplateModal = ({ setIsModalOpen, template, onBack, fetchTemplates 
     await fetchTemplates();
     setIsModalOpen(false);
     onBack();
+
+    // Log the template deletion action
+    await logAction(AUDIT_ACTIONS.DELETE_CV_TEMPLATE);
   }
 
   return (
