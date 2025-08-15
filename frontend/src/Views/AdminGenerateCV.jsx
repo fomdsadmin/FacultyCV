@@ -140,7 +140,7 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
       const allUsers = await getAllUsers();
       const usersInDepartment = allUsers.filter(
         (user) =>
-          (user.primary_department === department &&
+        (user.primary_department === department &&
           (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-")))
       );
       console.log("Users in Department:", usersInDepartment);
@@ -221,7 +221,7 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
       setDownloadUrl(pdfUrl);
       setDownloadUrlDocx(docxUrl);
       // Log the action
-      await logAction(AUDIT_ACTIONS.GENERATE_REPORT, {
+      await logAction(AUDIT_ACTIONS.GENERATE_CV, {
         userId: userObject.user_id,
         userName: `${userObject.first_name} ${userObject.last_name}`,
         userEmail: userObject.email,
@@ -296,9 +296,8 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
             <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
               <select
-                className={`select select-bordered w-full max-w-md ${
-                  departmentUsers.length === 0 ? "select-disabled bg-gray-100" : ""
-                }`}
+                className={`select select-bordered w-full max-w-md ${departmentUsers.length === 0 ? "select-disabled bg-gray-100" : ""
+                  }`}
                 value={selectedUser}
                 onChange={handleUserSelect}
                 disabled={departmentUsers.length === 0}
@@ -320,9 +319,8 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                 {/* List of Templates as a select dropdown */}
                 <div className="mb-4">
                   <select
-                    className={`select select-bordered w-full max-w-md ${
-                      !selectedUser ? "select-disabled bg-gray-100" : ""
-                    }`}
+                    className={`select select-bordered w-full max-w-md ${!selectedUser ? "select-disabled bg-gray-100" : ""
+                      }`}
                     value={selectedTemplate?.template_id || ""}
                     onChange={(e) => {
                       const templateId = e.target.value;

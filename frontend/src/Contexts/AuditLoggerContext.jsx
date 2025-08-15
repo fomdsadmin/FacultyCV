@@ -1,20 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { addAuditView } from '../graphql/graphqlHelpers';
-import { ADD_USER, UPDATE_USER_AFFILIATIONS } from 'graphql/mutations';
-import { reject } from 'bcrypt/promises';
 
 const AuditLoggerContext = createContext(null);
 
 export const AUDIT_ACTIONS = {
     VIEW_PAGE: 'View page',
-    SIGN_UP: 'Sign up',
+    LOGIN_REQUEST_SUBMITTED: 'Login request submitted',
     UPDATE_PROFILE: 'Update profile',
     UPDATE_AFFILIATIONS: 'Update affiliations',
 
-    
     FORM_CONNECTION: 'Form connection',
-    
 
     ADD_USER_DECLARATION: 'Add declaration',
     UPDATE_USER_DECLARATION: 'Update declaration',
@@ -25,12 +21,11 @@ export const AUDIT_ACTIONS = {
     DELETE_CV_DATA: 'Delete all CV data',
     ARCHIVE_CV_DATA: 'Archive CV data',
     RETRIEVE_EXTERNAL_DATA: 'Retrieve external data',
-
-    GENERATE_REPORT: 'Generate report', // TODO 
-    DOWNLOAD_REPORT: 'Download report', // TODO
-    // TODO add more actions
-
+    GENERATE_CV: 'Generate CV', 
+    
     // admin actions
+    GENERATE_DEPT_REPORT: 'Generate department report', // department Admin 
+
     EDIT_SECTION_DETAILS: 'Update section details',
     UPDATE_SECTION_ATTRIBUTES: 'Update section attributes',
     ARCHIVE_SECTION: 'Archive section',
@@ -43,15 +38,14 @@ export const AUDIT_ACTIONS = {
     CHANGE_USER_ROLE: 'Change role',
     EDIT_CV_TEMPLATE: 'Edit CV template',
     ADD_NEW_TEMPLATE: 'Add new template',
-    DELETE_CV_TEMPLATE: 'Delete CV template', 
-    EDIT_REPORT_FORMAT: 'Edit report format', 
+    DELETE_CV_TEMPLATE: 'Delete CV template',
+    EDIT_REPORT_FORMAT: 'Edit report format',
     ADD_USER: 'Add user',
-    UPDATE_USER_PROFILE: 'Update user profile', 
+    UPDATE_USER_PROFILE: 'Update user profile',
     IMPORT_USER: 'Import user',
     APPROVE_USER: 'Approve user',
-    REJECT_USER: 'Reject user', 
+    REJECT_USER: 'Reject user',
     ACCEPT_USER: 'Accept user'
-
 
 };
 
@@ -67,12 +61,15 @@ export const ACTION_CATEGORIES = {
         AUDIT_ACTIONS.CHANGE_USER_ROLE,
         AUDIT_ACTIONS.EDIT_CV_TEMPLATE,
         AUDIT_ACTIONS.ADD_NEW_TEMPLATE,
+        AUDIT_ACTIONS.DELETE_CV_TEMPLATE,
         AUDIT_ACTIONS.EDIT_REPORT_FORMAT,
         AUDIT_ACTIONS.ADD_USER,
         AUDIT_ACTIONS.UPDATE_USER_PROFILE,
         AUDIT_ACTIONS.IMPORT_USER,
         AUDIT_ACTIONS.APPROVE_USER,
-        AUDIT_ACTIONS.REJECT_USER
+        AUDIT_ACTIONS.REJECT_USER,
+        AUDIT_ACTIONS.ACCEPT_USER,
+        AUDIT_ACTIONS.GENERATE_DEPT_REPORT
     ],
 
 };

@@ -234,7 +234,7 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
       setDownloadUrl(pdfUrl);
       setDownloadUrlDocx(docxUrl);
 
-      await logAction(AUDIT_ACTIONS.GENERATE_REPORT, {
+      await logAction(AUDIT_ACTIONS.GENERATE_CV, {
         userId: userObject.user_id,
         userName: `${userObject.first_name} ${userObject.last_name}`,
         userEmail: userObject.email,

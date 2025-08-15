@@ -5,6 +5,7 @@ import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import { getAllUsers, getAllSections, getDepartmentCVData } from "../graphql/graphqlHelpers.js";
 import "../CustomStyles/scrollbar.css";
 import { useNotification } from "../Contexts/NotificationContext.jsx";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
 
 const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   const [selectedUsers, setSelectedUsers] = useState([]); // Changed to array for multiple selection
@@ -22,6 +23,7 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   const [dataSections, setDataSections] = useState([]); // Store data sections
   const { setNotification } = useNotification();
 
+  const { logAction } = useAuditLogger();
 
   const reportTypes = [
     { value: "publications", label: "Publications Report" },
@@ -343,6 +345,12 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
       
       setDownloadUrl(url);
       setNotification(true);
+
+      await logAction(AUDIT_ACTIONS.GENERATE_DEPT_REPORT, {
+        department: departmentForQuery,
+        numUsers: selectedUsers ? selectedUsers.length : 0
+      });
+      
     } catch (error) {
       console.error("Error generating report:", error);
       alert(`Error generating report: ${error.message}`);

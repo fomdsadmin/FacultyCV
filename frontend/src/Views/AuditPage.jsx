@@ -15,6 +15,17 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     const [auditViewData, setAuditViewData] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
 
+    const PAGE_SIZE = 20;
+    const [page_number, setPageNumber] = useState(1); // Current page number
+
+    const [emailFilter, setEmailFilter] = useState('');
+    const [firstNameFilter, setFirstNameFilter] = useState('');
+    const [lastNameFilter, setLastNameFilter] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [actionFilter, setActionFilter] = useState('');
+    const [actionCategory, setActionCategory] = useState('ALL');
+
     // Determine which menu component to use based on the user role
     const getMenuComponent = () => {
         // Get the current role with fallback to empty string
@@ -32,24 +43,12 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     };
     const MenuComponent = getMenuComponent();
 
-
-    const PAGE_SIZE = 20;
-    const [page_number, setPageNumber] = useState(1); // Current page number
-
-    const [emailFilter, setEmailFilter] = useState('');
-    const [firstNameFilter, setFirstNameFilter] = useState('');
-    const [lastNameFilter, setLastNameFilter] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [actionFilter, setActionFilter] = useState('');
-
-    const [actionCategory, setActionCategory] = useState('ALL');
-
-
+    // reset page display if filter change 
     useEffect(() => {
-        setPageNumber(1); // reset if filter change 
+        setPageNumber(1);
     }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter]);
 
+    // fetch audit data 
     useEffect(() => {
         fetchAuditViewData();
     }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter, page_number]);
@@ -57,11 +56,9 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     async function fetchAuditViewData() {
         setLoading(true);
         try {
-
             // Start with proper date formatting for both start and end dates
             let formattedStartDate = startDate;
             let formattedEndDate = endDate;
-
             // Format start date if it exists
             if (startDate) {
                 const startDateObj = new Date(startDate);
@@ -70,7 +67,6 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                 formattedStartDate = startDateObj.toISOString().split('.')[0]; // Remove milliseconds
                 console.log("Formatted start date:", formattedStartDate);
             }
-
             // Format end date if it exists
             if (endDate) {
                 const endDateObj = new Date(endDate);
@@ -91,7 +87,7 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                 end_date: formattedEndDate,
             });
 
-            const data = Array.isArray(response) ? response : (response.records || []);
+            let data = Array.isArray(response) ? response : (response.records || []);
             data.sort((a, b) => new Date(b.ts) - new Date(a.ts));
 
             setAuditViewData(data);
@@ -432,7 +428,7 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {pagedData.length === 0 ? (
                                     <tr>
-                                        <td colSpan={visibleColumns.length} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                        <td colSpan={visibleColumns.length} className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 text-center">
                                             No records found.
                                         </td>
                                     </tr>
@@ -440,12 +436,12 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                                     pagedData.map((log, index) => (
                                         <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                             {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => {
-                                                const shouldWrap = ["ts","logged_user_email", "profile_record", "page","session_id"].includes(col);
+                                                const shouldWrap = ["ts","logged_user_id", "profile_record", "page","session_id"].includes(col);
                     
                                                 return (
                                                     <td
                                                         key={col}
-                                                        className={`px-3 py-2 text-sm text-gray-700 ${shouldWrap ? "whitespace-normal break-words" : "truncate"}`}
+                                                        className={`px-3 py-2 text-xs text-gray-500 ${shouldWrap ? "whitespace-normal break-words" : "truncate"}`}
                                                         style={{ maxWidth: getColumnWidth(col) }}
                                                         title={log[col] && typeof log[col] === 'string' ? log[col] : ''}
                                                     >
