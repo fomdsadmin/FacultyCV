@@ -9,7 +9,6 @@ import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
 import PDFViewer from "../Components/PDFViewer.jsx";
-import DepartmentGenerateAllConfirmModal from "../Components/DepartmentGenerateAllConfirmModal.jsx";
 
 
 const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
@@ -26,9 +25,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState(""); // for super admin
   const [allDepartments, setAllDepartments] = useState([]); // for super admin
-  const [isDepartmentWide, setIsDepartmentWide] = useState(false); // for department-wide CV generation
   const [allUsers, setAllUsers] = useState([]); // store all users for filtering
-  const [showGenerateAllModal, setShowGenerateAllModal] = useState(false);
   const [userSearchTerm, setUserSearchTerm] = useState(""); // New state for user search
   const [dropdownOpen, setDropdownOpen] = useState(false); // Add this state to manage the dropdown visibility
   const { setNotification } = useNotification();
@@ -114,22 +111,17 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
 
   // When isDepartmentWide changes, update selectedUser accordingly
   useEffect(() => {
-    if (isDepartmentWide) {
-      setSelectedUser("All");
-      setDownloadUrl(null);
-      setDownloadUrlDocx(null);
-    } else {
+    if (selectedUser === "All") {
       setSelectedUser("");
       setSelectedTemplate("");
       setDownloadUrl(null);
       setDownloadUrlDocx(null);
     }
     // eslint-disable-next-line
-  }, [isDepartmentWide]);
+  }, []);
 
   const handleUserSelect = (event) => {
     setSelectedUser(event.target.value);
-    setIsDepartmentWide(event.target.value === "All");
     setDownloadUrl(null);
     setDownloadUrlDocx(null);
     if (event.target.value === "") {
@@ -151,7 +143,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const handleUserSearchChange = (event) => {
     setUserSearchTerm(event.target.value);
     // Automatically open dropdown when user starts typing in search field
-    if (event.target.value && !dropdownOpen && !isDepartmentWide && !selectedUser) {
+    if (event.target.value && !dropdownOpen && !selectedUser) {
       setDropdownOpen(true);
     }
     // Close dropdown if search field is emptied
@@ -174,21 +166,9 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase()))
   );
 
-  // Stub for department-wide generation
-  const handleGenerateAll = () => {
-    // TODO: Implement actual logic
-    setShowGenerateAllModal(false);
-    // last thing, notification
-    setNotification(true);
-
-    alert("Department-wide CV generation is not implemented yet.");
-  };
+  // Stub for department-wide generation has been removed
 
   const handleGenerate = async () => {
-    if (isDepartmentWide) {
-      setShowGenerateAllModal(true);
-      return;
-    }
     if (!selectedUser || !selectedTemplate) {
       alert("Please select both a user and a template");
       return;
@@ -292,7 +272,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                   placeholder="Search by name, email, or username..."
                   value={userSearchTerm}
                   onChange={handleUserSearchChange}
-                  disabled={isDepartmentWide || selectedUser !== ""} // Also disable when a user is selected
+                  disabled={selectedUser !== ""} // Also disable when a user is selected
                 />
                 
                 {/* Custom dropdown */}
@@ -300,14 +280,11 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                   <button
                     type="button"
                     className="select select-bordered w-full text-left flex items-center justify-between"
-                    onClick={() => !isDepartmentWide && setDropdownOpen(!dropdownOpen)}
-                    disabled={isDepartmentWide}
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
                   >
                     <div className="flex items-center justify-between w-full">
                       <span>
                         {selectedUser ? (
-                          selectedUser === "All" ? 
-                          "All Faculty Members" : 
                           departmentUsers.find(u => u.user_id === selectedUser)?.preferred_name || 
                           departmentUsers.find(u => u.user_id === selectedUser)?.first_name + " " + 
                           departmentUsers.find(u => u.user_id === selectedUser)?.last_name
@@ -319,7 +296,6 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                             onClick={(e) => {
                               e.stopPropagation(); // Prevent dropdown from toggling
                               setSelectedUser("");
-                              setIsDepartmentWide(false);
                               setDownloadUrl(null);
                               setDownloadUrlDocx(null);
                               setSelectedTemplate("");
@@ -339,7 +315,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                     </div>
                   </button>
                   
-                  {dropdownOpen && !isDepartmentWide && (
+                  {dropdownOpen && (
                     <div className="absolute z-10 w-full bg-white shadow-lg max-h-[40vh] rounded-md py-1 mt-1 overflow-auto custom-scrollbar">
                       <div 
                         className="cursor-pointer hover:bg-gray-100 px-4 py-2"
@@ -351,20 +327,6 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                       >
                         ...
                       </div>
-                      
-                      {/* {userInfo.role.startsWith("Admin-") && (
-                        <div 
-                          className="cursor-pointer hover:bg-gray-100 px-4 py-2"
-                          onClick={() => {
-                            setSelectedUser("All");
-                            setIsDepartmentWide(true);
-                            setDropdownOpen(false);
-                            setUserSearchTerm(""); // Clear search term
-                          }}
-                        >
-                          All Faculty Members
-                        </div>
-                      )} */}
                       
                       {filteredUsers.map((user) => (
                         <div 
@@ -391,18 +353,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                   )}
                 </div>
                 
-                {/* checkbox for department-wide cv (all fac members) */}
-                {/* {userInfo.role.startsWith("Admin-") && (
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary"
-                      checked={isDepartmentWide}
-                      onChange={(e) => setIsDepartmentWide(e.target.checked)}
-                    />
-                    <label className="ml-2">Generate for all department members</label>
-                  </div>
-                )} */}
+                {/* Removed checkbox for department-wide cv (all fac members) */}
               </div>
             </div>
 
@@ -415,7 +366,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                 <div className="mb-4">
                   <select
                     className={`select select-bordered w-full max-w-md ${
-                      !selectedUser && !isDepartmentWide ? "select-disabled bg-gray-100" : ""
+                      !selectedUser ? "select-disabled bg-gray-100" : ""
                     }`}
                     value={selectedTemplate?.template_id || ""}
                     onChange={(e) => {
@@ -423,7 +374,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                       const template = searchedTemplates.find((t) => t.template_id === templateId);
                       handleTemplateSelect(template || "");
                     }}
-                    disabled={!selectedUser && !isDepartmentWide}
+                    disabled={!selectedUser}
                   >
                     <option value="">Choose a template...</option>
                     {searchedTemplates.map((template) => (
@@ -539,16 +490,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
               )}
             </div>
 
-            <DepartmentGenerateAllConfirmModal
-              open={showGenerateAllModal}
-              onClose={() => setShowGenerateAllModal(false)}
-              onConfirm={handleGenerateAll}
-              department={userInfo.role === "Admin" ? selectedDepartment : userInfo.primary_department}
-              members={departmentUsers}
-              template={selectedTemplate}
-              startYear={startYear}
-              endYear={endYear}
-            />
+            {/* Removed DepartmentGenerateAllConfirmModal */}
           </div>
         )}
       </main>

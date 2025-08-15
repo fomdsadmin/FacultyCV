@@ -310,8 +310,8 @@ export const getAllSectionCVData = async (data_section_id, data_section_ids) => 
   return results["data"]["getAllSectionCVData"];
 };
 
-export const getDepartmentCVData = async (data_section_id, dept, title) => {
-  const results = await runGraphql(getDepartmentCVDataQuery(data_section_id, dept, title));
+export const getDepartmentCVData = async (data_section_id, dept, title, user_ids) => {
+  const results = await runGraphql(getDepartmentCVDataQuery(data_section_id, dept, title, user_ids));
   return results["data"]["getDepartmentCVData"];
 };
 
