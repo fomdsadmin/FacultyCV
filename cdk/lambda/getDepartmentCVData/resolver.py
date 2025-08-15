@@ -62,9 +62,12 @@ def getDepartmentCVData(arguments):
         )
         total_count = cursor.fetchone()[0]
         
-        # Get the actual data
+        # Get the actual data with user information
         cursor.execute(
-            f'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND user_id IN ({user_ids_placeholder}) AND archive != true',
+            f'''SELECT ucd.data_section_id, ucd.data_details, u.first_name, u.last_name, ucd.user_id 
+                FROM user_cv_data ucd 
+                JOIN users u ON ucd.user_id = u.user_id 
+                WHERE ucd.data_section_id = %s AND ucd.user_id IN ({user_ids_placeholder}) AND ucd.archive != true''',
             [data_section_id] + user_ids
         )
     # If dept is 'All' or empty string, get all data
@@ -76,7 +79,10 @@ def getDepartmentCVData(arguments):
         )
         total_count = cursor.fetchone()[0]
         cursor.execute(
-            'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND archive != true LIMIT 10000',
+            '''SELECT ucd.data_section_id, ucd.data_details, u.first_name, u.last_name, ucd.user_id 
+               FROM user_cv_data ucd 
+               JOIN users u ON ucd.user_id = u.user_id 
+               WHERE ucd.data_section_id = %s AND ucd.archive != true LIMIT 10000''',
             (data_section_id,)
         )
     # Otherwise, filter by department
@@ -100,9 +106,12 @@ def getDepartmentCVData(arguments):
             )
             total_count = cursor.fetchone()[0]
             
-            # Get the actual data
+            # Get the actual data with user information
             cursor.execute(
-                f'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND user_id IN ({user_ids_placeholder}) AND archive != true',
+                f'''SELECT ucd.data_section_id, ucd.data_details, u.first_name, u.last_name, ucd.user_id 
+                    FROM user_cv_data ucd 
+                    JOIN users u ON ucd.user_id = u.user_id 
+                    WHERE ucd.data_section_id = %s AND ucd.user_id IN ({user_ids_placeholder}) AND ucd.archive != true''',
                 [data_section_id] + dept_user_ids
             )
         
@@ -113,17 +122,40 @@ def getDepartmentCVData(arguments):
     user_cv_data = []
     for result in results:
         try:
-            # result[1] is already a dict, no need to parse with json.loads()
+            # result[1] is the data_details, result[2] is first_name, result[3] is last_name, result[4] is user_id
             raw_data = result[1]
+            first_name = result[2]
+            last_name = result[3]
+            user_id = result[4]
             
             # If it's a string, then parse it
             if isinstance(raw_data, str):
                 raw_data = json.loads(raw_data)
             
             filtered_data = filter_data_by_section(raw_data, section_title)
+            
+            # Always add first_name and last_name to the filtered data
+            if isinstance(filtered_data, dict):
+                filtered_data['first_name'] = first_name
+                filtered_data['last_name'] = last_name
+                filtered_data['user_id'] = user_id
+            else:
+                # If filtered_data is not a dict, create one
+                filtered_data = {
+                    'original_data': filtered_data,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'user_id': user_id
+                }
+                
         except (json.JSONDecodeError, TypeError) as e:
-            # If JSON parsing fails, use raw data
-            filtered_data = result[1]
+            # If JSON parsing fails, use raw data with user info
+            filtered_data = {
+                'original_data': result[1],
+                'first_name': result[2] if len(result) > 2 else '',
+                'last_name': result[3] if len(result) > 3 else '',
+                'user_id': result[4] if len(result) > 4 else '',
+            }
             print(f"Error parsing data: {e}")
         
         user_cv_data.append({

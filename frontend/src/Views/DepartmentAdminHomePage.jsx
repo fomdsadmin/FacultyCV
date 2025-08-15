@@ -8,6 +8,7 @@ import {
   getAllSections,
   getNumberOfGeneratedCVs,
   getDepartmentCVData,
+  getDepartmentAffiliations,
 } from "../graphql/graphqlHelpers.js";
 
 const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
@@ -28,6 +29,8 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   // const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
   const [keywordData, setKeywordData] = useState([]);
   const [showAllKeywords, setShowAllKeywords] = useState(false);
+  const [affiliationsData, setAffiliationsData] = useState([]);
+  const [showAllRanks, setShowAllRanks] = useState(false);
 
   // Consolidated data loading
   useEffect(() => {
@@ -39,13 +42,16 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     try {
       // Fetch all basic data in parallel
       department = department.trim() || "";
-      const [userCounts, dataSections, generatedCVs] = await Promise.all([
-        department === "All" ? getAllUsersCount() : getAllUsersCount(department),
+      const [userCounts, dataSections, generatedCVs, affiliations] = await Promise.all([
+        department === "All" ? getAllUsersCount() : getAllUsersCount(department, ""),
         getAllSections(),
         // department === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
+        Promise.resolve(0), // Placeholder for generatedCVs
+        getDepartmentAffiliations(department)
       ]);
 
       setUserCounts(userCounts);
+      setAffiliationsData(affiliations);
       // setTotalCVsGenerated(generatedCVs);
 
       // Fetch CV data
@@ -164,7 +170,6 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
         // Update state in batch
         setJournalPublications(publicationsData);
         setOtherPublications(otherPublicationsData);
-        console.log(publicationsData);
         setGrants(grantsData);
         setPatents(patentsData);
         setGrantMoneyRaised(processedGrantMoney);
@@ -411,30 +416,82 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
             <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM9 17a4 4 0 004-4H5a4 4 0 004 4z" />
             </svg>
-            Faculty Ranks
+            Faculty Rank Distribution
           </h3>
           <div className="space-y-4">
-            {/* Total Faculty Count
-            <AnalyticsCard 
-              title="Total Faculty" 
-              value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()} 
-              className="!bg-blue-50 !border-blue-200"
-            /> */}
+            {/* Primary Units Section */}
+            {facultyRanksCounts.allRanks.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                {/* Totals Header */}
+                <div className="mb-4">
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div className="bg-blue-100 border border-blue-300 rounded-md p-3 text-center">
+                      <div className="text-lg font-bold text-blue-800">{facultyRanksCounts.primaryTotal}</div>
+                      <div className="text-xs text-blue-600">Primary Appointments</div>
+                    </div>
+                    <div className="bg-indigo-100 border border-indigo-300 rounded-md p-3 text-center">
+                      <div className="text-lg font-bold text-indigo-800">{facultyRanksCounts.jointTotal}</div>
+                      <div className="text-xs text-indigo-600">Joint Appointments</div>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Faculty Ranks Breakdown */}
-            {facultyRanksCounts.length > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 mt-4">
-                <h4 className="text-sm font-semibold text-blue-800 mb-2">Rank Distribution</h4>
-                <div className="space-y-1">
-                  {facultyRanksCounts.map((rankData, index) => (
-                    <div key={index} className="flex justify-between items-center text-sm gap-y-1">
-                      <span className="text-blue-700 font-medium">{rankData.rank}</span>
-                      <span className="bg-blue-200 text-blue-800 p-2 rounded-md text-xs font-semibold min-w-[4rem] text-center">
-                        {rankData.count.toLocaleString()}
-                      </span>
+                {/* Table Header */}
+                <div className="bg-gray-100 border border-gray-300 rounded-t-md px-3 py-2">
+                  <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-gray-700">
+                    <div>Rank</div>
+                    <div className="text-center">Primary</div>
+                    <div className="text-center">Joint</div>
+                  </div>
+                </div>
+
+                {/* Table Rows */}
+                <div className="border-l border-r border-b border-gray-300 rounded-b-md">
+                  {facultyRanksCounts.allRanks
+                    .slice(0, showAllRanks ? undefined : 6)
+                    .map((rankData, index) => (
+                    <div key={rankData.rank} className={`px-3 py-2 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div className="text-gray-800 font-medium">{rankData.rank}</div>
+                        <div className="text-center">
+                          {rankData.primaryCount > 0 ? (
+                            <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded-md text-xs font-semibold">
+                              {rankData.primaryCount}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </div>
+                        <div className="text-center">
+                          {rankData.jointCount > 0 ? (
+                            <span className="bg-indigo-200 text-indigo-800 px-2 py-1 rounded-md text-xs font-semibold">
+                              {rankData.jointCount}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                {facultyRanksCounts.allRanks.length > 6 && (
+                  <button
+                    className="mt-3 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                    onClick={() => setShowAllRanks(!showAllRanks)}
+                  >
+                    {showAllRanks ? 'Show Less (Top 6)' : `Show All ${facultyRanksCounts.allRanks.length} Ranks`}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* No Data Message */}
+            {facultyRanksCounts.allRanks.length === 0 && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                <p className="text-gray-500 text-sm">No affiliations data available</p>
+                <p className="text-gray-400 text-xs mt-1">Faculty rank distribution will appear here once affiliations data is imported</p>
               </div>
             )}
           </div>
@@ -500,7 +557,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                 </svg>
                 Grants and Contracts
               </h4>
-              
+
               {/* Total Funding */}
               <AnalyticsCard
                 title="Total Funding"
@@ -514,12 +571,14 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                 {grantTypesCounts.grant.count > 0 && (
                   <div className="bg-white border border-green-300 rounded-md p-2">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-green-700 font-medium">Research Grants ({grantTypesCounts.grant.count.toLocaleString()})</span>
+                      <span className="text-green-700 font-medium">
+                        Research Grants ({grantTypesCounts.grant.count.toLocaleString()})
+                      </span>
                       <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
-                        {grantTypesCounts.grant.funding >= 1000000 
-                          ? `$${(grantTypesCounts.grant.funding / 1000000).toFixed(1)}M` 
-                          : grantTypesCounts.grant.funding >= 1000 
-                          ? `$${(grantTypesCounts.grant.funding / 1000).toFixed(0)}K` 
+                        {grantTypesCounts.grant.funding >= 1000000
+                          ? `$${(grantTypesCounts.grant.funding / 1000000).toFixed(1)}M`
+                          : grantTypesCounts.grant.funding >= 1000
+                          ? `$${(grantTypesCounts.grant.funding / 1000).toFixed(0)}K`
                           : `$${grantTypesCounts.grant.funding.toLocaleString()}`}
                       </span>
                     </div>
@@ -530,12 +589,14 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                 {grantTypesCounts.contract.count > 0 && (
                   <div className="bg-white border border-green-300 rounded-md p-2">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-green-700 font-medium">Research Contracts ({grantTypesCounts.contract.count.toLocaleString()})</span>
+                      <span className="text-green-700 font-medium">
+                        Research Contracts ({grantTypesCounts.contract.count.toLocaleString()})
+                      </span>
                       <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
-                        {grantTypesCounts.contract.funding >= 1000000 
-                          ? `$${(grantTypesCounts.contract.funding / 1000000).toFixed(1)}M` 
-                          : grantTypesCounts.contract.funding >= 1000 
-                          ? `$${(grantTypesCounts.contract.funding / 1000).toFixed(0)}K` 
+                        {grantTypesCounts.contract.funding >= 1000000
+                          ? `$${(grantTypesCounts.contract.funding / 1000000).toFixed(1)}M`
+                          : grantTypesCounts.contract.funding >= 1000
+                          ? `$${(grantTypesCounts.contract.funding / 1000).toFixed(0)}K`
                           : `$${grantTypesCounts.contract.funding.toLocaleString()}`}
                       </span>
                     </div>
@@ -571,59 +632,49 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
   // Memoized faculty ranks computation
   const facultyRanksCounts = useMemo(() => {
-    const rankCounts = {};
+    const primaryRankCounts = {};
+    const jointRankCounts = {};
 
-    // Note: This would need to be populated with actual rank data from user profiles
-    // For now, we'll use the existing user counts as a foundation
-    // This assumes rank information would come from user profiles or HR data
+    // Process affiliations data to count ranks
+    affiliationsData.forEach(affiliation => {
+      try {
+        // Parse primary unit
+        const primaryUnit = JSON.parse(affiliation.primary_unit || '{}');
+        if (primaryUnit.rank && primaryUnit.rank.trim()) {
+          const rank = primaryUnit.rank.trim();
+          primaryRankCounts[rank] = (primaryRankCounts[rank] || 0) + 1;
+        }
 
-    // You might need to fetch additional data or modify the getAllUsersCount function
-    // to include rank information. For now, showing basic user types:
-    if (userCounts.faculty_count > 0) {
-      rankCounts["Adjunct Professor"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Assistant Professor & Assistant Professor of Teaching"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Associate Professor & Associate Professor of Teaching"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Clinical Faculty"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Clinical Fellow"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Emeritus Faculty"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Honorary Faculty"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Investigator"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Lecturer"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Professor & Professor of Teaching"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Research Associate"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Seasonal Lecturer"] = 0;
-    }
-    if (userCounts.dept_admin_count > 0) {
-      rankCounts["Visiting Faculty"] = 0;
-    }
+        // Parse joint units
+        const jointUnits = JSON.parse(affiliation.joint_units || '[]');
+        if (Array.isArray(jointUnits)) {
+          jointUnits.forEach(unit => {
+            if (unit.rank && unit.rank.trim()) {
+              const rank = unit.rank.trim();
+              jointRankCounts[rank] = (jointRankCounts[rank] || 0) + 1;
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing affiliation data:', error, affiliation);
+      }
+    });
 
-    // Convert to array and sort by count
-    return Object.entries(rankCounts)
-      .map(([rank, count]) => ({ rank, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [userCounts]);
+    // Calculate totals
+    const primaryTotal = Object.values(primaryRankCounts).reduce((sum, count) => sum + count, 0);
+    const jointTotal = Object.values(jointRankCounts).reduce((sum, count) => sum + count, 0);
+
+    // Get all unique ranks from both primary and joint appointments
+    const allUniqueRanks = new Set([...Object.keys(primaryRankCounts), ...Object.keys(jointRankCounts)]);
+    const allRanks = Array.from(allUniqueRanks).map(rank => ({
+      rank,
+      primaryCount: primaryRankCounts[rank] || 0,
+      jointCount: jointRankCounts[rank] || 0,
+      totalCount: (primaryRankCounts[rank] || 0) + (jointRankCounts[rank] || 0)
+    })).sort((a, b) => b.totalCount - a.totalCount); // Sort by total count descending
+
+    return { primaryRankCounts, jointRankCounts, primaryTotal, jointTotal, allRanks };
+  }, [affiliationsData]);
 
   // Memoized publication types computation
   const publicationTypesCounts = useMemo(() => {
@@ -658,7 +709,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   const grantTypesCounts = useMemo(() => {
     const typeData = {
       contract: { count: 0, funding: 0 },
-      grant: { count: 0, funding: 0 }
+      grant: { count: 0, funding: 0 },
     };
 
     filteredGrants.forEach((grant) => {

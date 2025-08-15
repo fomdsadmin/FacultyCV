@@ -40,40 +40,33 @@ def updateUserAffiliations(arguments):
         # Update existing record
         query = """
         UPDATE affiliations SET 
-            faculty = %s,
-            institution = %s,
-            academic_units = %s,
+            primary_unit = %s,
+            joint_units = %s,
             research_affiliations = %s,
             hospital_affiliations = %s
-        WHERE user_id = %s AND first_name = %s AND last_name = %s
+        WHERE user_id = %s
         """
-        
         cursor.execute(query, (
-            json.dumps(affiliations.get('faculty', {})),
-            json.dumps(affiliations.get('institution', {})),
-            json.dumps(affiliations.get('academic_units', [])),
+            json.dumps(affiliations.get('primary_unit', {})),
+            json.dumps(affiliations.get('joint_units', [])),
             json.dumps(affiliations.get('research_affiliations', [])),
             json.dumps(affiliations.get('hospital_affiliations', [])),
             user_id,
-            first_name,
-            last_name
         ))
     else:
         # Insert new record
         query = """
         INSERT INTO affiliations (
-            user_id, first_name, last_name, faculty, institution, 
-            academic_units, research_affiliations, hospital_affiliations
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            user_id, first_name, last_name,
+            primary_unit, joint_units, research_affiliations, hospital_affiliations
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
-        
         cursor.execute(query, (
             user_id,
             first_name,
             last_name,
-            json.dumps(affiliations.get('faculty', {})),
-            json.dumps(affiliations.get('institution', {})),
-            json.dumps(affiliations.get('academic_units', [])),
+            json.dumps(affiliations.get('primary_unit', {})),
+            json.dumps(affiliations.get('joint_units', [])),
             json.dumps(affiliations.get('research_affiliations', [])),
             json.dumps(affiliations.get('hospital_affiliations', []))
         ))

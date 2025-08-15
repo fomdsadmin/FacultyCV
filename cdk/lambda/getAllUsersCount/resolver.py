@@ -17,7 +17,7 @@ def getAllUsersCount(arguments):
             COUNT(*) as total_count,
             COUNT(CASE WHEN role = 'Faculty' THEN 1 END) as faculty_count,
             COUNT(CASE WHEN role = 'Assistant' THEN 1 END) as assistant_count,
-            COUNT(CASE WHEN role LIKE 'Admin-%' THEN 1 END) as dept_admin_count,
+            COUNT(CASE WHEN role LIKE '%Admin-%' THEN 1 END) as dept_admin_count,
             COUNT(CASE WHEN role = 'Admin' THEN 1 END) as admin_count,
             COUNT(CASE WHEN role LIKE 'FacultyAdmin-%' THEN 1 END) as faculty_admin_count
         FROM users
