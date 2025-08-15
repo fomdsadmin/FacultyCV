@@ -11,6 +11,7 @@ import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js"
 import PDFViewer from "../Components/PDFViewer.jsx";
 import DepartmentGenerateAllConfirmModal from "../Components/DepartmentGenerateAllConfirmModal.jsx";
 
+
 const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [selectedUser, setSelectedUser] = useState("");
   const [departmentUsers, setDepartmentUsers] = useState([]);
@@ -221,6 +222,8 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
       setNotification(true);
       setDownloadUrl(pdfUrl);
       setDownloadUrlDocx(docxUrl);
+
+      
     } catch (error) {
       console.error("Error generating CV:", error);
       alert("Error generating CV. Please try again.");

@@ -8,11 +8,13 @@ const AuditLoggerContext = createContext(null);
 
 export const AUDIT_ACTIONS = {
     VIEW_PAGE: 'View page',
+    SIGN_UP: 'Sign up',
     UPDATE_PROFILE: 'Update profile',
     UPDATE_AFFILIATIONS: 'Update affiliations',
 
     
     FORM_CONNECTION: 'Form connection',
+    
 
     ADD_USER_DECLARATION: 'Add declaration',
     UPDATE_USER_DECLARATION: 'Update declaration',
@@ -33,20 +35,22 @@ export const AUDIT_ACTIONS = {
     UPDATE_SECTION_ATTRIBUTES: 'Update section attributes',
     ARCHIVE_SECTION: 'Archive section',
     DELETE_SECTION_DATA: 'Delete section Data',
+
     SEND_CONNECTION_INVITE: 'Send connection invite',
     DELETE_CONNECTION: 'Delete connection',
     ACCEPT_CONNECTION: 'Accept connection',
+
     CHANGE_USER_ROLE: 'Change role',
     EDIT_CV_TEMPLATE: 'Edit CV template',
     ADD_NEW_TEMPLATE: 'Add new template',
     DELETE_CV_TEMPLATE: 'Delete CV template', 
     EDIT_REPORT_FORMAT: 'Edit report format', 
-    // TODO
     ADD_USER: 'Add user',
-    UPDATE_USER_PROFILE: 'Update user profile', // DONE
+    UPDATE_USER_PROFILE: 'Update user profile', 
     IMPORT_USER: 'Import user',
     APPROVE_USER: 'Approve user',
     REJECT_USER: 'Reject user', 
+    ACCEPT_USER: 'Accept user'
 
 
 };
@@ -91,10 +95,8 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
                 console.log("Page view logging skipped - no user info available");
                 return;
             }
-
             if (location.pathname !== previousPath.current) {
                 previousPath.current = location.pathname;
-
                 await logAction(AUDIT_ACTIONS.VIEW_PAGE);
                 // console.log(`Logged page view: ${location.pathname}`);
             }
@@ -121,7 +123,15 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             console.warn("Cannot log action - no user info available");
             return;
         }
-
+        // Convert profileRecord to string if it's an object
+        let recordValue = profileRecord;
+        if (typeof profileRecord === 'object') {
+            try {
+                recordValue = JSON.stringify(profileRecord);
+            } catch (e) {
+                recordValue = String(profileRecord);
+            }
+        }
 
         const auditInput = {
             logged_user_id: userInfo?.user_id || 'Unknown',
@@ -133,7 +143,7 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             page: location.pathname,
             session_id: localStorage.getItem('session_id') || 'Unknown',
             assistant: userInfo?.role === 'Assistant' ? "true" : "false",
-            profile_record: profileRecord,
+            profile_record: recordValue,
             logged_user_email: userInfo?.email || 'Unknown',
             logged_user_action: actionType,
 

@@ -9,6 +9,7 @@ import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
 import PDFViewer from "../Components/PDFViewer.jsx";
+import { AUDIT_ACTIONS, useAuditLogger } from "../Contexts/AuditLoggerContext.jsx";
 
 const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [selectedUser, setSelectedUser] = useState("");
@@ -31,6 +32,7 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
 
   const [allUsers, setAllUsers] = useState([]); // add this to store all users
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     const loadData = async () => {
@@ -218,6 +220,13 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
       setNotification(true);
       setDownloadUrl(pdfUrl);
       setDownloadUrlDocx(docxUrl);
+      // Log the action
+      await logAction(AUDIT_ACTIONS.GENERATE_REPORT, {
+        userId: userObject.user_id,
+        userName: `${userObject.first_name} ${userObject.last_name}`,
+        userEmail: userObject.email,
+        reportName: selectedTemplate.title,
+      });
     } catch (error) {
       console.error("Error generating CV:", error);
       alert("Error generating CV. Please try again.");

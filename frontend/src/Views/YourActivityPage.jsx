@@ -147,6 +147,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
         "logged_user_role",
         "page",
         "logged_user_action",
+        "profile_record",
     ];
 
 

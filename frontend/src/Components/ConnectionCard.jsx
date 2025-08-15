@@ -48,7 +48,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
         // handle an actual removal here
         try {
             const response = await deleteUserConnection(connection.user_connection_id);
-            await logAction(AUDIT_ACTIONS.DELETE_CONNECTION);
+            await logAction(AUDIT_ACTIONS.DELETE_CONNECTION, connection.faculty_email);
         } catch (error) {
             console.error('Error:', error);
         }
@@ -60,7 +60,7 @@ const AssociatedUser = ({ connection, getAllUserConnections }) => {
         setIsAccepting(true);
         try {
             const response = await updateUserConnection(connection.user_connection_id, 'confirmed');
-            await logAction(AUDIT_ACTIONS.ACCEPT_CONNECTION);
+            await logAction(AUDIT_ACTIONS.ACCEPT_CONNECTION, connection.faculty_email);
         } catch (error) {
             console.error('Error:', error);
         }
