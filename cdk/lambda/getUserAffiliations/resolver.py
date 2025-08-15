@@ -13,8 +13,8 @@ def getUserAffiliations(arguments):
     cursor = connection.cursor()
     
     # Get column names
-    cursor.execute('SELECT faculty, institution, academic_units, research_affiliations, hospital_affiliations FROM affiliations WHERE user_id = %s AND first_name = %s AND last_name = %s', 
-                  (arguments['user_id'], arguments['first_name'], arguments['last_name']))
+    cursor.execute('SELECT primary_unit, joint_units, research_affiliations, hospital_affiliations FROM affiliations WHERE user_id = %s', 
+                  (arguments['user_id'],))
     
     # Get the result
     result = cursor.fetchone()
@@ -29,11 +29,10 @@ def getUserAffiliations(arguments):
     
     # Create a dictionary with all fields, handling None values
     affiliations_data = {
-        "faculty": result[0] if result[0] is not None else {},
-        "institution": result[1] if result[1] is not None else {},
-        "academic_units": result[2] if result[2] is not None else {},
-        "research_affiliations": result[3] if result[3] is not None else {},
-        "hospital_affiliations": result[4] if result[4] is not None else {}
+        "primary_unit": result[0] if result[0] is not None else {},
+        "joint_units": result[1] if result[1] is not None else [],
+        "research_affiliations": result[2] if result[2] is not None else [],
+        "hospital_affiliations": result[3] if result[3] is not None else []
     }
     
     # Format as expected in the schema

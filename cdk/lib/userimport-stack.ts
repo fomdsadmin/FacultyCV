@@ -379,7 +379,7 @@ export class UserImportStack extends Stack {
       "TeachingInterests",
       "UBCCourses",
       "VisitOtherTeaching",
-      "Doctors",
+      "Affiliations",
       "Users"
     ];
 
