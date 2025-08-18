@@ -198,7 +198,7 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
           <div>
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left my-4 text-4xl font-bold text-zinc-600  mx-4">{department} Users</h1>
+                <h1 className="text-left my-4 text-4xl font-bold text-zinc-600  mx-4">{department} Members</h1>
                 <div className="my-4 flex  mx-4">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input

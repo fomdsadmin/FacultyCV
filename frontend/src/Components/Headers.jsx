@@ -120,7 +120,7 @@ const Header = ({ assistantUserInfo }) => {
           />
           {/* Name and subtitle only on md and above */}
           <span className="mb-1 mx-4 text-xl flex flex-col font-bold text-gray-800 tracking-tight hidden md:flex">
-            Faculty360 <span className="font-normal text-sm text-gray-600 ">Faculty Activity Reporting</span>
+            Faculty360 <span className="font-normal text-sm text-gray-600 ">Faculty Activity Database</span>
           </span>
         </div>
         <div className="flex-1" />
