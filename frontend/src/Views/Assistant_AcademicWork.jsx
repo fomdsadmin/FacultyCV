@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PageContainer from "./PageContainer";
-import Assistant_FacultyMenu from "Components/Assistant_FacultyMenu";
+import DelegateMenu from "Components/DelegateMenu";
 import WorkSection from "../Components/WorkSection";
 import "../CustomStyles/scrollbar.css";
 import GenericSection from "../SharedComponents/GenericSection/GenericSection.jsx";
@@ -283,7 +283,7 @@ const Assistant_AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) =>
 
   return (
     <PageContainer>
-      <Assistant_FacultyMenu
+      <DelegateMenu
         userName={userInfo.preferred_name || userInfo.first_name}
         getCognitoUser={getCognitoUser}
         toggleViewMode={toggleViewMode}

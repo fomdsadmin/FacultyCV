@@ -46,7 +46,7 @@ const Header = ({ assistantUserInfo }) => {
       newViewRole = isFacultyAdmin ? userRole : (userRole === "Admin" ? `FacultyAdmin-All` : userRole);
     } else if (location.pathname.includes("/faculty")) {
       newViewRole = "Faculty";
-    } else if (location.pathname.startsWith("/assistant")) {
+    } else if (location.pathname.includes("/delegate")) {
       newViewRole = "Assistant";
     }
 
@@ -101,6 +101,9 @@ const Header = ({ assistantUserInfo }) => {
 
   // Get display text for current role
   const getCurrentRoleDisplay = () => {
+    if (currentViewRole === "Assistant") {
+      return "DELEGATE";
+    }
     if (currentViewRole.startsWith("Admin-")) {
       return `DEPT ADMIN - ${currentViewRole.split("Admin-")[1]}`;
     }

@@ -15,7 +15,7 @@ import { getUser } from "./graphql/graphqlHelpers.js";
 import AdminUsers from "./Views/AdminUsers.jsx";
 import Archive from "./Views/Archive.jsx";
 import AssistantConnections from "./Views/AssistantConnections.jsx";
-import Assistant_FacultyHomePage from "./Views/Assistant_FacultyHomePage.jsx";
+import DelegateHomePage from "./Views/DelegateHomePage.jsx";
 import Assistant_Archive from "./Views/Assistant_Archive.jsx";
 import Assistant_Reports from "./Views/Assistant_Reports.jsx";
 import Assistant_AcademicWork from "./Views/Assistant_AcademicWork.jsx";
@@ -129,7 +129,7 @@ const AppContent = () => {
                   userInfo.role.startsWith("Admin-") ? (
                   <Navigate to="/department-admin/home" />
                 ) : Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === "Assistant" ? (
-                  <Navigate to="/assistant/home" />
+                  <Navigate to="/delegate/home" />
                 ) : Object.keys(userInfo).length !== 0 && userInfo.role === "Faculty" ? (
                   <Navigate to="/faculty/home" />
                 ) : (
@@ -138,13 +138,14 @@ const AppContent = () => {
               }
             />
             <Route
-              path="/assistant/home"
+              path="/delegate/home"
               element={
-                assistantUserInfo.role === "Assistant" && currentViewRole === "Assistant" ? (
-                  <Assistant_FacultyHomePage
+                (assistantUserInfo.role === "Assistant" && currentViewRole === "Assistant") || 
+                (userInfo.role === "Admin" && currentViewRole === "Assistant") ? (
+                  <DelegateHomePage
                     assistantUserInfo={assistantUserInfo}
-                    userInfo={assistantUserInfo}
-                    setUserInfo={setAssistantUserInfo}
+                    userInfo={userInfo.role === "Admin" && currentViewRole === "Assistant" ? userInfo : assistantUserInfo}
+                    setUserInfo={userInfo.role === "Admin" && currentViewRole === "Assistant" ? setUserInfo : setAssistantUserInfo}
                     getUser={getUserInfo}
                     getCognitoUser={getCognitoUser}
                   />
@@ -249,7 +250,7 @@ const AppContent = () => {
             <Route
               path="/loggings"
               element={
-                currentViewRole === "Faculty" || currentViewRole.startsWith("Admin-") || userInfo.role.startsWith("Admin-") || userInfo.role === "Faculty" ? (
+                currentViewRole === "Faculty" || currentViewRole.startsWith("Admin-") || (userInfo.role && userInfo.role.startsWith("Assistant")) || (userInfo.role && userInfo.role.startsWith("Admin-")) || userInfo.role === "Faculty" ? (
                   <YourActivityPage userInfo={userInfo} getCognitoUser={getCognitoUser} currentViewRole={currentViewRole} />
                 ) : (
                   <Navigate to="/home" />
@@ -258,7 +259,7 @@ const AppContent = () => {
             />
 
             <Route path="/audit" element={
-              currentViewRole === "Admin" || currentViewRole.startsWith("FacultyAdmin-") || userInfo.role.startsWith("FacultyAdmin-") || userInfo.role === "Admin" ? (
+              currentViewRole === "Admin" || currentViewRole.startsWith("FacultyAdmin-") || (userInfo.role && userInfo.role.startsWith("FacultyAdmin-")) || userInfo.role === "Admin" ? (
                 <AuditPage userInfo={userInfo} getCognitoUser={getCognitoUser} currentViewRole={currentViewRole} />
               ) : (
                 <Navigate to="/home" />
@@ -342,7 +343,7 @@ const AppContent = () => {
               }
             />
             <Route
-              path="/assistant/connections"
+              path="/delegate/connections"
               element={
                 <AssistantConnections
                   assistantUserInfo={assistantUserInfo}

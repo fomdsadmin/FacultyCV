@@ -7,10 +7,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { FaRegTrashAlt } from "react-icons/fa";
 
-const Assistant_FacultyMenu = ({ userInfo, assistantUserInfo }) => {
+const DelegateMenu = ({ userInfo, assistantUserInfo }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [showText, setShowText] = useState(true);
 
   useEffect(() => {
@@ -33,39 +33,39 @@ const Assistant_FacultyMenu = ({ userInfo, assistantUserInfo }) => {
       onMouseLeave={() => setIsCollapsed(true)}
     >
       <ul className="menu rounded-box flex-shrink-0">
-        <li className={`mb-2 ${location.pathname === '/assistant/home' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/assistant/home'>
+        <li className={`mb-2 ${location.pathname === '/delegate/home' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/delegate/home'>
             <TbHome className="h-5 w-5" />
-            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/assistant/home' ? 'font-bold' : ''}`}>Assistant Home</p>}
+            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/delegate/home' ? 'font-bold' : ''}`}>Delegate Home</p>}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === '/assistant/academic-work' ? 'bg-gray-200 rounded-lg' : ''}`}>
+        {/* <li className={`mb-2 ${location.pathname === '/assistant/academic-work' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/assistant/academic-work'>
             <HiOutlineAcademicCap className="h-5 w-5" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/assistant/academic-work' ? 'font-bold' : ''}`}>Academic Work</p>}
           </Link>
-        </li>
-        <li className={`mb-2 ${location.pathname === '/assistant/reports' ? 'bg-gray-200 rounded-lg' : ''}`}>
+        </li> */}
+        {/* <li className={`mb-2 ${location.pathname === '/assistant/reports' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/assistant/reports'>
             <TiDownloadOutline className="h-5 w-5" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/assistant/reports' ? 'font-bold' : ''}`}>Reports</p>}
           </Link>
-        </li>
-        <li className={`mb-2 ${location.pathname === '/assistant/connections' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/assistant/connections'>
+        </li> */}
+        <li className={`mb-2 ${location.pathname === '/delegate/connections' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/delegate/connections'>
             <IoPersonAddOutline className="h-5 w-5" />
-            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/assistant/connections' ? 'font-bold' : ''}`}>Connections</p>}
+            {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/delegate/connections' ? 'font-bold' : ''}`}>Connections</p>}
           </Link>
         </li>
-        <li className={`mb-6 ${location.pathname === '/assistant/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
+        {/* <li className={`mb-6 ${location.pathname === '/assistant/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/assistant/archive'>
             <FaRegTrashAlt className="h-4 w-4" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/assistant/archive' ? 'font-bold' : ''}`}>Archive</p>}
           </Link>
-        </li>
+        </li> */}
       </ul>
     </div>
   )
 }
 
-export default Assistant_FacultyMenu;
+export default DelegateMenu;
