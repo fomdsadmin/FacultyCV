@@ -245,7 +245,7 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
                             Primary Rank
                           </th>
                           <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                            Joint Ranks
+                            Joint Rank
                           </th>
                           <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
                             Actions
