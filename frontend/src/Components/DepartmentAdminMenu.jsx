@@ -41,7 +41,7 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
           <Link to="/department-admin/home">
             <FaChartLine className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/home" ? "font-bold" : ""}`}>Home</p>
+              <p className={`ml-2 ${location.pathname === "/department-admin/home" ? "font-bold" : ""}`}>Dashboard</p>
             )}
           </Link>
         </li>
@@ -49,7 +49,7 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
           <Link to="/department-admin/users">
             <FaUsers className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/users" ? "font-bold" : ""}`}>Users</p>
+              <p className={`ml-2 ${location.pathname === "/department-admin/users" ? "font-bold" : ""}`}>Manage Members</p>
             )}
           </Link>
         </li>
@@ -58,7 +58,7 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             <FaFolderOpen className="h-5 w-5" /> {/* Changed to folder icon */}
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === "/department-admin/templates" ? "font-bold" : ""}`}>
-                Templates
+                CV Templates
               </p>
             )}
           </Link>
@@ -78,7 +78,7 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             <FaUsersCog className="h-5 w-5" />
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === "/department-admin/reporting" ? "font-bold" : ""}`}>
-                Reporting
+                Department Reporting
               </p>
             )}
           </Link>
@@ -87,7 +87,7 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
           <Link to="/loggings">
             <FaRegClipboard className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/loggings" ? "font-bold" : ""}`}>Loggings</p>
+              <p className={`ml-2 ${location.pathname === "/loggings" ? "font-bold" : ""}`}>Access Logs</p>
             )}
           </Link>
         </li>
