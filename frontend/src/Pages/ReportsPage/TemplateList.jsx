@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import DownloadButtons from './DownloadButtons.jsx';
+import { useAuditLogger, AUDIT_ACTIONS } from 'Contexts/AuditLoggerContext.jsx';
 
 const TemplateList = ({ 
   templates, 

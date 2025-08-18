@@ -10,6 +10,7 @@ import TemplateList from './TemplateList.jsx';
 import ReportPreview from './ReportPreview.jsx';
 import { buildLatex } from './LatexFunctions/LatexBuilder.js';
 import { useApp } from 'Contexts/AppContext.jsx';
+import { useAuditLogger, AUDIT_ACTIONS } from 'Contexts/AuditLoggerContext.jsx';
 
 const ReportsPage = () => {
   const {userInfo, getCognitoUser, toggleViewMode} = useApp();
@@ -24,7 +25,7 @@ const ReportsPage = () => {
   const [downloadUrlDocx, setDownloadUrlDocx] = useState(null);
   const { setNotification } = useNotification();
   const [switchingTemplates, setSwitchingTemplates] = useState(false);
-  
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     setUser(userInfo);
@@ -91,6 +92,8 @@ const ReportsPage = () => {
 
   const handleGenerate = (template, startYear, endYear) => {
     createLatexFile(template, startYear, endYear);
+
+    logAction(AUDIT_ACTIONS.GENERATE_CV, { template: template.title, startYear, endYear });
   };
 
   return (

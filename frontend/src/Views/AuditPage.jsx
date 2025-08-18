@@ -7,12 +7,24 @@ import { Accordion } from '../SharedComponents/Accordion/Accordion';
 import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem';
 
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
-import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
+import { AUDIT_ACTIONS, ACTION_CATEGORIES } from '../Contexts/AuditLoggerContext';
+
 
 const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
+
+    const PAGE_SIZE = 20;
+    const [page_number, setPageNumber] = useState(1); // Current page number
+
+    const [emailFilter, setEmailFilter] = useState('');
+    const [firstNameFilter, setFirstNameFilter] = useState('');
+    const [lastNameFilter, setLastNameFilter] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [actionFilter, setActionFilter] = useState('');
+    const [actionCategory, setActionCategory] = useState('ALL');
 
     // Determine which menu component to use based on the user role
     const getMenuComponent = () => {
@@ -31,21 +43,12 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     };
     const MenuComponent = getMenuComponent();
 
-
-    const PAGE_SIZE = 20;
-    const [page_number, setPageNumber] = useState(1); // Current page number
-
-    const [emailFilter, setEmailFilter] = useState('');
-    const [firstNameFilter, setFirstNameFilter] = useState('');
-    const [lastNameFilter, setLastNameFilter] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [actionFilter, setActionFilter] = useState('');
-
+    // reset page display if filter change 
     useEffect(() => {
-        setPageNumber(1); // reset if filter change 
+        setPageNumber(1);
     }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter]);
 
+    // fetch audit data 
     useEffect(() => {
         fetchAuditViewData();
     }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter, page_number]);
@@ -53,11 +56,9 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     async function fetchAuditViewData() {
         setLoading(true);
         try {
-
             // Start with proper date formatting for both start and end dates
             let formattedStartDate = startDate;
             let formattedEndDate = endDate;
-
             // Format start date if it exists
             if (startDate) {
                 const startDateObj = new Date(startDate);
@@ -66,7 +67,6 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                 formattedStartDate = startDateObj.toISOString().split('.')[0]; // Remove milliseconds
                 console.log("Formatted start date:", formattedStartDate);
             }
-
             // Format end date if it exists
             if (endDate) {
                 const endDateObj = new Date(endDate);
@@ -87,7 +87,7 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                 end_date: formattedEndDate,
             });
 
-            const data = Array.isArray(response) ? response : (response.records || []);
+            let data = Array.isArray(response) ? response : (response.records || []);
             data.sort((a, b) => new Date(b.ts) - new Date(a.ts));
 
             setAuditViewData(data);
@@ -141,26 +141,15 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
         if (!timestamp) return '';
 
         try {
-            // Parse the timestamp, assuming it's UTC and convert to local time
-            // The format appears to be "2025-07-04 22:43:40.644432" (UTC)
-
-            // standardize the timestamp format
+            // Parse the timestamp, convert UTC to local time eg: "2025-07-04 22:43:40.644432" (UTC)
             let parsedTimestamp = timestamp;
 
-            // If the timestamp contains space and no 'T' (like "2025-07-04 22:43:40.644432")
+            // If the timestamp contains space and no 'T' 
             // Convert it to ISO format by replacing space with 'T' and adding 'Z' to indicate UTC
             if (typeof timestamp === 'string' && timestamp.includes(' ') && !timestamp.includes('T')) {
                 parsedTimestamp = timestamp.replace(' ', 'T') + 'Z';
             }
-
-            // Create date object - now properly interpreting as UTC
             const date = new Date(parsedTimestamp);
-            // for debug
-            // console.log("Original timestamp:", timestamp);
-            // console.log("Parsed as UTC:", date.toISOString());
-            // console.log("Local time:", date.toString());
-
-            // Format the date in local time
             let convertedDate = date.toLocaleString(undefined, {
                 year: 'numeric',
                 month: 'short',
@@ -171,14 +160,14 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                 hour12: true,
                 timeZoneName: 'short'
             });
-
             return convertedDate;
         } catch (error) {
             console.error("Error formatting timestamp:", error, timestamp);
-            return timestamp; // Return the original if parsing fails
+            return timestamp;
         }
     };
 
+    // ORDERS MATTERS
     const pageViewColumns = [
         "log_view_id",
         "ts",
@@ -188,26 +177,25 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
         "logged_user_email",
         "logged_user_role",
         "assistant",
-        "profile_record",
         "page",
         "logged_user_action",
+        "profile_record",
         "session_id",
         "ip",
         "browser_version",
     ];
 
     // Create a default set of visible columns that excludes log_view_id, assistant, and profile_record
-    const defaultVisibleColumns = pageViewColumns.filter(col => col !== "log_view_id" && col !== "assistant" && col !== "profile_record");
+    const defaultVisibleColumns = pageViewColumns.filter(col => col !== "log_view_id" && col !== "assistant");
 
     // Initialize state with the filtered columns
     const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
-
     const pageViewData = auditViewData;
     // Pagination logic
     const totalPages = Math.ceil(totalCount / PAGE_SIZE);
     const pagedData = auditViewData;
 
-    // column name map 
+    // column name map (display in table head)
     const getColumnDisplayName = (columnName) => {
         const columnMap = {
             "ts": "Timestamp",
@@ -229,7 +217,16 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
         return columnMap[columnName] || columnName;
     };
 
-
+    // Define column widths in a single place for reuse
+    const getColumnWidth = (col) => {
+        switch (col) {
+            case "logged_user_email": return "200px";
+            case "profile_record": return "250px";
+            case "page": return "250px";
+            case "browser_version": return "600px";
+            default: return "auto";
+        }
+    };
 
     return (
         <PageContainer>
@@ -279,32 +276,57 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                                     placeholder="End Date/Time"
                                 />
                             </div>
-                            <select
-                                className="border px-2 py-1 rounded"
-                                value={actionFilter}
-                                onChange={e => setActionFilter(e.target.value)}
-                            >
-                                <option value="">All Actions</option>
-                                {Object.values(AUDIT_ACTIONS).map(action => (
-                                    <option key={action} value={action}>
-                                        {action}
-                                    </option>
-                                ))}
-                            </select>
+                            {/* Action category selector */}
+                            <div className="flex flex-col gap-2 w-full">
+                                <div className="flex gap-2">
+                                    <select
+                                        className="border px-2 py-1 rounded"
+                                        value={actionCategory}
+                                        onChange={e => {
+                                            setActionCategory(e.target.value);
+                                            setActionFilter(''); // Reset action filter when category changes
+                                        }}
+                                    >
+                                        <option value="ALL">All Action Types</option>
+                                        <option value="ADMIN_ACTIONS">Admin Actions</option>
+                                        <option value="OTHER_ACTIONS">Other Actions</option>
+                                        
+                                    </select>
 
-                            <button
-                                className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
-                                onClick={() => {
-                                    setEmailFilter('');
-                                    setFirstNameFilter('');
-                                    setLastNameFilter('');
-                                    setStartDate('');
-                                    setEndDate('');
-                                    setActionFilter('');
-                                }}
-                            >
-                                Clear Filters
-                            </button>
+                                    <select
+                                        className="border px-2 py-1 rounded flex-grow"
+                                        value={actionFilter}
+                                        onChange={e => setActionFilter(e.target.value)}
+                                    >
+                                        <option value="">
+                                            {actionCategory === 'ADMIN_ACTIONS' ? 'All Admin Actions' :
+                                                actionCategory === 'OTHER_ACTIONS' ? 'All Other Actions' :
+                                                    'All Actions'}
+                                        </option>
+                                        {(actionCategory === 'ALL'
+                                            ? Object.values(AUDIT_ACTIONS)
+                                            : ACTION_CATEGORIES[actionCategory] || []
+                                        ).map(action => (
+                                            <option key={action} value={action}>
+                                                {action}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                                        onClick={() => {
+                                            setEmailFilter('');
+                                            setFirstNameFilter('');
+                                            setLastNameFilter('');
+                                            setStartDate('');
+                                            setEndDate('');
+                                            setActionFilter('');
+                                        }}
+                                    >
+                                        Clear Filters
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </AccordionItem>
 
@@ -386,55 +408,50 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                     </div>
                 ) : (
                     <div className="overflow-x-auto rounded-lg shadow" style={{ maxHeight: 600, overflowY: 'auto' }}>
-                        <table className="min-w-full table-fixed divide-y divide-gray-200">
+                        <table className="min-w-full divide-y divide-gray-200" style={{ tableLayout: "fixed" }}>
+                            <colgroup>
+                                {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
+                                    <col key={col} style={{ width: getColumnWidth(col) }} />
+                                ))}
+                            </colgroup>
                             <thead className="bg-gray-50 sticky top-0">
                                 <tr>
-                                    {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => {
-                                        // Define column widths based on content type
-                                        let width = "30px";
-                                        if (col === "ts") width = "50px";
-                                        else if (col === "logged_user_action") width = "120px";
-                                        else if (col === "logged_user_email") width = "200px";
-                                        else if (col === "logged_user_first_name" || col === "logged_user_last_name") width = "40px";
-                                        else if (col === "logged_user_role") width = "150px";
-                                        else if (col === "log_view_id" || col === "logged_user_id" || col === "session_id") width = "50px";
-
-                                        return (
-                                            <th
-                                                key={col}
-                                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                                style={{ width }}
-                                            >
-                                                {getColumnDisplayName(col)}
-                                            </th>
-                                        );
-                                    })}
+                                    {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
+                                        <th
+                                            key={col}
+                                            className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            {getColumnDisplayName(col)}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {pagedData.length > 0 ? (
-                                    pagedData.map((log, idx) => (
-                                        <tr key={log.log_view_id || idx} className="hover:bg-gray-50">
-                                            {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
-                                                <td
-                                                    key={col}
-                                                    className="px-6 py-4 text-sm text-gray-500"
-                                                >
-                                                    <div className="truncate" title={log[col] != null ? String(log[col]) : ""}>
-                                                        {col === "ts"
-                                                            ? formatTimestamp(log[col])
-                                                            : log[col] || "-"}
-                                                    </div>
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))
-                                ) : (
+                                {pagedData.length === 0 ? (
                                     <tr>
-                                        <td colSpan={visibleColumns.length} className="px-6 py-4 text-center text-sm text-gray-500">
-                                            No audit data found
+                                        <td colSpan={visibleColumns.length} className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 text-center">
+                                            No records found.
                                         </td>
                                     </tr>
+                                ) : (
+                                    pagedData.map((log, index) => (
+                                        <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                            {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => {
+                                                const shouldWrap = ["ts","logged_user_id", "profile_record", "page","session_id"].includes(col);
+                    
+                                                return (
+                                                    <td
+                                                        key={col}
+                                                        className={`px-3 py-2 text-xs text-gray-500 ${shouldWrap ? "whitespace-normal break-words" : "truncate"}`}
+                                                        style={{ maxWidth: getColumnWidth(col) }}
+                                                        title={log[col] && typeof log[col] === 'string' ? log[col] : ''}
+                                                    >
+                                                        {col === 'ts' ? formatTimestamp(log[col]) : (log[col] !== null && log[col] !== undefined ? String(log[col]) : '')}
+                                                    </td>
+                                                )
+                                            })}
+                                        </tr>
+                                    ))
                                 )}
                             </tbody>
                         </table>

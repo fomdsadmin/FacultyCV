@@ -6,17 +6,9 @@ const AuditLoggerContext = createContext(null);
 
 export const AUDIT_ACTIONS = {
     VIEW_PAGE: 'View page',
+    LOGIN_REQUEST_SUBMITTED: 'Login request submitted',
     UPDATE_PROFILE: 'Update profile',
     UPDATE_AFFILIATIONS: 'Update affiliations',
-
-    EDIT_SECTION_DETAILS: 'Update section details', //admin
-    UPDATE_SECTION_ATTRIBUTES: 'Update section attributes', // admin
-    ARCHIVE_SECTION: 'Archive section', // admin
-    DELETE_SECTION_DATA: 'Delete section Data', // admin
-    SEND_CONNECTION_INVITE: 'Send connection invite', // admin
-    DELETE_CONNECTION: 'Delete connection', // admin
-    ACCEPT_CONNECTION: 'Accept connection', // admin
-    CHANGE_USER_ROLE: 'Change role', // admin
 
     FORM_CONNECTION: 'Form connection',
 
@@ -29,8 +21,63 @@ export const AUDIT_ACTIONS = {
     DELETE_CV_DATA: 'Delete all CV data',
     ARCHIVE_CV_DATA: 'Archive CV data',
     RETRIEVE_EXTERNAL_DATA: 'Retrieve external data',
-    // TODO add more actions
+    GENERATE_CV: 'Generate CV',
+
+    // admin actions
+    GENERATE_DEPT_REPORT: 'Generate department report', // department Admin 
+
+    EDIT_SECTION_DETAILS: 'Update section details',
+    UPDATE_SECTION_ATTRIBUTES: 'Update section attributes',
+    ARCHIVE_SECTION: 'Archive section',
+    DELETE_SECTION_DATA: 'Delete section Data',
+
+    SEND_CONNECTION_INVITE: 'Send connection invite',
+    DELETE_CONNECTION: 'Delete connection',
+    ACCEPT_CONNECTION: 'Accept connection',
+
+    CHANGE_USER_ROLE: 'Change role',
+    EDIT_CV_TEMPLATE: 'Edit CV template',
+    ADD_NEW_TEMPLATE: 'Add new template',
+    DELETE_CV_TEMPLATE: 'Delete CV template',
+    EDIT_REPORT_FORMAT: 'Edit report format',
+    ADD_USER: 'Add user',
+    UPDATE_USER: 'Update user profile',
+    IMPORT_USER: 'Import user',
+    APPROVE_USER: 'Approve user',
+    REJECT_USER: 'Reject user',
+    ACCEPT_USER: 'Accept user'
+
 };
+
+export const ACTION_CATEGORIES = {
+    ADMIN_ACTIONS: [
+        AUDIT_ACTIONS.EDIT_SECTION_DETAILS,
+        AUDIT_ACTIONS.UPDATE_SECTION_ATTRIBUTES,
+        AUDIT_ACTIONS.ARCHIVE_SECTION,
+        AUDIT_ACTIONS.DELETE_SECTION_DATA,
+        AUDIT_ACTIONS.SEND_CONNECTION_INVITE,
+        AUDIT_ACTIONS.DELETE_CONNECTION,
+        AUDIT_ACTIONS.ACCEPT_CONNECTION,
+        AUDIT_ACTIONS.CHANGE_USER_ROLE,
+        AUDIT_ACTIONS.EDIT_CV_TEMPLATE,
+        AUDIT_ACTIONS.ADD_NEW_TEMPLATE,
+        AUDIT_ACTIONS.DELETE_CV_TEMPLATE,
+        AUDIT_ACTIONS.EDIT_REPORT_FORMAT,
+        AUDIT_ACTIONS.ADD_USER,
+        AUDIT_ACTIONS.UPDATE_USER,
+        AUDIT_ACTIONS.IMPORT_USER,
+        AUDIT_ACTIONS.APPROVE_USER,
+        AUDIT_ACTIONS.REJECT_USER,
+        AUDIT_ACTIONS.ACCEPT_USER,
+        AUDIT_ACTIONS.GENERATE_DEPT_REPORT
+    ],
+
+};
+
+// All actions that aren't admin actions
+ACTION_CATEGORIES.OTHER_ACTIONS = Object.values(AUDIT_ACTIONS).filter(
+    action => !ACTION_CATEGORIES.ADMIN_ACTIONS.includes(action)
+);
 
 export const AuditLoggerProvider = ({ children, userInfo }) => {
     const [ip, setIp] = useState('Unknown');
@@ -45,10 +92,8 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
                 console.log("Page view logging skipped - no user info available");
                 return;
             }
-
             if (location.pathname !== previousPath.current) {
                 previousPath.current = location.pathname;
-
                 await logAction(AUDIT_ACTIONS.VIEW_PAGE);
                 // console.log(`Logged page view: ${location.pathname}`);
             }
@@ -75,7 +120,15 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             console.warn("Cannot log action - no user info available");
             return;
         }
-
+        // Convert profileRecord to string if it's an object
+        let recordValue = profileRecord;
+        if (typeof profileRecord === 'object') {
+            try {
+                recordValue = JSON.stringify(profileRecord);
+            } catch (e) {
+                recordValue = String(profileRecord);
+            }
+        }
 
         const auditInput = {
             logged_user_id: userInfo?.user_id || 'Unknown',
@@ -87,7 +140,7 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             page: location.pathname,
             session_id: localStorage.getItem('session_id') || 'Unknown',
             assistant: userInfo?.role === 'Assistant' ? "true" : "false",
-            profile_record: profileRecord,
+            profile_record: recordValue,
             logged_user_email: userInfo?.email || 'Unknown',
             logged_user_action: actionType,
 

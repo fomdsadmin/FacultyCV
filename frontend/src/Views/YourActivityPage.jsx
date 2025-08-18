@@ -7,10 +7,11 @@ import DepartmentAdminMenu from '../Components/DepartmentAdminMenu.jsx';
 import { Accordion } from '../SharedComponents/Accordion/Accordion.jsx';
 import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem.jsx';
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
-import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext.jsx';
+import { AUDIT_ACTIONS, ACTION_CATEGORIES } from '../Contexts/AuditLoggerContext.jsx';
 
 
 const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
+    const [actionCategory, setActionCategory] = useState('ALL');
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
@@ -34,6 +35,11 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
         } else {
             return FacultyMenu;
         }
+    };
+
+    const isFacultyUser = () => {
+        const role = currentViewRole || userInfo?.role || '';
+        return role === 'Faculty' || role === 'Assistant';
     };
 
     const MenuComponent = getMenuComponent();
@@ -61,7 +67,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                 // Set to beginning of day for start date
                 startDateObj.setHours(0, 0, 0, 0);
                 formattedStartDate = startDateObj.toISOString().split('.')[0]; // Remove milliseconds
-                console.log("Formatted start date:", formattedStartDate);
+                // console.log("Formatted start date:", formattedStartDate);
             }
 
             // Format end date if it exists
@@ -70,7 +76,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                 // Set to end of day for end date
                 endDateObj.setHours(23, 59, 59, 999);
                 formattedEndDate = endDateObj.toISOString().split('.')[0]; // Remove milliseconds
-                console.log("Formatted end date:", formattedEndDate);
+                // console.log("Formatted end date:", formattedEndDate);
             }
 
 
@@ -79,11 +85,9 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                 page_number,
                 page_size: PAGE_SIZE,
                 action: actionFilter || undefined,
-                start_date: formattedStartDate,  // Use formatted date
-                end_date: formattedEndDate       // Use formatted date
+                start_date: formattedStartDate,
+                end_date: formattedEndDate
             });
-
-            console.log("API response:", response);
 
             const data = Array.isArray(response) ? response : (response.records || []);
             data.sort((a, b) => new Date(b.ts) - new Date(a.ts));
@@ -148,6 +152,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
         "logged_user_role",
         "page",
         "logged_user_action",
+        "profile_record",
     ];
 
 
@@ -186,18 +191,60 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                                     placeholder="End Date/Time"
                                 />
                             </div>
-                            <select
-                                className="border px-2 py-1 rounded"
-                                value={actionFilter}
-                                onChange={e => setActionFilter(e.target.value)}
-                            >
-                                <option value="">All Actions</option>
-                                {Object.values(AUDIT_ACTIONS).map(action => (
-                                    <option key={action} value={action}>
-                                        {action}
-                                    </option>
-                                ))}
-                            </select>
+                            {/* Conditionally render based on user role */}
+                            {!isFacultyUser() ? (
+                                // For admin users, show both dropdowns
+                                <>
+                                    <select
+                                        className="border px-2 py-1 rounded"
+                                        value={actionCategory}
+                                        onChange={e => {
+                                            setActionCategory(e.target.value);
+                                            setActionFilter(''); // Reset action filter when category changes
+                                        }}
+                                    >
+                                        <option value="ALL">All Action Types</option>
+                                        <option value="ADMIN_ACTIONS">Admin Actions</option>
+                                        <option value="OTHER_ACTIONS">Other Actions</option>
+                                    </select>
+
+                                    <select
+                                        className="border px-2 py-1 rounded flex-grow"
+                                        value={actionFilter}
+                                        onChange={e => setActionFilter(e.target.value)}
+                                    >
+                                        <option value="">
+                                            {actionCategory === 'ADMIN_ACTIONS' ? 'All Admin Actions' :
+                                                actionCategory === 'OTHER_ACTIONS' ? 'All Other Actions' :
+                                                    'All Actions'}
+                                        </option>
+                                        {(actionCategory === 'ALL'
+                                            ? Object.values(AUDIT_ACTIONS)
+                                            : ACTION_CATEGORIES[actionCategory] || []
+                                        ).map(action => (
+                                            <option key={action} value={action}>
+                                                {action}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </>
+                            ) : (
+                                // For faculty users, show only one dropdown with non-admin actions
+                                <select
+                                    className="border px-2 py-1 rounded flex-grow"
+                                    value={actionFilter}
+                                    onChange={e => setActionFilter(e.target.value)}
+                                >
+                                    <option value="">All Actions</option>
+                                    {Object.values(AUDIT_ACTIONS)
+                                        .filter(action => !ACTION_CATEGORIES.ADMIN_ACTIONS.includes(action))
+                                        .map(action => (
+                                            <option key={action} value={action}>
+                                                {action}
+                                            </option>
+                                        ))}
+                                </select>
+                            )}
 
                             <button
                                 className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
