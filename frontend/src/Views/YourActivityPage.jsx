@@ -37,6 +37,11 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
         }
     };
 
+    const isFacultyUser = () => {
+        const role = currentViewRole || userInfo?.role || '';
+        return role === 'Faculty' || role === 'Assistant';
+    };
+
     const MenuComponent = getMenuComponent();
 
     useEffect(() => {
@@ -186,38 +191,60 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                                     placeholder="End Date/Time"
                                 />
                             </div>
-                            <select
-                                className="border px-2 py-1 rounded"
-                                value={actionCategory}
-                                onChange={e => {
-                                    setActionCategory(e.target.value);
-                                    setActionFilter(''); // Reset action filter when category changes
-                                }}
-                            >
-                                <option value="ALL">All Action Types</option>
-                                <option value="ADMIN_ACTIONS">Admin Actions</option>
-                                <option value="OTHER_ACTIONS">Other Actions</option>
-                            </select>
+                            {/* Conditionally render based on user role */}
+                            {!isFacultyUser() ? (
+                                // For admin users, show both dropdowns
+                                <>
+                                    <select
+                                        className="border px-2 py-1 rounded"
+                                        value={actionCategory}
+                                        onChange={e => {
+                                            setActionCategory(e.target.value);
+                                            setActionFilter(''); // Reset action filter when category changes
+                                        }}
+                                    >
+                                        <option value="ALL">All Action Types</option>
+                                        <option value="ADMIN_ACTIONS">Admin Actions</option>
+                                        <option value="OTHER_ACTIONS">Other Actions</option>
+                                    </select>
 
-                            <select
-                                className="border px-2 py-1 rounded flex-grow"
-                                value={actionFilter}
-                                onChange={e => setActionFilter(e.target.value)}
-                            >
-                                <option value="">
-                                    {actionCategory === 'ADMIN_ACTIONS' ? 'All Admin Actions' :
+                                    <select
+                                        className="border px-2 py-1 rounded flex-grow"
+                                        value={actionFilter}
+                                        onChange={e => setActionFilter(e.target.value)}
+                                    >
+                                        <option value="">
+                                            {actionCategory === 'ADMIN_ACTIONS' ? 'All Admin Actions' :
                                                 actionCategory === 'OTHER_ACTIONS' ? 'All Other Actions' :
                                                     'All Actions'}
-                                </option>
-                                {(actionCategory === 'ALL'
-                                    ? Object.values(AUDIT_ACTIONS)
-                                    : ACTION_CATEGORIES[actionCategory] || []
-                                ).map(action => (
-                                    <option key={action} value={action}>
-                                        {action}
-                                    </option>
-                                ))}
-                            </select>
+                                        </option>
+                                        {(actionCategory === 'ALL'
+                                            ? Object.values(AUDIT_ACTIONS)
+                                            : ACTION_CATEGORIES[actionCategory] || []
+                                        ).map(action => (
+                                            <option key={action} value={action}>
+                                                {action}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </>
+                            ) : (
+                                // For faculty users, show only one dropdown with non-admin actions
+                                <select
+                                    className="border px-2 py-1 rounded flex-grow"
+                                    value={actionFilter}
+                                    onChange={e => setActionFilter(e.target.value)}
+                                >
+                                    <option value="">All Actions</option>
+                                    {Object.values(AUDIT_ACTIONS)
+                                        .filter(action => !ACTION_CATEGORIES.ADMIN_ACTIONS.includes(action))
+                                        .map(action => (
+                                            <option key={action} value={action}>
+                                                {action}
+                                            </option>
+                                        ))}
+                                </select>
+                            )}
 
                             <button
                                 className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"

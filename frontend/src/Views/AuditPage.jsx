@@ -290,6 +290,7 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                                         <option value="ALL">All Action Types</option>
                                         <option value="ADMIN_ACTIONS">Admin Actions</option>
                                         <option value="OTHER_ACTIONS">Other Actions</option>
+                                        
                                     </select>
 
                                     <select
