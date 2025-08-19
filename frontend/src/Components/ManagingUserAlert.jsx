@@ -19,9 +19,9 @@ const ManagingUserAlert = () => {
           <p className="text-sm text-blue-700 text-center">
             <span className="font-medium">Managing Profile:</span> You are currently managing the profile for{' '}
             <span className="font-semibold">
-              {managedUser.first_name} {managedUser.last_name}
+              Dr. {managedUser.first_name} {managedUser.last_name}
             </span>
-            . All changes will be applied to their account.
+            . All changes will be applied to their profile.
           </p>
         </div>
       </div>
