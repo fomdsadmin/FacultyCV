@@ -73,6 +73,11 @@ def cleanData(df):
     # Handle Graduate Students Supervisory Committee specifically
     mask_supervisory = df["type_original"] == "Graduate Students Supervisory Committee"
     df.loc[mask_supervisory, "type"] = df.loc[mask_supervisory, "type_other"]
+    
+    # If type_other is empty for supervisory committee rows, use "Other" as fallback
+    empty_type_supervisory = mask_supervisory & (df["type_other"] == "")
+    df.loc[empty_type_supervisory, "type"] = "Other ()"
+
 
     # Handle unmapped values (fallback to Research Personnel Supervision or Other)
     mask_unmapped = df["type"].isna()
