@@ -37,6 +37,12 @@ export const AppProvider = ({ children }) => {
   // Role management state
   const [actualRole, setActualRole] = useState(""); // User's actual assigned role (permissions)
   const [currentViewRole, setCurrentViewRole] = useState(""); // Current active view role
+  
+  // Delegate management state
+  const [managedUser, setManagedUser] = useState(null); // User being managed by delegate
+  const [isManagingUser, setIsManagingUser] = useState(false); // Flag for when delegate is managing someone
+  const [originalUserInfo, setOriginalUserInfo] = useState(null); // Store original delegate info
+  const [hasActiveConnections, setHasActiveConnections] = useState(false); // Track if delegate has active connections
 
   // Initialize actual role when userInfo changes
   useEffect(() => {
@@ -70,7 +76,9 @@ export const AppProvider = ({ children }) => {
         const userInformation = await getUser(username);
         // console.log("User info fetched:", userInformation)
         if (userInformation.role === "Assistant") {
+          // For delegates, only set assistantUserInfo
           setAssistantUserInfo(userInformation);
+          // Don't set userInfo for delegates initially
         } else {
           setUserInfo(userInformation);
         }
@@ -257,16 +265,23 @@ export const AppProvider = ({ children }) => {
 
   // Get available roles based on user's permission level
   const getAvailableRoles = () => {
-    if (!userInfo || !userInfo.role) return [];
+    // For delegates, use assistantUserInfo when not managing, userInfo when managing
+    const effectiveUser = assistantUserInfo && assistantUserInfo.role === "Assistant" && !isManagingUser
+      ? assistantUserInfo
+      : userInfo;
+      
+    if (!effectiveUser || !effectiveUser.role) return [];
 
-    const isAdmin = userInfo.role === "Admin";
-    const isDepartmentAdmin = userInfo.role.startsWith("Admin-");
-    const isFacultyAdmin = userInfo.role.startsWith("FacultyAdmin-");
-    const department = isDepartmentAdmin ? userInfo.role.split("Admin-")[1] : "";
-    const faculty = isFacultyAdmin ? userInfo.role.split("FacultyAdmin-")[1] : "";
+    const isAdmin = effectiveUser.role === "Admin";
+    const isDepartmentAdmin = effectiveUser.role.startsWith("Admin-");
+    const isFacultyAdmin = effectiveUser.role.startsWith("FacultyAdmin-");
+    const department = isDepartmentAdmin ? effectiveUser.role.split("Admin-")[1] : "";
+    const faculty = isFacultyAdmin ? effectiveUser.role.split("FacultyAdmin-")[1] : "";
+
+    let roles = [];
 
     if (isAdmin) {
-      return [
+      roles = [
         { label: "Admin", value: "Admin", route: "/admin/home" },
         {
           label: `Department Admin - ${department || "All"}`,
@@ -282,24 +297,45 @@ export const AppProvider = ({ children }) => {
         { label: "Delegate", value: "Assistant", route: "/delegate/home" },
       ];
     } else if (isDepartmentAdmin) {
-      return [
+      roles = [
         { label: `Department Admin - ${department}`, value: `Admin-${department}`, route: "/department-admin/home" },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
       ];
     } else if (isFacultyAdmin) {
-      return [
+      roles = [
         { label: `Faculty Admin - ${faculty}`, value: `FacultyAdmin-${faculty}`, route: "/faculty-admin/home" },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
       ];
     } else {
-      return [
+      roles = [
         {
-          label: userInfo.role,
-          value: userInfo.role,
-          route: userInfo.role === "Faculty" ? "/faculty/home" : userInfo.role === "Assistant" ? "/delegate/home" : "/home",
+          label: effectiveUser.role === "Assistant" ? "Delegate" : effectiveUser.role,
+          value: effectiveUser.role,
+          route: effectiveUser.role === "Faculty" ? "/faculty/home" : effectiveUser.role === "Assistant" ? "/delegate/home" : "/home",
         },
       ];
     }
+
+    // If delegate is managing someone, add Faculty View option
+    if (assistantUserInfo && assistantUserInfo.role === "Assistant" && (isManagingUser || hasActiveConnections)) {
+      if (isManagingUser && managedUser) {
+        roles.push({
+          label: `Faculty View - ${managedUser.first_name} ${managedUser.last_name}`,
+          value: "Faculty",
+          route: "/faculty/home",
+          isManaging: true
+        });
+      } else if (hasActiveConnections && !isManagingUser) {
+        roles.push({
+          label: "Faculty View",
+          value: "Faculty", 
+          route: "/faculty/home",
+          isManaging: false
+        });
+      }
+    }
+
+    return roles;
   };
 
   // Get department from role
@@ -319,6 +355,35 @@ export const AppProvider = ({ children }) => {
       setCurrentViewRole(nextRole.value);
       // Navigate to the new role's route
       window.location.href = nextRole.route;
+    }
+  };
+
+  // Start managing a user (for delegates)
+  const startManagingUser = (facultyUser) => {
+    if (assistantUserInfo && assistantUserInfo.role === "Assistant") {
+      // Store the original delegate info
+      setOriginalUserInfo({ ...assistantUserInfo });
+      setManagedUser(facultyUser);
+      setIsManagingUser(true);
+      
+      // Replace userInfo with the managed faculty user's data
+      setUserInfo(facultyUser);
+      setCurrentViewRole("Faculty");
+    }
+  };
+
+  // Stop managing a user (return to delegate view)
+  const stopManagingUser = () => {
+    if (isManagingUser && originalUserInfo) {
+      // Clear userInfo and restore delegate state
+      setUserInfo({});
+      setManagedUser(null);
+      setIsManagingUser(false);
+      setOriginalUserInfo(null);
+      setCurrentViewRole("Assistant");
+      
+      // Navigate to delegate home
+      window.location.href = "/delegate/home";
     }
   };
 
@@ -347,6 +412,15 @@ export const AppProvider = ({ children }) => {
     currentViewRole,
     setCurrentViewRole,
     getAvailableRoles,
+
+    // Delegate management
+    managedUser,
+    isManagingUser,
+    originalUserInfo,
+    hasActiveConnections,
+    setHasActiveConnections,
+    startManagingUser,
+    stopManagingUser,
 
     // Functions
     getUserInfo,

@@ -1,86 +1,130 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUserConnections } from "../graphql/graphqlHelpers.js";
-import { get } from "aws-amplify/api";
+import { getUserConnections, deleteUserConnection, getUser } from "../graphql/graphqlHelpers.js";
+import { FaUser, FaTrash, FaCog } from "react-icons/fa";
+import RemoveConnectionModal from "./RemoveConnectionModal.jsx";
+import { useApp } from "../Contexts/AppContext.jsx";
 
-const AssociatedConnection = ({ connection, getUser }) => {
-    const [fontSize, setFontSize] = useState(20);
-    const [truncationLength, setTruncationLength] = useState(25);
-    const [enteringProfile, setEnteringProfile] = useState(false);
+const AssociatedConnection = ({ connection, refreshConnections }) => {
+  const [enteringProfile, setEnteringProfile] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const navigate = useNavigate();
+  const { startManagingUser } = useApp();
 
-    const navigate = useNavigate();
-    
-    const truncateString = (str, num) => {
-        if (str.length <= num) {
-            return str;
-        }
-        return str.slice(0, num) + '...';
-    };
+  const enterProfile = async () => {
+    setEnteringProfile(true);
+    try {
+      // Only proceed if the connection is confirmed
+      if (connection.status === "confirmed") {
+        // Get the full faculty user info
+        const facultyUser = await getUser(connection.faculty_username);
 
-    useEffect(() => {
-        
-        const calculateFontSize = () => {
-            const nameLength = `${connection.faculty_first_name} ${connection.faculty_last_name}`.length;
-            if (nameLength > 20) {
-                setFontSize(Math.max(16, 18 - (nameLength - 20) / 2));
-            } else {
-                setFontSize(20);
-            }
-        };
+        // Start managing the user
+        startManagingUser(facultyUser);
 
-        calculateFontSize();
-    }, []);
-
-    const enterProfile = async () => {
-        setEnteringProfile(true);
-        try {
-            const retrievedUserConnections = await getUserConnections(connection.assistant_user_id, false);
-            // check if there is an object in retrievedUserConnections with the connection.faculty_user_id and that object.status is confirmed
-            const connectionExists = retrievedUserConnections.some((conn) => conn.faculty_user_id === connection.faculty_user_id && conn.status === "confirmed");
-            if (connectionExists) {
-                
-                getUser(connection.faculty_email);
-                navigate('/delegate/home');
-            } else{
-                console.error('Error: Connection does not exist');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-        setEnteringProfile(false);
+        // Navigate to faculty home
+        navigate("/faculty/home");
+      } else {
+        console.error("Error: Connection is not confirmed");
+      }
+    } catch (error) {
+      console.error("Error:", error);
     }
+    setEnteringProfile(false);
+  };
 
+  const handleRemoveConnection = async () => {
+    setRemoving(true);
+    try {
+      await deleteUserConnection(connection.user_connection_id);
+      if (refreshConnections) {
+        refreshConnections();
+      }
+      setShowRemoveModal(false);
+    } catch (error) {
+      console.error("Error removing connection:", error);
+      alert("Failed to remove connection. Please try again.");
+    }
+    setRemoving(false);
+  };
+
+  const getStatusBadge = () => {
+    if (connection.status === "pending") {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          Pending
+        </span>
+      );
+    }
     return (
-        <div className={`bg-base-100 p-4 shadow-glow rounded-lg w-full ${enteringProfile ? 'w-90' : 'w-72'}`}>
-            <div className="flex flex-col justify-center">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h3 className="card-title" style={{ fontSize: `${fontSize}px` }} title={`${connection.faculty_first_name} ${connection.faculty_last_name}`}>
-                        {truncateString(`${connection.faculty_first_name} ${connection.faculty_last_name}`, truncationLength)}
-                        </h3>
-                        <p className="truncate">{connection.faculty_email}</p>
-                    </div>
-                    {connection.status === "confirmed" && (
-                      <div className="flex justify-between w-full ml-4 ">
-                          <button onClick={enterProfile} disabled={enteringProfile} className="text-white btn btn-primary h-8 p-4 leading-tight">
-                            {enteringProfile ? "Entering Profile..." : "Manage"}
-                          </button>
-                      </div>
-                    )}
-                </div>
-                
-            </div>
-            <div className="card-actions">
-                {connection.status === "pending" && (
-                    <div className="flex justify-between w-full mt-2">
-                        <button className="text-white btn btn-info min-h-0 h-6 leading-tight">
-                            Pending
-                        </button>
-                    </div>
-                )}
-            </div>
-        </div>
+      // <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+      //     Active
+      // </span>
+      <></>
     );
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+      {/* Header with Avatar and Status */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <FaUser className="text-gray-500 text-sm" />
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3
+              className="text-sm font-medium text-gray-900 truncate"
+              title={`${connection.faculty_first_name} ${connection.faculty_last_name}`}
+            >
+              {connection.faculty_first_name} {connection.faculty_last_name}
+            </h3>
+            <p className="text-sm text-gray-600 truncate" title={connection.faculty_email}>
+              {connection.faculty_email}
+            </p>
+          </div>
+        </div>
+        {getStatusBadge()}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2">
+        {connection.status === "confirmed" && (
+          <button
+            onClick={enterProfile}
+            disabled={enteringProfile}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 rounded-md transition-colors duration-200"
+          >
+            <FaCog className="text-xs" />
+            {enteringProfile ? "Entering..." : "Manage"}
+          </button>
+        )}
+
+        <button
+          onClick={() => setShowRemoveModal(true)}
+          disabled={removing}
+          className="inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:bg-red-25 disabled:text-red-400 rounded-md transition-colors duration-200"
+          title="Remove connection"
+        >
+          <FaTrash className="text-xs" />
+          Remove
+        </button>
+      </div>
+
+      {/* Remove Confirmation Modal */}
+      {showRemoveModal && (
+        <RemoveConnectionModal
+          connection={connection}
+          onConfirm={handleRemoveConnection}
+          onCancel={() => setShowRemoveModal(false)}
+          isRemoving={removing}
+        />
+      )}
+    </div>
+  );
 };
 
 export default AssociatedConnection;

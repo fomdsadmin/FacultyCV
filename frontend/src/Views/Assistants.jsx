@@ -3,7 +3,7 @@ import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu';
 import AssociatedUser from '../Components/AssociatedUser.jsx';
 import { getUserConnections } from '../graphql/graphqlHelpers.js';
-import { FaSync } from 'react-icons/fa';
+import { FaSync, FaSearch, FaUserPlus } from 'react-icons/fa';
 
 const Assistants = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,35 +14,40 @@ const Assistants = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   useEffect(() => {
     setLoading(true);
     getAllUserConnections();
-  }, [searchTerm, userInfo]);
+  }, [userInfo]);
 
   async function getAllUserConnections() {
     try {
       const retrievedUserConnections = await getUserConnections(userInfo.user_id);
-
-      const filteredUserConnections = retrievedUserConnections.filter(connection => 
-        connection.assistant_first_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-        connection.assistant_last_name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-        connection.assistant_email.toLowerCase().startsWith(searchTerm.toLowerCase())
-      );
-      
-      
-      setPendingConnections(filteredUserConnections.filter(connection => connection.status === 'pending'));
-      setConfirmedConnections(filteredUserConnections.filter(connection => connection.status === 'confirmed'));
+      setPendingConnections(retrievedUserConnections.filter(connection => connection.status === 'pending'));
+      setConfirmedConnections(retrievedUserConnections.filter(connection => connection.status === 'confirmed'));
     } catch (error) {
       console.error('Error:', error);
+      setPendingConnections([]);
+      setConfirmedConnections([]);
     }
-    setLoading(false)
+    setLoading(false);
   }
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
+  const filteredPending = pendingConnections.filter(connection =>
+    connection.assistant_first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    connection.assistant_last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    connection.assistant_email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredConfirmed = confirmedConnections.filter(connection =>
+    connection.assistant_first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    connection.assistant_last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    connection.assistant_email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const refresh = async () => {
-    setLoading(true)
-    await getAllUserConnections()
-    setLoading(false)
+    setLoading(true);
+    await getAllUserConnections();
+    setLoading(false);
   };
 
   return (
@@ -51,81 +56,105 @@ const Assistants = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         userName={userInfo.preferred_name || userInfo.first_name}
         getCognitoUser={getCognitoUser}
         toggleViewMode={toggleViewMode} userInfo={userInfo}/>
-      <main className="px-[2vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] overflow-auto custom-scrollbar w-full mb-4">
-        <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">
-          Delegates
-        </h1>
-        {loading ? (
-          <div className="flex items-center justify-center w-full">
-            <div className="block text-m mb-1 mt-6 text-zinc-600">
-              Loading...
+      <main className="flex-1 px-8 lg:px-12 py-6 overflow-auto h-full custom-scrollbar">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Delegates</h1>
+            <p className="text-gray-600">Manage your connections with delegates</p>
+          </div>
+        </div>
+        {/* Search and Refresh Section */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="h-4 w-4 text-gray-400" />
             </div>
+            <input
+              type="text"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              placeholder="Search by name or email..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <button
+            onClick={refresh}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaSync className={`h-4 w-4 text-gray-600 ${loading ? 'animate-spin' : ''}`} />
+            <span className="text-gray-700">Refresh</span>
+          </button>
+        </div>
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-gray-600">Loading connections...</p>
           </div>
         ) : (
-          <div>
-            <div className="m-4 flex">
-              <label className="input input-bordered flex items-center gap-2 flex-1">
-                <input
-                  type="text"
-                  className="grow"
-                  placeholder="Search"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                  className="h-4 w-4 opacity-70"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </label>
-              <button onClick={refresh} className="ml-2 btn btn-ghost">
-                <FaSync className="h-5 w-5 text-gray-600" />
-              </button>
-            </div>
-
-            {pendingConnections.length === 0 &&
-              confirmedConnections.length === 0 && (
-                <div className="text-center m-4 text-lg text-zinc-600">
-                  No connections found
+          /* Content */
+          <div className="space-y-8">
+            {/* No Connections State */}
+            {filteredPending.length === 0 && filteredConfirmed.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4">
+                  <FaUserPlus className="h-8 w-8 text-gray-400" />
                 </div>
-              )}
-
-            {pendingConnections.length > 0 && (
-              <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">
-                Invitations
-              </h2>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {searchTerm ? 'No connections found' : 'No connections yet'}
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {searchTerm
+                    ? 'Try adjusting your search terms or checking the spelling.'
+                    : 'Start by inviting a delegate to connect.'}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Pending Connections */}
+                {filteredPending.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <h2 className="text-xl font-semibold text-gray-800">Pending Invites</h2>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        {filteredPending.length}
+                      </span>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {filteredPending.map((connection) => (
+                        <AssociatedUser
+                          key={connection.user_connection_id}
+                          connection={connection}
+                          getAllUserConnections={getAllUserConnections}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Active Connections */}
+                {filteredConfirmed.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <h2 className="text-xl font-semibold text-gray-800">Active Connections</h2>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {filteredConfirmed.length}
+                      </span>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {filteredConfirmed.map((connection) => (
+                        <AssociatedUser
+                          key={connection.user_connection_id}
+                          connection={connection}
+                          getAllUserConnections={getAllUserConnections}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
-            <div className="ml-4 mr-2 flex flex-wrap gap-4">
-              {pendingConnections.map((connection) => (
-                <AssociatedUser
-                  key={connection.user_connection_id}
-                  connection={connection}
-                  getAllUserConnections={getAllUserConnections}
-                />
-              ))}
-            </div>
-
-            {confirmedConnections.length > 0 && (
-              <h2 className="text-left m-4 text-2xl font-bold text-zinc-600">
-                Active Connections
-              </h2>
-            )}
-            <div className="ml-4 mr-2 flex flex-wrap gap-4">
-              {confirmedConnections.map((connection) => (
-                <AssociatedUser
-                  key={connection.user_connection_id}
-                  connection={connection}
-                  getAllUserConnections={getAllUserConnections}
-                />
-              ))}
-            </div>
           </div>
         )}
       </main>

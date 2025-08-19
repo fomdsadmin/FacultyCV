@@ -6,18 +6,19 @@ import { FacultyProvider, useFaculty } from "./FacultyContext.jsx";
 import Tabs from "./Tabs/Tabs.jsx";
 import { useApp } from "../../Contexts/AppContext.jsx";
 import SaveButton from "./SaveButton.jsx";
+import ManagingUserAlert from "../../Components/ManagingUserAlert.jsx";
 
 const FacultyHomePageContent = (user) => {
-  const { loading, toggleViewMode } = useFaculty();
-  const { userInfo, getCognitoUser} = useApp();
+  const { loading, toggleViewMode, userInfo: effectiveUserInfo } = useFaculty();
+  const { getCognitoUser} = useApp();
 
   return (
     <PageContainer>
       <FacultyMenu
         getCognitoUser={getCognitoUser}
-        userName={userInfo.preferred_name || userInfo.first_name}
+        userName={effectiveUserInfo?.preferred_name || effectiveUserInfo?.first_name}
         toggleViewMode={toggleViewMode}
-        userInfo={userInfo}
+        userInfo={effectiveUserInfo}
       />
 
       <main

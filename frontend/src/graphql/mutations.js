@@ -135,7 +135,9 @@ export const addUserConnectionMutation = (
     assistant_first_name,
     assistant_last_name,
     assistant_email,
-    status
+    status,
+    faculty_username,
+    assistant_username
 ) => `
     mutation AddUserConnection {
         addUserConnection(
@@ -148,6 +150,8 @@ export const addUserConnectionMutation = (
             assistant_last_name: "${assistant_last_name}"
             assistant_email: "${assistant_email}"
             status: "${status}"
+            faculty_username: "${faculty_username}"
+            assistant_username: "${assistant_username}"
         )
     }
 `;

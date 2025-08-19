@@ -14,7 +14,7 @@ import Assistants from "./Views/Assistants.jsx";
 import { getUser } from "./graphql/graphqlHelpers.js";
 import AdminUsers from "./Views/AdminUsers.jsx";
 import Archive from "./Views/Archive.jsx";
-import AssistantConnections from "./Views/AssistantConnections.jsx";
+import DelegateConnections from "./Views/DelegateConnections.jsx";
 import DelegateHomePage from "./Views/DelegateHomePage.jsx";
 import Assistant_Archive from "./Views/Assistant_Archive.jsx";
 import Assistant_Reports from "./Views/Assistant_Reports.jsx";
@@ -40,6 +40,7 @@ import { AppProvider, useApp } from "./Contexts/AppContext";
 import { ToastContainer } from "react-toastify";
 import KeycloakLogout from "Components/KeycloakLogout";
 import YourActivityPage from "./Views/YourActivityPage.jsx";
+import ManagingUserAlert from "./Components/ManagingUserAlert.jsx";
 
 const AppContent = () => {
   const {
@@ -56,15 +57,16 @@ const AppContent = () => {
     isUserLoggedIn,
     isUserPending,
     isUserApproved,
+    isManagingUser,
   } = useApp();
 
   const getUserInfo = async (username) => {
     try {
       const userInformation = await getUser(username);
-      // console.log("userInformation, none because we don't add user...", userInformation)
       if (userInformation.role === "Assistant") {
+        // For delegates, only set assistantUserInfo
         setAssistantUserInfo(userInformation);
-        setUserInfo(userInformation);
+        // Don't set userInfo for delegates initially
       } else {
         setUserInfo(userInformation);
       }
@@ -90,6 +92,7 @@ const AppContent = () => {
           theme="light"
         />
         {isUserLoggedIn && <Header assistantUserInfo={assistantUserInfo} />}
+        {/* {isUserLoggedIn && isManagingUser && <ManagingUserAlert />} */}
         {loading ? (
           // Show loading spinner while authentication state is being determined
           <div className="flex items-center justify-center min-h-screen w-full">
@@ -345,11 +348,9 @@ const AppContent = () => {
             <Route
               path="/delegate/connections"
               element={
-                <AssistantConnections
-                  assistantUserInfo={assistantUserInfo}
+                <DelegateConnections
                   userInfo={assistantUserInfo}
                   setUserInfo={setAssistantUserInfo}
-                  getUser={getUserInfo}
                   getCognitoUser={getCognitoUser}
                 />
               }

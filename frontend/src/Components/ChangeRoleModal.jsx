@@ -111,6 +111,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
         updatedRole,
         userInfo.bio,
         userInfo.rank,
+        userInfo.institution,
         userInfo.primary_department,
         userInfo.secondary_department,
         userInfo.primary_faculty,
