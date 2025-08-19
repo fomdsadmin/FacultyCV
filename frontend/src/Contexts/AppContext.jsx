@@ -279,6 +279,7 @@ export const AppProvider = ({ children }) => {
           route: "/faculty-admin/home",
         },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
+        { label: "Delegate", value: "Assistant", route: "/delegate/home" },
       ];
     } else if (isDepartmentAdmin) {
       return [
@@ -295,7 +296,7 @@ export const AppProvider = ({ children }) => {
         {
           label: userInfo.role,
           value: userInfo.role,
-          route: userInfo.role === "Faculty" ? "/faculty/home" : "/assistant/home",
+          route: userInfo.role === "Faculty" ? "/faculty/home" : userInfo.role === "Assistant" ? "/delegate/home" : "/home",
         },
       ];
     }

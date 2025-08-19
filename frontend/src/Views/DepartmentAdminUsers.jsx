@@ -28,15 +28,16 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
 
       let filteredUsers;
       if (department === "All") {
-        // Show all users except the current user
-        filteredUsers = users.filter((user) => user.email !== userInfo.email);
+        // Show all users except Admin users
+        filteredUsers = users.filter((user) => user.role !== "Admin");
       } else {
         filteredUsers = users.filter(
           (user) =>
-            user.primary_department === department ||
+            (user.primary_department === department ||
             user.secondary_department === department ||
             user.role === `Admin-${department}` ||
-            user.role === "Assistant"
+            user.role === "Assistant") &&
+            user.role !== "Admin"
         );
       }
 
@@ -103,8 +104,8 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
     return null;
   };
 
-  // All unique roles for tabs and filters
-  const filters = Array.from(new Set(users.map((user) => user.role)));
+  // All unique roles for tabs and filters (excluding Admin)
+  const filters = Array.from(new Set(users.map((user) => user.role))).filter(role => role !== "Admin");
 
   // Tab bar for roles (copied and adapted from Sections.jsx)
   const UserTabs = ({ filters, activeFilter, onSelect }) => (
@@ -244,7 +245,7 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
                             Primary Rank
                           </th>
                           <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                            Joint Ranks
+                            Joint Rank
                           </th>
                           <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
                             Actions

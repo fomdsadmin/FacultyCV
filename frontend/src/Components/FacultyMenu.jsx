@@ -192,7 +192,7 @@ const FacultyMenu = ({
                     location.pathname === "/faculty/assistants" ? "font-bold" : ""
                   }`}
                 >
-                  Assistants
+                  Delegates
                 </p>
               )}
             </Link>

@@ -2,7 +2,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { getUserConnections } from "../graphql/graphqlHelpers.js";
 import AssociatedConnection from "../Components/AssociatedConnection.jsx";
-import Assistant_FacultyMenu from "../Components/Assistant_FacultyMenu.jsx";
+import DelegateMenu from "../Components/DelegateMenu.jsx";
 import { useApp, toggleViewMode } from "../Contexts/AppContext.jsx";
 import ConnectionInviteModal from "../Components/ConnectionInviteModal.jsx";
 import { FaSync } from "react-icons/fa";
@@ -53,7 +53,7 @@ const AssistantConnections = ({ userInfo, setUserInfo, getCognitoUser, getUser }
 
   return (
     <PageContainer>
-      <Assistant_FacultyMenu
+      <DelegateMenu
         userName={userInfo.first_name}
         getCognitoUser={getCognitoUser}
         toggleViewMode={toggleViewMode}

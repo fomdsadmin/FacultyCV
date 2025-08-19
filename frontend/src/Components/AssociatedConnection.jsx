@@ -40,7 +40,7 @@ const AssociatedConnection = ({ connection, getUser }) => {
             if (connectionExists) {
                 
                 getUser(connection.faculty_email);
-                navigate('/assistant/home');
+                navigate('/delegate/home');
             } else{
                 console.error('Error: Connection does not exist');
             }

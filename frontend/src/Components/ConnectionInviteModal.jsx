@@ -5,7 +5,7 @@ import { addUserConnection, getUser } from '../graphql/graphqlHelpers';
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen, admin = false, departmentAdmin = false, department = '' }) => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
   const [error, setError] = useState('');
   const { logAction } = useAuditLogger();
@@ -14,13 +14,13 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     setSendingInvite(true);
     setError('');
 
-    if (email === '') {
-      setError('Please enter an email');
+    if (username === '') {
+      setError('Please enter an username');
       setSendingInvite(false);
       return;
     }
 
-    if (email === userInfo.email) {
+    if (username === userInfo.username) {
       setError('You cannot form a connection with yourself');
       setSendingInvite(false);
       return;
@@ -28,20 +28,20 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
 
     let facultyMember;
     try {
-      // Get faculty member by email
-      facultyMember = await getUser(email);
+      // Get faculty member by username
+      facultyMember = await getUser(username);
     } catch (error) {
       console.error('Error finding user:', error);
-      setError('No user exists. Please enter valid email');
+      setError('No user exists. Please enter valid username');
       setSendingInvite(false);
       return;
     }
 
-    if (facultyMember.role !== 'Faculty') {
-      setError('User is not a faculty member');
-      setSendingInvite(false);
-      return;
-    }
+    // if (facultyMember.role !== 'Faculty') {
+    //   setError('User is not a faculty member');
+    //   setSendingInvite(false);
+    //   return;
+    // }
 
     try {
       // Call the addUserConnection function with the necessary parameters
@@ -72,13 +72,13 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     setSendingInvite(true);
     setError('');
 
-    if (email === '') {
-      setError('Please enter an email');
+    if (username === '') {
+      setError('Please enter an username');
       setSendingInvite(false);
       return;
     }
 
-    if (email === userInfo.email) {
+    if (username === userInfo.username) {
       setError('You cannot form a connection with yourself');
       setSendingInvite(false);
       return;
@@ -86,12 +86,12 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
 
     let member;
     try {
-      // Get member by email
-      member = await getUser(email);
+      // Get member by username
+      member = await getUser(username);
 
     } catch (error) {
       console.error('Error finding user:', error);
-      setError('No user exists. Please enter valid email');
+      setError('No user exists. Please enter valid username');
       setSendingInvite(false);
       return;
     }
@@ -158,13 +158,13 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
         </h2>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">User Email</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
           <input
-            type="email"
+            type="username"
             className="input input-bordered w-full"
-            placeholder="Enter user's email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter user's username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
         </div>
 

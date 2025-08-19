@@ -51,9 +51,9 @@ const Assistants = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         userName={userInfo.preferred_name || userInfo.first_name}
         getCognitoUser={getCognitoUser}
         toggleViewMode={toggleViewMode} userInfo={userInfo}/>
-      <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] 2xl:px-[10vw] overflow-auto custom-scrollbar w-full mb-4">
+      <main className="px-[2vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] overflow-auto custom-scrollbar w-full mb-4">
         <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">
-          Assistants
+          Delegates
         </h1>
         {loading ? (
           <div className="flex items-center justify-center w-full">
