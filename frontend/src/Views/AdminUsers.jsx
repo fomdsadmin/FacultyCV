@@ -1,5 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import { useApp } from "../Contexts/AppContext.jsx";
+import { useNavigate } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import AdminMenu from "../Components/AdminMenu.jsx";
 import Filters from "../Components/Filters.jsx";
@@ -59,6 +61,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [isPendingRequestsModalOpen, setIsPendingRequestsModalOpen] = useState(false);
   const [isImportUsersModalOpen, setIsImportUsersModalOpen] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
+  const { startManagingUser } = useApp();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAllUsers();
@@ -196,7 +200,11 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   };
 
   const handleImpersonateClick = (value) => {
-    // TODO
+    const user = users.find((user) => user.user_id === value);
+    if (user) {
+      startManagingUser(user);
+      navigate("/faculty/home");
+    }
   };
 
   const searchedUsers = users
