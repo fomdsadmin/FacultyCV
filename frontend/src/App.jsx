@@ -40,7 +40,6 @@ import { AppProvider, useApp } from "./Contexts/AppContext";
 import { ToastContainer } from "react-toastify";
 import KeycloakLogout from "Components/KeycloakLogout";
 import YourActivityPage from "./Views/YourActivityPage.jsx";
-import ManagingUserAlert from "./Components/ManagingUserAlert.jsx";
 
 const AppContent = () => {
   const {
@@ -92,7 +91,6 @@ const AppContent = () => {
           theme="light"
         />
         {isUserLoggedIn && <Header assistantUserInfo={assistantUserInfo} />}
-        {/* {isUserLoggedIn && isManagingUser && <ManagingUserAlert />} */}
         {loading ? (
           // Show loading spinner while authentication state is being determined
           <div className="flex items-center justify-center min-h-screen w-full">

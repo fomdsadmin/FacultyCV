@@ -6,7 +6,6 @@ import { FacultyProvider, useFaculty } from "./FacultyContext.jsx";
 import Tabs from "./Tabs/Tabs.jsx";
 import { useApp } from "../../Contexts/AppContext.jsx";
 import SaveButton from "./SaveButton.jsx";
-import ManagingUserAlert from "../../Components/ManagingUserAlert.jsx";
 
 const FacultyHomePageContent = (user) => {
   const { loading, toggleViewMode, userInfo: effectiveUserInfo } = useFaculty();

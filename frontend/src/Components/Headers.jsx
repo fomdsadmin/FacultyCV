@@ -176,7 +176,7 @@ const Header = ({ assistantUserInfo }) => {
             )}
             {/* Role selector or label - hide or disable when managing */}
             <div className="relative" ref={roleDropdownRef}>
-              {hasMultipleRoles ? (
+              {hasMultipleRoles && activeUserInfo.role !== "Assistant" ? (
                 <button
                   onClick={() => !isManagingUser && setIsRoleDropdownOpen(!isRoleDropdownOpen)}
                   className={`flex items-center gap-2 px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors ${
@@ -193,7 +193,7 @@ const Header = ({ assistantUserInfo }) => {
                 </div>
               )}
               {/* Dropdown menu - hide when managing */}
-              {isRoleDropdownOpen && hasMultipleRoles && !isManagingUser && (
+              {isRoleDropdownOpen && hasMultipleRoles && !isManagingUser && activeUserInfo.role !== "Assistant" && (
                 <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                   {availableRoles.map((role) => (
                     <button
