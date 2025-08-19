@@ -5,7 +5,7 @@ import Footer from "./Components/Footer.jsx";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "./Views/AuthPage";
 import Dashboard from "./Pages/Dashboard/dashboard.jsx";
-import Support from "./Views/support.jsx";
+import SupportForm from "./Views/support.jsx";
 import NotFound from "./Views/NotFound";
 import AcademicWork from "./Views/AcademicWork.jsx";
 import Declarations from "./Pages/Declarations/Declarations.jsx";
@@ -272,7 +272,8 @@ const AppContent = () => {
             <Route path="/faculty/home/affiliations" element={<FacultyHomePage tab="affiliations" />} />
             <Route path="/faculty/home/employment" element={<FacultyHomePage tab="employment" />} />
             <Route path="/faculty/home/education" element={<FacultyHomePage tab="education" />} />
-            <Route path="/support" element={<Support userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
+            <Route path="/support" element={<SupportForm userInfo={userInfo} getCognitoUser={getCognitoUser} toggleViewMode={toggleViewMode} />} />
+            <Route path="/delegate/support" element={<SupportForm userInfo={assistantUserInfo} getCognitoUser={getCognitoUser} toggleViewMode={toggleViewMode} />} />
             <Route
               path="/faculty/academic-work"
               element={<AcademicWork getCognitoUser={getCognitoUser} userInfo={userInfo} />}
