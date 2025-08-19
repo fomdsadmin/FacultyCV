@@ -359,31 +359,35 @@ export const AppProvider = ({ children }) => {
   };
 
   // Start managing a user (for delegates)
-  const startManagingUser = (facultyUser) => {
-    if (assistantUserInfo && assistantUserInfo.role === "Assistant") {
-      // Store the original delegate info
-      setOriginalUserInfo({ ...assistantUserInfo });
-      setManagedUser(facultyUser);
-      setIsManagingUser(true);
-      
-      // Replace userInfo with the managed faculty user's data
-      setUserInfo(facultyUser);
-      setCurrentViewRole("Faculty");
-    }
+  const startManagingUser = (userToManage) => {
+    // Store the original user info and role for any role
+    setOriginalUserInfo({ ...userInfo });
+    setManagedUser(userToManage);
+    setIsManagingUser(true);
+    setUserInfo(userToManage);
+    setCurrentViewRole("Faculty");
   };
 
   // Stop managing a user (return to delegate view)
   const stopManagingUser = () => {
     if (isManagingUser && originalUserInfo) {
-      // Clear userInfo and restore delegate state
-      setUserInfo({});
+      setUserInfo(originalUserInfo);
       setManagedUser(null);
       setIsManagingUser(false);
       setOriginalUserInfo(null);
-      setCurrentViewRole("Assistant");
-      
-      // Navigate to delegate home
-      window.location.href = "/delegate/home";
+      setCurrentViewRole(originalUserInfo.role || "Assistant");
+      // Navigate to correct home page for original role
+      if (originalUserInfo.role && originalUserInfo.role.startsWith("Admin-")) {
+        window.location.href = "/department-admin/home";
+      } else if (originalUserInfo.role && originalUserInfo.role.startsWith("FacultyAdmin-")) {
+        window.location.href = "/faculty-admin/home";
+      } else if (originalUserInfo.role === "Admin") {
+        window.location.href = "/admin/home";
+      } else if (originalUserInfo.role === "Assistant") {
+        window.location.href = "/delegate/home";
+      } else {
+        window.location.href = "/faculty/home";
+      }
     }
   };
 
