@@ -61,9 +61,6 @@ def cleanData(df):
         "Fellowship": "Postgraduate Students (Fellowship/Residency)",
         "Residency": "Postgraduate Students (Fellowship/Residency)",
         
-        # Graduate Studies Examination Committees category
-        "Graduate Students Supervisory Committee": "Graduate Studies Examination Committees",
-        
     }
     
     # Apply the mapping
@@ -72,6 +69,10 @@ def cleanData(df):
     # Handle "Other:" cases
     mask_other = df["type_original"] == "Other:"
     df.loc[mask_other, "type"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
+    
+    # Handle Graduate Students Supervisory Committee specifically
+    mask_supervisory = df["type_original"] == "Graduate Students Supervisory Committee"
+    df.loc[mask_supervisory, "type"] = df.loc[mask_supervisory, "type_other"]
 
     # Handle unmapped values (fallback to Research Personnel Supervision or Other)
     mask_unmapped = df["type"].isna()
