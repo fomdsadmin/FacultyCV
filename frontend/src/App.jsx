@@ -252,7 +252,7 @@ const AppContent = () => {
               path="/loggings"
               element={
                 (userInfo.role && userInfo.role !== "Assistant") ? (
-                  <YourActivityPage getCognitoUser={getCognitoUser} currentViewRole={currentViewRole} />
+                  <YourActivityPage userInfo={userInfo} getCognitoUser={getCognitoUser} currentViewRole={currentViewRole} />
                 ) : (
                   <Navigate to="/home" />
                 )
