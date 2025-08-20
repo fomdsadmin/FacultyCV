@@ -1,5 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import { useApp } from "../Contexts/AppContext.jsx";
+import { useNavigate } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import { getAllUsers, getDepartmentAffiliations } from "../graphql/graphqlHelpers.js";
@@ -13,6 +15,8 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { startManagingUser } = useApp();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAllUsers();
@@ -174,7 +178,11 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
   };
 
   const handleImpersonateClick = (value) => {
-    // TODO
+    const user = users.find((user) => user.user_id === value);
+    if (user) {
+      startManagingUser(user);
+      navigate("/faculty/home");
+    }
   };
 
   const handleBack = () => {

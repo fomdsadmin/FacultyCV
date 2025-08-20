@@ -124,7 +124,9 @@ def lambda_handler(event, context):
     columns.append(createColumn('assistant_first_name', 'varchar', '', False))
     columns.append(createColumn('assistant_last_name', 'varchar', '', False))
     columns.append(createColumn('assistant_email', 'varchar', '', False))
-    columns.append(createColumn('status', 'varchar', '', True))
+    columns.append(createColumn('status', 'varchar', '', False))
+    columns.append(createColumn('faculty_username', 'varchar', 'DEFAULT \'\'', False))
+    columns.append(createColumn('assistant_username', 'varchar', 'DEFAULT \'\'', True))
     query = createQuery('user_connections', columns)
     cursor.execute(query)
 

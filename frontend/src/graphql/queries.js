@@ -571,10 +571,12 @@ export const getUserConnectionsQuery = (user_id, isFaculty = true) => `
             faculty_first_name
             faculty_last_name
             faculty_email
+            faculty_username
             assistant_user_id
             assistant_first_name
             assistant_last_name
             assistant_email
+            assistant_username
             status
         }
     }

@@ -816,7 +816,9 @@ export const addUserConnection = async (
   assistant_first_name,
   assistant_last_name,
   assistant_email,
-  status
+  status,
+  faculty_username,
+  assistant_username
 ) => {
   const results = await runGraphql(
     addUserConnectionMutation(
@@ -828,7 +830,9 @@ export const addUserConnection = async (
       assistant_first_name,
       assistant_last_name,
       assistant_email,
-      status
+      status,
+      faculty_username,
+      assistant_username
     )
   );
   return results["data"]["addUserConnection"];

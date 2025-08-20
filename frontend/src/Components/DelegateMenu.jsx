@@ -6,6 +6,7 @@ import { IoPersonAddOutline } from "react-icons/io5";
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { FaRegTrashAlt } from "react-icons/fa";
+import { MdSupportAgent } from "react-icons/md";
 
 const DelegateMenu = ({ userInfo, assistantUserInfo }) => {
   const location = useLocation();
@@ -55,6 +56,14 @@ const DelegateMenu = ({ userInfo, assistantUserInfo }) => {
           <Link to='/delegate/connections'>
             <IoPersonAddOutline className="h-5 w-5" />
             {showText && !isCollapsed && <p className={`ml-2 ${location.pathname === '/delegate/connections' ? 'font-bold' : ''}`}>Connections</p>}
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === '/delegate/support' ? 'bg-gray-200 rounded-lg' : ''}`}>
+          <Link to='/delegate/support'>
+            <MdSupportAgent className="h-5 w-5" />
+            {showText && !isCollapsed && (
+              <p className={`ml-2 ${location.pathname === '/delegate/support' ? 'font-bold' : ''}`}>Support</p>
+            )}
           </Link>
         </li>
         {/* <li className={`mb-6 ${location.pathname === '/assistant/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>

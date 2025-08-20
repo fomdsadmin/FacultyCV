@@ -1,9 +1,7 @@
-import { useApp } from "../../../Contexts/AppContext";
 import { useFaculty } from "../FacultyContext";
 
 const Contact = () => {
-  const { handleInputChange } = useFaculty();
-  const { userInfo } = useApp();
+  const { handleInputChange, userInfo } = useFaculty();
 
   const handleNullValues = (value) => {
     if (

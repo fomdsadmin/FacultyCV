@@ -11,6 +11,13 @@ CREATE TABLE affiliations (
 	research_affiliations JSON,
     hospital_affiliations JSON
 );
+
+-- August 19th : to be done
+ALTER TABLE user_connections
+ADD COLUMN IF NOT EXISTS faculty_username VARCHAR DEFAULT '';
+
+ALTER TABLE user_connections
+ADD COLUMN IF NOT EXISTS assistant_username VARCHAR DEFAULT '';
 -- END
 
     

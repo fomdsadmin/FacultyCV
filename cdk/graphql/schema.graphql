@@ -259,6 +259,8 @@ type UserConnection {
 	assistant_last_name: String!
 	assistant_email: String!
 	status: String!
+	faculty_username: String!
+	assistant_username: String!
 }
 
 type UserProfileMatch {
@@ -418,7 +420,9 @@ archive: Boolean,
 		assistant_first_name: String!,
 		assistant_last_name: String!,
 		assistant_email: String!,
-		status: String!
+		status: String!,
+		faculty_username: String!,
+		assistant_username: String!
 	): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	updateUserConnection(user_connection_id: String!, status: String!): String
