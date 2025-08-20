@@ -10,7 +10,7 @@ import { getAuditViewData } from '../graphql/graphqlHelpers.js';
 import { AUDIT_ACTIONS, ACTION_CATEGORIES } from '../Contexts/AuditLoggerContext.jsx';
 
 
-const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
+const YourActivityPage = ({ userInfo, getCognitoUser}) => {
     const [actionCategory, setActionCategory] = useState('ALL');
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
@@ -26,9 +26,9 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
     // Determine which menu component to use based on the user role
     const getMenuComponent = () => {
         let role = userInfo?.role || '';
-        if (currentViewRole !== role) {
-            role = currentViewRole; // if current view is not user actual role
-        }
+        // if (currentViewRole !== role) {
+        //     role = currentViewRole; // if current view is not user actual role
+        // }
 
         if (role.startsWith('Admin-')) {
             return DepartmentAdminMenu;
@@ -38,8 +38,8 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
     };
 
     const isFacultyUser = () => {
-        const role = currentViewRole || userInfo?.role || '';
-        return role === 'Faculty' || role === 'Assistant';
+        const role = userInfo?.role || '';
+        return role === 'Faculty';
     };
 
     const MenuComponent = getMenuComponent();
@@ -79,8 +79,8 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                 // console.log("Formatted end date:", formattedEndDate);
             }
 
-
             const response = await getAuditViewData({
+                logged_user_id: userInfo.user_id,
                 email: userInfo.email,
                 page_number,
                 page_size: PAGE_SIZE,
@@ -162,6 +162,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
     // Calculate total pages based on filtered data if no API pagination
     const calculatedTotalPages = Math.ceil(pagedData.length / PAGE_SIZE);
     const totalPages = totalCount ? Math.ceil(totalCount / PAGE_SIZE) : calculatedTotalPages;
+
 
     return (
         <PageContainer>

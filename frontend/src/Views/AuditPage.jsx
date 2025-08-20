@@ -10,7 +10,7 @@ import { getAuditViewData } from '../graphql/graphqlHelpers.js';
 import { AUDIT_ACTIONS, ACTION_CATEGORIES } from '../Contexts/AuditLoggerContext';
 
 
-const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
+const AuditPage = ({ getCognitoUser, userInfo}) => {
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
@@ -30,11 +30,6 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     const getMenuComponent = () => {
         // Get the current role with fallback to empty string
         let role = userInfo?.role || '';
-
-        // Use currentViewRole if available and different from user's role
-        if (currentViewRole && currentViewRole !== role) {
-            role = currentViewRole;
-        }
 
         // Check if the role is for faculty admin
         return (role && role.startsWith('FacultyAdmin-')) ?
