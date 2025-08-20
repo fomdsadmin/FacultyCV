@@ -11,6 +11,10 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
   const [email, setEmail] = useState("");
   const [primaryDepartment, setPrimaryDepartment] = useState("");
   const [primaryFaculty, setPrimaryFaculty] = useState("");
+  const [institution, setInstitution] = useState("");
+  const [campus, setCampus] = useState("");
+  const [scopusId, setScopusId] = useState("");
+  const [orcid, setOrcid] = useState("");
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,10 +28,14 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
     if (existingUser) {
       setFirstName(existingUser.first_name || "");
       setLastName(existingUser.last_name || "");
-      setUsername(existingUser.username);
+      setUsername(existingUser.username || "");
       setEmail(existingUser.email || "");
       setPrimaryDepartment(existingUser.primary_department || "");
       setPrimaryFaculty(existingUser.primary_faculty || "");
+      setInstitution(existingUser.institution || "");
+      setCampus(existingUser.campus || "");
+      setScopusId(existingUser.scopus_id || "");
+      setOrcid(existingUser.orcid || "");
       setError("");
       // Don't clear success message here to allow it to persist after update
     }
@@ -86,20 +94,17 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
         email,
         existingUser.role, // Keep existing role
         existingUser.bio || "",
-        existingUser.rank || "",
-        existingUser.institution || "",
+        institution,
         primaryDepartment,
-        existingUser.secondary_department || "",
         primaryFaculty,
-        existingUser.secondary_faculty || "",
-        existingUser.primary_affiliation || "",
-        existingUser.secondary_affiliation || "",
-        existingUser.campus || "",
+        campus,
         existingUser.keywords || "",
         existingUser.institution_user_id || "",
-        existingUser.scopus_id || "",
-        existingUser.orcid_id || ""
+        scopusId,
+        orcid
       );
+
+      await 
 
       await changeUsername(existingUser.user_id, username);
 
@@ -165,7 +170,6 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                   required
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
                 <input
@@ -176,17 +180,47 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                   required
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input
+                  className="input input-bordered w-full text-sm bg-gray-50"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Username"
+                  type="text"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                className="input input-bordered w-full text-sm bg-gray-50"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                type="email"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  className="input input-bordered w-full text-sm bg-gray-50"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email"
+                  type="email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Institution</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={institution}
+                  onChange={(e) => setInstitution(e.target.value)}
+                  placeholder="Institution"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Campus</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={campus}
+                  onChange={(e) => setCampus(e.target.value)}
+                  placeholder="Campus"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,15 +256,25 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-              <input
-                className="input input-bordered w-full text-sm bg-gray-50"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
-                type="username"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Scopus ID</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={scopusId}
+                  onChange={(e) => setScopusId(e.target.value)}
+                  placeholder="Scopus ID"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ORCID</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={orcid}
+                  onChange={(e) => setOrcid(e.target.value)}
+                  placeholder="ORCID"
+                />
+              </div>
             </div>
 
             {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}

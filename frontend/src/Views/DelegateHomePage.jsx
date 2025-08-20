@@ -113,21 +113,16 @@ const DelegateHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, g
         userInfo.email,
         userInfo.role,
         userInfo.bio,
-        userInfo.rank,
         userInfo.institution,
         userInfo.primary_department,
-        userInfo.secondary_department,
         userInfo.primary_faculty,
-        userInfo.secondary_faculty,
-        userInfo.primary_affiliation,
-        userInfo.secondary_affiliation,
         userInfo.campus,
-        "",
+        userInfo.keywords,
         userInfo.institution_user_id,
         scopusId,
         orcidId
       );
-      getUser(userInfo.email);
+      getUser(userInfo.username);
       setIsSubmitting(false);
       setChange(false);
     } catch (error) {
