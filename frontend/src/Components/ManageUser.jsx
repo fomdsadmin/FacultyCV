@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getAuditViewData } from "../graphql/graphqlHelpers";
 import { FaArrowLeft } from "react-icons/fa";
 import ConnectionCard from "./ConnectionCard";
 import AssociatedUser from "./AssociatedUser";
@@ -19,6 +20,62 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
   const [pendingConnections, setPendingConnections] = useState([]);
   const [confirmedConnections, setConfirmedConnections] = useState([]);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [lastVisit, setLastVisit] = useState(null);
+  const [loadingLastVisit, setLoadingLastVisit] = useState(false);
+  // Fetch last visit timestamp for managed user
+  useEffect(() => {
+    async function fetchLastVisitAuth() {
+      if (!currentUser?.user_id) return;
+      setLoadingLastVisit(true);
+      let pageNumber = 1;
+      let found = null;
+      try {
+        while (!found) {
+          const response = await getAuditViewData({
+            logged_user_id: currentUser.user_id,
+            page_number: pageNumber,
+            page_size: 50
+          });
+          const records = response?.records || [];
+          if (!records.length) break;
+          const match = records.find((r) => r.page === "/auth");
+          if (match) {
+            found = match.ts;
+            break;
+          }
+          pageNumber++;
+        }
+        setLastVisit(found);
+      } catch (err) {
+        setLastVisit(null);
+      } finally {
+        setLoadingLastVisit(false);
+      }
+    }
+    fetchLastVisitAuth();
+  }, [currentUser]);
+  // Format timestamp for display
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return "";
+    try {
+      let parsedTimestamp = timestamp;
+      if (typeof timestamp === "string" && timestamp.includes(" ") && !timestamp.includes("T")) {
+        parsedTimestamp = timestamp.replace(" ", "T") + "Z";
+      }
+      const date = new Date(parsedTimestamp);
+      return date.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZoneName: "short",
+      });
+    } catch {
+      return timestamp;
+    }
+  };
 
   useEffect(() => {
     setCurrentUser(user);
@@ -104,34 +161,31 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-zinc-700">
             <div>
-              <span className="font-medium text-zinc-500">Employee ID:</span> {currentUser.employee_id || ""}
-            </div>
-            <div>
               <span className="font-medium text-zinc-500">Institution:</span> {currentUser.institution || ""}
-            </div>
-            <div>
-              <span className="font-medium text-zinc-500">Institution User ID:</span>{" "}
-              {currentUser.institution_user_id || ""}
-            </div>
-            <div>
-              <span className="font-medium text-zinc-500">Campus:</span> {currentUser.campus || ""}
             </div>
             <div>
               <span className="font-medium text-zinc-500">Email:</span> {currentUser.email}
             </div>
             <div>
-              <span className="font-medium text-zinc-500">Faculty:</span> {currentUser.primary_faculty || ""}
+              <span className="font-medium text-zinc-500">Campus:</span> {currentUser.campus || ""}
             </div>
             <div>
               <span className="font-medium text-zinc-500">Username:</span> {currentUser.username}
             </div>
-            {/* <div><span className="font-medium text-zinc-500"></span> {""}</div> */}
+            <div>
+              <span className="font-medium text-zinc-500">Faculty:</span> {currentUser.primary_faculty || ""}
+            </div>
+            <div>
+              <span className="font-medium text-zinc-500">Scopus ID:</span> {currentUser.scopus_id || ""}
+            </div>
             <div>
               <span className="font-medium text-zinc-500">Department:</span> {currentUser.primary_department || ""}
             </div>
-            <div className="col-span-2 flex flex-col mt-4 gap-2">
-              <span className="font-medium text-zinc-500">Scopus ID: {currentUser.scopus_id || ""}</span>
-              <span className="font-medium text-zinc-500">ORCID: {currentUser.orcid || ""}</span>
+            <div>
+              <span className="font-medium text-zinc-500">ORCID ID:</span> {currentUser.orcid_id || ""}
+            </div>
+            <div className="col-span-2">
+              <span className="font-medium text-zinc-500">Last Visit:</span> {loadingLastVisit ? "Loading..." : lastVisit ? formatTimestamp(lastVisit) : "No record found"}
             </div>
           </div>
           <div className="flex gap-2 mt-4 justify-end">
@@ -284,7 +338,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
       {(currentUser.role === "Faculty" ||
         currentUser.role.startsWith("Admin-") ||
         currentUser.role.startsWith("FacultyAdmin-")) && (
-        <div className="bg-white rounded-lg shadow w-full mt-6 mx-4" >
+        <div className="bg-white rounded-lg shadow w-full mt-6 mx-4">
           <button
             className="w-full flex items-center justify-between px-8 py-4 h-18 mb-2
             text-left text-xl font-bold text-zinc-700"
