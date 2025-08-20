@@ -319,12 +319,22 @@ const EntryModal = ({
         // Add new CV data
         await addUserCVData(userInfo.user_id, section.data_section_id, JSON.stringify(filteredFormData));
         // Log the addition action
-        await logAction(AUDIT_ACTIONS.ADD_CV_DATA);
+        await logAction(AUDIT_ACTIONS.ADD_CV_DATA, {
+          user_id: userInfo.user_id,
+          user_name: userInfo.first_name + " " + userInfo.last_name,
+          user_email: userInfo.email,
+          section: section.section.attributes,
+        });
       } else {
         // Update existing CV data
         await updateUserCVData(user_cv_data_id, JSON.stringify(filteredFormData));
         // Log the update action
-        await logAction(AUDIT_ACTIONS.UPDATE_CV_DATA, user_cv_data_id);
+        await logAction(AUDIT_ACTIONS.UPDATE_CV_DATA, {
+          user_id: userInfo.user_id,
+          user_name: userInfo.first_name + " " + userInfo.last_name,
+          user_email: userInfo.email,
+          section: section.section.attributes,
+        });
       }
     } catch (error) {
       console.error("Error submitting form:", error);

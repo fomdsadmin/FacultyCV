@@ -10,7 +10,7 @@ import { getAuditViewData } from '../graphql/graphqlHelpers.js';
 import { AUDIT_ACTIONS, ACTION_CATEGORIES } from '../Contexts/AuditLoggerContext.jsx';
 
 
-const YourActivityPage = ({ userInfo, getCognitoUser}) => {
+const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
     const [actionCategory, setActionCategory] = useState('ALL');
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
@@ -26,17 +26,15 @@ const YourActivityPage = ({ userInfo, getCognitoUser}) => {
     // Determine which menu component to use based on the user role
     const getMenuComponent = () => {
         let role = userInfo?.role || '';
-        // if (currentViewRole !== role) {
-        //     role = currentViewRole; // if current view is not user actual role
-        // }
-
+        if (currentViewRole !== role) {
+            role = currentViewRole; // if current view is not user actual role
+        }
         if (role.startsWith('Admin-')) {
             return DepartmentAdminMenu;
         } else {
             return FacultyMenu;
         }
     };
-
     const isFacultyUser = () => {
         const role = userInfo?.role || '';
         return role === 'Faculty';
@@ -273,7 +271,6 @@ const YourActivityPage = ({ userInfo, getCognitoUser}) => {
                             Previous
                         </button>
                         <span>Page {page_number} of {totalPages || 1}</span>
-                        <span>Total Records: {pagedData.length}</span>
                         <button
                             className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300"
                             onClick={() => setPageNumber(page_number + 1)}
