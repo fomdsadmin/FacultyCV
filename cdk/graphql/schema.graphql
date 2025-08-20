@@ -326,27 +326,21 @@ type Mutation {
 	): String
 		@aws_auth(cognito_groups: ["Admin"])
 	updateUser(
+		user_id: String!,
 		first_name: String,
 		last_name: String,
 		preferred_name: String,
 		email: String,
 		role: String,
 		bio: String,
-		rank: String,
 		institution: String,
 		primary_department: String,
-		secondary_department: String,
 		primary_faculty: String,
-		secondary_faculty: String,
-		primary_affiliation: String,
-		secondary_affiliation: String,
 		campus: String,
 		keywords: String,
 		institution_user_id: String,
 		scopus_id: String,
 		orcid_id: String,
-		user_id: String!,
-		cognito_user_id: String
 	): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant", "NewlyRegistered"])
 	updateUserPermissions(user_id: String!, pending: Boolean, approved: Boolean): String

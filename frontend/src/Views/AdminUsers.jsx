@@ -308,7 +308,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
           <div>
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users ({users.length})</h1>
+                <h1 className="text-left m-2 text-4xl font-bold text-zinc-600">All Members ({users.length})</h1>
                 <button
                   onClick={() => setIsAddUserModalOpen(true)}
                   className="btn btn-primary ml-4"
@@ -447,7 +447,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                                   onClick={() => handleManageClick(user.user_id)}
                                   className="btn btn-primary btn-sm text-white"
                                 >
-                                  Manage
+                                  Quick Actions
                                 </button>
                                 <button
                                   onClick={() => handleRemoveUser(user.user_id)}
