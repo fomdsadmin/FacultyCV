@@ -24,14 +24,9 @@ def updateUser(arguments):
         email = %s, 
         role = %s,
         bio = %s,
-        rank = %s, 
         institution = %s, 
         primary_department = %s, 
-        secondary_department = %s, 
         primary_faculty = %s, 
-        secondary_faculty = %s, 
-        primary_affiliation = %s,
-        secondary_affiliation = %s,
         campus = %s, 
         keywords = %s, 
         institution_user_id = %s, 
@@ -48,14 +43,9 @@ def updateUser(arguments):
         arguments['email'] if 'email' in arguments else '',
         arguments['role'] if 'role' in arguments else '',
         arguments['bio'] if 'bio' in arguments else '',
-        arguments['rank'] if 'rank' in arguments else '',
         arguments['institution'] if 'institution' in arguments else '',
         arguments['primary_department'] if 'primary_department' in arguments else '',
-        arguments['secondary_department'] if 'secondary_department' in arguments else '',
         arguments['primary_faculty'] if 'primary_faculty' in arguments else '',
-        arguments['secondary_faculty'] if 'secondary_faculty' in arguments else '',
-        arguments['primary_affiliation'] if 'primary_affiliation' in arguments else '',
-        arguments['secondary_affiliation'] if 'secondary_affiliation' in arguments else '',
         arguments['campus'] if 'campus' in arguments else '',
         arguments['keywords'] if 'keywords' in arguments else '',
         arguments['institution_user_id'] if 'institution_user_id' in arguments else '',
@@ -65,14 +55,14 @@ def updateUser(arguments):
     ))
 
     # Update the key cognito_user_id/user_id to the current timestamp
-    user_logs = {
-        'logEntryId': {'S': f"{arguments['cognito_user_id']}/{arguments['user_id']}"},
-        'timestamp': {'N': f"{int(time.time())}"}
-    }
-    dynamodb.put_item(
-        TableName=os.environ['TABLE_NAME'],
-        Item=user_logs
-    )
+    # user_logs = {
+    #     'logEntryId': {'S': f"{arguments['cognito_user_id']}/{arguments['user_id']}"},
+    #     'timestamp': {'N': f"{int(time.time())}"}
+    # }
+    # dynamodb.put_item(
+    #     TableName=os.environ['TABLE_NAME'],
+    #     Item=user_logs
+    # )
     print("Updated user logs")
     cursor.close()
     connection.commit()

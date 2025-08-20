@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import '../CustomStyles/scrollbar.css';
-import '../CustomStyles/modal.css';
-import { updateUser } from '../graphql/graphqlHelpers';
-import { addToUserGroup, removeFromUserGroup } from '../graphql/graphqlHelpers';
+import React, { useState } from "react";
+import "../CustomStyles/scrollbar.css";
+import "../CustomStyles/modal.css";
+import { updateUser } from "../graphql/graphqlHelpers";
+import { addToUserGroup, removeFromUserGroup } from "../graphql/graphqlHelpers";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, department }) => {
@@ -17,29 +17,23 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
 
     //put user in user group
     try {
-      if (newRole.startsWith('Admin-')) {
-        const result = await addToUserGroup(userInfo.username, 'DepartmentAdmin');
-        
+      if (newRole.startsWith("Admin-")) {
+        const result = await addToUserGroup(userInfo.username, "DepartmentAdmin");
       } else {
         const result = await addToUserGroup(userInfo.username, newRole);
-        
       }
     } catch (error) {
-      
       return;
     }
 
     //remove user from user group
     try {
-      if (userInfo.role.startsWith('Admin-')) {
-        const result = await removeFromUserGroup(userInfo.email, 'DepartmentAdmin');
-        
+      if (userInfo.role.startsWith("Admin-")) {
+        const result = await removeFromUserGroup(userInfo.email, "DepartmentAdmin");
       } else {
         const result = await removeFromUserGroup(userInfo.email, userInfo.role);
-        
       }
     } catch (error) {
-      
       return;
     }
 
@@ -52,26 +46,22 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
         userInfo.email,
         newRole,
         userInfo.bio,
-        userInfo.rank,
+        userInfo.institution,
         userInfo.primary_department,
-        userInfo.secondary_department,
         userInfo.primary_faculty,
-        userInfo.secondary_faculty,
         userInfo.campus,
         userInfo.keywords,
         userInfo.institution_user_id,
         userInfo.scopus_id,
-        userInfo.orcid_id,
-        userInfo.cwl,
-        userInfo.vpp
+        userInfo.orcid_id
       );
-      
+
       fetchAllUsers();
       handleBack();
       // Log the role change action
       await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, userInfo.email);
     } catch {
-      console.error('Error changing role');
+      console.error("Error changing role");
     }
     setChangingRole(false);
   }
@@ -111,9 +101,14 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
 
           {confirmChange && (
             <div>
-              <p className='mt-10'>Are you sure you want to change the role of this user to {newRole}?</p>
-              <button type="button" className="text-white btn btn-warning mt-10 min-h-0 h-8 leading-tight" onClick={changeRole} disabled={changingRole}>
-                {changingRole ? 'Changing role...' : 'Confirm'}
+              <p className="mt-10">Are you sure you want to change the role of this user to {newRole}?</p>
+              <button
+                type="button"
+                className="text-white btn btn-warning mt-10 min-h-0 h-8 leading-tight"
+                onClick={changeRole}
+                disabled={changingRole}
+              >
+                {changingRole ? "Changing role..." : "Confirm"}
               </button>
             </div>
           )}

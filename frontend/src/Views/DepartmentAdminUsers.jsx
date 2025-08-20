@@ -311,7 +311,7 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
                                   onClick={() => handleManageClick(user.user_id)}
                                   className="btn btn-primary btn-sm text-white"
                                 >
-                                  Manage
+                                  Quick Actions
                                 </button>
                                 {/* <button className="btn btn-error btn-sm text-white">Remove</button> */}
                               </div>
