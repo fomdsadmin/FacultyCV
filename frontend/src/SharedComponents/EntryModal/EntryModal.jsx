@@ -323,7 +323,6 @@ const EntryModal = ({
           user_id: userInfo.user_id,
           user_name: userInfo.first_name + " " + userInfo.last_name,
           user_email: userInfo.email,
-          section: section.section.attributes,
         });
       } else {
         // Update existing CV data
@@ -333,7 +332,6 @@ const EntryModal = ({
           user_id: userInfo.user_id,
           user_name: userInfo.first_name + " " + userInfo.last_name,
           user_email: userInfo.email,
-          section: section.section.attributes,
         });
       }
     } catch (error) {
