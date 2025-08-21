@@ -20,9 +20,6 @@ const AuditFilters = ({
         impersonationFilter
     } = filters;
 
-    // Add this inside the component to debug filter changes
-    console.log('AuditFilters render - impersonationFilter:', impersonationFilter);
-
     return (
         <AccordionItem title="Filters">
             <div className="flex flex-wrap gap-4 p-4">
@@ -78,7 +75,6 @@ const AuditFilters = ({
                         className="border px-2 py-1 rounded"
                         value={impersonationFilter || ''}
                         onChange={e => {
-                            console.log('Impersonation filter changed from', impersonationFilter, 'to', e.target.value);
                             onFilterChange('impersonationFilter', e.target.value);
                         }}
                     >

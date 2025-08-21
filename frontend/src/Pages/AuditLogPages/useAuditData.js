@@ -33,12 +33,12 @@ export const useAuditData = (userInfo, isPersonalView = false) => {
             }
 
             const hasImpersonation = parsed.impersonated_by && parsed.impersonated_user;
-            console.log('Checking record for impersonation:', {
-                hasImpersonatedBy: !!parsed.impersonated_by,
-                hasImpersonatedUser: !!parsed.impersonated_user,
-                result: hasImpersonation,
-                recordSnippet: typeof profileRecord === 'string' ? profileRecord.substring(0, 100) : 'object'
-            });
+            // console.log('Checking record for impersonation:', {
+            //     hasImpersonatedBy: !!parsed.impersonated_by,
+            //     hasImpersonatedUser: !!parsed.impersonated_user,
+            //     result: hasImpersonation,
+            //     recordSnippet: typeof profileRecord === 'string' ? profileRecord.substring(0, 100) : 'object'
+            // });
 
             return hasImpersonation;
         } catch (e) {
@@ -83,48 +83,46 @@ export const useAuditData = (userInfo, isPersonalView = false) => {
                 end_date: formattedEndDate
             };
 
-            // Add personal view specific params
+            // personal view specific params
             if (isPersonalView) {
                 requestParams.logged_user_id = userInfo.user_id;
                 requestParams.email = userInfo.email;
             } else {
-                // Add admin view specific params
+                // admin view specific params
                 if (emailFilter) requestParams.email = emailFilter;
                 if (firstNameFilter) requestParams.first_name = firstNameFilter;
                 if (lastNameFilter) requestParams.last_name = lastNameFilter;
             }
 
-            console.log('Fetching audit data with params:', { requestParams, impersonationFilter });
-
             const response = await getAuditViewData(requestParams);
             let rawData = Array.isArray(response) ? response : (response.records || []);
 
-            console.log('Raw data received:', rawData.length, 'records');
+            // console.log('Raw data received:', rawData.length, 'records');
 
             // Apply impersonation filter on frontend - create new array, don't mutate
             let filteredData = rawData;
             if (impersonationFilter) {
-                console.log('Applying impersonation filter:', impersonationFilter);
+                // console.log('Applying impersonation filter:', impersonationFilter);
                 const originalLength = rawData.length;
 
                 filteredData = rawData.filter(record => {
                     const isImpersonated = isImpersonatedRecord(record.profile_record);
                     const shouldInclude = impersonationFilter === 'impersonated' ? isImpersonated : !isImpersonated;
 
-                    // Debug individual records
-                    if (record.profile_record && record.profile_record.includes('impersonated_by')) {
-                        console.log('Found impersonated record:', {
-                            action: record.logged_user_action,
-                            isImpersonated,
-                            shouldInclude,
-                            filter: impersonationFilter
-                        });
-                    }
+                    // // Debug individual records
+                    // if (record.profile_record && record.profile_record.includes('impersonated_by')) {
+                    //     console.log('Found impersonated record:', {
+                    //         action: record.logged_user_action,
+                    //         isImpersonated,
+                    //         shouldInclude,
+                    //         filter: impersonationFilter
+                    //     });
+                    // }
 
                     return shouldInclude;
                 });
 
-                console.log(`Filtered from ${originalLength} to ${filteredData.length} records`);
+                // console.log(`Filtered from ${originalLength} to ${filteredData.length} records`);
             }
 
             // Sort the filtered data
