@@ -111,7 +111,7 @@ const Affiliations = () => {
       );
 
       console.log("Affiliations updated successfully!");
-      window.location.reload(); // Reload to reflect changes in the UI
+      // window.location.reload(); // Reload to reflect changes in the UI
 
       // Log the save action
       await logAction(AUDIT_ACTIONS.UPDATE_AFFILIATIONS);

@@ -14,9 +14,9 @@ const SaveButton = ({ affiliationsData }) => {
   const location = useLocation(); // <-- get location
   const { logAction } = useAuditLogger();
 
-  useEffect(() => {
-    getUserInfo(userInfo.email);
-  }, []);
+  // useEffect(() => {
+  //   getUserInfo(userInfo.username);
+  // }, []);
 
   // Dummy function for affiliations save
   const handleAffiliationsSave = async () => {

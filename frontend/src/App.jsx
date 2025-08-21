@@ -25,8 +25,8 @@ import Sections from "./Views/Sections.jsx";
 import AuditPage from "./Views/AuditPage.jsx";
 import { AuditLoggerProvider } from "./Contexts/AuditLoggerContext.jsx";
 import ArchivedSections from "./Views/ArchivedSections.jsx";
-import DepartmentAdminUsers from "./Views/DepartmentAdminUsers.jsx";
-import DepartmentAdminHomePage from "./Views/DepartmentAdminHomePage.jsx";
+import DepartmentAdminMembers from "./Views/DepartmentAdminMembers.jsx";
+import DepartmentAdminDashboard from "./Views/DepartmentAdminDashboard.jsx";
 import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
 import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
 import DepartmentAdminReporting from "Views/DepartmentAdminReporting";
@@ -128,7 +128,7 @@ const AppContent = () => {
                 ) : Object.keys(userInfo).length !== 0 &&
                   typeof userInfo.role === "string" &&
                   userInfo.role.startsWith("Admin-") ? (
-                  <Navigate to="/department-admin/home" />
+                  <Navigate to="/department-admin/dashboard" />
                 ) : Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === "Assistant" ? (
                   <Navigate to="/delegate/home" />
                 ) : Object.keys(userInfo).length !== 0 && userInfo.role === "Faculty" ? (
@@ -181,13 +181,13 @@ const AppContent = () => {
             <Route path="/admin/home" element={<AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
 
             <Route
-              path="/department-admin/home"
+              path="/department-admin/dashboard"
               element={
                 typeof userInfo.role === "string" &&
                   (userInfo.role.startsWith("Admin-") || userInfo.role === "Admin") &&
                   typeof currentViewRole === "string" &&
                   currentViewRole.startsWith("Admin-") ? (
-                  <DepartmentAdminHomePage
+                  <DepartmentAdminDashboard
                     userInfo={userInfo}
                     getCognitoUser={getCognitoUser}
                     department={
@@ -387,9 +387,9 @@ const AppContent = () => {
               element={<ArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} />}
             />
             <Route
-              path="/department-admin/users"
+              path="/department-admin/members"
               element={
-                <DepartmentAdminUsers
+                <DepartmentAdminMembers
                   userInfo={{ ...userInfo, role: currentViewRole }}
                   getCognitoUser={getCognitoUser}
                   department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
@@ -397,19 +397,29 @@ const AppContent = () => {
               }
             />
             <Route
-              path="/department-admin/users/:userId"
+              path="/department-admin/members/:userId"
               element={
-                <DepartmentAdminUsers
+                <DepartmentAdminMembers
                   userInfo={{ ...userInfo, role: currentViewRole }}
                   getCognitoUser={getCognitoUser}
                   department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
                 />
               }
             />
+              <Route
+                path="/department-admin/members/:userId/actions"
+                element={
+                  <DepartmentAdminMembers
+                    userInfo={{ ...userInfo, role: currentViewRole }}
+                    getCognitoUser={getCognitoUser}
+                    department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
+                  />
+                }
+              />
             <Route
               path="/department-admin/analytics"
               element={
-                <DepartmentAdminHomePage
+                <DepartmentAdminDashboard
                   userInfo={userInfo}
                   getCognitoUser={getCognitoUser}
                   department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}

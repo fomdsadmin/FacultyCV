@@ -5,7 +5,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { FacultyProvider, useFaculty } from "./FacultyContext.jsx";
 import Tabs from "./Tabs/Tabs.jsx";
 import { useApp } from "../../Contexts/AppContext.jsx";
-import SaveButton from "./SaveButton.jsx";
 
 const FacultyHomePageContent = (user) => {
   const { loading, toggleViewMode, userInfo: effectiveUserInfo } = useFaculty();
@@ -26,11 +25,6 @@ const FacultyHomePageContent = (user) => {
       >
         {/* Single container with consistent width */}
         <div className="mx-auto w-full">
-          {/* Save button positioned absolutely at the top right
-          <div className="flex justify-end mt-6 mr-4">
-            <SaveButton />
-          </div>
-           */}
           {/* Tabs section below the save button */}
           <div className="w-full mt-6">
             {!loading && <Tabs showCard={false} />}

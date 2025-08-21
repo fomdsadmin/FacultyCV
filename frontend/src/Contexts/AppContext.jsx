@@ -286,7 +286,7 @@ export const AppProvider = ({ children }) => {
         {
           label: `Department Admin - ${department || "All"}`,
           value: `Admin-${department || "All"}`,
-          route: "/department-admin/home",
+          route: "/department-admin/dashboard",
         },
         {
           label: `Faculty Admin - ${faculty || "All"}`,
@@ -298,7 +298,7 @@ export const AppProvider = ({ children }) => {
       ];
     } else if (isDepartmentAdmin) {
       roles = [
-        { label: `Department Admin - ${department}`, value: `Admin-${department}`, route: "/department-admin/home" },
+        { label: `Department Admin - ${department}`, value: `Admin-${department}`, route: "/department-admin/dashboard" },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
       ];
     } else if (isFacultyAdmin) {
@@ -378,7 +378,7 @@ export const AppProvider = ({ children }) => {
       setCurrentViewRole(originalUserInfo.role || "Assistant");
       // Navigate to correct home page for original role
       if (originalUserInfo.role && originalUserInfo.role.startsWith("Admin-")) {
-        window.location.href = "/department-admin/home";
+        window.location.href = "/department-admin/dashboard";
       } else if (originalUserInfo.role && originalUserInfo.role.startsWith("FacultyAdmin-")) {
         window.location.href = "/faculty-admin/home";
       } else if (originalUserInfo.role === "Admin") {

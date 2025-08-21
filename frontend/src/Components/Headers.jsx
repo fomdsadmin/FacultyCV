@@ -111,7 +111,12 @@ const Header = ({ assistantUserInfo }) => {
 
   const handleExitManaging = () => {
     stopManagingUser();
-    navigate("/delegate/home");
+    if (assistantUserInfo && assistantUserInfo.role === "Assistant") {
+      navigate("/delegate/connections");
+    } else {
+      navigate("/department-admin/members");
+      window.location.reload();
+    }
   };
 
   // Close dropdowns when clicking outside
@@ -176,7 +181,7 @@ const Header = ({ assistantUserInfo }) => {
             )}
             {/* Role selector or label - hide or disable when managing */}
             <div className="relative" ref={roleDropdownRef}>
-              {hasMultipleRoles && activeUserInfo.role !== "Assistant"  ? (
+              {hasMultipleRoles && activeUserInfo.role !== "Assistant" ? (
                 <button
                   onClick={() => !isManagingUser && setIsRoleDropdownOpen(!isRoleDropdownOpen)}
                   className={`flex items-center gap-2 px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors ${
