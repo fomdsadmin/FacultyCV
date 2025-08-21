@@ -658,3 +658,10 @@ export const getLatexConfigurationQuery = () => `
         getLatexConfiguration
     }
 `;
+
+export const GET_PRESIGNED_GOTENBERG_BUCKET_URL = `
+    query GetPresignedGotenbergBucketUrl($key: String!, $method: String!) {
+        getPresignedGotenbergBucketUrl(key: $key, method: $method)
+    }
+`;
+

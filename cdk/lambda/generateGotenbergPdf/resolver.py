@@ -21,6 +21,16 @@ def lambda_handler(event, context):
         html_key = unquote_plus(record['object']['key'])
         print(f"HTML file uploaded: s3://{bucket_name}/{html_key}")
 
+        s3_client.put_object_tagging(
+            Bucket=bucket_name,
+            Key=html_key,
+            Tagging={
+                "TagSet": [
+                    {"Key": "isPdfComplete", "Value": "false"}
+                ]
+            }
+        )
+
         # Read HTML file from S3
         html_obj = s3_client.get_object(Bucket=bucket_name, Key=html_key)
         html_content = html_obj['Body'].read()
@@ -55,6 +65,17 @@ def lambda_handler(event, context):
         # Upload PDF back to S3
         s3_client.put_object(Bucket=bucket_name, Key=pdf_key, Body=pdf_bytes, ContentType="application/pdf")
         print("PDF uploaded successfully!")
+
+        # Add Tag to html object
+        s3_client.put_object_tagging(
+            Bucket=bucket_name,
+            Key=html_key,
+            Tagging={
+                "TagSet": [
+                    {"Key": "isPdfComplete", "Value": "true"}
+                ]
+            }
+        )
 
         return {
             "status": "SUCCESS",

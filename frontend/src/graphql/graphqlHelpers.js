@@ -35,6 +35,7 @@ import {
   GET_BIO_RESPONSE_DATA,
   getAuditViewQuery,
   getUserAffiliationsQuery,
+  GET_PRESIGNED_GOTENBERG_BUCKET_URL
 } from "./queries";
 import {
   ADD_USER,
@@ -1259,9 +1260,9 @@ export const getBioResponseData = async (username_input) => {
   return results["data"]["getBioResponseData"];
 };
 
-export const createGotenbergPdf = async (form_data_base64) => {
-  const results = await executeGraphql(CREATE_GOTENBERG_PDF, { form_data_base64 });
+export const getPresignedGotenbergBucketUrl = async (key, method) => {
+  const results = await executeGraphql(GET_PRESIGNED_GOTENBERG_BUCKET_URL, { key, method });
   console.log(results);
-  return results["data"]["createGotenbergPdf"];
+  return results["data"]["getPresignedGotenbergBucketUrl"];
 };
 

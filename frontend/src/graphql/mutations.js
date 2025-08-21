@@ -426,11 +426,3 @@ export const addAuditViewMutation = `
         }
     }
 `;
-
-export const CREATE_GOTENBERG_PDF = `
-    mutation CreateGotenbergPdf($form_data_base64: String!) {
-        createGotenbergPdf(
-            form_data_base64: $form_data_base64
-        )
-    }
-`;

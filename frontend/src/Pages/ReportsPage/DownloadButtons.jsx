@@ -1,10 +1,13 @@
 const DownloadButtons = ({ 
   downloadUrl, 
   downloadBlob,
-  downloadUrlDocx, 
+  downloadUrlDocx,
+  downloadBlobDocx,
   selectedTemplate, 
-  user, 
-  buildingLatex 
+  user,
+  isPdfReady,
+  isDocxReady,
+  isGenerating = false
 }) => {
   const handleDownload_pdf = async () => {
     if (!downloadUrl && !downloadBlob) {
@@ -16,10 +19,8 @@ const DownloadButtons = ({
       let blob;
       
       if (downloadBlob) {
-        // Use the blob directly (from Gotenberg)
         blob = downloadBlob;
       } else {
-        // Fetch from URL (from S3)
         const response = await fetch(downloadUrl, { mode: "cors" });
         blob = await response.blob();
       }
@@ -35,19 +36,26 @@ const DownloadButtons = ({
 
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading the file:", error);
+      console.error("Error downloading the PDF file:", error);
     }
   };
 
   const handleDownload_docx = async () => {
-    if (!downloadUrlDocx) {
-      console.error("No download URL available");
+    if (!downloadUrlDocx && !downloadBlobDocx) {
+      console.error("No download URL or blob available for DOCX");
       return;
     }
 
     try {
-      const response = await fetch(downloadUrlDocx, { mode: "cors" });
-      const blob = await response.blob();
+      let blob;
+      
+      if (downloadBlobDocx) {
+        blob = downloadBlobDocx;
+      } else {
+        const response = await fetch(downloadUrlDocx, { mode: "cors" });
+        blob = await response.blob();
+      }
+      
       const url = window.URL.createObjectURL(blob);
 
       const element = document.createElement("a");
@@ -59,29 +67,50 @@ const DownloadButtons = ({
 
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading the file:", error);
+      console.error("Error downloading the DOCX file:", error);
     }
   };
 
-  if (!downloadUrl && !downloadBlob) {
+  const pdfAvailable = !!(downloadUrl || downloadBlob);
+  const docxAvailable = !!(downloadUrlDocx || downloadBlobDocx);
+  
+  // Always show buttons if a template is selected
+  if (!selectedTemplate) {
     return null;
   }
 
   return (
-    <div className="mt-auto flex flex-col space-y-4 pt-4">
+    <div className="flex flex-col space-y-3">
+      {/* PDF Download Button - Always visible */}
       <button
         onClick={handleDownload_pdf}
-        className="btn btn-success"
-        disabled={buildingLatex}
+        className={`btn ${pdfAvailable ? 'btn-success' : 'btn-secondary opacity-50 cursor-not-allowed'}`}
+        disabled={!pdfAvailable}
       >
-        {buildingLatex ? <span className="loader"></span> : "Download PDF"}
+        {pdfAvailable ? (
+          "Download PDF"
+        ) : (
+          <span className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></div>
+            PDF Processing...
+          </span>
+        )}
       </button>
+      
+      {/* DOCX Download Button - Always visible */}
       <button
         onClick={handleDownload_docx}
-        className="btn btn-success"
-        disabled={buildingLatex}
+        className={`btn ${docxAvailable ? 'btn-success' : 'btn-secondary opacity-50 cursor-not-allowed'}`}
+        disabled={!docxAvailable}
       >
-        {buildingLatex ? <span className="loader"></span> : "Download DOCX"}
+        {docxAvailable ? (
+          "Download DOCX"
+        ) : (
+          <span className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></div>
+            DOCX Processing...
+          </span>
+        )}
       </button>
     </div>
   );

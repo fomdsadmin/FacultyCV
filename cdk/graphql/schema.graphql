@@ -262,6 +262,7 @@ type UserConnection {
 }
 
 type Mutation {
+	notifyGotenbergGenerationComplete(key: String!): String
 	createGotenbergPdf(form_data_base64: String!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	addUserDeclaration(
@@ -434,6 +435,8 @@ archive: Boolean,
 }
 
 type Query {
+	getPresignedGotenbergBucketUrl(key: String!, method: String!): String
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getBioResponseData(username_input: String!): BioResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	GetAIResponse(user_input: String!): LambdaAIResponse
@@ -518,4 +521,8 @@ type Query {
 		end_date: String
 	): AuditViewResult
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+}
+type Subscription {
+	gotenbergGenerationStatusUpdate(key: String!): String
+		@aws_subscribe(mutations: ["notifyGotenbergGenerationComplete"])
 }
