@@ -318,7 +318,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
               {isChangeRoleModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                   <ChangeRoleModal
-                    userInfo={currentUser}
+                    currentUser={currentUser}
                     setIsModalOpen={setIsChangeRoleModalOpen}
                     fetchAllUsers={fetchAllUsers}
                     handleBack={handleBack}
