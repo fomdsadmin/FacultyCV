@@ -263,13 +263,13 @@ const Affiliations = () => {
               onChange={handleFacultyChange}
               options={faculties}
             />
-            <Field
+            {/* <Field
               label="Joint Faculty"
               name="secondary_faculty"
               value={facultyData.secondary_faculty || ""}
               onChange={handleFacultyChange}
               options={faculties}
-            />
+            /> */}
           </div>
         </Section>
         <Section title="Department">
@@ -281,13 +281,13 @@ const Affiliations = () => {
               onChange={handleDepartmentChange}
               options={departments}
             />
-            <Field
+            {/* <Field
               label="Secondary Department"
               name="secondary_department"
               value={departmentData.secondary_department || ""}
               onChange={handleDepartmentChange}
               options={departments}
-            />
+            /> */}
           </div>
         </Section>
       </div>
