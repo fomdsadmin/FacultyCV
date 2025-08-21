@@ -17,6 +17,12 @@ def filter_data_by_section(data_details, section_title):
         return {
             'end_date': data_details.get('end_date'),
         }
+    elif 'Other' in section_title:
+        # Return specific fields for publications
+        return {
+            'type': data_details.get('publication_type'),
+            'end_date': data_details.get('end_date'),
+        }
     elif 'Patent' in section_title:
         # Return specific fields for patents
         return {
@@ -27,6 +33,7 @@ def filter_data_by_section(data_details, section_title):
         return {
             'dates': data_details.get('dates'),
             'amount': data_details.get('amount'),
+            'type': data_details.get('type'),
         }
 
 def getDepartmentCVData(arguments):
@@ -36,7 +43,7 @@ def getDepartmentCVData(arguments):
     
     data_section_id = arguments.get('data_section_id')
     faculty = arguments.get('faculty')
-    section_title = arguments.get('section_title')
+    section_title = arguments.get('title')
     
     if not data_section_id:
         raise ValueError("data_section_id is required")
@@ -83,11 +90,18 @@ def getDepartmentCVData(arguments):
     user_cv_data = []
     for result in results:
         try:
-            raw_data = json.loads(result[1])
+            # result[1] is already a dict, no need to parse with json.loads()
+            raw_data = result[1]
+            
+            # If it's a string, then parse it
+            if isinstance(raw_data, str):
+                raw_data = json.loads(raw_data)
+            
             filtered_data = filter_data_by_section(raw_data, section_title)
-        except (json.JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, TypeError) as e:
             # If JSON parsing fails, use raw data
             filtered_data = result[1]
+            print(f"Error parsing data: {e}")
         
         user_cv_data.append({
             'data_section_id': result[0],

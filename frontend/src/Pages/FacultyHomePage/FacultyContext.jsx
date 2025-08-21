@@ -39,10 +39,12 @@ export const FacultyProvider = ({ children }) => {
   // Academic sections state
   const [academicSections, setAcademicSections] = useState([]);
 
-  useEffect(() => {
-    // get latest user info on render
-    getUserInfo(userInfo.email);
-  }, []);
+  // useEffect(() => {
+  //   // get latest user info on render
+  //   if (userInfo?.email || userInfo?.username) {
+  //     getUserInfo(userInfo.username || userInfo.email);
+  //   }
+  // }, [userInfo]);
 
   // This effect will ensure prevUserInfo is set only once
   useEffect(() => {
@@ -143,6 +145,7 @@ export const FacultyProvider = ({ children }) => {
   // Provide all values and functions to children
   const value = {
     // User state
+    userInfo,
     change,
     handleInputChange,
 

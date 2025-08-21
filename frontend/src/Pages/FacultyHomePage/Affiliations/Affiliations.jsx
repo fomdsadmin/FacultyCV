@@ -52,23 +52,20 @@ export const Dropdown = ({ label, ...props }) => (
 );
 
 const Affiliations = () => {
-  const { faculties, institutions, campuses } = useFaculty();
+  const { faculties, institutions, campuses, departments } = useFaculty();
   const { userInfo, setUserInfo } = useApp();
 
   // Dynamic data placeholders
-  const [affiliationsData, setAffiliationsData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
   // Initial states
   const [facultyData, setFacultyData] = useState({});
+  const [departmentData, setDepartmentData] = useState({});
   const [institutionData, setInstitutionData] = useState({});
-  const [academicUnits, setAcademicUnits] = useState([]); // Array, not object
+  const [primaryUnit, setPrimaryUnit] = useState({}); 
+  const [jointUnits, setJointUnits] = useState([]); // Array, not object
   const [researchAffiliations, setResearchAffiliations] = useState([]);
   const [hospitalAffiliations, setHospitalAffiliations] = useState([]);
-
-  const [departmentRows, setDepartmentRows] = useState({});
-  const [researchRows, setResearchRows] = useState([]);
-  const [hospitalRows, setHospitalRows] = useState([]);
 
   const { logAction } = useAuditLogger();
 
@@ -78,15 +75,12 @@ const Affiliations = () => {
     try {
       // Update the affiliationsData object with all current data
       const updatedAffiliationsData = {
-        faculty: facultyData,
-        institution: institutionData,
-        academic_units: academicUnits,
+        primary_unit: primaryUnit,
+        joint_units: jointUnits,
         research_affiliations: researchAffiliations,
         hospital_affiliations: hospitalAffiliations,
       };
 
-      // Update affiliationsData state
-      setAffiliationsData(updatedAffiliationsData);
       console.log("Saving affiliations data:", updatedAffiliationsData);
       // Call the API to save the data
       await updateUserAffiliations(
@@ -96,28 +90,7 @@ const Affiliations = () => {
         JSON.stringify(updatedAffiliationsData)
       );
 
-      // update userInfo for primary faculty, primary Department, institution, and campus
-      // Determine primary department: either from userInfo or from academic unit with 100% appointment
-      let primaryDepartment = userInfo.primary_department;
-      let primaryUnit = "";
-      let fullTimeUnit = false;
-      if (
-        !primaryDepartment ||
-        primaryDepartment === "" ||
-        primaryDepartment == null ||
-        primaryDepartment.includes("null")
-      ) {
-        fullTimeUnit = academicUnits[0];
-        if (fullTimeUnit) {
-          primaryUnit = fullTimeUnit.unit;
-        }
-      }
-
-      // Determine institution: either from institutionData or userInfo
-      let institution = institutionData.institution || userInfo.institution || "";
-      
-      // Determine campus: either from institutionData or userInfo
-      let campus = institutionData.campus || userInfo.campus || "";
+      console.log("Updating user information: ", facultyData, departmentData, institutionData);
 
       await updateUser(
         userInfo.user_id,
@@ -127,57 +100,23 @@ const Affiliations = () => {
         userInfo.email,
         userInfo.role,
         userInfo.bio,
-        userInfo.rank,
-        institution,
-        fullTimeUnit ? primaryUnit : primaryDepartment,
-        "",
-        facultyData.primary_faculty,
-        "",
-        "",
-        "",
-        campus,
-        "",
-        "",
+        institutionData.institution || "",
+        departmentData.primary_department || "",
+        facultyData.primary_faculty || "",
+        institutionData.campus || "",
+        userInfo.keywords,
+        userInfo.institution_id,
         userInfo.scopus_id,
-        userInfo.orcid_id,
-        userInfo.cwl,
-        userInfo.vpp
+        userInfo.orcid_id
       );
 
-      const res = await getUser(userInfo.username); // Refresh user info after update
-      console.log("Updated user info:", res);
-      console.log("Current facultyData before update:", facultyData);
-      console.log("Current institutionData before update:", institutionData);
-      
-      // Update the context with the new user info to prevent form reset
-      if (res) {
-        setUserInfo(res);
-        
-        // Also update local form state to ensure immediate UI consistency
-        const newFacultyData = {
-          primary_faculty: res.primary_faculty || facultyData.primary_faculty || "",
-          secondary_faculty: res.secondary_faculty || facultyData.secondary_faculty || "",
-        };
-        
-        const newInstitutionData = {
-          institution: res.institution || institutionData.institution || "",
-          campus: res.campus || institutionData.campus || "",
-        };
-
-        console.log("Setting new facultyData:", newFacultyData);
-        console.log("Setting new institutionData:", newInstitutionData);
-
-        setFacultyData(newFacultyData);
-        setInstitutionData(newInstitutionData);
-      }
+      console.log("Affiliations updated successfully!");
+      window.location.reload(); // Reload to reflect changes in the UI
 
       // Log the save action
       await logAction(AUDIT_ACTIONS.UPDATE_AFFILIATIONS);
-
-      // alert("Affiliations saved successfully!");
     } catch (error) {
       console.error("Error saving affiliations:", error);
-      alert("Failed to save affiliations. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -188,6 +127,20 @@ const Affiliations = () => {
     // Fetch affiliations data from the API
     const fetchAffiliations = async () => {
       try {
+        // initialize with data
+        setFacultyData({
+          primary_faculty: userInfo.primary_faculty || "",
+          secondary_faculty: userInfo.secondary_faculty || "",
+        });
+        setDepartmentData({
+          primary_department: userInfo.primary_department || "",
+          secondary_department: userInfo.secondary_department || "",
+        });
+        setInstitutionData({
+          institution: userInfo.institution || "",
+          campus: userInfo.campus || "",
+        });
+
         const response = await getUserAffiliations(userInfo.user_id, userInfo.first_name, userInfo.last_name);
         if (response && response.length > 0 && response[0].data_details) {
           let data = response[0].data_details;
@@ -203,209 +156,17 @@ const Affiliations = () => {
             }
           }
 
-          setAffiliationsData(data);
-
-          // Objects - make sure we properly initialize with data
-          setFacultyData({
-            primary_faculty: data.faculty?.primary_faculty || userInfo.primary_faculty || "",
-            secondary_faculty: data.faculty?.secondary_faculty || userInfo.secondary_faculty || "",
-          });
-
-          setInstitutionData({
-            institution: data.institution?.institution || userInfo.institution || "",
-            campus: data.institution?.campus || userInfo.campus || "",
-          });
-
-          // Arrays of objects
-          const academicUnitsData = Array.isArray(data.academic_units) ? data.academic_units : [];
-
-          // If no academic units exist, autofill with primary department
-          if (academicUnitsData.length === 0 && userInfo.primary_department) {
-            academicUnitsData.push({
-              unit: userInfo.primary_department,
-              rank: "",
-              title: "",
-              percent: "100",
-              additional_info: {
-                division: "",
-                program: "",
-                start: "",
-                end: "",
-              },
-            });
-          }
-
-          setAcademicUnits(academicUnitsData);
+          // Handle the new structure with primary_unit (object) and joint_units (array)
+          setPrimaryUnit(data.primary_unit && typeof data.primary_unit === 'object' ? data.primary_unit : {});
+          setJointUnits(Array.isArray(data.joint_units) ? data.joint_units : []);
           setResearchAffiliations(Array.isArray(data.research_affiliations) ? data.research_affiliations : []);
           setHospitalAffiliations(Array.isArray(data.hospital_affiliations) ? data.hospital_affiliations : []);
-
-          // Check and update user info for any null/empty values even when existing data exists
-          const currentFacultyData = {
-            primary_faculty: data.faculty?.primary_faculty || userInfo.primary_faculty || "",
-            secondary_faculty: data.faculty?.secondary_faculty || userInfo.secondary_faculty || "",
-          };
-          
-          const currentInstitutionData = {
-            institution: data.institution?.institution || userInfo.institution || "",
-            campus: data.institution?.campus || userInfo.campus || "",
-          };
-
-          let needsUpdate = false;
-          let updateData = {
-            institution: userInfo.institution,
-            campus: userInfo.campus,
-            primary_faculty: userInfo.primary_faculty,
-          };
-
-          // Check primary faculty
-          if (!userInfo.primary_faculty || userInfo.primary_faculty === "" || userInfo.primary_faculty == null || userInfo.primary_faculty.includes("null")) {
-            if (currentFacultyData.primary_faculty && currentFacultyData.primary_faculty !== "") {
-              updateData.primary_faculty = currentFacultyData.primary_faculty;
-              needsUpdate = true;
-            }
-          }
-
-          // Check institution
-          if (!userInfo.institution || userInfo.institution === "" || userInfo.institution == null || userInfo.institution.includes("null")) {
-            if (currentInstitutionData.institution && currentInstitutionData.institution !== "") {
-              updateData.institution = currentInstitutionData.institution;
-              needsUpdate = true;
-            }
-          }
-
-          // Check campus
-          if (!userInfo.campus || userInfo.campus === "" || userInfo.campus == null || userInfo.campus.includes("null")) {
-            if (currentInstitutionData.campus && currentInstitutionData.campus !== "") {
-              updateData.campus = currentInstitutionData.campus;
-              needsUpdate = true;
-            }
-          }
-
-          if (needsUpdate) {
-            await updateUser(
-              userInfo.user_id,
-              userInfo.first_name,
-              userInfo.last_name,
-              userInfo.preferred_name,
-              userInfo.email,
-              userInfo.role,
-              userInfo.bio,
-              userInfo.rank,
-              updateData.institution,
-              userInfo.primary_department,
-              "",
-              updateData.primary_faculty,
-              "",
-              "",
-              "",
-              updateData.campus,
-              "",
-              "",
-              userInfo.scopus_id,
-              userInfo.orcid_id,
-              userInfo.cwl,
-              userInfo.vpp
-            );
-            
-            // Update the context with the new user info
-            const refreshedUser = await getUser(userInfo.username);
-            if (refreshedUser) {
-              setUserInfo(refreshedUser);
-            }
-          }
         } else {
           console.log("No affiliations data found");
-          // Initialize with defaults - autofill academic units with primary department
-          
-          const defaultAcademicUnits = [];
-          if (userInfo.primary_department) {
-            defaultAcademicUnits.push({
-              unit: userInfo.primary_department,
-              rank: "",
-              title: "",
-              percent: "100",
-              additional_info: {
-                division: "",
-                program: "",
-                start: "",
-                end: "",
-              },
-            });
-          }
-
-          setAcademicUnits(defaultAcademicUnits);
+          setPrimaryUnit({});
+          setJointUnits([]);
           setResearchAffiliations([]);
           setHospitalAffiliations([]);
-
-          let primaryFaculty = userInfo.primary_faculty;
-          let existingPrimaryFaculty = "";
-          let isNull = false;
-          if (!primaryFaculty || primaryFaculty === "" || primaryFaculty == null || primaryFaculty.includes("null")) {
-            // Look for existing faculty data if available
-            existingPrimaryFaculty = "";
-            isNull = true;
-          }
-
-          // Handle institution and campus autofill
-          let institution = userInfo.institution;
-          let existingInstitution = "";
-          let institutionIsNull = false;
-          if (!institution || institution === "" || institution == null || institution.includes("null")) {
-            existingInstitution = "";
-            institutionIsNull = true;
-          }
-
-          let campus = userInfo.campus;
-          let existingCampus = "";
-          let campusIsNull = false;
-          if (!campus || campus === "" || campus == null || campus.includes("null")) {
-            existingCampus = "";
-            campusIsNull = true;
-          }
-
-          // Only update user if there are null values to fix
-          if (isNull || institutionIsNull || campusIsNull) {
-            await updateUser(
-              userInfo.user_id,
-              userInfo.first_name,
-              userInfo.last_name,
-              userInfo.preferred_name,
-              userInfo.email,
-              userInfo.role,
-              userInfo.bio,
-              userInfo.rank,
-              institutionIsNull ? existingInstitution : userInfo.institution,
-              userInfo.primary_department,
-              "",
-              isNull ? existingPrimaryFaculty : userInfo.primary_faculty,
-              "",
-              "",
-              "",
-              campusIsNull ? existingCampus : userInfo.campus,
-              "",
-              "",
-              userInfo.scopus_id,
-              userInfo.orcid_id,
-              userInfo.cwl,
-              userInfo.vpp
-            );
-            
-            // Update the context with the new user info
-            const refreshedUser = await getUser(userInfo.username);
-            if (refreshedUser) {
-              setUserInfo(refreshedUser);
-            }
-          }
-
-          setFacultyData({
-            primary_faculty: existingPrimaryFaculty || primaryFaculty || "",
-            secondary_faculty: userInfo.secondary_faculty || "",
-          });
-
-          setInstitutionData({
-            institution: existingInstitution || institution || "",
-            campus: existingCampus || campus || "",
-          });
         }
       } catch (error) {
         console.error("Error fetching affiliations:", error);
@@ -426,13 +187,26 @@ const Affiliations = () => {
         secondary_faculty: userInfo.secondary_faculty || prev.secondary_faculty || "",
       }));
 
+      setDepartmentData((prev) => ({
+        ...prev,
+        primary_department: userInfo.primary_department || prev.primary_department || "",
+        secondary_department: userInfo.secondary_department || prev.secondary_department || "",
+      }));
+
       setInstitutionData((prev) => ({
         ...prev,
         institution: userInfo.institution || prev.institution || "",
         campus: userInfo.campus || prev.campus || "",
       }));
     }
-  }, [userInfo.primary_faculty, userInfo.secondary_faculty, userInfo.institution, userInfo.campus]);
+  }, [
+    userInfo.primary_faculty,
+    userInfo.secondary_faculty,
+    userInfo.primary_department,
+    userInfo.secondary_department,
+    userInfo.institution,
+    userInfo.campus,
+  ]);
 
   // Add handlers for institution and faculty data
   const handleInstitutionChange = (e) => {
@@ -451,11 +225,19 @@ const Affiliations = () => {
     });
   };
 
+  const handleDepartmentChange = (e) => {
+    const { name, value } = e.target;
+    setDepartmentData({
+      ...departmentData,
+      [name]: value,
+    });
+  };
+
   return (
     <div className="mx-auto p-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xl:gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 xl:gap-2">
         <Section title="Institution">
-          <div className="gap-x-2 gap-y-4 grid grid-cols-1 md:grid-cols-2">
+          <div className="gap-x-2 gap-y-4 grid grid-cols-1">
             <Field
               label="Institution"
               name="institution"
@@ -473,7 +255,7 @@ const Affiliations = () => {
           </div>
         </Section>
         <Section title="Faculty">
-          <div className="gap-x-2 gap-y-4 grid grid-cols-1 md:grid-cols-2">
+          <div className="gap-x-2 gap-y-4 grid grid-cols-1 ">
             <Field
               label="Primary Faculty"
               name="primary_faculty"
@@ -490,15 +272,31 @@ const Affiliations = () => {
             />
           </div>
         </Section>
+        <Section title="Department">
+          <div className="gap-x-2 gap-y-4 grid grid-cols-1 ">
+            <Field
+              label="Primary Department"
+              name="primary_department"
+              value={departmentData.primary_department || ""}
+              onChange={handleDepartmentChange}
+              options={departments}
+            />
+            <Field
+              label="Secondary Department"
+              name="secondary_department"
+              value={departmentData.secondary_department || ""}
+              onChange={handleDepartmentChange}
+              options={departments}
+            />
+          </div>
+        </Section>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-1 gap-4 xl:gap-2 mt-4"></div>
 
       <div className="my-4 gap-y-4 flex flex-col">
         {/* Academic Units Table */}
-        <AcademicUnitSection
-          academicUnits={academicUnits}
-          setAcademicUnits={setAcademicUnits}
-          setAffiliationsData={setAffiliationsData}
-        />
+        <AcademicUnitSection primaryUnit={primaryUnit} setPrimaryUnit={setPrimaryUnit} jointUnits={jointUnits} setJointUnits={setJointUnits} />
 
         {/* Research Affiliation Table - Using new component */}
         <ResearchAffiliationSection

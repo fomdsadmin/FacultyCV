@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { addToUserGroup, updateUserPermissions } from "graphql/graphqlHelpers";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const PendingRequestsModal = ({
   isOpen,
@@ -11,6 +12,7 @@ const PendingRequestsModal = ({
   refreshUsers,
 }) => {
   const [showRejected, setShowRejected] = useState(false);
+  const { logAction } = useAuditLogger();
 
   const handleAccept = async (userId, user) => {
     // TODO: Implement accept logic
@@ -21,6 +23,15 @@ const PendingRequestsModal = ({
     // const result = await addToUserGroup(user.userName, "Faculty");
     // console.log("Add to Faculty group result:", result);
     await updateUserPermissions(userId, false, true);
+    // Log the approval action
+    await logAction(
+      AUDIT_ACTIONS.APPROVE_USER,
+      JSON.stringify({
+        userId: userId,
+        email: user.email,
+        name: `${user.first_name} ${user.last_name}`,
+      })
+    );
     refreshUsers();
   };
 
@@ -34,6 +45,14 @@ const PendingRequestsModal = ({
       setRejectedUsers((prev) => [...prev, userToReject]);
       await updateUserPermissions(userId, false, false);
       refreshUsers();
+      await logAction(
+        AUDIT_ACTIONS.REJECT_USER,
+        JSON.stringify({
+          userId: userId,
+          email: userToReject.email,
+          name: `${userToReject.first_name} ${userToReject.last_name}`,
+        })
+      );
     }
   };
 
@@ -47,6 +66,14 @@ const PendingRequestsModal = ({
     // const result = await addToUserGroup(user.userName, role);
     // console.log("Add to Faculty group result:", result);
     await updateUserPermissions(user.user_id, false, true);
+    await logAction(
+      AUDIT_ACTIONS.APPROVE_USER,
+      JSON.stringify({
+        userId: user.user_id,
+        email: user.email,
+        name: `${user.first_name} ${user.last_name}`,
+      })
+    );
     refreshUsers();
   };
 

@@ -4,6 +4,7 @@ import { HiOutlineAcademicCap } from "react-icons/hi2";
 import { HiOutlineDocumentText } from "react-icons/hi2";
 import { TiDownloadOutline } from "react-icons/ti";
 import { IoPersonAddOutline } from "react-icons/io5";
+import { FaRegClipboard } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 import { signOut } from "aws-amplify/auth";
 import { useNavigate } from "react-router-dom";
@@ -138,6 +139,7 @@ const FacultyMenu = ({
               )}
             </Link>
           </li>
+
           <li
             className={`mb-2 ${
               location.pathname === "/faculty/reports" ? "bg-gray-200 rounded-lg" : ""
@@ -156,6 +158,25 @@ const FacultyMenu = ({
               )}
             </Link>
           </li>
+
+          <li
+            className={`mb-2 ${location.pathname === "/loggings" ? "bg-gray-200 rounded-lg" : ""
+                }`}
+            >
+            <Link to="/loggings">
+              <FaRegClipboard className="h-5 w-5" />
+              {showText && !isCollapsed && (
+                <p
+                  className={`ml-2 ${location.pathname === "/loggings" ? "font-bold" : ""
+                    }`}
+                >
+                  Loggings
+                </p>
+              )}
+            </Link>
+
+          </li>
+
           <li
             className={`mb-2 ${
               location.pathname === "/faculty/assistants"
@@ -171,7 +192,7 @@ const FacultyMenu = ({
                     location.pathname === "/faculty/assistants" ? "font-bold" : ""
                   }`}
                 >
-                  Assistants
+                  Delegates
                 </p>
               )}
             </Link>

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
+import DelegateMenu from '../Components/DelegateMenu.jsx';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
-const ContactForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
+const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [formData, setFormData] = useState({
     name: `${userInfo.first_name} ${userInfo.last_name}`,
     email: `${userInfo.email}`,
@@ -119,12 +120,16 @@ const ContactForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
   return (
     <PageContainer>
-      <FacultyMenu
-        getCognitoUser={getCognitoUser}
-        userName={userInfo.preferred_name || userInfo.first_name}
-        toggleViewMode={toggleViewMode}
-        userInfo={userInfo}
-      />
+      {userInfo.role === 'Faculty' ? (
+        <FacultyMenu
+          getCognitoUser={getCognitoUser}
+          userName={userInfo.preferred_name || userInfo.first_name}
+          toggleViewMode={toggleViewMode}
+          userInfo={userInfo}
+        />
+      ) : (
+        <DelegateMenu userInfo={userInfo} assistantUserInfo={userInfo} />
+      )}
       <main className="ml-4 pr-5 w-full overflow-auto py-6 px-4">
         <div className="bg-white rounded-lg p-6 shadow-sm border">
           <h2 className="text-lg font-semibold mb-4">📬 Support Form</h2>
@@ -180,4 +185,4 @@ const ContactForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   );
 };
 
-export default ContactForm;
+export default SupportForm;

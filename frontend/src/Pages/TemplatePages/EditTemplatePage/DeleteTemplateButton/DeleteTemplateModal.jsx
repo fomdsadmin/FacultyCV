@@ -3,9 +3,13 @@ import { deleteTemplate } from "../../../../graphql/graphqlHelpers";
 import { toast } from "react-toastify";
 import { useTemplatePageContext } from "Pages/TemplatePages/TemplatesPage/TemplatePageContext";
 
+import { useAuditLogger } from '../../../../Contexts/AuditLoggerContext';
+import { AUDIT_ACTIONS } from '../../../../Contexts/AuditLoggerContext';
+
 const DeleteTemplateModal = ({ onClose }) => {
     const { activeTemplate, fetchTemplates, handleBack } = useTemplatePageContext();
     const [isDeleting, setIsDeleting] = useState(false);
+    const { logAction } = useAuditLogger();
 
     const handleDelete = async () => {
         if (!activeTemplate) return;
@@ -17,11 +21,14 @@ const DeleteTemplateModal = ({ onClose }) => {
             await fetchTemplates(); // Refresh the templates list
             handleBack(); // Go back to templates list
             onClose(); // Close the modal
+            // Log the template deletion action
+                await logAction(AUDIT_ACTIONS.DELETE_CV_TEMPLATE);
         } catch (error) {
             console.error("Error deleting template:", error);
             toast.error("Failed to delete template. Please try again.", { autoClose: 3000 });
         }
         setIsDeleting(false);
+
     };
 
     const handleCancel = () => {

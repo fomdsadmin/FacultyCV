@@ -8,7 +8,7 @@ import {
   getAllUsersCount,
   getAllSections,
   getNumberOfGeneratedCVs,
-  getFacultyWideCVData
+  getFacultyWideCVData,
 } from "../graphql/graphqlHelpers.js";
 
 const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
@@ -20,37 +20,26 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     assistant_count: 0,
     dept_admin_count: 0,
     admin_count: 0,
-    faculty_admin_count: 0
+    faculty_admin_count: 0,
   });
   const [publications, setPublications] = useState([]);
   const [grants, setGrants] = useState([]);
   const [patents, setPatents] = useState([]);
   const [grantMoneyRaised, setGrantMoneyRaised] = useState([]);
-  const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
-
-
-  // Determine which faculty this admin manages
-  useEffect(() => {
-    if (userInfo?.role) {
-      if (userInfo.role === "Admin") {
-        setFaculty("All");
-      } else if (userInfo.role.startsWith("FacultyAdmin-")) {
-        setFaculty(userInfo.role.split("FacultyAdmin-")[1]);
-      }
-    }
-  }, [userInfo]);
+  // const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
 
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
       try {
         let userCounts = {};
-
         if (userInfo.role === "Admin") {
+          setFaculty("All");
           userCounts = await getAllUsersCount();
         } else if (userInfo.role.startsWith("FacultyAdmin-")) {
           // FacultyAdmin can only see users in their faculty
           const facultyName = userInfo.role.split("FacultyAdmin-")[1];
+          setFaculty(facultyName);
           userCounts = await getAllUsersCount('', facultyName);
         }
 
@@ -69,120 +58,129 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }
   }, [userInfo]);
 
-  const fetchCVDataAndMetrics = useCallback(
-    async () => {
-      try {
-        // Get CV sections and generated CVs count
-        const [dataSections, generatedCVs] = await Promise.all([
-          getAllSections(),
-          userInfo.role === "Admin" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(faculty),
-        ]);
+  const fetchCVDataAndMetrics = useCallback(async () => {
+    try {
+      // Get CV sections and generated CVs count
+      const [dataSections, generatedCVs] = await Promise.all([
+        getAllSections(),
+        // userInfo.role === "Admin" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(faculty),
+      ]);
 
-        setTotalCVsGenerated(generatedCVs);
+      // setTotalCVsGenerated(generatedCVs);
 
-        // Find section IDs
-        const publicationSectionId = dataSections.find(
-          (section) => section.title.includes("Publication") && !section.title.includes("Other")
-        )?.data_section_id;
-        const otherPublicationSectionId = dataSections.find(
-          (section) => section.title.includes("Publication") && section.title.includes("Other")
-        )?.data_section_id;
-        const secureFundingSectionId = dataSections.find((section) =>
-          section.title.includes("Research or Equivalent Grants and Contracts")
-        )?.data_section_id;
-        const patentSectionId = dataSections.find((section) => section.title.includes("Patent"))?.data_section_id;
+      // Find section IDs
+      const publicationSectionId = dataSections.find(
+        (section) => section.title.includes("Publication") && !section.title.includes("Other")
+      )?.data_section_id;
+      const otherPublicationSectionId = dataSections.find(
+        (section) => section.title.includes("Publication") && section.title.includes("Other")
+      )?.data_section_id;
+      const secureFundingSectionId = dataSections.find((section) =>
+        section.title.includes("Research or Equivalent Grants and Contracts")
+      )?.data_section_id;
+      const patentSectionId = dataSections.find((section) => section.title.includes("Patent"))?.data_section_id;
 
-        // Use getDepartmentCVData for efficient faculty-wide data fetching
-        const promises = [];
-        
-        if (publicationSectionId) {
-          promises.push(
-            getFacultyWideCVData(publicationSectionId, faculty, "Publication")
-              .then(response => ({ type: 'publication', data: response.data }))
-              .catch(() => ({ type: 'publication', data: [] }))
-          );
-        }
-        
-        if (otherPublicationSectionId) {
-          promises.push(
-            getFacultyWideCVData(otherPublicationSectionId, faculty, "Other Publication")
-              .then(response => ({ type: 'otherPublication', data: response.data }))
-              .catch(() => ({ type: 'otherPublication', data: [] }))
-          );
-        }
-        
-        if (secureFundingSectionId) {
-          promises.push(
-            getFacultyWideCVData(secureFundingSectionId, faculty, "Grant")
-              .then(response => ({ type: 'grant', data: response.data }))
-              .catch(() => ({ type: 'grant', data: [] }))
-          );
-        }
-        
-        if (patentSectionId) {
-          promises.push(
-            getFacultyWideCVData(patentSectionId, faculty, "Patent")
-              .then(response => ({ type: 'patent', data: response.data }))
-              .catch(() => ({ type: 'patent', data: [] }))
-          );
-        }
+      // Use getDepartmentCVData for efficient faculty-wide data fetching
+      const promises = [];
 
-        // Execute all promises in parallel
-        const results = await Promise.all(promises);
-
-        // Process results
-        const publicationsData = [];
-        const otherPublicationsData = [];
-        const grantsData = [];
-        const patentsData = [];
-
-        results.forEach((result) => {
-          switch (result.type) {
-            case "publication":
-              // Convert CVData format to the expected format
-              publicationsData.push(...result.data.map(item => ({
-                data_section_id: item.data_section_id,
-                data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
-              })));
-              break;
-            case "otherPublication":
-              otherPublicationsData.push(...result.data.map(item => ({
-                data_section_id: item.data_section_id,
-                data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
-              })));
-              break;
-            case "grant":
-              grantsData.push(...result.data.map(item => ({
-                data_section_id: item.data_section_id,
-                data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
-              })));
-              break;
-            case "patent":
-              patentsData.push(...result.data.map(item => ({
-                data_section_id: item.data_section_id,
-                data_details: typeof item.data_details === 'string' ? item.data_details : JSON.stringify(item.data_details)
-              })));
-              break;
-            case "default":
-              break;
-          }
-        });
-
-        // Combine publications and process grant money
-        const allPublicationsData = [...publicationsData, ...otherPublicationsData];
-        const processedGrantMoney = processGrantMoney(grantsData);
-
-        // Update state
-        setPublications(allPublicationsData);
-        setGrants(grantsData);
-        setPatents(patentsData);
-        setGrantMoneyRaised(processedGrantMoney);
-      } catch (error) {
-        console.error("Error fetching CV data:", error);
+      if (publicationSectionId) {
+        promises.push(
+          getFacultyWideCVData(publicationSectionId, faculty, "Publication")
+            .then((response) => ({ type: "publication", data: response.data }))
+            .catch(() => ({ type: "publication", data: [] }))
+        );
       }
-    },
-    [faculty, userInfo?.role]
-  );
+
+      if (otherPublicationSectionId) {
+        promises.push(
+          getFacultyWideCVData(otherPublicationSectionId, faculty, "Other Publication")
+            .then((response) => ({ type: "otherPublication", data: response.data }))
+            .catch(() => ({ type: "otherPublication", data: [] }))
+        );
+      }
+
+      if (secureFundingSectionId) {
+        promises.push(
+          getFacultyWideCVData(secureFundingSectionId, faculty, "Grant")
+            .then((response) => ({ type: "grant", data: response.data }))
+            .catch(() => ({ type: "grant", data: [] }))
+        );
+      }
+
+      if (patentSectionId) {
+        promises.push(
+          getFacultyWideCVData(patentSectionId, faculty, "Patent")
+            .then((response) => ({ type: "patent", data: response.data }))
+            .catch(() => ({ type: "patent", data: [] }))
+        );
+      }
+
+      // Execute all promises in parallel
+      const results = await Promise.all(promises);
+
+      // Process results
+      const publicationsData = [];
+      const otherPublicationsData = [];
+      const grantsData = [];
+      const patentsData = [];
+
+      results.forEach((result) => {
+        switch (result.type) {
+          case "publication":
+            // Convert CVData format to the expected format
+            publicationsData.push(
+              ...result.data.map((item) => ({
+                data_section_id: item.data_section_id,
+                data_details:
+                  typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
+              }))
+            );
+            break;
+          case "otherPublication":
+            otherPublicationsData.push(
+              ...result.data.map((item) => ({
+                data_section_id: item.data_section_id,
+                data_details:
+                  typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
+              }))
+            );
+            break;
+          case "grant":
+            grantsData.push(
+              ...result.data.map((item) => ({
+                data_section_id: item.data_section_id,
+                data_details:
+                  typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
+              }))
+            );
+            break;
+          case "patent":
+            patentsData.push(
+              ...result.data.map((item) => ({
+                data_section_id: item.data_section_id,
+                data_details:
+                  typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
+              }))
+            );
+            break;
+          case "default":
+            break;
+        }
+      });
+
+      // Combine publications and process grant money
+      const allPublicationsData = [...publicationsData, ...otherPublicationsData];
+      const processedGrantMoney = processGrantMoney(grantsData);
+
+      // Update state
+      setPublications(allPublicationsData);
+      setGrants(grantsData);
+      setPatents(patentsData);
+      setGrantMoneyRaised(processedGrantMoney);
+    } catch (error) {
+      console.error("Error fetching CV data:", error);
+    }
+  }, [faculty, userInfo?.role]);
 
   const processGrantMoney = useCallback((grantsData) => {
     const totalGrantMoneyRaised = [];
@@ -192,17 +190,17 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         if (dataDetails.dates && dataDetails.amount) {
           const amount = parseFloat(dataDetails.amount);
           let year;
-          
+
           // Handle both date formats: "July, 2008 - June, 2011" and "July, 2008"
           const dateString = dataDetails.dates.trim();
-          
-          if (dateString.includes(' - ')) {
+
+          if (dateString.includes(" - ")) {
             // Date range format: "July, 2008 - June, 2011"
             // Extract the end date (second part after ' - ')
-            const endDate = dateString.split(' - ')[1].trim();
-            if (endDate.includes(',')) {
+            const endDate = dateString.split(" - ")[1].trim();
+            if (endDate.includes(",")) {
               // Format: "June, 2011"
-              year = endDate.split(',')[1].trim();
+              year = endDate.split(",")[1].trim();
             } else {
               // Fallback: try to extract year from end of string
               const yearMatch = endDate.match(/\d{4}/);
@@ -210,16 +208,16 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             }
           } else {
             // Single date format: "July, 2008"
-            if (dateString.includes(',')) {
+            if (dateString.includes(",")) {
               // Format: "July, 2008"
-              year = dateString.split(',')[1].trim();
+              year = dateString.split(",")[1].trim();
             } else {
               // Fallback: try to extract year from string
               const yearMatch = dateString.match(/\d{4}/);
               year = yearMatch ? yearMatch[0] : null;
             }
           }
-        
+
           // Only add grants with valid numeric amounts and years
           if (!isNaN(amount) && year && !isNaN(year) && amount > 0) {
             totalGrantMoneyRaised.push({
@@ -235,21 +233,21 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     return totalGrantMoneyRaised;
   }, []);
 
-
   // Since data is already filtered by faculty in getFacultyWideCVData, no need for frontend filtering
   const filteredPublications = publications;
   const filteredGrants = grants;
   const filteredPatents = patents;
   const filteredGrantMoney = grantMoneyRaised;
 
-  const totalGrantMoneyRaised = useMemo(() =>
-    filteredGrantMoney
-      .reduce((total, grant) => {
-        // Make sure amount is a valid number and greater than 0
-        const amount = Number(grant.amount);
-        return total + (isNaN(amount) || amount <= 0 ? 0 : amount);
-      }, 0)
-      .toLocaleString("en-US", { style: "currency", currency: "USD" }),
+  const totalGrantMoneyRaised = useMemo(
+    () =>
+      filteredGrantMoney
+        .reduce((total, grant) => {
+          // Make sure amount is a valid number and greater than 0
+          const amount = Number(grant.amount);
+          return total + (isNaN(amount) || amount <= 0 ? 0 : amount);
+        }, 0)
+        .toLocaleString("en-US", { style: "currency", currency: "USD" }),
     [filteredGrantMoney]
   );
 
@@ -261,9 +259,15 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     // Use filtered grant money data based on faculty
     filteredGrantMoney.forEach((grant) => {
       // Add guards to ensure valid data
-      if (grant.amount && grant.years && 
-          !isNaN(grant.amount) && !isNaN(grant.years) && 
-          grant.amount > 0 && grant.years > 1900 && grant.years <= new Date().getFullYear() + 10) {
+      if (
+        grant.amount &&
+        grant.years &&
+        !isNaN(grant.amount) &&
+        !isNaN(grant.years) &&
+        grant.amount > 0 &&
+        grant.years > 1900 &&
+        grant.years <= new Date().getFullYear() + 10
+      ) {
         const year = grant.years;
         if (yearlyDataMap.has(year)) {
           yearlyDataMap.get(year).GrantFunding += grant.amount;
@@ -298,17 +302,17 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         if (dataDetails.end_date) {
           let year;
           const endDateString = dataDetails.end_date.trim();
-          
-          if (endDateString.includes(' ')) {
+
+          if (endDateString.includes(" ")) {
             // Format: "June 2019" - extract the year part
-            const parts = endDateString.split(' ');
+            const parts = endDateString.split(" ");
             const yearPart = parts[parts.length - 1]; // Get the last part (year)
             year = parseInt(yearPart);
           } else {
             // Format: "2019" - direct year
             year = parseInt(endDateString);
           }
-          
+
           // Only include valid years
           if (!isNaN(year)) {
             const yearStr = year.toString();
@@ -322,7 +326,6 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             }
           }
         }
-
       } catch (error) {
         console.error("Error parsing publication data:", error, publication);
       }
@@ -389,53 +392,6 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           }
         }
 
-        // Fallback: Handle legacy year and years fields for backward compatibility
-        if (!dataDetails.year_published && !dataDetails.dates) {
-          if (dataDetails.year) {
-            const year = parseInt(dataDetails.year);
-            if (!isNaN(year) && year >= 1900 && year <= currentYear) {
-              const yearStr = year.toString();
-              if (yearlyDataMap.has(yearStr)) {
-                yearlyDataMap.get(yearStr).Patents += 1;
-              } else {
-                yearlyDataMap.set(yearStr, {
-                  year: yearStr,
-                  Patents: 1,
-                });
-              }
-            }
-          } else if (dataDetails.years) {
-            if (Array.isArray(dataDetails.years)) {
-              dataDetails.years.forEach((yearValue) => {
-                const year = parseInt(yearValue);
-                if (!isNaN(year) && year >= 1900 && year <= currentYear) {
-                  const yearStr = year.toString();
-                  if (yearlyDataMap.has(yearStr)) {
-                    yearlyDataMap.get(yearStr).Patents += 1;
-                  } else {
-                    yearlyDataMap.set(yearStr, {
-                      year: yearStr,
-                      Patents: 1,
-                    });
-                  }
-                }
-              });
-            } else {
-              const year = parseInt(dataDetails.years);
-              if (!isNaN(year) && year >= 1900 && year <= currentYear) {
-                const yearStr = year.toString();
-                if (yearlyDataMap.has(yearStr)) {
-                  yearlyDataMap.get(yearStr).Patents += 1;
-                } else {
-                  yearlyDataMap.set(yearStr, {
-                    year: yearStr,
-                    Patents: 1,
-                  });
-                }
-              }
-            }
-          }
-        }
       } catch (error) {
         console.error("Error parsing patent data:", error, patent);
       }
@@ -541,9 +497,12 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           <>
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <AnalyticsCard title="Faculty Members" value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()} />
+              <AnalyticsCard
+                title="Faculty Members"
+                value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()}
+              />
               <AnalyticsCard title="Delegates" value={userCounts.assistant_count.toLocaleString()} />
-              <AnalyticsCard title="CVs Generated" value={totalCVsGenerated.toLocaleString()} />
+              {/* <AnalyticsCard title="CVs Generated" value={totalCVsGenerated.toLocaleString()} /> */}
             </div>
 
             {/* Additional Metrics Cards */}
@@ -567,7 +526,6 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             <div className="mb-8">
               <GraphCarousel graphs={graphsConfig} />
             </div>
-
           </>
         )}
       </main>

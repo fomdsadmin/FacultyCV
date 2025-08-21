@@ -2,19 +2,21 @@ import React from 'react'
 import { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
 import AdminMenu from '../Components/AdminMenu.jsx';
+import FacultyAdminMenu from '../Components/FacultyAdminMenu.jsx';
 import { Accordion } from '../SharedComponents/Accordion/Accordion';
 import { AccordionItem } from '../SharedComponents/Accordion/AccordionItem';
 
 import { getAuditViewData } from '../graphql/graphqlHelpers.js';
-import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
+import { AUDIT_ACTIONS, ACTION_CATEGORIES } from '../Contexts/AuditLoggerContext';
 
-const AuditPage = ({ getCognitoUser, userInfo }) => {
+
+const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     const [loading, setLoading] = useState(false);
     const [auditViewData, setAuditViewData] = useState([]);
-
+    const [totalCount, setTotalCount] = useState(0);
 
     const PAGE_SIZE = 20;
-    const [page, setPage] = useState(1); // Current page number
+    const [page_number, setPageNumber] = useState(1); // Current page number
 
     const [emailFilter, setEmailFilter] = useState('');
     const [firstNameFilter, setFirstNameFilter] = useState('');
@@ -22,22 +24,80 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [actionFilter, setActionFilter] = useState('');
+    const [actionCategory, setActionCategory] = useState('ALL');
 
+    // Determine which menu component to use based on the user role
+    const getMenuComponent = () => {
+        // Get the current role with fallback to empty string
+        let role = userInfo?.role || '';
+        if (currentViewRole !== role) {
+            role = currentViewRole; // if current view is not user actual role
+        }
+
+        // Check if the role is for faculty admin
+        return (role && role.startsWith('FacultyAdmin-')) ?
+            FacultyAdminMenu :
+            AdminMenu;
+    };
+    const MenuComponent = getMenuComponent();
+
+    // reset page display if filter change 
+    useEffect(() => {
+        setPageNumber(1);
+    }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter]);
+
+    // fetch audit data 
     useEffect(() => {
         fetchAuditViewData();
-    }, [page]);
+    }, [emailFilter, firstNameFilter, lastNameFilter, startDate, endDate, actionFilter, page_number]);
 
     async function fetchAuditViewData() {
         setLoading(true);
         try {
-            const auditViewData = await getAuditViewData();
-            auditViewData.sort((a, b) => new Date(b.ts) - new Date(a.ts)); // Sort by timestamp descending
-            setAuditViewData(auditViewData);
+            // Start with proper date formatting for both start and end dates
+            let formattedStartDate = startDate;
+            let formattedEndDate = endDate;
+            // Format start date if it exists
+            if (startDate) {
+                const startDateObj = new Date(startDate);
+                // Set to beginning of day for start date
+                startDateObj.setHours(0, 0, 0, 0);
+                formattedStartDate = startDateObj.toISOString().split('.')[0]; // Remove milliseconds
+                console.log("Formatted start date:", formattedStartDate);
+            }
+            // Format end date if it exists
+            if (endDate) {
+                const endDateObj = new Date(endDate);
+                // Set to end of day for end date
+                endDateObj.setHours(23, 59, 59, 999);
+                formattedEndDate = endDateObj.toISOString().split('.')[0]; // Remove milliseconds
+                console.log("Formatted end date:", formattedEndDate);
+            }
+
+            const response = await getAuditViewData({
+                page_number,
+                page_size: PAGE_SIZE,
+                email: emailFilter,
+                first_name: firstNameFilter,
+                last_name: lastNameFilter,
+                action: actionFilter,
+                start_date: formattedStartDate,
+                end_date: formattedEndDate,
+            });
+
+            let data = Array.isArray(response) ? response : (response.records || []);
+            data.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+
+            setAuditViewData(data);
+
+            // This should be total results from backend
+            setTotalCount(response.total_count ?? totalCount);
         } catch (error) {
             console.error("Error fetching audit view data:", error);
         }
         setLoading(false);
     }
+
 
     const handleRefresh = async () => {
         await fetchAuditViewData();
@@ -55,7 +115,6 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         pageViewData.forEach(log => {
             const rowData = columns.map(col => {
                 const val = log[col];
-                // Handle different data types and escape quotes/commas for CSV
                 if (val === null || val === undefined) return '';
                 if (typeof val === "boolean") return String(val);
                 if (typeof val === "string") return `"${val.replace(/"/g, '""')}"`;
@@ -80,26 +139,15 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         if (!timestamp) return '';
 
         try {
-            // Parse the timestamp, assuming it's UTC and convert to local time
-            // The format appears to be "2025-07-04 22:43:40.644432" (UTC)
-
-            // standardize the timestamp format
+            // Parse the timestamp, convert UTC to local time eg: "2025-07-04 22:43:40.644432" (UTC)
             let parsedTimestamp = timestamp;
 
-            // If the timestamp contains space and no 'T' (like "2025-07-04 22:43:40.644432")
+            // If the timestamp contains space and no 'T' 
             // Convert it to ISO format by replacing space with 'T' and adding 'Z' to indicate UTC
             if (typeof timestamp === 'string' && timestamp.includes(' ') && !timestamp.includes('T')) {
                 parsedTimestamp = timestamp.replace(' ', 'T') + 'Z';
             }
-
-            // Create date object - now properly interpreting as UTC
             const date = new Date(parsedTimestamp);
-
-            // console.log("Original timestamp:", timestamp);
-            // console.log("Parsed as UTC:", date.toISOString());
-            // console.log("Local time:", date.toString());
-
-            // Format the date in local time
             let convertedDate = date.toLocaleString(undefined, {
                 year: 'numeric',
                 month: 'short',
@@ -110,14 +158,14 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                 hour12: true,
                 timeZoneName: 'short'
             });
-
             return convertedDate;
         } catch (error) {
             console.error("Error formatting timestamp:", error, timestamp);
-            return timestamp; // Return the original if parsing fails
+            return timestamp;
         }
     };
 
+    // ORDERS MATTERS
     const pageViewColumns = [
         "log_view_id",
         "ts",
@@ -127,52 +175,63 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
         "logged_user_email",
         "logged_user_role",
         "assistant",
-        "profile_record",
         "page",
         "logged_user_action",
+        "profile_record",
         "session_id",
         "ip",
         "browser_version",
     ];
 
-    // Create a default set of visible columns that excludes log_view_id
-    const defaultVisibleColumns = pageViewColumns.filter(col => col !== "log_view_id");
+    // Create a default set of visible columns that excludes log_view_id, assistant, and profile_record
+    const defaultVisibleColumns = pageViewColumns.filter(col => col !== "log_view_id" && col !== "assistant");
 
     // Initialize state with the filtered columns
     const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
-
-    const pageViewData = auditViewData.filter(log => {
-        const matchesPage = log.page;
-        const matchesEmail = log.logged_user_email?.toLowerCase().includes(emailFilter.toLowerCase());
-        const matchesFirstName = log.logged_user_first_name?.toLowerCase().includes(firstNameFilter.toLowerCase());
-        const matchesLastName = log.logged_user_last_name?.toLowerCase().includes(lastNameFilter.toLowerCase());
-        const matchesAction = !actionFilter || log.logged_user_action === actionFilter;
-
-        // Date/time filtering
-        let matchesStart = true;
-        let matchesEnd = true;
-        if (startDate) {
-            matchesStart = new Date(log.ts) >= new Date(startDate);
-        }
-        if (endDate) {
-            matchesEnd = new Date(log.ts) <= new Date(endDate);
-        }
-
-        return matchesPage && matchesEmail && matchesFirstName && matchesLastName && matchesStart && matchesEnd && matchesAction;
-
-    });
+    const pageViewData = auditViewData;
     // Pagination logic
-    const totalPages = Math.ceil(pageViewData.length / PAGE_SIZE);
-    const pagedData = pageViewData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+    const pagedData = auditViewData;
 
+    // column name map (display in table head)
+    const getColumnDisplayName = (columnName) => {
+        const columnMap = {
+            "ts": "Timestamp",
+            "logged_user_first_name": "First Name",
+            "logged_user_last_name": "Last Name",
+            "logged_user_email": "Email",
+            "logged_user_role": "Role",
+            "page": "Page",
+            "logged_user_action": "Action",
+            "log_view_id": "ID",
+            "logged_user_id": "User ID",
+            "assistant": "Assistant",
+            "profile_record": "Profile Record",
+            "session_id": "Session ID",
+            "ip": "IP Address",
+            "browser_version": "Browser"
+        };
 
+        return columnMap[columnName] || columnName;
+    };
+
+    // Define column widths in a single place for reuse
+    const getColumnWidth = (col) => {
+        switch (col) {
+            case "logged_user_email": return "200px";
+            case "profile_record": return "250px";
+            case "page": return "250px";
+            case "browser_version": return "600px";
+            default: return "auto";
+        }
+    };
 
     return (
         <PageContainer>
-            <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+            <MenuComponent getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
 
             <main className='px-12 mt-4 overflow-auto custom-scrollbar w-full mb-4'>
-                <h1 className="text-left text-4xl font-bold text-zinc-600 mb-4">Audit</h1>
+                <h1 className="text-left text-4xl font-bold text-zinc-600 mb-4">Activity Logs</h1>
 
                 <Accordion>
                     {/* Filters Section */}
@@ -215,32 +274,57 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                                     placeholder="End Date/Time"
                                 />
                             </div>
-                            <select
-                                className="border px-2 py-1 rounded"
-                                value={actionFilter}
-                                onChange={e => setActionFilter(e.target.value)}
-                            >
-                                <option value="">All Actions</option>
-                                {Object.values(AUDIT_ACTIONS).map(action => (
-                                    <option key={action} value={action}>
-                                        {action}
-                                    </option>
-                                ))}
-                            </select>
+                            {/* Action category selector */}
+                            <div className="flex flex-col gap-2 w-full">
+                                <div className="flex gap-2">
+                                    <select
+                                        className="border px-2 py-1 rounded"
+                                        value={actionCategory}
+                                        onChange={e => {
+                                            setActionCategory(e.target.value);
+                                            setActionFilter(''); // Reset action filter when category changes
+                                        }}
+                                    >
+                                        <option value="ALL">All Action Types</option>
+                                        <option value="ADMIN_ACTIONS">Admin Actions</option>
+                                        <option value="OTHER_ACTIONS">Other Actions</option>
+                                        
+                                    </select>
 
-                            <button
-                                className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
-                                onClick={() => {
-                                    setEmailFilter('');
-                                    setFirstNameFilter('');
-                                    setLastNameFilter('');
-                                    setStartDate('');
-                                    setEndDate('');
-                                    setActionFilter('');
-                                }}
-                            >
-                                Clear Filters
-                            </button>
+                                    <select
+                                        className="border px-2 py-1 rounded flex-grow"
+                                        value={actionFilter}
+                                        onChange={e => setActionFilter(e.target.value)}
+                                    >
+                                        <option value="">
+                                            {actionCategory === 'ADMIN_ACTIONS' ? 'All Admin Actions' :
+                                                actionCategory === 'OTHER_ACTIONS' ? 'All Other Actions' :
+                                                    'All Actions'}
+                                        </option>
+                                        {(actionCategory === 'ALL'
+                                            ? Object.values(AUDIT_ACTIONS)
+                                            : ACTION_CATEGORIES[actionCategory] || []
+                                        ).map(action => (
+                                            <option key={action} value={action}>
+                                                {action}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                                        onClick={() => {
+                                            setEmailFilter('');
+                                            setFirstNameFilter('');
+                                            setLastNameFilter('');
+                                            setStartDate('');
+                                            setEndDate('');
+                                            setActionFilter('');
+                                        }}
+                                    >
+                                        Clear Filters
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </AccordionItem>
 
@@ -282,16 +366,17 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
                     <div className="flex gap-2 items-center">
                         <button
                             className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
-                            onClick={() => setPage(page - 1)}
-                            disabled={page === 1}
+                            onClick={() => setPageNumber(page_number - 1)}
+                            disabled={page_number === 1}
                         >
                             Previous
                         </button>
-                        <span>Page {page} of {totalPages}</span>
+                        <span>Page {page_number} of {totalPages}</span>
+                        <span>Total Records: {totalCount}</span>
                         <button
                             className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
-                            onClick={() => setPage(page + 1)}
-                            disabled={page === totalPages}
+                            onClick={() => setPageNumber(page_number + 1)}
+                            disabled={page_number === totalPages}
                         >
                             Next
                         </button>
@@ -316,32 +401,56 @@ const AuditPage = ({ getCognitoUser, userInfo }) => {
 
 
                 {loading ? (
-                    <div>Loading...</div>
+                    <div className="flex justify-center items-center py-10">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
                 ) : (
-                    <div className="overflow-x-auto" style={{ maxHeight: 600, minWidth: 500, overflowY: 'auto', overflowX: 'auto' }}>
-                        <table className="min-w-full border text-xs">
-                            <thead>
+                    <div className="overflow-x-auto rounded-lg shadow" style={{ maxHeight: 600, overflowY: 'auto' }}>
+                        <table className="min-w-full divide-y divide-gray-200" style={{ tableLayout: "fixed" }}>
+                            <colgroup>
+                                {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
+                                    <col key={col} style={{ width: getColumnWidth(col) }} />
+                                ))}
+                            </colgroup>
+                            <thead className="bg-gray-50 sticky top-0">
                                 <tr>
                                     {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
-                                        <th key={col}>{col}</th>
+                                        <th
+                                            key={col}
+                                            className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                            {getColumnDisplayName(col)}
+                                        </th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody>
-                                {pagedData.map((log, idx) => (
-                                    <tr key={log.log_view_id || idx}>
-                                        {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => (
-                                            <td key={col}>
-                                                {col === "ts"
-                                                    ? formatTimestamp(log[col])
-                                                    : typeof log[col] === "boolean"
-                                                        ? String(log[col])
-                                                        : log[col]}
-
-                                            </td>
-                                        ))}
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {pagedData.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={visibleColumns.length} className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 text-center">
+                                            No records found.
+                                        </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    pagedData.map((log, index) => (
+                                        <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                            {pageViewColumns.filter(col => visibleColumns.includes(col)).map(col => {
+                                                const shouldWrap = ["ts","logged_user_id", "profile_record", "page","session_id"].includes(col);
+                    
+                                                return (
+                                                    <td
+                                                        key={col}
+                                                        className={`px-3 py-2 text-xs text-gray-500 ${shouldWrap ? "whitespace-normal break-words" : "truncate"}`}
+                                                        style={{ maxWidth: getColumnWidth(col) }}
+                                                        title={log[col] && typeof log[col] === 'string' ? log[col] : ''}
+                                                    >
+                                                        {col === 'ts' ? formatTimestamp(log[col]) : (log[col] !== null && log[col] !== undefined ? String(log[col]) : '')}
+                                                    </td>
+                                                )
+                                            })}
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>

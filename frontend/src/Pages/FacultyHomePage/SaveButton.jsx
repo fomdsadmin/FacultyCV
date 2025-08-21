@@ -58,8 +58,6 @@ const SaveButton = ({ affiliationsData }) => {
     const sanitizedBio = sanitizeInput(trimmedUserInfo.bio);
 
     try {
-      const cwlID = trimmedUserInfo.cwl ? trimmedUserInfo.cwl : "";
-      const vppID = trimmedUserInfo.vpp ? trimmedUserInfo.vpp : "";
       await updateUser(
         trimmedUserInfo.user_id,
         trimmedUserInfo.first_name,
@@ -68,21 +66,14 @@ const SaveButton = ({ affiliationsData }) => {
         trimmedUserInfo.email,
         trimmedUserInfo.role,
         sanitizedBio, // use sanitized bio here
-        trimmedUserInfo.rank,
         trimmedUserInfo.institution,
         trimmedUserInfo.primary_department,
-        trimmedUserInfo.secondary_department,
         trimmedUserInfo.primary_faculty,
-        trimmedUserInfo.secondary_faculty,
-        trimmedUserInfo.primary_affiliation,
-        trimmedUserInfo.secondary_affiliation,
         trimmedUserInfo.campus,
         trimmedUserInfo.keywords,
         trimmedUserInfo.institution_user_id,
         trimmedUserInfo.scopus_id,
         trimmedUserInfo.orcid_id,
-        cwlID,
-        vppID
       );
       
       // Get updated user info and update context

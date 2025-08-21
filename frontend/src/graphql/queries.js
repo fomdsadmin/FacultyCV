@@ -1,3 +1,5 @@
+import { Title } from "chart.js";
+
 export const GET_BIO_RESPONSE_DATA = `
     query GetBioResponseData($username_input: String!) {
         getBioResponseData(username_input: $username_input) {
@@ -39,6 +41,25 @@ export const getUserQuery = `
     }
 `;
 
+export const getUserProfileMatchesQuery = `
+    query GetUserProfileMatches($first_name: String!, $last_name: String!) {
+        getUserProfileMatches(
+            first_name: $first_name,
+            last_name: $last_name
+        ){
+            user_id
+            first_name
+            last_name
+            email
+            role
+            primary_department
+            primary_faculty
+            pending
+            approved
+            username
+        }
+    }
+`;
 export const getUserInstitutionIdQuery = (email) => `
     query GetUser {
         getUser (
@@ -266,8 +287,25 @@ export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
     }`;
 };
 
-export const getDepartmentCVDataQuery = (data_section_id, dept, title = "") => `
-    query GetDepartmentCVData {
+export const getDepartmentCVDataQuery = (data_section_id, dept, title, user_ids) => {
+  if (user_ids) {
+    return `query GetDepartmentCVData {
+        getDepartmentCVData (
+            data_section_id: "${data_section_id}",
+            dept: "${dept}",
+            title: "${title}",
+            user_ids: [${user_ids.map((id) => `"${id}"`).join(", ")}]
+        ) {
+            data {
+                data_section_id
+                data_details
+            }
+            total_count
+            returned_count
+        }
+    }`;
+  } else if (title) {
+    return `query GetDepartmentCVData {
         getDepartmentCVData (
             data_section_id: "${data_section_id}",
             dept: "${dept}",
@@ -281,6 +319,22 @@ export const getDepartmentCVDataQuery = (data_section_id, dept, title = "") => `
             returned_count
         }
     }`;
+  } else {
+    return `query GetDepartmentCVData {
+          getDepartmentCVData (
+              data_section_id: "${data_section_id}",
+              dept: "${dept}"
+          ) {
+              data {
+                  data_section_id
+                  data_details
+              }
+              total_count
+              returned_count
+          }
+      }`;
+  }
+};
 
 export const getFacultyWideCVDataQuery = (data_section_id, faculty, title = "") => `
     query GetFacultyWideCVData {
@@ -360,50 +414,53 @@ export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
     }
 `;
 
-export const getAuditViewQuery = (logged_user_id) => {
-  if (logged_user_id !== undefined && logged_user_id !== null) {
-    return `
-            query getAuditView {
-                getAuditView(logged_user_id: ${logged_user_id}) {
-                    log_view_id
-                    ts
-                    logged_user_id
-                    logged_user_first_name
-                    logged_user_last_name
-                    ip
-                    browser_version
-                    page
-                    session_id
-                    assistant
-                    profile_record
-                    logged_user_role,
-                    logged_user_email,
-                    logged_user_action
-                }
+export const getDepartmentAffiliationsQuery = (department) => `
+    query getDepartmentAffiliations {
+        getDepartmentAffiliations (
+            department: "${department}"
+        ) {
+            user_id
+            first_name
+            last_name
+            primary_unit
+            joint_units
+        }
+    }
+`;
+
+export const getAuditViewQuery = (args = {}) => {
+  const argList = [];
+  if (args.logged_user_id) argList.push(`logged_user_id: "${args.logged_user_id}"`);
+  if (args.page_number) argList.push(`page_number: ${args.page_number}`);
+  if (args.page_size) argList.push(`page_size: ${args.page_size}`);
+  if (args.email) argList.push(`email: "${args.email}"`);
+  if (args.first_name) argList.push(`first_name: "${args.first_name}"`);
+  if (args.last_name) argList.push(`last_name: "${args.last_name}"`);
+  if (args.action) argList.push(`action: "${args.action}"`);
+  if (args.start_date) argList.push(`start_date: "${args.start_date}"`);
+  if (args.end_date) argList.push(`end_date: "${args.end_date}"`);
+
+  return `query getAuditView {
+        getAuditView(${argList.join(", ")}) {
+            records {
+                log_view_id
+                ts
+                logged_user_id
+                logged_user_first_name
+                logged_user_last_name
+                ip
+                browser_version
+                page
+                session_id
+                assistant
+                profile_record
+                logged_user_role
+                logged_user_email
+                logged_user_action
             }
-        `;
-  } else {
-    return `
-            query getAuditView {
-                getAuditView {
-                    log_view_id
-                    ts
-                    logged_user_id
-                    logged_user_first_name
-                    logged_user_last_name
-                    ip
-                    browser_version
-                    page
-                    session_id
-                    assistant
-                    profile_record
-                    logged_user_role,
-                    logged_user_email,
-                    logged_user_action
-                }
-            }
-        `;
-  }
+            total_count
+    }
+}`;
 };
 
 export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution_name) => `
@@ -514,10 +571,12 @@ export const getUserConnectionsQuery = (user_id, isFaculty = true) => `
             faculty_first_name
             faculty_last_name
             faculty_email
+            faculty_username
             assistant_user_id
             assistant_first_name
             assistant_last_name
             assistant_email
+            assistant_username
             status
         }
     }

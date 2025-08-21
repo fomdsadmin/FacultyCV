@@ -3,6 +3,8 @@ import { getLatexConfiguration, updateLatexConfiguration } from "../graphql/grap
 import { FaArrowLeft } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useAuditLogger } from '../Contexts/AuditLoggerContext';
+import { AUDIT_ACTIONS } from '../Contexts/AuditLoggerContext';
 
 const MAX_SIZE = 5.0;
 const MIN_SIZE = -5.0;
@@ -12,7 +14,9 @@ const EditReportFormatting = ({ onBack }) => {
     const [configurationVspace, setConfigurationVspace] = useState(0.0);
     const [configurationMargin, setConfigurationMargin] = useState(0.0);
     const [configurationFont, setConfigurationFont] = useState('');
-    const [updating, setUpdating] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  
+  const { logAction } = useAuditLogger();
 
     useEffect(() => {
         fetchConfiguration();
@@ -35,8 +39,10 @@ const EditReportFormatting = ({ onBack }) => {
             setUpdating(false);
             return;
         }
-        await updateLatexConfiguration(configurationVspace, configurationMargin, '') // empty string for fonts TODO
-        setUpdating(false);
+      await updateLatexConfiguration(configurationVspace, configurationMargin, '') // empty string for fonts TODO
+      // Log the configuration update action
+      await logAction(AUDIT_ACTIONS.EDIT_REPORT_FORMAT);
+      setUpdating(false);
     }
 
     return (

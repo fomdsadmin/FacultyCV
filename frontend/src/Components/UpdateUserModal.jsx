@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { changeUsername, getUser, updateUser } from "../graphql/graphqlHelpers.js";
+import { changeUsername, getUser, updateUser, getAllUniversityInfo } from "../graphql/graphqlHelpers.js";
+import { useAuditLogger } from "../Contexts/AuditLoggerContext";
+import { AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 import { get } from "aws-amplify/api";
 
 const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSuccess }) => {
@@ -7,16 +9,33 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [primaryDepartment, setPrimaryDepartment] = useState("");
+  const [primaryFaculty, setPrimaryFaculty] = useState("");
+  const [institution, setInstitution] = useState("");
+  const [campus, setCampus] = useState("");
+  const [scopusId, setScopusId] = useState("");
+  const [orcid, setOrcid] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  //audit logger
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     if (existingUser) {
       setFirstName(existingUser.first_name || "");
       setLastName(existingUser.last_name || "");
-      setUsername(existingUser.username);
+      setUsername(existingUser.username || "");
       setEmail(existingUser.email || "");
+      setPrimaryDepartment(existingUser.primary_department || "");
+      setPrimaryFaculty(existingUser.primary_faculty || "");
+      setInstitution(existingUser.institution || "");
+      setCampus(existingUser.campus || "");
+      setScopusId(existingUser.scopus_id || "");
+      setOrcid(existingUser.orcid || "");
       setError("");
       // Don't clear success message here to allow it to persist after update
     }
@@ -27,6 +46,34 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
     if (isOpen) {
       setSuccessMessage("");
       setError("");
+    }
+  }, [isOpen]);
+
+  // Fetch university info (departments and faculties)
+  useEffect(() => {
+    const fetchUniversityInfo = async () => {
+      try {
+        const result = await getAllUniversityInfo();
+        const depts = [];
+        const facs = [];
+
+        result.forEach((element) => {
+          if (element.type === "Department") {
+            depts.push(element.value);
+          } else if (element.type === "Faculty") {
+            facs.push(element.value);
+          }
+        });
+
+        setDepartments(depts.sort());
+        setFaculties(facs.sort());
+      } catch (error) {
+        console.error("Error fetching university info:", error);
+      }
+    };
+
+    if (isOpen) {
+      fetchUniversityInfo();
     }
   }, [isOpen]);
 
@@ -47,20 +94,17 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
         email,
         existingUser.role, // Keep existing role
         existingUser.bio || "",
-        existingUser.rank || "",
-        existingUser.institution || "",
-        existingUser.primary_department || "",
-        existingUser.secondary_department || "",
-        existingUser.primary_faculty || "",
-        existingUser.secondary_faculty || "",
-        existingUser.primary_affiliation || "",
-        existingUser.secondary_affiliation || "",
-        existingUser.campus || "",
+        institution,
+        primaryDepartment,
+        primaryFaculty,
+        campus,
         existingUser.keywords || "",
         existingUser.institution_user_id || "",
-        existingUser.scopus_id || "",
-        existingUser.orcid_id || ""
+        scopusId,
+        orcid
       );
+
+      await 
 
       await changeUsername(existingUser.user_id, username);
 
@@ -71,6 +115,14 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
       onUpdateSuccess(newResult);
       // Set success message after updating the user data
       setSuccessMessage("User Successfully Updated");
+      // Log the user update action to audit logs
+      await logAction(AUDIT_ACTIONS.UPDATE_USER, 
+        {
+          userID: existingUser.user_id,
+          firstName, lastName
+        }
+      );
+      window.location.reload(); // Refresh the page on close
     } catch (error) {
       console.error("Error updating user:", error);
       setError("An error occurred while updating user. Please try again.");
@@ -91,7 +143,7 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-xl h-[500px] flex flex-col">
+      <div className="bg-white rounded-lg p-6 w-full max-w-xl  flex flex-col my-auto">
         <div className="flex justify-between items-center mb-4">
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-bold text-zinc-600">Update User</h2>
@@ -118,7 +170,6 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                   required
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
                 <input
@@ -129,27 +180,101 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                   required
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input
+                  className="input input-bordered w-full text-sm bg-gray-50"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Username"
+                  type="text"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                className="input input-bordered w-full text-sm bg-gray-50"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                type="email"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  className="input input-bordered w-full text-sm bg-gray-50"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email"
+                  type="email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Institution</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={institution}
+                  onChange={(e) => setInstitution(e.target.value)}
+                  placeholder="Institution"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Campus</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={campus}
+                  onChange={(e) => setCampus(e.target.value)}
+                  placeholder="Campus"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-              <input
-                className="input input-bordered w-full text-sm bg-gray-50"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
-                type="username"
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Faculty</label>
+                <select
+                  className="select select-bordered w-full text-sm"
+                  value={primaryFaculty}
+                  onChange={(e) => setPrimaryFaculty(e.target.value)}
+                >
+                  <option value="">Select Faculty</option>
+                  {faculties.map((fac, idx) => (
+                    <option key={idx} value={fac}>
+                      {fac}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Department</label>
+                <select
+                  className="select select-bordered w-full text-sm"
+                  value={primaryDepartment}
+                  onChange={(e) => setPrimaryDepartment(e.target.value)}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept, idx) => (
+                    <option key={idx} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Scopus ID</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={scopusId}
+                  onChange={(e) => setScopusId(e.target.value)}
+                  placeholder="Scopus ID"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ORCID</label>
+                <input
+                  className="input input-bordered w-full text-sm"
+                  value={orcid}
+                  onChange={(e) => setOrcid(e.target.value)}
+                  placeholder="ORCID"
+                />
+              </div>
             </div>
 
             {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}

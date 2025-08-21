@@ -82,14 +82,14 @@ def lambda_handler(event, context):
 
     # Create Affiliations Table
     columns = []
+    columns.append(createColumn('user_affiliation_id', 'varchar', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
     columns.append(createColumn('user_id', 'TEXT', 'NOT NULL', False))
     columns.append(createColumn('first_name', 'TEXT', '', False))
     columns.append(createColumn('last_name', 'TEXT', '', False))
-    columns.append(createColumn('hospital_affiliations', 'JSON', '', False))
-    columns.append(createColumn('institution', 'JSON', '', False))
-    columns.append(createColumn('academic_units', 'JSON', '', False))
+    columns.append(createColumn('primary_unit', 'JSON', '', False))
+    columns.append(createColumn('joint_units', 'JSON', '', False))
     columns.append(createColumn('research_affiliations', 'JSON', '', False))
-    columns.append(createColumn('faculty', 'JSON', '', True))
+    columns.append(createColumn('hospital_affiliations', 'JSON', '', True))
     query = createQuery('affiliations', columns)
     cursor.execute(query)
 
@@ -124,7 +124,9 @@ def lambda_handler(event, context):
     columns.append(createColumn('assistant_first_name', 'varchar', '', False))
     columns.append(createColumn('assistant_last_name', 'varchar', '', False))
     columns.append(createColumn('assistant_email', 'varchar', '', False))
-    columns.append(createColumn('status', 'varchar', '', True))
+    columns.append(createColumn('status', 'varchar', '', False))
+    columns.append(createColumn('faculty_username', 'varchar', 'DEFAULT \'\'', False))
+    columns.append(createColumn('assistant_username', 'varchar', 'DEFAULT \'\'', True))
     query = createQuery('user_connections', columns)
     cursor.execute(query)
 

@@ -7,6 +7,7 @@ import {
   getDepartmentCVDataQuery,
   getFacultyWideCVDataQuery,
   getUserQuery,
+  getUserProfileMatchesQuery,
   getAllUsersQuery,
   getAllUsersCountQuery,
   getAllUniversityInfoQuery,
@@ -35,7 +36,8 @@ import {
   GET_BIO_RESPONSE_DATA,
   getAuditViewQuery,
   getUserAffiliationsQuery,
-  GET_PRESIGNED_GOTENBERG_BUCKET_URL
+  GET_PRESIGNED_GOTENBERG_BUCKET_URL,
+  getDepartmentAffiliationsQuery,
 } from "./queries";
 import {
   ADD_USER,
@@ -218,6 +220,11 @@ export const getUser = async (username) => {
   return results["data"]["getUser"];
 };
 
+export const getUserProfileMatches = async (first_name, last_name) => {
+  const results = await executeGraphql(getUserProfileMatchesQuery, { first_name, last_name });
+  return results["data"]["getUserProfileMatches"];
+};
+
 /**
  * Function to get user data with institution_user_id
  * Arguments:
@@ -306,8 +313,8 @@ export const getAllSectionCVData = async (data_section_id, data_section_ids) => 
   return results["data"]["getAllSectionCVData"];
 };
 
-export const getDepartmentCVData = async (data_section_id, dept, title) => {
-  const results = await runGraphql(getDepartmentCVDataQuery(data_section_id, dept, title));
+export const getDepartmentCVData = async (data_section_id, dept, title, user_ids) => {
+  const results = await runGraphql(getDepartmentCVDataQuery(data_section_id, dept, title, user_ids));
   return results["data"]["getDepartmentCVData"];
 };
 
@@ -320,6 +327,12 @@ export const getUserAffiliations = async (user_id, first_name, last_name) => {
   const query = getUserAffiliationsQuery(user_id, first_name, last_name);
   const results = await executeGraphql(query);
   return results["data"]["getUserAffiliations"];
+};
+
+export const getDepartmentAffiliations = async (department) => {
+  const query = getDepartmentAffiliationsQuery(department);
+  const results = await executeGraphql(query);
+  return results["data"]["getDepartmentAffiliations"];
 };
 
 /**
@@ -805,7 +818,9 @@ export const addUserConnection = async (
   assistant_first_name,
   assistant_last_name,
   assistant_email,
-  status
+  status,
+  faculty_username,
+  assistant_username
 ) => {
   const results = await runGraphql(
     addUserConnectionMutation(
@@ -817,7 +832,9 @@ export const addUserConnection = async (
       assistant_first_name,
       assistant_last_name,
       assistant_email,
-      status
+      status,
+      faculty_username,
+      assistant_username
     )
   );
   return results["data"]["addUserConnection"];
@@ -968,14 +985,9 @@ export const updateUser = async (
   email,
   role,
   bio,
-  rank,
   institution,
   primary_department,
-  secondary_department,
   primary_faculty,
-  secondary_faculty,
-  primary_affiliation,
-  secondary_affiliation,
   campus,
   keywords,
   institution_user_id,
@@ -992,20 +1004,14 @@ export const updateUser = async (
       email,
       role,
       bio,
-      rank,
       institution,
       primary_department,
-      secondary_department,
       primary_faculty,
-      secondary_faculty,
-      primary_affiliation,
-      secondary_affiliation,
       campus,
       keywords,
       institution_user_id,
       scopus_id,
       orcid_id,
-      cognito_user_id
     )
   );
   return results["data"]["updateUser"];

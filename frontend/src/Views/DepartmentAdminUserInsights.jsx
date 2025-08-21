@@ -263,8 +263,7 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
   };
 
   return (
-    <div className="py-4 px-12 bg-white rounded-lg shadow w-full">
-      <h2 className="text-xl font-bold text-zinc-700 my-4">User Analytics</h2>
+    <div className="py-2 px-8 bg-white rounded-lg shadow w-full mt-0">
       {loading && (
         <div className="flex items-center justify-center w-full mt-8">
           <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
@@ -274,7 +273,7 @@ const DepartmentAdminUserInsights = ({ user, department }) => {
         <>
           <UserSummaryCards />
           {/* Graph Carousel Section */}
-          <div className="mt-8">
+          <div className="mt-0">
             <GraphCarousel graphs={graphsConfig()} />
           </div>
         </>

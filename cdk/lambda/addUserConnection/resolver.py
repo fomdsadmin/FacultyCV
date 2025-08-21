@@ -22,11 +22,11 @@ def addUserConnection(arguments):
         return "connection already exists"
 
     # Proceed with the insertion if no existing connection is found
-    cursor.execute("INSERT INTO user_connections (faculty_user_id, faculty_first_name, faculty_last_name, faculty_email, assistant_user_id, assistant_first_name, assistant_last_name, assistant_email, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+    cursor.execute("INSERT INTO user_connections (faculty_user_id, faculty_first_name, faculty_last_name, faculty_email, assistant_user_id, assistant_first_name, assistant_last_name, assistant_email, status, faculty_username, assistant_username) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
                    (arguments['faculty_user_id'], arguments['faculty_first_name'], arguments['faculty_last_name'], arguments['faculty_email'], 
                     arguments['assistant_user_id'], arguments['assistant_first_name'], arguments['assistant_last_name'], arguments['assistant_email'], 
-                    arguments['status']))
-    
+                    arguments['status'], arguments['faculty_username'], arguments['assistant_username']))
+
     cursor.close()
     connection.commit()
     connection.close()

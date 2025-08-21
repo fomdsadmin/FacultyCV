@@ -13,9 +13,9 @@ def getUserConnections(arguments):
     cursor = connection.cursor()
     
     if 'faculty_user_id' in arguments:
-        cursor.execute('SELECT user_connection_id, faculty_user_id, faculty_first_name, faculty_last_name, faculty_email, assistant_user_id, assistant_first_name, assistant_last_name, assistant_email, status FROM user_connections WHERE faculty_user_id = %s', (arguments['faculty_user_id'],))
+        cursor.execute('SELECT user_connection_id, faculty_user_id, faculty_first_name, faculty_last_name, faculty_email, assistant_user_id, assistant_first_name, assistant_last_name, assistant_email, status, faculty_username, assistant_username FROM user_connections WHERE faculty_user_id = %s', (arguments['faculty_user_id'],))
     elif 'assistant_user_id' in arguments:
-        cursor.execute('SELECT user_connection_id, faculty_user_id, faculty_first_name, faculty_last_name, faculty_email, assistant_user_id, assistant_first_name, assistant_last_name, assistant_email, status FROM user_connections WHERE assistant_user_id = %s', (arguments['assistant_user_id'],))
+        cursor.execute('SELECT user_connection_id, faculty_user_id, faculty_first_name, faculty_last_name, faculty_email, assistant_user_id, assistant_first_name, assistant_last_name, assistant_email, status, faculty_username, assistant_username FROM user_connections WHERE assistant_user_id = %s', (arguments['assistant_user_id'],))
     else:
         return []
 
@@ -35,7 +35,9 @@ def getUserConnections(arguments):
         'assistant_first_name': result[6],
         'assistant_last_name': result[7],
         'assistant_email': result[8],
-        'status': result[9]
+        'status': result[9],
+        'faculty_username': result[10],
+        'assistant_username': result[11]
     })      
     return user_connections
 

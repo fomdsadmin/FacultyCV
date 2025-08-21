@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { addUser, getUser, getAllUniversityInfo, addToUserGroup, updateUser } from "../graphql/graphqlHelpers.js";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
@@ -23,6 +24,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [createdUser, setCreatedUser] = useState(null);
+
+  const { logAction } = useAuditLogger();
 
   // Fetch departments and faculties when component mounts
   useEffect(() => {
@@ -63,6 +66,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       setIsFacultyAdmin(false);
       setRole(selectedRole);
     }
+
   };
 
   const handleDepartmentInputChange = (event) => {
@@ -180,6 +184,17 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
           role: role,
           department: department,
           faculty: faculty, // NEW: add faculty to onSuccess
+        });
+
+        // Log the user creation action
+        await logAction(AUDIT_ACTIONS.ADD_USER, {
+          username: username,
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          role: role,
+          department: department,
+          faculty: faculty,
         });
 
         // Step 3: Update user with department and faculty information

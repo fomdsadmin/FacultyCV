@@ -135,7 +135,9 @@ export const addUserConnectionMutation = (
     assistant_first_name,
     assistant_last_name,
     assistant_email,
-    status
+    status,
+    faculty_username,
+    assistant_username
 ) => `
     mutation AddUserConnection {
         addUserConnection(
@@ -148,6 +150,8 @@ export const addUserConnectionMutation = (
             assistant_last_name: "${assistant_last_name}"
             assistant_email: "${assistant_email}"
             status: "${status}"
+            faculty_username: "${faculty_username}"
+            assistant_username: "${assistant_username}"
         )
     }
 `;
@@ -203,20 +207,14 @@ export const updateUserMutation = (
     email,
     role,
     bio,
-    rank,
     institution,
     primary_department,
-    secondary_department,
     primary_faculty,
-    secondary_faculty,
-    primary_affiliation,
-    secondary_affiliation,
     campus,
     keywords,
     institution_user_id,
     scopus_id,
     orcid_id,
-    cognito_user_id
 ) => `
     mutation UpdateUser {
         updateUser(
@@ -226,21 +224,15 @@ export const updateUserMutation = (
             email: "${email}"
             role: "${role}"
             bio: "${bio}"
-            rank: "${rank}"
             institution: "${institution}"
             primary_department: "${primary_department}"
-            secondary_department: "${secondary_department}"
             primary_faculty: "${primary_faculty}"
-            secondary_faculty: "${secondary_faculty}"
-            primary_affiliation: "${primary_affiliation}"
-            secondary_affiliation: "${secondary_affiliation}"
             campus: "${campus}"
             keywords: "${keywords}"
             institution_user_id: "${institution_user_id}"
             scopus_id: "${scopus_id}"
             orcid_id: "${orcid_id}"
             user_id: "${user_id}"
-            cognito_user_id: "${cognito_user_id}"
         )
     }
 `;
