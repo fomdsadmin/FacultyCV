@@ -13,8 +13,6 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
   const [primaryFaculty, setPrimaryFaculty] = useState("");
   const [institution, setInstitution] = useState("");
   const [campus, setCampus] = useState("");
-  const [scopusId, setScopusId] = useState("");
-  const [orcid, setOrcid] = useState("");
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,8 +32,6 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
       setPrimaryFaculty(existingUser.primary_faculty || "");
       setInstitution(existingUser.institution || "");
       setCampus(existingUser.campus || "");
-      setScopusId(existingUser.scopus_id || "");
-      setOrcid(existingUser.orcid || "");
       setError("");
       // Don't clear success message here to allow it to persist after update
     }
@@ -84,6 +80,13 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
       setLoading(true);
       setError("");
       setSuccessMessage("");
+      function sanitizeInput(input) {
+        if (!input) return "";
+        return input
+          .replace(/\\/g, "\\\\") // escape backslashes
+          .replace(/"/g, '\\"') // escape double quotes
+          .replace(/\n/g, "\\n"); // escape newlines
+      }
 
       // Update user in database (keeping existing role)
       await updateUser(
@@ -93,18 +96,16 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
         existingUser.preferred_name || "",
         email,
         existingUser.role, // Keep existing role
-        existingUser.bio || "",
+        sanitizeInput(existingUser.bio || ""),
         institution,
         primaryDepartment,
         primaryFaculty,
         campus,
         existingUser.keywords || "",
         existingUser.institution_user_id || "",
-        scopusId,
-        orcid
+        existingUser.scopus_id,
+        existingUser.orcid_id
       );
-
-      await 
 
       await changeUsername(existingUser.user_id, username);
 
@@ -116,12 +117,11 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
       // Set success message after updating the user data
       setSuccessMessage("User Successfully Updated");
       // Log the user update action to audit logs
-      await logAction(AUDIT_ACTIONS.UPDATE_USER, 
-        {
-          userID: existingUser.user_id,
-          firstName, lastName
-        }
-      );
+      await logAction(AUDIT_ACTIONS.UPDATE_USER, {
+        userID: existingUser.user_id,
+        firstName,
+        lastName,
+      });
       window.location.reload(); // Refresh the page on close
     } catch (error) {
       console.error("Error updating user:", error);
@@ -190,9 +190,6 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                   type="text"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
@@ -203,6 +200,9 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                   type="email"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Institution</label>
                 <input
@@ -223,7 +223,7 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Primary Faculty</label>
                 <select
@@ -253,27 +253,6 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                     </option>
                   ))}
                 </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Scopus ID</label>
-                <input
-                  className="input input-bordered w-full text-sm"
-                  value={scopusId}
-                  onChange={(e) => setScopusId(e.target.value)}
-                  placeholder="Scopus ID"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ORCID</label>
-                <input
-                  className="input input-bordered w-full text-sm"
-                  value={orcid}
-                  onChange={(e) => setOrcid(e.target.value)}
-                  placeholder="ORCID"
-                />
               </div>
             </div>
 

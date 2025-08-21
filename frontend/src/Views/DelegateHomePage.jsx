@@ -103,7 +103,13 @@ const DelegateHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, g
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
-
+    function sanitizeInput(input) {
+      if (!input) return "";
+      return input
+        .replace(/\\/g, "\\\\") // escape backslashes
+        .replace(/"/g, '\\"') // escape double quotes
+        .replace(/\n/g, "\\n"); // escape newlines
+    }
     try {
       await updateUser(
         userInfo.user_id,
@@ -112,7 +118,7 @@ const DelegateHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, g
         userInfo.preferred_name,
         userInfo.email,
         userInfo.role,
-        userInfo.bio,
+        sanitizeInput(userInfo.bio),
         userInfo.institution,
         userInfo.primary_department,
         userInfo.primary_faculty,
