@@ -22,7 +22,7 @@ import Assistant_AcademicWork from "./Views/Assistant_AcademicWork.jsx";
 import AdminHomePage from "./Views/AdminHomePage.jsx";
 import TemplatesPage from "./Pages/TemplatePages/TemplatesPage/TemplatesPage.jsx";
 import Sections from "./Views/Sections.jsx";
-import AuditPage from "./Views/AuditPage.jsx";
+import AuditPage from "./Pages/AuditLogPages/AuditPage.jsx";
 import { AuditLoggerProvider } from "./Contexts/AuditLoggerContext.jsx";
 import ArchivedSections from "./Views/ArchivedSections.jsx";
 import DepartmentAdminMembers from "./Views/DepartmentAdminMembers.jsx";
@@ -39,7 +39,7 @@ import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
 import { ToastContainer } from "react-toastify";
 import KeycloakLogout from "Components/KeycloakLogout";
-import YourActivityPage from "./Views/YourActivityPage.jsx";
+import YourActivityPage from "./Pages/AuditLogPages/YourActivityPage.jsx";
 
 const AppContent = () => {
   const {
@@ -260,7 +260,7 @@ const AppContent = () => {
             />
 
             <Route path="/audit" element={
-                    (userInfo.role && userInfo.role.startsWith("FacultyAdmin-")) || (userInfo.role && userInfo.role === "Admin") ? (
+              (userInfo.role && userInfo.role.startsWith("FacultyAdmin-")) || (userInfo.role && userInfo.role === "Admin") ? (
                 <AuditPage userInfo={userInfo} getCognitoUser={getCognitoUser} currentViewRole={currentViewRole} />
               ) : (
                 <Navigate to="/home" />
@@ -406,16 +406,16 @@ const AppContent = () => {
                 />
               }
             />
-              <Route
-                path="/department-admin/members/:userId/actions"
-                element={
-                  <DepartmentAdminMembers
-                    userInfo={{ ...userInfo, role: currentViewRole }}
-                    getCognitoUser={getCognitoUser}
-                    department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
-                  />
-                }
-              />
+            <Route
+              path="/department-admin/members/:userId/actions"
+              element={
+                <DepartmentAdminMembers
+                  userInfo={{ ...userInfo, role: currentViewRole }}
+                  getCognitoUser={getCognitoUser}
+                  department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
+                />
+              }
+            />
             <Route
               path="/department-admin/analytics"
               element={
