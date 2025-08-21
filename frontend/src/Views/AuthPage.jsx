@@ -70,14 +70,17 @@ const AuthPage = () => {
   const handleConfirmClaim = async () => {
     setLoading(true);
     try {
-      // TODO: Implement actual profile claiming logic here
-      console.log("Confirming claim for profile:", selectedProfile);
-      console.log("With updated data:", claimFormData);
-
       const result = await changeUsername(selectedProfile.user_id, claimFormData.username);
-      console.log("Updated user profile username: ", result);
+      // console.log("Updated user profile username: ", result);
 
       const oldUserInfo = await getUser(claimFormData.username);
+      function sanitizeInput(input) {
+        if (!input) return "";
+        return input
+          .replace(/\\/g, "\\\\") // escape backslashes
+          .replace(/"/g, '\\"') // escape double quotes
+          .replace(/\n/g, "\\n"); // escape newlines
+      }
       const other_result = await updateUser(
         oldUserInfo.user_id,
         claimFormData.first_name,
@@ -85,7 +88,7 @@ const AuthPage = () => {
         oldUserInfo.preferred_name,
         oldUserInfo.email,
         oldUserInfo.role,
-        oldUserInfo.bio,
+        sanitizeInput(oldUserInfo.bio),
         oldUserInfo.institution,
         oldUserInfo.primary_department,
         oldUserInfo.primary_faculty,
@@ -95,7 +98,6 @@ const AuthPage = () => {
         oldUserInfo.scopus_id,
         oldUserInfo.orcid_id
       );
-      console.log("Updated user details: ", other_result);
 
       // After username is set, function as normal approved user entering the website
       setUserExistsInSqlDatabase(true);
@@ -165,7 +167,6 @@ const AuthPage = () => {
     }
     setFormError(""); // Clear error if present
     setLoading(true);
-    console.log("Submitting request with formData:", formData);
     try {
       await addUser(
         formData.first_name,
