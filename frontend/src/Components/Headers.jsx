@@ -113,6 +113,7 @@ const Header = ({ assistantUserInfo }) => {
     stopManagingUser();
     if (assistantUserInfo && assistantUserInfo.role === "Assistant") {
       navigate("/delegate/connections");
+      window.location.reload();
     } else {
       navigate("/department-admin/members");
       window.location.reload();
