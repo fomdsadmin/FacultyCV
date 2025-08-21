@@ -16,8 +16,12 @@ const AuditFilters = ({
         startDate,
         endDate,
         actionFilter,
-        actionCategory
+        actionCategory,
+        impersonationFilter
     } = filters;
+
+    // Add this inside the component to debug filter changes
+    console.log('AuditFilters render - impersonationFilter:', impersonationFilter);
 
     return (
         <AccordionItem title="Filters">
@@ -65,6 +69,23 @@ const AuditFilters = ({
                         onChange={e => onFilterChange('endDate', e.target.value)}
                         placeholder="End Date/Time"
                     />
+                </div>
+
+                {/* Impersonation filter */}
+                <div className="flex gap-2 items-center">
+                    <label className="text-sm font-medium text-gray-700">Impersonation:</label>
+                    <select
+                        className="border px-2 py-1 rounded"
+                        value={impersonationFilter || ''}
+                        onChange={e => {
+                            console.log('Impersonation filter changed from', impersonationFilter, 'to', e.target.value);
+                            onFilterChange('impersonationFilter', e.target.value);
+                        }}
+                    >
+                        <option value="">All Actions</option>
+                        <option value="impersonated"> Impersonated Only</option>
+                        <option value="direct">Direct Actions Only</option>
+                    </select>
                 </div>
 
                 {/* Action filters */}

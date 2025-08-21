@@ -22,6 +22,8 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
         setEndDate,
         actionFilter,
         setActionFilter,
+        impersonationFilter,
+        setImpersonationFilter,
         actionCategory,
         setActionCategory,
         setPageNumber,
@@ -63,6 +65,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
             case 'endDate': setEndDate(value); break;
             case 'actionFilter': setActionFilter(value); break;
             case 'actionCategory': setActionCategory(value); break;
+            case 'impersonationFilter': setImpersonationFilter(value); break;
         }
     };
 
@@ -80,7 +83,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                         isPersonalView={true}
                         isFacultyUser={isFacultyUser()}
                         filters={{
-                            startDate, endDate, actionFilter, actionCategory
+                            startDate, endDate, actionFilter, actionCategory, impersonationFilter
                         }}
                         onFilterChange={handleFilterChange}
                         onClearFilters={clearFilters}

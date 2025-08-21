@@ -37,6 +37,8 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
         setActionFilter,
         actionCategory,
         setActionCategory,
+        impersonationFilter,
+        setImpersonationFilter,
         setPageNumber,
         fetchAuditViewData,
         clearFilters
@@ -94,6 +96,7 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
             case 'endDate': setEndDate(value); break;
             case 'actionFilter': setActionFilter(value); break;
             case 'actionCategory': setActionCategory(value); break;
+            case 'impersonationFilter': setImpersonationFilter(value); break;  
         }
     };
 
@@ -137,7 +140,7 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
                         isFacultyUser={false}
                         filters={{
                             emailFilter, firstNameFilter, lastNameFilter,
-                            startDate, endDate, actionFilter, actionCategory
+                            startDate, endDate, actionFilter, actionCategory, impersonationFilter 
                         }}
                         onFilterChange={handleFilterChange}
                         onClearFilters={clearFilters}
