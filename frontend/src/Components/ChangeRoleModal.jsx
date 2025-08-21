@@ -11,7 +11,6 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
   const [changingRole, setChangingRole] = useState(false);
   const [confirmChange, setConfirmChange] = useState(false);
   const [newRole, setNewRole] = useState(currentUser.role.startsWith("Admin-") ? "Admin-" : currentUser.role);
-  console.log(currentUser);
   const [selectedDepartment, setSelectedDepartment] = useState(
     currentUser.role.startsWith("Admin-") ? currentUser.role.slice(6) : ""
   );
