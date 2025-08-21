@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaArchive, FaFolderOpen, FaRegClipboard } from "react-icons/fa";
+import { MdSupportAgent } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
@@ -37,19 +38,23 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
       onMouseLeave={() => setIsCollapsed(true)}
     >
       <ul className="menu rounded-box flex-shrink-0">
-        <li className={`mb-2 ${location.pathname === "/department-admin/home" ? "bg-gray-200 rounded-lg" : ""}`}>
-          <Link to="/department-admin/home">
+        <li className={`mb-2 ${location.pathname === "/department-admin/dashboard" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/department-admin/dashboard">
             <FaChartLine className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/home" ? "font-bold" : ""}`}>Dashboard</p>
+              <p className={`ml-2 ${location.pathname === "/department-admin/dashboard" ? "font-bold" : ""}`}>
+                Dashboard
+              </p>
             )}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === "/department-admin/users" ? "bg-gray-200 rounded-lg" : ""}`}>
-          <Link to="/department-admin/users">
+        <li className={`mb-2 ${location.pathname === "/department-admin/members" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/department-admin/members">
             <FaUsers className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/users" ? "font-bold" : ""}`}>Manage Members</p>
+              <p className={`ml-2 ${location.pathname === "/department-admin/members" ? "font-bold" : ""}`}>
+                Manage Members
+              </p>
             )}
           </Link>
         </li>
@@ -88,6 +93,14 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             <FaRegClipboard className="h-5 w-5" />
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === "/loggings" ? "font-bold" : ""}`}>Access Logs</p>
+            )}
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === "/support" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/support">
+            <MdSupportAgent className="h-5 w-5" />
+            {showText && !isCollapsed && (
+              <p className={`ml-2 ${location.pathname === "/support" ? "font-bold" : ""}`}>Support</p>
             )}
           </Link>
         </li>

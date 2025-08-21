@@ -1,26 +1,59 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { useApp } from "../Contexts/AppContext.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import { getAllUsers, getDepartmentAffiliations } from "../graphql/graphqlHelpers.js";
 import ManageUser from "Components/ManageUser.jsx";
 
-const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
+const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [affiliations, setAffiliations] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
+  const params = useParams();
+  const location = useLocation();
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
 
+  // Helper functions for base64 encoding/decoding
+  const encodeId = (id) => {
+    try {
+      return btoa(id);
+    } catch {
+      return id;
+    }
+  };
+  const decodeId = (encoded) => {
+    try {
+      return atob(encoded);
+    } catch {
+      return encoded;
+    }
+  };
+
   useEffect(() => {
     fetchAllUsers();
   }, []);
+
+  // Ensure activeUser is set when users or params.userId changes
+  useEffect(() => {
+    if (params.userId && users.length > 0) {
+      const decodedId = decodeId(params.userId);
+      const foundUser = users.find((user) => user.user_id === decodedId);
+      if (foundUser) {
+        setActiveUser(foundUser);
+      } else {
+        setActiveUser(null);
+      }
+    } else {
+      setActiveUser(null);
+    }
+  }, [users, params.userId]);
 
   async function fetchAllUsers() {
     setLoading(true);
@@ -120,21 +153,24 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
         }`}
         onClick={() => onSelect(null)}
       >
-        All
+        All ({users.length})
       </button>
       {[...filters]
         .sort((a, b) => a.localeCompare(b))
-        .map((filter) => (
-          <button
-            key={filter}
-            className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-              activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-            onClick={() => onSelect(filter)}
-          >
-            {filter}
-          </button>
-        ))}
+        .map((filter) => {
+          const count = users.filter(u => u.role === filter).length;
+          return (
+            <button
+              key={filter}
+              className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
+                activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => onSelect(filter)}
+            >
+              {filter} ({count})
+            </button>
+          );
+        })}
     </div>
   );
 
@@ -173,8 +209,10 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
     });
 
   const handleManageClick = (value) => {
-    const user = users.filter((user) => user.user_id === value);
-    setActiveUser(user[0]);
+  const user = users.filter((user) => user.user_id === value);
+  setActiveUser(user[0]);
+  const encodedId = encodeId(value);
+  navigate(`/department-admin/members/${encodedId}/actions`);
   };
 
   const handleImpersonateClick = (value) => {
@@ -187,6 +225,7 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
 
   const handleBack = () => {
     setActiveUser(null);
+    navigate('/department-admin/members');
   };
 
   return (
@@ -239,23 +278,23 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
                     <div className="block text-m mb-1 mt-6 text-zinc-600">No {department} Users Found</div>
                   </div>
                 ) : (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mx-4">
-                    <table className="w-full">
-                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 overflow-auto max-h-[60vh]">
+                    <table className="w-full table-fixed min-w-[750px] md:overflow-x-auto">
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 sticky top-0 z-10">
                         <tr>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/3 md:w-1/4 lg:w-1/5">
                             User
                           </th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Role
                           </th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Primary Rank
                           </th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Joint Rank
                           </th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Actions
                           </th>
                         </tr>
@@ -268,20 +307,20 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
                               index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
                             }`}
                           >
-                            <td className="px-6 py-5">
-                              <div className="flex flex-col">
-                                <div className="text-sm font-semibold text-gray-900 mb-1">
+                            <td className="px-4 py-5 w-1/3 md:w-1/4 lg:w-1/5">
+                              <div className="flex flex-col min-w-0 break-words">
+                                <div className="text-sm font-semibold text-gray-900 mb-1 truncate">
                                   {user.first_name} {user.last_name}
                                 </div>
-                                <div className="text-sm text-gray-500">{user.email}</div>
+                                <div className="text-sm text-gray-500 truncate">{user.email}</div>
                               </div>
                             </td>
-                            <td className="px-6 py-5 text-center">
+                            <td className="px-4 py-5 text-center w-1/6">
                               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                                 {user.role}
                               </span>
                             </td>
-                            <td className="px-6 py-5 text-center">
+                            <td className="px-4 py-5 text-center w-1/6">
                               <span className="text-sm font-medium text-gray-700">
                                 {getPrimaryRank(user.user_id) ? (
                                   getPrimaryRank(user.user_id)
@@ -290,7 +329,7 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
                                 )}
                               </span>
                             </td>
-                            <td className="px-6 py-5 text-center">
+                            <td className="px-4 py-5 text-center w-1/6">
                               <span className="text-sm font-medium text-gray-700">
                                 {getSecondaryRanks(user.user_id) ? (
                                   getSecondaryRanks(user.user_id)
@@ -299,17 +338,17 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
                                 )}
                               </span>
                             </td>
-                            <td className="px-6 py-5">
-                              <div className="flex justify-center gap-3">
+                            <td className="px-4 py-5 w-1/6">
+                              <div className="grid grid-cols-1 xl:grid-cols-2 justify-center gap-2 items-stretch w-full">
                                 <button
                                   onClick={() => handleImpersonateClick(user.user_id)}
-                                  className="btn btn-accent btn-sm text-white"
+                                  className="btn btn-accent btn-sm text-white min-w-full text-xs lg:text-md"
                                 >
                                   Impersonate
                                 </button>
                                 <button
                                   onClick={() => handleManageClick(user.user_id)}
-                                  className="btn btn-primary btn-sm text-white"
+                                  className="btn btn-primary btn-sm text-white min-w-full text-xs lg:text-md"
                                 >
                                   Quick Actions
                                 </button>
@@ -325,12 +364,6 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                {/* <ManageDepartmentUser
-                    user={activeUser}
-                    onBack={handleBack}
-                    fetchAllUsers={fetchAllUsers}
-                    department={department}
-                  ></ManageDepartmentUser> */}
                 <ManageUser
                   user={activeUser}
                   onBack={handleBack}
@@ -346,4 +379,4 @@ const DepartmentAdminUsers = ({ userInfo, getCognitoUser, department, toggleView
   );
 };
 
-export default DepartmentAdminUsers;
+export default DepartmentAdminMembers;

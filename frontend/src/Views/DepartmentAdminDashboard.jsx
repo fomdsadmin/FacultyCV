@@ -11,7 +11,7 @@ import {
   getDepartmentAffiliations,
 } from "../graphql/graphqlHelpers.js";
 
-const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
+const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
   const [loading, setLoading] = useState(false);
   const [userCounts, setUserCounts] = useState({
     total_count: 0,
@@ -42,12 +42,10 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     try {
       // Fetch all basic data in parallel
       department = department.trim() || "";
-      const [userCounts, dataSections, generatedCVs, affiliations] = await Promise.all([
+      const [userCounts, dataSections, affiliations] = await Promise.all([
         department === "All" ? getAllUsersCount() : getAllUsersCount(department, ""),
         getAllSections(),
-        // department === "All" ? getNumberOfGeneratedCVs() : getNumberOfGeneratedCVs(department)
-        Promise.resolve(0), // Placeholder for generatedCVs
-        getDepartmentAffiliations(department)
+        getDepartmentAffiliations(department),
       ]);
 
       setUserCounts(userCounts);
@@ -400,16 +398,14 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     <>
       {/* User Statistics Row */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4 mt-2">
-        <AnalyticsCard
-          title="Faculty"
-          value={(userCounts.faculty_count + userCounts.faculty_admin_count).toLocaleString()}
-        />
+        <AnalyticsCard title="Department Admin(s)" value={userCounts.dept_admin_count.toLocaleString()} />
+        <AnalyticsCard title="Faculty" value={userCounts.faculty_count.toLocaleString()} />
         <AnalyticsCard title="Delegates" value={userCounts.assistant_count.toLocaleString()} />
         {/* <AnalyticsCard title="CVs Generated" value={totalCVsGenerated.toLocaleString()} /> */}
       </div>
 
       {/* Research Metrics - 3 Column Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {/* Faculty Ranks Section - First */}
         <div className="bg-white rounded-lg shadow-md p-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
@@ -424,7 +420,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
               <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
                 {/* Totals Header */}
                 <div className="mb-4">
-                  <div className="grid grid-cols-2 gap-4 mb-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
                     <div className="bg-blue-100 border border-blue-300 rounded-md p-3 text-center">
                       <div className="text-lg font-bold text-blue-800">{facultyRanksCounts.primaryTotal}</div>
                       <div className="text-xs text-blue-600">Primary Appointments</div>
@@ -447,10 +443,8 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
                 {/* Table Rows */}
                 <div className="border-l border-r border-b border-gray-300 rounded-b-md">
-                  {facultyRanksCounts.allRanks
-                    .slice(0, showAllRanks ? undefined : 6)
-                    .map((rankData, index) => (
-                    <div key={rankData.rank} className={`px-3 py-2 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                  {facultyRanksCounts.allRanks.slice(0, showAllRanks ? undefined : 6).map((rankData, index) => (
+                    <div key={rankData.rank} className={`px-3 py-2 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
                       <div className="grid grid-cols-3 gap-2 text-sm">
                         <div className="text-gray-800 font-medium">{rankData.rank}</div>
                         <div className="text-center">
@@ -481,7 +475,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
                     className="mt-3 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                     onClick={() => setShowAllRanks(!showAllRanks)}
                   >
-                    {showAllRanks ? 'Show Less (Top 6)' : `Show All ${facultyRanksCounts.allRanks.length} Ranks`}
+                    {showAllRanks ? "Show Less (Top 6)" : `Show All ${facultyRanksCounts.allRanks.length} Ranks`}
                   </button>
                 )}
               </div>
@@ -491,7 +485,9 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
             {facultyRanksCounts.allRanks.length === 0 && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
                 <p className="text-gray-500 text-sm">No affiliations data available</p>
-                <p className="text-gray-400 text-xs mt-1">Faculty rank distribution will appear here once affiliations data is imported</p>
+                <p className="text-gray-400 text-xs mt-1">
+                  Faculty rank distribution will appear here once affiliations data is imported
+                </p>
               </div>
             )}
           </div>
@@ -636,19 +632,19 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
     const jointRankCounts = {};
 
     // Process affiliations data to count ranks
-    affiliationsData.forEach(affiliation => {
+    affiliationsData.forEach((affiliation) => {
       try {
         // Parse primary unit
-        const primaryUnit = JSON.parse(affiliation.primary_unit || '{}');
+        const primaryUnit = JSON.parse(affiliation.primary_unit || "{}");
         if (primaryUnit.rank && primaryUnit.rank.trim()) {
           const rank = primaryUnit.rank.trim();
           primaryRankCounts[rank] = (primaryRankCounts[rank] || 0) + 1;
         }
 
         // Parse joint units
-        const jointUnits = JSON.parse(affiliation.joint_units || '[]');
+        const jointUnits = JSON.parse(affiliation.joint_units || "[]");
         if (Array.isArray(jointUnits)) {
-          jointUnits.forEach(unit => {
+          jointUnits.forEach((unit) => {
             if (unit.rank && unit.rank.trim()) {
               const rank = unit.rank.trim();
               jointRankCounts[rank] = (jointRankCounts[rank] || 0) + 1;
@@ -656,7 +652,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
           });
         }
       } catch (error) {
-        console.error('Error parsing affiliation data:', error, affiliation);
+        console.error("Error parsing affiliation data:", error, affiliation);
       }
     });
 
@@ -666,12 +662,14 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
 
     // Get all unique ranks from both primary and joint appointments
     const allUniqueRanks = new Set([...Object.keys(primaryRankCounts), ...Object.keys(jointRankCounts)]);
-    const allRanks = Array.from(allUniqueRanks).map(rank => ({
-      rank,
-      primaryCount: primaryRankCounts[rank] || 0,
-      jointCount: jointRankCounts[rank] || 0,
-      totalCount: (primaryRankCounts[rank] || 0) + (jointRankCounts[rank] || 0)
-    })).sort((a, b) => b.totalCount - a.totalCount); // Sort by total count descending
+    const allRanks = Array.from(allUniqueRanks)
+      .map((rank) => ({
+        rank,
+        primaryCount: primaryRankCounts[rank] || 0,
+        jointCount: jointRankCounts[rank] || 0,
+        totalCount: (primaryRankCounts[rank] || 0) + (jointRankCounts[rank] || 0),
+      }))
+      .sort((a, b) => b.totalCount - a.totalCount); // Sort by total count descending
 
     return { primaryRankCounts, jointRankCounts, primaryTotal, jointTotal, allRanks };
   }, [affiliationsData]);
@@ -835,7 +833,7 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   return (
     <PageContainer>
       <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
-      <main className="px-16 py-4 w-full min-h-screen bg-zinc-50 mb-16">
+      <main className="px-8 lg:px-12 xl:px-16 2xl:px-20 py-4 w-full min-h-screen bg-zinc-50">
         <div className="mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-zinc-700 mb-1 mt-2">Department Analytics</h1>
           <h2 className="text-xl font-semibold text-blue-700 mb-4 mt-2">{department}</h2>
@@ -853,42 +851,44 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
               </div>
 
               {/* Department Keywords Section */}
-              <div className="mt-8">
-                <div className="flex flex-col gap-2 p-2 rounded-lg shadow-md bg-zinc-50">
-                  <h2 className="text-lg font-semibold p-4">
-                    {department === "All"
-                      ? "Top Keywords From Publications (All Departments)"
-                      : "Top Keywords From Publications (Department-wide)"}
-                  </h2>
-                  {keywordData.length > 0 && (
-                    <div className="flex-1 min-w-0 p-4">
-                      <div className="flex flex-wrap gap-2">
-                        {(showAllKeywords ? keywordData : keywordData.slice(0, 10)).map((item, index) => {
-                          const isMax = item.value === Math.max(...keywordData.map((k) => k.value || 0));
-                          return (
-                            <span
-                              key={index}
-                              className={`py-2 px-3 text-sm rounded-full ${
-                                isMax ? "bg-yellow-400 text-black font-bold" : "bg-gray-200 text-gray-800"
-                              }`}
-                            >
-                              {item.text.toUpperCase()} {item.value !== 0 && `(${item.value})`}
-                            </span>
-                          );
-                        })}
+              {keywordData.length > 0 && (
+                <div className="mt-8">
+                  <div className="flex flex-col gap-2 p-2 rounded-lg shadow-md bg-zinc-50">
+                    <>
+                      <h2 className="text-lg font-semibold p-4">
+                        {department === "All"
+                          ? "Top Keywords From Publications (All Departments)"
+                          : "Top Keywords From Publications (Department-wide)"}
+                      </h2>
+                      <div className="flex-1 min-w-0 p-4">
+                        <div className="flex flex-wrap gap-2">
+                          {(showAllKeywords ? keywordData : keywordData.slice(0, 10)).map((item, index) => {
+                            const isMax = item.value === Math.max(...keywordData.map((k) => k.value || 0));
+                            return (
+                              <span
+                                key={index}
+                                className={`py-2 px-3 text-sm rounded-full ${
+                                  isMax ? "bg-yellow-400 text-black font-bold" : "bg-gray-200 text-gray-800"
+                                }`}
+                              >
+                                {item.text.toUpperCase()} {item.value !== 0 && `(${item.value})`}
+                              </span>
+                            );
+                          })}
+                        </div>
+                        {keywordData.length > 10 && (
+                          <button
+                            className="mt-4 px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                            onClick={() => setShowAllKeywords(!showAllKeywords)}
+                          >
+                            {showAllKeywords ? `Show Less (Top 10)` : `Show All ${keywordData.length} Keywords`}
+                          </button>
+                        )}
                       </div>
-                      {keywordData.length > 10 && (
-                        <button
-                          className="mt-4 px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                          onClick={() => setShowAllKeywords(!showAllKeywords)}
-                        >
-                          {showAllKeywords ? `Show Less (Top 10)` : `Show All ${keywordData.length} Keywords`}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                    </>
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>
@@ -897,4 +897,4 @@ const DepartmentAdminHomePage = ({ getCognitoUser, userInfo, department }) => {
   );
 };
 
-export default DepartmentAdminHomePage;
+export default DepartmentAdminDashboard;

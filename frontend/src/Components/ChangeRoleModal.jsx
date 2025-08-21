@@ -122,14 +122,14 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
 
       fetchAllUsers();
       handleBack();
-      
+
       // Log the role change action
       const roleChangeInfo = JSON.stringify({
         from: oldRole,
         to: updatedRole,
         userId: userInfo.user_id,
         username: userInfo.username,
-        email: userInfo.email
+        email: userInfo.email,
       });
       await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, roleChangeInfo);
     } catch (error) {
@@ -179,11 +179,32 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
             value={newRole}
             onChange={handleRoleChange}
           >
-            <option value="Faculty">Faculty</option>
-            <option value="Assistant">Assistant</option>
-            <option value="Admin-">Department Admin</option>
-            <option value="FacultyAdmin-">Faculty Admin</option>
-            <option value="Admin">Admin</option>
+            {/* If user is Admin, show all options */}
+            {userInfo.role === "Admin" ? (
+              <>
+                <option value="Faculty">Faculty</option>
+                <option value="Assistant">Assistant</option>
+                <option value="Admin-">Department Admin</option>
+                <option value="FacultyAdmin-">Faculty Admin</option>
+                <option value="Admin">Admin</option>
+              </>
+            ) : userInfo.role.startsWith("Admin-") ? (
+              <>
+                <option value="Faculty">Faculty</option>
+                <option value="Assistant">Assistant</option>
+                <option value="Admin-">Department Admin</option>
+              </>
+            ) : userInfo.role.startsWith("FacultyAdmin-") ? (
+              <>
+                <option value="Faculty">Faculty</option>
+                <option value="Assistant">Assistant</option>
+                <option value="FacultyAdmin-">Faculty Admin</option>
+              </>
+            ) : (
+              <>
+                <option value=""></option>
+              </>
+            )}
           </select>
 
           {isDepartmentAdmin && (
