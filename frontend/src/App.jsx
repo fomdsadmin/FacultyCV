@@ -141,8 +141,8 @@ const AppContent = () => {
             <Route
               path="/delegate/home"
               element={
-                (assistantUserInfo.role === "Assistant" && currentViewRole === "Assistant") || 
-                (userInfo.role === "Admin" && currentViewRole === "Assistant") ? (
+                (assistantUserInfo.role === "Assistant" && currentViewRole === "Assistant") ||
+                  (userInfo.role === "Admin" && currentViewRole === "Assistant") ? (
                   <DelegateHomePage
                     assistantUserInfo={assistantUserInfo}
                     userInfo={userInfo.role === "Admin" && currentViewRole === "Assistant" ? userInfo : assistantUserInfo}
@@ -251,7 +251,7 @@ const AppContent = () => {
             <Route
               path="/loggings"
               element={
-                currentViewRole === "Faculty" || currentViewRole.startsWith("Admin-") || (userInfo.role && userInfo.role.startsWith("Assistant")) || (userInfo.role && userInfo.role.startsWith("Admin-")) || userInfo.role === "Faculty" ? (
+                (userInfo.role && userInfo.role !== "Assistant") ? (
                   <YourActivityPage userInfo={userInfo} getCognitoUser={getCognitoUser} currentViewRole={currentViewRole} />
                 ) : (
                   <Navigate to="/home" />
@@ -260,7 +260,7 @@ const AppContent = () => {
             />
 
             <Route path="/audit" element={
-              currentViewRole === "Admin" || currentViewRole.startsWith("FacultyAdmin-") || (userInfo.role && userInfo.role.startsWith("FacultyAdmin-")) || userInfo.role === "Admin" ? (
+                    (userInfo.role && userInfo.role.startsWith("FacultyAdmin-")) || (userInfo.role && userInfo.role === "Admin") ? (
                 <AuditPage userInfo={userInfo} getCognitoUser={getCognitoUser} currentViewRole={currentViewRole} />
               ) : (
                 <Navigate to="/home" />

@@ -22,7 +22,7 @@ const EntryModal = ({
   const [dateNeeded, setDateNeeded] = useState(false);
 
   const { userInfo } = useApp();
-  const logAction = useAuditLogger();
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     // Initialize formData with all fields

@@ -88,14 +88,13 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
     useEffect(() => {
         const logPageView = async () => {
             // Skip logging for certain paths or if userInfo is not available
-            if (!userInfo || !userInfo.email) {
-                console.log("Page view logging skipped - no user info available");
+            if (!userInfo || userInfo.approved !== true) {
+                console.log("Page view logging skipped - no user info available/ user not approved");
                 return;
             }
             if (location.pathname !== previousPath.current) {
                 previousPath.current = location.pathname;
                 await logAction(AUDIT_ACTIONS.VIEW_PAGE);
-                // console.log(`Logged page view: ${location.pathname}`);
             }
         };
 
