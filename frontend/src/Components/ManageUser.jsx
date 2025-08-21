@@ -201,7 +201,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
         {/* Connections */}
         <div className="bg-white rounded-lg shadow py-6 px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h3 className="text-xl font-semibold text-zinc-700">Connections</h3>
+            <h3 className="text-xl font-semibold text-zinc-700">Delegates</h3>
             <div className="flex items-center gap-2">
               <label className="input input-bordered flex items-center gap-2">
                 <input

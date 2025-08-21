@@ -3,9 +3,10 @@ import PageContainer from "./PageContainer.jsx";
 import FacultyMenu from "../Components/FacultyMenu.jsx";
 import DelegateMenu from "../Components/DelegateMenu.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
+import AdminMenu from "Components/AdminMenu.jsx";
 import { fetchAuthSession } from "aws-amplify/auth";
 
-const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
+const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode, currentViewRole }) => {
   const [formData, setFormData] = useState({
     name: `${userInfo.first_name} ${userInfo.last_name}`,
     email: `${userInfo.email}`,
@@ -131,14 +132,15 @@ const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
   return (
     <PageContainer>
-      {userInfo.role === "Faculty" ? (
+      {console.log(currentViewRole)}
+      {currentViewRole === "Faculty" ? (
         <FacultyMenu
           getCognitoUser={getCognitoUser}
           userName={userInfo.preferred_name || userInfo.first_name}
           toggleViewMode={toggleViewMode}
           userInfo={userInfo}
         />
-      ) : userInfo.role && userInfo.role.startsWith("Admin-") ? (
+      ) : typeof currentViewRole === "string" && currentViewRole.includes('Admin-') ? (
         <DepartmentAdminMenu
           userInfo
           getCognitoUser={getCognitoUser}
@@ -146,7 +148,7 @@ const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           toggleViewMode={toggleViewMode}
           viewMode="department-admin"
         />
-      ) : (
+      ) :(
         <DelegateMenu userInfo={userInfo} assistantUserInfo={userInfo} />
       )}
       <main className="w-full overflow-auto py-6 px-12">
