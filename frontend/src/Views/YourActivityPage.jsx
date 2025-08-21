@@ -29,17 +29,15 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
         if (currentViewRole !== role) {
             role = currentViewRole; // if current view is not user actual role
         }
-
         if (role.startsWith('Admin-')) {
             return DepartmentAdminMenu;
         } else {
             return FacultyMenu;
         }
     };
-
     const isFacultyUser = () => {
-        const role = currentViewRole || userInfo?.role || '';
-        return role === 'Faculty' || role === 'Assistant';
+        const role = userInfo?.role || '';
+        return role === 'Faculty';
     };
 
     const MenuComponent = getMenuComponent();
@@ -79,8 +77,8 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                 // console.log("Formatted end date:", formattedEndDate);
             }
 
-
             const response = await getAuditViewData({
+                logged_user_id: userInfo.user_id,
                 email: userInfo.email,
                 page_number,
                 page_size: PAGE_SIZE,
@@ -162,6 +160,7 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
     // Calculate total pages based on filtered data if no API pagination
     const calculatedTotalPages = Math.ceil(pagedData.length / PAGE_SIZE);
     const totalPages = totalCount ? Math.ceil(totalCount / PAGE_SIZE) : calculatedTotalPages;
+
 
     return (
         <PageContainer>
@@ -272,7 +271,6 @@ const YourActivityPage = ({ userInfo, getCognitoUser, currentViewRole }) => {
                             Previous
                         </button>
                         <span>Page {page_number} of {totalPages || 1}</span>
-                        <span>Total Records: {pagedData.length}</span>
                         <button
                             className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300"
                             onClick={() => setPageNumber(page_number + 1)}

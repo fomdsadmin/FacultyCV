@@ -63,7 +63,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           if (!records.length) break; // no more pages
 
           // Look for /auth page in this batch
-          const match = records.find((r) => r.page === "/auth");
+          const match = records.find((r) => r.page === "/auth" || r.page === "/");
           if (match) {
             found = match.ts;
             break;

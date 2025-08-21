@@ -30,10 +30,8 @@ const AuditPage = ({ getCognitoUser, userInfo, currentViewRole }) => {
     const getMenuComponent = () => {
         // Get the current role with fallback to empty string
         let role = userInfo?.role || '';
-
-        // Use currentViewRole if available and different from user's role
-        if (currentViewRole && currentViewRole !== role) {
-            role = currentViewRole;
+        if (currentViewRole !== role) {
+            role = currentViewRole; // if current view is not user actual role
         }
 
         // Check if the role is for faculty admin
