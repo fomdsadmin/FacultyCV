@@ -13,6 +13,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
   const { logAction } = useAuditLogger();
 
   async function changeRole() {
+    const oldRole = userInfo.role;
     setChangingRole(true);
 
     //put user in user group
@@ -59,7 +60,14 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack, 
       fetchAllUsers();
       handleBack();
       // Log the role change action
-      await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, userInfo.email);
+      const roleChangeInfo = JSON.stringify({
+        from: oldRole,
+        to: newRole,
+        userId: userInfo.user_id,
+        username: userInfo.username,
+        email: userInfo.email
+      });
+      await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, roleChangeInfo);
     } catch {
       console.error("Error changing role");
     }
