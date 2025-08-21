@@ -100,7 +100,13 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
         return;
       }
     }
-
+    function sanitizeInput(input) {
+      if (!input) return "";
+      return input
+        .replace(/\\/g, "\\\\") // escape backslashes
+        .replace(/"/g, '\\"') // escape double quotes
+        .replace(/\n/g, "\\n"); // escape newlines
+    }
     try {
       const updatedUser = await updateUser(
         userInfo.user_id,
@@ -109,7 +115,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
         userInfo.preferred_name,
         userInfo.email,
         updatedRole,
-        userInfo.bio,
+        sanitizeInput(userInfo.bio),
         userInfo.institution,
         userInfo.primary_department,
         userInfo.primary_faculty,

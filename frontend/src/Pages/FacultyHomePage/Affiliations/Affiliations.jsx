@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useApp } from "../../../Contexts/AppContext";
 import { useFaculty } from "../FacultyContext";
 import { getUserAffiliations, updateUserAffiliations, updateUser, getUser } from "../../../graphql/graphqlHelpers.js";
-import SaveButton from "../SaveButton";
 import AcademicUnitSection from "./AcademicUnitSection";
 import ResearchAffiliationSection from "./ResearchAffiliationSection";
 import HospitalAffiliationSection from "./HospitalAffiliationSection";
 import { useAuditLogger, AUDIT_ACTIONS } from "../../../Contexts/AuditLoggerContext";
+
+// useEffect(() => {
+//   getUserInfo(userInfo.username);
+// }, [userInfo]);
 
 // Responsive Section card
 export const Section = ({ title, children }) => (
@@ -62,13 +65,19 @@ const Affiliations = () => {
   const [facultyData, setFacultyData] = useState({});
   const [departmentData, setDepartmentData] = useState({});
   const [institutionData, setInstitutionData] = useState({});
-  const [primaryUnit, setPrimaryUnit] = useState({}); 
+  const [primaryUnit, setPrimaryUnit] = useState({});
   const [jointUnits, setJointUnits] = useState([]); // Array, not object
   const [researchAffiliations, setResearchAffiliations] = useState([]);
   const [hospitalAffiliations, setHospitalAffiliations] = useState([]);
 
   const { logAction } = useAuditLogger();
-
+  function sanitizeInput(input) {
+    if (!input) return "";
+    return input
+      .replace(/\\/g, "\\\\") // escape backslashes
+      .replace(/"/g, '\\"') // escape double quotes
+      .replace(/\n/g, "\\n"); // escape newlines
+  }
   // Function to save all affiliations data
   const handleSaveAffiliations = async () => {
     setIsSaving(true);
@@ -81,7 +90,6 @@ const Affiliations = () => {
         hospital_affiliations: hospitalAffiliations,
       };
 
-      console.log("Saving affiliations data:", updatedAffiliationsData);
       // Call the API to save the data
       await updateUserAffiliations(
         userInfo.user_id,
@@ -90,28 +98,30 @@ const Affiliations = () => {
         JSON.stringify(updatedAffiliationsData)
       );
 
-      console.log("Updating user information: ", facultyData, departmentData, institutionData);
-
       await updateUser(
         userInfo.user_id,
         userInfo.first_name,
         userInfo.last_name,
-        userInfo.preferred_name,
-        userInfo.email,
+        userInfo.preferred_name || "",
+        userInfo.email || "",
         userInfo.role,
-        userInfo.bio,
+        sanitizeInput(userInfo.bio) || "",
         institutionData.institution || "",
         departmentData.primary_department || "",
         facultyData.primary_faculty || "",
         institutionData.campus || "",
-        userInfo.keywords,
-        userInfo.institution_id,
-        userInfo.scopus_id,
-        userInfo.orcid_id
+        userInfo.keywords || "",
+        userInfo.institution_id || "",
+        userInfo.scopus_id || "",
+        userInfo.orcid_id || ""
       );
 
       console.log("Affiliations updated successfully!");
-      // window.location.reload(); // Reload to reflect changes in the UI
+      // Get updated user info and update context
+      const updatedUser = await getUser(userInfo.username);
+      if (updatedUser) {
+        setUserInfo(updatedUser);
+      }
 
       // Log the save action
       await logAction(AUDIT_ACTIONS.UPDATE_AFFILIATIONS);
@@ -130,11 +140,9 @@ const Affiliations = () => {
         // initialize with data
         setFacultyData({
           primary_faculty: userInfo.primary_faculty || "",
-          secondary_faculty: userInfo.secondary_faculty || "",
         });
         setDepartmentData({
           primary_department: userInfo.primary_department || "",
-          secondary_department: userInfo.secondary_department || "",
         });
         setInstitutionData({
           institution: userInfo.institution || "",
@@ -157,7 +165,7 @@ const Affiliations = () => {
           }
 
           // Handle the new structure with primary_unit (object) and joint_units (array)
-          setPrimaryUnit(data.primary_unit && typeof data.primary_unit === 'object' ? data.primary_unit : {});
+          setPrimaryUnit(data.primary_unit && typeof data.primary_unit === "object" ? data.primary_unit : {});
           setJointUnits(Array.isArray(data.joint_units) ? data.joint_units : []);
           setResearchAffiliations(Array.isArray(data.research_affiliations) ? data.research_affiliations : []);
           setHospitalAffiliations(Array.isArray(data.hospital_affiliations) ? data.hospital_affiliations : []);
@@ -184,13 +192,11 @@ const Affiliations = () => {
       setFacultyData((prev) => ({
         ...prev,
         primary_faculty: userInfo.primary_faculty || prev.primary_faculty || "",
-        secondary_faculty: userInfo.secondary_faculty || prev.secondary_faculty || "",
       }));
 
       setDepartmentData((prev) => ({
         ...prev,
         primary_department: userInfo.primary_department || prev.primary_department || "",
-        secondary_department: userInfo.secondary_department || prev.secondary_department || "",
       }));
 
       setInstitutionData((prev) => ({
@@ -199,14 +205,7 @@ const Affiliations = () => {
         campus: userInfo.campus || prev.campus || "",
       }));
     }
-  }, [
-    userInfo.primary_faculty,
-    userInfo.secondary_faculty,
-    userInfo.primary_department,
-    userInfo.secondary_department,
-    userInfo.institution,
-    userInfo.campus,
-  ]);
+  }, [userInfo.primary_faculty, userInfo.primary_department, userInfo.institution, userInfo.campus]);
 
   // Add handlers for institution and faculty data
   const handleInstitutionChange = (e) => {
@@ -296,7 +295,12 @@ const Affiliations = () => {
 
       <div className="my-4 gap-y-4 flex flex-col">
         {/* Academic Units Table */}
-        <AcademicUnitSection primaryUnit={primaryUnit} setPrimaryUnit={setPrimaryUnit} jointUnits={jointUnits} setJointUnits={setJointUnits} />
+        <AcademicUnitSection
+          primaryUnit={primaryUnit}
+          setPrimaryUnit={setPrimaryUnit}
+          jointUnits={jointUnits}
+          setJointUnits={setJointUnits}
+        />
 
         {/* Research Affiliation Table - Using new component */}
         <ResearchAffiliationSection
