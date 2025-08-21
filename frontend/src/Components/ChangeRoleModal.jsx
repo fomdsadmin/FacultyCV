@@ -4,16 +4,19 @@ import "../CustomStyles/modal.css";
 import { updateUser } from "../graphql/graphqlHelpers";
 import { addToUserGroup, removeFromUserGroup, getAllUniversityInfo } from "../graphql/graphqlHelpers";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
+import { useApp } from "Contexts/AppContext";
 
-const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }) => {
+const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBack }) => {
+  const { userInfo, currentViewRole } = useApp();
   const [changingRole, setChangingRole] = useState(false);
   const [confirmChange, setConfirmChange] = useState(false);
-  const [newRole, setNewRole] = useState(userInfo.role.startsWith("Admin-") ? "Admin-" : userInfo.role);
+  const [newRole, setNewRole] = useState(currentUser.role.startsWith("Admin-") ? "Admin-" : currentUser.role);
+  console.log(currentUser);
   const [selectedDepartment, setSelectedDepartment] = useState(
-    userInfo.role.startsWith("Admin-") ? userInfo.role.slice(6) : ""
+    currentUser.role.startsWith("Admin-") ? currentUser.role.slice(6) : ""
   );
   const [selectedFaculty, setSelectedFaculty] = useState(
-    userInfo.role.startsWith("FacultyAdmin-") ? userInfo.role.split("FacultyAdmin-")[1] : ""
+    currentUser.role.startsWith("FacultyAdmin-") ? currentUser.role.split("FacultyAdmin-")[1] : ""
   );
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(userInfo.role.startsWith("Admin-") ? true : false);
   const [isFacultyAdmin, setIsFacultyAdmin] = useState(userInfo.role.startsWith("FacultyAdmin-") ? true : false);
@@ -63,7 +66,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
   };
 
   async function changeRole() {
-    const oldRole = userInfo.role;
+    const oldRole = currentUser.role;
     const updatedRole =
       newRole === "Admin-"
         ? `${newRole}${selectedDepartment}`
@@ -77,11 +80,11 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
       //put user in user group
       try {
         if (updatedRole.startsWith("Admin-")) {
-          const result = await addToUserGroup(userInfo.username, "DepartmentAdmin");
+          const result = await addToUserGroup(currentUser.username, "DepartmentAdmin");
         } else if (updatedRole.startsWith("FacultyAdmin-")) {
-          const result = await addToUserGroup(userInfo.username, "FacultyAdmin");
+          const result = await addToUserGroup(currentUser.username, "FacultyAdmin");
         } else {
-          const result = await addToUserGroup(userInfo.username, updatedRole);
+          const result = await addToUserGroup(currentUser.username, updatedRole);
         }
       } catch (error) {
         return;
@@ -89,12 +92,12 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
 
       //remove user from user group
       try {
-        if (userInfo.role.startsWith("Admin-")) {
-          const result = await removeFromUserGroup(userInfo.username, "DepartmentAdmin");
-        } else if (userInfo.role.startsWith("FacultyAdmin-")) {
-          const result = await removeFromUserGroup(userInfo.username, "FacultyAdmin");
+        if (currentUser.role.startsWith("Admin-")) {
+          const result = await removeFromUserGroup(currentUser.username, "DepartmentAdmin");
+        } else if (currentUser.role.startsWith("FacultyAdmin-")) {
+          const result = await removeFromUserGroup(currentUser.username, "FacultyAdmin");
         } else {
-          const result = await removeFromUserGroup(userInfo.username, userInfo.role);
+          const result = await removeFromUserGroup(currentUser.username, currentUser.role);
         }
       } catch (error) {
         return;
@@ -109,21 +112,21 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
     }
     try {
       const updatedUser = await updateUser(
-        userInfo.user_id,
-        userInfo.first_name,
-        userInfo.last_name,
-        userInfo.preferred_name,
-        userInfo.email,
+        currentUser.user_id,
+        currentUser.first_name,
+        currentUser.last_name,
+        currentUser.preferred_name,
+        currentUser.email,
         updatedRole,
-        sanitizeInput(userInfo.bio),
-        userInfo.institution,
-        userInfo.primary_department,
-        userInfo.primary_faculty,
-        userInfo.campus,
-        userInfo.keywords,
-        userInfo.institution_user_id,
-        userInfo.scopus_id,
-        userInfo.orcid_id
+        sanitizeInput(currentUser.bio),
+        currentUser.institution,
+        currentUser.primary_department,
+        currentUser.primary_faculty,
+        currentUser.campus,
+        currentUser.keywords,
+        currentUser.institution_user_id,
+        currentUser.scopus_id,
+        currentUser.orcid_id
       );
 
       fetchAllUsers();
@@ -133,9 +136,9 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
       const roleChangeInfo = JSON.stringify({
         from: oldRole,
         to: updatedRole,
-        userId: userInfo.user_id,
-        username: userInfo.username,
-        email: userInfo.email,
+        userId: currentUser.user_id,
+        username: currentUser.username,
+        email: currentUser.email,
       });
       await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, roleChangeInfo);
     } catch (error) {
@@ -157,9 +160,9 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
         : selectedRole;
 
     if (
-      updatedRole !== userInfo.role ||
-      (updatedRole === "Admin-" && selectedDepartment !== userInfo.role.slice(6)) ||
-      (updatedRole === "FacultyAdmin-" && selectedFaculty !== userInfo.role.slice(15))
+      updatedRole !== currentUser.role ||
+      (updatedRole === "Admin-" && selectedDepartment !== currentUser.role.slice(6)) ||
+      (updatedRole === "FacultyAdmin-" && selectedFaculty !== currentUser.role.slice(15))
     ) {
       setConfirmChange(true);
     } else {
@@ -186,7 +189,7 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
             onChange={handleRoleChange}
           >
             {/* If user is Admin, show all options */}
-            {userInfo.role === "Admin" ? (
+            {currentViewRole === "Admin" ? (
               <>
                 <option value="Faculty">Faculty</option>
                 <option value="Assistant">Assistant</option>
@@ -194,13 +197,13 @@ const ChangeRoleModal = ({ userInfo, setIsModalOpen, fetchAllUsers, handleBack }
                 <option value="FacultyAdmin-">Faculty Admin</option>
                 <option value="Admin">Admin</option>
               </>
-            ) : userInfo.role.startsWith("Admin-") ? (
+            ) : currentViewRole.startsWith("Admin-") ? (
               <>
                 <option value="Faculty">Faculty</option>
                 <option value="Assistant">Assistant</option>
                 <option value="Admin-">Department Admin</option>
               </>
-            ) : userInfo.role.startsWith("FacultyAdmin-") ? (
+            ) : currentViewRole.startsWith("FacultyAdmin-") ? (
               <>
                 <option value="Faculty">Faculty</option>
                 <option value="Assistant">Assistant</option>
