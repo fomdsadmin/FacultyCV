@@ -1,8 +1,18 @@
-import React from 'react'
+import React from "react";
 
 const months = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 // Helper: convert month name to number (for comparison)
@@ -10,7 +20,7 @@ const monthToNum = (month) => months.indexOf(month);
 
 function validateDateFields(formData, attrsObj) {
   // Check for "dates" field (start/end month/year)
-  if (Object.keys(attrsObj).some(k => k.toLowerCase().includes("dates"))) {
+  if (Object.keys(attrsObj).some((k) => k.toLowerCase().includes("dates"))) {
     const { startDateMonth, startDateYear, endDateMonth, endDateYear } = formData;
     if (!startDateMonth || !startDateYear) {
       return "Please select a start date (month and year).";
@@ -19,12 +29,10 @@ function validateDateFields(formData, attrsObj) {
       return "Please select an end date (month and year) or 'Current'.";
     }
     // Allow "None" as a valid option for end dates
-    if ((endDateMonth === "None" && endDateYear !== "None") || 
-        (endDateMonth !== "None" && endDateYear === "None")) {
+    if ((endDateMonth === "None" && endDateYear !== "None") || (endDateMonth !== "None" && endDateYear === "None")) {
       return "Please select a valid end date (month and year) or 'Current'.";
     }
-    if (endDateMonth !== "Current" && endDateYear !== "Current" && 
-        endDateMonth !== "None" && endDateYear !== "None") {
+    if (endDateMonth !== "Current" && endDateYear !== "Current" && endDateMonth !== "None" && endDateYear !== "None") {
       // Compare start and end
       const start = new Date(Number(startDateYear), monthToNum(startDateMonth));
       const end = new Date(Number(endDateYear), monthToNum(endDateMonth));
@@ -47,8 +55,10 @@ function validateDateFields(formData, attrsObj) {
         return "Please select an end date (month and year) or 'Current'.";
       }
       // Allow "None" as a valid option for end dates
-      if ((formData.endDateMonth === "None" && formData.endDateYear !== "None") || 
-          (formData.endDateMonth !== "None" && formData.endDateYear === "None")) {
+      if (
+        (formData.endDateMonth === "None" && formData.endDateYear !== "None") ||
+        (formData.endDateMonth !== "None" && formData.endDateYear === "None")
+      ) {
         return "Please select a valid end date (month and year) or 'Current'.";
       }
       if (
@@ -66,34 +76,35 @@ function validateDateFields(formData, attrsObj) {
         }
       }
     }
+  }
+
+  for (const attrName of Object.keys(attrsObj)) {
+    const lower = attrName.toLowerCase();
+    if (lower.includes("year")) {
+      // Instead of checking only formData.year, check the actual field name
+      if (!formData.year) {
+        return "Please select a year.";
+      }
     }
-    
-    for (const attrName of Object.keys(attrsObj)) {
-        const lower = attrName.toLowerCase();
-        console.log("Validating attribute:", lower);
-      if (lower.includes("year")) {
-        // Instead of checking only formData.year, check the actual field name
-        if (!formData.year) {
-          return "Please select a year.";
-        }
-        }
-    }
+  }
   return null;
 }
 
-const DateEntry = ({ attrsObj, attributes, formData, handleChange, years }) => {
+const DateEntry = ({ attrsObj, attributes, formData, handleChange, years, sectionName }) => {
   if (!attrsObj) return null;
   return Object.entries(attrsObj).map(([attrName, value]) => {
     // Get the snake_case key from attributes mapping
     const snakeKey = attributes && attributes[attrName] ? attributes[attrName] : attrName;
 
+    // Helper to check if section is publications/other publications
+    const isPublicationSection =
+      sectionName && ["publications", "other publications"].includes(sectionName.toLowerCase());
+
     if (attrName && attrName.toLowerCase().includes("dates")) {
       // Render Start/End Month/Year dropdowns for "dates" field
       return (
         <div key={attrName} className="mb-1 col-span-1 w-full">
-          <label className="block text-sm capitalize font-semibold mb-1">
-            Start Date
-          </label>
+          <label className="block text-sm capitalize font-semibold mb-1">Start Date</label>
           <div className="flex space-x-2">
             <select
               name="startDateMonth"
@@ -124,7 +135,7 @@ const DateEntry = ({ attrsObj, attributes, formData, handleChange, years }) => {
             </select>
           </div>
           <label className="block text-sm capitalize mt-3 mb-1 font-semibold">
-            End Date
+            {isPublicationSection ? "Year Published" : "End Date"}
           </label>
           <div className="flex space-x-2">
             <select
@@ -163,15 +174,12 @@ const DateEntry = ({ attrsObj, attributes, formData, handleChange, years }) => {
       );
     } else if (
       attrName &&
-      (attrName.toLowerCase().includes("year") ||
-        attrName.toLowerCase().includes("Year Published"))
+      (attrName.toLowerCase().includes("year") || attrName.toLowerCase().includes("Year Published"))
     ) {
-        // Handle year fields using snakeKey for name/value
-        return (
+      // Handle year fields using snakeKey for name/value
+      return (
         <div key={attrName} className="mb-1">
-          <label className="block text-sm capitalize font-semibold mb-1 ">
-            {attrName}
-          </label>
+          <label className="block text-sm capitalize font-semibold mb-1 ">{attrName}</label>
           <select
             name={snakeKey}
             value={formData[snakeKey] || ""}
@@ -190,15 +198,14 @@ const DateEntry = ({ attrsObj, attributes, formData, handleChange, years }) => {
       );
     } else if (
       attrName &&
-      (attrName.toLowerCase().includes("start date") ||
-        attrName.toLowerCase().includes("end date"))
+      (attrName.toLowerCase().includes("start date") || attrName.toLowerCase().includes("end date"))
     ) {
       // Handle single start_date or end_date fields (month/year selector)
       const prefix = attrName.toLowerCase().includes("start") ? "start" : "end";
       return (
         <div key={attrName} className="mb-1 col-span-2">
           <label className="block text-sm capitalize font-semibold mb-1">
-            {attrName.replace(/_/g, " ")}
+            {isPublicationSection ? "Year Published" : "End Date 1"}
           </label>
           <div className="flex space-x-2">
             <select
@@ -246,7 +253,7 @@ const DateEntry = ({ attrsObj, attributes, formData, handleChange, years }) => {
     }
     return null;
   });
-}
+};
 
 export default DateEntry;
 export { validateDateFields };

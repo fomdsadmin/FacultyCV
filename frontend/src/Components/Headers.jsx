@@ -111,13 +111,6 @@ const Header = ({ assistantUserInfo }) => {
 
   const handleExitManaging = () => {
     stopManagingUser();
-    if (assistantUserInfo && assistantUserInfo.role === "Assistant") {
-      navigate("/delegate/connections");
-      window.location.reload();
-    } else {
-      navigate("/department-admin/members");
-      window.location.reload();
-    }
   };
 
   // Close dropdowns when clicking outside

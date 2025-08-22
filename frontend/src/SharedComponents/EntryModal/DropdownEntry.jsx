@@ -13,7 +13,6 @@ const DropdownEntry = ({ attrsObj, attributes, formData, handleChange }) => {
     typeof formData[snakeKey] === "string" &&
     formData[snakeKey].trim().toLowerCase().includes("other");
     const otherKey = `${snakeKey}_other`;
-    console.log(otherKey)
 
     const selectedValue = (() => {
       const v = formData[snakeKey] || "";

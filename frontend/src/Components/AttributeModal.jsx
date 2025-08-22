@@ -218,8 +218,8 @@ const AttributeModal = ({
       }
     });
 
-    console.log("Attributes JSON:", attributesJSONString);
-    console.log("AWSJson for updateSection:", awsJson);
+    // console.log("Attributes JSON:", attributesJSONString);
+    // console.log("AWSJson for updateSection:", awsJson);
 
     try {
       await updateSection(
