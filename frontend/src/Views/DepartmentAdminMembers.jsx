@@ -6,6 +6,7 @@ import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import { getAllUsers, getDepartmentAffiliations } from "../graphql/graphqlHelpers.js";
 import ManageUser from "Components/ManageUser.jsx";
+import { useAuditLogger, AUDIT_ACTIONS } from "Contexts/AuditLoggerContext.jsx";
 
 const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   const [searchTerm, setSearchTerm] = useState("");
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
+  const { logAction } = useAuditLogger();
 
   // Helper functions for base64 encoding/decoding
   const encodeId = (id) => {
@@ -215,8 +217,20 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   navigate(`/department-admin/members/${encodedId}/actions`);
   };
 
-  const handleImpersonateClick = (value) => {
+  const handleImpersonateClick = async (value) => {
     const user = users.find((user) => user.user_id === value);
+
+    // Log the impersonation action with the impersonated user details
+          await logAction(AUDIT_ACTIONS.IMPERSONATE, {
+            impersonated_user: {
+              user_id: user.user_id,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              email: user.email,
+              role: user.role
+            }
+          });
+    
     if (user) {
       startManagingUser(user);
       navigate("/faculty/home");

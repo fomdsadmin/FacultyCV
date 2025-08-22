@@ -24,8 +24,8 @@ export const AUDIT_ACTIONS = {
     RETRIEVE_EXTERNAL_DATA: 'Retrieve external data',
     GENERATE_CV: 'Generate CV',
 
-    // admin actions
-    GENERATE_DEPT_REPORT: 'Generate department report', // department Admin 
+    // admin actions (all admin actions)
+    GENERATE_DEPT_REPORT: 'Generate department report', // department Admin
 
     EDIT_SECTION_DETAILS: 'Update section details',
     UPDATE_SECTION_ATTRIBUTES: 'Update section attributes',
@@ -47,6 +47,7 @@ export const AUDIT_ACTIONS = {
     APPROVE_USER: 'Approve user',
     REJECT_USER: 'Reject user',
     ACCEPT_USER: 'Accept user',
+    IMPERSONATE: 'Impersonate user',
 };
 
 export const ACTION_CATEGORIES = {
@@ -69,7 +70,8 @@ export const ACTION_CATEGORIES = {
         AUDIT_ACTIONS.APPROVE_USER,
         AUDIT_ACTIONS.REJECT_USER,
         AUDIT_ACTIONS.ACCEPT_USER,
-        AUDIT_ACTIONS.GENERATE_DEPT_REPORT
+        AUDIT_ACTIONS.GENERATE_DEPT_REPORT,
+        AUDIT_ACTIONS.IMPERSONATE
     ],
 
 };

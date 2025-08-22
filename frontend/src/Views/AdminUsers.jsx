@@ -10,6 +10,7 @@ import AddUserModal from "../Components/AddUserModal.jsx";
 import ImportUserModal from "../Components/ImportUserModal.jsx";
 import PendingRequestsModal from "../Components/PendingRequestsModal.jsx";
 import { getAllUsers, removeUser, getDepartmentAffiliations } from "../graphql/graphqlHelpers.js";
+import { useAuditLogger, AUDIT_ACTIONS} from "../Contexts/AuditLoggerContext.jsx";
 
 // Custom Modal Component
 const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = "confirm" }) => {
@@ -63,6 +64,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
+
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     fetchAllUsers();
@@ -202,9 +205,21 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     setActiveUser(user[0]);
   };
 
-  const handleImpersonateClick = (value) => {
+  const handleImpersonateClick = async (value) => {
     const user = users.find((user) => user.user_id === value);
     if (user) {
+      
+      // Log the impersonation action with the impersonated user details
+      await logAction(AUDIT_ACTIONS.IMPERSONATE, {
+        impersonated_user: {
+          user_id: user.user_id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          role: user.role
+        }
+      });
+
       startManagingUser(user);
       navigate("/faculty/home");
     }
