@@ -46,18 +46,38 @@ const EntryModal = ({
         let endDateYear = "";
         if (datesStr.includes(" - ")) {
           const [start, end] = datesStr.split(" - ");
-          if (start && start.includes(", ")) {
-            [startDateMonth, startDateYear] = start.split(", ");
+          // Handle start date
+          if (start) {
+            if (start.includes(", ")) {
+              [startDateMonth, startDateYear] = start.split(", ");
+            } else if (/^[A-Za-z]+ \d{4}$/.test(start.trim())) {
+              // e.g. October 2006
+              const parts = start.trim().split(" ");
+              startDateMonth = parts[0];
+              startDateYear = parts[1];
+            }
           }
+          // Handle end date
           if (end === "Current" || end === "None") {
             endDateMonth = end;
             endDateYear = end;
-          } else if (end && end.includes(", ")) {
-            [endDateMonth, endDateYear] = end.split(", ");
+          } else if (end) {
+            if (end.includes(", ")) {
+              [endDateMonth, endDateYear] = end.split(", ");
+            } else if (/^[A-Za-z]+ \d{4}$/.test(end.trim())) {
+              // e.g. October 2006
+              const parts = end.trim().split(" ");
+              endDateMonth = parts[0];
+              endDateYear = parts[1];
+            }
           }
         } else if (datesStr) {
           if (datesStr.includes(", ")) {
             [startDateMonth, startDateYear] = datesStr.split(", ");
+          } else if (/^[A-Za-z]+ \d{4}$/.test(datesStr.trim())) {
+            const parts = datesStr.trim().split(" ");
+            startDateMonth = parts[0];
+            startDateYear = parts[1];
           }
         }
         setFormData((prev) => ({
@@ -81,13 +101,17 @@ const EntryModal = ({
         if (displayName.toLowerCase().includes("start date") || displayName.toLowerCase().includes("end date")) {
           // Use the snake_case key for value if present, else fallback to displayName
           const val = fields[snakeKey] !== undefined ? fields[snakeKey] : fields[displayName];
+          const prefix = displayName.toLowerCase().includes("start") ? "start" : "end";
           if (val && typeof val === "string" && val.includes(", ")) {
             const [month, year] = val.split(", ");
-            const prefix = displayName.toLowerCase().includes("start") ? "start" : "end";
             newFormData[`${prefix}DateMonth`] = month;
             newFormData[`${prefix}DateYear`] = year;
+          } else if (val && typeof val === "string" && /^[A-Za-z]+ \d{4}$/.test(val.trim())) {
+            // e.g. October 2006
+            const parts = val.trim().split(" ");
+            newFormData[`${prefix}DateMonth`] = parts[0];
+            newFormData[`${prefix}DateYear`] = parts[1];
           } else if (val === "Current" || val === "None") {
-            const prefix = displayName.toLowerCase().includes("start") ? "start" : "end";
             newFormData[`${prefix}DateMonth`] = val;
             newFormData[`${prefix}DateYear`] = val;
           }
@@ -313,7 +337,6 @@ const EntryModal = ({
     );
 
     console.log("Submitting form data:", finalFormData);
-
     try {
       if (isNew) {
         // Add new CV data
@@ -374,6 +397,7 @@ const EntryModal = ({
                     formData={formData}
                     handleChange={handleChange}
                     years={years}
+                    sectionName={section.title}
                   />
                 );
               } else if (type === "dropdown") {

@@ -18,6 +18,8 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
     currentUser.role.startsWith("FacultyAdmin-") ? currentUser.role.split("FacultyAdmin-")[1] : ""
   );
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(userInfo.role.startsWith("Admin-") ? true : false);
+  const [isCurrentUserDepartmentAdmin, setIsCurrentUserDepartmentAdmin] = useState(currentUser.role.startsWith("Admin-") ? true : false);
+
   const [isFacultyAdmin, setIsFacultyAdmin] = useState(userInfo.role.startsWith("FacultyAdmin-") ? true : false);
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
@@ -28,7 +30,7 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
   }, []);
 
   useEffect(() => {
-    if (isDepartmentAdmin) {
+    if (isCurrentUserDepartmentAdmin) {
       handleRoleChange({ target: { value: "Admin-" } });
     }
   }, [selectedDepartment]);
@@ -188,6 +190,8 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
             onChange={handleRoleChange}
           >
             {/* If user is Admin, show all options */}
+            {console.log("Current View:", currentViewRole)}
+            {console.log("user info role:", userInfo.role, currentUser.role)}
             {currentViewRole === "Admin" ? (
               <>
                 <option value="Faculty">Faculty</option>
@@ -215,7 +219,7 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
             )}
           </select>
 
-          {isDepartmentAdmin && (
+          {isCurrentUserDepartmentAdmin && (
             <div className="department-input">
               <label className="block mt-4">Select department:</label>
               <select
