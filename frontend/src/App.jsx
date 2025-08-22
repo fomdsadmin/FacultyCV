@@ -22,11 +22,11 @@ import Assistant_AcademicWork from "./Views/Assistant_AcademicWork.jsx";
 import AdminHomePage from "./Views/AdminHomePage.jsx";
 import TemplatesPage from "./Pages/TemplatePages/TemplatesPage/TemplatesPage.jsx";
 import Sections from "./Views/Sections.jsx";
-import AuditPage from "./Views/AuditPage.jsx";
+import AuditPage from "./Pages/AuditLogPages/AuditPage.jsx";
 import { AuditLoggerProvider } from "./Contexts/AuditLoggerContext.jsx";
 import ArchivedSections from "./Views/ArchivedSections.jsx";
-import DepartmentAdminUsers from "./Views/DepartmentAdminUsers.jsx";
-import DepartmentAdminHomePage from "./Views/DepartmentAdminHomePage.jsx";
+import DepartmentAdminMembers from "./Views/DepartmentAdminMembers.jsx";
+import DepartmentAdminDashboard from "./Views/DepartmentAdminDashboard.jsx";
 import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
 import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
 import DepartmentAdminReporting from "Views/DepartmentAdminReporting";
@@ -39,7 +39,7 @@ import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
 import { ToastContainer } from "react-toastify";
 import KeycloakLogout from "Components/KeycloakLogout";
-import YourActivityPage from "./Views/YourActivityPage.jsx";
+import YourActivityPage from "./Pages/AuditLogPages/YourActivityPage.jsx";
 
 const AppContent = () => {
   const {
@@ -128,7 +128,7 @@ const AppContent = () => {
                 ) : Object.keys(userInfo).length !== 0 &&
                   typeof userInfo.role === "string" &&
                   userInfo.role.startsWith("Admin-") ? (
-                  <Navigate to="/department-admin/home" />
+                  <Navigate to="/department-admin/dashboard" />
                 ) : Object.keys(assistantUserInfo).length !== 0 && assistantUserInfo.role === "Assistant" ? (
                   <Navigate to="/delegate/home" />
                 ) : Object.keys(userInfo).length !== 0 && userInfo.role === "Faculty" ? (
@@ -181,13 +181,13 @@ const AppContent = () => {
             <Route path="/admin/home" element={<AdminHomePage userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
 
             <Route
-              path="/department-admin/home"
+              path="/department-admin/dashboard"
               element={
                 typeof userInfo.role === "string" &&
                   (userInfo.role.startsWith("Admin-") || userInfo.role === "Admin") &&
                   typeof currentViewRole === "string" &&
                   currentViewRole.startsWith("Admin-") ? (
-                  <DepartmentAdminHomePage
+                  <DepartmentAdminDashboard
                     userInfo={userInfo}
                     getCognitoUser={getCognitoUser}
                     department={
@@ -260,7 +260,7 @@ const AppContent = () => {
             />
 
             <Route path="/audit" element={
-                    (userInfo.role && userInfo.role.startsWith("FacultyAdmin-")) || (userInfo.role && userInfo.role === "Admin") ? (
+              (userInfo.role && userInfo.role.startsWith("FacultyAdmin-")) || (userInfo.role && userInfo.role === "Admin") ? (
                 <AuditPage userInfo={userInfo} getCognitoUser={getCognitoUser} currentViewRole={currentViewRole} />
               ) : (
                 <Navigate to="/home" />
@@ -272,8 +272,8 @@ const AppContent = () => {
             <Route path="/faculty/home/affiliations" element={<FacultyHomePage tab="affiliations" />} />
             <Route path="/faculty/home/employment" element={<FacultyHomePage tab="employment" />} />
             <Route path="/faculty/home/education" element={<FacultyHomePage tab="education" />} />
-            <Route path="/support" element={<SupportForm userInfo={userInfo} getCognitoUser={getCognitoUser} toggleViewMode={toggleViewMode} />} />
-            <Route path="/delegate/support" element={<SupportForm userInfo={assistantUserInfo} getCognitoUser={getCognitoUser} toggleViewMode={toggleViewMode} />} />
+            <Route path="/support" element={<SupportForm userInfo={userInfo} getCognitoUser={getCognitoUser} toggleViewMode={toggleViewMode} currentViewRole={currentViewRole}/>} />
+            <Route path="/delegate/support" element={<SupportForm userInfo={Object.keys(userInfo).length !== 0 ? userInfo : assistantUserInfo} getCognitoUser={getCognitoUser} toggleViewMode={toggleViewMode} />} />
             <Route
               path="/faculty/academic-work"
               element={<AcademicWork getCognitoUser={getCognitoUser} userInfo={userInfo} />}
@@ -387,9 +387,9 @@ const AppContent = () => {
               element={<ArchivedSections userInfo={userInfo} getCognitoUser={getCognitoUser} />}
             />
             <Route
-              path="/department-admin/users"
+              path="/department-admin/members"
               element={
-                <DepartmentAdminUsers
+                <DepartmentAdminMembers
                   userInfo={{ ...userInfo, role: currentViewRole }}
                   getCognitoUser={getCognitoUser}
                   department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
@@ -397,9 +397,19 @@ const AppContent = () => {
               }
             />
             <Route
-              path="/department-admin/users/:userId"
+              path="/department-admin/members/:userId"
               element={
-                <DepartmentAdminUsers
+                <DepartmentAdminMembers
+                  userInfo={{ ...userInfo, role: currentViewRole }}
+                  getCognitoUser={getCognitoUser}
+                  department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
+                />
+              }
+            />
+            <Route
+              path="/department-admin/members/:userId/actions"
+              element={
+                <DepartmentAdminMembers
                   userInfo={{ ...userInfo, role: currentViewRole }}
                   getCognitoUser={getCognitoUser}
                   department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
@@ -409,7 +419,7 @@ const AppContent = () => {
             <Route
               path="/department-admin/analytics"
               element={
-                <DepartmentAdminHomePage
+                <DepartmentAdminDashboard
                   userInfo={userInfo}
                   getCognitoUser={getCognitoUser}
                   department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}

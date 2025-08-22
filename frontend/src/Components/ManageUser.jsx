@@ -9,6 +9,8 @@ import UpdateUserModal from "./UpdateUserModal";
 import { getUserConnections } from "../graphql/graphqlHelpers";
 import { IoMdAddCircleOutline } from "react-icons/io";
 import DepartmentAdminUserInsights from "../Views/DepartmentAdminUserInsights"; // Use the same insights component
+import Orcid from "../Pages/FacultyHomePage/Profile/Linkages/Orcid/Orcid";
+import Scopus from "../Pages/FacultyHomePage/Profile/Linkages/Scopus/Scopus";
 
 const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
   const [currentUser, setCurrentUser] = useState(user);
@@ -34,7 +36,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
           const response = await getAuditViewData({
             logged_user_id: currentUser.user_id,
             page_number: pageNumber,
-            page_size: 50
+            page_size: 50,
           });
           const records = response?.records || [];
           if (!records.length) break;
@@ -176,18 +178,21 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
               <span className="font-medium text-zinc-500">Faculty:</span> {currentUser.primary_faculty || ""}
             </div>
             <div>
-              <span className="font-medium text-zinc-500">Scopus ID:</span> {currentUser.scopus_id || ""}
-            </div>
-            <div>
               <span className="font-medium text-zinc-500">Department:</span> {currentUser.primary_department || ""}
             </div>
-            <div>
-              <span className="font-medium text-zinc-500">ORCID ID:</span> {currentUser.orcid_id || ""}
-            </div>
             <div className="col-span-2">
-              <span className="font-medium text-zinc-500">Last Visit:</span> {loadingLastVisit ? "Loading..." : lastVisit ? formatTimestamp(lastVisit) : "No record found"}
+              <span className="font-medium text-zinc-500">Last Visit:</span>{" "}
+              {loadingLastVisit ? "Loading..." : lastVisit ? formatTimestamp(lastVisit) : "No record found"}
             </div>
           </div>
+          {/* Scopus/ORCID Linkages for Admin */}
+          <div className="mt-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <Scopus user={currentUser} setUser={setCurrentUser} isAdmin={true} />
+              <Orcid user={currentUser} setUser={setCurrentUser} isAdmin={true} />
+            </div>
+          </div>
+
           <div className="flex gap-2 mt-4 justify-end">
             <button onClick={handleUpdateUser} className="btn btn-primary px-4 text-white font-semibold">
               Update
@@ -201,7 +206,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
         {/* Connections */}
         <div className="bg-white rounded-lg shadow py-6 px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h3 className="text-xl font-semibold text-zinc-700">Connections</h3>
+            <h3 className="text-xl font-semibold text-zinc-700">Delegates</h3>
             <div className="flex items-center gap-2">
               <label className="input input-bordered flex items-center gap-2">
                 <input
@@ -313,7 +318,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
               {isChangeRoleModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                   <ChangeRoleModal
-                    userInfo={currentUser}
+                    currentUser={currentUser}
                     setIsModalOpen={setIsChangeRoleModalOpen}
                     fetchAllUsers={fetchAllUsers}
                     handleBack={handleBack}

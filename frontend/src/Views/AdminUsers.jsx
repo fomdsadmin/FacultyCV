@@ -170,21 +170,24 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         }`}
         onClick={() => onSelect(null)}
       >
-        All
+        All ({users.length})
       </button>
       {[...filters]
         .sort((a, b) => a.localeCompare(b))
-        .map((filter) => (
-          <button
-            key={filter}
-            className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-              activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-            onClick={() => onSelect(filter)}
-          >
-            {filter}
-          </button>
-        ))}
+        .map((filter) => {
+          const count = users.filter(u => u.role === filter).length;
+          return (
+            <button
+              key={filter}
+              className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
+                activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => onSelect(filter)}
+            >
+              {filter} ({count})
+            </button>
+          );
+        })}
     </div>
   );
 
@@ -308,7 +311,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
           <div>
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left m-2 text-4xl font-bold text-zinc-600">All Members ({users.length})</h1>
+                <h1 className="text-left mx-4 text-4xl font-bold text-zinc-600">All Members ({users.length})</h1>
                 <button
                   onClick={() => setIsAddUserModalOpen(true)}
                   className="btn btn-primary ml-4"
@@ -345,7 +348,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                   Import Users
                 </button>
                 <div className="m-4 flex">
-                  <label className="input input-bordered flex items-center gap-2 flex-1">
+                  <label className="input input-bordered flex items-center flex-1">
                     <input
                       type="text"
                       className="grow"
@@ -375,23 +378,23 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                     <div className="block text-m mb-1 mt-6 text-zinc-600">No Users Found</div>
                   </div>
                 ) : (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mx-4">
-                    <table className="w-full">
-                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 overflow-auto max-h-[55vh]">
+                    <table className="w-full table-fixed min-w-[750px] md:overflow-x-auto">
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 sticky top-0 z-10">
                         <tr>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/3 md:w-1/4 lg:w-1/5">
                             User
                           </th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Role
                           </th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Primary Rank
                           </th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Joint Rank
                           </th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Actions
                           </th>
                         </tr>
@@ -404,20 +407,20 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                               index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
                             }`}
                           >
-                            <td className="px-6 py-5">
-                              <div className="flex flex-col">
-                                <div className="text-sm font-semibold text-gray-900 mb-1">
+                            <td className="px-4 py-5 w-1/3 md:w-1/4 lg:w-1/5">
+                              <div className="flex flex-col min-w-0 break-words">
+                                <div className="text-sm font-semibold text-gray-900 mb-1 truncate">
                                   {user.first_name} {user.last_name}
                                 </div>
-                                <div className="text-sm text-gray-500">{user.email}</div>
+                                <div className="text-sm text-gray-500 truncate">{user.email}</div>
                               </div>
                             </td>
-                            <td className="px-6 py-5 text-center">
+                            <td className="px-4 py-5 text-center w-1/6">
                               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                                 {user.role}
                               </span>
                             </td>
-                            <td className="px-6 py-5 text-center">
+                            <td className="px-4 py-5 text-center w-1/6">
                               <span className="text-sm font-medium text-gray-700">
                                 {getPrimaryRank(user.user_id) ? (
                                   getPrimaryRank(user.user_id)
@@ -426,7 +429,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                                 )}
                               </span>
                             </td>
-                            <td className="px-6 py-5 text-center">
+                            <td className="px-4 py-5 text-center w-1/6">
                               <span className="text-sm font-medium text-gray-700">
                                 {getJointRanks(user.user_id) ? (
                                   getJointRanks(user.user_id)
@@ -435,23 +438,23 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                                 )}
                               </span>
                             </td>
-                            <td className="px-6 py-5">
-                              <div className="flex justify-center gap-3">
+                            <td className="px-4 py-5 w-1/6">
+                              <div className="grid grid-cols-1 xl:grid-cols-3 justify-center gap-2 items-stretch w-full">
                                 <button
                                   onClick={() => handleImpersonateClick(user.user_id)}
-                                  className="btn btn-accent btn-sm text-white"
+                                  className="btn btn-accent btn-sm min-w-full text-xs lg:text-md text-white shadow"
                                 >
                                   Impersonate
                                 </button>
                                 <button
                                   onClick={() => handleManageClick(user.user_id)}
-                                  className="btn btn-primary btn-sm text-white"
+                                  className="btn btn-primary btn-sm text-white min-w-full text-xs lg:text-md"
                                 >
                                   Quick Actions
                                 </button>
                                 <button
                                   onClick={() => handleRemoveUser(user.user_id)}
-                                  className="btn btn-error btn-sm text-white"
+                                  className="btn btn-error btn-sm text-white min-w-full text-xs lg:text-md"
                                 >
                                   Remove
                                 </button>

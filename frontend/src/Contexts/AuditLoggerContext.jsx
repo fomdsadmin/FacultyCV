@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { addAuditView } from '../graphql/graphqlHelpers';
+import { useApp } from './AppContext';
 
 const AuditLoggerContext = createContext(null);
 
@@ -45,8 +46,7 @@ export const AUDIT_ACTIONS = {
     IMPORT_USER: 'Import user',
     APPROVE_USER: 'Approve user',
     REJECT_USER: 'Reject user',
-    ACCEPT_USER: 'Accept user'
-
+    ACCEPT_USER: 'Accept user',
 };
 
 export const ACTION_CATEGORIES = {
@@ -83,6 +83,8 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
     const [ip, setIp] = useState('Unknown');
     const location = useLocation();
     const previousPath = useRef(null);
+
+    const { isManagingUser, managedUser, originalUserInfo } = useApp();
 
     // Log page views automatically
     useEffect(() => {
@@ -129,20 +131,45 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             }
         }
 
+        // Determine if this is an impersonation scenario
+        const isImpersonation = isManagingUser && managedUser && originalUserInfo;
+
+        let finalProfileRecord = recordValue;
+        if (isImpersonation) {
+            const impersonationContext = {
+                action_data: recordValue || '',
+                impersonated_by: {
+                    user_id: originalUserInfo.user_id,
+                    first_name: originalUserInfo.first_name,
+                    last_name: originalUserInfo.last_name,
+                    email: originalUserInfo.email,
+                    role: originalUserInfo.role
+                },
+                impersonated_user: {
+                    user_id: managedUser.user_id,
+                    first_name: managedUser.first_name,
+                    last_name: managedUser.last_name,
+                    email: managedUser.email,
+                    role: managedUser.role
+                }
+            };
+            finalProfileRecord = JSON.stringify(impersonationContext);
+        }
+
         const auditInput = {
-            logged_user_id: userInfo?.user_id || 'Unknown',
-            logged_user_first_name: userInfo?.first_name || 'Unknown',
-            logged_user_last_name: userInfo?.last_name || 'Unknown',
-            logged_user_role: userInfo?.role || 'Unknown',
+            // Log as the impersonated user but include impersonator info in profile_record
+            logged_user_id: isImpersonation ? managedUser.user_id : userInfo?.user_id || 'Unknown',
+            logged_user_first_name: isImpersonation ? managedUser.first_name : userInfo?.first_name || 'Unknown',
+            logged_user_last_name: isImpersonation ? managedUser.last_name : userInfo?.last_name || 'Unknown',
+            logged_user_role: isImpersonation ? managedUser.role : userInfo?.role || 'Unknown',
+            logged_user_email: isImpersonation ? managedUser.email : userInfo?.email || 'Unknown',
             ip,
             browser_version: navigator.userAgent,
             page: location.pathname,
             session_id: localStorage.getItem('session_id') || 'Unknown',
             assistant: userInfo?.role === 'Assistant' ? "true" : "false",
-            profile_record: recordValue,
-            logged_user_email: userInfo?.email || 'Unknown',
+            profile_record: finalProfileRecord,
             logged_user_action: actionType,
-
         };
 
         // console.log('Audit Log Action:', actionType, auditInput);

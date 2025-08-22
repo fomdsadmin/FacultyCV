@@ -73,7 +73,7 @@ const DepartmentAdminTemplates = ({ getCognitoUser, userInfo }) => {
               <NewTemplate onBack={handleBackFromNewTemplate} fetchTemplates={fetchTemplates} />
             ) : activeTemplate === null ? (
               <div className='!overflow-auto !h-full custom-scrollbar'>
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Templates</h1>
+                <h1 className="text-left mx-4 text-4xl font-bold text-zinc-600">Templates</h1>
                 <button 
                   className="btn btn-info text-white m-4" 
                   onClick={handleAddNewTemplate}
