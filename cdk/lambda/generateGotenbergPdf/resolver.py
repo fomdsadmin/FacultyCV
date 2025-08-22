@@ -2,9 +2,10 @@ import boto3
 import base64
 import http.client
 import traceback
+import os
 from urllib.parse import unquote_plus
 
-GOTENBERG_HOST = "gotenberg-public-alb-1371596528.ca-central-1.elb.amazonaws.com"
+GOTENBERG_HOST = os.environ.get('GOTENBERG_HOST')
 GOTENBERG_PATH = "/forms/chromium/convert/html"
 FIXED_BOUNDARY = "----WebKitFormBoundary123456"
 
