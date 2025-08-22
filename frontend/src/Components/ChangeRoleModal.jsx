@@ -151,7 +151,7 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
   const handleRoleChange = (event) => {
     const selectedRole = event.target.value;
     setNewRole(selectedRole);
-    setIsDepartmentAdmin(selectedRole === "Admin-");
+    setIsCurrentUserDepartmentAdmin(selectedRole === "Admin-");
     setIsFacultyAdmin(selectedRole === "FacultyAdmin-");
     const updatedRole =
       selectedRole === "Admin-"
