@@ -24,6 +24,7 @@ export const formatTimestamp = (timestamp) => {
     }
 };
 
+// action details 
 export const parseProfileRecord = (profileRecord) => {
     if (!profileRecord) return null;
 
@@ -39,6 +40,7 @@ export const parseProfileRecord = (profileRecord) => {
         }
     } catch (e) {
         // Not JSON or invalid format
+        console.error("Error parsing profile record:", e.message);
     }
     return { isImpersonation: false, data: profileRecord };
 };
