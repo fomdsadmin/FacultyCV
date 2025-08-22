@@ -149,13 +149,13 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
         <div className="bg-white rounded-xl shadow border border-gray-100 px-8 py-6 flex flex-col gap-2">
           <div className="flex items-center gap-4 mb-2">
             <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold text-zinc-800">
-                {currentUser.first_name} {currentUser.last_name}
-              </span>
-              <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-200">
-                {currentUser.role}
-              </span>
-            </div>
+                <span className="text-2xl font-bold text-zinc-800">
+                  {currentUser.first_name} {currentUser.last_name}
+                </span>
+                <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-200">
+                  {currentUser.role === "Assistant" ? "Delegate" : currentUser.role}
+                </span>
+              </div>
             <span className="ml-auto text-xs text-zinc-400">
               Joined:{" "}
               {currentUser.joined_timestamp ? new Date(currentUser.joined_timestamp).toLocaleDateString() : "N/A"}
@@ -279,7 +279,6 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
                       )}
                       {confirmedConnections.length > 0 && (
                         <section>
-                          <h4 className="text-lg font-semibold text-zinc-700 mb-2">Active Connections</h4>
                           <div className="flex flex-wrap gap-4">
                             {confirmedConnections.map((connection) =>
                               currentUser.role === "Faculty" ? (

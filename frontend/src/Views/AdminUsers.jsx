@@ -162,7 +162,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   };
 
   // All unique roles for tabs and filters
-  const filters = Array.from(new Set(users.map((user) => user.role)));
+  const filters = Array.from(new Set(users.map((user) => user.role === "Assistant" ? "Delegate" : user.role)));
 
   // Tab bar for roles (copied and adapted from DepartmentAdminUsers)
   const UserTabs = ({ filters, activeFilter, onSelect }) => (
@@ -178,7 +178,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
       {[...filters]
         .sort((a, b) => a.localeCompare(b))
         .map((filter) => {
-          const count = users.filter(u => u.role === filter).length;
+          // Count users for this tab, mapping 'Delegate' back to 'Assistant' for counting
+          const count = users.filter(u => (filter === "Delegate" ? u.role === "Assistant" : u.role === filter)).length;
           return (
             <button
               key={filter}
@@ -236,7 +237,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         lastName.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
         email.toLowerCase().startsWith(searchTerm.toLowerCase());
 
-      const matchesTab = !activeTab || user.role === activeTab;
+      // Fix: If activeTab is 'Delegate', match users with role 'Assistant'
+      const matchesTab = !activeTab || (activeTab === "Delegate" ? user.role === "Assistant" : user.role === activeTab);
       const matchesFilter = activeFilters.length === 0 || !activeFilters.includes(user.role);
 
       return matchesSearch && matchesTab && matchesFilter;
@@ -432,7 +434,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                             </td>
                             <td className="px-4 py-5 text-center w-1/6">
                               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                {user.role}
+                                {user.role === "Assistant" ? "Delegate" : user.role}
                               </span>
                             </td>
                             <td className="px-4 py-5 text-center w-1/6">

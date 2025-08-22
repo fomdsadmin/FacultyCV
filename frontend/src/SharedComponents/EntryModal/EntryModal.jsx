@@ -407,6 +407,7 @@ const EntryModal = ({
                     attributes={section.attributes}
                     formData={formData}
                     handleChange={handleChange}
+                    section={section}
                   />
                 );
               } else if (type === "text") {
