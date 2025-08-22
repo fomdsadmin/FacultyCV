@@ -195,7 +195,7 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
             {currentViewRole === "Admin" ? (
               <>
                 <option value="Faculty">Faculty</option>
-                <option value="Assistant">Assistant</option>
+                <option value="Assistant">Delegate</option>
                 <option value="Admin-">Department Admin</option>
                 <option value="FacultyAdmin-">Faculty Admin</option>
                 <option value="Admin">Admin</option>
@@ -203,13 +203,13 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
             ) : currentViewRole.startsWith("Admin-") ? (
               <>
                 <option value="Faculty">Faculty</option>
-                <option value="Assistant">Assistant</option>
+                <option value="Assistant">Delegate</option>
                 <option value="Admin-">Department Admin</option>
               </>
             ) : currentViewRole.startsWith("FacultyAdmin-") ? (
               <>
                 <option value="Faculty">Faculty</option>
-                <option value="Assistant">Assistant</option>
+                <option value="Assistant">Delegate</option>
                 <option value="FacultyAdmin-">Faculty Admin</option>
               </>
             ) : (
@@ -266,6 +266,8 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
                   ? `Are you sure you want to change the role of this user to Admin-${selectedDepartment}?`
                   : newRole === "FacultyAdmin-" && selectedFaculty !== ""
                   ? `Are you sure you want to change the role of this user to FacultyAdmin-${selectedFaculty}?`
+                  : newRole === "Assistant"
+                  ? `Are you sure you want to change the role of this user to Delegate?`
                   : `Are you sure you want to change the role of this user to ${newRole}?`}
               </p>
               <button

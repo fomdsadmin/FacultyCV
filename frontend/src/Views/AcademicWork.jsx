@@ -346,7 +346,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar w-full mx-auto">
-                {activeSection.title === "Publications" && (
+                {activeSection.title === "Journal Publications" && (
                   <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {activeSection.title.includes("Patents") && (
@@ -356,7 +356,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                   <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {!(
-                  activeSection.title === "Publications" ||
+                  activeSection.title === "Journal Publications" ||
                   activeSection.title.includes("Patents") ||
                   activeSection.title.includes("Research or Equivalent Grants")
                 ) && <GenericSection user={userInfo} section={activeSection} onBack={handleBack} />}

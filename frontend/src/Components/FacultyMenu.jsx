@@ -179,17 +179,17 @@ const FacultyMenu = ({
 
           <li
             className={`mb-2 ${
-              location.pathname === "/faculty/assistants"
+              location.pathname === "/faculty/delegates"
                 ? "bg-gray-200 rounded-lg"
                 : ""
             }`}
           >
-            <Link to="/faculty/assistants">
+            <Link to="/faculty/delegates">
               <IoPersonAddOutline className="h-5 w-5" />
               {showText && !isCollapsed && (
                 <p
                   className={`ml-2 ${
-                    location.pathname === "/faculty/assistants" ? "font-bold" : ""
+                    location.pathname === "/faculty/delegates" ? "font-bold" : ""
                   }`}
                 >
                   Delegates

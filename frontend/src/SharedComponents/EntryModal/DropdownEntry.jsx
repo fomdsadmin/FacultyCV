@@ -1,6 +1,6 @@
 import React from 'react';
 
-const DropdownEntry = ({ attrsObj, attributes, formData, handleChange }) => {
+const DropdownEntry = ({ attrsObj, attributes, formData, handleChange, section }) => {
   if (!attrsObj) return null;
   return Object.entries(attrsObj).map(([attrName, options]) => {
     const snakeKey = attributes && attributes[attrName] ? attributes[attrName] : attrName;
@@ -10,22 +10,31 @@ const DropdownEntry = ({ attrsObj, attributes, formData, handleChange }) => {
         (option) => typeof option === "string" && option.trim().toLowerCase().includes("other")
       );
     const isOtherSelected =
-    typeof formData[snakeKey] === "string" &&
-    formData[snakeKey].trim().toLowerCase().includes("other");
+      typeof formData[snakeKey] === "string" &&
+      formData[snakeKey].trim().toLowerCase().includes("other");
     const otherKey = `${snakeKey}_other`;
 
-    const selectedValue = (() => {
-      const v = formData[snakeKey] || "";
-      // If value is like "Other (something)", just select the option containing "Other"
-      if (typeof v === "string" && v.toLowerCase().includes("other (")) {
-        // Find the first option that contains "other"
-        const found = Array.isArray(options)
-          ? options.find(opt => opt.toLowerCase().includes("other"))
-          : "Other";
-        return found || "Other";
-      }
-      return v;
-    })();
+    // Autofill publication type with 'Journal' if in journal publications section
+    let selectedValue;
+    if (
+      attrName.toLowerCase() === "publication type" &&
+      (section.title === "Journal Publications")
+    ) {
+      selectedValue = "Journal";
+    } else {
+      selectedValue = (() => {
+        const v = formData[snakeKey] || "";
+        // If value is like "Other (something)", just select the option containing "Other"
+        if (typeof v === "string" && v.toLowerCase().includes("other (")) {
+          // Find the first option that contains "other"
+          const found = Array.isArray(options)
+            ? options.find(opt => opt.toLowerCase().includes("other"))
+            : "Other";
+          return found || "Other";
+        }
+        return v;
+      })();
+    }
 
     return (
       <div key={attrName} className="mb-1">

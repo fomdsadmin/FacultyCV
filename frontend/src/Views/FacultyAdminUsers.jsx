@@ -134,7 +134,7 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   };
 
   // All unique roles for tabs and filters
-  const filters = Array.from(new Set((users || []).map((user) => user.role)));
+  const filters = Array.from(new Set((users || []).map((user) => user.role === "Assistant" ? "Delegate" : user.role)));
 
   // Tab bar for roles
   const UserTabs = ({ filters, activeFilter, onSelect }) => (
@@ -149,17 +149,21 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       </button>
       {[...filters]
         .sort((a, b) => a.localeCompare(b))
-        .map((filter) => (
-          <button
-            key={filter}
-            className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-              activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-            onClick={() => onSelect(filter)}
-          >
-            {filter}
-          </button>
-        ))}
+        .map((filter) => {
+          // Count users for this tab, mapping 'Delegate' back to 'Assistant' for counting
+          const count = (users || []).filter(u => (filter === "Delegate" ? u.role === "Assistant" : u.role === filter)).length;
+          return (
+            <button
+              key={filter}
+              className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
+                activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => onSelect(filter)}
+            >
+              {filter} ({count})
+            </button>
+          );
+        })}
     </div>
   );
 
@@ -179,7 +183,8 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         lastName.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
         email.toLowerCase().startsWith(searchTerm.toLowerCase());
 
-      const matchesTab = !activeTab || user.role === activeTab;
+      // Fix: If activeTab is 'Delegate', match users with role 'Assistant'
+      const matchesTab = !activeTab || (activeTab === "Delegate" ? user.role === "Assistant" : user.role === activeTab);
       const matchesFilter = activeFilters.length === 0 || !activeFilters.includes(user.role);
 
       return matchesSearch && matchesTab && matchesFilter;
@@ -310,7 +315,7 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                             </td>
                             <td className="px-6 py-5 text-center">
                               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                {user.role}
+                                {user.role === "Assistant" ? "Delegate" : user.role}
                               </span>
                             </td>
                             <td className="px-6 py-5 text-center">
@@ -332,14 +337,20 @@ const FacultyAdminUsers = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                               </span>
                             </td>
                             <td className="px-6 py-5">
-                              <div className="flex justify-center gap-3">
+                              <div className="grid grid-cols-1 xl:grid-cols-2 justify-center gap-2 items-stretch w-full">
+                                <button
+                                  onClick={() => handleImpersonateClick(user.user_id)}
+                                  className="btn btn-accent btn-sm text-white min-w-full text-xs lg:text-md"
+                                >
+                                  Impersonate
+                                </button>
                                 <button
                                   onClick={() => handleManageClick(user.user_id)}
-                                  className="btn btn-primary btn-sm text-white"
+                                  className="btn btn-primary btn-sm text-white min-w-full text-xs lg:text-md"
                                 >
-                                  Manage
+                                  Quick Actions
                                 </button>
-                                <button className="btn btn-error btn-sm text-white">Remove</button>
+                                {/* <button className="btn btn-error btn-sm text-white">Remove</button> */}
                               </div>
                             </td>
                           </tr>
