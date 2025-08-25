@@ -60,13 +60,34 @@ def cleanData(df):
     
     # Apply encoding fixes to text columns
     df["location"] = df["location"].apply(fix_encoding)
+    df["division"] = df["Division"].fillna('').str.strip()
+    df['medical_program'] = df['medical_program'].fillna('').str.strip()
     
+    df['health_authority'] = df['health_authority'].fillna('').str.strip()
+    df['role'] = df['role'].fillna('').str.strip()
+
+    # Map health authority entries to custom system values
+    health_authority_map = {
+        'PHC': 'Providence Health Care',
+        'PHSA': 'Provincial Health Services Authority',
+        'VCH': 'Vancouver Coastal Health',
+        'FHA': 'Fraser Health Authority',
+        'VCH/FHA': 'VCH/FHA',
+        'VIHA': 'Island Health Authority',
+        'IHA': 'Interior Health Authority',
+        'NHA': 'Northern Health Authority',
+        # Add more mappings as needed
+    }
+    def map_health_authority(val):
+        return health_authority_map.get(val, val)
+    df['health_authority'] = df['health_authority'].apply(map_health_authority)
+
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     
     # Keep only relevant columns
-    df = df[["employee_id", "job_profile", "business_title", "type", "location"]]
-    
+    df = df[["employee_id", "job_profile", "business_title", "type", "location", "division", "medical_program", "health_authority", "role"]]
+
     return df
 
 def getUserMapping(cursor, employee_ids):
@@ -139,8 +160,8 @@ def structureAffiliationsData(df, user_mapping):
             'percent': '',  # Not provided in CSV, will be empty
             'location': row['location'],
             'additional_info': {
-                'division': '',
-                'program': '',
+                'division': row['division'] if row['type'].lower() == 'full time' else '',
+                'program': row['medical_program'] if row['type'].lower() == 'full time' else '',
                 'start': '',
                 'end': ''
             }
@@ -160,6 +181,24 @@ def structureAffiliationsData(df, user_mapping):
         full_time_appointments = appointments['full_time']
         part_time_appointments = appointments['part_time']
         
+        hospital_affiliations = []
+        # Find the employee_id for this user_id
+        employee_id_for_user = None
+        for emp_id, info in user_mapping.items():
+            if info['user_id'] == user_id:
+                employee_id_for_user = emp_id
+                break
+        if employee_id_for_user:
+            for _, row in df[df['employee_id'] == employee_id_for_user].iterrows():
+                if row['health_authority']:
+                    hospital_affiliations.append({
+                        'authority': row['health_authority'],
+                        'hospital': '',
+                        'role': row['role'],
+                        'start': '',
+                        'end': ''
+                    })
+        
         # Initialize user's affiliations
         affiliations_data[user_id] = {
             'user_id': user_id,
@@ -168,7 +207,7 @@ def structureAffiliationsData(df, user_mapping):
             'primary_unit': {},
             'joint_units': [],
             'research_affiliations': [],
-            'hospital_affiliations': []
+            'hospital_affiliations': hospital_affiliations
         }
         
         # Handle full-time appointments
@@ -267,7 +306,6 @@ def storeData(affiliations_data, connection, cursor, errors, rows_processed, row
                     json.dumps(user_data['hospital_affiliations']),
                     user_id,
                 ))
-                print(f"Updated affiliations for user {user_id}")
             else:
                 # Insert new record
                 query = """
@@ -285,7 +323,6 @@ def storeData(affiliations_data, connection, cursor, errors, rows_processed, row
                     json.dumps(user_data['research_affiliations']),
                     json.dumps(user_data['hospital_affiliations'])
                 ))
-                print(f"Inserted new affiliations for user {user_id}")
             
             rows_added_to_db += 1
             
@@ -350,7 +387,6 @@ def lambda_handler(event, context):
                 'error': str(e)
             }
         print("Data loaded successfully.")
-        print(f"Loaded {len(df)} rows with columns: {list(df.columns)}")
 
         # Validate required columns
         required_columns = ['employee_id', 'job_profile', 'business_title', 'type', 'location']
@@ -365,7 +401,6 @@ def lambda_handler(event, context):
         # Clean the DataFrame
         df = cleanData(df)
         print("Data cleaned successfully.")
-        print(df.head().to_string())
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)

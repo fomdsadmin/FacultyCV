@@ -20,4 +20,23 @@ ALTER TABLE user_connections
 ADD COLUMN IF NOT EXISTS assistant_username VARCHAR DEFAULT '';
 -- END
 
-    
+-- August 25th : to be done
+update university_info
+set value = 'Fraser Health Authority'
+where value = 'Fraser Health'
+
+update university_info
+set value = 'Interior Health Authority'
+where value = 'Interior Health'
+
+update university_info
+set value = 'Island Health Authority'
+where value = 'Island Health'
+
+update university_info
+set value = 'Northern Health Authority'
+where value = 'Northern Health'
+
+INSERT INTO university_info (type, value)
+VALUES ('Authority', 'VCH/FHA')
+-- END
