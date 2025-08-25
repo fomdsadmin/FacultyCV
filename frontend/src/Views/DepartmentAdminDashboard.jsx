@@ -10,17 +10,11 @@ import {
   getDepartmentCVData,
   getDepartmentAffiliations,
 } from "../graphql/graphqlHelpers.js";
+import { useAdmin } from "Contexts/AdminContext.jsx";
 
 const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
-  const [loading, setLoading] = useState(false);
-  const [userCounts, setUserCounts] = useState({
-    total_count: 0,
-    faculty_count: 0,
-    assistant_count: 0,
-    dept_admin_count: 0,
-    admin_count: 0,
-    faculty_admin_count: 0,
-  });
+  const { loading, setLoading, allUsersCount, departmentAffiliations, allDataSections } = useAdmin();
+  const [userCounts, setUserCounts] = useState(allUsersCount);
   const [journalPublications, setJournalPublications] = useState([]);
   const [otherPublications, setOtherPublications] = useState([]);
   const [grants, setGrants] = useState([]);
@@ -32,34 +26,30 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
   const [affiliationsData, setAffiliationsData] = useState([]);
   const [showAllRanks, setShowAllRanks] = useState(false);
 
-  // Consolidated data loading
   useEffect(() => {
-    loadAllData();
-  }, [department]);
+    setAffiliationsData(departmentAffiliations);
+    setUserCounts(allUsersCount);
+  }, [departmentAffiliations, allUsersCount]);
+
+
+  useEffect(() => {
+    if (allDataSections && allDataSections.length > 0) {
+      loadAllData();
+    }
+  }, [allDataSections]);
 
   const loadAllData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch all basic data in parallel
-      department = department.trim() || "";
-      const [userCounts, dataSections, affiliations] = await Promise.all([
-        department === "All" ? getAllUsersCount() : getAllUsersCount(department, ""),
-        getAllSections(),
-        getDepartmentAffiliations(department),
-      ]);
-
-      setUserCounts(userCounts);
-      setAffiliationsData(affiliations);
       // setTotalCVsGenerated(generatedCVs);
-
       // Fetch CV data
-      await fetchAllUserCVData(dataSections);
+      await fetchAllUserCVData(allDataSections);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
-  }, [department]);
+  }, [allDataSections]);
 
   const fetchAllUserCVData = useCallback(
     async (dataSections) => {

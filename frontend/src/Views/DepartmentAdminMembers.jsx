@@ -7,10 +7,12 @@ import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import { getAllUsers, getDepartmentAffiliations } from "../graphql/graphqlHelpers.js";
 import ManageUser from "Components/ManageUser.jsx";
 import { useAuditLogger, AUDIT_ACTIONS } from "Contexts/AuditLoggerContext.jsx";
+import { useAdmin } from "../Contexts/AdminContext.jsx";
 
 const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [affiliations, setAffiliations] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const params = useParams();
@@ -21,6 +23,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
   const { logAction } = useAuditLogger();
+  const { allUsers, departmentAffiliations } = useAdmin();
 
   // Helper functions for base64 encoding/decoding
   const encodeId = (id) => {
@@ -39,14 +42,22 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   };
 
   useEffect(() => {
+    setUsers(allUsers);
+  }, [allUsers]);
+
+  useEffect(() => {
+    setAffiliations(departmentAffiliations);
+  }, [departmentAffiliations]);
+
+  useEffect(() => {
     fetchAllUsers();
-  }, [userInfo, department]);
+  }, [users, userInfo]);
 
   // Ensure activeUser is set when users or params.userId changes
   useEffect(() => {
-    if (params.userId && users.length > 0) {
+    if (params.userId && filteredUsers.length > 0) {
       const decodedId = decodeId(params.userId);
-      const foundUser = users.find((user) => user.user_id === decodedId);
+      const foundUser = filteredUsers.find((user) => user.user_id === decodedId);
       if (foundUser) {
         setActiveUser(foundUser);
       } else {
@@ -55,13 +66,11 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     } else {
       setActiveUser(null);
     }
-  }, [users, params.userId]);
+  }, [filteredUsers, params.userId]);
 
   async function fetchAllUsers() {
     setLoading(true);
     try {
-      const [users, affiliationsData] = await Promise.all([getAllUsers(), getDepartmentAffiliations(department)]);
-
       let filteredUsers;
       if (department === "All") {
         // Show all users except Admin users
@@ -69,18 +78,13 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
       } else {
         filteredUsers = users.filter(
           (user) =>
-            (user.primary_department === department ||
-              user.secondary_department === department ||
-              user.role === `Admin-${department}` ||
-              user.role === "Assistant") &&
+            (user.primary_department === department || user.role.includes(`Admin-${department}`)) &&
             user.role !== "Admin"
         );
       }
-
-      setUsers(filteredUsers);
-      setAffiliations(affiliationsData);
+      setFilteredUsers(filteredUsers);
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
     setLoading(false);
   }
@@ -143,7 +147,9 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   };
 
   // All unique roles for tabs and filters (excluding Admin)
-  const filters = Array.from(new Set(users.map((user) => user.role === "Assistant" ? "Delegate" : user.role))).filter((role) => role !== "Admin");
+  const filters = Array.from(new Set(filteredUsers.map((user) => (user.role === "Assistant" ? "Delegate" : user.role)))).filter(
+    (role) => role !== "Admin"
+  );
 
   // Tab bar for roles (copied and adapted from Sections.jsx)
   const UserTabs = ({ filters, activeFilter, onSelect }) => (
@@ -154,13 +160,15 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         }`}
         onClick={() => onSelect(null)}
       >
-        All ({users.length})
+        All ({filteredUsers.length})
       </button>
       {[...filters]
         .sort((a, b) => a.localeCompare(b))
         .map((filter) => {
-          // Count users for this tab, mapping 'Delegate' back to 'Assistant' for counting
-          const count = users.filter(u => (filter === "Delegate" ? u.role === "Assistant" : u.role === filter)).length;
+          // Count filteredUsers for this tab, mapping 'Delegate' back to 'Assistant' for counting
+          const count = filteredUsers.filter((u) =>
+            filter === "Delegate" ? u.role === "Assistant" : u.role === filter
+          ).length;
           return (
             <button
               key={filter}
@@ -184,7 +192,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     setActiveFilters([]); // Optionally clear filters when switching tabs
   };
 
-  const searchedUsers = users
+  const searchedUsers = filteredUsers
     .filter((user) => {
       const firstName = user.first_name || "";
       const lastName = user.last_name || "";
@@ -214,26 +222,26 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     });
 
   const handleManageClick = (value) => {
-    const user = users.filter((user) => user.user_id === value);
+    const user = filteredUsers.filter((user) => user.user_id === value);
     setActiveUser(user[0]);
     const encodedId = encodeId(value);
     navigate(`/department-admin/members/${encodedId}/actions`);
   };
 
   const handleImpersonateClick = async (value) => {
-    const user = users.find((user) => user.user_id === value);
+    const user = filteredUsers.find((user) => user.user_id === value);
 
     // Log the impersonation action with the impersonated user details
-          await logAction(AUDIT_ACTIONS.IMPERSONATE, {
-            impersonated_user: {
-              user_id: user.user_id,
-              first_name: user.first_name,
-              last_name: user.last_name,
-              email: user.email,
-              role: user.role
-            }
-          });
-    
+    await logAction(AUDIT_ACTIONS.IMPERSONATE, {
+      impersonated_user: {
+        user_id: user.user_id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+
     if (user) {
       startManagingUser(user);
       navigate("/faculty/home");

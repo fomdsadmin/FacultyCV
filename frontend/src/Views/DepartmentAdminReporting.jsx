@@ -7,6 +7,7 @@ import "../CustomStyles/scrollbar.css";
 import { useNotification } from "../Contexts/NotificationContext.jsx";
 // No longer importing static config - we'll generate dynamically from sections
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
+import { useAdmin } from "Contexts/AdminContext.jsx";
 
 // Config: map section titles to custom display names
 // To hide a section entirely, add its title to EXCLUDED_SECTION_TITLES,
@@ -122,16 +123,19 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(""); // for super admin
   const [allDepartments, setAllDepartments] = useState([]); // for super admin
-  const [allUsers, setAllUsers] = useState([]); // store all users for filtering
+  const [users, setUsers] = useState([]); // store all users for filtering
   const [userSearchTerm, setUserSearchTerm] = useState(""); // New state for user search
   const [dropdownOpen, setDropdownOpen] = useState(false); // Add this state to manage the dropdown visibility
   const [selectAll, setSelectAll] = useState(true); // Track if all users are selected
   const [dataSections, setDataSections] = useState([]); // Store data sections
+  const [parsedDataSections, setParsedDataSections] = useState([]); // Store parsed data sections
   const [availableReportTypes, setAvailableReportTypes] = useState([]); // Dynamic report types from sections
   const [reportSearchTerm, setReportSearchTerm] = useState(""); // Search for report templates
   const { setNotification } = useNotification();
 
   const { logAction } = useAuditLogger();
+
+  const { allUsers, allDataSections } = useAdmin();
 
   // Helper function to create a display name from section title, with optional exclusion
   const createDisplayName = (title, sectionId) => {
@@ -229,29 +233,29 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
           : ['First Name', 'Last Name', ...rt.csvOverride.fieldMappings.map(m => m.header)];
         return { headers, fieldMappings: rt.csvOverride.fieldMappings };
       }
-      const sections = dataSections.filter(s => rt.combinedSectionIds.includes(s.data_section_id));
+      const sections = parsedDataSections.filter(s => rt.combinedSectionIds.includes(s.data_section_id));
       return generateCombinedCsvConfig(sections);
     }
     // Single section
-    const section = dataSections.find(s => s.data_section_id === sectionOrCombinedId);
+    const section = parsedDataSections.find(s => s.data_section_id === sectionOrCombinedId);
     return section ? generateCsvConfig(section) : null;
   };
 
+  useEffect(() => {
+    setUsers(allUsers)
+  }, [allUsers]);
+
+  useEffect(() => {
+    setDataSections(allDataSections)
+  }, [allDataSections]);
 
   useEffect(() => {
     // Initial load: all users and data sections
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const [users, sections] = await Promise.all([
-          getAllUsers(),
-          getAllSections()
-        ]);
-        
-        setAllUsers(users);
-        
         // Parse sections and filter out archived ones
-        const parsedSections = sections
+        const parsedSections = dataSections
           .filter(section => !section.archive) // Only non-archived sections
           .map(section => ({
             ...section,
@@ -260,8 +264,8 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
               : section.attributes
           }))
           .sort((a, b) => a.title.localeCompare(b.title));
-        
-        setDataSections(parsedSections);
+
+        setParsedDataSections(parsedSections);
 
         // Generate dynamic report types from sections, honoring exclusions
         const singleReportTypes = parsedSections.flatMap(section => {
@@ -328,19 +332,18 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
       setLoading(false);
     };
     fetchInitialData();
-    // eslint-disable-next-line
-  }, []);
+  }, [dataSections]);
 
   // Filter department users when selectedDepartment or allUsers changes (for super admin)
   useEffect(() => {
-    if (userInfo && userInfo.role === "Admin" && allUsers.length > 0 && selectedDepartment) {
+    if (userInfo && userInfo.role === "Admin" && users.length > 0 && selectedDepartment) {
       let usersInDepartment;
       if (selectedDepartment === "All") {
-        usersInDepartment = allUsers.filter(
+        usersInDepartment = users.filter(
           (user) => user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-")
         );
       } else {
-        usersInDepartment = allUsers.filter(
+        usersInDepartment = users.filter(
           (user) =>
             user.primary_department === selectedDepartment &&
             (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
@@ -353,13 +356,13 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
       setDownloadUrl(null);
     }
     // eslint-disable-next-line
-  }, [selectedDepartment, allUsers]);
+  }, [selectedDepartment, users]);
 
   // For department admin, filter users once after allUsers is loaded
   useEffect(() => {
-    if (userInfo && userInfo.role && userInfo.role.startsWith("Admin-") && allUsers.length > 0) {
+    if (userInfo && userInfo.role && userInfo.role.startsWith("Admin-") && users.length > 0) {
       const departmentName = userInfo.role.split("-")[1];
-      const usersInDepartment = allUsers.filter(
+      const usersInDepartment = users.filter(
         (user) =>
           user.primary_department === departmentName &&
           (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
@@ -370,7 +373,7 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
       setSelectAll(true);
     }
     // eslint-disable-next-line
-  }, [allUsers, userInfo]);
+  }, [users, userInfo]);
 
   // When isDepartmentWide changes, update selectedUsers accordingly
   useEffect(() => {
@@ -512,7 +515,7 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
     if (rt.combinedSectionIds && rt.combinedSectionIds.length > 0) {
       try {
         const fetches = rt.combinedSectionIds.map(async sid => {
-          const section = dataSections.find(s => s.data_section_id === sid);
+          const section = parsedDataSections.find(s => s.data_section_id === sid);
           const resp = await getDepartmentCVData(sid, departmentForQuery, 'All', userIdsForQuery);
           return { section, data: resp.data || [] };
         });
@@ -526,7 +529,7 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
     }
 
     // Single section
-    const section = dataSections.find(s => s.data_section_id === sectionOrCombinedId);
+    const section = parsedDataSections.find(s => s.data_section_id === sectionOrCombinedId);
     if (!section) {
       throw new Error(`Unknown section: ${sectionOrCombinedId}`);
     }
