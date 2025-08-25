@@ -41,7 +41,13 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [notification, setNotification] = useState(""); // <-- Add this
+  const [notification, setNotification] = useState("");
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const totalPages = Math.ceil(fieldData.length / pageSize);
+  const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const { userInfo } = useApp();
   const { logAction } = useAuditLogger();
@@ -62,47 +68,36 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
 
       const filteredData = parsedData.filter((entry) => {
         const [field1, field2] = rankFields(entry.data_details);
-
         return (
-          (field1 &&
-            typeof field1 === "string" &&
-            field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 &&
-            typeof field2 === "string" &&
-            field2.toLowerCase().includes(searchTerm.toLowerCase()))
+          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
 
       const rankedData = filteredData.map((entry) => {
         const [field1, field2] = rankFields(entry.data_details);
-
         const findKeyForField = (field) => {
           return Object.keys(entry.data_details).find(
             (key) => entry.data_details[key] === field
           );
         };
-
         const key1 = findKeyForField(field1);
         const key2 = findKeyForField(field2);
-
         return { ...entry, field1, field2, key1, key2 };
       });
 
       const extractYear = (dateStr) => {
         if (!dateStr || typeof dateStr !== "string") return null;
         if (dateStr.toLowerCase().includes("current")) {
-          return Number.POSITIVE_INFINITY; // Use Infinity to ensure "Current" is always sorted higher
+          return Number.POSITIVE_INFINITY;
         }
         const years = dateStr.match(/\b\d{4}\b/g);
-        return years ? Number.parseInt(years[years.length - 1]) : null; // Use the last year in the string
+        return years ? Number.parseInt(years[years.length - 1]) : null;
       };
 
       rankedData.sort((a, b) => {
         const isDateOrYear = (key) =>
-          key &&
-          (key.toLowerCase().includes("date") ||
-            key.toLowerCase().includes("year"));
-
+          key && (key.toLowerCase().includes("date") || key.toLowerCase().includes("year"));
         const dateA = isDateOrYear(a.key1)
           ? extractYear(a.field1)
           : isDateOrYear(a.key2)
@@ -113,7 +108,6 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
           : isDateOrYear(b.key2)
           ? extractYear(b.field2)
           : null;
-
         if (dateA !== null && dateB !== null) {
           return dateB - dateA;
         } else if (dateA !== null) {
@@ -125,6 +119,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
       });
 
       setFieldData(rankedData);
+      setCurrentPage(1); // Reset to first page on new data
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -195,17 +190,28 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     fetchData();
   }, [searchTerm, section.data_section_id]);
 
+  // Reset to first page when search term or page size changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, pageSize]);
+
   // Context value
   const value = {
     // State
     searchTerm,
     setSearchTerm,
     fieldData,
+    paginatedData,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalPages,
     selectedEntry,
     isModalOpen,
     isNew,
     loading,
-    notification, // <-- Provide notification
+    notification,
 
     // Section data
     section,

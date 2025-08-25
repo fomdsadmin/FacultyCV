@@ -33,11 +33,11 @@ export const AppProvider = ({ children }) => {
   const [userProfileMatches, setUserProfileMatches] = useState([]);
   const [doesUserHaveAProfileInDatabase, setDoesUserHaveAProfileInDatabase] = useState(false);
 
-
   // Role management state
   const [actualRole, setActualRole] = useState(""); // User's actual assigned role (permissions)
   const [currentViewRole, setCurrentViewRole] = useState(""); // Current active view role
-  
+  const [previousViewRole, setPreviousViewRole] = useState(""); // Previous view role before switching
+
   // Delegate management state
   const [managedUser, setManagedUser] = useState(null); // User being managed by delegate
   const [isManagingUser, setIsManagingUser] = useState(false); // Flag for when delegate is managing someone
@@ -266,10 +266,9 @@ export const AppProvider = ({ children }) => {
   // Get available roles based on user's permission level
   const getAvailableRoles = () => {
     // For delegates, use assistantUserInfo when not managing, userInfo when managing
-    const effectiveUser = assistantUserInfo && assistantUserInfo.role === "Assistant" && !isManagingUser
-      ? assistantUserInfo
-      : userInfo;
-      
+    const effectiveUser =
+      assistantUserInfo && assistantUserInfo.role === "Assistant" && !isManagingUser ? assistantUserInfo : userInfo;
+
     if (!effectiveUser || !effectiveUser.role) return [];
 
     const isAdmin = effectiveUser.role === "Admin";
@@ -298,7 +297,11 @@ export const AppProvider = ({ children }) => {
       ];
     } else if (isDepartmentAdmin) {
       roles = [
-        { label: `Department Admin - ${department}`, value: `Admin-${department}`, route: "/department-admin/dashboard" },
+        {
+          label: `Department Admin - ${department}`,
+          value: `Admin-${department}`,
+          route: "/department-admin/dashboard",
+        },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
       ];
     } else if (isFacultyAdmin) {
@@ -311,7 +314,12 @@ export const AppProvider = ({ children }) => {
         {
           label: effectiveUser.role === "Assistant" ? "Delegate" : effectiveUser.role,
           value: effectiveUser.role,
-          route: effectiveUser.role === "Faculty" ? "/faculty/home" : effectiveUser.role === "Assistant" ? "/delegate/home" : "/home",
+          route:
+            effectiveUser.role === "Faculty"
+              ? "/faculty/home"
+              : effectiveUser.role === "Assistant"
+              ? "/delegate/home"
+              : "/home",
         },
       ];
     }
@@ -323,14 +331,14 @@ export const AppProvider = ({ children }) => {
           label: `Faculty View - ${managedUser.first_name} ${managedUser.last_name}`,
           value: "Faculty",
           route: "/faculty/home",
-          isManaging: true
+          isManaging: true,
         });
       } else if (hasActiveConnections && !isManagingUser) {
         roles.push({
           label: "Faculty View",
-          value: "Faculty", 
+          value: "Faculty",
           route: "/faculty/home",
-          isManaging: false
+          isManaging: false,
         });
       }
     }
@@ -365,29 +373,42 @@ export const AppProvider = ({ children }) => {
     setManagedUser(userToManage);
     setIsManagingUser(true);
     setUserInfo(userToManage);
+    setPreviousViewRole(currentViewRole);
     setCurrentViewRole("Faculty");
   };
 
   // Stop managing a user (return to delegate view)
   const stopManagingUser = () => {
     if (isManagingUser && originalUserInfo) {
-      setUserInfo(originalUserInfo);
-      setManagedUser(null);
-      setIsManagingUser(false);
-      setOriginalUserInfo(null);
-      setCurrentViewRole(originalUserInfo.role || "Assistant");
-      // Navigate to correct home page for original role
-      if (originalUserInfo.role && originalUserInfo.role.startsWith("Admin-")) {
-        window.location.href = "/department-admin/dashboard";
-      } else if (originalUserInfo.role && originalUserInfo.role.startsWith("FacultyAdmin-")) {
-        window.location.href = "/faculty-admin/home";
-      } else if (originalUserInfo.role === "Admin") {
-        window.location.href = "/admin/home";
-      } else if (originalUserInfo.role === "Assistant") {
-        window.location.href = "/delegate/home";
+      console.log("Stopped managing user, reverted to:", originalUserInfo);
+      // Only navigate, do not update view role before navigation
+      if (previousViewRole && previousViewRole.startsWith("Admin-")) {
+        window.location.href = "/department-admin/members";
+        return;
+      } else if (previousViewRole && previousViewRole === "Admin") {
+        if (currentViewRole && currentViewRole.startsWith("Admin-")) {
+          window.location.href = "/department-admin/members";
+          return;
+        } else {
+          window.location.href = "/admin/users";
+          return;
+        }
+      } else if (previousViewRole && previousViewRole.startsWith("FacultyAdmin-")) {
+        window.location.href = "/faculty-admin/users";
+        return;
+      } else if (previousViewRole && previousViewRole === "Assistant") {
+        window.location.href = "/delegate/connections";
+        return;
       } else {
-        window.location.href = "/faculty/home";
+        window.location.href = "/auth";
+        return;
       }
+      // If needed, set view role and user info after navigation (not before)
+      // setCurrentViewRole(previousViewRole);
+      setIsManagingUser(false);
+      setManagedUser(null);
+      setOriginalUserInfo(null);
+      setUserInfo(originalUserInfo);
     }
   };
 

@@ -22,18 +22,19 @@ const EditSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }) 
     const data_type = type;
     setUpdating(true);
     try {
-      console.log("Updating section with data:", {
-        title,
-        data_type,
-        description,
-        info,
-      });
+      // console.log("Updating section with data:", {
+      //   title,
+      //   data_type,
+      //   description,
+      //   info,
+      // });
       await editSectionDetails(section.data_section_id, title, data_type, description, info);
 
       // Log the section update action
       await logAction(AUDIT_ACTIONS.EDIT_SECTION_DETAILS);
 
       await getDataSections();
+      console.log("Section updated successfully:", section.title);
       setIsModalOpen(false);
       onBack();
     } catch (err) {

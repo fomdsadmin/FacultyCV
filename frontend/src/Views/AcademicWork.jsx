@@ -305,7 +305,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                 <h1 className="text-left mb-4 text-4xl font-bold text-zinc-600 p-2 ml-2">Academic Work</h1>
                 {/* Search bar for filtering sections */}
                 <div className="mb-4 flex justify-start items-left ml-4">
-                  <label className="input input-bordered flex items-left gap-2 flex-1 max-w-xl">
+                  <label className="input input-bordered flex items-left gap-2 flex-1">
                     <input
                       type="text"
                       className="grow"
@@ -345,8 +345,8 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                 ))}
               </div>
             ) : (
-              <div className="!overflow-auto !h-full custom-scrollbar max-w-6xl w-full mx-auto">
-                {activeSection.title === "Publications" && (
+              <div className="!overflow-auto !h-full custom-scrollbar w-full mx-auto">
+                {activeSection.title === "Journal Publications" && (
                   <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {activeSection.title.includes("Patents") && (
@@ -356,7 +356,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                   <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {!(
-                  activeSection.title === "Publications" ||
+                  activeSection.title === "Journal Publications" ||
                   activeSection.title.includes("Patents") ||
                   activeSection.title.includes("Research or Equivalent Grants")
                 ) && <GenericSection user={userInfo} section={activeSection} onBack={handleBack} />}

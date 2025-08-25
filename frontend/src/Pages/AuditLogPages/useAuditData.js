@@ -85,10 +85,12 @@ export const useAuditData = (userInfo, isPersonalView = false) => {
 
             // personal view specific params
             if (isPersonalView) {
+                // faculty, department admin
                 requestParams.logged_user_id = userInfo.user_id;
                 requestParams.email = userInfo.email;
             } else {
                 // admin view specific params
+                // faculty admin, super admin
                 if (emailFilter) requestParams.email = emailFilter;
                 if (firstNameFilter) requestParams.first_name = firstNameFilter;
                 if (lastNameFilter) requestParams.last_name = lastNameFilter;
@@ -97,12 +99,9 @@ export const useAuditData = (userInfo, isPersonalView = false) => {
             const response = await getAuditViewData(requestParams);
             let rawData = Array.isArray(response) ? response : (response.records || []);
 
-            // console.log('Raw data received:', rawData.length, 'records');
-
             // Apply impersonation filter on frontend - create new array, don't mutate
             let filteredData = rawData;
             if (impersonationFilter) {
-                // console.log('Applying impersonation filter:', impersonationFilter);
                 const originalLength = rawData.length;
 
                 filteredData = rawData.filter(record => {

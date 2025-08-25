@@ -10,6 +10,7 @@ import AddUserModal from "../Components/AddUserModal.jsx";
 import ImportUserModal from "../Components/ImportUserModal.jsx";
 import PendingRequestsModal from "../Components/PendingRequestsModal.jsx";
 import { getAllUsers, removeUser, getDepartmentAffiliations } from "../graphql/graphqlHelpers.js";
+import { useAuditLogger, AUDIT_ACTIONS} from "../Contexts/AuditLoggerContext.jsx";
 
 // Custom Modal Component
 const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = "confirm" }) => {
@@ -63,6 +64,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
+
+  const { logAction } = useAuditLogger();
 
   useEffect(() => {
     fetchAllUsers();
@@ -159,7 +162,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   };
 
   // All unique roles for tabs and filters
-  const filters = Array.from(new Set(users.map((user) => user.role)));
+  const filters = Array.from(new Set(users.map((user) => user.role === "Assistant" ? "Delegate" : user.role)));
 
   // Tab bar for roles (copied and adapted from DepartmentAdminUsers)
   const UserTabs = ({ filters, activeFilter, onSelect }) => (
@@ -175,7 +178,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
       {[...filters]
         .sort((a, b) => a.localeCompare(b))
         .map((filter) => {
-          const count = users.filter(u => u.role === filter).length;
+          // Count users for this tab, mapping 'Delegate' back to 'Assistant' for counting
+          const count = users.filter(u => (filter === "Delegate" ? u.role === "Assistant" : u.role === filter)).length;
           return (
             <button
               key={filter}
@@ -202,9 +206,21 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     setActiveUser(user[0]);
   };
 
-  const handleImpersonateClick = (value) => {
+  const handleImpersonateClick = async (value) => {
     const user = users.find((user) => user.user_id === value);
     if (user) {
+      
+      // Log the impersonation action with the impersonated user details
+      await logAction(AUDIT_ACTIONS.IMPERSONATE, {
+        impersonated_user: {
+          user_id: user.user_id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          role: user.role
+        }
+      });
+
       startManagingUser(user);
       navigate("/faculty/home");
     }
@@ -221,7 +237,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         lastName.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
         email.toLowerCase().startsWith(searchTerm.toLowerCase());
 
-      const matchesTab = !activeTab || user.role === activeTab;
+      // Fix: If activeTab is 'Delegate', match users with role 'Assistant'
+      const matchesTab = !activeTab || (activeTab === "Delegate" ? user.role === "Assistant" : user.role === activeTab);
       const matchesFilter = activeFilters.length === 0 || !activeFilters.includes(user.role);
 
       return matchesSearch && matchesTab && matchesFilter;
@@ -417,7 +434,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                             </td>
                             <td className="px-4 py-5 text-center w-1/6">
                               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                {user.role}
+                                {user.role === "Assistant" ? "Delegate" : user.role}
                               </span>
                             </td>
                             <td className="px-4 py-5 text-center w-1/6">

@@ -4,7 +4,7 @@ import { AUDIT_ACTIONS, ACTION_CATEGORIES } from '../Contexts/AuditLoggerContext
 
 const AuditFilters = ({
     isPersonalView = false,
-    isFacultyUser = false,
+    isFacultyUser = false, // will show faculty-specific actions only
     filters,
     onFilterChange,
     onClearFilters

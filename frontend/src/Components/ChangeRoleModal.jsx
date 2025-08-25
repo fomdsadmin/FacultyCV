@@ -18,6 +18,8 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
     currentUser.role.startsWith("FacultyAdmin-") ? currentUser.role.split("FacultyAdmin-")[1] : ""
   );
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(userInfo.role.startsWith("Admin-") ? true : false);
+  const [isCurrentUserDepartmentAdmin, setIsCurrentUserDepartmentAdmin] = useState(currentUser.role.startsWith("Admin-") ? true : false);
+
   const [isFacultyAdmin, setIsFacultyAdmin] = useState(userInfo.role.startsWith("FacultyAdmin-") ? true : false);
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
@@ -28,7 +30,7 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
   }, []);
 
   useEffect(() => {
-    if (isDepartmentAdmin) {
+    if (isCurrentUserDepartmentAdmin) {
       handleRoleChange({ target: { value: "Admin-" } });
     }
   }, [selectedDepartment]);
@@ -149,7 +151,7 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
   const handleRoleChange = (event) => {
     const selectedRole = event.target.value;
     setNewRole(selectedRole);
-    setIsDepartmentAdmin(selectedRole === "Admin-");
+    setIsCurrentUserDepartmentAdmin(selectedRole === "Admin-");
     setIsFacultyAdmin(selectedRole === "FacultyAdmin-");
     const updatedRole =
       selectedRole === "Admin-"
@@ -188,10 +190,12 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
             onChange={handleRoleChange}
           >
             {/* If user is Admin, show all options */}
+            {console.log("Current View:", currentViewRole)}
+            {console.log("user info role:", userInfo.role, currentUser.role)}
             {currentViewRole === "Admin" ? (
               <>
                 <option value="Faculty">Faculty</option>
-                <option value="Assistant">Assistant</option>
+                <option value="Assistant">Delegate</option>
                 <option value="Admin-">Department Admin</option>
                 <option value="FacultyAdmin-">Faculty Admin</option>
                 <option value="Admin">Admin</option>
@@ -199,13 +203,13 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
             ) : currentViewRole.startsWith("Admin-") ? (
               <>
                 <option value="Faculty">Faculty</option>
-                <option value="Assistant">Assistant</option>
+                <option value="Assistant">Delegate</option>
                 <option value="Admin-">Department Admin</option>
               </>
             ) : currentViewRole.startsWith("FacultyAdmin-") ? (
               <>
                 <option value="Faculty">Faculty</option>
-                <option value="Assistant">Assistant</option>
+                <option value="Assistant">Delegate</option>
                 <option value="FacultyAdmin-">Faculty Admin</option>
               </>
             ) : (
@@ -215,7 +219,7 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
             )}
           </select>
 
-          {isDepartmentAdmin && (
+          {isCurrentUserDepartmentAdmin && (
             <div className="department-input">
               <label className="block mt-4">Select department:</label>
               <select
@@ -262,6 +266,8 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
                   ? `Are you sure you want to change the role of this user to Admin-${selectedDepartment}?`
                   : newRole === "FacultyAdmin-" && selectedFaculty !== ""
                   ? `Are you sure you want to change the role of this user to FacultyAdmin-${selectedFaculty}?`
+                  : newRole === "Assistant"
+                  ? `Are you sure you want to change the role of this user to Delegate?`
                   : `Are you sure you want to change the role of this user to ${newRole}?`}
               </p>
               <button

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import PageContainer from './PageContainer.jsx';
-import FacultyMenu from '../Components/FacultyMenu';
+import FacultyMenu from '../Components/FacultyMenu.jsx';
 import AssociatedUser from '../Components/AssociatedUser.jsx';
 import { getUserConnections } from '../graphql/graphqlHelpers.js';
 import { FaSync, FaSearch, FaUserPlus } from 'react-icons/fa';
 
-const Assistants = ({ userInfo, getCognitoUser, toggleViewMode }) => {
+const FacultyDelegates = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [pendingConnections, setPendingConnections] = useState([]);
   const [confirmedConnections, setConfirmedConnections] = useState([]);
@@ -162,4 +162,4 @@ const Assistants = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   );
 }
 
-export default Assistants;
+export default FacultyDelegates;

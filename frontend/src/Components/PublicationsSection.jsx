@@ -4,7 +4,8 @@ import GenericEntry from "../SharedComponents/GenericEntry";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import PermanentEntryModal from "./PermanentEntryModal";
 import PublicationsModal from "./PublicationsModal";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaRegEdit } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import { LuBrainCircuit } from "react-icons/lu";
@@ -155,33 +156,32 @@ const PublicationsSection = ({ user, section, onBack }) => {
     onBack();
   };
 
-  const GenericEntry = ({ field1, field2, data_details, onEdit, onArchive }) => (
-    <div className="entry">
-      <h2>{field1}</h2>
-      <div className="m-2 flex">
-        <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
-          X
-        </button>
-      </div>
-      <p>{field2}</p>
-      <div>{data_details}</div>
-    </div>
-  );
-  const PermanentEntry = ({ field1, field2, data_details, isArchived, onEdit, onArchive }) => (
-    <div className={`entry ${isArchived ? "archived" : ""}`}>
-      <h2>{field1}</h2>
-      <div className="m-2 flex">
-        <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
-          X
-        </button>
-      </div>
-      <p>{field2}</p>
-      <div>{data_details}</div>
-    </div>
-  );
+  // const GenericEntry = ({ field1, field2, data_details, onEdit, onArchive }) => (
+  //   <div className="entry">
+  //     <h2>{field1}</h2>
+  //     <div className="m-2 flex">
+  //       <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
+  //         X
+  //       </button>
+  //     </div>
+  //     <p>{field2}</p>
+  //     <div>{data_details}</div>
+  //   </div>
+  // );
+  // const PermanentEntry = ({ field1, field2, data_details, isArchived, onEdit, onArchive }) => (
+  //   <div className={`entry ${isArchived ? "archived" : ""}`}>
+  //     <h2>{field1}</h2>
+  //     <div className="m-2 flex">
+  //       <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
+  //         X
+  //       </button>
+  //     </div>
+  //     <p>{field2}</p>
+  //     <div>{data_details}</div>
+  //   </div>
+  // );
 
   const renderDataDetails = (details) => {
-    // console.log(details);
     if (!details || typeof details !== "object") return null;
 
     const authorList = Array.isArray(details.author_names) ? details.author_names : [details.author_names];
@@ -194,7 +194,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
     if (details.end_date) {
       formattedDate = details.end_date.trim();
     }
-    
+
     // Map author names, bold the one matching user's scopus_id
     const authorDisplay = authorList.map((name, idx) => {
       if (user.scopus_id && authorIds && authorIds[idx] && String(authorIds[idx]) === String(user.scopus_id)) {
@@ -208,8 +208,10 @@ const PublicationsSection = ({ user, section, onBack }) => {
     });
 
     return (
-      <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
+      <>
+        {details.title && (
+          <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
+        )}
         <p className="text-sm text-gray-700 mb-2">
           {formattedDate}
           {details.volume && (
@@ -239,9 +241,10 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </p>
         )}
 
-        {keywordsList?.length > 0 && keywordsList.some(keyword => keyword && keyword.trim() !== '') && (
+        {keywordsList?.length > 0 && keywordsList.some((keyword) => keyword && keyword.trim() !== "") && (
           <p className="text-sm text-gray-700 mb-1">
-            <span className="font-semibold">Keywords:</span> {keywordsList.filter(keyword => keyword && keyword.trim() !== '').join(", ")}
+            <span className="font-semibold">Keywords:</span>{" "}
+            {keywordsList.filter((keyword) => keyword && keyword.trim() !== "").join(", ")}
           </p>
         )}
 
@@ -265,20 +268,26 @@ const PublicationsSection = ({ user, section, onBack }) => {
           .filter(([key, value]) => {
             // Exclude fields that are already displayed above
             const displayedFields = [
-              'title', 'end_date', 'volume', 'article_number', 'author_names', 
-              'author_ids', 'doi', 'keywords', 'link', 
-              'publication_id',
+              "title",
+              "end_date",
+              "volume",
+              "article_number",
+              "author_names",
+              "author_ids",
+              "doi",
+              "keywords",
+              "link",
+              "publication_id",
             ];
-            return !displayedFields.includes(key) && value && value !== '' && value !== null;
+            return !displayedFields.includes(key) && value && value !== "" && value !== null;
           })
           .map(([key, value]) => (
             <p key={key} className="text-sm text-gray-700 mb-1">
-              <span className="font-semibold">{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span>{' '}
-              {Array.isArray(value) ? value.join(', ') : String(value)}
+              <span className="font-semibold">{key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}:</span>{" "}
+              {Array.isArray(value) ? value.join(", ") : String(value)}
             </p>
           ))}
-        
-      </div>
+      </>
     );
   };
 
@@ -417,51 +426,35 @@ const PublicationsSection = ({ user, section, onBack }) => {
       ) : (
         <div>
           <div>
-            {sortedData.map((entry, index) =>
-              entry.editable ? (
-                <GenericEntry
-                  key={index}
-                  onEdit={() => handleEdit(entry)}
-                  data_details={renderDataDetails(entry.data_details)}
-                  onArchive={() => handleArchive(entry)}
-                />
-              ) : (
-                <GenericEntry
-                  key={index}
-                  onEdit={() => handleEdit(entry)}
-                  data_details={renderDataDetails(entry.data_details)}
-                  onArchive={() => handleArchive(entry)}
-                />
-              )
-            )}
+            {sortedData.map((entry, index) => (
+              <div key={index} className="min-h-8 shadow-glow my-2 px-4 py-4 flex items-center bg-white rounded-lg">
+                <div className="flex-1 w-full">
+                  {renderDataDetails(entry.data_details)}
+                </div>
+                <div className="flex items-center space-x-1">
+                  <button className="btn btn-sm btn-circle btn-ghost" onClick={() => handleEdit(entry)} title="Edit">
+                    <FaRegEdit className="h-5 w-5" />
+                  </button>
+                  <button className="btn btn-sm btn-circle btn-ghost" onClick={() => handleArchive(entry)} title="Delete">
+                    <IoClose className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {isModalOpen &&
-            selectedEntry &&
-            !isNew &&
-            (selectedEntry.editable ? (
-              <EntryModal
-                isNew={false}
-                user={user}
-                section={section}
-                fields={selectedEntry.fields}
-                user_cv_data_id={selectedEntry.data_id}
-                entryType={section.title}
-                fetchData={fetchData}
-                onClose={handleCloseModal}
-              />
-            ) : (
-              <PermanentEntryModal
-                isNew={false}
-                user={user}
-                section={section}
-                fields={selectedEntry.fields}
-                user_cv_data_id={selectedEntry.data_id}
-                entryType={section.title}
-                fetchData={fetchData}
-                onClose={handleCloseModal}
-              />
-            ))}
+          {isModalOpen && selectedEntry && !isNew && (
+            <EntryModal
+              isNew={false}
+              user={user}
+              section={section}
+              fields={selectedEntry.fields}
+              user_cv_data_id={selectedEntry.data_id}
+              entryType={section.title}
+              fetchData={fetchData}
+              onClose={handleCloseModal}
+            />
+          )}
           {isModalOpen && selectedEntry && isNew && (
             <EntryModal
               isNew={true}
@@ -474,20 +467,6 @@ const PublicationsSection = ({ user, section, onBack }) => {
               onClose={handleCloseModal}
             />
           )}
-          {/* // (selectedEntry.editable ? (
-
-            // ) : (
-            //   PermanentEntryModal
-            //     isNew={true}
-            //     user={user}
-            //     section={section}
-            //     fields={selectedEntry.fields}
-            //     user_cv_data_id={selectedEntry.data_id}
-            //     entryType={section.title}
-            //     fetchData={fetchData}
-            //     onClose={handleCloseModal}
-            //   />
-            // ))} */}
           {retrievingData && (
             <PublicationsModal
               user={user}
