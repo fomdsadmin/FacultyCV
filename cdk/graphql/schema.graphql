@@ -8,6 +8,7 @@ type DepartmentAffiliation {
 	last_name: String
 	primary_unit: AWSJSON
 	joint_units: AWSJSON
+	hospital_affiliations: AWSJSON
 }
 
 input AuditViewInput {

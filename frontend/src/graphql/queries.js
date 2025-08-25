@@ -424,6 +424,7 @@ export const getDepartmentAffiliationsQuery = (department) => `
             last_name
             primary_unit
             joint_units
+            hospital_affiliations
         }
     }
 `;

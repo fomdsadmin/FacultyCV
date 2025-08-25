@@ -394,6 +394,34 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
     return data;
   }, [filteredPatents]);
 
+  // Compute hospital affiliations summary
+  const hospitalAffiliationsSummary = useMemo(() => {
+    let total = 0;
+    const authorityCounts = {};
+    affiliationsData.forEach((aff) => {
+      let hospitalAffiliations = aff.hospital_affiliations;
+      if (typeof hospitalAffiliations === "string") {
+        try {
+          hospitalAffiliations = JSON.parse(hospitalAffiliations);
+        } catch {
+          hospitalAffiliations = [];
+        }
+      }
+      if (Array.isArray(hospitalAffiliations)) {
+        hospitalAffiliations.forEach((hosp) => {
+          total++;
+          const authority = hosp.authority || "Unknown";
+          authorityCounts[authority] = (authorityCounts[authority] || 0) + 1;
+        });
+      }
+    });
+    // Sort authorities by count descending
+    const sortedAuthorities = Object.entries(authorityCounts)
+      .map(([authority, count]) => ({ authority, count }))
+      .sort((a, b) => b.count - a.count);
+    return { total, sortedAuthorities };
+  }, [affiliationsData]);
+
   const SummaryCards = () => (
     <>
       {/* User Statistics Row */}
@@ -408,7 +436,7 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {/* Faculty Ranks Section - First */}
         <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+          <h3 className="text-lg font-semibold text-gray-800 m-2 flex items-center">
             <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM9 17a4 4 0 004-4H5a4 4 0 004 4z" />
             </svg>
@@ -417,68 +445,66 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
           <div className="space-y-4">
             {/* Primary Units Section */}
             {facultyRanksCounts.allRanks.length > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+              <>
                 {/* Totals Header */}
-                <div className="mb-4">
+                <div className="mb-4 m-2">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
-                    <div className="bg-blue-100 border border-blue-300 rounded-md p-3 text-center">
-                      <div className="text-lg font-bold text-blue-800">{facultyRanksCounts.primaryTotal}</div>
-                      <div className="text-xs text-blue-600">Primary Appointments</div>
-                    </div>
-                    <div className="bg-indigo-100 border border-indigo-300 rounded-md p-3 text-center">
-                      <div className="text-lg font-bold text-indigo-800">{facultyRanksCounts.jointTotal}</div>
-                      <div className="text-xs text-indigo-600">Joint Appointments</div>
-                    </div>
+                    <AnalyticsCard
+                      title="Primary Appointments"
+                      value={facultyRanksCounts.primaryTotal.toLocaleString()}
+                    />
+                    <AnalyticsCard title="Joint Appointments" value={facultyRanksCounts.jointTotal.toLocaleString()} />
                   </div>
                 </div>
-
-                {/* Table Header */}
-                <div className="bg-gray-100 border border-gray-300 rounded-t-md px-3 py-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-gray-700">
-                    <div>Rank</div>
-                    <div className="text-center">Primary</div>
-                    <div className="text-center">Joint</div>
+                <div className="rounded-lg m-2">
+                  {/* Table Header */}
+                  <div className="bg-gray-100 border border-gray-300 rounded-t-md px-3 py-2">
+                    <div className="grid grid-cols-3 gap-2 text-xs font-semibold text-gray-700">
+                      <div>Rank</div>
+                      <div className="text-center">Primary</div>
+                      <div className="text-center">Joint</div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Table Rows */}
-                <div className="border-l border-r border-b border-gray-300 rounded-b-md">
-                  {facultyRanksCounts.allRanks.slice(0, showAllRanks ? undefined : 6).map((rankData, index) => (
-                    <div key={rankData.rank} className={`px-3 py-2 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        <div className="text-gray-800 font-medium">{rankData.rank}</div>
-                        <div className="text-center">
-                          {rankData.primaryCount > 0 ? (
-                            <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded-md text-xs font-semibold">
-                              {rankData.primaryCount}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400 text-xs">-</span>
-                          )}
-                        </div>
-                        <div className="text-center">
-                          {rankData.jointCount > 0 ? (
-                            <span className="bg-indigo-200 text-indigo-800 px-2 py-1 rounded-md text-xs font-semibold">
-                              {rankData.jointCount}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400 text-xs">-</span>
-                          )}
+                  {/* Table Rows */}
+                  <div className="border-l border-r border-b border-gray-300 rounded-b-md">
+                    {facultyRanksCounts.allRanks.slice(0, showAllRanks ? undefined : 6).map((rankData, index) => (
+                      <div key={rankData.rank} className={`px-3 py-2 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div className="text-gray-800 font-medium">{rankData.rank}</div>
+                          <div className="text-center">
+                            {rankData.primaryCount > 0 ? (
+                              <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded-md text-xs font-semibold">
+                                {rankData.primaryCount}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+                          </div>
+                          <div className="text-center">
+                            {rankData.jointCount > 0 ? (
+                              <span className="bg-indigo-200 text-indigo-800 px-2 py-1 rounded-md text-xs font-semibold">
+                                {rankData.jointCount}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
 
-                {facultyRanksCounts.allRanks.length > 6 && (
-                  <button
-                    className="mt-3 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                    onClick={() => setShowAllRanks(!showAllRanks)}
-                  >
-                    {showAllRanks ? "Show Less (Top 6)" : `Show All ${facultyRanksCounts.allRanks.length} Ranks`}
-                  </button>
-                )}
-              </div>
+                  {facultyRanksCounts.allRanks.length > 6 && (
+                    <button
+                      className="mt-3 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                      onClick={() => setShowAllRanks(!showAllRanks)}
+                    >
+                      {showAllRanks ? "Show Less (Top 6)" : `Show All ${facultyRanksCounts.allRanks.length} Ranks`}
+                    </button>
+                  )}
+                </div>
+              </>
             )}
 
             {/* No Data Message */}
@@ -490,6 +516,42 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/*Faculty Health Authority Distribution Section*/}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <h3 className="text-lg font-semibold text-gray-800 m-2 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM9 17a4 4 0 004-4H5a4 4 0 004 4z" />
+            </svg>
+            Health Authority Affiliations
+          </h3>
+          <div className="space-y-4">
+            <AnalyticsCard
+              title="Total Affiliations"
+              value={hospitalAffiliationsSummary.total.toLocaleString()}
+              className="!bg-purple-50 !border-purple-200"
+            />
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              {hospitalAffiliationsSummary.sortedAuthorities.length > 0 && (
+                <div className="">
+                  <div className="space-y-1">
+                    {hospitalAffiliationsSummary.sortedAuthorities.map((item, idx) => (
+                      <div key={item.authority} className="flex justify-between items-center text-sm gap-y-1">
+                        <span className="text-purple-700 font-medium">{item.authority}</span>
+                        <span className="bg-purple-200 text-purple-800 p-2 rounded-md text-xs font-semibold min-w-[4rem] text-center">
+                          {item.count.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {hospitalAffiliationsSummary.total === 0 && (
+                <div className="text-center text-gray-400 mt-4">No hospital affiliations found.</div>
+              )}
+            </div>
           </div>
         </div>
 
