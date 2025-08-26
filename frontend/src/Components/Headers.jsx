@@ -111,14 +111,16 @@ const Header = ({ assistantUserInfo }) => {
 
   const handleExitManaging = () => {
     const previousViewRole = stopManagingUser();
+    console.log(previousViewRole, currentViewRole)
     if (previousViewRole && previousViewRole.startsWith("Admin-")) {
       navigate("/department-admin/members");
       return;
-    } else if (previousViewRole && previousViewRole === "Admin") {
+    } else if (previousViewRole && previousViewRole.startsWith("Admin")) {
       if (currentViewRole && currentViewRole.startsWith("Admin-")) {
         navigate("/department-admin/members");
         return;
-      } else {
+      } else if (currentViewRole && currentViewRole.startsWith("Faculty")) {
+        setCurrentViewRole("Admin");
         navigate("/admin/users");
         return;
       }
@@ -127,9 +129,6 @@ const Header = ({ assistantUserInfo }) => {
       return;
     } else if (previousViewRole && previousViewRole === "Assistant") {
       navigate("/delegate/connections");
-      return;
-    } else {
-      navigate("/auth");
       return;
     }
   };
