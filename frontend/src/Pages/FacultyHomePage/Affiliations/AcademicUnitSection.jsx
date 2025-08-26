@@ -5,7 +5,7 @@ import { useFaculty } from "../FacultyContext.jsx";
 const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJointUnits }) => {
   const { departments, ranks } = useFaculty();
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
-  
+
   // Handler for primary unit changes
   const handlePrimaryUnitChange = (field, value) => {
     setPrimaryUnit({
@@ -20,8 +20,8 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
       ...primaryUnit,
       additional_info: {
         ...(primaryUnit.additional_info || {}),
-        [field]: value
-      }
+        [field]: value,
+      },
     });
   };
 
@@ -42,8 +42,8 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
       ...updatedUnits[index],
       additional_info: {
         ...(updatedUnits[index].additional_info || {}),
-        [field]: value
-      }
+        [field]: value,
+      },
     };
     setJointUnits(updatedUnits);
   };
@@ -60,8 +60,8 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
         division: "",
         program: "",
         start: "",
-        end: ""
-      }
+        end: "",
+      },
     };
     setJointUnits([...jointUnits, newUnit]);
   };
@@ -86,8 +86,8 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
           division: "",
           program: "",
           start: "",
-          end: ""
-        }
+          end: "",
+        },
       });
     }
   };
@@ -102,13 +102,11 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
       <Section title="Academic Units (Workday)">
         <div className="overflow-x-auto">
           {!hasAnyUnits ? (
-            <div className="text-center text-gray-400 mb-4">
-              No academic units found.
-            </div>
+            <div className="text-center text-gray-400 mb-4 p-4">No academic units found.</div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr className="bg-gray-50">
+            <table className="min-w-full divide-x divide-white">
+              <thead className="">
+                <tr className="bg-gray-100">
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Type
                   </th>
@@ -128,59 +126,84 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                     Appointment %
                   </th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Actions
+                    Type
                   </th>
+                  {/* <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    Actions
+                  </th> */}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-x divide-white ">
                 {/* Primary Unit Row */}
                 {hasPrimaryUnit && (
-                  <tr className="bg-blue-50">
-                    <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-blue-700">
-                      Primary
-                    </td>
+                  <tr className="">
+                    <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-blue-700">Primary</td>
                     <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <Dropdown
+                      {/* <Dropdown
                         name="unit"
                         value={primaryUnit.unit || ""}
-                        onChange={(e) => handlePrimaryUnitChange("unit", e.target.value)}
+                        onChange={() => {}}
                         options={departments}
+                        readOnly
+                        disabled
+                      /> */}
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                        value={primaryUnit.unit || ""}
+                        readOnly
                       />
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <Dropdown
+                      {/* <Dropdown
                         name="rank"
                         value={primaryUnit.rank || ""}
-                        onChange={(e) => handlePrimaryUnitChange("rank", e.target.value)}
+                        onChange={() => {}}
                         options={ranks}
+                        readOnly
+                        disabled
+                      /> */}
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                        value={primaryUnit.rank || ""}
+                        readOnly
                       />
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                       <input
                         type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
                         value={primaryUnit.title || ""}
-                        onChange={(e) => handlePrimaryUnitChange("title", e.target.value)}
+                        readOnly
                       />
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                       <input
                         type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
                         value={primaryUnit.location || ""}
-                        onChange={(e) => handlePrimaryUnitChange("location", e.target.value)}
+                        readOnly
                         placeholder="e.g., Hospital Name"
                       />
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                       <input
                         type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                        value={primaryUnit.percent || ""}
-                        onChange={(e) => handlePrimaryUnitChange("percent", e.target.value)}
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                        value={primaryUnit.apt_percent || ""}
+                        readOnly
                       />
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                        value={primaryUnit.type ? primaryUnit.type.toUpperCase() || "" : ""}
+                        readOnly
+                      />
+                    </td>
+                    {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                       <button
                         onClick={() => setPrimaryUnit({})}
                         className="text-red-500 hover:text-red-700"
@@ -199,58 +222,81 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           />
                         </svg>
                       </button>
-                    </td>
+                    </td> */}
                   </tr>
                 )}
-                
+
                 {/* Joint Units Rows */}
-                {hasJointUnits && jointUnits.map((unit, idx) => (
-                  <tr key={idx}>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-gray-600">
-                      Joint
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <Dropdown
-                        name="unit"
-                        value={unit.unit || ""}
-                        onChange={(e) => handleJointUnitChange(idx, "unit", e.target.value)}
-                        options={departments}
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <Dropdown
-                        name="rank"
-                        value={unit.rank || ""}
-                        onChange={(e) => handleJointUnitChange(idx, "rank", e.target.value)}
-                        options={ranks}
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                        value={unit.title || ""}
-                        onChange={(e) => handleJointUnitChange(idx, "title", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                        value={unit.location || ""}
-                        onChange={(e) => handleJointUnitChange(idx, "location", e.target.value)}
-                        placeholder="e.g., Hospital Name"
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                        value={unit.percent || ""}
-                        onChange={(e) => handleJointUnitChange(idx, "percent", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                {hasJointUnits &&
+                  jointUnits.map((unit, idx) => (
+                    <tr key={idx}>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-gray-600">Joint</td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {/* <Dropdown
+                          name="unit"
+                          value={unit.unit || ""}
+                          onChange={() => {}}
+                          options={departments}
+                          readOnly
+                          disabled
+                        /> */}
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.unit || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {/* <Dropdown
+                          name="rank"
+                          value={unit.rank || ""}
+                          onChange={() => {}}
+                          options={ranks}
+                          readOnly
+                          disabled
+                        /> */}
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.rank || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.title || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.location || ""}
+                          readOnly
+                          placeholder="e.g., Hospital Name"
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.apt_percent || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.type ? unit.type.toUpperCase() || "" : ""}
+                          readOnly
+                        />
+                      </td>
+                      {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                       <button
                         onClick={() => handleDeleteJointUnit(idx)}
                         className="text-red-500 hover:text-red-700"
@@ -269,15 +315,15 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           />
                         </svg>
                       </button>
-                    </td>
-                  </tr>
-                ))}
+                    </td> */}
+                    </tr>
+                  ))}
               </tbody>
             </table>
           )}
 
           {/* Action buttons */}
-          <div className="mt-2 flex gap-2 justify-end">
+          {/* <div className="mt-2 flex gap-2 justify-end">
             {!hasPrimaryUnit && (
               <button
                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
@@ -300,10 +346,10 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
             >
               + Add Joint Unit
             </button>
-          </div>
+          </div> */}
         </div>
       </Section>
-      
+
       {/* Only show Additional Academic Information toggle if there are units */}
       {hasAnyUnits && (
         <div className="">
@@ -313,7 +359,7 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
           >
             <span>Additional Academic Information</span>
             <svg
-              className={`h-5 w-5 transition-transform ${showAdditionalInfo ? 'transform rotate-180' : ''}`}
+              className={`h-5 w-5 transition-transform ${showAdditionalInfo ? "transform rotate-180" : ""}`}
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -326,7 +372,7 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
               />
             </svg>
           </button>
-          
+
           {/* Collapsible content */}
           {showAdditionalInfo && (
             <div className="mt-4 border rounded-lg">
@@ -358,9 +404,7 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                     {/* Primary Unit Additional Info */}
                     {hasPrimaryUnit && (
                       <tr className="bg-blue-50">
-                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-700">
-                          Primary
-                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-700">Primary</td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                           {primaryUnit.unit || "Not specified"}
                         </td>
@@ -400,52 +444,51 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                         </td>
                       </tr>
                     )}
-                    
+
                     {/* Joint Units Additional Info */}
-                    {hasJointUnits && jointUnits.map((unit, idx) => (
-                      <tr key={`additional-${idx}`}>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-600">
-                          Joint
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {unit.unit || "Not specified"}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          <input
-                            type="text"
-                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                            value={(unit.additional_info && unit.additional_info.division) || ""}
-                            onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "division", e.target.value)}
-                            placeholder="Enter division"
-                          />
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          <input
-                            type="text"
-                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                            value={(unit.additional_info && unit.additional_info.program) || ""}
-                            onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "program", e.target.value)}
-                            placeholder="Enter program"
-                          />
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          <input
-                            type="date"
-                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                            value={(unit.additional_info && unit.additional_info.start) || ""}
-                            onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "start", e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          <input
-                            type="date"
-                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                            value={(unit.additional_info && unit.additional_info.end) || ""}
-                            onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "end", e.target.value)}
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {hasJointUnits &&
+                      jointUnits.map((unit, idx) => (
+                        <tr key={`additional-${idx}`}>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-600">Joint</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {unit.unit || "Not specified"}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <input
+                              type="text"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              value={(unit.additional_info && unit.additional_info.division) || ""}
+                              onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "division", e.target.value)}
+                              placeholder="Enter division"
+                            />
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <input
+                              type="text"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              value={(unit.additional_info && unit.additional_info.program) || ""}
+                              onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "program", e.target.value)}
+                              placeholder="Enter program"
+                            />
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <input
+                              type="date"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              value={(unit.additional_info && unit.additional_info.start) || ""}
+                              onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "start", e.target.value)}
+                            />
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <input
+                              type="date"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              value={(unit.additional_info && unit.additional_info.end) || ""}
+                              onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "end", e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>

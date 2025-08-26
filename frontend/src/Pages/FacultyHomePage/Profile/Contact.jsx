@@ -4,16 +4,11 @@ const Contact = () => {
   const { handleInputChange, userInfo } = useFaculty();
 
   const handleNullValues = (value) => {
-    if (
-      value === null ||
-      value === undefined ||
-      value === "null" ||
-      value === "undefined"
-    ) {
+    if (value === null || value === undefined || value === "null" || value === "undefined") {
       return "";
     }
     return value;
-  }
+  };
 
   return (
     <div>
@@ -66,16 +61,23 @@ const Contact = () => {
             readOnly
           />
         </div>
-        <div>
-          <label className="block text-sm mb-1">Username</label>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            value={handleNullValues(userInfo?.username) || ""}
-            className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
-            readOnly
-          />
+        <div className="">
+          <div className="flex items-center">
+            <div className="flex-1 min-w-full">
+              <label className="block text-sm mb-1">Username</label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                value={handleNullValues(userInfo?.username) || ""}
+                className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
+                readOnly
+              />
+            </div>
+            <span className="ml-4 text-xs text-blue-600 font-normal bg-blue-50 p-2 rounded-xl min-w-full mt-6">
+              * Use your <span className="bg-blue-100 px-1 rounded">CWLID@ubc.ca</span> or registered email for Health Authority Login (VCH, PHSA, PHC).
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -288,14 +288,14 @@ const SecureFundingSection = ({ user, section, onBack }) => {
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-center w-full max-w-7xl relative mx-auto">
-            <div className="w-full max-w-7xl">
+          <div className="flex items-center justify-center w-full relative mx-auto">
+            <div className="w-full ">
               {paginatedData.length > 0 ? (
                 paginatedData.map((entry, index) => {
                   // Omit the "agency" field and add "sponsor" field for view (PermanentEntry)
                   const { agency, ...filteredDetails } = entry.data_details;
                   return entry.editable ? (
-                    <div className="w-full">
+                    <div className="w-full px-4">
                       <GenericEntry
                         // isArchived={entry.is_archived ? true : false}
                         key={index}

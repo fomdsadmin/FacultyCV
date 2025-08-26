@@ -204,17 +204,35 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
     sectionDescriptions[section.data_type] = section.description;
   });
 
-  const searchedSections = dataSections.filter((entry) => {
+  // Enhanced search: if no match in selected tab, show matches from other categories distinctly
+  const search = searchTerm.toLowerCase();
+  const matchesInTab = dataSections.filter((entry) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
     const info = entry.info || "";
-    const search = searchTerm.toLowerCase();
-    const matchesSearch = section.toLowerCase().includes(search) || 
-                         category.toLowerCase().includes(search) || 
-                         info.toLowerCase().includes(search);
+    const matchesSearch =
+      section.toLowerCase().includes(search) ||
+      category.toLowerCase().includes(search) ||
+      info.toLowerCase().includes(search);
     const matchesFilter = !activeTab || category === activeTab;
     return matchesSearch && matchesFilter;
   });
+
+  let searchedSections = matchesInTab;
+  let otherCategorySections = [];
+  if (searchTerm && activeTab && matchesInTab.length === 0) {
+    // Show matches from other categories
+    otherCategorySections = dataSections.filter((entry) => {
+      const section = entry.title || "";
+      const category = entry.data_type || "";
+      const info = entry.info || "";
+      const matchesSearch =
+        section.toLowerCase().includes(search) ||
+        category.toLowerCase().includes(search) ||
+        info.toLowerCase().includes(search);
+      return matchesSearch && category !== activeTab;
+    });
+  }
 
   // Use category from URL for filtering
   useEffect(() => {
@@ -222,9 +240,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
       // Find the original category name from slug
       const matched = filters.find((f) => {
         const fullSlug = slugify(f);
-        const cleanedSlug = fullSlug.split("-")[0].match(/\d/) 
-          ? fullSlug.split("-").slice(1).join("-") 
-          : fullSlug;
+        const cleanedSlug = fullSlug.split("-")[0].match(/\d/) ? fullSlug.split("-").slice(1).join("-") : fullSlug;
         return fullSlug === category || cleanedSlug === category;
       });
       setActiveTab(matched || null);
@@ -343,6 +359,34 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                     info={section.info}
                   />
                 ))}
+                {/* If no results in tab, show matches from other categories distinctly */}
+                {searchTerm && activeTab && searchedSections.length === 0 && otherCategorySections.length > 0 && (
+                  <div className="mt-6 px-6">
+                    <div className="text-sm font-normal text-gray-600 mb-2 text-center py-2">No results found for search in selected category.</div>
+                    <div className="text-md font-semibold text-gray-600 mb-2">Showing results from other categories:</div>
+                    {[...otherCategorySections].sort(sectionTitleSort).map((section) => {
+                      // Clean category name similar to tab cleaning
+                      const cat = section.data_type;
+                      const catParts = cat.split(".");
+                      let cleanedCat = catParts[1] ? catParts[1].trim() : cat;
+                      return (
+                        <div
+                          key={section.data_section_id}
+                          className="border-l-4 border-yellow-400 bg-yellow-50 p-2 mb-2 rounded"
+                        >
+                          <div className="text-xs text-yellow-700 mb-1">{cleanedCat}</div>
+                          <WorkSection
+                            onClick={handleManageClick}
+                            id={section.data_section_id}
+                            title={section.title}
+                            category={section.data_type}
+                            info={section.info}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar w-full mx-auto">
