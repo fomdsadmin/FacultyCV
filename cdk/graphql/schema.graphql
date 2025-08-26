@@ -2,6 +2,10 @@ type Affiliations {
 	data_details: AWSJSON!
 }
 
+type NotifyGotenbergPayload {
+  key: String! @aws_api_key
+}
+
 type DepartmentAffiliation {
 	user_id: String!
 	first_name: String
@@ -288,6 +292,10 @@ type UsersCountResult {
 }
 
 type Mutation {
+	notifyGotenbergGenerationComplete(key: String!): NotifyGotenbergPayload
+		@aws_api_key
+	createGotenbergPdf(form_data_base64: String!): String
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	addUserDeclaration(
 		user_id: String!,
 		reporting_year: Int!,
@@ -454,10 +462,8 @@ archive: Boolean,
 }
 
 type Query {
-	getGotenbergPdf(form_data_base_64: String!): String
-		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getPresignedGotenbergBucketUrl(key: String!, method: String!): String
-        @aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getBioResponseData(username_input: String!): BioResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	GetAIResponse(user_input: String!): LambdaAIResponse
@@ -546,4 +552,8 @@ type Query {
 		end_date: String
 	): AuditViewResult
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+}
+type Subscription {
+	gotenbergGenerationStatusUpdate(key: String!): NotifyGotenbergPayload
+		@aws_subscribe(mutations: ["notifyGotenbergGenerationComplete"])
 }

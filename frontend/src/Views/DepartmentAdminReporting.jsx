@@ -1,3 +1,4 @@
+import FacultyMemberSelector from "../Components/FacultyMemberSelector.jsx";
 import React from "react";
 import { useState, useEffect } from "react";
 import PageContainer from "./PageContainer.jsx";
@@ -7,6 +8,7 @@ import "../CustomStyles/scrollbar.css";
 import { useNotification } from "../Contexts/NotificationContext.jsx";
 // No longer importing static config - we'll generate dynamically from sections
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
+import { useAdmin } from "Contexts/AdminContext.jsx";
 
 // Config: map section titles to custom display names
 // To hide a section entirely, add its title to EXCLUDED_SECTION_TITLES,
@@ -122,16 +124,19 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(""); // for super admin
   const [allDepartments, setAllDepartments] = useState([]); // for super admin
-  const [allUsers, setAllUsers] = useState([]); // store all users for filtering
+  const [users, setUsers] = useState([]); // store all users for filtering
   const [userSearchTerm, setUserSearchTerm] = useState(""); // New state for user search
   const [dropdownOpen, setDropdownOpen] = useState(false); // Add this state to manage the dropdown visibility
   const [selectAll, setSelectAll] = useState(true); // Track if all users are selected
   const [dataSections, setDataSections] = useState([]); // Store data sections
+  const [parsedDataSections, setParsedDataSections] = useState([]); // Store parsed data sections
   const [availableReportTypes, setAvailableReportTypes] = useState([]); // Dynamic report types from sections
   const [reportSearchTerm, setReportSearchTerm] = useState(""); // Search for report templates
   const { setNotification } = useNotification();
 
   const { logAction } = useAuditLogger();
+
+  const { allUsers, allDataSections } = useAdmin();
 
   // Helper function to create a display name from section title, with optional exclusion
   const createDisplayName = (title, sectionId) => {
@@ -229,29 +234,29 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
           : ['First Name', 'Last Name', ...rt.csvOverride.fieldMappings.map(m => m.header)];
         return { headers, fieldMappings: rt.csvOverride.fieldMappings };
       }
-      const sections = dataSections.filter(s => rt.combinedSectionIds.includes(s.data_section_id));
+      const sections = parsedDataSections.filter(s => rt.combinedSectionIds.includes(s.data_section_id));
       return generateCombinedCsvConfig(sections);
     }
     // Single section
-    const section = dataSections.find(s => s.data_section_id === sectionOrCombinedId);
+    const section = parsedDataSections.find(s => s.data_section_id === sectionOrCombinedId);
     return section ? generateCsvConfig(section) : null;
   };
 
+  useEffect(() => {
+    setUsers(allUsers)
+  }, [allUsers]);
+
+  useEffect(() => {
+    setDataSections(allDataSections)
+  }, [allDataSections]);
 
   useEffect(() => {
     // Initial load: all users and data sections
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const [users, sections] = await Promise.all([
-          getAllUsers(),
-          getAllSections()
-        ]);
-        
-        setAllUsers(users);
-        
         // Parse sections and filter out archived ones
-        const parsedSections = sections
+        const parsedSections = dataSections
           .filter(section => !section.archive) // Only non-archived sections
           .map(section => ({
             ...section,
@@ -260,8 +265,8 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
               : section.attributes
           }))
           .sort((a, b) => a.title.localeCompare(b.title));
-        
-        setDataSections(parsedSections);
+
+        setParsedDataSections(parsedSections);
 
         // Generate dynamic report types from sections, honoring exclusions
         const singleReportTypes = parsedSections.flatMap(section => {
@@ -328,19 +333,18 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
       setLoading(false);
     };
     fetchInitialData();
-    // eslint-disable-next-line
-  }, []);
+  }, [dataSections]);
 
   // Filter department users when selectedDepartment or allUsers changes (for super admin)
   useEffect(() => {
-    if (userInfo && userInfo.role === "Admin" && allUsers.length > 0 && selectedDepartment) {
+    if (userInfo && userInfo.role === "Admin" && users.length > 0 && selectedDepartment) {
       let usersInDepartment;
       if (selectedDepartment === "All") {
-        usersInDepartment = allUsers.filter(
+        usersInDepartment = users.filter(
           (user) => user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-")
         );
       } else {
-        usersInDepartment = allUsers.filter(
+        usersInDepartment = users.filter(
           (user) =>
             user.primary_department === selectedDepartment &&
             (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
@@ -353,13 +357,13 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
       setDownloadUrl(null);
     }
     // eslint-disable-next-line
-  }, [selectedDepartment, allUsers]);
+  }, [selectedDepartment, users]);
 
   // For department admin, filter users once after allUsers is loaded
   useEffect(() => {
-    if (userInfo && userInfo.role && userInfo.role.startsWith("Admin-") && allUsers.length > 0) {
+    if (userInfo && userInfo.role && userInfo.role.startsWith("Admin-") && users.length > 0) {
       const departmentName = userInfo.role.split("-")[1];
-      const usersInDepartment = allUsers.filter(
+      const usersInDepartment = users.filter(
         (user) =>
           user.primary_department === departmentName &&
           (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
@@ -370,7 +374,7 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
       setSelectAll(true);
     }
     // eslint-disable-next-line
-  }, [allUsers, userInfo]);
+  }, [users, userInfo]);
 
   // When isDepartmentWide changes, update selectedUsers accordingly
   useEffect(() => {
@@ -512,7 +516,7 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
     if (rt.combinedSectionIds && rt.combinedSectionIds.length > 0) {
       try {
         const fetches = rt.combinedSectionIds.map(async sid => {
-          const section = dataSections.find(s => s.data_section_id === sid);
+          const section = parsedDataSections.find(s => s.data_section_id === sid);
           const resp = await getDepartmentCVData(sid, departmentForQuery, 'All', userIdsForQuery);
           return { section, data: resp.data || [] };
         });
@@ -526,7 +530,7 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
     }
 
     // Single section
-    const section = dataSections.find(s => s.data_section_id === sectionOrCombinedId);
+    const section = parsedDataSections.find(s => s.data_section_id === sectionOrCombinedId);
     if (!section) {
       throw new Error(`Unknown section: ${sectionOrCombinedId}`);
     }
@@ -704,65 +708,17 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
                 </div>
               </div>
 
-              {/* Right Section - Faculty Selection */}
+              {/* Right Section - Faculty Selection (using refactored component) */}
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Members</label>
-                
-                {/* Search and Select All Controls */}
-                <div className="space-y-4 mb-4">
-                  <input
-                    type="text"
-                    className="input input-bordered w-full text-sm font-medium"
-                    placeholder="Search by name, email, or username..."
-                    value={userSearchTerm}
-                    onChange={handleUserSearchChange}
-                  />
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                    />
-                    <label className="text-sm font-medium text-gray-700">
-                      Select All ({departmentUsers.length} faculty members)
-                    </label>
-                  </div>
-                </div>
-
-                {/* Faculty List */}
-                <div className="border rounded-lg max-h-80 overflow-y-auto custom-scrollbar bg-white">
-                  {filteredUsers.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">
-                      {userSearchTerm ? "No faculty members match your search" : "No faculty members found"}
-                    </div>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <div key={user.user_id} className="flex items-center gap-2 px-4 py-3 border-b hover:bg-gray-50">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm checkbox-secondary"
-                          checked={selectedUsers.includes(user.user_id)}
-                          onChange={() => handleUserToggle(user.user_id)}
-                        />
-                        <div className="flex-1">
-                          <div className="text-sm text-gray-900">
-                            {(user.preferred_name || user.first_name) + " " + user.last_name}
-                          </div>
-                          {user.email && user.email.trim() !== "" && user.email !== "null" && user.email !== "undefined" && (
-                            <div className="text-xs text-gray-500">{user.email}</div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                
-                {/* Selected Count */}
-                <div className="mt-2 text-sm text-gray-600 align-right text-right">
-                  {selectedUsers.length} / {departmentUsers.length} selected
-                </div>
+                <FacultyMemberSelector
+                  departmentUsers={departmentUsers}
+                  selectedUsers={selectedUsers}
+                  onUserToggle={handleUserToggle}
+                  selectAll={selectAll}
+                  onSelectAll={handleSelectAll}
+                  userSearchTerm={userSearchTerm}
+                  onUserSearchChange={handleUserSearchChange}
+                />
               </div>
             </div>
 

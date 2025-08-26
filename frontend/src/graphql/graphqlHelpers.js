@@ -36,6 +36,7 @@ import {
   GET_BIO_RESPONSE_DATA,
   getAuditViewQuery,
   getUserAffiliationsQuery,
+  GET_PRESIGNED_GOTENBERG_BUCKET_URL,
   getDepartmentAffiliationsQuery,
 } from "./queries";
 import {
@@ -73,8 +74,10 @@ import {
   EDIT_SECTION_DETAILS,
   UPDATE_USER_AFFILIATIONS,
   CHANGE_USERNAME,
+  CREATE_GOTENBERG_PDF
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
+import { GOTENBERG_GENERATION_STATUS_UPDATE } from "./subscriptions";
 
 const executeGraphql = async (query, variables = null) => {
   const client = generateClient();
@@ -1263,3 +1266,61 @@ export const getBioResponseData = async (username_input) => {
   });
   return results["data"]["getBioResponseData"];
 };
+
+export const getPresignedGotenbergBucketUrl = async (key, method) => {
+  const results = await executeGraphql(GET_PRESIGNED_GOTENBERG_BUCKET_URL, { key, method });
+  console.log(results);
+  return results["data"]["getPresignedGotenbergBucketUrl"];
+};
+
+/**
+ * Subscribe to Gotenberg generation status updates
+ * Arguments:
+ * key - The S3 key to listen for updates (e.g., "pdf/username_templateid.pdf" or "docx/username_templateid.docx")
+ * onData - Callback function called when data is received
+ * onError - Callback function called on error
+ * Return value:
+ * Subscription object with unsubscribe method
+ */
+export const subscribeToGotenbergStatus = (key, onData, onError) => {
+  console.log('Setting up subscription for key:', key);
+  
+  const client = generateClient();
+  
+  try {
+    const subscription = client.graphql({
+      query: GOTENBERG_GENERATION_STATUS_UPDATE,
+      variables: { key }
+    }).subscribe({
+      next: (data) => {
+        console.log('Gotenberg status update received:', data);
+        console.log('Full data object:', JSON.stringify(data, null, 2));
+        if (onData) {
+          // Access the nested key from the payload
+          const payload = data.data.gotenbergGenerationStatusUpdate;
+          onData(payload ? payload.key : key);
+        }
+      },
+      error: (error) => {
+        console.error('Subscription error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        if (onError) {
+          onError(error);
+        }
+      },
+      complete: () => {
+        console.log('Subscription completed for key:', key);
+      }
+    });
+
+    console.log('Subscription created successfully for key:', key);
+    return subscription;
+  } catch (error) {
+    console.error('Failed to create subscription:', error);
+    if (onError) {
+      onError(error);
+    }
+    return null;
+  }
+};
+

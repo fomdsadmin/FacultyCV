@@ -1,31 +1,105 @@
 import React, { useState, useEffect } from 'react';
 import PageContainer from '../../Views/PageContainer.jsx';
 import FacultyMenu from '../../Components/FacultyMenu.jsx';
-import { cvIsUpToDate, getAllTemplates } from '../../graphql/graphqlHelpers.js';
+import { getAllTemplates } from '../../graphql/graphqlHelpers.js';
 import '../../CustomStyles/scrollbar.css';
-import { getDownloadUrl, uploadLatexToS3 } from '../../utils/reportManagement.js';
 import { useNotification } from '../../Contexts/NotificationContext.jsx';
-import { getUserId } from '../../getAuthToken.js';
 import TemplateList from './TemplateList.jsx';
 import ReportPreview from './ReportPreview.jsx';
-import { buildLatex } from './LatexFunctions/LatexBuilder.js';
 import { useApp } from 'Contexts/AppContext.jsx';
-import { useAuditLogger, AUDIT_ACTIONS } from 'Contexts/AuditLoggerContext.jsx';
+import { checkPdfComplete, checkDocxComplete, getPdfDownloadUrl, getDocxDownloadUrl, doesDocxTagExist, doesPdfTagExist, subscribeToCompletion } from './gotenbergGenerateUtils/gotenbergService.js';
+import { useRef } from 'react';
 
 const ReportsPage = () => {
-  const {userInfo, getCognitoUser, toggleViewMode} = useApp();
+  const { userInfo, getCognitoUser, toggleViewMode } = useApp();
 
   const [user, setUser] = useState(userInfo);
-  const [selectedTemplate, setSelectedTemplate] = useState('');
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState([]);
-  const [latex, setLatex] = useState('');
-  const [buildingLatex, setBuildingLatex] = useState(false);
+
+  // Download states
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [downloadUrlDocx, setDownloadUrlDocx] = useState(null);
+  const [downloadBlob, setDownloadBlob] = useState(null);
+  const [downloadBlobDocx, setDownloadBlobDocx] = useState(null);
+
+  // Generation states
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [startYear, setStartYear] = useState(null);
+  const [endYear, setEndYear] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isPdfReady, setIsPdfReady] = useState(false);
+  const [isDocxReady, setIsDocxReady] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState("");
+  const [docxTagExists, setDocxTagExists] = useState(false);
+  const [pdfTagExists, setPdfTagExists] = useState(false);
+  const cancelRef = useRef(null);
+
   const { setNotification } = useNotification();
-  const [switchingTemplates, setSwitchingTemplates] = useState(false);
-  const { logAction } = useAuditLogger();
+
+  useEffect(() => {
+    const helper = async () => {
+      setIsGenerating(true);
+      const promises = [
+        checkPdfComplete(userInfo, selectedTemplate),
+        checkDocxComplete(userInfo, selectedTemplate),
+        doesDocxTagExist(userInfo, selectedTemplate),
+        doesPdfTagExist(userInfo, selectedTemplate)
+      ];
+
+      const [
+        isPdfComplete,
+        isDocxComplete,
+        pdfTagExists,
+        docxTagExists
+      ] = await Promise.all(promises);
+
+      setDocxTagExists(docxTagExists);
+      setPdfTagExists(pdfTagExists);
+
+      if (!pdfTagExists && !docxTagExists) {
+        setIsGenerating(false);
+      }
+
+      if ((!isPdfComplete && pdfTagExists) || (!isDocxComplete && docxTagExists)) {
+        cancelRef.current?.();
+        cancelRef.current = null;
+
+        const cancel = subscribeToCompletion(
+          userInfo,
+          selectedTemplate,
+          handlePdfReady,
+          handleDocxReady,
+          handleProgress,
+          (success) => {
+            handleGenerateComplete(success);
+            // auto-clear cancel after completion
+            cancelRef.current = null;
+          }
+        );
+
+        cancelRef.current = cancel;
+      }
+
+      if (isPdfComplete) {
+        setIsPdfReady(true);
+        setDownloadUrl(await getPdfDownloadUrl(userInfo, selectedTemplate));
+      }
+
+      if (isDocxComplete) {
+        setIsDocxReady(true);
+        setDownloadUrlDocx(await getDocxDownloadUrl(userInfo, selectedTemplate));
+      }
+
+      if (isPdfComplete && isDocxComplete) {
+        setIsGenerating(false);
+      }
+    }
+
+    if (selectedTemplate && userInfo) {
+      helper();
+    }
+  }, [selectedTemplate, userInfo])
 
   useEffect(() => {
     setUser(userInfo);
@@ -40,60 +114,75 @@ const ReportsPage = () => {
   }, [userInfo]);
 
   const handleTemplateSelect = (template) => {
+    clearGenerationState();
     setSelectedTemplate(template);
   };
 
-  const createLatexFile = async (template, startYear, endYear) => {
-    setSwitchingTemplates(true);
-
-    // Update template with selected date range
-    const templateWithDates = {
-      ...template,
-      start_year: startYear,
-      end_year: endYear
-    };
-
-    const cvUpToDate = await cvIsUpToDate(
-      await getUserId(),
-      userInfo.user_id,
-      template.template_id
-    );
-
-    const key = `${userInfo.user_id}/${template.template_id}/resume.tex`;
-
-    if (true) {
-      setBuildingLatex(true);
-
-      // Direct function call - much simpler!
-      const latex = await buildLatex(userInfo, templateWithDates);
-      setLatex(latex);
-
-      // Upload .tex to S3
-      await uploadLatexToS3(latex, key);
-
-      // Wait till URLs for both PDF and DOCX are available
-      const pdfUrl = await getDownloadUrl(key.replace("tex", "pdf"), 0);
-      const docxUrl = await getDownloadUrl(key.replace("tex", "docx"), 0);
-
-      setNotification(true);
-      setBuildingLatex(false);
-      setSwitchingTemplates(false);
-      setDownloadUrl(pdfUrl);
-      setDownloadUrlDocx(docxUrl);
-    } else {
-      // If no new .tex was uploaded, fetch both URLs
-      const pdfUrl = await getDownloadUrl(key.replace("tex", "pdf"), 0);
-      const docxUrl = await getDownloadUrl(key.replace("tex", "docx"), 0);
-      setSwitchingTemplates(false);
-      setDownloadUrl(pdfUrl);
-      setDownloadUrlDocx(docxUrl);
-    }
+  const clearGenerationState = () => {
+    setDownloadUrl(null);
+    setDownloadUrlDocx(null);
+    setDownloadBlob(null);
+    setDownloadBlobDocx(null);
+    setIsPdfReady(false);
+    setIsDocxReady(false);
+    setIsGenerating(false);
+    setDocxTagExists(false);
+    setPdfTagExists(false);
+    setProcessingMessage("");
   };
 
-  const handleGenerate = (template, startYear, endYear) => {
-    createLatexFile(template, startYear, endYear);
+  const handleGenerateStart = (template, startYear, endYear) => {
+    console.log("Generation started for template:", template.title);
+    setSelectedTemplate(template);
+    setStartYear(startYear);
+    setEndYear(endYear);
+    setIsGenerating(true);
+    setIsPdfReady(false);
+    setIsDocxReady(false);
+    setProcessingMessage("Starting conversion...");
+    // Clear previous downloads
+    setDownloadUrl(null);
+    setDownloadUrlDocx(null);
+    setDownloadBlob(null);
+    setDownloadBlobDocx(null);
+  };
 
-    logAction(AUDIT_ACTIONS.GENERATE_CV, { template: template.title, startYear, endYear });
+  const handlePdfReady = (pdfUrl) => {
+    console.log("PDF ready with URL:", pdfUrl);
+    setDownloadUrl(pdfUrl);
+    setIsPdfReady(true);
+    setDownloadBlob(null);
+    setNotification({ message: "PDF finsihed generating!" });
+    setProcessingMessage("Generating DOCX");
+  };
+
+  const handleDocxReady = (docxUrl) => {
+    console.log("DOCX ready with URL:", docxUrl);
+    setDownloadUrlDocx(docxUrl);
+    setIsDocxReady(true);
+    setDownloadBlobDocx(null);
+    setNotification({ message: "DOCX finsihed generating!" });
+    setIsGenerating(false);
+  };
+
+  const handleProgress = (message) => {
+    setProcessingMessage(message);
+  };
+
+  const handleGenerateComplete = (success) => {
+    console.log('Generation completed, success:', success);
+    setIsGenerating(false); // RE-ENABLE THE GENERATE BUTTON
+
+    if (success) {
+      setProcessingMessage("Generation completed successfully");
+    } else {
+      setProcessingMessage("Generation completed with errors or timeout");
+    }
+
+    // Clear the processing message after a delay
+    setTimeout(() => {
+      setProcessingMessage("");
+    }, 3000);
   };
 
   return (
@@ -101,31 +190,44 @@ const ReportsPage = () => {
       <FacultyMenu
         userName={user.preferred_name || user.first_name}
         getCognitoUser={getCognitoUser}
-        toggleViewMode={toggleViewMode} userInfo={userInfo}/>
+        toggleViewMode={toggleViewMode}
+        userInfo={userInfo}
+      />
       <main className="ml-4 overflow-auto custom-scrollbar w-full">
         <div className="w-full px-8 pt-4">
           <h1 className="text-3xl font-bold text-zinc-800 mb-2">Reports</h1>
         </div>
         <div className="flex w-full h-full px-8 pb-8">
-          {/* Left Panel: Template List */}
           <TemplateList
             templates={templates}
             selectedTemplate={selectedTemplate}
             onTemplateSelect={handleTemplateSelect}
-            onGenerate={handleGenerate}
-            buildingLatex={buildingLatex}
-            switchingTemplates={switchingTemplates}
+            onGenerateStart={handleGenerateStart}
+            onGenerateComplete={handleGenerateComplete}
+            onPdfReady={handlePdfReady}
+            onDocxReady={handleDocxReady}
+            onProgress={handleProgress}
+            isGenerating={isGenerating}
+            isPdfReady={isPdfReady}
+            isDocxReady={isDocxReady}
             downloadUrl={downloadUrl}
+            downloadBlob={downloadBlob}
             downloadUrlDocx={downloadUrlDocx}
+            downloadBlobDocx={downloadBlobDocx}
+            processingMessage={processingMessage}
             user={user}
+            cancelRef={cancelRef}
+            docxTagExists={docxTagExists}
+            pdfTagExists={pdfTagExists}
           />
 
-          {/* Right Panel: Resume Preview */}
           <div className="flex-1 flex flex-col items-center bg-gray-50 rounded-lg shadow-md px-8 overflow-auto custom-scrollbar h-[90vh]">
             <ReportPreview
               loading={loading}
               selectedTemplate={selectedTemplate}
               downloadUrl={downloadUrl}
+              downloadBlob={downloadBlob}
+              generatingPdf={isGenerating && !isPdfReady}
             />
           </div>
         </div>

@@ -4,20 +4,21 @@ import PageContainer from "./PageContainer.jsx";
 import AdminMenu from "../Components/AdminMenu.jsx";
 import { getAllTemplates, getAllUsers, getAllUniversityInfo } from "../graphql/graphqlHelpers.js";
 import "../CustomStyles/scrollbar.css";
-import { getDownloadUrl, uploadLatexToS3 } from "../utils/reportManagement.js";
+import { getDownloadUrl, uploadLatexToS3 } from "../Pages/ReportsPage/gotenbergGenerateUtils/reportManagement.js";
 import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
 import PDFViewer from "../Components/PDFViewer.jsx";
 import { AUDIT_ACTIONS, useAuditLogger } from "../Contexts/AuditLoggerContext.jsx";
+import { useAdmin } from "Contexts/AdminContext.jsx";
 
 const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
+  const [users, setUsers] = useState([]); // add this to store all users
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState("");
-  const [departmentUsers, setDepartmentUsers] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,8 +32,13 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
 
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
 
-  const [allUsers, setAllUsers] = useState([]); // add this to store all users
   const { logAction } = useAuditLogger();
+
+  const { allUsers } = useAdmin();
+
+  useEffect(() => {
+    setUsers(allUsers);
+  }, [allUsers]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -56,17 +62,9 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
           .sort();
         setFaculties(facultyList);
 
-        // Load all users once
-        const users = await getAllUsers();
-        setAllUsers(users);
-
         // Default to "All" for both faculty and department
         setSelectedFaculty("");
         setSelectedDepartment("");
-        setDepartmentUsers(users.filter(
-          (user) =>
-            (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
-        ));
       } catch (error) {
         console.error("Error loading data:", error);
       }
@@ -82,7 +80,7 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     if (selectedFaculty) {
       filteredDepartments = Array.from(
         new Set(
-          allUsers
+          users
             .filter(
               (user) =>
                 (user.primary_faculty === selectedFaculty || user.secondary_faculty === selectedFaculty) &&
@@ -95,7 +93,6 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     }
     setDepartments(filteredDepartments);
     setSelectedDepartment("");
-    setDepartmentUsers([]);
     setSelectedUser("");
     setSelectedTemplate("");
     setDownloadUrl(null);
@@ -105,50 +102,25 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
 
   // Filter users based on selected faculty and department
   useEffect(() => {
-    let users = allUsers.filter(
-      (user) =>
-        (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
-    );
-    if (selectedFaculty) {
-      users = users.filter(
-        (user) =>
-          user.primary_faculty === selectedFaculty || user.secondary_faculty === selectedFaculty
-      );
-    }
-    if (selectedDepartment) {
-      users = users.filter(
-        (user) =>
-          user.primary_department === selectedDepartment ||
-          user.secondary_department === selectedDepartment
-      );
-    }
-    setDepartmentUsers(users);
+    // let users = users.filter(
+    //   (user) => user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-")
+    // );
+    // if (selectedFaculty) {
+    //   users = users.filter(
+    //     (user) => user.primary_faculty === selectedFaculty || user.secondary_faculty === selectedFaculty
+    //   );
+    // }
+    // if (selectedDepartment) {
+    //   users = users.filter(
+    //     (user) => user.primary_department === selectedDepartment || user.secondary_department === selectedDepartment
+    //   );
+    // }
     setSelectedUser("");
     setSelectedTemplate("");
     setDownloadUrl(null);
     setDownloadUrlDocx(null);
     // eslint-disable-next-line
   }, [selectedDepartment, selectedFaculty, allUsers]);
-
-  const loadUsersForDepartment = async (department) => {
-    if (!department) {
-      setDepartmentUsers([]);
-      return;
-    }
-
-    try {
-      const allUsers = await getAllUsers();
-      const usersInDepartment = allUsers.filter(
-        (user) =>
-        (user.primary_department === department &&
-          (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-")))
-      );
-      console.log("Users in Department:", usersInDepartment);
-      setDepartmentUsers(usersInDepartment);
-    } catch (error) {
-      console.error("Error loading users for department:", error);
-    }
-  };
 
   const handleDepartmentSelect = (event) => {
     const department = event.target.value;
@@ -157,7 +129,6 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     setSelectedTemplate("");
     setDownloadUrl(null);
     setDownloadUrlDocx(null);
-    loadUsersForDepartment(department);
   };
 
   const handleFacultySelect = (event) => {
@@ -178,9 +149,6 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     setDownloadUrlDocx(null);
   };
 
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
 
   const searchedTemplates = templates
     .filter((template) => template.title.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -196,7 +164,7 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
 
     try {
       // Find the selected user object
-      const userObject = departmentUsers.find((user) => user.user_id === selectedUser);
+      const userObject = users.find((user) => user.user_id === selectedUser);
 
       // Update template with selected date range
       const templateWithDates = {
@@ -296,14 +264,15 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
             <div className="my-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
               <select
-                className={`select select-bordered w-full max-w-md ${departmentUsers.length === 0 ? "select-disabled bg-gray-100" : ""
-                  }`}
+                className={`select select-bordered w-full max-w-md ${
+                  users.length === 0 ? "select-disabled bg-gray-100" : ""
+                }`}
                 value={selectedUser}
                 onChange={handleUserSelect}
-                disabled={departmentUsers.length === 0}
+                disabled={users.length === 0}
               >
                 <option value="">Choose a faculty member...</option>
-                {departmentUsers.map((user) => (
+                {users.map((user) => (
                   <option key={user.user_id} value={user.user_id}>
                     {user.preferred_name || user.first_name} {user.last_name} ({user.email})
                   </option>
@@ -319,8 +288,9 @@ const AdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                 {/* List of Templates as a select dropdown */}
                 <div className="mb-4">
                   <select
-                    className={`select select-bordered w-full max-w-md ${!selectedUser ? "select-disabled bg-gray-100" : ""
-                      }`}
+                    className={`select select-bordered w-full max-w-md ${
+                      !selectedUser ? "select-disabled bg-gray-100" : ""
+                    }`}
                     value={selectedTemplate?.template_id || ""}
                     onChange={(e) => {
                       const templateId = e.target.value;

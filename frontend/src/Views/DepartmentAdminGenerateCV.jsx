@@ -2,21 +2,22 @@ import React from "react";
 import { useState, useEffect } from "react";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
-import { getAllTemplates, getAllUsers } from "../graphql/graphqlHelpers.js";
+import FacultyMemberSelector from "../Components/FacultyMemberSelector.jsx";
+// ...existing code...
 import "../CustomStyles/scrollbar.css";
-import { getDownloadUrl, uploadLatexToS3 } from "../utils/reportManagement.js";
+import { getDownloadUrl, uploadLatexToS3 } from "../Pages/ReportsPage/gotenbergGenerateUtils/reportManagement.js";
 import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
 import PDFViewer from "../Components/PDFViewer.jsx";
-import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx"; 
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
+import { useAdmin } from "Contexts/AdminContext.jsx";
 
 const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
-  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState([]); // For compatibility with selector
   const [departmentUsers, setDepartmentUsers] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [startYear, setStartYear] = useState(new Date().getFullYear() - 10);
   const [endYear, setEndYear] = useState(new Date().getFullYear());
   const [buildingLatex, setBuildingLatex] = useState(false);
@@ -25,110 +26,109 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState(""); // for super admin
   const [allDepartments, setAllDepartments] = useState([]); // for super admin
-  const [allUsers, setAllUsers] = useState([]); // store all users for filtering
-  const [userSearchTerm, setUserSearchTerm] = useState(""); // New state for user search
-  const [dropdownOpen, setDropdownOpen] = useState(false); // Add this state to manage the dropdown visibility
+  const [users, setUsers] = useState([]); // store all users for filtering
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [selectAll, setSelectAll] = useState(false);
   const { setNotification } = useNotification();
   const { logAction } = useAuditLogger();
-
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
+  const { loading, setLoading, allUsers, allTemplates } = useAdmin();
 
+  // Get users list from context
   useEffect(() => {
-    // Initial load: templates and all users
-    const fetchInitialData = async () => {
-      setLoading(true);
-      try {
-        const templatesData = await getAllTemplates();
-        setTemplates(templatesData);
+    setUsers(allUsers);
+  }, [allUsers]);
 
-        const users = await getAllUsers();
-        setAllUsers(users);
+  // Get templates list from context
+  useEffect(() => {
+    setTemplates(allTemplates);
+  }, [allTemplates]);
 
-        if (userInfo && userInfo.role === "Admin") {
-          const departments = Array.from(
-            new Set(
-              users
-                .filter(
-                  (u) => 
-                    u.primary_department && 
-                    u.primary_department !== "null" && 
-                    u.primary_department !== "undefined" &&
-                    u.primary_department.trim() !== ""
-                )
-                .map((u) => u.primary_department)
-            )
-          ).sort();
-          setAllDepartments(departments);
-          // Add "All" option for super admin
-          if (!selectedDepartment) {
-            setSelectedDepartment("All");
-          }
+  // Extract unique, valid departments from users list
+  useEffect(() => {
+    if (users && users.length > 0) {
+      const deptSet = new Set();
+      users.forEach((user) => {
+        const dept = user.primary_department;
+        if (
+          dept &&
+          typeof dept === "string" &&
+          dept.trim() !== "" &&
+          dept.toLowerCase() !== "null" &&
+          dept.toLowerCase() !== "undefined"
+        ) {
+          deptSet.add(dept.trim());
         }
-      } catch (error) {
-        console.error("Error loading data:", error);
-      }
-      setLoading(false);
-    };
-    fetchInitialData();
-    // eslint-disable-next-line
-  }, []);
+      });
+      setAllDepartments(Array.from(deptSet).sort());
+    } else {
+      setAllDepartments([]);
+    }
+  }, [users]);
 
-  // Filter department users when selectedDepartment or allUsers changes (for super admin)
+  // Set default department and department users based on role
   useEffect(() => {
-    if (userInfo && userInfo.role === "Admin" && allUsers.length > 0 && selectedDepartment) {
+    if (userInfo && users.length > 0) {
+      if (userInfo.role === "Admin") {
+        setSelectedDepartment("All");
+        setDepartmentUsers(
+          users.filter(
+            (user) =>
+              user.role && (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
+          )
+        );
+      } else if (userInfo.role.startsWith("Admin-")) {
+        const dept = userInfo.role.split("-")[1];
+        setSelectedDepartment(dept);
+        setDepartmentUsers(
+          users.filter(
+            (user) =>
+              user.primary_department === dept &&
+              user.role &&
+              (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
+          )
+        );
+      }
+      setSelectedUsers([]);
+      setDownloadUrl(null);
+      setDownloadUrlDocx(null);
+    }
+  }, [userInfo, users]);
+
+  // Update department users when selectedDepartment changes (for Admin only)
+  useEffect(() => {
+    if (userInfo && userInfo.role === "Admin" && users.length > 0 && selectedDepartment) {
       let usersInDepartment;
       if (selectedDepartment === "All") {
-        usersInDepartment = allUsers.filter(
-          (user) => user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-")
+        usersInDepartment = users.filter(
+          (user) =>
+            user.role && (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
         );
       } else {
-        usersInDepartment = allUsers.filter(
+        usersInDepartment = users.filter(
           (user) =>
             user.primary_department === selectedDepartment &&
+            user.role &&
             (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
         );
       }
       setDepartmentUsers(usersInDepartment);
-      setSelectedUser(""); // reset user selection when department changes
+      setSelectedUsers([]);
       setDownloadUrl(null);
       setDownloadUrlDocx(null);
     }
     // eslint-disable-next-line
-  }, [selectedDepartment, allUsers]);
-
-  // For department admin, filter users once after allUsers is loaded
-  useEffect(() => {
-    if (userInfo && userInfo.role && userInfo.role.startsWith("Admin-") && allUsers.length > 0) {
-      const departmentName = userInfo.role.split("-")[1];
-      const usersInDepartment = allUsers.filter(
-        (user) =>
-          user.primary_department === departmentName &&
-          (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
-      );
-      setDepartmentUsers(usersInDepartment);
-    }
-    // eslint-disable-next-line
-  }, [allUsers, userInfo]);
+  }, [selectedDepartment, users, userInfo]);
 
   // When isDepartmentWide changes, update selectedUser accordingly
+  // Reset template/downloads if no user selected
   useEffect(() => {
-    if (selectedUser === "All") {
-      setSelectedUser("");
+    if (selectedUsers.length === 0) {
       setSelectedTemplate("");
       setDownloadUrl(null);
       setDownloadUrlDocx(null);
     }
-    // eslint-disable-next-line
-  }, []);
-
-  const handleUserSelect = (event) => {
-    setSelectedUser(event.target.value);
-    setDownloadUrl(null);
-    setDownloadUrlDocx(null);
-    if (event.target.value === "") {
-      setSelectedTemplate("");
-    }
-  };
+  }, [selectedUsers]);
 
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template);
@@ -137,20 +137,27 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     setDownloadUrlDocx(null);
   };
 
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
   const handleUserSearchChange = (event) => {
     setUserSearchTerm(event.target.value);
-    // Automatically open dropdown when user starts typing in search field
-    if (event.target.value && !dropdownOpen && !selectedUser) {
-      setDropdownOpen(true);
-    }
-    // Close dropdown if search field is emptied
-    if (!event.target.value && dropdownOpen) {
-      // Optional: you can comment this out if you prefer to keep the dropdown open when clearing search
-      // setDropdownOpen(false);
+  };
+
+  const handleUserToggle = (userId) => {
+    setSelectedUsers((prev) => {
+      if (prev.includes(userId)) {
+        return prev.filter((id) => id !== userId);
+      } else {
+        return [...prev, userId];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedUsers([]);
+      setSelectAll(false);
+    } else {
+      setSelectedUsers(departmentUsers.map((user) => user.user_id));
+      setSelectAll(true);
     }
   };
 
@@ -158,28 +165,16 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     .filter((template) => template.title.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => a.title.localeCompare(b.title));
 
-  // Filter users based on search term
-  const filteredUsers = departmentUsers.filter(user => 
-    (user.preferred_name && user.preferred_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
-    (user.first_name && user.first_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
-    (user.last_name && user.last_name.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
-    (user.email && user.email.toLowerCase().includes(userSearchTerm.toLowerCase())) ||
-    (user.username && user.username.toLowerCase().includes(userSearchTerm.toLowerCase()))
-  );
-
-  // Stub for department-wide generation has been removed
-
   const handleGenerate = async () => {
-    if (!selectedUser || !selectedTemplate) {
+    if (selectedUsers.length === 0 || !selectedTemplate) {
       alert("Please select both a user and a template");
       return;
     }
-
     setBuildingLatex(true);
-
     try {
-      // Find the selected user object
-      const userObject = departmentUsers.find((user) => user.user_id === selectedUser);
+      // Only support single user for CV generation
+      const userId = selectedUsers[0];
+      const userObject = departmentUsers.find((user) => user.user_id === userId);
 
       // Update template with selected date range
       const templateWithDates = {
@@ -205,12 +200,11 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
       setDownloadUrlDocx(docxUrl);
 
       await logAction(AUDIT_ACTIONS.GENERATE_CV, {
-              userId: userObject.user_id,
-              userName: `${userObject.first_name} ${userObject.last_name}`,
-              userEmail: userObject.email,
-              reportName: selectedTemplate.title,
-            });
-      
+        userId: userObject.user_id,
+        userName: `${userObject.first_name} ${userObject.last_name}`,
+        userEmail: userObject.email,
+        reportName: selectedTemplate.title,
+      });
     } catch (error) {
       console.error("Error generating CV:", error);
       alert("Error generating CV. Please try again.");
@@ -223,7 +217,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
     if (url) {
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${selectedUser}_${selectedTemplate.title}_CV.${format}`;
+      link.download = `${selectedUsers.length}_${selectedTemplate.title}_CV.${format}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -232,7 +226,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
 
   return (
     <PageContainer>
-      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.first_name} />
       <main className="px-16 overflow-auto custom-scrollbar w-full mb-4">
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
@@ -242,138 +236,42 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
           <div className="">
             <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">Generate CV</h1>
 
-            {/* Department Field */}
-            <div className="my-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-              {userInfo.role === "Admin" ? (
-                <select
-                  className="select select-bordered w-full max-w-md"
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                >
-                  <option value="All">All</option>
-                  {allDepartments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  className="input input-bordered w-full max-w-md bg-gray-100"
-                  value={userInfo.role.startsWith("Admin-") ? userInfo.role.split("-")[1] : ""}
-                  disabled
-                />
-              )}
-            </div>
-
-            {/* User Selection Dropdown */}
-            <div className="my-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
-              <div className="flex flex-col gap-4">
-                {/* Search field for users */}
-                <input
-                  type="text"
-                  className="input input-bordered w-full max-w-md"
-                  placeholder="Search by name, email, or username..."
-                  value={userSearchTerm}
-                  onChange={handleUserSearchChange}
-                  disabled={selectedUser !== ""} // Also disable when a user is selected
-                />
-                
-                {/* Custom dropdown */}
-                <div className="relative w-full max-w-md">
-                  <button
-                    type="button"
-                    className="select select-bordered w-full text-left flex items-center justify-between"
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span>
-                        {selectedUser ? (
-                          departmentUsers.find(u => u.user_id === selectedUser)?.preferred_name || 
-                          departmentUsers.find(u => u.user_id === selectedUser)?.first_name + " " + 
-                          departmentUsers.find(u => u.user_id === selectedUser)?.last_name
-                        ) : "Choose a faculty member..."}
-                      </span>
-                      <div className="flex items-center">
-                        {selectedUser && (
-                          <svg
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent dropdown from toggling
-                              setSelectedUser("");
-                              setDownloadUrl(null);
-                              setDownloadUrlDocx(null);
-                              setSelectedTemplate("");
-                            }}
-                            className="w-4 h-4 mr-2 text-gray-500 hover:text-black cursor-pointer"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        )}
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </button>
-                  
-                  {dropdownOpen && (
-                    <div className="absolute z-10 w-full bg-white shadow-lg max-h-[40vh] rounded-md py-1 mt-1 overflow-auto custom-scrollbar">
-                      <div 
-                        className="cursor-pointer hover:bg-gray-100 px-4 py-2"
-                        onClick={() => {
-                          setSelectedUser("");
-                          setDropdownOpen(false);
-                          setUserSearchTerm(""); // Clear search term
-                        }}
-                      >
-                        ...
-                      </div>
-                      
-                      {filteredUsers.map((user) => (
-                        <div 
-                          key={user.user_id}
-                          className="cursor-pointer hover:bg-gray-100 px-4 py-2"
-                          onClick={() => {
-                            setSelectedUser(user.user_id);
-                            setDropdownOpen(false);
-                            setUserSearchTerm(""); // Clear search term
-                          }}
-                        >
-                          <div className="font-medium">
-                            {(user.preferred_name || user.first_name) + " " + user.last_name}
-                          </div>
-                          {user.email && user.email.trim() !== "" && user.email !== "null" && user.email !== "undefined" && (
-                            <div className="text-sm text-gray-500">{user.email}</div>
-                          )}
-                          {user.username && user.username.trim() !== "" && user.username !== "null" && user.username !== "undefined" && (
-                            <div className="text-sm text-gray-500">{user.username}</div>
-                          )}
-                        </div>
+            {/* Main Content Grid - Left and Right Sections (flex, gap-6) */}
+            <div className="flex flex-col md:flex-row gap-6 mb-8">
+              {/* Left Section - Department and Templates */}
+              <div className="flex-1 space-y-6 max-w-md">
+                {/* Department Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                  {userInfo.role === "Admin" ? (
+                    <select
+                      className="select select-bordered w-full"
+                      value={selectedDepartment}
+                      onChange={(e) => setSelectedDepartment(e.target.value)}
+                    >
+                      <option value="All">All</option>
+                      {allDepartments.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
                       ))}
-                    </div>
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      className="input input-bordered w-full bg-gray-100"
+                      value={userInfo.role.startsWith("Admin-") ? userInfo.role.split("-")[1] : ""}
+                      disabled
+                    />
                   )}
                 </div>
-                
-                {/* Removed checkbox for department-wide cv (all fac members) */}
-              </div>
-            </div>
 
-            <div className="flex flex-col w-full h-full pb-8">
-              {/* Left Panel: Template List */}
-              <div className="flex flex-col h-full">
-                <h2 className="text-sm font-medium text-gray-700 mb-2">Templates</h2>
-
-                {/* List of Templates as a select dropdown (same as above )*/}
-                <div className="mb-4">
+                {/* Templates Dropdown */}
+                <div>
+                  <h2 className="text-sm font-medium text-gray-700 mb-2">Templates</h2>
                   <select
-                    className={`select select-bordered w-full max-w-md ${
-                      !selectedUser ? "select-disabled bg-gray-100" : ""
+                    className={`select select-bordered w-full ${
+                      selectedUsers.length === 0 ? "select-disabled bg-gray-100" : ""
                     }`}
                     value={selectedTemplate?.template_id || ""}
                     onChange={(e) => {
@@ -381,7 +279,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                       const template = searchedTemplates.find((t) => t.template_id === templateId);
                       handleTemplateSelect(template || "");
                     }}
-                    disabled={!selectedUser}
+                    disabled={selectedUsers.length === 0}
                   >
                     <option value="">Choose a template...</option>
                     {searchedTemplates.map((template) => (
@@ -390,114 +288,110 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                       </option>
                     ))}
                   </select>
-                </div>
-
-                {/* Date Range Picker and Generate Button */}
-                {selectedTemplate && (
-                  <div className="mt-auto">
-                    <div className="flex space-x-2">
-                      <label className="block font-medium text-zinc-600 mt-4">Select Date Range (Year)</label>
-                      <select
-                        className="border rounded px-4 py-4"
-                        value={startYear}
-                        onChange={(e) => setStartYear(Number(e.target.value))}
-                      >
-                        {yearOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="self-center">to</span>
-                      <select
-                        className="border rounded px-4 py-4"
-                        value={endYear}
-                        onChange={(e) => setEndYear(Number(e.target.value))}
-                      >
-                        {yearOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Download Buttons */}
-                    {(downloadUrl || downloadUrlDocx) && (
-                      <div className="flex gap-x-2 mr-2 mt-4">
-                        {downloadUrl && (
-                          <button className="w-1/2 btn btn-success" onClick={() => handleDownload(downloadUrl, "pdf")}>
-                            Download PDF
-                          </button>
-                        )}
-                        {downloadUrlDocx && (
-                          <button
-                            className="w-1/2 btn btn-success"
-                            onClick={() => handleDownload(downloadUrlDocx, "docx")}
+                  {/* Date Range Picker and Download Buttons */}
+                  {selectedTemplate && (
+                    <div className="my-4 mx-auto">
+                      <div className="flex space-x-2 p-2">
+                        <label className="block font-medium text-zinc-600 my-4">Select Date Range (Year)</label>
+                        <div className="">
+                          <select
+                            className="border rounded px-4 py-4 ml-4"
+                            value={startYear}
+                            onChange={(e) => setStartYear(Number(e.target.value))}
                           >
-                            Download DOCX
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Right Panel: Preview/Info */}
-              <div
-                className="flex-1 flex flex-col items-center bg-gray-50 rounded-lg 
-                        shadow-md px-8 overflow-auto custom-scrollbar h-full mt-4"
-              >
-                <div className="w-full h-full max-w-2xl p-8">
-                  {!selectedUser ? (
-                    <div className="text-center text-gray-500">
-                      <p>Choose a faculty member from the dropdown above to get started.</p>
-                    </div>
-                  ) : !selectedTemplate ? (
-                    <div className="text-center text-gray-500">
-                      <p>Choose a template from the dropdown to continue.</p>
-                    </div>
-                  ) : downloadUrl || downloadUrlDocx ? (
-                    <div className="w-full h-full">
-                      <div className="text-center mb-4">
-                        <h3 className="text-xl font-semibold mb-2 text-green-600">CV Generated Successfully!</h3>
-                      </div>
-                      {downloadUrl && (
-                        <div className="w-full h-full">
-                          <PDFViewer url={downloadUrl} />
+                            {yearOptions.map((year) => (
+                              <option key={year} value={year}>
+                                {year}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="self-center"> to </span>
+                          <select
+                            className="border rounded px-4 py-4"
+                            value={endYear}
+                            onChange={(e) => setEndYear(Number(e.target.value))}
+                          >
+                            {yearOptions.map((year) => (
+                              <option key={year} value={year}>
+                                {year}
+                              </option>
+                            ))}
+                          </select>
                         </div>
-                      )}
-                    </div>
-                  ) : buildingLatex ? (
-                    <div className="text-center">
-                      <p className=" text-gray-600">
-                        Please wait while we generate the CV, you will be notified once it's ready.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className=" text-gray-600">Click "Generate" to create the CV with the selected parameters.</p>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
 
-              {selectedTemplate && (
-                <div className="mt-auto">
-                  {/* Generate Button */}
-                  <button
-                    className="w-full btn btn-primary my-4"
-                    onClick={handleGenerate}
-                    disabled={buildingLatex || !selectedUser || !selectedTemplate}
-                  >
-                    {buildingLatex ? "Generating..." : "Generate"}
-                  </button>
-                </div>
-              )}
+              {/* Right Section - Faculty Member Selector */}
+              <div className="flex-1 max-w-md">
+                <FacultyMemberSelector
+                  departmentUsers={departmentUsers}
+                  selectedUsers={selectedUsers}
+                  onUserToggle={handleUserToggle}
+                  selectAll={selectAll}
+                  onSelectAll={handleSelectAll}
+                  userSearchTerm={userSearchTerm}
+                  onUserSearchChange={handleUserSearchChange}
+                  showSelectAll={false}
+                />
+              </div>
             </div>
 
-            {/* Removed DepartmentGenerateAllConfirmModal */}
+            {selectedTemplate && (
+              <div className="flex flex-col items-center">
+                {/* Generate Button */}
+                <button
+                  className={`w-full btn btn-primary  ${
+                    downloadUrl ? "btn-disabled bg-gray-300 text-gray-500 cursor-not-allowed" : ""
+                  }`}
+                  onClick={handleGenerate}
+                  disabled={buildingLatex || selectedUsers.length === 0 || !selectedTemplate || !!downloadUrl}
+                >
+                  {buildingLatex ? "Generating..." : "Generate"}
+                </button>
+                {downloadUrl && (
+                  <>
+                    <div className="w-full text-center mt-4">
+                      <h3 className="text-xl font-semibold text-green-600">CV Generated Successfully!</h3>
+                    </div>
+                    <div className="flex gap-x-2 mr-2 mb-4 align-center items-center">
+                          <div className="flex justify-center gap-4 my-4 mb-12">
+                            {downloadUrl && (
+                              <button className="btn btn-success" style={{ minWidth: '160px' }} onClick={() => handleDownload(downloadUrl, "pdf")}>Download PDF</button>
+                            )}
+                            {downloadUrlDocx && (
+                              <button className="btn btn-success" style={{ minWidth: '160px' }} onClick={() => handleDownload(downloadUrlDocx, "docx")}>Download DOCX</button>
+                            )}
+                          </div>
+                    </div>
+                    <div className="w-full flex justify-center">
+                      <div className="max-w-2xl w-full">
+                        <PDFViewer url={downloadUrl} />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-col w-full h-full pb-4">
+              {/* Right Panel: Preview/Info */}
+              <div className="flex flex-col">
+                <div className="w-full h-full max-w-2xl py-2">
+                  {buildingLatex ? (
+                    <div className="text-left mt-2">
+                      <p className=" text-gray-600">
+                        Please wait while we generate the CV, you will be notified once it's ready.
+                      </p>
+                    </div>
+                  ) : (
+                    <></>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>

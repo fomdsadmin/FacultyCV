@@ -1,5 +1,5 @@
-import { getJWT } from "../getAuthToken";
-import { getPresignedUrl } from "../graphql/graphqlHelpers";
+import { getJWT } from "../../../getAuthToken";
+import { getPresignedUrl } from "../../../graphql/graphqlHelpers";
 
 export const uploadLatexToS3 = async (latex, key) => {
     // Get presigned URL

@@ -7,9 +7,10 @@ import {
   getAllUsersCount,
   getNumberOfGeneratedCVs,
 } from "../graphql/graphqlHelpers.js";
+import { useAdmin } from "Contexts/AdminContext.jsx";
 
 const AdminHomePage = ({ getCognitoUser, userInfo }) => {
-  const [loading, setLoading] = useState(false);
+  const { loading, setLoading, allUsersCount, departmentAffiliations, allDataSections } = useAdmin();
   const [userCounts, setUserCounts] = useState({
     total_count: 0,
     faculty_count: 0,
@@ -21,20 +22,14 @@ const AdminHomePage = ({ getCognitoUser, userInfo }) => {
   const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
 
   useEffect(() => {
-    fetchUserCounts();
     fetchGeneratedCVs();
   }, []);
 
-  async function fetchUserCounts() {
-    setLoading(true);
-    try {
-      const counts = await getAllUsersCount();
-      setUserCounts(counts);
-    } catch (error) {
-      console.error("Error fetching user counts:", error);
-    }
-    setLoading(false);
-  }
+  useEffect(() => {
+    setUserCounts(allUsersCount);
+  }, [allUsersCount]);
+
+
   async function fetchGeneratedCVs() {
     setLoading(true);
     try {

@@ -37,6 +37,7 @@ import FacultyAdminGenerateCV from "./Views/FacultyAdminGenerateCV.jsx";
 import { NotificationProvider } from "./Contexts/NotificationContext.jsx";
 import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
+import { AdminProvider } from "./Contexts/AdminContext.jsx";
 import { ToastContainer } from "react-toastify";
 import KeycloakLogout from "Components/KeycloakLogout";
 import YourActivityPage from "./Pages/AuditLogPages/YourActivityPage.jsx";
@@ -531,11 +532,33 @@ const AppContent = () => {
   );
 };
 
+
 const App = () => {
+  // Use AppProvider and NotificationProvider as usual
+  // Wrap AppContent with AdminContextProvider only for admin roles
+  // We need to get the userInfo from AppContext, so use a wrapper
+  const AdminWrapper = () => {
+    const { userInfo } = useApp();
+    const isAdmin =
+      userInfo &&
+      typeof userInfo.role === "string" &&
+      (userInfo.role === "Admin" ||
+        userInfo.role.startsWith("Admin-") ||
+        userInfo.role.startsWith("FacultyAdmin-"));
+    const role = userInfo.role;
+    if (isAdmin) {
+      return (
+        <AdminProvider isAdmin={isAdmin} role={role}>
+          <AppContent />
+        </AdminProvider>
+      );
+    }
+    return <AppContent />;
+  };
   return (
     <AppProvider>
       <NotificationProvider>
-        <AppContent />
+        <AdminWrapper />
       </NotificationProvider>
     </AppProvider>
   );
