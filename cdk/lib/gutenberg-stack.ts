@@ -138,10 +138,38 @@ export class GotenbergStack extends cdk.Stack {
                                 `${gotenbergBucket.bucketArn}/*`,
                             ],
                         }),
+                        new iam.PolicyStatement({
+                            effect: iam.Effect.ALLOW,
+                            actions: [
+                                'appsync:GraphQL',
+                            ],
+                            resources: [
+                                `${apiStack.getApi().arn}/*`,
+                            ],
+                        }),
                     ],
                 }),
             },
         });
+
+        // Separate IAM role for the notify Lambda (needs AppSync invoke permissions)
+        const notifyLambdaRole = new iam.Role(this, 'NotifyGotenbergLambdaRole', {
+            assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+            managedPolicies: [
+                iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+            ],
+        });
+
+        // Grant AppSync permission to invoke the notify Lambda
+        notifyLambdaRole.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: [
+                'logs:CreateLogGroup',
+                'logs:CreateLogStream',
+                'logs:PutLogEvents',
+            ],
+            resources: ['arn:aws:logs:*:*:*'],
+        }));
 
         // getPresignedGotenbergBucketUrl Lambda
         const getPresignedUrlLambda = new lambda.Function(this, 'GetPresignedGotenbergBucketUrl', {
@@ -156,6 +184,9 @@ export class GotenbergStack extends cdk.Stack {
             timeout: cdk.Duration.minutes(3),
         });
 
+        // Import the API key from the exported value
+        const apiKey = cdk.Fn.importValue(`${resourcePrefix}-ApiKey`);
+
         // generateGotenbergPdf Lambda
         const generatePdfLambda = new lambda.Function(this, 'GenerateGotenbergPdf', {
             functionName: `${resourcePrefix}-generateGotenbergPdf`,
@@ -166,6 +197,8 @@ export class GotenbergStack extends cdk.Stack {
             environment: {
                 BUCKET_NAME: gotenbergBucket.bucketName,
                 GOTENBERG_HOST: alb.loadBalancerDnsName,
+                APPSYNC_ENDPOINT: apiStack.getApi().graphqlUrl,
+                APPSYNC_API_KEY: apiKey,
             },
             timeout: cdk.Duration.minutes(15),
         });
@@ -184,6 +217,8 @@ export class GotenbergStack extends cdk.Stack {
             ephemeralStorageSize: cdk.Size.mebibytes(1024),
             environment: {
                 BUCKET_NAME: gotenbergBucket.bucketName,
+                APPSYNC_ENDPOINT: apiStack.getApi().graphqlUrl,
+                APPSYNC_API_KEY: apiKey,
             },
             timeout: cdk.Duration.minutes(15),
         });
@@ -245,6 +280,50 @@ export class GotenbergStack extends cdk.Stack {
                 util.error(error.message, error.type, result);
             }
             return result;
+        }
+      `),
+            runtime: appsync.FunctionRuntime.JS_1_0_0,
+        });
+
+        // Simple Lambda resolver for notifyGotenbergGenerationComplete
+        const notifyLambda = new lambda.Function(this, 'NotifyGotenbergGenerationComplete', {
+            functionName: `${resourcePrefix}-notifyGotenbergGenerationComplete`,
+            runtime: lambda.Runtime.PYTHON_3_9,
+            handler: 'index.handler',
+            role: notifyLambdaRole, // Use the separate role
+            code: lambda.Code.fromInline(`
+def handler(event, context):
+    print(f"Notify mutation called with event: {event}")
+    key = event.get('arguments', {}).get('key', '')
+    print(f"Returning key: {key}")
+    return {"key": key}
+            `),
+            timeout: cdk.Duration.seconds(30),
+        });
+
+        const notifyDataSource = new appsync.LambdaDataSource(this, 'NotifyGotenbergLambdaDataSource', {
+            api: apiStack.getApi(),
+            lambdaFunction: notifyLambda,
+            name: 'notifyGotenbergLambdaDataSource',
+        });
+
+        new appsync.Resolver(this, 'NotifyGotenbergGenerationCompleteResolver', {
+            api: apiStack.getApi(),
+            dataSource: notifyDataSource,
+            typeName: 'Mutation',
+            fieldName: 'notifyGotenbergGenerationComplete',
+            code: appsync.Code.fromInline(`
+        export function request(ctx) {
+            return {
+                operation: 'Invoke',
+                payload: {
+                    arguments: ctx.arguments,
+                },
+            };
+        }
+
+        export function response(ctx) {
+            return ctx.result;
         }
       `),
             runtime: appsync.FunctionRuntime.JS_1_0_0,

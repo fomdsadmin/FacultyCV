@@ -7,7 +7,7 @@ import { useNotification } from '../../Contexts/NotificationContext.jsx';
 import TemplateList from './TemplateList.jsx';
 import ReportPreview from './ReportPreview.jsx';
 import { useApp } from 'Contexts/AppContext.jsx';
-import { checkPdfComplete, checkDocxComplete, getPdfDownloadUrl, getDocxDownloadUrl, doesDocxTagExist, doesPdfTagExist, pollForCompletion } from './gotenbergGenerateUtils/gotenbergService.js';
+import { checkPdfComplete, checkDocxComplete, getPdfDownloadUrl, getDocxDownloadUrl, doesDocxTagExist, doesPdfTagExist, subscribeToCompletion } from './gotenbergGenerateUtils/gotenbergService.js';
 import { useRef } from 'react';
 
 const ReportsPage = () => {
@@ -31,13 +31,15 @@ const ReportsPage = () => {
   const [isPdfReady, setIsPdfReady] = useState(false);
   const [isDocxReady, setIsDocxReady] = useState(false);
   const [processingMessage, setProcessingMessage] = useState("");
+  const [docxTagExists, setDocxTagExists] = useState(false);
+  const [pdfTagExists, setPdfTagExists] = useState(false);
   const cancelRef = useRef(null);
 
   const { setNotification } = useNotification();
 
   useEffect(() => {
     const helper = async () => {
-
+      setIsGenerating(true);
       const promises = [
         checkPdfComplete(userInfo, selectedTemplate),
         checkDocxComplete(userInfo, selectedTemplate),
@@ -52,11 +54,18 @@ const ReportsPage = () => {
         docxTagExists
       ] = await Promise.all(promises);
 
+      setDocxTagExists(docxTagExists);
+      setPdfTagExists(pdfTagExists);
+
+      if (!pdfTagExists && !docxTagExists) {
+        setIsGenerating(false);
+      }
+
       if ((!isPdfComplete && pdfTagExists) || (!isDocxComplete && docxTagExists)) {
         cancelRef.current?.();
         cancelRef.current = null;
 
-        const cancel = pollForCompletion(
+        const cancel = subscribeToCompletion(
           userInfo,
           selectedTemplate,
           handlePdfReady,
@@ -70,16 +79,20 @@ const ReportsPage = () => {
         );
 
         cancelRef.current = cancel;
-      } else {
-        if (isPdfComplete) {
-          setIsPdfReady(true);
-          setDownloadUrl(await getPdfDownloadUrl(userInfo, selectedTemplate));
-        }
+      }
 
-        if (isDocxComplete) {
-          setIsDocxReady(true);
-          setDownloadUrlDocx(await getDocxDownloadUrl(userInfo, selectedTemplate));
-        }
+      if (isPdfComplete) {
+        setIsPdfReady(true);
+        setDownloadUrl(await getPdfDownloadUrl(userInfo, selectedTemplate));
+      }
+
+      if (isDocxComplete) {
+        setIsDocxReady(true);
+        setDownloadUrlDocx(await getDocxDownloadUrl(userInfo, selectedTemplate));
+      }
+
+      if (isPdfComplete && isDocxComplete) {
+        setIsGenerating(false);
       }
     }
 
@@ -113,6 +126,8 @@ const ReportsPage = () => {
     setIsPdfReady(false);
     setIsDocxReady(false);
     setIsGenerating(false);
+    setDocxTagExists(false);
+    setPdfTagExists(false);
     setProcessingMessage("");
   };
 
@@ -138,13 +153,7 @@ const ReportsPage = () => {
     setIsPdfReady(true);
     setDownloadBlob(null);
     setNotification({ message: "PDF finsihed generating!" });
-
-    if (isDocxReady || downloadUrlDocx) {
-      setIsGenerating(false);
-      setProcessingMessage("Both files ready");
-    } else {
-      setProcessingMessage("PDF ready, waiting for DOCX...");
-    }
+    setProcessingMessage("Generating DOCX");
   };
 
   const handleDocxReady = (docxUrl) => {
@@ -153,13 +162,7 @@ const ReportsPage = () => {
     setIsDocxReady(true);
     setDownloadBlobDocx(null);
     setNotification({ message: "DOCX finsihed generating!" });
-
-    if (isPdfReady || downloadUrl) {
-      setIsGenerating(false);
-      setProcessingMessage("Both files ready");
-    } else {
-      setProcessingMessage("DOCX ready, waiting for PDF...");
-    }
+    setIsGenerating(false);
   };
 
   const handleProgress = (message) => {
@@ -214,6 +217,8 @@ const ReportsPage = () => {
             processingMessage={processingMessage}
             user={user}
             cancelRef={cancelRef}
+            docxTagExists={docxTagExists}
+            pdfTagExists={pdfTagExists}
           />
 
           <div className="flex-1 flex flex-col items-center bg-gray-50 rounded-lg shadow-md px-8 overflow-auto custom-scrollbar h-[90vh]">

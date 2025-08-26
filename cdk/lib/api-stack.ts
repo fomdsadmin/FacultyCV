@@ -26,6 +26,7 @@ export class ApiStack extends cdk.Stack {
   private readonly layerList: { [key: string]: LayerVersion };
   private readonly resolverRole: Role;
   private readonly oidcStack: OidcAuthStack;
+  
   public getEndpointUrl = () => this.api.graphqlUrl;
   public getUserPoolId = () => this.oidcStack.getUserPoolId();
   public getUserPoolClientId = () => this.oidcStack.getUserPoolClientId();
@@ -33,18 +34,16 @@ export class ApiStack extends cdk.Stack {
   public getUserPoolClientName = () => this.oidcStack.getUserPoolClient().userPoolClientName || 'oidc-client';
   public getApi = () => this.api;
   public getResolverRole = () => this.resolverRole;
-  public addLayer = (name: string, layer: LayerVersion) =>
-    (this.layerList[name] = layer);
+  public addLayer = (name: string, layer: LayerVersion) => (this.layerList[name] = layer);
   public getLayers = () => this.layerList;
-  
+
   constructor(scope: Construct, id: string, databaseStack: DatabaseStack, cvGenStack: CVGenStack, oidcStack: OidcAuthStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
     this.oidcStack = oidcStack;
 
     let resourcePrefix = this.node.tryGetContext('prefix');
-    if (!resourcePrefix)
-      resourcePrefix = 'facultycv' // Default
+    if (!resourcePrefix) resourcePrefix = 'facultycv';
 
     this.layerList = {};
 
@@ -98,14 +97,34 @@ export class ApiStack extends cdk.Stack {
     this.layerList["databaseConnect"] = databaseConnectLayer;
     this.layerList["openai"] = openailayer;
 
-    // AppSync API
+    // AppSync API with both User Pool and API Key authorization
     this.api = new appsync.GraphqlApi(this, "FacultyCVApi", {
       name: `${resourcePrefix}-api`,
       definition: appsync.Definition.fromFile("./graphql/schema.graphql"),
-      authorizationConfig: oidcStack.getAppSyncAuthConfig(),
+      authorizationConfig: {
+        defaultAuthorization: oidcStack.getAppSyncAuthConfig().defaultAuthorization,
+        additionalAuthorizationModes: [
+          {
+            authorizationType: appsync.AuthorizationType.API_KEY,
+            // Remove the apiKeyConfig to make it never expire
+          },
+        ],
+      },
       logConfig: {
         fieldLogLevel: appsync.FieldLogLevel.ALL,
       },
+    });
+
+    // Explicitly create an API key that never expires
+    const apiKey = new appsync.CfnApiKey(this, 'FacultyCVApiKey', {
+      apiId: this.api.apiId,
+      // Remove the expires property to make it never expire
+    });
+
+    // Export as output so other stacks can use it
+    new cdk.CfnOutput(this, 'FacultyCVApiKeyOutput', {
+      value: apiKey.attrApiKey,
+      exportName: `${resourcePrefix}-ApiKey`,
     });
 
     // AppSync API Role

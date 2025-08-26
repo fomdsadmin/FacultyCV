@@ -1,10 +1,50 @@
 import boto3
 import botocore
 import os
+import json
+import urllib.request
 from pdf2docx import Converter
 from urllib.parse import unquote_plus
 
 s3_client = boto3.client("s3")
+
+# Environment variables for AppSync
+APPSYNC_ENDPOINT = os.environ.get('APPSYNC_ENDPOINT')
+APPSYNC_API_KEY = os.environ.get('APPSYNC_API_KEY')
+
+def notify_docx_complete(docx_key):
+    """Call the GraphQL mutation to notify that DOCX conversion is complete"""
+    try:
+        mutation = """
+        mutation NotifyComplete($key: String!) {
+            notifyGotenbergGenerationComplete(key: $key) {
+                key
+            }
+        }
+        """
+        
+        payload = {
+            "query": mutation,
+            "variables": {
+                "key": docx_key
+            }
+        }
+        
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": APPSYNC_API_KEY
+        }
+        
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(APPSYNC_ENDPOINT, data=data, headers=headers, method='POST')
+        
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            print(f"DOCX notification sent successfully: {result}")
+            
+    except Exception as e:
+        print(f"Failed to send DOCX notification: {str(e)}")
+        # Don't fail the entire function if notification fails
 
 def download_file_from_s3(bucket_name, s3_file_key, local_file_path):
     try:
@@ -105,6 +145,9 @@ def handler(event, context):
             print(f"Tagged original PDF {pdf_key} with isDocxComplete:true")
         except botocore.exceptions.ClientError as tag_error:
             print(f"Failed to tag PDF: {tag_error}")
+
+        # Notify that DOCX conversion is complete using the same mutation as PDF
+        notify_docx_complete(docx_key)
 
         print(f"Successfully converted PDF to DOCX: {docx_key}")
 

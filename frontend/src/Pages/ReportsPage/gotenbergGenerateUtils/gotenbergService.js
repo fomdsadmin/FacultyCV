@@ -1,4 +1,5 @@
 import { getPresignedGotenbergBucketUrl } from "../../../graphql/graphqlHelpers";
+import { subscribeToGotenbergStatus } from "../../../graphql/graphqlHelpers";
 
 export const getHtmlKey = (userInfo, selectedTemplate) => {
   return `html/${userInfo.username}${selectedTemplate.template_id}.html`;
@@ -124,124 +125,97 @@ export const getDocxDownloadUrl = async (userInfo, selectedTemplate) => {
   }
 };
 
-// Poll for PDF first, then DOCX once PDF is ready
+// Replace pollForCompletion with subscription-based approach
 // Returns a cancel function
-export const pollForCompletion = (
+export const subscribeToCompletion = (
   userInfo,
   selectedTemplate,
   onPdfReady,
   onDocxReady,
   onProgress,
-  onComplete,
-  maxAttempts = 60
+  onComplete
 ) => {
-  let cancel = false;
-  let attempts = 0;
+  const pdfKey = getPdfKey(userInfo, selectedTemplate);
+  const docxKey = getDocxKey(userInfo, selectedTemplate);
+  
+  console.log('🔔 Setting up subscriptions for:');
+  console.log('📄 PDF Key:', pdfKey);
+  console.log('📝 DOCX Key:', docxKey);
+  
   let pdfReady = false;
   let docxReady = false;
-  let timeoutId = null;
+  let pdfSubscription = null;
+  let docxSubscription = null;
 
-  // token prevents older pollers from continuing after a new one starts
-  const token = Symbol();
-
-  const scheduleNext = () => {
-    if (cancel) return;                  // ✅ re-check just before scheduling
-    timeoutId = setTimeout(poll, 2000, token);
+  const checkCompletion = () => {
+    if (pdfReady && docxReady) {
+      onProgress?.('Both files ready');
+      onComplete?.(true);
+      // Clean up subscriptions
+      pdfSubscription?.unsubscribe();
+      docxSubscription?.unsubscribe();
+    }
   };
 
-  const poll = async (tkn) => {
-    // if this iteration belongs to an obsolete poller, stop
-    if (tkn !== token) return;
-
-    if (cancel) return;
-
-    attempts++;
-    console.log(`Polling attempt ${attempts}/${maxAttempts}`);
-
-    try {
-      if (!pdfReady) {
-        pdfReady = await checkPdfComplete(userInfo, selectedTemplate);
-        if (cancel || tkn !== token) return;  // ✅ mid-await cancellation guard
-
-        if (pdfReady) {
-          const pdfUrl = await getPdfDownloadUrl(userInfo, selectedTemplate);
-          if (cancel || tkn !== token) return;
-          if (pdfUrl) {
-            onPdfReady(pdfUrl);
-            onProgress?.('PDF ready, starting DOCX conversion...');
-          }
-        } else {
-          onProgress?.(`Generating PDF... (${attempts}/${maxAttempts})`);
-        }
+  // Subscribe to PDF generation updates
+  onProgress?.('Waiting for PDF generation...');
+  console.log('🔔 Creating PDF subscription...');
+  pdfSubscription = subscribeToGotenbergStatus(
+    pdfKey,
+    async (data) => {
+      console.log('✅ PDF generation complete:', data);
+      pdfReady = true;
+      
+      // Get the download URL
+      const pdfUrl = await getPdfDownloadUrl(userInfo, selectedTemplate);
+      if (pdfUrl) {
+        onPdfReady(pdfUrl);
+        onProgress?.('PDF ready, waiting for DOCX...');
       }
-
-      if (pdfReady && !docxReady) {
-        docxReady = await checkDocxComplete(userInfo, selectedTemplate);
-        if (cancel || tkn !== token) return;
-
-        if (docxReady) {
-          const docxUrl = await getDocxDownloadUrl(userInfo, selectedTemplate);
-          if (cancel || tkn !== token) return;
-          if (docxUrl) {
-            onDocxReady(docxUrl);
-            onProgress?.('Both PDF and DOCX are ready');
-          }
-        } else {
-          onProgress?.(`PDF ready, generating DOCX... (${attempts}/${maxAttempts})`);
-        }
-      }
-
-      // stop conditions
-      if ((pdfReady && docxReady) || attempts >= maxAttempts) {
-        cancel = true;                    // ✅ freeze further scheduling
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        if (pdfReady && docxReady) {
-          onProgress?.('Both files ready');
-          onComplete?.(true);
-        } else {
-          if (pdfReady && !docxReady) {
-            onProgress?.('PDF ready, DOCX timeout - may still be processing');
-          } else {
-            onProgress?.('PDF timeout - may still be processing');
-          }
-          onComplete?.(false);
-        }
-        return;
-      }
-
-      // schedule next tick (after all awaits + checks)
-      scheduleNext();
-    } catch (err) {
-      // On error, stop and surface failure
-      cancel = true;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-      console.error('Polling error:', err);
+      
+      checkCompletion();
+    },
+    (error) => {
+      console.error('❌ PDF subscription error:', error);
       onComplete?.(false);
     }
-  };
+  );
 
-  // kick off
-  scheduleNext(); // start via the same scheduler path
-
-  // cancel function
-  return () => {
-    if (cancel) return;
-    cancel = true;
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
+  // Subscribe to DOCX generation updates
+  console.log('🔔 Creating DOCX subscription...');
+  docxSubscription = subscribeToGotenbergStatus(
+    docxKey,
+    async (data) => {
+      console.log('✅ DOCX generation complete:', data);
+      docxReady = true;
+      
+      // Get the download URL
+      const docxUrl = await getDocxDownloadUrl(userInfo, selectedTemplate);
+      if (docxUrl) {
+        onDocxReady(docxUrl);
+        onProgress?.('DOCX ready, waiting for PDF...');
+      }
+      
+      checkCompletion();
+    },
+    (error) => {
+      console.error('❌ DOCX subscription error:', error);
+      onComplete?.(false);
     }
-    console.log('Polling cancelled');
+  );
+
+  console.log('🔔 Subscriptions created:', {
+    pdfSubscription: !!pdfSubscription,
+    docxSubscription: !!docxSubscription
+  });
+
+  // Return cancel function
+  return () => {
+    console.log('🛑 Cancelling subscriptions');
+    pdfSubscription?.unsubscribe();
+    docxSubscription?.unsubscribe();
   };
 };
-
-
 
 export const convertHtmlToPdf = async (htmlContent, options = {}, userInfo, selectedTemplate) => {
   console.log('Starting HTML to PDF conversion...');

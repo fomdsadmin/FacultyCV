@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import DownloadButtons from './DownloadButtons.jsx';
 import { buildHtml } from './HtmlFunctions/HtmlBuilder.js';
-import { convertHtmlToPdf, pollForCompletion } from './gotenbergGenerateUtils/gotenbergService';
+import { convertHtmlToPdf, subscribeToCompletion } from './gotenbergGenerateUtils/gotenbergService';
 import { useApp } from 'Contexts/AppContext.jsx';
 import { useNotification } from 'Contexts/NotificationContext.jsx';
 
@@ -23,7 +23,9 @@ const TemplateList = ({
   downloadBlobDocx,
   processingMessage,
   user,
-  cancelRef
+  cancelRef,
+  docxTagExists,
+  pdfTagExists
 }) => {
 
   const { userInfo } = useApp();
@@ -68,16 +70,16 @@ const TemplateList = ({
 
       cancelRef.current?.();
       cancelRef.current = null;
-      // Start polling for completion with completion callback
-
-      const cancel = pollForCompletion(
+      
+      // Start subscription for completion with completion callback
+      const cancel = subscribeToCompletion(
         userInfo,
         selectedTemplate,
         onPdfReady,
         onDocxReady,
         onProgress,
         (success) => {
-          console.log('Polling completed, success:', success);
+          console.log('Subscription completed, success:', success);
           // This will call the parent's completion handler to stop generating state
           onGenerateComplete(success);
         }
@@ -216,6 +218,8 @@ const TemplateList = ({
             isPdfReady={isPdfReady}
             isDocxReady={isDocxReady}
             isGenerating={isGenerating}
+            docxTagExists={docxTagExists}
+            pdfTagExists={pdfTagExists}
           />
         </div>
       )}

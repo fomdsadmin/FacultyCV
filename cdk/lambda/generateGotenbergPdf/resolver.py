@@ -3,13 +3,51 @@ import base64
 import http.client
 import traceback
 import os
+import json
+import urllib.request
 from urllib.parse import unquote_plus
 
 GOTENBERG_HOST = os.environ.get('GOTENBERG_HOST')
 GOTENBERG_PATH = "/forms/chromium/convert/html"
 FIXED_BOUNDARY = "----WebKitFormBoundary123456"
+APPSYNC_ENDPOINT = os.environ.get('APPSYNC_ENDPOINT')  # You'll need to add this
+APPSYNC_API_KEY = os.environ.get('APPSYNC_API_KEY')    # You'll need to add this
 
 s3_client = boto3.client("s3")
+
+def notify_generation_complete(pdf_key):
+    """Call the GraphQL mutation to notify that generation is complete"""
+    try:
+        mutation = """
+        mutation NotifyComplete($key: String!) {
+            notifyGotenbergGenerationComplete(key: $key) {
+                key
+            }
+        }
+        """
+        
+        payload = {
+            "query": mutation,
+            "variables": {
+                "key": pdf_key
+            }
+        }
+        
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": APPSYNC_API_KEY
+        }
+        
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(APPSYNC_ENDPOINT, data=data, headers=headers, method='POST')
+        
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            print(f"Notification sent successfully: {result}")
+            
+    except Exception as e:
+        print(f"Failed to send notification: {str(e)}")
+        # Don't fail the entire function if notification fails
 
 def lambda_handler(event, context):
     try:
@@ -77,6 +115,9 @@ def lambda_handler(event, context):
                 ]
             }
         )
+
+        # Notify that generation is complete
+        notify_generation_complete(pdf_key)
 
         return {
             "status": "SUCCESS",
