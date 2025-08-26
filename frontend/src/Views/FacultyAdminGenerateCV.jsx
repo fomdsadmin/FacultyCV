@@ -4,7 +4,7 @@ import PageContainer from "./PageContainer.jsx";
 import FacultyAdminMenu from "../Components/FacultyAdminMenu.jsx";
 import { getAllTemplates, getAllUsers, getAllUniversityInfo } from "../graphql/graphqlHelpers.js";
 import "../CustomStyles/scrollbar.css";
-import { getDownloadUrl, uploadLatexToS3 } from "../utils/reportManagement.js";
+import { getDownloadUrl, uploadLatexToS3 } from "../Pages/ReportsPage/gotenbergGenerateUtils/reportManagement.js";
 import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";

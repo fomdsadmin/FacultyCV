@@ -3,7 +3,7 @@ import PageContainer from './PageContainer.jsx';
 import FacultyMenu from 'Components/FacultyMenu.jsx';
 import { cvIsUpToDate, getAllTemplates } from 'graphql/graphqlHelpers.js';
 import '../CustomStyles/scrollbar.css';
-import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
+import { getDownloadUrl, uploadLatexToS3 } from '../Pages/ReportsPage/gotenbergGenerateUtils/reportManagement.js';
 import { useNotification } from '../Contexts/NotificationContext.jsx';
 import { getUserId } from '../getAuthToken.js';
 import TemplateList from 'Pages/ReportsPage/TemplateList.jsx';

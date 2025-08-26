@@ -5,7 +5,7 @@ import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import FacultyMemberSelector from "../Components/FacultyMemberSelector.jsx";
 // ...existing code...
 import "../CustomStyles/scrollbar.css";
-import { getDownloadUrl, uploadLatexToS3 } from "../utils/reportManagement.js";
+import { getDownloadUrl, uploadLatexToS3 } from "../Pages/ReportsPage/gotenbergGenerateUtils/reportManagement.js";
 import { useNotification } from "../Contexts/NotificationContext.jsx";
 import { getUserId } from "../getAuthToken.js";
 import { buildLatex } from "../Pages/ReportsPage/LatexFunctions/LatexBuilder.js";
