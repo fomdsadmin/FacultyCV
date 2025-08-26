@@ -110,7 +110,28 @@ const Header = ({ assistantUserInfo }) => {
   };
 
   const handleExitManaging = () => {
-    stopManagingUser();
+    const previousViewRole = stopManagingUser();
+    if (previousViewRole && previousViewRole.startsWith("Admin-")) {
+      navigate("/department-admin/members");
+      return;
+    } else if (previousViewRole && previousViewRole === "Admin") {
+      if (currentViewRole && currentViewRole.startsWith("Admin-")) {
+        navigate("/department-admin/members");
+        return;
+      } else {
+        navigate("/admin/users");
+        return;
+      }
+    } else if (previousViewRole && previousViewRole.startsWith("FacultyAdmin-")) {
+      navigate("/faculty-admin/users");
+      return;
+    } else if (previousViewRole && previousViewRole === "Assistant") {
+      navigate("/delegate/connections");
+      return;
+    } else {
+      navigate("/auth");
+      return;
+    }
   };
 
   // Close dropdowns when clicking outside

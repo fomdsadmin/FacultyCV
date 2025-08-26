@@ -10,7 +10,8 @@ import AddUserModal from "../Components/AddUserModal.jsx";
 import ImportUserModal from "../Components/ImportUserModal.jsx";
 import PendingRequestsModal from "../Components/PendingRequestsModal.jsx";
 import { getAllUsers, removeUser, getDepartmentAffiliations } from "../graphql/graphqlHelpers.js";
-import { useAuditLogger, AUDIT_ACTIONS} from "../Contexts/AuditLoggerContext.jsx";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
+import { useAdmin } from "Contexts/AdminContext.jsx";
 
 // Custom Modal Component
 const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = "confirm" }) => {
@@ -49,8 +50,8 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = "conf
 };
 
 const AdminUsers = ({ userInfo, getCognitoUser }) => {
-  const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
+  const [approvedUsers, setApprovedUsers] = useState([]);
   const [affiliations, setAffiliations] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [rejectedUsers, setRejectedUsers] = useState([]);
@@ -66,19 +67,23 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const navigate = useNavigate();
 
   const { logAction } = useAuditLogger();
+  const { loading, setLoading, allUsers, departmentAffiliations } = useAdmin();
+
+  useEffect(() => {
+    setUsers(allUsers);
+  }, [allUsers]);
 
   useEffect(() => {
     fetchAllUsers();
-  }, []);
+  }, [users]);
+
+  useEffect(() => {
+    setAffiliations(departmentAffiliations);
+  }, [departmentAffiliations]);
+
 
   async function fetchAllUsers() {
-    setLoading(true);
     try {
-      const [users, affiliationsData] = await Promise.all([
-        getAllUsers(),
-        getDepartmentAffiliations("All") // Get all affiliations for admin view
-      ]);
-
       // Clear and rebuild the arrays
       const pendingUsersList = [];
       const approvedUsersList = [];
@@ -94,10 +99,9 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         }
       });
 
-      setUsers(approvedUsersList);
+      setApprovedUsers(approvedUsersList);
       setPendingUsers(pendingUsersList);
       setRejectedUsers(rejectedUsersList);
-      setAffiliations(affiliationsData);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
@@ -110,59 +114,59 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
 
   // Function to get primary rank for a user from affiliations data
   const getPrimaryRank = (userId) => {
-    const userAffiliation = affiliations.find(aff => aff.user_id === userId);
-    
+    const userAffiliation = affiliations.find((aff) => aff.user_id === userId);
+
     if (userAffiliation && userAffiliation.primary_unit) {
       try {
         // Parse the primary_unit string to JSON object
-        const primaryUnit = typeof userAffiliation.primary_unit === 'string' 
-          ? JSON.parse(userAffiliation.primary_unit) 
-          : userAffiliation.primary_unit;
-        
+        const primaryUnit =
+          typeof userAffiliation.primary_unit === "string"
+            ? JSON.parse(userAffiliation.primary_unit)
+            : userAffiliation.primary_unit;
+
         if (primaryUnit && primaryUnit.rank) {
           return primaryUnit.rank;
         }
       } catch (error) {
-        console.error('Error parsing primary_unit JSON:', error, userAffiliation.primary_unit);
+        console.error("Error parsing primary_unit JSON:", error, userAffiliation.primary_unit);
       }
     }
-    
+
     return null;
   };
 
   // Function to get joint ranks for a user from affiliations data
   const getJointRanks = (userId) => {
-    const userAffiliation = affiliations.find(aff => aff.user_id === userId);
-    
+    const userAffiliation = affiliations.find((aff) => aff.user_id === userId);
+
     if (userAffiliation && userAffiliation.joint_units) {
       try {
         // Parse the joint_units string to JSON array
-        const jointUnits = typeof userAffiliation.joint_units === 'string' 
-          ? JSON.parse(userAffiliation.joint_units) 
-          : userAffiliation.joint_units;
-        
+        const jointUnits =
+          typeof userAffiliation.joint_units === "string"
+            ? JSON.parse(userAffiliation.joint_units)
+            : userAffiliation.joint_units;
+
         if (Array.isArray(jointUnits) && jointUnits.length > 0) {
           // Extract ranks from joint units and filter out empty ones
-          const ranks = jointUnits
-            .map(unit => unit.rank)
-            .filter(rank => rank && rank.trim() !== '');
-          
+          const ranks = jointUnits.map((unit) => unit.rank).filter((rank) => rank && rank.trim() !== "");
+
           if (ranks.length > 0) {
             // Remove duplicates by converting to Set and back to array
             const uniqueRanks = [...new Set(ranks)];
-            return uniqueRanks.join(', ');
+            return uniqueRanks.join(", ");
           }
         }
       } catch (error) {
-        console.error('Error parsing joint_units JSON:', error, userAffiliation.joint_units);
+        console.error("Error parsing joint_units JSON:", error, userAffiliation.joint_units);
       }
     }
-    
+
     return null;
   };
 
   // All unique roles for tabs and filters
-  const filters = Array.from(new Set(users.map((user) => user.role === "Assistant" ? "Delegate" : user.role)));
+  const filters = Array.from(new Set(approvedUsers.map((user) => (user.role === "Assistant" ? "Delegate" : user.role))));
 
   // Tab bar for roles (copied and adapted from DepartmentAdminUsers)
   const UserTabs = ({ filters, activeFilter, onSelect }) => (
@@ -173,18 +177,22 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         }`}
         onClick={() => onSelect(null)}
       >
-        All ({users.length})
+        All ({approvedUsers.length})
       </button>
       {[...filters]
         .sort((a, b) => a.localeCompare(b))
         .map((filter) => {
           // Count users for this tab, mapping 'Delegate' back to 'Assistant' for counting
-          const count = users.filter(u => (filter === "Delegate" ? u.role === "Assistant" : u.role === filter)).length;
+          const count = approvedUsers.filter((u) =>
+            filter === "Delegate" ? u.role === "Assistant" : u.role === filter
+          ).length;
           return (
             <button
               key={filter}
               className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-                activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                activeFilter === filter
+                  ? "bg-blue-600 text-white shadow"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
               onClick={() => onSelect(filter)}
             >
@@ -202,14 +210,13 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   };
 
   const handleManageClick = (value) => {
-    const user = users.filter((user) => user.user_id === value);
+    const user = approvedUsers.filter((user) => user.user_id === value);
     setActiveUser(user[0]);
   };
 
   const handleImpersonateClick = async (value) => {
-    const user = users.find((user) => user.user_id === value);
+    const user = approvedUsers.find((user) => user.user_id === value);
     if (user) {
-      
       // Log the impersonation action with the impersonated user details
       await logAction(AUDIT_ACTIONS.IMPERSONATE, {
         impersonated_user: {
@@ -217,8 +224,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
           first_name: user.first_name,
           last_name: user.last_name,
           email: user.email,
-          role: user.role
-        }
+          role: user.role,
+        },
       });
 
       startManagingUser(user);
@@ -226,7 +233,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     }
   };
 
-  const searchedUsers = users
+  const searchedUsers = approvedUsers
     .filter((user) => {
       const firstName = user.first_name || "";
       const lastName = user.last_name || "";
@@ -275,7 +282,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   };
 
   const handleRemoveUser = async (userId) => {
-    const userToRemove = users.find((user) => user.user_id === userId);
+    const userToRemove = approvedUsers.find((user) => user.user_id === userId);
 
     if (!userToRemove) {
       console.error("User not found");
@@ -328,7 +335,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
           <div>
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left mx-4 text-4xl font-bold text-zinc-600">All Members ({users.length})</h1>
+                <h1 className="text-left mx-4 text-4xl font-bold text-zinc-600">All Members ({approvedUsers.length})</h1>
                 <button
                   onClick={() => setIsAddUserModalOpen(true)}
                   className="btn btn-primary ml-4"

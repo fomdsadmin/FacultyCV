@@ -26,16 +26,32 @@ set value = 'Fraser Health Authority'
 where value = 'Fraser Health'
 
 update university_info
+set type = 'Authority - Fraser Health Authority'
+where type = 'Authority - Fraser Health'
+
+update university_info
 set value = 'Interior Health Authority'
 where value = 'Interior Health'
+
+update university_info
+set type = 'Authority - Interior Health Authority'
+where type = 'Authority - Interior Health'
 
 update university_info
 set value = 'Island Health Authority'
 where value = 'Island Health'
 
 update university_info
+set type = 'Authority - Island Health Authority'
+where type = 'Authority - Island Health'
+
+update university_info
 set value = 'Northern Health Authority'
 where value = 'Northern Health'
+
+update university_info
+set type = 'Authority - Northern Health Authority'
+where type = 'Authority - Northern Health'
 
 INSERT INTO university_info (type, value)
 VALUES ('Authority', 'VCH/FHA')

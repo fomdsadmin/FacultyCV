@@ -380,35 +380,11 @@ export const AppProvider = ({ children }) => {
   // Stop managing a user (return to delegate view)
   const stopManagingUser = () => {
     if (isManagingUser && originalUserInfo) {
-      console.log("Stopped managing user, reverted to:", originalUserInfo);
-      // Only navigate, do not update view role before navigation
-      if (previousViewRole && previousViewRole.startsWith("Admin-")) {
-        window.location.href = "/department-admin/members";
-        return;
-      } else if (previousViewRole && previousViewRole === "Admin") {
-        if (currentViewRole && currentViewRole.startsWith("Admin-")) {
-          window.location.href = "/department-admin/members";
-          return;
-        } else {
-          window.location.href = "/admin/users";
-          return;
-        }
-      } else if (previousViewRole && previousViewRole.startsWith("FacultyAdmin-")) {
-        window.location.href = "/faculty-admin/users";
-        return;
-      } else if (previousViewRole && previousViewRole === "Assistant") {
-        window.location.href = "/delegate/connections";
-        return;
-      } else {
-        window.location.href = "/auth";
-        return;
-      }
-      // If needed, set view role and user info after navigation (not before)
-      // setCurrentViewRole(previousViewRole);
       setIsManagingUser(false);
       setManagedUser(null);
       setOriginalUserInfo(null);
       setUserInfo(originalUserInfo);
+      return previousViewRole
     }
   };
 
