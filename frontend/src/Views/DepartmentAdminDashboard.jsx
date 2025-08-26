@@ -13,376 +13,42 @@ import {
 import { useAdmin } from "Contexts/AdminContext.jsx";
 
 const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
-  const { loading, setLoading, allUsersCount, departmentAffiliations, allDataSections } = useAdmin();
+  const {
+    loading,
+    setLoading,
+    allUsersCount,
+    departmentAffiliations,
+    allUserCVData,
+    totalGrantMoneyRaised,
+    grantMoneyGraphData,
+    yearlyPublicationsGraphData,
+    yearlyPatentsGraphData,
+  } = useAdmin();
   const [userCounts, setUserCounts] = useState(allUsersCount);
-  const [journalPublications, setJournalPublications] = useState([]);
-  const [otherPublications, setOtherPublications] = useState([]);
-  const [grants, setGrants] = useState([]);
-  const [patents, setPatents] = useState([]);
-  const [grantMoneyRaised, setGrantMoneyRaised] = useState([]);
-  // const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
+  const [userCVData, setUserCVData] = useState([]);
   const [keywordData, setKeywordData] = useState([]);
   const [showAllKeywords, setShowAllKeywords] = useState(false);
   const [affiliationsData, setAffiliationsData] = useState([]);
   const [showAllRanks, setShowAllRanks] = useState(false);
 
   useEffect(() => {
-    setAffiliationsData(departmentAffiliations);
     setUserCounts(allUsersCount);
-  }, [departmentAffiliations, allUsersCount]);
-
+  }, [allUsersCount]);
 
   useEffect(() => {
-    if (allDataSections && allDataSections.length > 0) {
-      loadAllData();
-    }
-  }, [allDataSections]);
+    setAffiliationsData(departmentAffiliations);
+  }, [departmentAffiliations]);
 
-  const loadAllData = useCallback(async () => {
-    setLoading(true);
-    try {
-      // setTotalCVsGenerated(generatedCVs);
-      // Fetch CV data
-      await fetchAllUserCVData(allDataSections);
-    } catch (error) {
-      console.error("Error loading data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [allDataSections]);
+  useEffect(() => {
+    setUserCVData(allUserCVData);
+  }, [allUserCVData]);
 
-  const fetchAllUserCVData = useCallback(
-    async (dataSections) => {
-      try {
-        // Find section IDs
-        const publicationSectionId = dataSections.find(
-          (section) => section.title.includes("Publication") && !section.title.includes("Other")
-        )?.data_section_id;
-        const otherPublicationSectionId = dataSections.find(
-          (section) => section.title.includes("Publication") && section.title.includes("Other")
-        )?.data_section_id;
-        const secureFundingSectionId = dataSections.find((section) =>
-          section.title.includes("Research or Equivalent Grants and Contracts")
-        )?.data_section_id;
-        const patentSectionId = dataSections.find((section) => section.title.includes("Patent"))?.data_section_id;
+  // Use CV data from context
+  const journalPublications = userCVData.publications || [];
+  const otherPublications = userCVData.otherPublications || [];
+  const grants = userCVData.grants || [];
+  const patents = userCVData.patents || [];
 
-        // Create promises for parallel execution using getDepartmentCVData
-        const promises = [];
-
-        if (publicationSectionId) {
-          promises.push(
-            getDepartmentCVData(publicationSectionId, department, "Publication")
-              .then((response) => ({ type: "publication", data: response.data }))
-              .catch(() => ({ type: "publication", data: [] }))
-          );
-        }
-
-        if (otherPublicationSectionId) {
-          promises.push(
-            getDepartmentCVData(otherPublicationSectionId, department, "Other")
-              .then((response) => ({ type: "otherPublication", data: response.data }))
-              .catch(() => ({ type: "otherPublication", data: [] }))
-          );
-        }
-
-        if (secureFundingSectionId) {
-          promises.push(
-            getDepartmentCVData(secureFundingSectionId, department, "Grant")
-              .then((response) => ({ type: "grant", data: response.data }))
-              .catch(() => ({ type: "grant", data: [] }))
-          );
-        }
-
-        if (patentSectionId) {
-          promises.push(
-            getDepartmentCVData(patentSectionId, department, "Patent")
-              .then((response) => ({ type: "patent", data: response.data }))
-              .catch(() => ({ type: "patent", data: [] }))
-          );
-        }
-
-        // Execute all promises in parallel
-        const results = await Promise.all(promises);
-
-        // Process results
-        const publicationsData = [];
-        const otherPublicationsData = [];
-        const grantsData = [];
-        const patentsData = [];
-
-        results.forEach((result) => {
-          switch (result.type) {
-            case "publication":
-              // Convert CVData format to the expected format
-              publicationsData.push(
-                ...result.data.map((item) => ({
-                  data_section_id: item.data_section_id,
-                  data_details:
-                    typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
-                }))
-              );
-              break;
-            case "otherPublication":
-              otherPublicationsData.push(
-                ...result.data.map((item) => ({
-                  data_section_id: item.data_section_id,
-                  data_details:
-                    typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
-                }))
-              );
-              break;
-            case "grant":
-              grantsData.push(
-                ...result.data.map((item) => ({
-                  data_section_id: item.data_section_id,
-                  data_details:
-                    typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
-                }))
-              );
-              break;
-            case "patent":
-              patentsData.push(
-                ...result.data.map((item) => ({
-                  data_section_id: item.data_section_id,
-                  data_details:
-                    typeof item.data_details === "string" ? item.data_details : JSON.stringify(item.data_details),
-                }))
-              );
-              break;
-          }
-        });
-
-        // Combine publications and process grant money
-        const processedGrantMoney = processGrantMoney(grantsData);
-
-        // Update state in batch
-        setJournalPublications(publicationsData);
-        setOtherPublications(otherPublicationsData);
-        setGrants(grantsData);
-        setPatents(patentsData);
-        setGrantMoneyRaised(processedGrantMoney);
-      } catch (error) {
-        console.error("Error fetching CV data:", error);
-      }
-    },
-    [department]
-  );
-
-  const processGrantMoney = useCallback((grantsData) => {
-    const totalGrantMoneyRaised = [];
-    for (const data of grantsData) {
-      try {
-        const dataDetails = JSON.parse(data.data_details);
-        if (dataDetails.dates && dataDetails.amount) {
-          const amount = parseFloat(dataDetails.amount);
-          let year;
-
-          // Handle both date formats: "July, 2008 - June, 2011" and "July, 2008"
-          const dateString = dataDetails.dates.trim();
-
-          if (dateString.includes(" - ")) {
-            // Date range format: "July, 2008 - June, 2011"
-            // Extract the end date (second part after ' - ')
-            const endDate = dateString.split(" - ")[1].trim();
-            if (endDate.includes(",")) {
-              // Format: "June, 2011"
-              year = endDate.split(",")[1].trim();
-            } else {
-              // Fallback: try to extract year from end of string
-              const yearMatch = endDate.match(/\d{4}/);
-              year = yearMatch ? yearMatch[0] : null;
-            }
-          } else {
-            // Single date format: "July, 2008"
-            if (dateString.includes(",")) {
-              // Format: "July, 2008"
-              year = dateString.split(",")[1].trim();
-            } else {
-              // Fallback: try to extract year from string
-              const yearMatch = dateString.match(/\d{4}/);
-              year = yearMatch ? yearMatch[0] : null;
-            }
-          }
-
-          // Only add grants with valid numeric amounts and years
-          if (!isNaN(amount) && year && !isNaN(year) && amount > 0) {
-            totalGrantMoneyRaised.push({
-              amount: amount,
-              years: parseInt(year), // Convert to integer for consistency
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing grant data:", error);
-      }
-    }
-    return totalGrantMoneyRaised;
-  }, []);
-
-  // Since data is already filtered by department in getDepartmentCVData, no need for frontend filtering
-  const filteredPublications = journalPublications;
-  const filteredGrants = grants;
-  const filteredPatents = patents;
-  const filteredGrantMoney = grantMoneyRaised;
-
-  const totalGrantMoneyRaised = useMemo(() => {
-    const total = filteredGrantMoney.reduce((sum, grant) => {
-      // Make sure amount is a valid number and greater than 0
-      const amount = Number(grant.amount);
-      return sum + (isNaN(amount) || amount <= 0 ? 0 : amount);
-    }, 0);
-
-    // Format the total like dashboard charts
-    if (total >= 1000000) {
-      return `$${(total / 1000000).toFixed(1)}M`;
-    } else if (total >= 1000) {
-      return `$${(total / 1000).toFixed(0)}K`;
-    }
-    return `$${total.toLocaleString()}`;
-  }, [filteredGrantMoney]);
-
-  // Memoized graph data functions to avoid expensive recalculations
-  const grantMoneyGraphData = useMemo(() => {
-    const data = [];
-    const yearlyDataMap = new Map();
-
-    // Use filtered grant money data based on department
-    filteredGrantMoney.forEach((grant) => {
-      // Add guards to ensure valid data
-      if (
-        grant.amount &&
-        grant.years &&
-        !isNaN(grant.amount) &&
-        !isNaN(grant.years) &&
-        grant.amount > 0 &&
-        grant.years > 1900 &&
-        grant.years <= new Date().getFullYear() + 10
-      ) {
-        const year = grant.years;
-        if (yearlyDataMap.has(year)) {
-          yearlyDataMap.get(year).GrantFunding += grant.amount;
-        } else {
-          yearlyDataMap.set(year, {
-            date: year.toString(),
-            GrantFunding: grant.amount,
-          });
-        }
-      }
-    });
-
-    // Convert the map to an array for the graph
-    yearlyDataMap.forEach((value) => {
-      data.push(value);
-    });
-
-    data.sort((a, b) => parseInt(a.date) - parseInt(b.date));
-    return data;
-  }, [filteredGrantMoney]);
-
-  const yearlyPublicationsGraphData = useMemo(() => {
-    const data = [];
-    const yearlyDataMap = new Map();
-
-    // Use filtered publications based on department
-    filteredPublications.forEach((publication) => {
-      try {
-        const dataDetails = JSON.parse(publication.data_details);
-
-        // Handle publications with end_date field
-        if (dataDetails.end_date) {
-          let year;
-          const endDateString = dataDetails.end_date.trim();
-
-          if (endDateString.includes(" ")) {
-            // Format: "June 2019" - extract the year part
-            const parts = endDateString.split(" ");
-            const yearPart = parts[parts.length - 1]; // Get the last part (year)
-            year = parseInt(yearPart);
-          } else {
-            // Format: "2019" - direct year
-            year = parseInt(endDateString);
-          }
-
-          // Only include valid years
-          if (!isNaN(year)) {
-            const yearStr = year.toString();
-            if (yearlyDataMap.has(yearStr)) {
-              yearlyDataMap.get(yearStr).Publications += 1;
-            } else {
-              yearlyDataMap.set(yearStr, {
-                year: yearStr,
-                Publications: 1,
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing publication data:", error, publication);
-      }
-    });
-
-    // Convert the map to an array for the graph
-    yearlyDataMap.forEach((value) => {
-      data.push(value);
-    });
-
-    // Sort data by year to ensure chronological order
-    data.sort((a, b) => parseInt(a.year) - parseInt(b.year));
-    return data;
-  }, [filteredPublications]);
-
-  // Memoized patents graph data
-  const yearlyPatentsGraphData = useMemo(() => {
-    const data = [];
-    const yearlyDataMap = new Map();
-
-    // Use filtered patents based on department
-    filteredPatents.forEach((patent) => {
-      try {
-        const dataDetails = JSON.parse(patent.data_details);
-
-        // Handle patents with end_date field (same pattern as publications)
-        if (dataDetails.end_date) {
-          let year;
-          const endDateString = dataDetails.end_date.trim();
-
-          if (endDateString.includes(" ")) {
-            // Format: "June 2019" - extract the year part
-            const parts = endDateString.split(" ");
-            const yearPart = parts[parts.length - 1]; // Get the last part (year)
-            year = parseInt(yearPart);
-          } else {
-            // Format: "2019" - direct year
-            year = parseInt(endDateString);
-          }
-
-          // Only include valid years
-          if (!isNaN(year)) {
-            const yearStr = year.toString();
-            if (yearlyDataMap.has(yearStr)) {
-              yearlyDataMap.get(yearStr).Patents += 1;
-            } else {
-              yearlyDataMap.set(yearStr, {
-                year: yearStr,
-                Patents: 1,
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing patent data:", error, patent);
-      }
-    });
-
-    // Convert the map to an array for the graph
-    yearlyDataMap.forEach((value) => {
-      data.push(value);
-    });
-
-    // Sort data by year to ensure chronological order
-    data.sort((a, b) => parseInt(a.year) - parseInt(b.year));
-    return data;
-  }, [filteredPatents]);
 
   // Compute hospital affiliations summary
   const hospitalAffiliationsSummary = useMemo(() => {
@@ -415,7 +81,7 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
   const SummaryCards = () => (
     <>
       {/* User Statistics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4 mt-2">
+      <div className="grid grid-cols-2  md:grid-cols-3 lg:grid-cols-[0.7fr_0.7fr_0.7fr_0.5fr]  gap-4 mb-4 mt-2">
         <AnalyticsCard title="Department Admin(s)" value={userCounts.dept_admin_count.toLocaleString()} />
         <AnalyticsCard title="Faculty" value={userCounts.faculty_count.toLocaleString()} />
         <AnalyticsCard title="Delegates" value={userCounts.assistant_count.toLocaleString()} />
@@ -423,7 +89,7 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
       </div>
 
       {/* Research Metrics - 3 Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[0.7fr_0.7fr_0.7fr_0.5fr] gap-4 mb-4 w-full">
         {/* Faculty Ranks Section - First */}
         <div className="bg-white rounded-lg shadow-md p-4">
           <h3 className="text-lg font-semibold text-gray-800 m-2 flex items-center">
@@ -557,7 +223,7 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
             {/* Total Publications Count */}
             <AnalyticsCard
               title="Total Publications"
-              value={(filteredPublications.length + otherPublications.length).toLocaleString()}
+              value={(journalPublications.length + otherPublications.length).toLocaleString()}
               className="!bg-purple-50 !border-purple-200"
             />
 
@@ -668,7 +334,7 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
               <div className="flex justify-between items-center text-sm">
                 <span className="text-amber-700 font-medium">Total Patents</span>
                 <span className="bg-amber-200 text-amber-800 p-1 rounded text-xs font-semibold">
-                  {filteredPatents.length.toLocaleString()}
+                  {patents.length.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -745,15 +411,15 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
     });
 
     // Add journal publications as a separate type
-    if (filteredPublications.length > 0) {
-      typeCounts["Journal Publications"] = filteredPublications.length;
+    if (journalPublications.length > 0) {
+      typeCounts["Journal Publications"] = journalPublications.length;
     }
 
     // Convert to array and sort by count
     return Object.entries(typeCounts)
       .map(([type, count]) => ({ type, count }))
       .sort((a, b) => b.count - a.count);
-  }, [otherPublications, filteredPublications]);
+  }, [otherPublications, journalPublications]);
 
   // Memoized grant types computation
   const grantTypesCounts = useMemo(() => {
@@ -762,7 +428,7 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
       grant: { count: 0, funding: 0 },
     };
 
-    filteredGrants.forEach((grant) => {
+    grants.forEach((grant) => {
       try {
         const details = JSON.parse(grant.data_details);
         const type = details.type || "";
@@ -781,13 +447,13 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
     });
 
     return typeData;
-  }, [filteredGrants]);
+  }, [grants]);
 
   // Memoized keyword computation
   const computedKeywordData = useMemo(() => {
     // Compute department-wide keywords from filtered publications (including other publications)
     const keywordCounts = {};
-    filteredPublications.forEach((pub) => {
+    journalPublications.forEach((pub) => {
       try {
         const details = JSON.parse(pub.data_details);
         const keywords = details.keywords || [];

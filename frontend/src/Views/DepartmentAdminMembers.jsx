@@ -4,26 +4,23 @@ import { useApp } from "../Contexts/AppContext.jsx";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
-import { getAllUsers, getDepartmentAffiliations } from "../graphql/graphqlHelpers.js";
 import ManageUser from "Components/ManageUser.jsx";
 import { useAuditLogger, AUDIT_ACTIONS } from "Contexts/AuditLoggerContext.jsx";
 import { useAdmin } from "../Contexts/AdminContext.jsx";
 
 const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
-  const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [affiliations, setAffiliations] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const params = useParams();
-  const location = useLocation();
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
   const { logAction } = useAuditLogger();
-  const { allUsers, departmentAffiliations } = useAdmin();
+  const { allUsers, departmentAffiliations, loading, setLoading } = useAdmin();
 
   // Helper functions for base64 encoding/decoding
   const encodeId = (id) => {

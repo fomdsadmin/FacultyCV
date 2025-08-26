@@ -1,3 +1,4 @@
+import FacultyMemberSelector from "../Components/FacultyMemberSelector.jsx";
 import React from "react";
 import { useState, useEffect } from "react";
 import PageContainer from "./PageContainer.jsx";
@@ -707,65 +708,17 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
                 </div>
               </div>
 
-              {/* Right Section - Faculty Selection */}
+              {/* Right Section - Faculty Selection (using refactored component) */}
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Faculty Members</label>
-                
-                {/* Search and Select All Controls */}
-                <div className="space-y-4 mb-4">
-                  <input
-                    type="text"
-                    className="input input-bordered w-full text-sm font-medium"
-                    placeholder="Search by name, email, or username..."
-                    value={userSearchTerm}
-                    onChange={handleUserSearchChange}
-                  />
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                    />
-                    <label className="text-sm font-medium text-gray-700">
-                      Select All ({departmentUsers.length} faculty members)
-                    </label>
-                  </div>
-                </div>
-
-                {/* Faculty List */}
-                <div className="border rounded-lg max-h-80 overflow-y-auto custom-scrollbar bg-white">
-                  {filteredUsers.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">
-                      {userSearchTerm ? "No faculty members match your search" : "No faculty members found"}
-                    </div>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <div key={user.user_id} className="flex items-center gap-2 px-4 py-3 border-b hover:bg-gray-50">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm checkbox-secondary"
-                          checked={selectedUsers.includes(user.user_id)}
-                          onChange={() => handleUserToggle(user.user_id)}
-                        />
-                        <div className="flex-1">
-                          <div className="text-sm text-gray-900">
-                            {(user.preferred_name || user.first_name) + " " + user.last_name}
-                          </div>
-                          {user.email && user.email.trim() !== "" && user.email !== "null" && user.email !== "undefined" && (
-                            <div className="text-xs text-gray-500">{user.email}</div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                
-                {/* Selected Count */}
-                <div className="mt-2 text-sm text-gray-600 align-right text-right">
-                  {selectedUsers.length} / {departmentUsers.length} selected
-                </div>
+                <FacultyMemberSelector
+                  departmentUsers={departmentUsers}
+                  selectedUsers={selectedUsers}
+                  onUserToggle={handleUserToggle}
+                  selectAll={selectAll}
+                  onSelectAll={handleSelectAll}
+                  userSearchTerm={userSearchTerm}
+                  onUserSearchChange={handleUserSearchChange}
+                />
               </div>
             </div>
 
