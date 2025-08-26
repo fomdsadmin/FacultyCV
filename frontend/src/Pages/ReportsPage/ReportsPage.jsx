@@ -152,7 +152,7 @@ const ReportsPage = () => {
     setDownloadUrl(pdfUrl);
     setIsPdfReady(true);
     setDownloadBlob(null);
-    setNotification({ message: "PDF finsihed generating!" });
+    setNotification({ message: "PDF Generated!" });
     setProcessingMessage("Generating DOCX");
   };
 
@@ -161,7 +161,7 @@ const ReportsPage = () => {
     setDownloadUrlDocx(docxUrl);
     setIsDocxReady(true);
     setDownloadBlobDocx(null);
-    setNotification({ message: "DOCX finsihed generating!" });
+    setNotification({ message: "DOCX Generated!" });
     setIsGenerating(false);
   };
 

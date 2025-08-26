@@ -100,9 +100,9 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
   return (
     <>
       <Section title="Academic Units (Workday)">
-        <div className="overflow-x-auto bg-gray-100">
+        <div className="overflow-x-auto">
           {!hasAnyUnits ? (
-            <div className="text-center text-gray-400 mb-4">No academic units found.</div>
+            <div className="text-center text-gray-400 mb-4 p-4">No academic units found.</div>
           ) : (
             <table className="min-w-full divide-x divide-white">
               <thead className="">
@@ -124,6 +124,9 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                   </th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Appointment %
+                  </th>
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    Type
                   </th>
                   {/* <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Actions
@@ -188,7 +191,15 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                       <input
                         type="text"
                         className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                        value={primaryUnit.percent || ""}
+                        value={primaryUnit.apt_percent || ""}
+                        readOnly
+                      />
+                    </td>
+                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                        value={primaryUnit.type ? primaryUnit.type.toUpperCase() || "" : ""}
                         readOnly
                       />
                     </td>
@@ -273,7 +284,15 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                         <input
                           type="text"
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                          value={unit.percent || ""}
+                          value={unit.apt_percent || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.type ? unit.type.toUpperCase() || "" : ""}
                           readOnly
                         />
                       </td>
