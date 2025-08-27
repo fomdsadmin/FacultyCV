@@ -1,6 +1,12 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useApp } from "./AppContext.jsx";
-import { getAllSections, getAllTemplates, getAllUsers, getDepartmentAffiliations, getDepartmentCVData } from "../graphql/graphqlHelpers.js";
+import {
+  getAllSections,
+  getAllTemplates,
+  getAllUsers,
+  getDepartmentAffiliations,
+  getDepartmentCVData,
+} from "../graphql/graphqlHelpers.js";
 
 // Create the context
 const AdminContext = createContext(null);
@@ -16,6 +22,7 @@ export const useAdmin = () => {
 
 // Provider component
 export const AdminProvider = ({ children, isAdmin, role }) => {
+  const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
   const { userInfo } = useApp();
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +57,13 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
     }
   }, []);
 
-  
+  // Fetch number of generated CVs
+  useEffect(() => {
+    if (isAdmin) {
+      fetchGeneratedCVs();
+    }
+  }, []);
+
   // Fetch all user cv data
   useEffect(() => {
     setLoading(true);
@@ -59,7 +72,7 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
       if (role.startsWith("Admin-")) {
         department = role.split("-")[1].trim();
       } else if (role === "Admin") {
-        department = 'All';
+        department = "All";
       }
       fetchAllUserCVData(allDataSections, department);
     }
@@ -339,6 +352,26 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
     }
   }
 
+  async function fetchGeneratedCVs() {
+    setLoading(true);
+    try {
+      let department = undefined;
+      if (isAdmin) {
+        if (role.startsWith("Admin-")) {
+          department = role.split("-")[1].trim();
+        } else if (role === "Admin") {
+          department = "All";
+        }
+      }
+      // getNumberOfGeneratedCVs expects department
+      const generatedCVs = await import("../graphql/graphqlHelpers.js").then((m) =>
+        m.getNumberOfGeneratedCVs(department)
+      );
+      setTotalCVsGenerated(await generatedCVs);
+    } catch (error) {}
+    setLoading(false);
+  }
+
   // Graph calculations
   const totalGrantMoneyRaised = useMemo(() => {
     const total = allUserCVData.grantMoneyRaised.reduce((sum, grant) => {
@@ -357,13 +390,7 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
     const data = [];
     const yearlyDataMap = new Map();
     allUserCVData.grantMoneyRaised.forEach((grant) => {
-      if (
-        grant.amount &&
-        grant.years &&
-        !isNaN(grant.amount) &&
-        !isNaN(grant.years) &&
-        grant.amount > 0
-      ) {
+      if (grant.amount && grant.years && !isNaN(grant.amount) && !isNaN(grant.years) && grant.amount > 0) {
         const year = grant.years;
         if (yearlyDataMap.has(year)) {
           yearlyDataMap.get(year).GrantFunding += grant.amount;
@@ -473,6 +500,7 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
     yearlyPublicationsGraphData,
     yearlyPatentsGraphData,
     allTemplates,
+    totalCVsGenerated,
     loading,
     setLoading,
   };

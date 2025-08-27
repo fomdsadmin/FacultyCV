@@ -388,7 +388,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
 
       let dataSections = [];
       dataSections = await getAllSections();
-      const publicationsSectionId = dataSections.find((section) => section.title === "Publications")?.data_section_id;
+      const publicationsSectionId = dataSections.find((section) => section.title.includes("Journal Publication")).data_section_id;
 
       // Add "Type: Journal" to each publication
       publications = publications.map((pub) => {

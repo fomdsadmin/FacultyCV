@@ -26,7 +26,7 @@ const Contact = () => {
             onChange={handleInputChange}
           />
         </div>
-        <div>
+        {/* <div>
           <label className="block text-sm mb-1">Preferred Name</label>
           <input
             id="preferredName"
@@ -37,7 +37,7 @@ const Contact = () => {
             className="w-full rounded text-sm px-3 py-2 border border-gray-300"
             onChange={handleInputChange}
           />
-        </div>
+        </div> */}
         <div>
           <label className="block text-sm mb-1">Last Name</label>
           <input
@@ -61,6 +61,7 @@ const Contact = () => {
             readOnly
           />
         </div>
+        <div></div>
         <div className="">
           <div className="flex items-center">
             <div className="flex-1 min-w-full">
