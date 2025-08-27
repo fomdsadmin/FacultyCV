@@ -1,16 +1,16 @@
 import { getPresignedGotenbergBucketUrl } from "../../../graphql/graphqlHelpers";
 import { subscribeToGotenbergStatus } from "../../../graphql/graphqlHelpers";
 
-export const getHtmlKey = (userInfo, selectedTemplate) => {
-  return `html/${userInfo.username}${selectedTemplate.template_id}.html`;
+export const getHtmlKey = (userInfo, selectedTemplate, optionalKey = "") => {
+  return `html/${userInfo.username}${selectedTemplate.template_id}${optionalKey}.html`;
 }
 
-export const getPdfKey = (userInfo, selectedTemplate) => {
-  return `pdf/${userInfo.username}${selectedTemplate.template_id}.pdf`;
+export const getPdfKey = (userInfo, selectedTemplate, optionalKey = "") => {
+  return `pdf/${userInfo.username}${selectedTemplate.template_id}${optionalKey}.pdf`;
 }
 
-export const getDocxKey = (userInfo, selectedTemplate) => {
-  return `docx/${userInfo.username}${selectedTemplate.template_id}.docx`;
+export const getDocxKey = (userInfo, selectedTemplate, optionalKey = "") => {
+  return `docx/${userInfo.username}${selectedTemplate.template_id}${optionalKey}.docx`;
 }
 
 // Check if PDF is complete by checking tags on the HTML file
