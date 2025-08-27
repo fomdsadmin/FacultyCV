@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import AdminMenu from "../Components/AdminMenu.jsx";
-import { getAllSections } from "../graphql/graphqlHelpers.js";
+import { useAdmin } from "Contexts/AdminContext.jsx";
 import WorkSection from "../Components/WorkSection.jsx";
 import ManageSection from "../Components/ManageSection.jsx";
 import NewSection from "../Components/NewSection.jsx";
@@ -13,42 +13,22 @@ const Sections = ({ getCognitoUser, userInfo }) => {
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [activeSection, setActiveSection] = useState(null);
-  const [dataSections, setDataSections] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { allDataSections, loading, setLoading } = useAdmin();
   const [openNewSection, setOpenNewSection] = useState(false);
   const navigate = useNavigate();
   const { category, title } = useParams();
   const location = useLocation();
 
-  useEffect(() => {
-    getDataSections();
-  }, []);
-
-  const getDataSections = async () => {
-    setDataSections([]);
-    const retrievedSections = await getAllSections();
-
-    const parsedSections = retrievedSections.map((section) => ({
-      ...section,
-      attributes: JSON.parse(section.attributes),
-      attributes_type: JSON.parse(section.attributes_type || "{}"),
-    }));
-
-    parsedSections.sort((a, b) => a.title.localeCompare(b.title));
-
-    setDataSections(parsedSections);
-    setLoading(false);
-  };
 
   // Open section if URL param is present
   useEffect(() => {
-    if (title && dataSections.length > 0) {
-      const found = dataSections.find((s) => slugify(s.title) === title && slugify(s.data_type) === category);
+    if (title && allDataSections.length > 0) {
+      const found = allDataSections.find((s) => slugify(s.title) === title && slugify(s.data_type) === category);
       if (found) setActiveSection(found);
     }
-  }, [title, category, dataSections]);
+  }, [title, category, allDataSections]);
 
-  const filters = Array.from(new Set(dataSections.map((section) => section.data_type)));
+  const filters = Array.from(new Set(allDataSections.map((section) => section.data_type)));
   // Set active tab from URL param
   useEffect(() => {
     if (category && filters.length > 0) {
@@ -103,7 +83,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
 
   // When user clicks a section, update the URL
   const handleManageClick = (value) => {
-    const section = dataSections.find((section) => section.data_section_id == value);
+    const section = allDataSections.find((section) => section.data_section_id == value);
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
@@ -127,7 +107,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
 
   // When user clicks a section, update the URL
   const handleManageDataClick = (value) => {
-    const section = dataSections.find((section) => section.data_section_id == value);
+    const section = allDataSections.find((section) => section.data_section_id == value);
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
@@ -149,7 +129,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
     }
   };
 
-  const searchedSections = dataSections.filter((entry) => {
+  const searchedSections = allDataSections.filter((entry) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
     const search = searchTerm.toLowerCase();
@@ -291,7 +271,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
         ) : (
           <>
             {openNewSection ? (
-              <NewSection onBack={handleBackFromNewSection} getDataSections={getDataSections} sections={dataSections} />
+              <NewSection onBack={handleBackFromNewSection} getDataSections={null} sections={allDataSections} />
             ) : activeSection === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Manage Faculty Sections</h1>
@@ -323,25 +303,25 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                 </div>
                 <SectionTabs filters={filters} activeFilter={activeTab} onSelect={handleTabSelect} />
                 {[...searchedSections].sort(sectionTitleSort).map((section) => (
-                  <WorkSection
-                    onClick={handleManageClick}
-                    onDataClick={handleManageDataClick}
-                    key={section.data_section_id}
-                    id={section.data_section_id}
-                    title={section.title}
-                    category={section.data_type}
-                    info={section.info}
-                    userInfo={userInfo}
-                  />
+                    <WorkSection
+                      onClick={handleManageClick}
+                      onDataClick={handleManageDataClick}
+                      key={section.data_section_id}
+                      id={section.data_section_id}
+                      title={section.title}
+                      category={section.data_type}
+                      info={section.info}
+                      userInfo={userInfo}
+                    />
                 ))}
               </div>
             ) : (
               <>
                 <div className="!overflow-auto !h-full custom-scrollbar">
                   {location.pathname.endsWith("/data") ? (
-                    <CVDataSection section={activeSection} onBack={handleBack} getDataSections={getDataSections} />
+                    <CVDataSection section={activeSection} onBack={handleBack} getDataSections={null} />
                   ) : (
-                    <ManageSection section={activeSection} onBack={handleBack} getDataSections={getDataSections} />
+                    <ManageSection section={activeSection} onBack={handleBack} getDataSections={null} />
                   )}
                 </div>
               </>

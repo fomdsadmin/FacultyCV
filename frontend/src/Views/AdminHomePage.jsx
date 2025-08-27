@@ -10,7 +10,7 @@ import {
 import { useAdmin } from "Contexts/AdminContext.jsx";
 
 const AdminHomePage = ({ getCognitoUser, userInfo }) => {
-  const { loading, setLoading, allUsersCount, departmentAffiliations, allDataSections } = useAdmin();
+  const { loading, setLoading, allUsersCount, totalCVsGenerated } = useAdmin();
   const [userCounts, setUserCounts] = useState({
     total_count: 0,
     faculty_count: 0,
@@ -19,25 +19,10 @@ const AdminHomePage = ({ getCognitoUser, userInfo }) => {
     admin_count: 0,
     faculty_admin_count: 0
   });
-  const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
-
-  useEffect(() => {
-    fetchGeneratedCVs();
-  }, []);
 
   useEffect(() => {
     setUserCounts(allUsersCount);
   }, [allUsersCount]);
-
-
-  async function fetchGeneratedCVs() {
-    setLoading(true);
-    try {
-      const generatedCVs = await getNumberOfGeneratedCVs();
-      setTotalCVsGenerated(generatedCVs);
-    } catch (error) {}
-    setLoading(false);
-  }
 
 
   return (
