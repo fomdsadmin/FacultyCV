@@ -57,7 +57,8 @@ export const getUserProfileMatchesQuery = `
             primary_faculty
             pending
             approved
-            username
+            cwl_username
+            vpp_username
         }
     }
 `;
