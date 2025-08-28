@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import '../CustomStyles/PDFViewer.css';
-import { FaAngleLeft, FaAngleRight, FaExpand, FaCompress, FaSearchPlus, FaSearchMinus } from 'react-icons/fa';
+import { FaAngleLeft, FaAngleRight, FaExpand, FaCompress, FaSearchPlus, FaSearchMinus, FaList, FaFile } from 'react-icons/fa';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -12,7 +12,11 @@ const PDFViewer = ({ url, blob }) => {
   const [containerWidth, setContainerWidth] = useState(800);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [scale, setScale] = useState(1);
+  const [scrollMode, setScrollMode] = useState(true);
+  const [isEditingPageNumber, setIsEditingPageNumber] = useState(false);
+  const [tempPageNumber, setTempPageNumber] = useState('1');
   
+  const pageInputRef = useRef(null);
   const fileSource = blob || url;
 
   const onDocumentLoadSuccess = ({ numPages }) => {
@@ -37,6 +41,10 @@ const PDFViewer = ({ url, blob }) => {
     setIsFullscreen(!isFullscreen);
   };
 
+  const toggleScrollMode = () => {
+    setScrollMode(!scrollMode);
+  };
+
   const zoomIn = () => {
     setScale(prevScale => Math.min(prevScale + 0.2, 3));
   };
@@ -45,10 +53,38 @@ const PDFViewer = ({ url, blob }) => {
     setScale(prevScale => Math.max(prevScale - 0.2, 0.5));
   };
 
+  // Handle page number editing
+  const handlePageNumberClick = () => {
+    if (!scrollMode) {
+      setIsEditingPageNumber(true);
+      setTempPageNumber(pageNumber.toString());
+      setTimeout(() => pageInputRef.current?.focus(), 0);
+    }
+  };
+
+  const handlePageNumberSubmit = () => {
+    const newPageNumber = parseInt(tempPageNumber, 10);
+    if (newPageNumber >= 1 && newPageNumber <= numPages) {
+      setPageNumber(newPageNumber);
+    } else {
+      setTempPageNumber(pageNumber.toString());
+    }
+    setIsEditingPageNumber(false);
+  };
+
+  const handlePageNumberKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handlePageNumberSubmit();
+    } else if (e.key === 'Escape') {
+      setTempPageNumber(pageNumber.toString());
+      setIsEditingPageNumber(false);
+    }
+  };
+
   useEffect(() => {
     setPageNumber(1);
     setError(null);
-    setScale(1); // Reset scale when new document loads
+    setScale(1);
   }, [url, blob]);
 
   useEffect(() => {
@@ -70,17 +106,22 @@ const PDFViewer = ({ url, blob }) => {
     };
   }, [url, blob, isFullscreen]);
 
-  // Handle escape key for fullscreen
+  // Handle escape key for fullscreen and editing
   useEffect(() => {
     const handleKeyPress = (event) => {
-      if (event.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false);
+      if (event.key === 'Escape') {
+        if (isFullscreen) {
+          setIsFullscreen(false);
+        } else if (isEditingPageNumber) {
+          setIsEditingPageNumber(false);
+          setTempPageNumber(pageNumber.toString());
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [isFullscreen]);
+  }, [isFullscreen, isEditingPageNumber, pageNumber]);
 
   if (error) {
     return (
@@ -97,6 +138,27 @@ const PDFViewer = ({ url, blob }) => {
   const containerClasses = isFullscreen
     ? "w-full h-full flex flex-col"
     : "w-full h-full flex flex-col border border-gray-200 rounded-lg overflow-hidden";
+
+  // Render all pages for scroll mode
+  const renderAllPages = () => {
+    if (!numPages) return null;
+    
+    const pages = [];
+    for (let i = 1; i <= numPages; i++) {
+      pages.push(
+        <div key={i} className="mb-4">
+          <Page
+            pageNumber={i}
+            className="shadow-lg"
+            width={containerWidth * scale}
+            renderTextLayer={false}
+            renderAnnotationLayer={false}
+          />
+        </div>
+      );
+    }
+    return pages;
+  };
 
   return (
     <div className={viewerClasses}>
@@ -125,8 +187,21 @@ const PDFViewer = ({ url, blob }) => {
           </div>
 
           <div className="flex items-center space-x-2">
-            {/* Page Navigation */}
-            {numPages > 1 && (
+            {/* Scroll Mode Toggle */}
+            <button 
+              onClick={toggleScrollMode}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+              title={scrollMode ? "Single Page Mode" : "Scroll Mode"}
+            >
+              {scrollMode ? (
+                <FaFile className="text-gray-600" />
+              ) : (
+                <FaList className="text-gray-600" />
+              )}
+            </button>
+
+            {/* Page Navigation - only show in single page mode */}
+            {numPages > 1 && !scrollMode && (
               <>
                 <button 
                   onClick={goToPreviousPage} 
@@ -135,9 +210,30 @@ const PDFViewer = ({ url, blob }) => {
                 >
                   <FaAngleLeft className="text-gray-600" />
                 </button>
-                <span className="text-sm text-gray-600 min-w-[80px] text-center">
-                  {numPages ? `${pageNumber} / ${numPages}` : 'Loading...'}
-                </span>
+                
+                {/* Editable Page Number */}
+                {isEditingPageNumber ? (
+                  <input
+                    ref={pageInputRef}
+                    type="number"
+                    min="1"
+                    max={numPages}
+                    value={tempPageNumber}
+                    onChange={(e) => setTempPageNumber(e.target.value)}
+                    onBlur={handlePageNumberSubmit}
+                    onKeyDown={handlePageNumberKeyPress}
+                    className="w-12 text-sm text-center border border-gray-300 rounded px-1 py-1"
+                  />
+                ) : (
+                  <span 
+                    onClick={handlePageNumberClick}
+                    className="text-sm text-gray-600 min-w-[80px] text-center cursor-pointer hover:bg-gray-100 rounded px-2 py-1"
+                    title="Click to edit page number"
+                  >
+                    {numPages ? `${pageNumber} / ${numPages}` : 'Loading...'}
+                  </span>
+                )}
+                
                 <button 
                   onClick={goToNextPage} 
                   disabled={pageNumber >= numPages}
@@ -146,6 +242,13 @@ const PDFViewer = ({ url, blob }) => {
                   <FaAngleRight className="text-gray-600" />
                 </button>
               </>
+            )}
+
+            {/* Page count in scroll mode */}
+            {scrollMode && numPages && (
+              <span className="text-sm text-gray-600 min-w-[80px] text-center">
+                {numPages} pages
+              </span>
             )}
             
             {/* Fullscreen Toggle */}
@@ -172,13 +275,21 @@ const PDFViewer = ({ url, blob }) => {
               onLoadError={onDocumentLoadError}
               className="flex items-center justify-center"
             >
-              <Page
-                pageNumber={pageNumber}
-                className="shadow-lg"
-                width={containerWidth * scale}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-              />
+              {scrollMode ? (
+                // Scroll mode - show all pages
+                <div className="flex flex-col items-center">
+                  {renderAllPages()}
+                </div>
+              ) : (
+                // Single page mode - show current page only
+                <Page
+                  pageNumber={pageNumber}
+                  className="shadow-lg"
+                  width={containerWidth * scale}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                />
+              )}
             </Document>
           </div>
         </div>
