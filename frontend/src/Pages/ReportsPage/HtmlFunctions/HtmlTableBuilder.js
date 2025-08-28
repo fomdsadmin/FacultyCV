@@ -43,7 +43,7 @@ const estimateTextWidth = (text, fontSize = 9.5) => {
 };
 
 const calculateOptimalFontSize = (text, availableWidthPt, baseFontSize = 9.5) => {
-    const minFontSize = 6;
+    const minFontSize = 5;
     const maxFontSize = baseFontSize;
     
     // Convert percentage width to approximate points (assuming 8.5" page width)
