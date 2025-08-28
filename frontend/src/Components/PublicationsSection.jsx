@@ -425,7 +425,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
         </div>
       ) : (
         <div>
-          <div>
+          <div className="px-4">
             {sortedData.map((entry, index) => (
               <div key={index} className="min-h-8 shadow-glow my-2 px-4 py-4 flex items-center bg-white rounded-lg">
                 <div className="flex-1 w-full">

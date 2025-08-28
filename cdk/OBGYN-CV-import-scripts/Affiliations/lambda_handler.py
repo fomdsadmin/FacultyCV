@@ -25,7 +25,8 @@ def cleanData(df):
     df["business_title"] = df["business_title"].fillna('').str.strip()
     df["type"] = df["type"].fillna('').str.strip().str.lower()
     df["location"] = df["location"].fillna('').str.strip()
-    
+    df["apt_percent"] = df["apt_percent"].astype(str).str.strip()
+
     # Fix encoding issues in text fields
     def fix_encoding(text):
         if not isinstance(text, str):
@@ -86,7 +87,7 @@ def cleanData(df):
     df = df.replace({np.nan: ''})
     
     # Keep only relevant columns
-    df = df[["employee_id", "job_profile", "business_title", "type", "location", "division", "medical_program", "health_authority", "role"]]
+    df = df[["employee_id", "job_profile", "business_title", "type", "apt_percent", "location", "division", "medical_program", "health_authority", "role"]]
 
     return df
 
@@ -135,15 +136,15 @@ def structureAffiliationsData(df, user_mapping):
     
     for _, row in df.iterrows():
         employee_id = str(row['employee_id'])
-        
+
         # Skip if employee_id not found in users table
         if employee_id not in user_mapping:
             errors.append(f"Employee ID {employee_id} not found in users table")
             continue
-        
+
         user_info = user_mapping[employee_id]
         user_id = user_info['user_id']
-        
+
         # Initialize user's appointments if not exists
         if user_id not in user_appointments:
             user_appointments[user_id] = {
@@ -151,14 +152,16 @@ def structureAffiliationsData(df, user_mapping):
                 'full_time': [],
                 'part_time': []
             }
-        
-        # Create unit object
+
+        # Create unit object (must be outside the initialization block)
         unit_data = {
-            'unit': 'Obstetrics & Gynaecology',  # Will be mapped from department/unit if available, otherwise empty
-            'rank': row['job_profile'],  # job_profile maps to rank
+            'unit': 'Obstetrics & Gynaecology',
+            'rank': row['job_profile'],
             'title': row['business_title'],
-            'percent': '',  # Not provided in CSV, will be empty
+            'percent': '',
+            'apt_percent': row['apt_percent'],
             'location': row['location'],
+            'type': row['type'],
             'additional_info': {
                 'division': row['division'] if row['type'].lower() == 'full time' else '',
                 'program': row['medical_program'] if row['type'].lower() == 'full time' else '',
@@ -166,7 +169,7 @@ def structureAffiliationsData(df, user_mapping):
                 'end': ''
             }
         }
-        
+
         # Group by appointment type
         if row['type'].lower() == 'full time':
             user_appointments[user_id]['full_time'].append(unit_data)
@@ -180,25 +183,14 @@ def structureAffiliationsData(df, user_mapping):
         user_info = appointments['user_info']
         full_time_appointments = appointments['full_time']
         part_time_appointments = appointments['part_time']
-        
-        hospital_affiliations = []
+
         # Find the employee_id for this user_id
         employee_id_for_user = None
         for emp_id, info in user_mapping.items():
             if info['user_id'] == user_id:
                 employee_id_for_user = emp_id
                 break
-        if employee_id_for_user:
-            for _, row in df[df['employee_id'] == employee_id_for_user].iterrows():
-                if row['health_authority']:
-                    hospital_affiliations.append({
-                        'authority': row['health_authority'],
-                        'hospital': '',
-                        'role': row['role'],
-                        'start': '',
-                        'end': ''
-                    })
-        
+
         # Initialize user's affiliations
         affiliations_data[user_id] = {
             'user_id': user_id,
@@ -207,8 +199,24 @@ def structureAffiliationsData(df, user_mapping):
             'primary_unit': {},
             'joint_units': [],
             'research_affiliations': [],
-            'hospital_affiliations': hospital_affiliations
+            'hospital_affiliations': []
         }
+
+        # Hospital affiliation: add only one entry, matching primary unit
+        hospital_affiliation_entry = None
+        if employee_id_for_user:
+            # Use the first row for this employee_id
+            row = df[df['employee_id'] == employee_id_for_user].iloc[0]
+            if row['health_authority']:
+                hospital_affiliation_entry = {
+                    'authority': row['health_authority'],
+                    'hospital': '',
+                    'role': row['role'],
+                    'start': '',
+                    'end': ''
+                }
+        if hospital_affiliation_entry:
+            affiliations_data[user_id]['hospital_affiliations'].append(hospital_affiliation_entry)
         
         # Handle full-time appointments
         if len(full_time_appointments) == 1:
@@ -258,25 +266,8 @@ def structureAffiliationsData(df, user_mapping):
         # Add all part-time appointments to joint_units
         affiliations_data[user_id]['joint_units'].extend(part_time_appointments)
     
-    # After processing all appointments, set percentage based on appointment structure
-    for user_id, user_data in affiliations_data.items():
-        has_primary = bool(user_data['primary_unit'])
-        joint_count = len(user_data['joint_units'])
-        
-        if has_primary and joint_count == 0:
-            # Single primary unit only - set to 100%
-            user_data['primary_unit']['percent'] = '100'
-        elif has_primary and joint_count == 1:
-            # Check if the joint unit was originally a full-time entry (multiple full-time case)
-            # We can identify this by checking if we have exactly 2 total units
-            total_units = 1 + joint_count  # 1 primary + joint count
-            if total_units == 2:
-                # Likely case: 2 full-time entries split between primary and joint
-                user_data['primary_unit']['percent'] = '50'
-                user_data['joint_units'][0]['percent'] = '50'
-            # For other cases (primary + part-time), leave blank for manual input
-        # For all other cases (multiple joints, complex arrangements), leave blank for manual input
-    
+    # After processing all appointments, leave percent blank for all units
+    # No logic to assign percent values
     return affiliations_data, errors
 
 def storeData(affiliations_data, connection, cursor, errors, rows_processed, rows_added_to_db):
