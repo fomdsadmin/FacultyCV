@@ -81,7 +81,6 @@ def getUser(event):
     cursor.close()
     connection.commit()
     connection.close()
-    print('user: ', user)
     return user
 
 def lambda_handler(event, context):

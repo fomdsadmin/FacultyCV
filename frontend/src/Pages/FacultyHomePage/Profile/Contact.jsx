@@ -22,8 +22,10 @@ const Contact = () => {
             type="text"
             maxLength={100}
             value={handleNullValues(userInfo.first_name) || ""}
-            className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-            onChange={handleInputChange}
+            className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
+            // onChange={handleInputChange}
+            readOnly
+            disabled
           />
         </div>
         {/* <div>
@@ -46,8 +48,10 @@ const Contact = () => {
             type="text"
             maxLength={100}
             value={handleNullValues(userInfo.last_name) || ""}
-            className="w-full rounded text-sm px-3 py-2 border border-gray-300"
-            onChange={handleInputChange}
+            className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
+            // onChange={handleInputChange}
+            readOnly
+            disabled
           />
         </div>
         <div>
@@ -59,9 +63,10 @@ const Contact = () => {
             value={handleNullValues(userInfo?.email) || ""}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
             readOnly
+            disabled
           />
         </div>
-        <div></div>
+        {/* 
         <div className="">
           <div className="flex items-center">
             <div className="flex-1 min-w-full">
@@ -79,7 +84,7 @@ const Contact = () => {
               * Use your <span className="bg-blue-100 px-1 rounded">CWLID@ubc.ca</span> or registered email for Health Authority Login (VCH, PHSA, PHC).
             </span>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

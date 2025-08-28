@@ -190,8 +190,6 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
             onChange={handleRoleChange}
           >
             {/* If user is Admin, show all options */}
-            {console.log("Current View:", currentViewRole)}
-            {console.log("user info role:", userInfo.role, currentUser.role)}
             {currentViewRole === "Admin" ? (
               <>
                 <option value="Faculty">Faculty</option>

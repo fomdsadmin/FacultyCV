@@ -81,7 +81,6 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
 
   useEffect(() => {
     setCurrentUser(user);
-    console.log("ManageUser - Received user:", user);
   }, [user]);
 
   useEffect(() => {
@@ -148,7 +147,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4">
         {/* User Info - Minimal Card */}
         <div className="bg-white rounded-xl shadow border border-gray-100 px-8 py-6 flex flex-col gap-2">
-          <div className="flex items-center gap-4 mb-2">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl font-bold text-zinc-800">
                 {currentUser.first_name} {currentUser.last_name}
@@ -162,31 +161,31 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
               {currentUser.joined_timestamp ? new Date(currentUser.joined_timestamp).toLocaleDateString() : "N/A"}
             </span>
           </div>
+          <div className="col-span-1 font-small text-sm mb-4">
+            <span className=" text-zinc-500">Last Visit:</span>{" "}
+            {loadingLastVisit ? "Loading..." : lastVisit ? formatTimestamp(lastVisit) : "No record found"}
+          </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-zinc-700">
-            <div>
-              <span className="font-medium text-zinc-500">Institution:</span> {currentUser.institution || ""}
-            </div>
             <div>
               <span className="font-medium text-zinc-500">Email:</span> {currentUser.email}
             </div>
             <div>
-              <span className="font-medium text-zinc-500">Campus:</span> {currentUser.campus || ""}
+              <span className="font-medium text-zinc-500">Institution:</span> {currentUser.institution || ""}
             </div>
             <div>
               <span className="font-medium text-zinc-500">CWL Username:</span> {currentUser.cwl_username}
             </div>
             <div>
+              <span className="font-medium text-zinc-500">Campus:</span> {currentUser.campus || ""}
+            </div>
+            <div>
               <span className="font-medium text-zinc-500">VPP Username:</span> {currentUser.vpp_username}
             </div>
-            <div></div>
             <div>
               <span className="font-medium text-zinc-500">Faculty:</span>{" "}
-              {currentUser.primary_faculty ? (
-                currentUser.primary_faculty
-              ) : (
-                <span className="text-gray-600 italic"> - </span>
-              )}
+              {currentUser.primary_faculty ? currentUser.primary_faculty : <span></span>}
             </div>
+            <div></div>
             <div>
               <span className="font-medium text-zinc-500">Department:</span>{" "}
               {currentUser.primary_department ? (
@@ -194,10 +193,6 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
               ) : (
                 <span className="text-gray-600 italic"> - </span>
               )}
-            </div>
-            <div className="col-span-2">
-              <span className="font-medium text-zinc-500">Last Visit:</span>{" "}
-              {loadingLastVisit ? "Loading..." : lastVisit ? formatTimestamp(lastVisit) : "No record found"}
             </div>
           </div>
           {/* Scopus/ORCID Linkages for Admin */}

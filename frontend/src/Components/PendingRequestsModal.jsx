@@ -16,7 +16,7 @@ const PendingRequestsModal = ({
 
   const handleAccept = async (userId, user) => {
     // TODO: Implement accept logic
-    console.log("Accepting user:", userId, user.email);
+    console.log("Accepting user");
     // Remove from pending list
     setPendingUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== userId));
     // console.log("Adding user to Faculty group:", user.userName);
@@ -58,7 +58,7 @@ const PendingRequestsModal = ({
 
   const handleApprove = async (user) => {
     // TODO: Implement approve logic for rejected users
-    console.log("Approving previously rejected user:", user.userName);
+    console.log("Approving previously rejected user");
     // Remove from rejected list
     setRejectedUsers((prev) => prev.filter((user) => (user.user_id || user.id) !== user.user_id));
     let role = user.role || "Faculty";
@@ -217,7 +217,9 @@ const PendingRequestsModal = ({
                             {user.role}
                           </span>
                         </div>
-                        <p className="text-gray-600 mb-2">{user.email}</p>
+                        <p className="text-gray-600 text-sm mb-1">{user.email}</p>
+                        <p className="text-gray-600 text-sm mb-1"><b>CWL:</b> {user.cwl_username}</p>
+                        {(user.vpp_username && user.vpp_username.trim() !== "") && <p className="text-gray-600 text-sm mb-1"><b>VPP:</b> {user.vpp_username}</p>}
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <span className="flex items-center gap-1">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
