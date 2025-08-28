@@ -239,7 +239,8 @@ type User {
 	joined_timestamp: String
 	pending: Boolean
 	approved: Boolean
-	username: String!
+	cwl_username: String!
+	vpp_username: String!
 }
 
 type UserCVData {
@@ -322,7 +323,8 @@ type Mutation {
 		role: String!,
 		pending: Boolean!,
 		approved: Boolean!,
-		username: String!,
+		cwl_username: String!,
+		vpp_username: String!,
 		primary_department: String!,
 		primary_faculty: String!
 	): String
@@ -354,7 +356,7 @@ type Mutation {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant", "NewlyRegistered"])
 	updateUserPermissions(user_id: String!, pending: Boolean, approved: Boolean): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
-	changeUsername(user_id: String!, username: String!): String
+	changeUsername(user_id: String!, cwl_username: String!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","NewlyRegistered"])
 	updateUserAffiliations(
 		user_id: String!,
@@ -468,7 +470,7 @@ type Query {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	GetAIResponse(user_input: String!): LambdaAIResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
-	getUser(username: String!): User
+	getUser(cwl_username: String!): User
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
 	getUserProfileMatches(first_name: String!, last_name: String!): [UserProfileMatch]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])

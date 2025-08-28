@@ -91,7 +91,7 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             if user_id_value is None or pd.isna(user_id_value):
                 cursor.execute(
                     """
-                    INSERT INTO users (employee_id, last_name, first_name, email, username, role, primary_faculty, primary_department, pending, approved)
+                    INSERT INTO users (employee_id, last_name, first_name, email, cwl_username, role, primary_faculty, primary_department, pending, approved)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (row['employee_id'], row['last_name'], row['first_name'], row['email'], 
@@ -100,7 +100,7 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             else:
                 cursor.execute(
                     """
-                    INSERT INTO users (user_id, employee_id, last_name, first_name, email, username, role, primary_faculty, primary_department, pending, approved)
+                    INSERT INTO users (user_id, employee_id, last_name, first_name, email, cwl_username, role, primary_faculty, primary_department, pending, approved)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (user_id_value, row['employee_id'], row['last_name'], row['first_name'], row['email'], 

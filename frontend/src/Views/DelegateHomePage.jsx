@@ -128,7 +128,7 @@ const DelegateHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, g
         scopusId,
         orcidId
       );
-      getUser(userInfo.username);
+      getUser(userInfo.cwl_username);
       setIsSubmitting(false);
       setChange(false);
     } catch (error) {
