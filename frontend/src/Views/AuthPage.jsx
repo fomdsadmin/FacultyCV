@@ -43,8 +43,9 @@ const AuthPage = () => {
   const [claimFormData, setClaimFormData] = useState({
     first_name: "",
     last_name: "",
-    username: "",
+    cwl_username: "",
   });
+  const [manualVPPUsername, setManualVPPUsername] = useState("");
 
   // Handle claiming a profile
   const handleClaimProfile = async (profile) => {
@@ -54,11 +55,15 @@ const AuthPage = () => {
     // Get current user attributes for the form
     try {
       const { given_name, family_name, name } = await fetchUserAttributes();
-      setClaimFormData({
-        first_name: given_name || "",
-        last_name: family_name || "",
-        username: name || "",
-      });
+      // if name ends with @ubc.ca, set as cwl_username
+      if (name && name.endsWith("@ubc.ca")) {
+        setClaimFormData({
+          first_name: given_name || "",
+          last_name: family_name || "",
+          cwl_username: name || "",
+        });
+      } else {
+      }
     } catch (error) {
       console.error("Error fetching user attributes:", error);
     }
@@ -70,10 +75,10 @@ const AuthPage = () => {
   const handleConfirmClaim = async () => {
     setLoading(true);
     try {
-      const result = await changeUsername(selectedProfile.user_id, claimFormData.username);
+      const result = await changeUsername(selectedProfile.user_id, claimFormData.cwl_username);
       // console.log("Updated user profile username: ", result);
 
-      const oldUserInfo = await getUser(claimFormData.username);
+      const oldUserInfo = await getUser(claimFormData.cwl_username);
       function sanitizeInput(input) {
         if (!input) return "";
         return input
@@ -122,7 +127,7 @@ const AuthPage = () => {
     setClaimFormData({
       first_name: "",
       last_name: "",
-      username: "",
+      cwl_username: "",
     });
   };
 
@@ -160,10 +165,14 @@ const AuthPage = () => {
   };
 
   const submitRequest = async () => {
-    // Check for required department and faculty
-    if (!formData.primary_department || !formData.primary_faculty) {
-      formData.primary_department = "";
-      formData.primary_faculty = "";
+    // Trim and validate
+    const missingFields = [];
+    if (!formData.primary_faculty.trim()) missingFields.push("Primary Faculty");
+    if (!formData.primary_department.trim()) missingFields.push("Primary Department");
+
+    if (missingFields.length > 0) {
+      setFormError(`Please select an option for the field(s): ${missingFields.join(", ")}`);
+      return;
     }
     setFormError(""); // Clear error if present
     setLoading(true);
@@ -173,7 +182,8 @@ const AuthPage = () => {
         formData.last_name,
         formData.email,
         formData.role,
-        formData.username,
+        formData.cwl_username,
+        manualVPPUsername && manualVPPUsername.trim() !== "" ? manualVPPUsername.trim() : "",
         formData.primary_department,
         formData.primary_faculty
       );
@@ -191,28 +201,14 @@ const AuthPage = () => {
     // console.log(await fetchUserAttributes());
     const { given_name, family_name, email, name } = await fetchUserAttributes();
     setFormData({
-      username: name,
-      email: email,
       first_name: given_name,
       last_name: family_name,
+      cwl_username: name,
+      email: email,
       role: "Faculty",
       primary_department: "",
       primary_faculty: "",
     });
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      const clientId = process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID;
-      const logoutUri = `${process.env.REACT_APP_AMPLIFY_DOMAIN}/keycloak-logout`;
-      const cognitoDomain = "https://" + process.env.REACT_APP_COGNITO_DOMAIN;
-      window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
-        logoutUri
-      )}`;
-    } catch (error) {
-      window.location.href = "/auth";
-    }
   };
 
   useEffect(() => {
@@ -245,7 +241,7 @@ const AuthPage = () => {
   return (
     <PageContainer>
       <div className="flex w-full rounded-lg mx-auto shadow-lg overflow-hidden bg-gray-100">
-        <div className="w-3/5 flex flex-col items-center justify-center overflow-auto custom-scrollbar">
+        <div className="w-3/5 flex flex-col items-center justify-start overflow-auto custom-scrollbar mt-16">
           {loading && (
             <div className="text-center p-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
@@ -254,141 +250,193 @@ const AuthPage = () => {
           )}
 
           {!loading && isUserLoggedIn && !userExistsInSqlDatabase && !doesUserHaveAProfileInDatabase && (
-            <form className="w-full max-w-md">
-              <div className="text-2xl text-gray-500 font-bold m-4">Signup Page</div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="username"
-                  value={formData.username}
-                  readOnly
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-                  Email
-                </label>
-                <input
-                  type="text"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  readOnly
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="first_name">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  id="first_name"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="last_name">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  id="last_name"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primary_faculty">
-                  Primary Faculty
-                </label>
-                <select
-                  id="primary_faculty"
-                  name="primary_faculty"
-                  value={formData.primary_faculty}
-                  onChange={(e) => setFormData({ ...formData, primary_faculty: e.target.value })}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                >
-                  <option value="">Select Faculty</option>
-                  {faculties.map((fac, idx) => (
-                    <option key={idx} value={fac}>
-                      {fac}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primary_department">
-                  Primary Department
-                </label>
-                <select
-                  id="primary_department"
-                  name="primary_department"
-                  value={formData.primary_department}
-                  onChange={(e) => setFormData({ ...formData, primary_department: e.target.value })}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((dept, idx) => (
-                    <option key={idx} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {formError && <div className="mb-4 text-blue-600 text-sm">{formError}</div>}
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
-                  Role
-                </label>
-                <div className="flex items-center gap-4">
-                  <label className="">
+            <div className="bg-stone-100 p-8 w-full h-full max-w-[70%] max-h-[80vh] border border-black overflow-y-auto rounded-2xl shadow-xl" >
+              <form className="w-full max-w-2xl">
+                <div className="text-3xl text-gray-500  font-bold my-4">SIGN UP</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="first_name">
+                      <label className=" text-red-600 text-sm font-bold" htmlFor="first_name">
+                        *{" "}
+                      </label>
+                      First Name
+                    </label>
                     <input
-                      type="radio"
-                      name="role"
-                      value="Faculty"
-                      checked={formData.role === "Faculty"}
-                      className="m-2"
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      type="text"
+                      id="first_name"
+                      name="first_name"
+                      value={formData.first_name}
+                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                      readOnly
+                      disabled
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline cursor-not-allowed"
                     />
-                    Faculty
-                  </label>
-                  <label className="">
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="last_name">
+                      <label className=" text-red-600 text-sm font-bold" htmlFor="last_name">
+                        *{" "}
+                      </label>
+                      Last Name
+                    </label>
                     <input
-                      type="radio"
-                      name="role"
-                      value="Assistant"
-                      checked={formData.role === "Assistant"}
-                      className="m-2"
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      type="text"
+                      id="last_name"
+                      name="last_name"
+                      value={formData.last_name}
+                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                      readOnly
+                      disabled
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline cursor-not-allowed"
                     />
-                    Delegate
-                  </label>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cwl_username">
+                      <label className=" text-red-600 text-sm font-bold" htmlFor="cwl_username">
+                        *{" "}
+                      </label>
+                      CWL Username
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="cwl_username"
+                      value={formData.cwl_username}
+                      readOnly
+                      disabled
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+                      <label className=" text-red-600 text-sm font-bold" htmlFor="last_name">
+                        *{" "}
+                      </label>
+                      Email
+                    </label>
+                    <input
+                      type="text"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      readOnly
+                      disabled
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="vpp_username">
+                      VPP Username
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="vpp_username"
+                      value={manualVPPUsername}
+                      onChange={(e) => setManualVPPUsername(e.target.value)}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                  </div>
                 </div>
-              </div>
-              <button
-                type="button"
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 focus:outline-none mt-4 disabled:opacity-50"
-                onClick={submitRequest}
-                disabled={loading}
-              >
-                {loading ? "Submitting..." : "Submit Request"}
-              </button>
-            </form>
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primary_faculty">
+                    <label className=" text-red-600 text-sm font-bold" htmlFor="last_name">
+                      *{" "}
+                    </label>
+                    Primary Faculty
+                  </label>
+                  <select
+                    id="primary_faculty"
+                    name="primary_faculty"
+                    value={formData.primary_faculty}
+                    onChange={(e) => setFormData({ ...formData, primary_faculty: e.target.value })}
+                    className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+                      formError.toLowerCase().includes("faculty") ? "border-red-500" : ""
+                    }`}
+                  >
+                    <option value="">Select Faculty</option>
+                    {faculties.map((fac, idx) => (
+                      <option key={idx} value={fac}>
+                        {fac}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="primary_department">
+                    <label className=" text-red-600 text-sm font-bold" htmlFor="last_name">
+                      *{" "}
+                    </label>
+                    Primary Department
+                  </label>
+                  <select
+                    id="primary_department"
+                    name="primary_department"
+                    value={formData.primary_department}
+                    onChange={(e) => setFormData({ ...formData, primary_department: e.target.value })}
+                    className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+                      formError.toLowerCase().includes("department") ? "border-red-500" : ""
+                    }`}
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map((dept, idx) => (
+                      <option key={idx} value={dept}>
+                        {dept}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
+                    Role
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="Faculty"
+                        checked={formData.role === "Faculty"}
+                        className="m-2"
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      />
+                      Faculty
+                    </label>
+                    <label className="">
+                      <input
+                        type="radio"
+                        name="role"
+                        value="Assistant"
+                        checked={formData.role === "Assistant"}
+                        className="m-2"
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      />
+                      Delegate
+                    </label>
+                  </div>
+                </div>
+                {formError && <div className="mb-4 text-red-600 text-sm">{formError}</div>}
+
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 focus:outline-none mt-4 disabled:opacity-50"
+                  onClick={submitRequest}
+                  disabled={loading}
+                >
+                  {loading ? "Submitting..." : "Submit Request"}
+                </button>
+              </form>
+            </div>
           )}
 
           {!loading && isUserLoggedIn && !userExistsInSqlDatabase && doesUserHaveAProfileInDatabase && (
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-2xl mt-12">
               {/* <div className="text-2xl text-gray-500 font-bold m-4 text-center">Profile Found</div> */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <div className="flex items-center mb-2">
@@ -420,10 +468,10 @@ const AuthPage = () => {
                             {match.first_name} {match.last_name}
                           </h4>
 
-                          <div className="space-y-1 text-sm text-gray-600">
+                          <div className="space-y-2 text-sm text-gray-600">
                             {match.role && match.role !== "" && match.role !== "null" && match.role !== "undefined" && (
                               <div className="flex items-center">
-                                <span className="font-medium w-16">Role:</span>
+                                <span className="font-medium w-40">Role:</span>
                                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
                                   {match.role}
                                 </span>
@@ -435,7 +483,7 @@ const AuthPage = () => {
                               match.email !== "null" &&
                               match.email !== "undefined" && (
                                 <div className="flex items-center">
-                                  <span className="font-medium w-16">Email:</span>
+                                  <span className="font-mediu w-40">Email:</span>
                                   <span>{match.email}</span>
                                 </div>
                               )}
@@ -445,7 +493,7 @@ const AuthPage = () => {
                               match.primary_department !== "null" &&
                               match.primary_department !== "undefined" && (
                                 <div className="flex items-center">
-                                  <span className="font-medium w-16">Dept:</span>
+                                  <span className="font-mediu w-40">Dept:</span>
                                   <span>{match.primary_department}</span>
                                 </div>
                               )}
@@ -455,18 +503,18 @@ const AuthPage = () => {
                               match.primary_faculty !== "null" &&
                               match.primary_faculty !== "undefined" && (
                                 <div className="flex items-center">
-                                  <span className="font-medium w-16">Faculty:</span>
+                                  <span className="font-mediu w-40">Faculty:</span>
                                   <span>{match.primary_faculty}</span>
                                 </div>
                               )}
 
-                            {match.username &&
-                              match.username !== "" &&
-                              match.username !== "null" &&
-                              match.username !== "undefined" && (
+                            {match.cwl_username &&
+                              match.cwl_username !== "" &&
+                              match.cwl_username !== "null" &&
+                              match.cwl_username !== "undefined" && (
                                 <div className="flex items-center">
-                                  <span className="font-medium w-16">Username:</span>
-                                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">{match.username}</span>
+                                  <span className="font-mediu w-40">CWL Username:</span>
+                                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">{match.cwl_username}</span>
                                 </div>
                               )}
                           </div>
@@ -630,7 +678,7 @@ const AuthPage = () => {
                 <input
                   type="text"
                   id="claim_username"
-                  value={claimFormData.username}
+                  value={claimFormData.cwl_username}
                   readOnly
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100"
                 />

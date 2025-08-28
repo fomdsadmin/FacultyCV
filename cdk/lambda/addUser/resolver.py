@@ -21,8 +21,9 @@ def addUser(arguments):
         role,
         pending,
         approved,
-        username
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+        cwl_username,
+        vpp_username
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
 
     # Execute the query with the provided arguments
@@ -33,7 +34,8 @@ def addUser(arguments):
         arguments['role'],
         arguments['pending'] if 'pending' in arguments else True,
         arguments['approved'] if 'approved' in arguments else False,
-        arguments['username']
+        arguments['cwl_username'],
+        arguments['vpp_username']
     ))
 
     cursor.close()

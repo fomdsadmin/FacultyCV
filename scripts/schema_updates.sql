@@ -56,3 +56,10 @@ where type = 'Authority - Northern Health'
 INSERT INTO university_info (type, value)
 VALUES ('Authority', 'VCH/FHA')
 -- END
+
+-- August 28th : to be done
+ALTER TABLE users
+RENAME username TO cwl_username;
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS vpp_username VARCHAR DEFAULT '';

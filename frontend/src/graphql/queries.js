@@ -10,9 +10,9 @@ export const GET_BIO_RESPONSE_DATA = `
 `;
 
 export const getUserQuery = `
-    query GetUser($username: String!) {
+    query GetUser($cwl_username: String!) {
         getUser(
-            username: $username
+            cwl_username: $cwl_username
         ){
             user_id
             first_name
@@ -36,7 +36,8 @@ export const getUserQuery = `
             joined_timestamp   
             pending
             approved
-            username
+            cwl_username
+            vpp_username
         }
     }
 `;
@@ -113,7 +114,8 @@ export const getAllUsersQuery = () => `
             joined_timestamp
             pending
             approved
-            username
+            cwl_username
+            vpp_username
         }
     }
 `;

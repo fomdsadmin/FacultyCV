@@ -58,23 +58,8 @@ const AppContent = () => {
     isUserPending,
     isUserApproved,
     isManagingUser,
+    getUserInfo,
   } = useApp();
-
-  const getUserInfo = async (username) => {
-    try {
-      const userInformation = await getUser(username);
-      if (userInformation.role === "Assistant") {
-        // For delegates, only set assistantUserInfo
-        setAssistantUserInfo(userInformation);
-        // Don't set userInfo for delegates initially
-      } else {
-        setUserInfo(userInformation);
-      }
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-    }
-  };
 
   return (
     <Router>

@@ -10,7 +10,6 @@ def getUser(event):
     connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
     print("Connected to database")
     cursor = connection.cursor()
-    
     arguments = event['arguments']
 
     cognito_idp = boto3.client('cognito-idp')
@@ -21,18 +20,10 @@ def getUser(event):
     # print("User pool id: ", user_pool_id)
     # print("Claims", event['identity']['claims'])
     # print("identity", event['identity'])
-    cursor.execute("SELECT username FROM users")
-    emails = cursor.fetchall()
-    print("Username in DB:", emails)
 
-    
-    # Prepare the SELECT query
-    username = arguments['username']  # get the email from arguments
-    print('username: ', username)
-
-    print('before retreiving userIds')
+    cwl_username = arguments['cwl_username']  # get the email from arguments
     # Retrieve user_ids from users table
-    cursor.execute(f"SELECT user_id FROM users WHERE username = '{username}'")
+    cursor.execute(f"SELECT user_id FROM users WHERE cwl_username = '{cwl_username}'")
     username_user_id = cursor.fetchone()
     print('got to here')
     print('username_user_id: ', username_user_id)
@@ -45,7 +36,7 @@ def getUser(event):
     print('before query')
     query = f"""
     SELECT * FROM users 
-    WHERE username = '{username}'
+    WHERE cwl_username = '{cwl_username}'
     """
     
     # Execute the query
@@ -81,7 +72,8 @@ def getUser(event):
             'joined_timestamp': result[20],
             'pending': result[21],
             'approved': result[22],
-            'username': result[23]
+            'cwl_username': result[23],
+            'vpp_username': result[25]
         }
     else:
         user = "User not found"

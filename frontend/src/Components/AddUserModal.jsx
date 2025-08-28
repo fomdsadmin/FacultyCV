@@ -160,7 +160,9 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
           pending,
           approved,
         });
-        const result = await addUser(firstName, lastName, email, role, username, department, faculty);
+        const cwl_username = username
+        const vpp_username = ''
+        const result = await addUser(firstName, lastName, email, role, cwl_username, vpp_username, faculty);
         console.log("User added to database successfully");
 
         // Set success message and user details
@@ -288,7 +290,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   <strong>Email:</strong> {createdUser.email}
                 </p>
                 <p>
-                  <strong>Username:</strong> {createdUser.username}
+                  <strong>CWL Username:</strong> {createdUser.username}
                 </p>
                 {department && (
                   <p>

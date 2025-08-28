@@ -215,8 +215,8 @@ export const getArchivedSections = async () => {
  *      orcid_id
  *   }
  */
-export const getUser = async (username) => {
-  const results = await executeGraphql(getUserQuery, { username: username });
+export const getUser = async (cwl_username) => {
+  const results = await executeGraphql(getUserQuery, { cwl_username: cwl_username });
   console.log(results);
   return results["data"]["getUser"];
 };
@@ -738,24 +738,14 @@ export const addSection = async (title, description, data_type, attributes) => {
  * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
  *      first_name
  *      last_name
- *      preferred_name
  *      email
  *      role
- *      bio
- *      rank
  *      primary_department
- *      secondary_department
  *      primary_faculty
- *      secondary_faculty
- *      campus
- *      keywords
- *      institution_user_id
- *      scopus_id
- *      orcid_id
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUser = async (first_name, last_name, email, role, username, primary_department, primary_faculty) => {
+export const addUser = async (first_name, last_name, email, role, cwl_username, vpp_username, primary_department, primary_faculty) => {
   const results = await executeGraphql(ADD_USER, {
     first_name,
     last_name,
@@ -763,7 +753,8 @@ export const addUser = async (first_name, last_name, email, role, username, prim
     role,
     pending: true, // Default to pending
     approved: false, // Default to not approved
-    username,
+    cwl_username,
+    vpp_username,
     primary_department,
     primary_faculty
   });

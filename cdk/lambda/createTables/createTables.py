@@ -62,8 +62,9 @@ def lambda_handler(event, context):
     columns.append(createColumn('joined_timestamp', 'varchar', 'DEFAULT CURRENT_TIMESTAMP', False))  
     columns.append(createColumn('pending', 'BOOLEAN', 'DEFAULT true', False))  # Add this
     columns.append(createColumn('approved', 'BOOLEAN', 'DEFAULT false', False))  # Add this
-    columns.append(createColumn('username', 'varchar', '', False))
-    columns.append(createColumn('employee_id', 'varchar', '', True))
+    columns.append(createColumn('cwl_username', 'varchar', '', False))
+    columns.append(createColumn('employee_id', 'varchar', '', False))
+    columns.append(createColumn('vpp_username', 'varchar', '', True))
     query = createQuery('users', columns)
     cursor.execute(query)
 

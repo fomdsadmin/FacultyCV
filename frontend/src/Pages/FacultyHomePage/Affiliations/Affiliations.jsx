@@ -118,7 +118,7 @@ const Affiliations = () => {
 
       console.log("Affiliations updated successfully!");
       // Get updated user info and update context
-      const updatedUser = await getUser(userInfo.username);
+      const updatedUser = await getUser(userInfo.cwl_username);
       if (updatedUser) {
         setUserInfo(updatedUser);
       }
