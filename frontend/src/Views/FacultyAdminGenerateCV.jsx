@@ -276,14 +276,13 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
     <div>
       <h2 className="text-sm font-medium text-gray-700 mb-2">Templates</h2>
       <select
-        className={`select select-bordered w-full ${selectedUsers.length === 0 ? "select-disabled bg-gray-100" : ""}`}
+        className="select select-bordered w-full"
         value={selectedTemplate?.template_id || ""}
         onChange={(e) => {
           const templateId = e.target.value;
           const template = searchedTemplates.find((t) => t.template_id === templateId);
           handleTemplateSelect(template || "");
         }}
-        disabled={selectedUsers.length === 0}
       >
         <option value="">Choose a template...</option>
         {searchedTemplates.map((template) => (
@@ -404,14 +403,17 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
 
               <SelectedUsersSummary />
 
-              <CVGenerationComponent
-                getHtml={getHtml}
-                optionalKey="facultyadmin"
-                selectedTemplate={selectedTemplate}
-                setPdfPreviewUrl={setPdfUrl}
-                pdfGenerationCompleteMessage={`PDF for bulk CV "${selectedTemplate?.title}" finished generating!`}
-                docxGenerationCompleteMessage={`DOCX for bulk CV "${selectedTemplate?.title}" finished generating!`}
-              />
+              {/* CV Generation Component */}
+              <div className={`${selectedUsers.length === 0 || !selectedTemplate ? 'opacity-50 pointer-events-none' : ''}`}>
+                <CVGenerationComponent
+                  getHtml={getHtml}
+                  optionalKey="facultyadmin"
+                  selectedTemplate={selectedTemplate}
+                  setPdfPreviewUrl={setPdfUrl}
+                  pdfGenerationCompleteMessage={`PDF for bulk CV "${selectedTemplate?.title}" finished generating!`}
+                  docxGenerationCompleteMessage={`DOCX for bulk CV "${selectedTemplate?.title}" finished generating!`}
+                />
+              </div>
             </div>
 
             {/* Right Section - Report Preview */}
