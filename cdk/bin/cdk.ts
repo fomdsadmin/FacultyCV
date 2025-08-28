@@ -19,7 +19,7 @@ import { Resolver3Stack } from '../lib/resolver3-stack';
 import { SupportFormStack } from '../lib/supportform-stack';
 import { BatchApiGatewayStack } from '../lib/batch-apigateway-stack';
 import { OidcAuthStack } from '../lib/oidc-auth-stack';
-import { GotenbergStack } from '../lib/gutenberg-stack';
+import { GotenbergStack } from '../lib/gotenberg-stack';
 
 const app = new cdk.App();
 
