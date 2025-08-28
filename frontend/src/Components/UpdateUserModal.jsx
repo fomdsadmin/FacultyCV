@@ -7,12 +7,11 @@ import { get } from "aws-amplify/api";
 const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSuccess }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
+  const [cwl_username, setCWLUsername] = useState("");
+  const [vpp_username, setVPPUsername] = useState("");
   const [email, setEmail] = useState("");
   const [primaryDepartment, setPrimaryDepartment] = useState("");
   const [primaryFaculty, setPrimaryFaculty] = useState("");
-  const [institution, setInstitution] = useState("");
-  const [campus, setCampus] = useState("");
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,12 +25,11 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
     if (existingUser) {
       setFirstName(existingUser.first_name || "");
       setLastName(existingUser.last_name || "");
-      setUsername(existingUser.username || "");
+      setCWLUsername(existingUser.cwl_username || "");
+      setVPPUsername(existingUser.vpp_username || "");
       setEmail(existingUser.email || "");
       setPrimaryDepartment(existingUser.primary_department || "");
       setPrimaryFaculty(existingUser.primary_faculty || "");
-      setInstitution(existingUser.institution || "");
-      setCampus(existingUser.campus || "");
       setError("");
       // Don't clear success message here to allow it to persist after update
     }
@@ -97,17 +95,17 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
         email,
         existingUser.role, // Keep existing role
         sanitizeInput(existingUser.bio || ""),
-        institution,
+        existingUser.institution || "",
         primaryDepartment,
         primaryFaculty,
-        campus,
+        existingUser.campus || "",
         existingUser.keywords || "",
         existingUser.institution_user_id || "",
         existingUser.scopus_id,
         existingUser.orcid_id
       );
 
-      await changeUsername(existingUser.user_id, username);
+      await changeUsername(existingUser.user_id, cwl_username, vpp_username);
 
       const newResult = await getUser(existingUser.cwl_username);
       console.log("User updated successfully:", newResult);
@@ -142,8 +140,8 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-xl  flex flex-col my-auto">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 px-4">
+      <div className="bg-white rounded-lg p-8 w-full max-w-xl  flex flex-col my-auto">
         <div className="flex justify-between items-center mb-4">
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-bold text-zinc-600">Update User</h2>
@@ -181,44 +179,33 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CWL Username</label>
                 <input
-                  className="input input-bordered w-full text-sm bg-gray-50"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Username"
+                  className="input input-bordered w-full text-sm bg-gray-100"
+                  value={cwl_username}
+                  onChange={(e) => setCWLUsername(e.target.value)}
+                  placeholder="CWL Username"
+                  type="text"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">VPP Username</label>
+                <input
+                  className="input input-bordered w-full text-sm bg-gray-100"
+                  value={vpp_username}
+                  onChange={(e) => setVPPUsername(e.target.value)}
+                  placeholder="VPP Username"
                   type="text"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
-                  className="input input-bordered w-full text-sm bg-gray-50"
+                  className="input input-bordered w-full text-sm "
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
                   type="email"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Institution</label>
-                <input
-                  className="input input-bordered w-full text-sm"
-                  value={institution}
-                  onChange={(e) => setInstitution(e.target.value)}
-                  placeholder="Institution"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Campus</label>
-                <input
-                  className="input input-bordered w-full text-sm"
-                  value={campus}
-                  onChange={(e) => setCampus(e.target.value)}
-                  placeholder="Campus"
                 />
               </div>
             </div>

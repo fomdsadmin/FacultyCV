@@ -1019,10 +1019,11 @@ export const updateUserAffiliations = async (user_id, first_name, last_name, aff
   return results["data"]["updateUserAffiliations"];
 };
 
-export const changeUsername = async (user_id, username) => {
+export const changeUsername = async (user_id, cwl_username, vpp_username) => {
   const results = await executeGraphql(CHANGE_USERNAME, {
     user_id: user_id,
-    username: username,
+    cwl_username: cwl_username,
+    vpp_username: vpp_username,
   });
   return results["data"]["changeUsername"];
 };

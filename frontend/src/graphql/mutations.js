@@ -264,10 +264,11 @@ export const UPDATE_SECTION = `
 `;
 
 export const CHANGE_USERNAME = `
-    mutation ChangeUsername($user_id: String!, $username: String!) {
+    mutation ChangeUsername($user_id: String!, $cwl_username: String!, $vpp_username: String!) {
         changeUsername(
             user_id: $user_id,
-            username: $username
+            cwl_username: $cwl_username,
+            vpp_username: $vpp_username
         )
     }
 `;
