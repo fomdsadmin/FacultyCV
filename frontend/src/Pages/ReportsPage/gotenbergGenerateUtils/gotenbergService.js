@@ -254,7 +254,7 @@ export const subscribeToCompletion = (
   };
 };
 
-export const convertHtmlToPdf = async (htmlContent, options = {}, key) => {
+export const convertHtmlToPdf = async (htmlContent, options = {}, key, onUploadSuccessful) => {
   console.log('Starting HTML to PDF conversion...');
   console.log('PDF Key:', getPdfKey(key));
   console.log('HTML Key:', getHtmlKey(key));
@@ -280,6 +280,8 @@ export const convertHtmlToPdf = async (htmlContent, options = {}, key) => {
         'Content-Type': 'text/html',
       },
     });
+
+    onUploadSuccessful?.();
 
     if (!htmlUploadResponse.ok) {
       throw new Error(`Failed to upload HTML to S3: ${htmlUploadResponse.statusText}`);

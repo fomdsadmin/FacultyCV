@@ -161,7 +161,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
 
     try {
       // Get selected user objects
-      const selectedUserObjects = selectedUsers.map(userId => 
+      const selectedUserObjects = selectedUsers.map(userId =>
         departmentUsers.find(user => user.user_id === userId)
       ).filter(user => user !== undefined);
 
@@ -174,6 +174,11 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
 
       console.log('🔄 Generating HTML for users:', selectedUserObjects.map(u => `${u.first_name} ${u.last_name}`));
 
+      setNotification({
+        message: "Uploading CV Template for report generation please stay on page!",
+        type: 'success'
+      });
+
       // Generate HTML content (supports both single user and multiple users)
       const htmlContent = await buildHtml(selectedUserObjects, templateWithDates);
 
@@ -184,11 +189,6 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
         reportName: selectedTemplate.title,
         action: 'BULK_CV_GENERATION',
         userCount: selectedUserObjects.length
-      });
-
-      setNotification({
-        message: "HTML generated successfully! Starting PDF and DOCX generation...",
-        type: 'success'
       });
 
       return htmlContent;
@@ -249,9 +249,8 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                 <div>
                   <h2 className="text-sm font-medium text-gray-700 mb-2">Templates</h2>
                   <select
-                    className={`select select-bordered w-full ${
-                      selectedUsers.length === 0 ? "select-disabled bg-gray-100" : ""
-                    }`}
+                    className={`select select-bordered w-full ${selectedUsers.length === 0 ? "select-disabled bg-gray-100" : ""
+                      }`}
                     value={selectedTemplate?.template_id || ""}
                     onChange={(e) => {
                       const templateId = e.target.value;
@@ -267,7 +266,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
                       </option>
                     ))}
                   </select>
-                  
+
                   {/* Date Range Picker */}
                   {selectedTemplate && (
                     <div className="my-4">

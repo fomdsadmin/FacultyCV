@@ -68,7 +68,12 @@ const CVGenerationComponent = ({
         setDocxComplete(false);
 
         const html = await getHtml();
-        await convertHtmlToPdf(html, {}, getKey());
+
+        const onUploadSuccessful = () => {
+            setNotification({ message: "CV Template Uploaded Successfully!" });
+        }
+
+        await convertHtmlToPdf(html, {}, getKey(), onUploadSuccessful);
     }
 
     const onGenerationError = () => {
