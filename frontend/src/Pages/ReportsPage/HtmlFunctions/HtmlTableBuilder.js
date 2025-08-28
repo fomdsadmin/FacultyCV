@@ -23,7 +23,63 @@ export const cellOptions = (textOptions, color = null) => {
     }
 }
 
-const textOptionsBuilder = (textOptions) => {
+// Update the font size calculation with the improvements
+const estimateTextWidth = (text, fontSize = 9.5) => {
+    // Less conservative character width estimation
+    const avgCharWidth = fontSize * 0.6; // Reduced back from 0.65 to 0.6
+    
+    // Remove HTML tags for width calculation
+    const plainText = text.replace(/<[^>]*>/g, '');
+    
+    // Find the longest word
+    const words = plainText.split(/\s+/);
+    const longestWord = words.reduce((longest, word) => 
+        word.length > longest.length ? word : longest, '');
+    
+    // Reduced formatting multiplier for bold text
+    const formattingMultiplier = text.includes('<strong>') ? 1.1 : 1.0; // Reduced from 1.15 to 1.1
+    
+    return longestWord.length * avgCharWidth * formattingMultiplier;
+};
+
+const calculateOptimalFontSize = (text, availableWidthPt, baseFontSize = 9.5) => {
+    const minFontSize = 5;
+    const maxFontSize = baseFontSize;
+    
+    // Convert percentage width to approximate points (assuming 8.5" page width)
+    const pageWidthPt = 612; // 8.5 inches * 72 points/inch
+    const availableWidth = (parseFloat(availableWidthPt) / 100) * pageWidthPt;
+    
+    // Reduced buffer space to allow more room for text
+    const usableWidth = availableWidth - 12; // Reduced buffer from 20 to 12
+    
+    const estimatedWidth = estimateTextWidth(text, baseFontSize);
+    
+    if (estimatedWidth <= usableWidth) {
+        return baseFontSize; // No adjustment needed
+    }
+    
+    // Calculate required font size with a less aggressive safety factor
+    const safetyFactor = 0.92; // Increased from 0.85 to 0.92 (only 8% smaller instead of 15%)
+    const requiredFontSize = (usableWidth / estimatedWidth) * baseFontSize * safetyFactor;
+    
+    // Return the larger of minimum font size or calculated size
+    return Math.max(minFontSize, Math.min(maxFontSize, requiredFontSize));
+};
+
+// Add function to calculate padding based on font size
+const calculatePadding = (fontSize, baseFontSize = 9.5) => {
+    const basePadding = 4; // Base padding in pixels for normal font size
+    const minPadding = 2;  // Minimum padding to maintain readability
+    
+    // Scale padding proportionally with font size
+    const scaledPadding = (fontSize / baseFontSize) * basePadding;
+    
+    // Ensure minimum padding
+    return Math.max(minPadding, Math.round(scaledPadding));
+};
+
+const textOptionsBuilder = (textOptions, columnWidth = null) => {
     const processedTexts = textOptions.map((textOption) => {
         if (!textOption || !textOption.text || textOption.text === 'undefined' || textOption.text === 'null') {
             return "";
@@ -32,13 +88,18 @@ const textOptionsBuilder = (textOptions) => {
         // Use sanitizeRichText instead of sanitizeHtml to preserve rich text formatting
         let html = sanitizeRichText(String(textOption.text));
 
+        // Calculate optimal font size if column width is provided
+        let fontSize = textOption.size || 9.5;
+        if (columnWidth) {
+            fontSize = calculateOptimalFontSize(html, columnWidth, textOption.size || 9.5);
+        }
+
         if (textOption.bold) {
             html = `<strong>${html}</strong>`;
         }
 
-        if (textOption.size) {
-            html = `<span style="font-size: ${textOption.size}pt; line-height: ${textOption.size * 1.2}pt;">${html}</span>`;
-        }
+        // Always apply font size (either original or calculated)
+        html = `<span style="font-size: ${fontSize}pt; line-height: ${fontSize * 1.3}pt;" data-font-size="${fontSize}">${html}</span>`;
 
         if (textOption.link) {
             html = `<a href="${textOption.link}" style="color: inherit; text-decoration: underline;">${html}</a>`;
@@ -52,14 +113,39 @@ const textOptionsBuilder = (textOptions) => {
 
 export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, includeFirstColumnInMerge = false) => {
     let cellsHtml = cellOptions.map((cellOption, index) => {
-        let html = textOptionsBuilder(cellOption.textOptions);
+        // Pass column width to textOptionsBuilder for font size calculation
+        let html = textOptionsBuilder(cellOption.textOptions, columnWidths[index]);
 
         if (html.trim() === "") {
             html = "&nbsp;"; // Non-breaking space for empty cells
         }
 
-        // Apply background color if specified
-        let cellStyle = `padding: 4px 6px; border: 1px solid #000; vertical-align: top; width: ${columnWidths[index] || 'auto'}; max-width: ${columnWidths[index] || 'auto'}; word-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; overflow-wrap: break-word; page-break-inside: avoid;`;
+        // Extract font size from the HTML to calculate padding
+        let fontSize = 9.5; // Default
+        const fontSizeMatch = html.match(/data-font-size="([^"]+)"/);
+        if (fontSizeMatch) {
+            fontSize = parseFloat(fontSizeMatch[1]);
+        }
+
+        // Calculate dynamic padding based on font size
+        const padding = calculatePadding(fontSize);
+
+        // Allow sentence wrapping but prevent word breaking/hyphenation with dynamic padding
+        let cellStyle = `padding: ${padding}px ${padding + 2}px; 
+                        border: 1px solid #000; 
+                        vertical-align: top; 
+                        width: ${columnWidths[index] || 'auto'}; 
+                        max-width: ${columnWidths[index] || 'auto'}; 
+                        word-wrap: normal;
+                        overflow-wrap: normal;
+                        word-break: keep-all;
+                        hyphens: none;
+                        -webkit-hyphens: none;
+                        -moz-hyphens: none;
+                        -ms-hyphens: none;
+                        white-space: normal;
+                        page-break-inside: avoid;
+                        box-sizing: border-box;`;
         
         if (cellOption.color) {
             const colorMap = {
@@ -71,6 +157,9 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
             cellStyle += ` background-color: ${bgColor};`;
         }
 
+        // Remove the data-font-size attribute from the final HTML
+        html = html.replace(/data-font-size="[^"]+"\s*/g, '');
+
         return `<td style="${cellStyle}">${html}</td>`;
     });
 
@@ -79,9 +168,34 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
         
         if (includeFirstColumnInMerge) {
             // Merge all cells including the first column
-            const combinedContent = cellOptions.map(opt => textOptionsBuilder(opt.textOptions)).filter(content => content.trim() !== "").join(', ');
-            const totalWidth = columnWidths.reduce((sum, width) => sum + parseFloat(width), 0);
-            const cellStyle = `padding: 4px 6px; border: 1px solid #000; vertical-align: top; width: ${totalWidth}%; max-width: ${totalWidth}%; word-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; overflow-wrap: break-word; box-sizing: border-box; page-break-inside: avoid;`;
+            const totalWidth = columnWidths.reduce((sum, width) => sum + parseFloat(width), 0) + '%';
+            const combinedContent = cellOptions.map((opt, index) => 
+                textOptionsBuilder(opt.textOptions, totalWidth)
+            ).filter(content => content.trim() !== "").join(', ');
+            
+            // Extract font size for merged cell padding
+            let fontSize = 9.5;
+            const fontSizeMatch = combinedContent.match(/data-font-size="([^"]+)"/);
+            if (fontSizeMatch) {
+                fontSize = parseFloat(fontSizeMatch[1]);
+            }
+            const padding = calculatePadding(fontSize);
+            
+            const cellStyle = `padding: ${padding}px ${padding + 2}px; 
+                             border: 1px solid #000; 
+                             vertical-align: top; 
+                             width: ${totalWidth}; 
+                             max-width: ${totalWidth}; 
+                             word-wrap: normal;
+                             overflow-wrap: normal;
+                             word-break: keep-all;
+                             hyphens: none;
+                             -webkit-hyphens: none;
+                             -moz-hyphens: none;
+                             -ms-hyphens: none;
+                             white-space: normal;
+                             box-sizing: border-box; 
+                             page-break-inside: avoid;`;
             let bgColor = '';
             if (cellOptions[0]?.color) {
                 const colorMap = {
@@ -91,13 +205,40 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
                 };
                 bgColor = ` background-color: ${colorMap[cellOptions[0].color] || cellOptions[0].color};`;
             }
-            cellsHtml = [`<td colspan="${cellOptions.length}" style="${cellStyle}${bgColor}">${combinedContent}</td>`];
+            
+            const cleanContent = combinedContent.replace(/data-font-size="[^"]+"\s*/g, '');
+            cellsHtml = [`<td colspan="${cellOptions.length}" style="${cellStyle}${bgColor}">${cleanContent}</td>`];
         } else {
             // Keep first column separate, merge the rest
             const firstCell = cellsHtml[0];
-            const restContent = cellOptions.slice(1).map(opt => textOptionsBuilder(opt.textOptions)).filter(content => content.trim() !== "").join(', ');
-            const restWidth = columnWidths.slice(1).reduce((sum, width) => sum + parseFloat(width), 0);
-            const restCellStyle = `padding: 4px 6px; border: 1px solid #000; vertical-align: top; width: ${restWidth}%; max-width: ${restWidth}%; word-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; -moz-hyphens: auto; overflow-wrap: break-word; box-sizing: border-box; page-break-inside: avoid;`;
+            const restWidth = columnWidths.slice(1).reduce((sum, width) => sum + parseFloat(width), 0) + '%';
+            const restContent = cellOptions.slice(1).map((opt, index) => 
+                textOptionsBuilder(opt.textOptions, restWidth)
+            ).filter(content => content.trim() !== "").join(', ');
+            
+            // Extract font size for merged cell padding
+            let fontSize = 9.5;
+            const fontSizeMatch = restContent.match(/data-font-size="([^"]+)"/);
+            if (fontSizeMatch) {
+                fontSize = parseFloat(fontSizeMatch[1]);
+            }
+            const padding = calculatePadding(fontSize);
+            
+            const restCellStyle = `padding: ${padding}px ${padding + 2}px; 
+                                 border: 1px solid #000; 
+                                 vertical-align: top; 
+                                 width: ${restWidth}; 
+                                 max-width: ${restWidth}; 
+                                 word-wrap: normal;
+                                 overflow-wrap: normal;
+                                 word-break: keep-all;
+                                 hyphens: none;
+                                 -webkit-hyphens: none;
+                                 -moz-hyphens: none;
+                                 -ms-hyphens: none;
+                                 white-space: normal;
+                                 box-sizing: border-box; 
+                                 page-break-inside: avoid;`;
             let bgColor = '';
             if (cellOptions[1]?.color) {
                 const colorMap = {
@@ -107,7 +248,9 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
                 };
                 bgColor = ` background-color: ${colorMap[cellOptions[1].color] || cellOptions[1].color};`;
             }
-            cellsHtml = [firstCell, `<td colspan="${cellOptions.length - 1}" style="${restCellStyle}${bgColor}">${restContent}</td>`];
+            
+            const cleanContent = restContent.replace(/data-font-size="[^"]+"\s*/g, '');
+            cellsHtml = [firstCell, `<td colspan="${cellOptions.length - 1}" style="${restCellStyle}${bgColor}">${cleanContent}</td>`];
         }
     }
 

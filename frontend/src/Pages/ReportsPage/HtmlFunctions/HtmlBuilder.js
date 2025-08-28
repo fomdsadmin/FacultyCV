@@ -622,7 +622,96 @@ const buildGroup = async (group) => {
     return html;
 };
 
-const buildHtmlHeader = () => {
+export const buildHtml = async (userInfoInput, templateWithEndStartDate) => {
+    // Handle both single user and array of users
+    const userInfoArray = Array.isArray(userInfoInput) ? userInfoInput : [userInfoInput];
+    const isMultipleUsers = userInfoArray.length > 1;
+    
+    template = templateWithEndStartDate;
+    sortAscending = JSON.parse(template.template_structure).sort_ascending;
+
+    // Get all sections data once (shared for all users)
+    const allSections = await getAllSections();
+    const allSectionIds = allSections.map((section) => section.data_section_id);
+    
+    // Create sectionsMap with data_section_id as key and section as value
+    sectionsMap = {};
+    allSections.forEach((section) => {
+        sectionsMap[section.data_section_id] = section;
+    });
+
+    // Start building the complete HTML document
+    let completeHtml = buildHtmlHeader(isMultipleUsers);
+
+    // Process each user
+    for (let userIndex = 0; userIndex < userInfoArray.length; userIndex++) {
+        const currentUserInfo = userInfoArray[userIndex];
+        console.log(`Building CV for user ${userIndex + 1}/${userInfoArray.length}:`, currentUserInfo.first_name, currentUserInfo.last_name);
+
+        // Add page break before each user (except the first one)
+        if (isMultipleUsers && userIndex > 0) {
+            completeHtml += addPageBreak();
+        }
+
+        // Get user-specific CV data
+        const unparsedData = await getUserCVData(currentUserInfo.user_id, allSectionIds);
+
+        // Parse user data and create userCvDataMap for this user
+        const userCvData = unparsedData.map((data) => {
+            let dataDetails;
+            try {
+                dataDetails = JSON.parse(data.data_details);
+            } catch (e) {
+                dataDetails = data.data_details;
+            }
+            return { ...data, data_details: dataDetails };
+        });
+
+        // Create userCvDataMap with data_section_id as key and array of CV data as value
+        userCvDataMap = {};
+        userCvData.forEach((cvData) => {
+            const sectionId = cvData.data_section_id;
+            if (!userCvDataMap[sectionId]) {
+                userCvDataMap[sectionId] = [];
+            }
+            userCvDataMap[sectionId].push(cvData);
+        });
+
+        // Build user profile section
+        completeHtml += buildUserProfile(currentUserInfo);
+
+        // Parse the template structure and process each group
+        const parsedGroups = JSON.parse(template.template_structure).groups;
+
+        for (const group of parsedGroups || []) {
+            if (group.id === HIDDEN_GROUP_ID) continue; // Skip hidden groups
+            completeHtml += await buildGroup(group);
+        }
+
+        console.log(`Completed CV for user ${userIndex + 1}/${userInfoArray.length}`);
+    }
+
+    // Close the HTML document
+    completeHtml += buildHtmlFooter();
+
+    console.log(`Built complete HTML document for ${userInfoArray.length} user(s)`);
+    return completeHtml;
+};
+
+// Update buildHtmlHeader to include page break styles for multiple users
+const buildHtmlHeader = (isMultipleUsers = false) => {
+    const pageBreakStyles = isMultipleUsers ? `
+        .page-break {
+            page-break-before: always;
+            -webkit-page-break-before: always;
+            break-before: page;
+        }
+        .page-break-after {
+            page-break-after: always;
+            -webkit-page-break-after: always;
+            break-after: page;
+        }` : '';
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -738,69 +827,23 @@ const buildHtmlHeader = () => {
         }
         u {
             text-decoration: underline;
-        }
+        }${pageBreakStyles}
     </style>
 </head>
 <body>`;
 }
 
-export const buildHtml = async (userInfo, templateWithEndStartDate) => {
-    // Get all user data
-    const allSections = await getAllSections();
-    template = templateWithEndStartDate;
-    const allSectionIds = allSections.map((section) => section.data_section_id);
-    const unparsedData = await getUserCVData(userInfo.user_id, allSectionIds);
-    sortAscending = JSON.parse(template.template_structure).sort_ascending;
+// Add helper function for page breaks
+const addPageBreak = () => {
+    return `<div class="page-break"></div>\n`;
+}
 
-    // Create sectionsMap with data_section_id as key and section as value
-    sectionsMap = {};
-    allSections.forEach((section) => {
-        sectionsMap[section.data_section_id] = section;
-    });
+// Add helper function for HTML footer
+const buildHtmlFooter = () => {
+    return `</body>\n</html>`;
+}
 
-    let html = buildHtmlHeader();
-
-    html += buildUserProfile(userInfo);
-
-    // Parse user data and create userCvDataMap
-    const userCvData = unparsedData.map((data) => {
-        let dataDetails;
-        try {
-            dataDetails = JSON.parse(data.data_details);
-        } catch (e) {
-            dataDetails = data.data_details;
-        }
-        return { ...data, data_details: dataDetails };
-    });
-
-    // Create userCvDataMap with data_section_id as key and array of CV data as value
-    userCvDataMap = {};
-    userCvData.forEach((cvData) => {
-        const sectionId = cvData.data_section_id;
-        if (!userCvDataMap[sectionId]) {
-            userCvDataMap[sectionId] = [];
-        }
-        userCvDataMap[sectionId].push(cvData);
-    });
-
-    // Parse the template structure
-    const parsedGroups = JSON.parse(template.template_structure).groups;
-
-    // Process each group in the template
-    for (const group of parsedGroups || []) {
-        if (group.id === HIDDEN_GROUP_ID) continue; // Skip hidden groups
-        html += await buildGroup(group);
-    }
-
-    const documentEnd = `</body>\n</html>`;
-
-    html += documentEnd;
-
-    console.log(html);
-    return html;
-};
-
-const buildUserProfile = (userInfoParam) => {
+export const buildUserProfile = (userInfoParam) => {
     // Get current date in format "Apr 11, 2025"
     userInfo = userInfoParam;
 

@@ -1,39 +1,20 @@
-import { useState } from 'react';
-import DownloadButtons from './DownloadButtons.jsx';
+import React, { useState } from 'react';
 import { buildHtml } from './HtmlFunctions/HtmlBuilder.js';
-import { convertHtmlToPdf, subscribeToCompletion } from './gotenbergGenerateUtils/gotenbergService';
-import { useApp } from 'Contexts/AppContext.jsx';
 import { useNotification } from 'Contexts/NotificationContext.jsx';
+import CVGenerationComponent from './CVGenerationComponent/CVGenerationComponent.jsx';
 
 const TemplateList = ({
   templates,
   selectedTemplate,
   onTemplateSelect,
-  onGenerateStart,
-  onGenerateComplete,
-  onPdfReady,
-  onDocxReady,
-  onProgress,
-  isGenerating,
-  isPdfReady,
-  isDocxReady,
-  downloadUrl,
-  downloadBlob,
-  downloadUrlDocx,
-  downloadBlobDocx,
-  processingMessage,
   user,
-  cancelRef,
-  docxTagExists,
-  pdfTagExists
+  setPdfPreviewUrl
 }) => {
-
-  const { userInfo } = useApp();
+  const { setNotification } = useNotification();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [startYear, setStartYear] = useState(new Date().getFullYear() - 10);
   const [endYear, setEndYear] = useState(new Date().getFullYear());
-  const { setNotification } = useNotification();
 
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
 
@@ -45,72 +26,38 @@ const TemplateList = ({
     template.title.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => a.title.localeCompare(b.title));
 
-  const handleGenerate = async () => {
-    if (!selectedTemplate || isGenerating) return;
+  // HTML generation function for CVGenerationComponent
+  const getHtml = async () => {
+    if (!selectedTemplate) {
+      throw new Error("Please select a template");
+    }
 
     try {
-      setNotification({
-        message: "Uploading template for document generation. Please do not refresh the page!",
-        type: 'info'
-      })
+      // Update template with selected date range
+      const templateWithDates = {
+        ...selectedTemplate,
+        start_year: startYear,
+        end_year: endYear,
+      };
 
-      // Notify parent that generation started
-      onGenerateStart(selectedTemplate, startYear, endYear);
+      setNotification({
+        message: "Uploading template for CV generation please stay on page!",
+        type: 'success'
+      });
 
       // Generate HTML content
-      const htmlContent = await buildHtml(user, selectedTemplate);
+      const htmlContent = await buildHtml(user, templateWithDates);
 
-      // Start the conversion process (non-blocking)
-      await convertHtmlToPdf(htmlContent, {}, userInfo, selectedTemplate);
-
-      setNotification({
-        message: "Upload complete!",
-        type: 'success'
-      })
-
-      cancelRef.current?.();
-      cancelRef.current = null;
-      
-      // Start subscription for completion with completion callback
-      const cancel = subscribeToCompletion(
-        userInfo,
-        selectedTemplate,
-        onPdfReady,
-        onDocxReady,
-        onProgress,
-        (success) => {
-          console.log('Subscription completed, success:', success);
-          // This will call the parent's completion handler to stop generating state
-          onGenerateComplete(success);
-        }
-      )
-
-      cancelRef.current = cancel;
+      return htmlContent;
 
     } catch (error) {
-      console.error("Error generating HTML CV or converting to PDF:", error);
+      console.error("Error generating HTML:", error);
       setNotification({
-        message: "An error occurred while generating the CV. Please try again.",
+        message: "An error occurred while generating the HTML. Please try again.",
         type: 'error'
-      })
-      // Reset generation state on error
-      onProgress("Error occurred during generation");
-      onGenerateComplete(false); // Stop generating state on error
+      });
+      throw error;
     }
-  };
-
-  // Determine button text
-  const getButtonText = () => {
-    if (isGenerating) {
-      if (!isPdfReady && !isDocxReady) {
-        return "Generating PDF & DOCX...";
-      } else if (isPdfReady && !isDocxReady) {
-        return "PDF Done, Generating DOCX...";
-      } else {
-        return "Processing...";
-      }
-    }
-    return "Generate PDF & DOCX";
   };
 
   return (
@@ -125,7 +72,6 @@ const TemplateList = ({
           placeholder="Search templates..."
           value={searchTerm}
           onChange={handleSearchChange}
-          disabled={isGenerating}
         />
       </div>
 
@@ -134,92 +80,60 @@ const TemplateList = ({
         {searchedTemplates.map((template, index) => (
           <button
             key={index}
-            className={`w-full text-left text-sm px-4 py-2 mb-2 my-1 rounded transition bg-gray-100 ${selectedTemplate &&
-              selectedTemplate.template_id === template.template_id
-              ? "bg-blue-100 border-l-4 border-blue-500 font-semibold"
-              : "hover:bg-gray-200"
-              } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={() => !isGenerating && onTemplateSelect(template)}
-            disabled={isGenerating}
+            className={`w-full text-left text-sm px-4 py-2 mb-2 my-1 rounded transition bg-gray-100 ${selectedTemplate && selectedTemplate.template_id === template.template_id
+                ? "bg-blue-100 border-l-4 border-blue-500 font-semibold"
+                : "hover:bg-gray-200"
+              }`}
+            onClick={() => onTemplateSelect(template)}
           >
             {template.title}
           </button>
         ))}
       </div>
 
-      {/* Date Range Picker, Generate Button, and Download Buttons */}
+      {/* Date Range Picker and CV Generation Component */}
       {selectedTemplate && (
-        <div className="mt-auto">
-          <label className="block mb-2 font-medium text-zinc-600">
-            Select Date Range (Year)
-          </label>
-          <div className="flex space-x-2 mb-4">
-            <select
-              className="border rounded px-2 py-1"
-              value={startYear}
-              onChange={(e) => setStartYear(Number(e.target.value))}
-              disabled={isGenerating}
-            >
-              {yearOptions.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-            <span className="self-center">to</span>
-            <select
-              className="border rounded px-2 py-1"
-              value={endYear}
-              onChange={(e) => setEndYear(Number(e.target.value))}
-              disabled={isGenerating}
-            >
-              {yearOptions.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+        <div className="mt-auto space-y-4">
+          {/* Date Range Picker */}
+          <div>
+            <label className="block mb-2 font-medium text-zinc-600">
+              Select Date Range (Year)
+            </label>
+            <div className="flex space-x-2">
+              <select
+                className="border rounded px-2 py-1 flex-1"
+                value={startYear}
+                onChange={(e) => setStartYear(Number(e.target.value))}
+              >
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+              <span className="self-center">to</span>
+              <select
+                className="border rounded px-2 py-1 flex-1"
+                value={endYear}
+                onChange={(e) => setEndYear(Number(e.target.value))}
+              >
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Generate Button */}
-          <button
-            className={`w-full btn mb-4 ${isGenerating ? 'btn-secondary cursor-not-allowed opacity-75' : 'btn-primary'}`}
-            onClick={handleGenerate}
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <span className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                {getButtonText()}
-              </span>
-            ) : (
-              getButtonText()
-            )}
-          </button>
-
-          {/* Processing Status */}
-          {isGenerating && (
-            <div className="text-center p-3 bg-blue-50 border border-blue-200 rounded mb-4">
-              <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-blue-700 text-sm">{processingMessage || "Processing..."}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Download Buttons */}
-          <DownloadButtons
-            downloadUrl={downloadUrl}
-            downloadBlob={downloadBlob}
-            downloadUrlDocx={downloadUrlDocx}
-            downloadBlobDocx={downloadBlobDocx}
+          {/* CV Generation Component */}
+          <CVGenerationComponent
+            getHtml={getHtml}
+            optionalKey="faculty"
             selectedTemplate={selectedTemplate}
-            user={user}
-            isPdfReady={isPdfReady}
-            isDocxReady={isDocxReady}
-            isGenerating={isGenerating}
-            docxTagExists={docxTagExists}
-            pdfTagExists={pdfTagExists}
+            setPdfPreviewUrl={setPdfPreviewUrl}
+            pdfGenerationCompleteMessage={`PDF for "${selectedTemplate.title}" finished generating!`}
+            docxGenerationCompleteMessage={`DOCX for "${selectedTemplate.title}" finished generating!`}
           />
         </div>
       )}

@@ -1,22 +1,26 @@
 import { getPresignedGotenbergBucketUrl } from "../../../graphql/graphqlHelpers";
 import { subscribeToGotenbergStatus } from "../../../graphql/graphqlHelpers";
 
-export const getHtmlKey = (userInfo, selectedTemplate) => {
-  return `html/${userInfo.username}${selectedTemplate.template_id}.html`;
+export const getGenericKey = (userInfo, selectedTemplate, optionalKey = "") => {
+  return `${userInfo.username}${selectedTemplate.template_id}${optionalKey}`;
 }
 
-export const getPdfKey = (userInfo, selectedTemplate) => {
-  return `pdf/${userInfo.username}${selectedTemplate.template_id}.pdf`;
+export const getHtmlKey = (key) => {
+  return `html/${key}.html`;
 }
 
-export const getDocxKey = (userInfo, selectedTemplate) => {
-  return `docx/${userInfo.username}${selectedTemplate.template_id}.docx`;
+export const getPdfKey = (key) => {
+  return `pdf/${key}.pdf`;
+}
+
+export const getDocxKey = (key) => {
+  return `docx/${key}.docx`;
 }
 
 // Check if PDF is complete by checking tags on the HTML file
-export const checkPdfComplete = async (userInfo, selectedTemplate) => {
+export const checkPdfComplete = async (key) => {
   try {
-    const htmlKey = getHtmlKey(userInfo, selectedTemplate);
+    const htmlKey = getHtmlKey(key);
     console.log('Checking PDF completion via HTML file tags for key:', htmlKey);
 
     const tags = await getPresignedGotenbergBucketUrl(htmlKey, 'GET_TAGS');
@@ -39,8 +43,8 @@ export const checkPdfComplete = async (userInfo, selectedTemplate) => {
 };
 
 // Helper function to check if PDF tags contain isPdfComplete = true
-export const doesPdfTagExist = async (userInfo, selectedTemplate) => {
-  const htmlKey = getHtmlKey(userInfo, selectedTemplate);
+export const doesPdfTagExist = async (key) => {
+  const htmlKey = getHtmlKey(key);
   const tags = await getPresignedGotenbergBucketUrl(htmlKey, 'GET_TAGS');
   if (!tags) {
     console.log('No tags provided for PDF check');
@@ -51,8 +55,8 @@ export const doesPdfTagExist = async (userInfo, selectedTemplate) => {
 };
 
 // Helper function to check if DOCX tags contain isDocxComplete = true  
-export const doesDocxTagExist = async (userInfo, selectedTemplate) => {
-  const pdfKey = getPdfKey(userInfo, selectedTemplate);
+export const doesDocxTagExist = async (key) => {
+  const pdfKey = getPdfKey(key);
   const tags = await getPresignedGotenbergBucketUrl(pdfKey, 'GET_TAGS');
   if (!tags) {
     console.log('No tags provided for DOCX check');
@@ -63,9 +67,9 @@ export const doesDocxTagExist = async (userInfo, selectedTemplate) => {
 };
 
 // Check if DOCX is complete by checking tags on the PDF file
-export const checkDocxComplete = async (userInfo, selectedTemplate) => {
+export const checkDocxComplete = async (key) => {
   try {
-    const pdfKey = getPdfKey(userInfo, selectedTemplate);
+    const pdfKey = getPdfKey(key);
     console.log('Checking DOCX completion via PDF file tags for key:', pdfKey);
 
     const tags = await getPresignedGotenbergBucketUrl(pdfKey, 'GET_TAGS');
@@ -88,11 +92,11 @@ export const checkDocxComplete = async (userInfo, selectedTemplate) => {
 };
 
 // Get PDF download URL if ready
-export const getPdfDownloadUrl = async (userInfo, selectedTemplate) => {
+export const getPdfDownloadUrl = async (key) => {
   try {
-    const isReady = await checkPdfComplete(userInfo, selectedTemplate);
+    const isReady = await checkPdfComplete(key);
     if (isReady) {
-      const pdfKey = getPdfKey(userInfo, selectedTemplate);
+      const pdfKey = getPdfKey(key);
       console.log('Getting PDF download URL for key:', pdfKey);
 
       const url = await getPresignedGotenbergBucketUrl(pdfKey, 'GET');
@@ -107,11 +111,11 @@ export const getPdfDownloadUrl = async (userInfo, selectedTemplate) => {
 };
 
 // Get DOCX download URL if ready
-export const getDocxDownloadUrl = async (userInfo, selectedTemplate) => {
+export const getDocxDownloadUrl = async (key) => {
   try {
-    const isReady = await checkDocxComplete(userInfo, selectedTemplate);
+    const isReady = await checkDocxComplete(key);
     if (isReady) {
-      const docxKey = getDocxKey(userInfo, selectedTemplate);
+      const docxKey = getDocxKey(key);
       console.log('Getting DOCX download URL for key:', docxKey);
 
       const url = await getPresignedGotenbergBucketUrl(docxKey, 'GET');
@@ -125,6 +129,39 @@ export const getDocxDownloadUrl = async (userInfo, selectedTemplate) => {
   }
 };
 
+const subscriptionDict = {};
+export const addSubscription = (key, onComplete, onError) => {
+  if (!subscriptionDict[key]) {
+    subscriptionDict[key] = subscribeToCompletionNotification(key, onComplete, onError);
+  }
+}
+
+export const removeSubscription = (key) => {
+  if (subscriptionDict[key]) {
+    subscriptionDict[key].unsubscribe();
+    delete subscriptionDict[key];
+  }
+}
+
+const subscribeToCompletionNotification = (key, onComplete, onError) => {
+  console.log('🔔 Setting up completion notification for key:', key);
+
+  return subscribeToGotenbergStatus(
+    key,
+    (data) => {
+      console.log('✅ Completion notification received for key:', key, data);
+      setTimeout(() => removeSubscription(data), 0);
+      onComplete?.(data);
+    },
+    (error) => {
+      console.error('❌ Completion notification error for key:', key, error);
+      setTimeout(() => removeSubscription(key), 0);
+      onError?.();
+    }
+  );
+};
+
+
 // Replace pollForCompletion with subscription-based approach
 // Returns a cancel function
 export const subscribeToCompletion = (
@@ -137,11 +174,11 @@ export const subscribeToCompletion = (
 ) => {
   const pdfKey = getPdfKey(userInfo, selectedTemplate);
   const docxKey = getDocxKey(userInfo, selectedTemplate);
-  
+
   console.log('🔔 Setting up subscriptions for:');
   console.log('📄 PDF Key:', pdfKey);
   console.log('📝 DOCX Key:', docxKey);
-  
+
   let pdfReady = false;
   let docxReady = false;
   let pdfSubscription = null;
@@ -165,14 +202,14 @@ export const subscribeToCompletion = (
     async (data) => {
       console.log('✅ PDF generation complete:', data);
       pdfReady = true;
-      
+
       // Get the download URL
       const pdfUrl = await getPdfDownloadUrl(userInfo, selectedTemplate);
       if (pdfUrl) {
         onPdfReady(pdfUrl);
         onProgress?.('PDF ready, waiting for DOCX...');
       }
-      
+
       checkCompletion();
     },
     (error) => {
@@ -188,14 +225,14 @@ export const subscribeToCompletion = (
     async (data) => {
       console.log('✅ DOCX generation complete:', data);
       docxReady = true;
-      
+
       // Get the download URL
       const docxUrl = await getDocxDownloadUrl(userInfo, selectedTemplate);
       if (docxUrl) {
         onDocxReady(docxUrl);
         onProgress?.('DOCX ready, waiting for PDF...');
       }
-      
+
       checkCompletion();
     },
     (error) => {
@@ -217,14 +254,14 @@ export const subscribeToCompletion = (
   };
 };
 
-export const convertHtmlToPdf = async (htmlContent, options = {}, userInfo, selectedTemplate) => {
+export const convertHtmlToPdf = async (htmlContent, options = {}, key, onUploadSuccessful) => {
   console.log('Starting HTML to PDF conversion...');
-  console.log('PDF Key:', getPdfKey(userInfo, selectedTemplate));
-  console.log('HTML Key:', getHtmlKey(userInfo, selectedTemplate));
+  console.log('PDF Key:', getPdfKey(key));
+  console.log('HTML Key:', getHtmlKey(key));
 
   try {
     // Step 1: Upload HTML to S3 (this will trigger the Lambda via S3 event)
-    const htmlKey = getHtmlKey(userInfo, selectedTemplate);
+    const htmlKey = getHtmlKey(key);
     console.log('Getting upload URL for HTML key:', htmlKey);
 
     const htmlUploadUrl = await getPresignedGotenbergBucketUrl(htmlKey, 'PUT');
@@ -243,6 +280,8 @@ export const convertHtmlToPdf = async (htmlContent, options = {}, userInfo, sele
         'Content-Type': 'text/html',
       },
     });
+
+    onUploadSuccessful?.();
 
     if (!htmlUploadResponse.ok) {
       throw new Error(`Failed to upload HTML to S3: ${htmlUploadResponse.statusText}`);

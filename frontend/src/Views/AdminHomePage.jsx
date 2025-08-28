@@ -3,10 +3,6 @@ import { useState, useEffect } from "react";
 import PageContainer from "./PageContainer.jsx";
 import AdminMenu from "../Components/AdminMenu.jsx";
 import AnalyticsCard from "../Components/AnalyticsCard.jsx";
-import {
-  getAllUsersCount,
-  getNumberOfGeneratedCVs,
-} from "../graphql/graphqlHelpers.js";
 import { useAdmin } from "Contexts/AdminContext.jsx";
 
 const AdminHomePage = ({ getCognitoUser, userInfo }) => {
