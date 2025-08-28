@@ -280,7 +280,8 @@ type UserProfileMatch {
 	primary_faculty: String
 	pending: Boolean
 	approved: Boolean
-	username: String
+	cwl_username: String!
+	vpp_username: String
 }
 
 type UsersCountResult {

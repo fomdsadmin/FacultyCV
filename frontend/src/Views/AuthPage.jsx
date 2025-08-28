@@ -517,6 +517,16 @@ const AuthPage = () => {
                                   <span className="font-mono text-xs bg-gray-100 px-1 rounded">{match.cwl_username}</span>
                                 </div>
                               )}
+                            
+                            {match.vpp_username &&
+                              match.vpp_username !== "" &&
+                              match.vpp_username !== "null" &&
+                              match.vpp_username !== "undefined" && (
+                                <div className="flex items-center">
+                                  <span className="font-mediu w-40">VPP Username:</span>
+                                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">{match.vpp_username}</span>
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>

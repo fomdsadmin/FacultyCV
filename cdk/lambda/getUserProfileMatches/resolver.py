@@ -11,12 +11,8 @@ def getUserProfileMatches(event):
     cursor = connection.cursor()
     
     arguments = event['arguments']
-
-    # Get search parameters
     first_name = arguments.get('first_name', '')
     last_name = arguments.get('last_name', '')
-    
-    print(f'Searching for users with first_name like: {first_name}, last_name like: {last_name}')
     
     # Build query with ILIKE for case-insensitive partial matching
     query = """
@@ -49,6 +45,7 @@ def getUserProfileMatches(event):
             'pending': result[21],
             'approved': result[22],
             'cwl_username': result[23],
+            'vpp_username': result[25]
             
         }
         user_matches.append(user)
