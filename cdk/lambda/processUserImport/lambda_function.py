@@ -19,23 +19,23 @@ def addUserToDatabase(row, conn, cursor):
     """
     try:
         # Check if user already exists
-        cursor.execute("SELECT user_id FROM users WHERE username = %s", (row['username'],))
+        cursor.execute("SELECT user_id FROM users WHERE cwl_username = %s", (row['cwl_username'],))
         existing_user = cursor.fetchone()
         
         if existing_user:
-            print(f"User {row['username']} already exists, skipping")
+            print(f"User {row['cwl_username']} already exists, skipping")
             return 0
 
         # Insert new user
         cursor.execute("""
             INSERT INTO users (
-                first_name, last_name, email, username, primary_department, role, primary_faculty, pending, approved
+                first_name, last_name, email, cwl_username, primary_department, role, primary_faculty, pending, approved
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             row['first_name'], 
             row['last_name'], 
             row['email'], 
-            row['username'],
+            row['cwl_username'],
             row['department'], 
             row['role'], 
             row['faculty'],
@@ -128,7 +128,7 @@ def lambda_handler(event, context):
             if addUserToDatabase(row, connection, cursor):
                 rows_added_to_db += 1
             else:
-                errors.append(f"Row {i+2}: Failed to add {row['username']} to database")
+                errors.append(f"Row {i+2}: Failed to add to database")
         
         cursor.close()
         connection.close()

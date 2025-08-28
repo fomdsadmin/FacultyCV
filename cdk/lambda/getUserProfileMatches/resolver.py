@@ -48,7 +48,7 @@ def getUserProfileMatches(event):
             'primary_faculty': result[11],
             'pending': result[21],
             'approved': result[22],
-            'username': result[23],
+            'cwl_username': result[23],
             
         }
         user_matches.append(user)

@@ -72,7 +72,6 @@ export const AppProvider = ({ children }) => {
   async function getUserInfo(username) {
     try {
       if (username && username !== "") {
-        // ("Fetching user info for:", username);
         const userInformation = await getUser(username);
         // console.log("User info fetched:", userInformation)
         if (userInformation.role === "Assistant") {
@@ -157,6 +156,7 @@ export const AppProvider = ({ children }) => {
           setLoading(false);
           return;
         }
+        console.log("Filter: Username fetched:", username);
 
         // Check if user exists in SQL database
         try {

@@ -109,7 +109,7 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
 
       await changeUsername(existingUser.user_id, username);
 
-      const newResult = await getUser(existingUser.username);
+      const newResult = await getUser(existingUser.cwl_username);
       console.log("User updated successfully:", newResult);
 
       // Store the updated user data
