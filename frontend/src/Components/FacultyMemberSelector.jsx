@@ -74,7 +74,7 @@ const FacultyMemberSelector = ({
       </div>
       {/* Selected Count */}
       <div className="mt-2 text-sm text-gray-600 align-right text-right">
-        {selectedUsers.length} / {departmentUsers.length} selected
+        {departmentUsers.length} users to select from
       </div>
     </div>
   );

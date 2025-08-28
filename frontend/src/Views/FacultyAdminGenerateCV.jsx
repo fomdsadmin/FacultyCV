@@ -1,5 +1,5 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import PageContainer from "./PageContainer.jsx";
 import FacultyAdminMenu from "../Components/FacultyAdminMenu.jsx";
 import FacultyMemberSelector from "../Components/FacultyMemberSelector.jsx";
@@ -28,8 +28,8 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
   const [allFaculties, setAllFaculties] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState("");
   const [userSearchTerm, setUserSearchTerm] = useState("");
-  const [selectAll, setSelectAll] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
+  const notificationShownRef = useRef(false);
 
   // Hooks
   const { setNotification } = useNotification();
@@ -37,6 +37,7 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
 
   // Constants
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
+  const MAX_SELECTION_LIMIT = 25;
 
   // Load initial data
   useEffect(() => {
@@ -153,21 +154,23 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
   const handleUserToggle = (userId) => {
     setSelectedUsers((prev) => {
       if (prev.includes(userId)) {
+        notificationShownRef.current = false; // Reset when deselecting
         return prev.filter((id) => id !== userId);
       } else {
+        // Check if we're at the maximum limit
+        if (prev.length >= MAX_SELECTION_LIMIT) {
+          if (!notificationShownRef.current) {
+            setNotification({
+              message: `Maximum amount of people selected (${MAX_SELECTION_LIMIT}). Please deselect someone to add another person.`,
+              type: 'warning'
+            });
+            notificationShownRef.current = true;
+          }
+          return prev;
+        }
         return [...prev, userId];
       }
     });
-  };
-
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedUsers([]);
-      setSelectAll(false);
-    } else {
-      setSelectedUsers(departmentUsers.map((user) => user.user_id));
-      setSelectAll(true);
-    }
   };
 
   // Computed Values
@@ -327,8 +330,13 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
     selectedUsers.length > 0 && (
       <div className="mb-6">
         <h3 className="text-lg font-medium text-zinc-700 mb-3">
-          Selected Faculty Members ({selectedUsers.length})
+          Selected Faculty Members ({selectedUsers.length}/{MAX_SELECTION_LIMIT})
         </h3>
+        {selectedUsers.length >= MAX_SELECTION_LIMIT && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-2 rounded mb-3 text-sm">
+            Maximum selection limit reached. Deselect someone to add another person.
+          </div>
+        )}
         <div className="bg-gray-50 rounded-lg p-4 max-h-32 overflow-y-auto">
           <div className="grid grid-cols-1 gap-1">
             {selectedUsers.map(userId => {
@@ -394,11 +402,10 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
                 departmentUsers={departmentUsers}
                 selectedUsers={selectedUsers}
                 onUserToggle={handleUserToggle}
-                selectAll={selectAll}
-                onSelectAll={handleSelectAll}
                 userSearchTerm={userSearchTerm}
                 onUserSearchChange={handleUserSearchChange}
-                showSelectAll={true}
+                showSelectAll={false}
+                maxSelectionLimit={MAX_SELECTION_LIMIT}
               />
 
               <SelectedUsersSummary />
