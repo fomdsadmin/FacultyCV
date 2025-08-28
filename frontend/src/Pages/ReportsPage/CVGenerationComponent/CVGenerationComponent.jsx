@@ -126,7 +126,7 @@ const CVGenerationComponent = ({
             }
 
             if (docxComplete) {
-                setDocxUrl(await getPdfDownloadUrl(getKey()));
+                setDocxUrl(await getDocxDownloadUrl(getKey()));
                 setDocxComplete(docxComplete)
             }
         }
