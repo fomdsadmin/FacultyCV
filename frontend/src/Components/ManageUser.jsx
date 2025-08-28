@@ -81,6 +81,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
 
   useEffect(() => {
     setCurrentUser(user);
+    console.log("ManageUser - Received user:", user);
   }, [user]);
 
   useEffect(() => {
@@ -149,13 +150,13 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
         <div className="bg-white rounded-xl shadow border border-gray-100 px-8 py-6 flex flex-col gap-2">
           <div className="flex items-center gap-4 mb-2">
             <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold text-zinc-800">
-                  {currentUser.first_name} {currentUser.last_name}
-                </span>
-                <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-200">
-                  {currentUser.role === "Assistant" ? "Delegate" : currentUser.role}
-                </span>
-              </div>
+              <span className="text-2xl font-bold text-zinc-800">
+                {currentUser.first_name} {currentUser.last_name}
+              </span>
+              <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-200">
+                {currentUser.role === "Assistant" ? "Delegate" : currentUser.role}
+              </span>
+            </div>
             <span className="ml-auto text-xs text-zinc-400">
               Joined:{" "}
               {currentUser.joined_timestamp ? new Date(currentUser.joined_timestamp).toLocaleDateString() : "N/A"}
@@ -172,13 +173,27 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
               <span className="font-medium text-zinc-500">Campus:</span> {currentUser.campus || ""}
             </div>
             <div>
-              <span className="font-medium text-zinc-500">Username:</span> {currentUser.username}
+              <span className="font-medium text-zinc-500">CWL Username:</span> {currentUser.cwl_username}
             </div>
             <div>
-              <span className="font-medium text-zinc-500">Faculty:</span> {currentUser.primary_faculty || ""}
+              <span className="font-medium text-zinc-500">VPP Username:</span> {currentUser.vpp_username}
+            </div>
+            <div></div>
+            <div>
+              <span className="font-medium text-zinc-500">Faculty:</span>{" "}
+              {currentUser.primary_faculty ? (
+                currentUser.primary_faculty
+              ) : (
+                <span className="text-gray-600 italic"> - </span>
+              )}
             </div>
             <div>
-              <span className="font-medium text-zinc-500">Department:</span> {currentUser.primary_department || ""}
+              <span className="font-medium text-zinc-500">Department:</span>{" "}
+              {currentUser.primary_department ? (
+                currentUser.primary_department
+              ) : (
+                <span className="text-gray-600 italic"> - </span>
+              )}
             </div>
             <div className="col-span-2">
               <span className="font-medium text-zinc-500">Last Visit:</span>{" "}
