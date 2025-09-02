@@ -20,6 +20,8 @@ const AuthPage = () => {
     setIsUserPending,
     isUserApproved,
     setIsUserApproved,
+    isUserActive,
+    setIsUserActive,
     doesUserNeedToReLogin, // Use this here
     doesUserHaveAProfileInDatabase,
     setDoesUserHaveAProfileInDatabase,
@@ -108,6 +110,7 @@ const AuthPage = () => {
       setUserExistsInSqlDatabase(true);
       setIsUserPending(false);
       setIsUserApproved(true);
+      setIsUserActive(true);
       setDoesUserHaveAProfileInDatabase(false);
       setShowClaimModal(false);
 
@@ -221,10 +224,10 @@ const AuthPage = () => {
   }, [loading, isUserLoggedIn]);
 
   useEffect(() => {
-    if (!loading && isUserLoggedIn && isUserApproved && !isUserPending && !doesUserNeedToReLogin) {
+    if (!loading && isUserLoggedIn && isUserApproved && !isUserPending && isUserActive && !doesUserNeedToReLogin) {
       window.location.href = "/home";
     }
-  }, [isUserApproved, isUserLoggedIn, isUserPending, loading, doesUserNeedToReLogin]);
+  }, [isUserApproved, isUserLoggedIn, isUserPending, isUserActive, loading, doesUserNeedToReLogin]);
 
   const signIn = async () => {
     // console.log("Filter: User redirected to keycloak page");
@@ -330,7 +333,7 @@ const AuthPage = () => {
 
                   <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="vpp_username">
-                      VPP Username
+                      VCH/PHSA/PHC Username
                     </label>
                     <input
                       type="text"
@@ -584,6 +587,20 @@ const AuthPage = () => {
                 <h2 className="text-lg font-bold">Account not approved</h2>
                 <p className="mt-2">
                   Your account has not been approved. Please contact the administrator for assistance.
+                </p>
+              </div>
+            )}
+          {!loading &&
+            isUserLoggedIn &&
+            userExistsInSqlDatabase &&
+            isUserApproved &&
+            !isUserPending &&
+            !isUserActive &&
+            !doesUserNeedToReLogin && (
+              <div className="text-center p-4 m-4 bg-orange-100 border border-orange-400 text-orange-700 rounded">
+                <h2 className="text-lg font-bold">Account Inactive</h2>
+                <p className="mt-2">
+                  Your account is currently inactive. Please contact the administrator for assistance to reactivate your account.
                 </p>
               </div>
             )}

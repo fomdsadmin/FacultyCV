@@ -241,6 +241,7 @@ type User {
 	approved: Boolean
 	cwl_username: String!
 	vpp_username: String!
+	active: Boolean!
 }
 
 type UserCVData {
@@ -356,6 +357,8 @@ type Mutation {
 	): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant", "NewlyRegistered"])
 	updateUserPermissions(user_id: String!, pending: Boolean, approved: Boolean): String
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
+	updateUserActiveStatus(user_id: String!, active: Boolean!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	changeUsername(user_id: String!, cwl_username: String!, vpp_username: String!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","NewlyRegistered"])
@@ -526,8 +529,6 @@ type Query {
 	getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getAllUsers: [User]
-		@aws_auth(cognito_groups: ["Admin","FacultyAdmin","DepartmentAdmin"])
-	getAllUsersCount(department: String, faculty: String): UsersCountResult!
 		@aws_auth(cognito_groups: ["Admin","FacultyAdmin","DepartmentAdmin"])
 	getPatentMatches(first_name: String!, last_name: String!): [Patent]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])

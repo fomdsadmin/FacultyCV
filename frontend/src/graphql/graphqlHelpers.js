@@ -9,7 +9,6 @@ import {
   getUserQuery,
   getUserProfileMatchesQuery,
   getAllUsersQuery,
-  getAllUsersCountQuery,
   getAllUniversityInfoQuery,
   getAllNotificationsQuery,
   getUserDeclarationsQuery,
@@ -45,6 +44,7 @@ import {
   updateUserCVDataMutation,
   updateUserMutation,
   updateUserPermissionsMutation,
+  updateUserActiveStatusMutation,
   updateUniversityInfoMutation,
   linkScopusIdMutation,
   addUserConnectionMutation,
@@ -134,26 +134,6 @@ const runGraphql = async (query) => {
 export const getAllUsers = async () => {
   const results = await runGraphql(getAllUsersQuery());
   return results["data"]["getAllUsers"];
-};
-
-/**
- * Function to get all users count by role
- * Arguments:
- * department - Optional department filter (string)
- * faculty - Optional faculty filter (string)
- * Return value:
- * {
- *      total_count: Integer - total count of all users
- *      faculty_count: Integer - count of Faculty users
- *      assistant_count: Integer - count of Assistant users  
- *      dept_admin_count: Integer - count of department admin users
- *      admin_count: Integer - count of admin users
- *      faculty_admin_count: Integer - count of faculty admin users
- * }
- */
-export const getAllUsersCount = async (department, faculty) => {
-  const results = await runGraphql(getAllUsersCountQuery(department, faculty));
-  return results["data"]["getAllUsersCount"];
 };
 
 /**
@@ -1038,6 +1018,17 @@ export const changeUsername = async (user_id, cwl_username, vpp_username) => {
 export const updateUserPermissions = async (user_id, pending, approved) => {
   const results = await runGraphql(updateUserPermissionsMutation(user_id, pending, approved));
   return results["data"]["updateUserPermissions"];
+};
+
+/**
+ * Updates user active status
+ * @param {string} user_id - The ID of the user to update
+ * @param {boolean} active - Whether the user is active
+ * @returns {Promise<string>} String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateUserActiveStatus = async (user_id, active) => {
+  const results = await runGraphql(updateUserActiveStatusMutation(user_id, active));
+  return results["data"]["updateUserActiveStatus"];
 };
 
 /**

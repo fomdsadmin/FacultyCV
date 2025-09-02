@@ -4,8 +4,6 @@ import FacultyAdminMenu from "../Components/FacultyAdminMenu.jsx";
 import AnalyticsCard from "../Components/AnalyticsCard.jsx";
 import GraphCarousel from "../Components/GraphCarousel.jsx";
 import {
-  getAllUsers,
-  getAllUsersCount,
   getAllSections,
   getNumberOfGeneratedCVs,
   getFacultyWideCVData,
@@ -35,15 +33,11 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         let userCounts = {};
         if (userInfo.role === "Admin") {
           setFaculty("All");
-          userCounts = await getAllUsersCount();
         } else if (userInfo.role.startsWith("FacultyAdmin-")) {
           // FacultyAdmin can only see users in their faculty
           const facultyName = userInfo.role.split("FacultyAdmin-")[1];
           setFaculty(facultyName);
-          userCounts = await getAllUsersCount('', facultyName);
         }
-
-        setUserCounts(userCounts);
         // Fetch CV data and other metrics
         await fetchCVDataAndMetrics();
       } catch (error) {

@@ -59,7 +59,7 @@ const Login = () => {
         </div>
         <div></div>
         <div className="flex-1 w-full relative">
-          <label className="block text-sm mb-1">VPP Username</label>
+          <label className="block text-sm mb-1">VCH/PHSA/PHC Username</label>
           {userInfo.vpp_username ? (
             <div className="flex items-center gap-2">
               <span

@@ -252,6 +252,15 @@ export const updateUserPermissionsMutation = (
     }
 `;
 
+export const updateUserActiveStatusMutation = (user_id, active) => `
+    mutation UpdateUserActiveStatus {
+        updateUserActiveStatus(
+            user_id: "${user_id}"
+            active: ${active}
+        )
+    }
+`;
+
 export const UPDATE_SECTION = `
     mutation UpdateSection($data_section_id: String!, $archive: Boolean, $attributes: AWSJSON, $attributes_type: AWSJSON) {
         updateSection(

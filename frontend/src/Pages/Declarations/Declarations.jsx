@@ -383,9 +383,9 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       />
 
       {/* Main content */}
-      <main className="px-[3vw] xs:px-[3vw] sm:px-[4vw] md:px-[4vw] lg:px-[6vw] xl:px-[8vw] 2xl:px-[10vw] w-full overflow-auto mt-2 py-6">
+      <main className="px-8 xl:px-16 w-full overflow-auto mt-2 py-6">
         {/* Heading row */}
-        <div className="max-w-6xl mx-auto px-0 flex justify-between">
+        <div className="mx-auto px-0 flex justify-between">
           <div className="text-4xl font-bold text-zinc-600">Declarations</div>
           <button
             className={`btn btn-primary px-6 py-2 rounded-lg shadow transition
@@ -403,10 +403,10 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         </div>
 
         {/* Button row */}
-        <div className="flex justify-end max-w-6xl mx-auto px-0 mb-4"></div>
+        <div className="flex justify-end mx-auto px-0 mb-4"></div>
 
         {/* Declarations List Dropdown */}
-        <div className="mb-8 max-w-6xl mx-auto px-0">
+        <div className="mb-8 mx-auto px-0">
           <div className="space-y-6">
             {loading ? (
               <div className="rounded-2xl bg-zinc-100 shadow-xl border-2 border-zinc-300 px-10 py-6 flex items-center justify-center text-lg text-gray-500">
@@ -432,7 +432,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                       key={decl.year}
                       className={`
                         flex flex-col rounded-xl shadow transition
-                        w-full max-w-6xl mx-auto mb-2 border-l-8 px-2 py-2
+                        w-full mx-auto mb-2 border-l-8 px-2 py-2
                         ${
                           isCurrent
                             ? "border-blue-500 bg-white"

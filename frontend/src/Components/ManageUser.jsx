@@ -179,7 +179,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
               <span className="font-medium text-zinc-500">Campus:</span> {currentUser.campus || ""}
             </div>
             <div>
-              <span className="font-medium text-zinc-500">VPP Username:</span> {currentUser.vpp_username}
+              <span className="font-medium text-zinc-500">VCH/PHSA/PHC Login:</span> {currentUser.vpp_username}
             </div>
             <div>
               <span className="font-medium text-zinc-500">Faculty:</span>{" "}

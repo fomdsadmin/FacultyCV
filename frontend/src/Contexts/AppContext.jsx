@@ -29,6 +29,7 @@ export const AppProvider = ({ children }) => {
   const [userExistsInSqlDatabase, setUserExistsInSqlDatabase] = useState(false);
   const [isUserPending, setIsUserPending] = useState(false);
   const [isUserApproved, setIsUserApproved] = useState(false);
+  const [isUserActive, setIsUserActive] = useState(true);
   const [doesUserNeedToReLogin, setDoesUserNeedToReLogin] = useState(false);
   const [userProfileMatches, setUserProfileMatches] = useState([]);
   const [doesUserHaveAProfileInDatabase, setDoesUserHaveAProfileInDatabase] = useState(false);
@@ -153,6 +154,7 @@ export const AppProvider = ({ children }) => {
           setUserExistsInSqlDatabase(false);
           setIsUserPending(false);
           setIsUserApproved(false);
+          setIsUserActive(true);
           setLoading(false);
           return;
         }
@@ -164,9 +166,10 @@ export const AppProvider = ({ children }) => {
           setUserExistsInSqlDatabase(true);
           setIsUserPending(userData.pending);
           setIsUserApproved(userData.approved);
+          setIsUserActive(userData.active !== false); // Default to true if active is not explicitly false
 
-          // If user is approved, set up full user context
-          if (userData.approved && !userData.pending) {
+          // If user is approved and active, set up full user context
+          if (userData.approved && !userData.pending && userData.active !== false) {
             // Set up full user context (inline getCognitoUser logic)
             try {
               const userData = await getCurrentUser();
@@ -193,8 +196,8 @@ export const AppProvider = ({ children }) => {
             }
           }
 
-          // Add user to Cognito group if they are approved if not already a member
-          if (userData.approved && !userData.pending) {
+          // Add user to Cognito group if they are approved and active if not already a member
+          if (userData.approved && !userData.pending && userData.active !== false) {
             if (userData.role && userData.role !== "") {
               console.log("Username: ", username, "Role: ", userData.role);
               let result;
@@ -221,6 +224,7 @@ export const AppProvider = ({ children }) => {
           setUserExistsInSqlDatabase(false);
           setIsUserPending(false);
           setIsUserApproved(false);
+          setIsUserActive(true);
 
           // Still set up basic user info for header display
           const { given_name, family_name, email, name } = await fetchUserAttributes();
@@ -255,6 +259,7 @@ export const AppProvider = ({ children }) => {
         setUserExistsInSqlDatabase(false);
         setIsUserPending(false);
         setIsUserApproved(false);
+        setIsUserActive(true);
       } finally {
         setLoading(false);
       }
@@ -407,6 +412,8 @@ export const AppProvider = ({ children }) => {
     setIsUserPending,
     isUserApproved,
     setIsUserApproved,
+    isUserActive,
+    setIsUserActive,
 
     // Role management
     actualRole,

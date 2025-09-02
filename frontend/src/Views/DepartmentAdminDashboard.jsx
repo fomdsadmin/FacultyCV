@@ -4,7 +4,6 @@ import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import AnalyticsCard from "../Components/AnalyticsCard.jsx";
 import GraphCarousel from "../Components/GraphCarousel.jsx";
 import {
-  getAllUsersCount,
   getAllSections,
   getNumberOfGeneratedCVs,
   getDepartmentCVData,
