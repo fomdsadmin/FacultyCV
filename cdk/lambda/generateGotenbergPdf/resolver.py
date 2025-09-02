@@ -6,12 +6,13 @@ import os
 import json
 import urllib.request
 from urllib.parse import unquote_plus
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 
 GOTENBERG_HOST = os.environ.get('GOTENBERG_HOST')
 GOTENBERG_PATH = "/forms/chromium/convert/html"
 FIXED_BOUNDARY = "----WebKitFormBoundary123456"
-APPSYNC_ENDPOINT = os.environ.get('APPSYNC_ENDPOINT')  # You'll need to add this
-APPSYNC_API_KEY = os.environ.get('APPSYNC_API_KEY')    # You'll need to add this
+APPSYNC_ENDPOINT = os.environ.get('APPSYNC_ENDPOINT')
 
 s3_client = boto3.client("s3")
 
@@ -33,13 +34,30 @@ def notify_generation_complete(pdf_key):
             }
         }
         
-        headers = {
-            "Content-Type": "application/json",
-            "x-api-key": APPSYNC_API_KEY
-        }
+        # Use IAM authentication instead of API key
+        session = boto3.Session()
+        credentials = session.get_credentials()
+        region = session.region_name or 'ca-central-1'
         
-        data = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(APPSYNC_ENDPOINT, data=data, headers=headers, method='POST')
+        # Create the request
+        data = json.dumps(payload)
+        request = AWSRequest(
+            method='POST',
+            url=APPSYNC_ENDPOINT,
+            data=data,
+            headers={'Content-Type': 'application/json'}
+        )
+        
+        # Sign the request with IAM credentials
+        SigV4Auth(credentials, 'appsync', region).add_auth(request)
+        
+        # Make the request using urllib
+        req = urllib.request.Request(
+            APPSYNC_ENDPOINT, 
+            data=data.encode('utf-8'), 
+            headers=dict(request.headers), 
+            method='POST'
+        )
         
         with urllib.request.urlopen(req) as response:
             result = json.loads(response.read().decode('utf-8'))

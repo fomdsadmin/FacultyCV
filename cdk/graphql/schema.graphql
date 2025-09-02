@@ -3,7 +3,7 @@ type Affiliations {
 }
 
 type NotifyGotenbergPayload {
-  key: String! @aws_api_key
+  key: String! @aws_iam
 }
 
 type DepartmentAffiliation {
@@ -296,7 +296,7 @@ type UsersCountResult {
 
 type Mutation {
 	notifyGotenbergGenerationComplete(key: String!): NotifyGotenbergPayload
-		@aws_api_key
+		@aws_iam
 	createGotenbergPdf(form_data_base64: String!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	addUserDeclaration(
