@@ -2,7 +2,7 @@ import { getPresignedGotenbergBucketUrl } from "../../../graphql/graphqlHelpers"
 import { subscribeToGotenbergStatus } from "../../../graphql/graphqlHelpers";
 
 export const getGenericKey = (userInfo, selectedTemplate, optionalKey = "") => {
-  return `${userInfo.username}${selectedTemplate.template_id}${optionalKey}`;
+  return `${userInfo.user_id}${selectedTemplate.template_id}${optionalKey}`;
 }
 
 export const getHtmlKey = (key) => {

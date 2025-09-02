@@ -8,9 +8,9 @@ import ReportPreview from './CVGenerationComponent/ReportPreview.jsx';
 import { useApp } from 'Contexts/AppContext.jsx';
 
 const ReportsPage = () => {
-  const { userInfo, getCognitoUser, toggleViewMode } = useApp();
+  const { userInfo, getCognitoUser, toggleViewMode, isManagingUser,  } = useApp();
 
-  const [user, setUser] = useState(userInfo);
+  const [user, setUser] = useState(isManagingUser ? isManagingUser : userInfo);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [pdfUrl, setPdfUrl] = useState(null);

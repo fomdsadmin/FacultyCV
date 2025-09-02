@@ -23,7 +23,9 @@ const CVGenerationComponent = ({
     docxGenerationCompleteMessage
 }) => {
 
-    const { userInfo } = useApp();
+    const { userInfo: user, managedUser  } = useApp();
+
+    const userInfo = managedUser || user;
     const { setNotification } = useNotification();
     const [pdfExists, setPdfExists] = useState(false);
     const [docxExists, setDocxExists] = useState(false);
