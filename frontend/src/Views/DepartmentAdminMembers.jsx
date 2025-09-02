@@ -9,8 +9,10 @@ import { useAuditLogger, AUDIT_ACTIONS } from "Contexts/AuditLoggerContext.jsx";
 import { useAdmin } from "../Contexts/AdminContext.jsx";
 import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
 import { ConfirmModal, DeactivatedUsersModal } from "../Components/AdminUsersModals.jsx";
+import AdminUserTabs from "Components/AdminUserTabs.jsx";
 
 const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
+  const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [approvedUsers, setApprovedUsers] = useState([]);
@@ -29,7 +31,11 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
   const { logAction } = useAuditLogger();
-  const { allUsers, departmentAffiliations, loading, setLoading, fetchAllUsers } = useAdmin();
+  const { allUsers, departmentAffiliations, isLoading: adminLoading, fetchAllUsers } = useAdmin();
+
+  useEffect(() => {
+    setLoading(adminLoading);
+  }, [adminLoading]);
 
   // Helper functions for base64 encoding/decoding
   const encodeId = (id) => {
@@ -56,7 +62,10 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   }, [departmentAffiliations]);
 
   useEffect(() => {
-    filterAllUsers();
+    // Only filter users if we actually have users loaded
+    if (users.length > 0) {
+      filterAllUsers();
+    }
   }, [users, userInfo]);
 
   // Ensure activeUser is set when approvedUsers or params.userId changes
@@ -75,9 +84,9 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   }, [approvedUsers, params.userId]);
 
   async function filterAllUsers() {
-    setLoading(true);
     try {
       let allFilteredUsers;
+      setLoading(true);
 
       // Handle role-based filtering
       if (userInfo.role === "Admin") {
@@ -210,40 +219,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     new Set(approvedUsers.map((user) => (user.role === "Assistant" ? "Delegate" : user.role)))
   ).filter((role) => role !== "Admin");
 
-  // Tab bar for roles (copied and adapted from Sections.jsx)
-  const UserTabs = ({ filters, activeFilter, onSelect }) => (
-    <div className="flex flex-wrap gap-4 mb-6 px-4 max-w-full">
-      <button
-        className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-          activeFilter === null ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-        }`}
-        onClick={() => onSelect(null)}
-      >
-        All ({approvedUsers.length})
-      </button>
-      {[...filters]
-        .sort((a, b) => a.localeCompare(b))
-        .map((filter) => {
-          // Count approvedUsers for this tab, mapping 'Delegate' back to 'Assistant' for counting
-          const count = approvedUsers.filter((u) =>
-            filter === "Delegate" ? u.role === "Assistant" : u.role === filter
-          ).length;
-          return (
-            <button
-              key={filter}
-              className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-                activeFilter === filter
-                  ? "bg-blue-600 text-white shadow"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-              onClick={() => onSelect(filter)}
-            >
-              {filter} ({count})
-            </button>
-          );
-        })}
-    </div>
-  );
+  // Using the extracted AdminUserTabs component
 
   // When user clicks a tab, update the activeTab
   const handleTabSelect = (selectedRole) => {
@@ -457,13 +433,8 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         viewMode="department-admin"
       />
       <main className="px-16 overflow-auto custom-scrollbar w-full mb-4 mt-4">
-        {loading ? (
-          <div className="flex items-center justify-center w-full">
-            <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-          </div>
-        ) : (
-          <div>
-            {activeUser === null ? (
+        <div>
+          {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
                 <div className="flex flex-col justify-start align-left items-start mx-4 mb-4">
                   <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">
@@ -491,28 +462,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                     </button>
                   </div>
                 </div>
-                <div className="mx-4 flex mb-4 gap-4">
-                  <label className="input input-bordered flex items-center flex-1">
-                    <input
-                      type="text"
-                      className="grow"
-                      placeholder="Search members..."
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                    />
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 16 16"
-                      fill="currentColor"
-                      className="h-4 w-4 opacity-70"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </label>
+                <div className="ml-4 flex mb-4 gap-2">
                   {(userInfo.role === "Admin" || userInfo.role === "Admin-All" || allowedDepartments.length > 0) && (
                     <select
                       className="select select-bordered min-w-48"
@@ -540,11 +490,41 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                       })}
                     </select>
                   )}
+                  <label className="input input-bordered flex items-center flex-1">
+                    <input
+                      type="text"
+                      className="grow"
+                      placeholder="Search members..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                    />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      className="h-4 w-4 opacity-70"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </label>
                 </div>
-                <UserTabs filters={filters} activeFilter={activeTab} onSelect={handleTabSelect} />
+                <AdminUserTabs
+                  filters={filters}
+                  activeFilter={activeTab}
+                  onSelect={handleTabSelect}
+                  users={searchedUsers}
+                />
                 {/* Optionally keep Filters below if you want both */}
                 {/* <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters> */}
-                {searchedUsers.length === 0 ? (
+                {loading ? (
+                  <div className="flex items-center justify-center w-full">
+                    <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+                  </div>
+                ) : (searchedUsers.length === 0 && !loading) ? (
                   <div className="flex items-center justify-center w-full">
                     <div className="block text-m mb-1 mt-6 text-zinc-600">No Users Found</div>
                   </div>
@@ -648,8 +628,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                 ></ManageUser>
               </div>
             )}
-          </div>
-        )}
+        </div>
       </main>
 
       <DeactivatedUsersModal

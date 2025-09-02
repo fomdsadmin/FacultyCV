@@ -24,6 +24,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [lastVisit, setLastVisit] = useState(null);
   const [loadingLastVisit, setLoadingLastVisit] = useState(false);
+
   // Fetch last visit timestamp for managed user
   useEffect(() => {
     async function fetchLastVisitAuth() {
@@ -129,10 +130,6 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
     setIsUpdateUserModalOpen(true);
   };
 
-  const handleUpdateSuccess = (updatedUser) => {
-    setCurrentUser(updatedUser);
-  };
-
   return (
     <div className="mx-auto px-8 py-2 flex flex-col gap-2">
       {/* Header */}
@@ -144,8 +141,10 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
       </div>
 
       {/* Main Grid: User Info & Connections Side by Side */}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4">
         {/* User Info - Minimal Card */}
+
         <div className="bg-white rounded-xl shadow border border-gray-100 px-8 py-6 flex flex-col gap-2">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -337,10 +336,11 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
               {isUpdateUserModalOpen && (
                 <UpdateUserModal
                   isOpen={isUpdateUserModalOpen}
+                  setIsOpen={setIsUpdateUserModalOpen}
                   onClose={() => setIsUpdateUserModalOpen(false)}
                   onBack={() => setIsUpdateUserModalOpen(false)}
                   existingUser={currentUser}
-                  onUpdateSuccess={handleUpdateSuccess}
+                  onUpdateSuccess={fetchAllUsers}
                 />
               )}
             </div>

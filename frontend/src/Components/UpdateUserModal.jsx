@@ -4,7 +4,7 @@ import { useAuditLogger } from "../Contexts/AuditLoggerContext";
 import { AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 import { get } from "aws-amplify/api";
 
-const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSuccess }) => {
+const UpdateUserModal = ({ isOpen, setIsOpen, onClose, onBack, existingUser, onUpdateSuccess }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [cwl_username, setCWLUsername] = useState("");
@@ -104,23 +104,19 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
         existingUser.scopus_id,
         existingUser.orcid_id
       );
-
       await changeUsername(existingUser.user_id, cwl_username, vpp_username);
-
-      const newResult = await getUser(existingUser.cwl_username);
-      console.log("User updated successfully:", newResult);
+      console.log("User updated successfully");
 
       // Store the updated user data
-      onUpdateSuccess(newResult);
-      // Set success message after updating the user data
-      setSuccessMessage("User Successfully Updated");
+      onUpdateSuccess();
+      setIsOpen(false);
+
       // Log the user update action to audit logs
       await logAction(AUDIT_ACTIONS.UPDATE_USER, {
         userID: existingUser.user_id,
         firstName,
         lastName,
       });
-      window.location.reload(); // Refresh the page on close
     } catch (error) {
       console.error("Error updating user:", error);
       setError("An error occurred while updating user. Please try again.");

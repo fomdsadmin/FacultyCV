@@ -65,7 +65,6 @@ def cleanData(df):
     df['medical_program'] = df['medical_program'].fillna('').str.strip()
     
     df['health_authority'] = df['health_authority'].fillna('').str.strip()
-    df['role'] = df['role'].fillna('').str.strip()
 
     # Map health authority entries to custom system values
     health_authority_map = {
@@ -87,7 +86,7 @@ def cleanData(df):
     df = df.replace({np.nan: ''})
     
     # Keep only relevant columns
-    df = df[["employee_id", "job_profile", "business_title", "type", "apt_percent", "location", "division", "medical_program", "health_authority", "role"]]
+    df = df[["employee_id", "job_profile", "business_title", "type", "apt_percent", "location", "division", "medical_program", "health_authority"]]
 
     return df
 
@@ -211,7 +210,7 @@ def structureAffiliationsData(df, user_mapping):
                 hospital_affiliation_entry = {
                     'authority': row['health_authority'],
                     'hospital': '',
-                    'role': row['role'],
+                    'role': '',
                     'start': '',
                     'end': ''
                 }

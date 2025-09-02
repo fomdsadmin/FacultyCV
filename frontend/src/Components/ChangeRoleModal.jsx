@@ -131,7 +131,8 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
       );
 
       fetchAllUsers();
-      handleBack();
+      // handleBack();
+      setIsModalOpen(false);
 
       // Log the role change action
       const roleChangeInfo = JSON.stringify({

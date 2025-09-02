@@ -24,7 +24,7 @@ export const useAdmin = () => {
 export const AdminProvider = ({ children, isAdmin, role }) => {
   const [totalCVsGenerated, setTotalCVsGenerated] = useState(0);
   const { userInfo } = useApp();
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [allUsers, setAllUsers] = useState([]);
   const [allUsersCount, setAllUsersCount] = useState({
@@ -48,12 +48,9 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
 
   // Fetch all sections
   useEffect(() => {
-    setLoading(true);
+    setIsLoading(true);
     if (isAdmin) {
-      getAllSections().then((sections) => {
-        setAllDataSections(sections);
-        setLoading(false);
-      });
+      fetchAllDataSections();
     }
   }, []);
 
@@ -66,7 +63,7 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
 
   // Fetch all user cv data
   useEffect(() => {
-    setLoading(true);
+    setIsLoading(true);
     let department;
     if (isAdmin) {
       if (role.startsWith("Admin-")) {
@@ -77,39 +74,37 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
       fetchAllUserCVData(allDataSections, department);
     }
 
-    setLoading(false);
+    setIsLoading(false);
   }, [allDataSections]);
 
   // Fetch all users
   useEffect(() => {
-    setLoading(true);
+    setIsLoading(true);
     if (isAdmin) {
       fetchAllUsers();
     }
-
-    setLoading(false);
   }, []);
 
   // Fetch all templates
   useEffect(() => {
-    setLoading(true);
+    setIsLoading(true);
     if (isAdmin) {
       getAllTemplates().then((templates) => {
         setAllTemplates(templates);
-        setLoading(false);
+        setIsLoading(false);
       });
     }
 
-    setLoading(false);
+    setIsLoading(false);
   }, []);
 
   // Fetch all Faculty Rank Distribution per Department
   useEffect(() => {
-    setLoading(true);
+    setIsLoading(true);
     if (isAdmin) {
       fetchDepartmentAffiliations();
     }
-    setLoading(false);
+    setIsLoading(false);
   }, []);
 
   async function fetchAllUsers() {
@@ -193,6 +188,7 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
     } catch (error) {
       console.error(error);
     }
+    setIsLoading(false);
   }
 
   async function fetchDepartmentAffiliations() {
@@ -205,6 +201,16 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
         const affiliations = await getDepartmentAffiliations("All");
         setDepartmentAffiliations(affiliations);
       }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function fetchAllDataSections() {
+    try {
+      const result = await getAllSections();
+      setAllDataSections(result);
+      setIsLoading(false);
     } catch (error) {
       console.error(error);
     }
@@ -353,7 +359,7 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
   }
 
   async function fetchGeneratedCVs() {
-    setLoading(true);
+    setIsLoading(true);
     try {
       let department = undefined;
       if (isAdmin) {
@@ -369,7 +375,7 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
       );
       setTotalCVsGenerated(await generatedCVs);
     } catch (error) {}
-    setLoading(false);
+    setIsLoading(false);
   }
 
   // Graph calculations
@@ -502,8 +508,9 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
     yearlyPatentsGraphData,
     allTemplates,
     totalCVsGenerated,
-    loading,
-    setLoading,
+    loading: isLoading,
+    setLoading: setIsLoading,
+    fetchAllDataSections
   };
 
   if (!isAdmin) return children;
