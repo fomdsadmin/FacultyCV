@@ -73,7 +73,8 @@ def getUser(event):
             'pending': result[21],
             'approved': result[22],
             'cwl_username': result[23],
-            'vpp_username': result[25]
+            'vpp_username': result[25],
+            'active': result[26]
         }
     else:
         user = "User not found"

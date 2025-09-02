@@ -14,7 +14,7 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = "Publications"
+SECTION_TITLE = "Journal Publications"
 SECTION_TITLE_OTHER = "Other Publications"
 SECTION_TITLE_PATENTS = "Patents"
 

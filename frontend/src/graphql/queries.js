@@ -38,6 +38,7 @@ export const getUserQuery = `
             approved
             cwl_username
             vpp_username
+            active
         }
     }
 `;
@@ -117,56 +118,11 @@ export const getAllUsersQuery = () => `
             approved
             cwl_username
             vpp_username
+            active
         }
     }
 `;
 
-export const getAllUsersCountQuery = (department, faculty) => {
-  if (department) {
-    return `
-    query GetAllUsersCount {
-        getAllUsersCount(
-            department: "${department}",
-        ) {
-            total_count
-            faculty_count
-            assistant_count
-            dept_admin_count
-            admin_count
-            faculty_admin_count
-        }
-    }
-`;
-  } else if (faculty) {
-    return `
-    query GetAllUsersCount {
-        getAllUsersCount(
-            faculty: "${faculty}"
-        ) {
-            total_count
-            faculty_count
-            assistant_count
-            dept_admin_count
-            admin_count
-            faculty_admin_count
-        }
-    }
-`;
-  } else {
-    return `
-    query GetAllUsersCount {
-        getAllUsersCount {
-            total_count
-            faculty_count
-            assistant_count
-            dept_admin_count
-            admin_count
-            faculty_admin_count
-        }
-    }
-`;
-  }
-};
 
 export const getExistingUserQuery = (institution_user_id) => `
     query GetExistingUser {

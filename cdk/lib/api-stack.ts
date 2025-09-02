@@ -108,6 +108,9 @@ export class ApiStack extends cdk.Stack {
             authorizationType: appsync.AuthorizationType.API_KEY,
             // Remove the apiKeyConfig to make it never expire
           },
+          {
+            authorizationType: appsync.AuthorizationType.IAM, // Add IAM authorization
+          },
         ],
       },
       logConfig: {

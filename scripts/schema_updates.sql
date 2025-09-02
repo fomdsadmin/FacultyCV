@@ -63,3 +63,9 @@ RENAME username TO cwl_username;
 
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS vpp_username VARCHAR DEFAULT '';
+-- END
+
+-- August 29th: to be done
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT FALSE;
+-- END

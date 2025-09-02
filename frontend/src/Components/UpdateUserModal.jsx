@@ -178,18 +178,20 @@ const UpdateUserModal = ({ isOpen, onClose, onBack, existingUser, onUpdateSucces
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">CWL Username</label>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  * CWL Username (must end with <b><i>@ubc.ca</i></b>)
+                </label>
                 <input
                   className="input input-bordered w-full text-sm bg-gray-100"
                   value={cwl_username}
                   onChange={(e) => setCWLUsername(e.target.value)}
-                  placeholder="CWL Username"
+                  placeholder="Eg. CWL@ubc.ca"
                   type="text"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">VPP Username</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">VCH/PHSA/PHC Username</label>
                 <input
                   className="input input-bordered w-full text-sm bg-gray-100"
                   value={vpp_username}

@@ -98,7 +98,7 @@ const DeclarationForm = ({
     <div className="w-full flex justify-center">
       <div
         ref={formRef}
-        className="mb-10 p-12 px-20 w-full max-w-6xl rounded-lg gap-6 flex flex-col bg-gray-100 shadow-lg border border-zinc-300"
+        className="mb-10 p-12 px-20 w-full rounded-lg gap-6 flex flex-col bg-gray-100 shadow-lg border border-zinc-300"
       >
         <div id="declaration-field-year" className="mb-2">
           <label className="block text-base font-semibold mb-1">

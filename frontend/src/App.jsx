@@ -57,6 +57,7 @@ const AppContent = () => {
     isUserLoggedIn,
     isUserPending,
     isUserApproved,
+    isUserActive,
     isManagingUser,
     getUserInfo,
   } = useApp();
@@ -91,14 +92,14 @@ const AppContent = () => {
             <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
             <Route path="/*" element={<Navigate to="/auth" />} />
           </Routes>
-        ) : isUserPending || !isUserApproved ? (
+        ) : isUserPending || !isUserApproved || !isUserActive ? (
           <Routes>
             <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
             <Route path="/*" element={<Navigate to="/auth" />} />
           </Routes>
         ) : (
-          // User is logged in and approved - allow access to all routes
+          // User is logged in, approved and active - allow access to all routes
           <Routes>
             <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             {/* Main home route - redirects based on role */}

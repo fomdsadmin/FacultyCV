@@ -16,20 +16,19 @@ const Profile = () => {
           grid 
           grid-cols-1 
           md:grid-cols-2 
-          xl:grid-cols-2 
-          gap-x-4 gap-y-4 
+          gap-x-12 gap-y-2
+          px-8
         "
       >
         <div>
           <Login />
         </div>
         <div>
-          <Linkages />
-        </div>
-        <div>
           <Contact />
         </div>
-
+        <div>
+          <Linkages />
+        </div>
         <div>
           <Bio />
         </div>

@@ -64,7 +64,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('approved', 'BOOLEAN', 'DEFAULT false', False))  # Add this
     columns.append(createColumn('cwl_username', 'varchar', '', False))
     columns.append(createColumn('employee_id', 'varchar', '', False))
-    columns.append(createColumn('vpp_username', 'varchar', '', True))
+    columns.append(createColumn('vpp_username', 'varchar', '', False))
+    columns.append(createColumn('active', 'BOOLEAN', 'DEFAULT false', True))
     query = createQuery('users', columns)
     cursor.execute(query)
 
