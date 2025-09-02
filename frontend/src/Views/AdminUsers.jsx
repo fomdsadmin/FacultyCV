@@ -37,21 +37,21 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const navigate = useNavigate();
 
   const { logAction } = useAuditLogger();
-  const { loading, setLoading, allUsers, departmentAffiliations } = useAdmin();
+  const { loading, setLoading, allUsers, departmentAffiliations, fetchAllUsers } = useAdmin();
 
   useEffect(() => {
     setUsers(allUsers);
   }, [allUsers]);
 
   useEffect(() => {
-    fetchAllUsers();
+    filterAllUsers();
   }, [users]);
 
   useEffect(() => {
     setAffiliations(departmentAffiliations);
   }, [departmentAffiliations]);
 
-  async function fetchAllUsers() {
+  async function filterAllUsers() {
     try {
       // Clear and rebuild the arrays
       const pendingUsersList = [];

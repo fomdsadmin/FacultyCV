@@ -597,7 +597,7 @@ const AuthPage = () => {
             !isUserPending &&
             !isUserActive &&
             !doesUserNeedToReLogin && (
-              <div className="text-center p-4 m-4 bg-orange-100 border border-orange-400 text-orange-700 rounded">
+              <div className="flex flex-col items-center justify-center align-center p-4 m-4 text-center bg-orange-100 border border-orange-400 text-orange-700 rounded">
                 <h2 className="text-lg font-bold">Account Inactive</h2>
                 <p className="mt-2">
                   Your account is currently inactive. Please contact the administrator for assistance to reactivate your account.

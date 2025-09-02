@@ -29,7 +29,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
   const { logAction } = useAuditLogger();
-  const { allUsers, departmentAffiliations, loading, setLoading } = useAdmin();
+  const { allUsers, departmentAffiliations, loading, setLoading, fetchAllUsers } = useAdmin();
 
   // Helper functions for base64 encoding/decoding
   const encodeId = (id) => {
@@ -56,7 +56,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   }, [departmentAffiliations]);
 
   useEffect(() => {
-    fetchAllUsers();
+    filterAllUsers();
   }, [users, userInfo]);
 
   // Ensure activeUser is set when approvedUsers or params.userId changes
@@ -74,7 +74,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     }
   }, [approvedUsers, params.userId]);
 
-  async function fetchAllUsers() {
+  async function filterAllUsers() {
     setLoading(true);
     try {
       let allFilteredUsers;

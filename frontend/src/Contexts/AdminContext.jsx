@@ -495,6 +495,7 @@ export const AdminProvider = ({ children, isAdmin, role }) => {
     allDataSections,
     allUserCVData,
     fetchAllUserCVData,
+    fetchAllUsers,
     totalGrantMoneyRaised,
     grantMoneyGraphData,
     yearlyPublicationsGraphData,
