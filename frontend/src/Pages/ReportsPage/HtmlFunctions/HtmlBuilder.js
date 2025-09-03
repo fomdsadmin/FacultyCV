@@ -399,13 +399,13 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     return htmlTables.filter(table => table.trim() !== '').join('\n');
 }
 
-const buildTableAttributeGroup = (attributeGroups) => {
+const buildTableAttributeGroup = (attributeGroups, attributeRenameMap) => {
     const columnRatioArray = [];
     let groupedColumnNamesArray = [];
 
     for (const attributeGroup of attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID)) {
-        const title = attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID ? attributeGroup.title : '~';
-
+        const title = attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID ? attributeRenameMap[attributeGroup.title] || attributeGroup.title : '~';
+        console.log("JJFILTER: attribute: ", attributeGroup);
         // Create the cell object in the format cellRowBuilder expects
         const cellObject = {
             textOptions: [textOptions(title, true, 11)], // text, bold=true, size='small'
@@ -432,7 +432,7 @@ const buildTableSectionColumns = (preparedSection) => {
 
     // take into account hidden and shown attribute group
     if (attributeGroups.length > 2) {
-        html += buildTableAttributeGroup(attributeGroups);
+        html += buildTableAttributeGroup(attributeGroups, attributeRenameMap);
     }
 
     const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
