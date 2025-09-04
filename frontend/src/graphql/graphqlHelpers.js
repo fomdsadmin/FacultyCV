@@ -725,14 +725,14 @@ export const addSection = async (title, description, data_type, attributes) => {
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUser = async (first_name, last_name, email, role, cwl_username, vpp_username, primary_department, primary_faculty) => {
+export const addUser = async (first_name, last_name, email, role, pending = true, approved = false, cwl_username, vpp_username, primary_department, primary_faculty) => {
   const results = await executeGraphql(ADD_USER, {
     first_name,
     last_name,
     email,
     role,
-    pending: true, // Default to pending
-    approved: false, // Default to not approved
+    pending,
+    approved,
     cwl_username,
     vpp_username,
     primary_department,
@@ -751,12 +751,9 @@ export const addUser = async (first_name, last_name, email, role, cwl_username, 
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const removeUser = async (user_id, email, first_name, last_name) => {
+export const removeUser = async (user_id) => {
   const results = await executeGraphql(REMOVE_USER, {
-    user_id,
-    email,
-    first_name,
-    last_name,
+    user_id
   });
   return results["data"]["removeUser"];
 };
@@ -1022,12 +1019,14 @@ export const updateUserPermissions = async (user_id, pending, approved) => {
 
 /**
  * Updates user active status
- * @param {string} user_id - The ID of the user to update
+ * @param {string|array} user_ids - The ID(s) of the user(s) to update (can be single ID or array)
  * @param {boolean} active - Whether the user is active
  * @returns {Promise<string>} String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const updateUserActiveStatus = async (user_id, active) => {
-  const results = await runGraphql(updateUserActiveStatusMutation(user_id, active));
+export const updateUserActiveStatus = async (user_ids, active) => {
+  // Convert single ID to array if needed
+  const idsArray = Array.isArray(user_ids) ? user_ids : [user_ids];
+  const results = await runGraphql(updateUserActiveStatusMutation(idsArray, active));
   return results["data"]["updateUserActiveStatus"];
 };
 

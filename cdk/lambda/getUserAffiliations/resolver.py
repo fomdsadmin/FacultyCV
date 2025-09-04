@@ -29,7 +29,7 @@ def getUserAffiliations(arguments):
     
     # Create a dictionary with all fields, handling None values
     affiliations_data = {
-        "primary_unit": result[0] if result[0] is not None else {},
+        "primary_unit": result[0] if result[0] is not None else [],
         "joint_units": result[1] if result[1] is not None else [],
         "research_affiliations": result[2] if result[2] is not None else [],
         "hospital_affiliations": result[3] if result[3] is not None else []

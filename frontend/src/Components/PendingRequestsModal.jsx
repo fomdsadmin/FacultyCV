@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { addToUserGroup, updateUserPermissions } from "graphql/graphqlHelpers";
+import { addToUserGroup, updateUserPermissions, removeUser } from "graphql/graphqlHelpers";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const PendingRequestsModal = ({
@@ -12,6 +12,7 @@ const PendingRequestsModal = ({
   refreshUsers,
 }) => {
   const [showRejected, setShowRejected] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const { logAction } = useAuditLogger();
 
   const handleAccept = async (userId, user) => {
@@ -75,6 +76,35 @@ const PendingRequestsModal = ({
       })
     );
     refreshUsers();
+  };
+
+  const handleDelete = async (user) => {
+    try {
+      console.log("Deleting user:", user);
+      
+      // Call the removeUser function to permanently delete from database
+      const result = await removeUser(user.user_id);
+      
+      // Remove from rejected list
+      setRejectedUsers((prev) => prev.filter((u) => u.user_id !== user.user_id));
+      
+      // Log the deletion action
+      await logAction(
+        AUDIT_ACTIONS.DELETE_USER || 'DELETE_USER',
+        JSON.stringify({
+          userId: user.user_id,
+          name: `${user.first_name} ${user.last_name}`,
+        })
+      );
+      
+      refreshUsers();
+      setShowDeleteConfirm(null);
+      
+      console.log("User deletion result:", result);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      // You might want to show an error message to the user here
+    }
   };
 
   if (!isOpen) return null;
@@ -240,15 +270,26 @@ const PendingRequestsModal = ({
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2">
                       {showRejected ? (
-                        <button
-                          onClick={() => handleApprove(user)}
-                          className="btn btn-success flex items-center gap-2"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          Approve
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleApprove(user)}
+                            className="btn btn-success flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => setShowDeleteConfirm(user)}
+                            className="btn btn-error text-white flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                          </button>
+                        </>
                       ) : (
                         <>
                           <button
@@ -291,6 +332,51 @@ const PendingRequestsModal = ({
           </button>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+                  <p className="text-sm text-gray-500">This action cannot be undone</p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-700">
+                  Are you sure you want to permanently delete user <strong>{showDeleteConfirm.first_name} {showDeleteConfirm.last_name}</strong>?
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  This will completely remove their account and all associated data from the database.
+                </p>
+              </div>
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(showDeleteConfirm)}
+                  className="btn btn-error text-white"
+                >
+                  Delete Permanently
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

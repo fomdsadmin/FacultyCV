@@ -78,12 +78,9 @@ export const ADD_USER = `
 `;
 
 export const REMOVE_USER = `
-    mutation RemoveUser($user_id: String!, $email: String!, $first_name: String!, $last_name: String!) {
+    mutation RemoveUser($user_id: String!) {
         removeUser(
-            user_id: $user_id,
-            email: $email,
-            first_name: $first_name,
-            last_name: $last_name
+            user_id: $user_id
         )
     }
 `;
@@ -252,10 +249,10 @@ export const updateUserPermissionsMutation = (
     }
 `;
 
-export const updateUserActiveStatusMutation = (user_id, active) => `
+export const updateUserActiveStatusMutation = (user_ids, active) => `
     mutation UpdateUserActiveStatus {
         updateUserActiveStatus(
-            user_id: "${user_id}"
+            user_ids: [${user_ids.map(id => `"${id}"`).join(', ')}]
             active: ${active}
         )
     }

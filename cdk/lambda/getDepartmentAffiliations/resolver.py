@@ -45,9 +45,9 @@ def getDepartmentAffiliations(arguments):
         
         # Parse JSON fields, handle None values
         try:
-            primary_unit_data = primary_unit if primary_unit else {}
+            primary_unit_data = primary_unit if primary_unit else []
         except (json.JSONDecodeError, TypeError):
-            primary_unit_data = {}
+            primary_unit_data = []
         
         try:
             joint_units_data = joint_units if joint_units else []

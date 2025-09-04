@@ -4,7 +4,7 @@ import { useApp } from "../Contexts/AppContext.jsx";
 import { useNavigate } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import AdminMenu from "../Components/AdminMenu.jsx";
-import Filters from "../Components/Filters.jsx";
+// import Filters from "../Components/Filters.jsx";
 import ManageUser from "../Components/ManageUser.jsx";
 import AddUserModal from "../Components/AddUserModal.jsx";
 import ImportUserModal from "../Components/ImportUserModal.jsx";
@@ -12,9 +12,13 @@ import PendingRequestsModal from "../Components/PendingRequestsModal.jsx";
 import { ConfirmModal, DeactivatedUsersModal } from "../Components/AdminUsersModals.jsx";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
 import { useAdmin } from "Contexts/AdminContext.jsx";
-import { removeUser, updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
+import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
+import { removeUser } from "../graphql/graphqlHelpers.js";
+import AdminUserTabs from "Components/AdminUserTabs.jsx";
+import { use } from "react";
 
 const AdminUsers = ({ userInfo, getCognitoUser }) => {
+  const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [approvedUsers, setApprovedUsers] = useState([]);
   const [deactivatedUsers, setDeactivatedUsers] = useState([]);
@@ -37,7 +41,11 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const navigate = useNavigate();
 
   const { logAction } = useAuditLogger();
-  const { loading, setLoading, allUsers, departmentAffiliations, fetchAllUsers } = useAdmin();
+  const { isLoading, setIsLoading, allUsers, departmentAffiliations, fetchAllUsers } = useAdmin();
+
+  useEffect(() => {
+    setLoading(isLoading);
+  }, [isLoading]);
 
   useEffect(() => {
     setUsers(allUsers);
@@ -47,11 +55,13 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     filterAllUsers();
   }, [users]);
 
+
   useEffect(() => {
     setAffiliations(departmentAffiliations);
   }, [departmentAffiliations]);
 
   async function filterAllUsers() {
+    setLoading(true);
     try {
       // Clear and rebuild the arrays
       const pendingUsersList = [];
@@ -94,14 +104,15 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
 
     if (userAffiliation && userAffiliation.primary_unit) {
       try {
-        // Parse the primary_unit string to JSON object
-        const primaryUnit =
+        // Parse the primary_unit string to JSON array
+        const primaryUnits =
           typeof userAffiliation.primary_unit === "string"
             ? JSON.parse(userAffiliation.primary_unit)
             : userAffiliation.primary_unit;
 
-        if (primaryUnit && primaryUnit.rank) {
-          return primaryUnit.rank;
+        // Handle array of primary units - return first one's rank if available
+        if (Array.isArray(primaryUnits) && primaryUnits.length > 0 && primaryUnits[0].rank) {
+          return primaryUnits[0].rank;
         }
       } catch (error) {
         console.error("Error parsing primary_unit JSON:", error, userAffiliation.primary_unit);
@@ -147,39 +158,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   );
 
   // Tab bar for roles (copied and adapted from DepartmentAdminUsers)
-  const UserTabs = ({ filters, activeFilter, onSelect }) => (
-    <div className="flex flex-wrap gap-4 mb-6 px-4 max-w-full">
-      <button
-        className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-          activeFilter === null ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-        }`}
-        onClick={() => onSelect(null)}
-      >
-        All ({approvedUsers.length})
-      </button>
-      {[...filters]
-        .sort((a, b) => a.localeCompare(b))
-        .map((filter) => {
-          // Count users for this tab, mapping 'Delegate' back to 'Assistant' for counting
-          const count = approvedUsers.filter((u) =>
-            filter === "Delegate" ? u.role === "Assistant" : u.role === filter
-          ).length;
-          return (
-            <button
-              key={filter}
-              className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-                activeFilter === filter
-                  ? "bg-blue-600 text-white shadow"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-              onClick={() => onSelect(filter)}
-            >
-              {filter} ({count})
-            </button>
-          );
-        })}
-    </div>
-  );
+
 
   // When user clicks a tab, update the activeTab
   const handleTabSelect = (selectedRole) => {
@@ -336,6 +315,71 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     );
   };
 
+  const handleActivateAll = (user_ids) => {
+    const userCount = user_ids.length;
+    
+    // Show confirmation dialog
+    showModal(
+      "Confirm Bulk User Activation",
+      `Are you sure you want to activate all ${userCount} filtered users?`,
+      "confirm",
+      async () => {
+        try {
+          console.log("Activating multiple users:", user_ids);
+
+          // Call updateUserActiveStatus with array of user_ids
+          const result = await updateUserActiveStatus(user_ids, true);
+
+          // Refresh the users list
+          fetchAllUsers();
+
+          // Show success message
+          showModal(
+            "Users Activated Successfully",
+            `${userCount} users have been successfully activated.`,
+            "success"
+          );
+        } catch (error) {
+          console.error("Error activating users:", error);
+          showModal("Error", "Failed to activate users. Please try again.", "error");
+        }
+      }
+    );
+  };
+
+  const handleDeleteUser = async (user) => {
+    try {
+      console.log("Deleting user:", user);
+      
+      // Call the removeUser function to permanently delete from database
+      const result = await removeUser(user.user_id);
+      
+      // Log the deletion action
+      await logAction(
+        AUDIT_ACTIONS.DELETE_USER || 'DELETE_USER',
+        {
+          userId: user.user_id,
+          name: `${user.first_name} ${user.last_name}`,
+        }
+      );
+      
+      // Refresh the users list
+      fetchAllUsers();
+      
+      // Show success message
+      showModal(
+        "User Deleted Successfully",
+        `User ${user.first_name} ${user.last_name} has been permanently deleted.`,
+        "success"
+      );
+      
+      console.log("User deletion result:", result);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      showModal("Error", "Failed to delete user. Please try again.", "error");
+    }
+  };
+
   const handleDeactivatedSearchChange = (event) => {
     setDeactivatedSearchTerm(event.target.value);
   };
@@ -421,7 +465,22 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                   </button>
                 </div>
 
-                <div className="mx-4 flex mb-4 gap-4">
+                <div className="mx-4 flex mb-4 gap-2">
+                  <select
+                    className="select select-bordered min-w-48"
+                    value={departmentFilter}
+                    onChange={handleDepartmentFilterChange}
+                  >
+                    <option value="">All Departments ({approvedUsers.length})</option>
+                    {activeDepartments.map((dept) => {
+                      const deptCount = approvedUsers.filter((user) => user.primary_department === dept).length;
+                      return (
+                        <option key={dept} value={dept}>
+                          {dept} ({deptCount})
+                        </option>
+                      );
+                    })}
+                  </select>
                   <label className="input input-bordered flex items-center flex-1">
                     <input
                       type="text"
@@ -443,23 +502,15 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                       />
                     </svg>
                   </label>
-                  <select
-                    className="select select-bordered min-w-48"
-                    value={departmentFilter}
-                    onChange={handleDepartmentFilterChange}
-                  >
-                    <option value="">All Departments ({approvedUsers.length})</option>
-                    {activeDepartments.map((dept) => {
-                      const deptCount = approvedUsers.filter((user) => user.primary_department === dept).length;
-                      return (
-                        <option key={dept} value={dept}>
-                          {dept} ({deptCount})
-                        </option>
-                      );
-                    })}
-                  </select>
                 </div>
-                <UserTabs filters={filters} activeFilter={activeTab} onSelect={handleTabSelect} />
+                <AdminUserTabs 
+                  filters={filters} 
+                  activeFilter={activeTab} 
+                  onSelect={handleTabSelect} 
+                  users={approvedUsers}
+                  searchTerm={searchTerm}
+                  departmentFilter={departmentFilter}
+                />
                 {/* Optionally keep Filters below if you want both */}
                 {/* <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters> */}
                 {searchedUsers.length === 0 ? (
@@ -558,7 +609,11 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <ManageUser user={activeUser} onBack={handleBack} fetchAllUsers={fetchAllUsers}></ManageUser>
+                <ManageUser 
+                  user={activeUser} 
+                  onBack={handleBack} 
+                  fetchAllUsers={fetchAllUsers}
+                />
               </div>
             )}
           </div>
@@ -598,6 +653,9 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         getPrimaryRank={getPrimaryRank}
         getJointRanks={getJointRanks}
         onReactivateUser={handleReactivateUser}
+        onActivateAll={handleActivateAll}
+        onDeleteUser={handleDeleteUser}
+        userRole={userInfo.role}
       />
 
       <ConfirmModal

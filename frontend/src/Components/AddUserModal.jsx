@@ -5,20 +5,21 @@ import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
+  const [cwl_username, setCWLUsername] = useState("");
+  const [vpp_username, setVPPUsername] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("Faculty");
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(false);
   const [isFacultyAdmin, setIsFacultyAdmin] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedFaculty, setSelectedFaculty] = useState("");
-  const [institution, setInstitution] = useState("University of British Columbia"); // NEW: institution state
   const [department, setDepartment] = useState("");
   const [faculty, setFaculty] = useState(""); // NEW: faculty state
   const [departments, setDepartments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [existingUser, setExistingUser] = useState(null);
   const [showUpdateRole, setShowUpdateRole] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -66,7 +67,6 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       setIsFacultyAdmin(false);
       setRole(selectedRole);
     }
-
   };
 
   const handleDepartmentInputChange = (event) => {
@@ -85,158 +85,104 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     setFaculty(e.target.value);
   };
 
-  const handleSignUp = async (event) => {
-    event.preventDefault();
+  const validateForm = () => {
+    const errors = {};
 
-    // Username specification
-    const usernameRegex = /@[\w-]+\.ubc\.ca$/;
-    const username2Regex = /@ubc\.ca$/;
+    if (!cwl_username.trim()) {
+      errors.cwl_username = "CWL username is required";
+    } else {
+      const usernameRegex = /@ubc\.ca$/;
+      if (!usernameRegex.test(cwl_username)) {
+        errors.cwl_username = "CWL Username must end with @ubc.ca";
+      }
+    }
 
-    if (!usernameRegex.test(email) && !username2Regex.test(email)) {
-      setError("Email must end with @ubc.ca or @[department].ubc.ca");
-      return;
+    if (!department.trim()) {
+      errors.department = "Department is required";
+    }
+
+    if (!faculty.trim()) {
+      errors.faculty = "Faculty is required";
+    }
+
+    if (isDepartmentAdmin && !selectedDepartment) {
+      errors.selectedDepartment = "Please select a department for admin role";
     }
 
     if (isFacultyAdmin && !selectedFaculty) {
-      setError("Please select a faculty");
+      errors.selectedFaculty = "Please select a faculty for admin role";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSignUp = async (event) => {
+    event.preventDefault();
+
+    // Clear previous errors
+    setError("");
+    setFieldErrors({});
+
+    // Validate form
+    if (!validateForm()) {
       return;
     }
 
-    setError("");
     setExistingUser(null);
     setShowUpdateRole(false);
     setShowUpdateModal(false);
     setSuccessMessage("");
     setCreatedUser(null);
+    setLoading(true);
 
     try {
-      setLoading(true);
-      console.log("Checking if user exists in database :", username);
-
       // Step 1: Check if user already exists in database
-      try {
-        const userExists = await getUser(username);
-
-        if (userExists) {
-          console.log("User already exists in database:", userExists);
-          setExistingUser(userExists);
-          setShowUpdateRole(true);
-          setError("");
-          setLoading(false);
-          return;
-        }
-      } catch (error) {
-        console.log("Used not found in database");
-      }
-
-      // Step 2: Add user to Cognito user group
-      console.log("First adding user to Cognito group and checking if user in Cognito pool");
-      let result2;
-      if (role.includes("FacultyAdmin")) {
-        result2 = await addToUserGroup(username, "FacultyAdmin");
-      } else {
-        result2 = await addToUserGroup(username, role);
-      }
-
-      // const result2obj = JSON.parse(result2str);
-
-      // Check if there was an error with Cognito
-      if (result2.includes("FAILURE")) {
-        console.log("Error adding user to Cognito group, statusCode 500");
-        setError(`User not found in Cognito pool and was not added to database `);
-        setLoading(false);
-        return;
-      } else if (result2.includes("SUCCESS")) {
-        // Step 2: Add user to database (since they don't exist)
-        console.log("User found in pool, added to Cognito group, statusCode 200 OK");
-        const pending = true; // Default to pending
-        const approved = false; // Default to not approved
-        console.log("Adding user to database with details:", {
-          firstName,
-          lastName,
-          email,
-          username,
-          role,
-          pending,
-          approved,
-        });
-        const cwl_username = username
-        const vpp_username = ''
-        const result = await addUser(firstName, lastName, email, role, cwl_username, vpp_username, faculty);
-        console.log("User added to database successfully");
-
-        // Set success message and user details
-        setSuccessMessage("User has been successfully added to database");
-        setCreatedUser({
-          username: username,
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
-          role: role,
-          department: department,
-          faculty: faculty, // NEW: add faculty to createdUser
-        });
-        // Notify parent component of success
-        onSuccess({
-          type: "user_created",
-          username: username,
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
-          role: role,
-          department: department,
-          faculty: faculty, // NEW: add faculty to onSuccess
-        });
-
-        // Log the user creation action
-        await logAction(AUDIT_ACTIONS.ADD_USER, {
-          username: username,
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
-          role: role,
-          department: department,
-          faculty: faculty,
-        });
-
-        // Step 3: Update user with department and faculty information
-      } else if (result2.includes("ALREADY_EXISTS")) {
-        setError(
-          "User already exists in Cognito pool with correct group membership, but not in database.. Please remove the group membership in AWS to add to database"
-        );
-        setLoading(false);
-        return;
-      } else {
-        setError("Something went wrong while adding user to Cognito group. Please try again.");
+      const userExists = await getUser(cwl_username);
+      if (userExists) {
+        console.log("User with this CWL already exists in database:", userExists);
+        setExistingUser(userExists);
+        setShowUpdateRole(true);
         setLoading(false);
         return;
       }
-
-      setLoading(false);
-
-      // Clear form fields but keep success message
-      setFirstName("");
-      setLastName("");
-      setUsername("");
-      setEmail("");
-      setRole("Faculty");
-      setIsDepartmentAdmin(false);
-      setIsFacultyAdmin(false);
-      setSelectedDepartment("");
-      setSelectedFaculty("");
-      setDepartment("");
-      setFaculty(""); // NEW: reset faculty
-      setError("");
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.log("No user found with same CWL, proceeding with creation", error);
+    } finally {
+      setLoading(false);
+    }
+
+    // Step 2: Create user in database
+    try {
+      // Special case: make these approved when added with Admin page
+      let pending = false;
+      let approved = true;
+      const result = await addUser(firstName, lastName, email, role, pending, approved, cwl_username, vpp_username, department, faculty);
+      console.log("User added to database successfully:", result);
+
+      setSuccessMessage("User has been successfully added to database");
+      
+      // Step 6: Log the user creation action
+      await logAction(AUDIT_ACTIONS.ADD_USER, { ...result });
+
+      // Step 7: Call onSuccess to refresh the users list
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+    } catch (error) {
+      console.log("Error in user creation process:", error);
+      setError(`Failed to create user: ${error.message || "Unknown error occurred"}`);
+    } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
+  const resetFormFields = () => {
     setFirstName("");
     setLastName("");
-    setUsername("");
+    setCWLUsername("");
+    setVPPUsername("");
     setEmail("");
     setRole("Faculty");
     setIsDepartmentAdmin(false);
@@ -244,8 +190,13 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     setSelectedDepartment("");
     setSelectedFaculty("");
     setDepartment("");
-    setFaculty(""); // NEW: reset faculty
+    setFaculty("");
+  };
+
+  const resetForm = () => {
+    resetFormFields();
     setError("");
+    setFieldErrors({});
     setExistingUser(null);
     setShowUpdateRole(false);
     setShowUpdateModal(false);
@@ -277,99 +228,106 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           )}
 
-          {successMessage && createdUser && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
               <div className="flex items-center">
                 <div className="text-green-800 text-sm font-medium">✅ {successMessage}</div>
-              </div>
-              <div className="text-sm text-green-700">
-                <p>
-                  <strong>Name:</strong> {createdUser.firstName} {createdUser.lastName}
-                </p>
-                <p>
-                  <strong>Email:</strong> {createdUser.email}
-                </p>
-                <p>
-                  <strong>CWL Username:</strong> {createdUser.username}
-                </p>
-                {department && (
-                  <p>
-                    <strong>Department:</strong> {createdUser.department}
-                  </p>
-                )}
-                {faculty && (
-                  <p>
-                    <strong>Faculty:</strong> {createdUser.faculty}
-                  </p>
-                )}
-                <p>
-                  <strong>Role:</strong> {createdUser.role}
-                </p>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={handleClose} className="btn btn-primary btn-sm">
-                  Close
-                </button>
               </div>
             </div>
           )}
 
-          {!loading && !successMessage && (
+          {!loading && (
             <form onSubmit={handleSignUp} className="space-y-4">
+              {/* First Row: First Name + Last Name */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
                   <input
-                    className="input input-bordered w-full text-sm"
+                    className={`input input-bordered w-full text-sm ${
+                      fieldErrors.firstName ? "border-red-500 bg-red-50" : ""
+                    }`}
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="First Name"
-                    required
                   />
+                  {fieldErrors.firstName && <p className="text-xs text-red-600 mt-1">{fieldErrors.firstName}</p>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
                   <input
-                    className="input input-bordered w-full text-sm"
+                    className={`input input-bordered w-full text-sm ${
+                      fieldErrors.lastName ? "border-red-500 bg-red-50" : ""
+                    }`}
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Last Name"
-                    required
                   />
+                  {fieldErrors.lastName && <p className="text-xs text-red-600 mt-1">{fieldErrors.lastName}</p>}
                 </div>
               </div>
 
+              {/* Second Row: CWL Username (full width) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  CWL Username <span className="text-red-500">*</span> (must end with{" "}
+                  <b>
+                    <i>@ubc.ca</i>
+                  </b>
+                  )
+                </label>
                 <input
-                  className="input input-bordered w-full text-sm"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                  type="email"
+                  className={`input input-bordered w-full text-sm bg-gray-100 ${
+                    fieldErrors.cwl_username ? "border-red-500 bg-red-50" : ""
+                  }`}
+                  value={cwl_username}
+                  onChange={(e) => setCWLUsername(e.target.value)}
+                  placeholder="Eg. CWL@ubc.ca"
+                  type="text"
                   required
                 />
+                {fieldErrors.cwl_username && <p className="text-xs text-red-600 mt-1">{fieldErrors.cwl_username}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input
-                  className="input input-bordered w-full text-sm"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Username"
-                  type="username"
-                  required
-                />
+
+              {/* Third Row: VPP Username + Email */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">VCH/PHSA/PHC Username</label>
+                  <input
+                    className="input input-bordered w-full text-sm bg-gray-100"
+                    value={vpp_username}
+                    onChange={(e) => setVPPUsername(e.target.value)}
+                    placeholder="VPP Username"
+                    type="text"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    className={`input input-bordered w-full text-sm ${
+                      fieldErrors.email ? "border-red-500 bg-red-50" : ""
+                    }`}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    type="email"
+                  />
+                  {fieldErrors.email && <p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>}
+                </div>
               </div>
               {/* TODO: Ask about primary and joint*/}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Department <span className="text-red-500">*</span>
+                </label>
                 <select
-                  className="input input-sm input-bordered w-full text-sm "
+                  className={`input input-sm input-bordered w-full text-sm ${
+                    fieldErrors.department ? "border-red-500 bg-red-50" : ""
+                  }`}
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  // removed required to make optional
+                  required
                 >
                   <option value="">Select a department...</option>
                   {departments.map((dept, index) => (
@@ -378,15 +336,20 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.department && <p className="text-xs text-red-600 mt-1">{fieldErrors.department}</p>}
               </div>
-              {/* NEW: Faculty dropdown */}
+              {/* Faculty dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Faculty</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Faculty <span className="text-red-500">*</span>
+                </label>
                 <select
-                  className="input input-sm input-bordered w-full text-sm"
+                  className={`input input-sm input-bordered w-full text-sm ${
+                    fieldErrors.faculty ? "border-red-500 bg-red-50" : ""
+                  }`}
                   value={faculty}
                   onChange={handleFacultyChange}
-                  // removed required to make optional
+                  required
                 >
                   <option value="">Select a faculty...</option>
                   {faculties.map((fac, index) => (
@@ -395,23 +358,16 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Institution</label>
-                  <input
-                    className="input input-sm input-bordered w-full text-sm"
-                    value={institution || ""}
-                    onChange={(e) => setInstitution(e.target.value)}
-                    placeholder="Institution"
-                  />
-                </div>
+                {fieldErrors.faculty && <p className="text-xs text-red-600 mt-1">{fieldErrors.faculty}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 space-y-2">
+                <div
+                  className={`grid grid-cols-1 sm:grid-cols-2 space-y-2 ${
+                    fieldErrors.role ? "border border-red-500 bg-red-50 p-2 rounded" : ""
+                  }`}
+                >
                   <div className="flex items-center">
                     <input
                       type="radio"
@@ -478,13 +434,18 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                     </label>
                   </div>
                 </div>
+                {fieldErrors.role && <p className="text-xs text-red-600 mt-1">{fieldErrors.role}</p>}
               </div>
 
               {isDepartmentAdmin && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Department <span className="text-red-500">*</span>
+                  </label>
                   <select
-                    className="input input-bordered w-full text-sm"
+                    className={`input input-bordered w-full text-sm ${
+                      fieldErrors.selectedDepartment ? "border-red-500 bg-red-50" : ""
+                    }`}
                     value={selectedDepartment}
                     onChange={handleDepartmentInputChange}
                     required
@@ -496,15 +457,22 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                       </option>
                     ))}
                   </select>
+                  {fieldErrors.selectedDepartment && (
+                    <p className="text-xs text-red-600 mt-1">{fieldErrors.selectedDepartment}</p>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">Select the department for this admin role</p>
                 </div>
               )}
 
               {isFacultyAdmin && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Faculty</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Faculty <span className="text-red-500">*</span>
+                  </label>
                   <select
-                    className="input input-bordered w-full text-sm"
+                    className={`input input-bordered w-full text-sm ${
+                      fieldErrors.selectedFaculty ? "border-red-500 bg-red-50" : ""
+                    }`}
                     value={selectedFaculty}
                     onChange={handleFacultyInputChange}
                     required
@@ -516,34 +484,24 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                       </option>
                     ))}
                   </select>
+                  {fieldErrors.selectedFaculty && (
+                    <p className="text-xs text-red-600 mt-1">{fieldErrors.selectedFaculty}</p>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">Select the faculty for this admin role</p>
                 </div>
               )}
-
-              {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
 
               {existingUser && showUpdateRole && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
                   <div className="flex items-center">
                     <div className="text-yellow-800 text-sm font-medium">
-                      ⚠️ User with this email already exists in the database.
+                      ⚠️ User with this CWL already exists in the database.
                     </div>
-                  </div>
-                  <div className="text-sm text-yellow-700">
-                    <p>
-                      <strong>Name:</strong> {existingUser.first_name} {existingUser.last_name}
-                    </p>
-                    <p>
-                      <strong>Email:</strong> {existingUser.email}
-                    </p>
-                    <p>
-                      <strong>Role:</strong> {existingUser.role}
-                    </p>
                   </div>
                 </div>
               )}
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={

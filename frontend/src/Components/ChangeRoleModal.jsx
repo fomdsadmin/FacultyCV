@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import "../CustomStyles/scrollbar.css";
 import "../CustomStyles/modal.css";
 import { updateUser } from "../graphql/graphqlHelpers";
-import { addToUserGroup, removeFromUserGroup, getAllUniversityInfo } from "../graphql/graphqlHelpers";
+import { addToUserGroup, getUser, removeFromUserGroup, getAllUniversityInfo } from "../graphql/graphqlHelpers";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 import { useApp } from "Contexts/AppContext";
 
-const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBack }) => {
+const ChangeRoleModal = ({ currentUser, setActiveUser, setIsModalOpen, fetchAllUsers, handleBack }) => {
   const { userInfo, currentViewRole } = useApp();
   const [changingRole, setChangingRole] = useState(false);
   const [confirmChange, setConfirmChange] = useState(false);
@@ -18,7 +18,9 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
     currentUser.role.startsWith("FacultyAdmin-") ? currentUser.role.split("FacultyAdmin-")[1] : ""
   );
   const [isDepartmentAdmin, setIsDepartmentAdmin] = useState(userInfo.role.startsWith("Admin-") ? true : false);
-  const [isCurrentUserDepartmentAdmin, setIsCurrentUserDepartmentAdmin] = useState(currentUser.role.startsWith("Admin-") ? true : false);
+  const [isCurrentUserDepartmentAdmin, setIsCurrentUserDepartmentAdmin] = useState(
+    currentUser.role.startsWith("Admin-") ? true : false
+  );
 
   const [isFacultyAdmin, setIsFacultyAdmin] = useState(userInfo.role.startsWith("FacultyAdmin-") ? true : false);
   const [departments, setDepartments] = useState([]);
@@ -130,8 +132,18 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
         currentUser.orcid_id
       );
 
+      // First update the local state immediately with the new role
+      const updatedUserData = { ...currentUser, role: updatedRole };
+      setActiveUser(updatedUserData);
+      // setIsModalOpen(false);
+
+      // Then fetch fresh data from the server to ensure consistency
+      const result = await getUser(currentUser.username);
+      if (result) {
+        setActiveUser(result);
+      }
+
       fetchAllUsers();
-      handleBack();
 
       // Log the role change action
       const roleChangeInfo = JSON.stringify({
@@ -144,8 +156,10 @@ const ChangeRoleModal = ({  currentUser, setIsModalOpen, fetchAllUsers, handleBa
       await logAction(AUDIT_ACTIONS.CHANGE_USER_ROLE, roleChangeInfo);
     } catch (error) {
       console.error("Error changing role", error);
+    } finally {
+      setIsModalOpen(false);
+      setChangingRole(false);
     }
-    setChangingRole(false);
   }
 
   const handleRoleChange = (event) => {

@@ -16,7 +16,7 @@ def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     - Maps employee_id to user_id from users table
-    - Structures data into primary_unit and joint_units format
+    - Structures data into joint_units format
     - Fixes encoding issues in text fields
     """
     # Clean and prepare the data
@@ -121,17 +121,71 @@ def getUserMapping(cursor, employee_ids):
     
     return user_mapping
 
-def structureAffiliationsData(df, user_mapping):
+def getExistingAffiliations(cursor, user_ids):
     """
-    Structure the data into the format expected by the affiliations table:
-    - primary_unit: list for full-time appointments (to handle edge cases with 2 full-time entries)
-    - Only process full-time entries, disregard part-time ones
+    Get existing affiliations for the given user_ids
+    Returns a dictionary mapping user_id to their current affiliations
     """
-    affiliations_data = {}
+    if not user_ids:
+        return {}
+    
+    # Create placeholders for the IN clause
+    placeholders = ','.join(['%s'] * len(user_ids))
+    query = f"""
+        SELECT user_id, primary_unit, joint_units, research_affiliations, hospital_affiliations
+        FROM affiliations 
+        WHERE user_id IN ({placeholders})
+    """
+    
+    cursor.execute(query, user_ids)
+    results = cursor.fetchall()
+    
+    # Create affiliations dictionary
+    existing_affiliations = {}
+    for row in results:
+        user_id, primary_unit, joint_units, research_affiliations, hospital_affiliations = row
+        
+        # Parse JSON fields
+        try:
+            primary_unit_data = json.loads(primary_unit) if primary_unit else []
+        except (json.JSONDecodeError, TypeError):
+            primary_unit_data = []
+        
+        try:
+            joint_units_data = json.loads(joint_units) if joint_units else []
+        except (json.JSONDecodeError, TypeError):
+            joint_units_data = []
+        
+        try:
+            research_affiliations_data = json.loads(research_affiliations) if research_affiliations else []
+        except (json.JSONDecodeError, TypeError):
+            research_affiliations_data = []
+        
+        try:
+            hospital_affiliations_data = json.loads(hospital_affiliations) if hospital_affiliations else []
+        except (json.JSONDecodeError, TypeError):
+            hospital_affiliations_data = []
+        
+        existing_affiliations[user_id] = {
+            'primary_unit': primary_unit_data,
+            'joint_units': joint_units_data,
+            'research_affiliations': research_affiliations_data,
+            'hospital_affiliations': hospital_affiliations_data
+        }
+    
+    return existing_affiliations
+
+def structureJointAffiliationsData(df, user_mapping, existing_affiliations):
+    """
+    Structure the data to append joint units to existing affiliations:
+    - Process all entries (regardless of type) as joint appointments
+    - Append to existing joint_units list for each user
+    """
+    updated_affiliations = {}
     errors = []
     
-    # Group data by user to handle multiple appointments per user
-    user_appointments = {}
+    # Group data by user to handle multiple joint appointments per user
+    user_joint_appointments = {}
     
     for _, row in df.iterrows():
         employee_id = str(row['employee_id'])
@@ -141,21 +195,17 @@ def structureAffiliationsData(df, user_mapping):
             errors.append(f"Employee ID {employee_id} not found in users table")
             continue
 
-        # Skip if not full-time - only process full-time entries
-        # if row['type'].lower() != 'full time':
-        #     continue
-
         user_info = user_mapping[employee_id]
         user_id = user_info['user_id']
 
-        # Initialize user's appointments if not exists
-        if user_id not in user_appointments:
-            user_appointments[user_id] = {
+        # Initialize user's joint appointments if not exists
+        if user_id not in user_joint_appointments:
+            user_joint_appointments[user_id] = {
                 'user_info': user_info,
-                'full_time': []
+                'joint_appointments': []
             }
 
-        # Create unit object for full-time appointments only
+        # Create unit object for joint appointment
         unit_data = {
             'unit': 'Obstetrics & Gynaecology',
             'rank': row['job_profile'],
@@ -171,84 +221,62 @@ def structureAffiliationsData(df, user_mapping):
             }
         }
 
-        # Add to full-time appointments
-        user_appointments[user_id]['full_time'].append(unit_data)
+        # Add to joint appointments
+        user_joint_appointments[user_id]['joint_appointments'].append(unit_data)
     
-    # Now process each user's appointments
-    for user_id, appointments in user_appointments.items():
+    # Now process each user's joint appointments
+    for user_id, appointments in user_joint_appointments.items():
         user_info = appointments['user_info']
-        full_time_appointments = appointments['full_time']
+        joint_appointments = appointments['joint_appointments']
 
-        # Find the employee_id for this user_id
-        employee_id_for_user = None
-        for emp_id, info in user_mapping.items():
-            if info['user_id'] == user_id:
-                employee_id_for_user = emp_id
-                break
-
-        # Initialize user's affiliations with primary_unit as a list
-        affiliations_data[user_id] = {
-            'user_id': user_id,
-            'first_name': user_info['first_name'],
-            'last_name': user_info['last_name'],
+        # Get existing affiliations for this user
+        existing_data = existing_affiliations.get(user_id, {
             'primary_unit': [],
             'joint_units': [],
             'research_affiliations': [],
             'hospital_affiliations': []
+        })
+
+        # Append new joint appointments to existing joint_units
+        updated_joint_units = existing_data['joint_units'].copy()
+        updated_joint_units.extend(joint_appointments)
+
+        # Store updated affiliations
+        updated_affiliations[user_id] = {
+            'user_id': user_id,
+            'first_name': user_info['first_name'],
+            'last_name': user_info['last_name'],
+            'primary_unit': existing_data['primary_unit'],
+            'joint_units': updated_joint_units,
+            'research_affiliations': existing_data['research_affiliations'],
+            'hospital_affiliations': existing_data['hospital_affiliations']
         }
-
-        # Hospital affiliation: add only one entry, matching primary unit
-        hospital_affiliation_entry = None
-        if employee_id_for_user:
-            # Use the first row for this employee_id
-            row = df[df['employee_id'] == employee_id_for_user].iloc[0]
-            if row['health_authority']:
-                hospital_affiliation_entry = {
-                    'authority': row['health_authority'],
-                    'hospital': '',
-                    'role': '',
-                    'start': '',
-                    'end': ''
-                }
-        if hospital_affiliation_entry:
-            affiliations_data[user_id]['hospital_affiliations'].append(hospital_affiliation_entry)
-        
-        # Handle full-time appointments - all go to primary_unit as it's now a list
-        affiliations_data[user_id]['primary_unit'] = full_time_appointments
     
-    # After processing all appointments, leave percent blank for all units
-    # No logic to assign percent values
-    return affiliations_data, errors
+    return updated_affiliations, errors
 
-def storeData(affiliations_data, connection, cursor, errors, rows_processed, rows_added_to_db):
+def storeData(updated_affiliations, connection, cursor, errors, rows_processed, rows_added_to_db):
     """
-    Store the structured affiliations data into the database.
+    Store the updated affiliations data (with appended joint units) into the database.
     """
-    for user_id, user_data in affiliations_data.items():
+    for user_id, user_data in updated_affiliations.items():
         try:
             # Check if record already exists
             cursor.execute("SELECT COUNT(*) FROM affiliations WHERE user_id = %s", (user_id,))
             record_exists = cursor.fetchone()[0] > 0
             
             if record_exists:
-                # Update existing record
+                # Update existing record with new joint units
                 query = """
                 UPDATE affiliations SET 
-                    primary_unit = %s,
-                    joint_units = %s,
-                    research_affiliations = %s,
-                    hospital_affiliations = %s
+                    joint_units = %s
                 WHERE user_id = %s
                 """
                 cursor.execute(query, (
-                    json.dumps(user_data['primary_unit']),
                     json.dumps(user_data['joint_units']),
-                    json.dumps(user_data['research_affiliations']),
-                    json.dumps(user_data['hospital_affiliations']),
                     user_id,
                 ))
             else:
-                # Insert new record
+                # Insert new record (this case should be rare since we're appending to existing data)
                 query = """
                 INSERT INTO affiliations (
                     user_id, first_name, last_name,
@@ -303,8 +331,8 @@ def loadData(file_bytes, file_key):
 
 def lambda_handler(event, context):
     """
-    Processes affiliations upload file (CSV or Excel) uploaded to S3
-    Reads file with pandas, transforms, and adds to affiliations table
+    Processes joint affiliations upload file (CSV or Excel) uploaded to S3
+    Reads file with pandas, transforms, and appends to existing joint_units in affiliations table
     """
     try:
         # Parse S3 event
@@ -312,7 +340,7 @@ def lambda_handler(event, context):
         bucket_name = s3_event["bucket"]["name"]
         file_key = s3_event["object"]["key"]
 
-        print(f"Processing affiliations file: {file_key} from bucket: {bucket_name}")
+        print(f"Processing joint affiliations file: {file_key} from bucket: {bucket_name}")
 
         # Fetch file from S3 (as bytes)
         file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
@@ -353,9 +381,16 @@ def lambda_handler(event, context):
         user_mapping = getUserMapping(cursor, unique_employee_ids)
         print(f"Found {len(user_mapping)} users in database")
 
-        # Structure the data for affiliations table
-        affiliations_data, structure_errors = structureAffiliationsData(df, user_mapping)
-        print(f"Structured data for {len(affiliations_data)} users")
+        # Get user_ids for existing affiliations lookup
+        user_ids = list(user_mapping[emp_id]['user_id'] for emp_id in user_mapping.keys())
+        
+        # Get existing affiliations
+        existing_affiliations = getExistingAffiliations(cursor, user_ids)
+        print(f"Found existing affiliations for {len(existing_affiliations)} users")
+
+        # Structure the data for joint affiliations append
+        updated_affiliations, structure_errors = structureJointAffiliationsData(df, user_mapping, existing_affiliations)
+        print(f"Structured joint appointments for {len(updated_affiliations)} users")
 
         # Store data in database
         rows_processed = 0
@@ -363,7 +398,7 @@ def lambda_handler(event, context):
         errors = structure_errors.copy()
 
         rows_processed, rows_added_to_db = storeData(
-            affiliations_data, connection, cursor, errors, rows_processed, rows_added_to_db
+            updated_affiliations, connection, cursor, errors, rows_processed, rows_added_to_db
         )
         print("Data stored successfully.")
         
@@ -379,20 +414,22 @@ def lambda_handler(event, context):
             'status': 'COMPLETED',
             'total_csv_rows': len(df),
             'unique_users_found': len(user_mapping),
+            'users_with_existing_affiliations': len(existing_affiliations),
             'users_processed': rows_processed,
-            'users_added_to_database': rows_added_to_db,
+            'users_updated_in_database': rows_added_to_db,
             'errors': errors[:20] if errors else [],  # Limit errors to first 20
             'summary': {
-                'primary_units': sum(len(data['primary_unit']) for data in affiliations_data.values()),
-                'joint_units': sum(len(data['joint_units']) for data in affiliations_data.values())
+                'joint_units_appended': sum(len(data['joint_units']) - len(existing_affiliations.get(user_id, {}).get('joint_units', [])) 
+                                          for user_id, data in updated_affiliations.items()),
+                'total_joint_units_after_update': sum(len(data['joint_units']) for data in updated_affiliations.values())
             }
         }
 
-        print(f"Affiliations import completed: {result}")
+        print(f"Joint affiliations import completed: {result}")
         return result
 
     except Exception as e:
-        print(f"Error processing affiliations import: {str(e)}")
+        print(f"Error processing joint affiliations import: {str(e)}")
         return {
             'statusCode': 500,
             'status': 'FAILED',

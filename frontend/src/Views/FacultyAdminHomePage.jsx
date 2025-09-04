@@ -229,8 +229,6 @@ const FacultyAdminHomePage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
   // Since data is already filtered by faculty in getFacultyWideCVData, no need for frontend filtering
   const filteredPublications = publications;
-  const filteredGrants = grants;
-  const filteredPatents = patents;
   const filteredGrantMoney = grantMoneyRaised;
 
   const totalGrantMoneyRaised = useMemo(

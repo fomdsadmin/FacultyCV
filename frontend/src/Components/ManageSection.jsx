@@ -1,14 +1,19 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaArrowLeft, FaTrash } from "react-icons/fa";
 import DeleteSectionModal from "./DeleteSectionModal";
 import EditSectionModal from "./EditSectionModal";
 import AttributeModal from "./AttributeModal.jsx";
+import { useAdmin } from "../Contexts/AdminContext.jsx";
 
-const ManageSection = ({ section, onBack, getDataSections }) => {
+const ManageSection = ({ section: initialSection, onBack, getDataSections }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditSectionModalOpen, setIsEditSectionModalOpen] = useState(false);
   const [isUpdateAttributeModalOpen, setIsUpdateAttributeModalOpen] = useState(false);
+  const { allDataSections } = useAdmin();
+  
+  // Get the current section data from context to ensure we have the latest updates
+  const section = allDataSections.find(s => s.data_section_id === initialSection.data_section_id) || initialSection;
 
   const handleBack = () => {
     onBack();

@@ -9,16 +9,20 @@ import NewSection from "../Components/NewSection.jsx";
 import CVDataSection from "../Components/CVDataSection.jsx";
 
 const Sections = ({ getCognitoUser, userInfo }) => {
+  const [allDataSections, setAllDataSections] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [activeSection, setActiveSection] = useState(null);
-  const { allDataSections, loading, setLoading } = useAdmin();
+  const { allDataSections: allAdminDataSections, fetchAllDataSections, loading, setLoading } = useAdmin();
   const [openNewSection, setOpenNewSection] = useState(false);
   const navigate = useNavigate();
   const { category, title } = useParams();
   const location = useLocation();
 
+  useEffect(() => {
+    setAllDataSections(allAdminDataSections);
+  }, [allAdminDataSections]);
 
   // Open section if URL param is present
   useEffect(() => {
@@ -83,7 +87,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
 
   // When user clicks a section, update the URL
   const handleManageClick = (value) => {
-    const section = allDataSections.find((section) => section.data_section_id == value);
+    const section = allDataSections.find((section) => section.data_section_id === value);
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
@@ -107,7 +111,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
 
   // When user clicks a section, update the URL
   const handleManageDataClick = (value) => {
-    const section = allDataSections.find((section) => section.data_section_id == value);
+    const section = allDataSections.find((section) => section.data_section_id === value);
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
@@ -271,7 +275,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
         ) : (
           <>
             {openNewSection ? (
-              <NewSection onBack={handleBackFromNewSection} getDataSections={null} sections={allDataSections} />
+              <NewSection onBack={handleBackFromNewSection} getDataSections={fetchAllDataSections} sections={allDataSections} />
             ) : activeSection === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
                 <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Manage Faculty Sections</h1>
@@ -319,9 +323,9 @@ const Sections = ({ getCognitoUser, userInfo }) => {
               <>
                 <div className="!overflow-auto !h-full custom-scrollbar">
                   {location.pathname.endsWith("/data") ? (
-                    <CVDataSection section={activeSection} onBack={handleBack} getDataSections={null} />
+                    <CVDataSection section={activeSection} onBack={handleBack} getDataSections={fetchAllDataSections} />
                   ) : (
-                    <ManageSection section={activeSection} onBack={handleBack} getDataSections={null} />
+                    <ManageSection section={activeSection} onBack={handleBack} getDataSections={fetchAllDataSections} />
                   )}
                 </div>
               </>
