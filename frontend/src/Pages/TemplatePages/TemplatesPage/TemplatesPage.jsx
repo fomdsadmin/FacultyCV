@@ -11,7 +11,7 @@ import { addTemplate } from '../../../graphql/graphqlHelpers';
 import { toast } from 'react-toastify';
 
 const TemplatesPageContent = () => {
-  const { getCognitoUser, userInfo } = useApp();
+  const { getCognitoUser, userInfo, currentViewRole } = useApp();
   const { templates, activeTemplate, handleManageClick, handleBack, loading, fetchTemplates } = useTemplatePageContext();
   
   // Local state only
@@ -48,6 +48,7 @@ const TemplatesPageContent = () => {
   const handleCloneTemplate = async (templateId) => {
     const templateToClone = templates.find(t => t.template_id === templateId);
     if (!templateToClone) return;
+    
     // Generate unique title
     const baseTitle = `Copy of ${templateToClone.title}`;
     let newTitle = baseTitle;
@@ -57,10 +58,15 @@ const TemplatesPageContent = () => {
       newTitle = `Copy (${copyNumber}) of ${templateToClone.title}`;
       copyNumber++;
     }
+    
     try {
+      // Parse the template structure and update created_with_role
+      const templateStructure = JSON.parse(templateToClone.template_structure);
+      templateStructure.created_with_role = currentViewRole;
+      
       await addTemplate(
         newTitle,
-        templateToClone.template_structure,
+        JSON.stringify(templateStructure), // Convert back to string
         templateToClone.start_year,
         templateToClone.end_year
       );
@@ -129,6 +135,7 @@ const TemplatesPageContent = () => {
                     key={template.template_id} 
                     id={template.template_id} 
                     title={template.title}
+                    createdWithRole={JSON.parse(template.template_structure).created_with_role}
                   />
                 ))}
               </div>

@@ -33,7 +33,7 @@ const DepartmentAdminGenerateCV = ({ getCognitoUser, userInfo }) => {
   const { loading, allUsers, allTemplates } = useAdmin();
   
   // Constants
-  const MAX_SELECTION_LIMIT = 25;
+  const MAX_SELECTION_LIMIT = 10;
 
   // Get users list from context
   useEffect(() => {

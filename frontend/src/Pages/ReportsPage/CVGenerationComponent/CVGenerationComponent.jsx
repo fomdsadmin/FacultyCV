@@ -23,7 +23,7 @@ const CVGenerationComponent = ({
     docxGenerationCompleteMessage
 }) => {
 
-    const { userInfo: user, managedUser  } = useApp();
+    const { userInfo: user, managedUser } = useApp();
 
     const userInfo = managedUser || user;
     const { setNotification } = useNotification();
@@ -45,10 +45,10 @@ const CVGenerationComponent = ({
         if (backendKey === getPdfKey(getKey())) {
             const pdfUrl = await getPdfDownloadUrl(getKey())
             setPdfUrl(pdfUrl);
-            setPdfPreviewUrl?.(pdfUrl)
+            setPdfPreviewUrl?.(pdfUrl);
+            setPdfExists(true);
+            setPdfComplete(true);
         }
-        setPdfExists(true);
-        setPdfComplete(true);
         setNotification({ message: pdfGenerationCompleteMessage });
     }
 
@@ -56,14 +56,17 @@ const CVGenerationComponent = ({
 
         if (backendKey === getDocxKey(getKey())) {
             setDocxUrl(await getDocxDownloadUrl(getKey()));
+            setDocxExists(true);
+            setDocxComplete(true);
         }
-        setDocxExists(true);
-        setDocxComplete(true);
         setNotification({ message: docxGenerationCompleteMessage });
     }
 
     const onGenerate = async () => {
         setGenerating(true);
+
+        // get key earlier in case user switches templates thus changing the key
+        const key = getKey();
 
         setPdfPreviewUrl?.(null);
         setPdfComplete(false);
@@ -75,7 +78,7 @@ const CVGenerationComponent = ({
             setNotification({ message: "CV Template Uploaded Successfully!" });
         }
 
-        await convertHtmlToPdf(html, {}, getKey(), onUploadSuccessful);
+        await convertHtmlToPdf(html, {}, key, onUploadSuccessful);
     }
 
     const onGenerationError = () => {

@@ -17,13 +17,12 @@ const SaveTemplateButton = ({ templateId = null }) => {
         groups,
         HIDDEN_GROUP_ID,
         onBack,
-        sortAscending
+        sortAscending,
+        createdWithRole // Add this from context
     } = useTemplateModifier();
 
     const { fetchTemplates } = useTemplatePageContext();
-
     const { logAction } = useAuditLogger();
-
     const [addingTemplate, setAddingTemplate] = useState(false)
 
     const saveTemplate = async () => {
@@ -36,9 +35,10 @@ const SaveTemplateButton = ({ templateId = null }) => {
         const clean_groups = groups.filter(group => group.id !== HIDDEN_GROUP_ID)
         console.log(HIDDEN_GROUP_ID)
 
-        // Build template structure from groups data
+        // Build template structure from groups data - INCLUDE created_with_role
         const templateStructure = JSON.stringify({
             sort_ascending: sortAscending,
+            created_with_role: createdWithRole,
             groups: clean_groups
         })
         console.log(clean_groups);

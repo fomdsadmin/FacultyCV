@@ -3,12 +3,15 @@ import { useState, useEffect } from "react"
 import { getAllSections } from "../../graphql/graphqlHelpers"
 import TemplateModifier from "./SharedTemplatePageComponents/TemplateModifier/TemplateModifier";
 import { HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "./SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
+import { useApp } from "Contexts/AppContext";
 
 const NewTemplatePage = ({ onBack }) => {
   const [title, setTitle] = useState("")
   const [sections, setSections] = useState([])
   const [template, setTemplate] = useState({groups: []});
   const [loading, setLoading] = useState(true);
+  const { currentViewRole } = useApp();
+  const [createdWithRole, setCreatedWithRole] = useState(currentViewRole);
 
   useEffect(() => {
     fetchSections()
@@ -17,6 +20,7 @@ const NewTemplatePage = ({ onBack }) => {
   useEffect(() => {
     const initialData = {
       sort_ascending: true,
+      created_with_role: createdWithRole,
       groups: [
         {
           id: HIDDEN_GROUP_ID,
@@ -85,6 +89,8 @@ const NewTemplatePage = ({ onBack }) => {
             title={title}
             setTitle={setTitle}
             onBack={onBack}
+            setCreatedWithRole={setCreatedWithRole}
+            createdWithRole={createdWithRole}
           />
         )}
       </div>

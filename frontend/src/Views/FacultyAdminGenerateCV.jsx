@@ -37,7 +37,7 @@ const FacultyAdminGenerateCV = ({ getCognitoUser, userInfo, toggleViewMode }) =>
 
   // Constants
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
-  const MAX_SELECTION_LIMIT = 25;
+  const MAX_SELECTION_LIMIT = 10;
 
   // Load initial data
   useEffect(() => {

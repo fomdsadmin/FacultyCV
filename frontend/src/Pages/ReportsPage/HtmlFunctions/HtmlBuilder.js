@@ -399,13 +399,13 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     return htmlTables.filter(table => table.trim() !== '').join('\n');
 }
 
-const buildTableAttributeGroup = (attributeGroups) => {
+const buildTableAttributeGroup = (attributeGroups, attributeRenameMap) => {
     const columnRatioArray = [];
     let groupedColumnNamesArray = [];
 
     for (const attributeGroup of attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID)) {
-        const title = attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID ? attributeGroup.title : '~';
-
+        const title = attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID ? attributeRenameMap[attributeGroup.title] || attributeGroup.title : '~';
+        console.log("JJFILTER: attribute: ", attributeGroup);
         // Create the cell object in the format cellRowBuilder expects
         const cellObject = {
             textOptions: [textOptions(title, true, 11)], // text, bold=true, size='small'
@@ -432,7 +432,7 @@ const buildTableSectionColumns = (preparedSection) => {
 
     // take into account hidden and shown attribute group
     if (attributeGroups.length > 2) {
-        html += buildTableAttributeGroup(attributeGroups);
+        html += buildTableAttributeGroup(attributeGroups, attributeRenameMap);
     }
 
     const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
@@ -719,6 +719,10 @@ const buildHtmlHeader = (isMultipleUsers = false) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Faculty CV</title>
     <style>
+        @page {
+            size: portrait;
+            margin: 0.2in;
+        }
         body {
             font-family: Arial, sans-serif;
             font-size: 11pt;
@@ -728,6 +732,10 @@ const buildHtmlHeader = (isMultipleUsers = false) => {
             color: black;
         }
         @media print {
+            @page {
+                size: portrait;
+                margin: 0.2in;
+            }
             body {
                 margin: 0.2in;
             }
@@ -763,7 +771,7 @@ const buildHtmlHeader = (isMultipleUsers = false) => {
             -webkit-page-break-after: auto;
         }
         td {
-            padding: 4px 6px;
+            padding: 2px 3px;
             border: 1px solid #000;
             vertical-align: top;
             word-wrap: break-word;
