@@ -7,11 +7,11 @@ export const generateColumnFormatViaRatioArray = (ratioArray) => {
     });
 };
 
-export const textOptions = (text, bold = false, size = 9.5, link = null) => {
+export const textOptions = (text, bold = false, size = 10, link = null) => {
     return {
         text: text,
         bold: bold,
-        size: size,
+        size: 10, // Force size to always be 7 for table cells only
         link: link
     }
 }
@@ -32,15 +32,14 @@ const textOptionsBuilder = (textOptions) => {
         // Use sanitizeRichText instead of sanitizeHtml to preserve rich text formatting
         let html = sanitizeRichText(String(textOption.text));
 
-        // Use the original font size without any dynamic calculation
-        const fontSize = textOption.size || 9.5;
+        const fontSize = textOption.size;
 
         if (textOption.bold) {
             html = `<strong>${html}</strong>`;
         }
 
-        // Apply the original font size
-        html = `<span style="font-size: ${fontSize}pt; line-height: ${fontSize * 1.3}pt;">${html}</span>`;
+        // Apply the forced font size with tighter line height
+        html = `<span style="font-size: ${fontSize}pt; line-height: ${fontSize * 1.1}pt;">${html}</span>`;
 
         if (textOption.link) {
             html = `<a href="${textOption.link}" style="color: inherit; text-decoration: underline;">${html}</a>`;
@@ -60,11 +59,11 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
             html = "&nbsp;"; // Non-breaking space for empty cells
         }
 
-        // Use fixed padding instead of dynamic padding
-        const padding = 4;
+        // Use smaller padding for tighter spacing
+        const padding = 2;
 
-        // Add auto-hyphenation styling
-        let cellStyle = `padding: ${padding}px ${padding + 2}px; 
+        // Add auto-hyphenation styling with smaller padding
+        let cellStyle = `padding: ${padding}px ${padding + 1}px; 
                         border: 1px solid #000; 
                         vertical-align: top; 
                         width: ${columnWidths[index] || 'auto'}; 
@@ -101,10 +100,10 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
                 textOptionsBuilder(opt.textOptions)
             ).filter(content => content.trim() !== "").join(', ');
             
-            // Use fixed padding for merged cells
-            const padding = 4;
+            // Use smaller padding for merged cells
+            const padding = 2;
             
-            const cellStyle = `padding: ${padding}px ${padding + 2}px; 
+            const cellStyle = `padding: ${padding}px ${padding + 1}px; 
                              border: 1px solid #000; 
                              vertical-align: top; 
                              width: ${totalWidth}; 
@@ -136,10 +135,10 @@ export const cellRowBuilder = (cellOptions, columnWidths, mergeCells = false, in
                 textOptionsBuilder(opt.textOptions)
             ).filter(content => content.trim() !== "").join(', ');
             
-            // Use fixed padding for merged cells
-            const padding = 4;
+            // Use smaller padding for merged cells
+            const padding = 2;
             
-            const restCellStyle = `padding: ${padding}px ${padding + 2}px; 
+            const restCellStyle = `padding: ${padding}px ${padding + 1}px; 
                                  border: 1px solid #000; 
                                  vertical-align: top; 
                                  width: ${restWidth}; 

@@ -719,6 +719,10 @@ const buildHtmlHeader = (isMultipleUsers = false) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Faculty CV</title>
     <style>
+        @page {
+            size: portrait;
+            margin: 0.2in;
+        }
         body {
             font-family: Arial, sans-serif;
             font-size: 11pt;
@@ -728,6 +732,10 @@ const buildHtmlHeader = (isMultipleUsers = false) => {
             color: black;
         }
         @media print {
+            @page {
+                size: portrait;
+                margin: 0.2in;
+            }
             body {
                 margin: 0.2in;
             }
@@ -763,7 +771,7 @@ const buildHtmlHeader = (isMultipleUsers = false) => {
             -webkit-page-break-after: auto;
         }
         td {
-            padding: 4px 6px;
+            padding: 2px 3px;
             border: 1px solid #000;
             vertical-align: top;
             word-wrap: break-word;
