@@ -39,6 +39,7 @@ import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
 import { AdminProvider } from "./Contexts/AdminContext.jsx";
 import { ToastContainer } from "react-toastify";
+import VPPNoMatchPage from "./Views/VPPNoMatchPage";
 import KeycloakLogout from "Components/KeycloakLogout";
 import YourActivityPage from "./Pages/AuditLogPages/YourActivityPage.jsx";
 
@@ -60,6 +61,8 @@ const AppContent = () => {
     isUserActive,
     isManagingUser,
     getUserInfo,
+    isVPPUser,
+    hasVPPProfile,
   } = useApp();
 
   return (
@@ -91,6 +94,12 @@ const AppContent = () => {
             <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
             <Route path="/*" element={<Navigate to="/auth" />} />
+          </Routes>
+        ) : isVPPUser && !hasVPPProfile ? (
+          <Routes>
+            <Route path="/keycloak-logout" element={<KeycloakLogout />} />
+            <Route path="/vpp-no-match" element={<VPPNoMatchPage />} />
+            <Route path="/*" element={<Navigate to="/vpp-no-match" />} />
           </Routes>
         ) : isUserPending || !isUserApproved || !isUserActive ? (
           <Routes>

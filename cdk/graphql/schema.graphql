@@ -473,6 +473,8 @@ type Query {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getUser(cwl_username: String!): User
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
+	getUserWithVPPUsername(vpp_username: String!): User
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
 	getUserProfileMatches(first_name: String!, last_name: String!): [UserProfileMatch]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
 	getExistingUser(institution_user_id: String!): User
