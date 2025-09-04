@@ -82,6 +82,14 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
 
   useEffect(() => {
     setCurrentUser(user);
+    // Force a re-render when user data changes
+    if (user && user.role) {
+      // This ensures the role badge updates immediately
+      setCurrentUser(prevUser => ({
+        ...prevUser,
+        ...user
+      }));
+    }
   }, [user]);
 
   useEffect(() => {
@@ -327,6 +335,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                   <ChangeRoleModal
                     currentUser={currentUser}
+                    setActiveUser={setCurrentUser}
                     setIsModalOpen={setIsChangeRoleModalOpen}
                     fetchAllUsers={fetchAllUsers}
                     handleBack={handleBack}

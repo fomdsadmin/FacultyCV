@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 // Custom Modal Component
 export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = "confirm" }) => {
@@ -46,9 +46,13 @@ export const DeactivatedUsersModal = ({
   departmentFilter,
   onDepartmentChange,
   onReactivateUser,
+  onActivateAll,
+  onDeleteUser,
   userRole = "",
   userDepartment = "",
 }) => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  
   if (!isOpen) return null;
 
   // Get unique departments for filter - handle role-based restrictions
@@ -108,7 +112,20 @@ export const DeactivatedUsersModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
-          <h3 className="text-xl font-semibold text-gray-800">Inactive Members ({filteredDeactivatedUsers.length} of {deactivatedUsers.length})</h3>
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">Inactive Members ({filteredDeactivatedUsers.length} of {deactivatedUsers.length})</h3>
+            {filteredDeactivatedUsers.length > 0 && (
+              <button
+                onClick={() => onActivateAll(filteredDeactivatedUsers.map(user => user.user_id))}
+                className="btn btn-primary btn-md text-white flex items-center gap-2 shadow-lg"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Activate All {filteredDeactivatedUsers.length} Users
+              </button>
+            )}
+          </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -221,12 +238,25 @@ export const DeactivatedUsersModal = ({
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <button
-                            onClick={() => onReactivateUser(user.user_id)}
-                            className="btn btn-success btn-sm text-white"
-                          >
-                            Activate
-                          </button>
+                          <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => onReactivateUser(user.user_id)}
+                              className="btn btn-success btn-sm text-white"
+                            >
+                              Activate
+                            </button>
+                            {userRole === "Admin" && (
+                              <button
+                                onClick={() => setShowDeleteConfirm(user)}
+                                className="btn btn-error btn-sm text-white flex items-center gap-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -237,6 +267,54 @@ export const DeactivatedUsersModal = ({
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+                  <p className="text-sm text-gray-500">This action cannot be undone</p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-700">
+                  Are you sure you want to permanently delete user <strong>{showDeleteConfirm.first_name} {showDeleteConfirm.last_name}</strong>?
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  This will completely remove their account and all associated data from the database.
+                </p>
+              </div>
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    onDeleteUser(showDeleteConfirm);
+                    setShowDeleteConfirm(null);
+                  }}
+                  className="btn btn-error text-white"
+                >
+                  Delete User
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

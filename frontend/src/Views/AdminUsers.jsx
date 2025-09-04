@@ -13,7 +13,9 @@ import { ConfirmModal, DeactivatedUsersModal } from "../Components/AdminUsersMod
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
 import { useAdmin } from "Contexts/AdminContext.jsx";
 import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
+import { removeUser } from "../graphql/graphqlHelpers.js";
 import AdminUserTabs from "Components/AdminUserTabs.jsx";
+import { use } from "react";
 
 const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [loading, setLoading] = useState(false);
@@ -52,6 +54,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   useEffect(() => {
     filterAllUsers();
   }, [users]);
+
 
   useEffect(() => {
     setAffiliations(departmentAffiliations);
@@ -101,14 +104,15 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
 
     if (userAffiliation && userAffiliation.primary_unit) {
       try {
-        // Parse the primary_unit string to JSON object
-        const primaryUnit =
+        // Parse the primary_unit string to JSON array
+        const primaryUnits =
           typeof userAffiliation.primary_unit === "string"
             ? JSON.parse(userAffiliation.primary_unit)
             : userAffiliation.primary_unit;
 
-        if (primaryUnit && primaryUnit.rank) {
-          return primaryUnit.rank;
+        // Handle array of primary units - return first one's rank if available
+        if (Array.isArray(primaryUnits) && primaryUnits.length > 0 && primaryUnits[0].rank) {
+          return primaryUnits[0].rank;
         }
       } catch (error) {
         console.error("Error parsing primary_unit JSON:", error, userAffiliation.primary_unit);
@@ -311,6 +315,71 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     );
   };
 
+  const handleActivateAll = (user_ids) => {
+    const userCount = user_ids.length;
+    
+    // Show confirmation dialog
+    showModal(
+      "Confirm Bulk User Activation",
+      `Are you sure you want to activate all ${userCount} filtered users?`,
+      "confirm",
+      async () => {
+        try {
+          console.log("Activating multiple users:", user_ids);
+
+          // Call updateUserActiveStatus with array of user_ids
+          const result = await updateUserActiveStatus(user_ids, true);
+
+          // Refresh the users list
+          fetchAllUsers();
+
+          // Show success message
+          showModal(
+            "Users Activated Successfully",
+            `${userCount} users have been successfully activated.`,
+            "success"
+          );
+        } catch (error) {
+          console.error("Error activating users:", error);
+          showModal("Error", "Failed to activate users. Please try again.", "error");
+        }
+      }
+    );
+  };
+
+  const handleDeleteUser = async (user) => {
+    try {
+      console.log("Deleting user:", user);
+      
+      // Call the removeUser function to permanently delete from database
+      const result = await removeUser(user.user_id);
+      
+      // Log the deletion action
+      await logAction(
+        AUDIT_ACTIONS.DELETE_USER || 'DELETE_USER',
+        {
+          userId: user.user_id,
+          name: `${user.first_name} ${user.last_name}`,
+        }
+      );
+      
+      // Refresh the users list
+      fetchAllUsers();
+      
+      // Show success message
+      showModal(
+        "User Deleted Successfully",
+        `User ${user.first_name} ${user.last_name} has been permanently deleted.`,
+        "success"
+      );
+      
+      console.log("User deletion result:", result);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      showModal("Error", "Failed to delete user. Please try again.", "error");
+    }
+  };
+
   const handleDeactivatedSearchChange = (event) => {
     setDeactivatedSearchTerm(event.target.value);
   };
@@ -434,7 +503,14 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                     </svg>
                   </label>
                 </div>
-                <AdminUserTabs filters={filters} activeFilter={activeTab} onSelect={handleTabSelect} users={searchedUsers} />
+                <AdminUserTabs 
+                  filters={filters} 
+                  activeFilter={activeTab} 
+                  onSelect={handleTabSelect} 
+                  users={approvedUsers}
+                  searchTerm={searchTerm}
+                  departmentFilter={departmentFilter}
+                />
                 {/* Optionally keep Filters below if you want both */}
                 {/* <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters> */}
                 {searchedUsers.length === 0 ? (
@@ -533,7 +609,11 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <ManageUser user={activeUser} onBack={handleBack} fetchAllUsers={fetchAllUsers}></ManageUser>
+                <ManageUser 
+                  user={activeUser} 
+                  onBack={handleBack} 
+                  fetchAllUsers={fetchAllUsers}
+                />
               </div>
             )}
           </div>
@@ -573,6 +653,9 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         getPrimaryRank={getPrimaryRank}
         getJointRanks={getJointRanks}
         onReactivateUser={handleReactivateUser}
+        onActivateAll={handleActivateAll}
+        onDeleteUser={handleDeleteUser}
+        userRole={userInfo.role}
       />
 
       <ConfirmModal

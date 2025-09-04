@@ -16,17 +16,11 @@ def removeUser(arguments):
     query = """
     DELETE FROM users 
     WHERE user_id = %s 
-    AND email = %s 
-    AND first_name = %s 
-    AND last_name = %s
     """
 
     # Execute the query with the provided arguments
     cursor.execute(query, (
         arguments['user_id'],
-        arguments['email'],
-        arguments['first_name'],
-        arguments['last_name']
     ))
 
     # Get the number of rows affected

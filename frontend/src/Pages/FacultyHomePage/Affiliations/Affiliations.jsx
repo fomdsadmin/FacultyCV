@@ -65,7 +65,7 @@ const Affiliations = () => {
   const [facultyData, setFacultyData] = useState({});
   const [departmentData, setDepartmentData] = useState({});
   const [institutionData, setInstitutionData] = useState({});
-  const [primaryUnit, setPrimaryUnit] = useState({});
+  const [primaryUnit, setPrimaryUnit] = useState([]); // Changed to array
   const [jointUnits, setJointUnits] = useState([]); // Array, not object
   const [researchAffiliations, setResearchAffiliations] = useState([]);
   const [hospitalAffiliations, setHospitalAffiliations] = useState([]);
@@ -164,14 +164,14 @@ const Affiliations = () => {
             }
           }
 
-          // Handle the new structure with primary_unit (object) and joint_units (array)
-          setPrimaryUnit(data.primary_unit && typeof data.primary_unit === "object" ? data.primary_unit : {});
+          // Handle the new structure with primary_unit (array) and joint_units (array)
+          setPrimaryUnit(Array.isArray(data.primary_unit) ? data.primary_unit : []);
           setJointUnits(Array.isArray(data.joint_units) ? data.joint_units : []);
           setResearchAffiliations(Array.isArray(data.research_affiliations) ? data.research_affiliations : []);
           setHospitalAffiliations(Array.isArray(data.hospital_affiliations) ? data.hospital_affiliations : []);
         } else {
           console.log("No affiliations data found");
-          setPrimaryUnit({});
+          setPrimaryUnit([]);
           setJointUnits([]);
           setResearchAffiliations([]);
           setHospitalAffiliations([]);

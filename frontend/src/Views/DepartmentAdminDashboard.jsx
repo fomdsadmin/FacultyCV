@@ -351,11 +351,15 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
     // Process affiliations data to count ranks
     affiliationsData.forEach((affiliation) => {
       try {
-        // Parse primary unit
-        const primaryUnit = JSON.parse(affiliation.primary_unit || "{}");
-        if (primaryUnit.rank && primaryUnit.rank.trim()) {
-          const rank = primaryUnit.rank.trim();
-          primaryRankCounts[rank] = (primaryRankCounts[rank] || 0) + 1;
+        // Parse primary unit (now an array)
+        const primaryUnits = JSON.parse(affiliation.primary_unit || "[]");
+        if (Array.isArray(primaryUnits)) {
+          primaryUnits.forEach((unit) => {
+            if (unit.rank && unit.rank.trim()) {
+              const rank = unit.rank.trim();
+              primaryRankCounts[rank] = (primaryRankCounts[rank] || 0) + 1;
+            }
+          });
         }
 
         // Parse joint units

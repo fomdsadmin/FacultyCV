@@ -47,7 +47,7 @@ def updateUserAffiliations(arguments):
         WHERE user_id = %s
         """
         cursor.execute(query, (
-            json.dumps(affiliations.get('primary_unit', {})),
+            json.dumps(affiliations.get('primary_unit', [])),
             json.dumps(affiliations.get('joint_units', [])),
             json.dumps(affiliations.get('research_affiliations', [])),
             json.dumps(affiliations.get('hospital_affiliations', [])),
@@ -65,7 +65,7 @@ def updateUserAffiliations(arguments):
             user_id,
             first_name,
             last_name,
-            json.dumps(affiliations.get('primary_unit', {})),
+            json.dumps(affiliations.get('primary_unit', [])),
             json.dumps(affiliations.get('joint_units', [])),
             json.dumps(affiliations.get('research_affiliations', [])),
             json.dumps(affiliations.get('hospital_affiliations', []))

@@ -6,23 +6,27 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
   const { departments, ranks } = useFaculty();
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
 
-  // Handler for primary unit changes
-  const handlePrimaryUnitChange = (field, value) => {
-    setPrimaryUnit({
-      ...primaryUnit,
+  // Handler for primary unit changes - now handles array
+  const handlePrimaryUnitChange = (index, field, value) => {
+    const updatedUnits = [...primaryUnit];
+    updatedUnits[index] = {
+      ...updatedUnits[index],
       [field]: value,
-    });
+    };
+    setPrimaryUnit(updatedUnits);
   };
 
-  // Handler for primary unit additional info changes
-  const handlePrimaryUnitAdditionalInfoChange = (field, value) => {
-    setPrimaryUnit({
-      ...primaryUnit,
+  // Handler for primary unit additional info changes - now handles array
+  const handlePrimaryUnitAdditionalInfoChange = (index, field, value) => {
+    const updatedUnits = [...primaryUnit];
+    updatedUnits[index] = {
+      ...updatedUnits[index],
       additional_info: {
-        ...(primaryUnit.additional_info || {}),
+        ...(updatedUnits[index].additional_info || {}),
         [field]: value,
       },
-    });
+    };
+    setPrimaryUnit(updatedUnits);
   };
 
   // Handler for joint units changes
@@ -73,10 +77,10 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
     setJointUnits(updatedUnits);
   };
 
-  // Function to initialize primary unit if it's empty
+  // Function to initialize primary unit if it's empty - now handles array
   const initializePrimaryUnit = () => {
-    if (!primaryUnit || Object.keys(primaryUnit).length === 0) {
-      setPrimaryUnit({
+    if (!primaryUnit || primaryUnit.length === 0) {
+      setPrimaryUnit([{
         unit: "",
         rank: "",
         title: "",
@@ -88,12 +92,12 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
           start: "",
           end: "",
         },
-      });
+      }]);
     }
   };
 
-  // Check if we have any units to display
-  const hasPrimaryUnit = primaryUnit && Object.keys(primaryUnit).length > 0;
+  // Check if we have any units to display - updated for array
+  const hasPrimaryUnit = primaryUnit && primaryUnit.length > 0;
   const hasJointUnits = jointUnits && jointUnits.length > 0;
   const hasAnyUnits = hasPrimaryUnit || hasJointUnits;
 
@@ -134,97 +138,63 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                 </tr>
               </thead>
               <tbody className="bg-white divide-x divide-white ">
-                {/* Primary Unit Row */}
-                {hasPrimaryUnit && (
-                  <tr className="">
-                    <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-blue-700">Primary</td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {/* <Dropdown
-                        name="unit"
-                        value={primaryUnit.unit || ""}
-                        onChange={() => {}}
-                        options={departments}
-                        readOnly
-                        disabled
-                      /> */}
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                        value={primaryUnit.unit || ""}
-                        readOnly
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {/* <Dropdown
-                        name="rank"
-                        value={primaryUnit.rank || ""}
-                        onChange={() => {}}
-                        options={ranks}
-                        readOnly
-                        disabled
-                      /> */}
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                        value={primaryUnit.rank || ""}
-                        readOnly
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                        value={primaryUnit.title || ""}
-                        readOnly
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                        value={primaryUnit.location || ""}
-                        readOnly
-                        placeholder="e.g., Hospital Name"
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                        value={primaryUnit.apt_percent || ""}
-                        readOnly
-                      />
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                        value={primaryUnit.type ? primaryUnit.type.toUpperCase() || "" : ""}
-                        readOnly
-                      />
-                    </td>
-                    {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <button
-                        onClick={() => setPrimaryUnit({})}
-                        className="text-red-500 hover:text-red-700"
-                        title="Remove Primary Unit"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </td> */}
-                  </tr>
-                )}
+                {/* Primary Unit Rows - Now handles array */}
+                {hasPrimaryUnit && 
+                  primaryUnit.map((unit, idx) => (
+                    <tr key={`primary-${idx}`} className="">
+                      <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-blue-700">Primary</td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.unit || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.rank || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.title || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.location || ""}
+                          readOnly
+                          placeholder="e.g., Hospital Name"
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.apt_percent || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={unit.type ? unit.type.toUpperCase() || "" : ""}
+                          readOnly
+                        />
+                      </td>
+                    </tr>
+                  ))
+                }
 
                 {/* Joint Units Rows */}
                 {hasJointUnits &&
@@ -401,49 +371,51 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {/* Primary Unit Additional Info */}
-                    {hasPrimaryUnit && (
-                      <tr className="bg-blue-50">
-                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-700">Primary</td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {primaryUnit.unit || "Not specified"}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          <input
-                            type="text"
-                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                            value={(primaryUnit.additional_info && primaryUnit.additional_info.division) || ""}
-                            onChange={(e) => handlePrimaryUnitAdditionalInfoChange("division", e.target.value)}
-                            placeholder="Enter division"
-                          />
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          <input
-                            type="text"
-                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                            value={(primaryUnit.additional_info && primaryUnit.additional_info.program) || ""}
-                            onChange={(e) => handlePrimaryUnitAdditionalInfoChange("program", e.target.value)}
-                            placeholder="Enter program"
-                          />
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          <input
-                            type="date"
-                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                            value={(primaryUnit.additional_info && primaryUnit.additional_info.start) || ""}
-                            onChange={(e) => handlePrimaryUnitAdditionalInfoChange("start", e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                          <input
-                            type="date"
-                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                            value={(primaryUnit.additional_info && primaryUnit.additional_info.end) || ""}
-                            onChange={(e) => handlePrimaryUnitAdditionalInfoChange("end", e.target.value)}
-                          />
-                        </td>
-                      </tr>
-                    )}
+                    {/* Primary Unit Additional Info - Updated for array */}
+                    {hasPrimaryUnit && 
+                      primaryUnit.map((unit, idx) => (
+                        <tr key={`primary-additional-${idx}`} className="bg-blue-50">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-700">Primary</td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {unit.unit || "Not specified"}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <input
+                              type="text"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              value={(unit.additional_info && unit.additional_info.division) || ""}
+                              onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "division", e.target.value)}
+                              placeholder="Enter division"
+                            />
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <input
+                              type="text"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              value={(unit.additional_info && unit.additional_info.program) || ""}
+                              onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "program", e.target.value)}
+                              placeholder="Enter program"
+                            />
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <input
+                              type="date"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              value={(unit.additional_info && unit.additional_info.start) || ""}
+                              onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "start", e.target.value)}
+                            />
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            <input
+                              type="date"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              value={(unit.additional_info && unit.additional_info.end) || ""}
+                              onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "end", e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    }
 
                     {/* Joint Units Additional Info */}
                     {hasJointUnits &&

@@ -167,14 +167,15 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
 
     if (userAffiliation && userAffiliation.primary_unit) {
       try {
-        // Parse the primary_unit string to JSON object
-        const primaryUnit =
+        // Parse the primary_unit string to JSON array
+        const primaryUnits =
           typeof userAffiliation.primary_unit === "string"
             ? JSON.parse(userAffiliation.primary_unit)
             : userAffiliation.primary_unit;
 
-        if (primaryUnit && primaryUnit.rank) {
-          return primaryUnit.rank;
+        // Handle array of primary units - return first one's rank if available
+        if (Array.isArray(primaryUnits) && primaryUnits.length > 0 && primaryUnits[0].rank) {
+          return primaryUnits[0].rank;
         }
       } catch (error) {
         console.error("Error parsing primary_unit JSON:", error, userAffiliation.primary_unit);
@@ -374,6 +375,38 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     );
   };
 
+  const handleActivateAll = (user_ids) => {
+    const userCount = user_ids.length;
+    
+    // Show confirmation dialog
+    showModal(
+      "Confirm Bulk User Activation",
+      `Are you sure you want to activate all ${userCount} filtered users?`,
+      "confirm",
+      async () => {
+        try {
+          console.log("Activating multiple users:", user_ids);
+
+          // Call updateUserActiveStatus with array of user_ids
+          const result = await updateUserActiveStatus(user_ids, true);
+
+          // Refresh the users list
+          fetchAllUsers();
+
+          // Show success message
+          showModal(
+            "Users Activated Successfully",
+            `${userCount} users have been successfully activated.`,
+            "success"
+          );
+        } catch (error) {
+          console.error("Error activating users:", error);
+          showModal("Error", "Failed to activate users. Please try again.", "error");
+        }
+      }
+    );
+  };
+
   const handleDeactivatedSearchChange = (event) => {
     setDeactivatedSearchTerm(event.target.value);
   };
@@ -516,7 +549,9 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                   filters={filters}
                   activeFilter={activeTab}
                   onSelect={handleTabSelect}
-                  users={searchedUsers}
+                  users={approvedUsers}
+                  searchTerm={searchTerm}
+                  departmentFilter={departmentFilter}
                 />
                 {/* Optionally keep Filters below if you want both */}
                 {/* <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters> */}
@@ -640,6 +675,8 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         departmentFilter={deactivatedDepartmentFilter}
         onDepartmentChange={handleDeactivatedDepartmentFilterChange}
         onReactivateUser={handleReactivateUser}
+        onActivateAll={handleActivateAll}
+        userRole={userInfo.role}
       />
 
       <ConfirmModal
