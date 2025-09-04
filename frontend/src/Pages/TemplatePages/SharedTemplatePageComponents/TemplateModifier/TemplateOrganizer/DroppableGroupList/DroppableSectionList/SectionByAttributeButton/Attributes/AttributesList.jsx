@@ -2,14 +2,16 @@ import { useTemplateModifier } from "Pages/TemplatePages/SharedTemplatePageCompo
 import AttributeItem from "./AttributeItem";
 
 const AttributesList = ({ subSection, preparedSection, setSubSectionSettings }) => {
-    const { SHOWN_ATTRIBUTE_GROUP_ID } = useTemplateModifier();
-    
+    const { HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplateModifier();
+
     // Get shown attributes from prepared section
     const getShownAttributes = () => {
-        const shownAttributeGroup = preparedSection.attribute_groups?.find(
-            group => group.id === SHOWN_ATTRIBUTE_GROUP_ID
-        );
-        return shownAttributeGroup?.attributes || [];
+        const visibleAttributeGroups = preparedSection.attribute_groups?.filter(
+            group => group.id !== HIDDEN_ATTRIBUTE_GROUP_ID
+        ) || [];
+
+        // Flatten all attributes from all visible groups into a single array
+        return visibleAttributeGroups.flatMap(group => group.attributes || []);
     };
 
     const shownAttributes = getShownAttributes();

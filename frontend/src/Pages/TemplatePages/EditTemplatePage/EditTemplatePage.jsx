@@ -7,11 +7,13 @@ import DeleteTemplateButton from "./DeleteTemplateButton/DeleteTemplateButton";
 import { HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext";
 import { syncTemplateSections } from "../SyncTemplateSections"
+import { useApp } from "Contexts/AppContext";
 
 const EditTemplatePage = ({ onBack }) => {
+    const { currentViewRole } = useApp();
     const { activeTemplate } = useTemplatePageContext();
     const [title, setTitle] = useState(activeTemplate?.title || "")
-    const [template, setTemplate] = useState({ groups: [], sort_ascending: null });
+    const [template, setTemplate] = useState({ groups: [], sort_ascending: null, created_with_role: null });
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -28,6 +30,11 @@ const EditTemplatePage = ({ onBack }) => {
         try {
             // Parse the existing template structure
             const templateStructure = JSON.parse(activeTemplate.template_structure);
+
+            // Add created_with_role if it doesn't exist
+            if (!templateStructure.created_with_role) {
+                templateStructure.created_with_role = "Admin";
+            }
 
             const templateGroups = templateStructure.groups;
 
@@ -47,8 +54,35 @@ const EditTemplatePage = ({ onBack }) => {
             const existingSectionIds = new Set();
             templateGroups.forEach(group => {
                 group.prepared_sections?.forEach(section => {
-                    existingSectionIds.add(section.data_section_id);
+                    // Only add to set if section and data_section_id exist
+                    if (section && section.data_section_id) {
+                        existingSectionIds.add(section.data_section_id);
+                    }
                 });
+            });
+
+            // Filter out any null/invalid sections from template groups
+            templateGroups.forEach(group => {
+                if (group.prepared_sections) {
+                    group.prepared_sections = group.prepared_sections.filter(section => {
+                        if (!section || !section.data_section_id) {
+                            console.warn('Removing invalid section from template:', section);
+                            return false;
+                        }
+                        
+                        // Check if the section still exists in the database
+                        const sectionExists = fetchedSections.some(dbSection => 
+                            dbSection.data_section_id === section.data_section_id
+                        );
+                        
+                        if (!sectionExists) {
+                            console.warn('Removing deleted section from template:', section.data_section_id);
+                            return false;
+                        }
+                        
+                        return true;
+                    });
+                }
             });
 
             const missingSections = sortedSections.filter(section =>
@@ -92,13 +126,15 @@ const EditTemplatePage = ({ onBack }) => {
 
             setTemplate({
                 sort_ascending: templateStructure.sort_ascending,
+                created_with_role: templateStructure.created_with_role, // Make sure this is set
                 groups: syncTemplateSections(templateGroups, fetchedSections)
             });
+
         } catch (error) {
             console.error('Error parsing template structure:', error);
-            toast.error("Failed to load template data.", { autoClose: 3000 });
             setTemplate({
                 sort_ascending: true,
+                created_with_role: currentViewRole,
                 groups: []
             });
         }
@@ -158,6 +194,8 @@ const EditTemplatePage = ({ onBack }) => {
                         templateId={activeTemplate.template_id}
                         template={template}
                         setTemplate={setTemplate}
+                        createdWithRole={template.created_with_role} // Pass the value
+                        setCreatedWithRole={(role) => setTemplate(prev => ({...prev, created_with_role: role}))} // Pass setter
                     />
                 )}
             </div>
