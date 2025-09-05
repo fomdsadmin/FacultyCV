@@ -43,6 +43,40 @@ export const getUserQuery = `
     }
 `;
 
+export const getUserWithVppUsernameQuery = `
+    query getUserWithVPPUsername($vpp_username: String!) {
+        getUserWithVPPUsername(
+            vpp_username: $vpp_username
+        ){
+            user_id
+            first_name
+            last_name
+            preferred_name
+            email
+            role
+            bio
+            rank
+            institution
+            primary_department
+            secondary_department
+            primary_faculty
+            secondary_faculty
+            primary_affiliation
+            secondary_affiliation
+            campus
+            keywords
+            scopus_id
+            orcid_id
+            joined_timestamp   
+            pending
+            approved
+            cwl_username
+            vpp_username
+            active
+        }
+    }
+`;
+
 export const getUserProfileMatchesQuery = `
     query GetUserProfileMatches($first_name: String!, $last_name: String!) {
         getUserProfileMatches(

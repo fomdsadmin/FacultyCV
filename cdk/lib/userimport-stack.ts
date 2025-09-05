@@ -380,6 +380,7 @@ export class UserImportStack extends Stack {
       "UBCCourses",
       "VisitOtherTeaching",
       "Affiliations",
+      "JointAffiliations",
       "Users"
     ];
 

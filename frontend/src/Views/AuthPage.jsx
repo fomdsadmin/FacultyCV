@@ -29,6 +29,23 @@ const AuthPage = () => {
     setUserProfileMatches,
   } = useApp();
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      const clientId = process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID;
+      const logoutUri = `${process.env.REACT_APP_AMPLIFY_DOMAIN}/keycloak-logout`; // Make sure this URL is registered in your Cognito App Client's "Sign out URLs"
+      const cognitoDomain = "https://" + process.env.REACT_APP_COGNITO_DOMAIN;
+
+      window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
+        logoutUri
+      )}`;
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Fallback on error
+      window.location.href = "/auth";
+    }
+  };
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -253,7 +270,7 @@ const AuthPage = () => {
           )}
 
           {!loading && isUserLoggedIn && !userExistsInSqlDatabase && !doesUserHaveAProfileInDatabase && (
-            <div className="bg-stone-100 p-8 w-full h-full max-w-[70%] max-h-[80vh] border border-black overflow-y-auto rounded-2xl shadow-xl" >
+            <div className="bg-stone-100 p-8 w-full h-full max-w-[70%] max-h-[80vh] border border-black overflow-y-auto rounded-2xl shadow-xl">
               <form className="w-full max-w-2xl">
                 <div className="text-3xl text-gray-500  font-bold my-4">SIGN UP</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
@@ -517,17 +534,21 @@ const AuthPage = () => {
                               match.cwl_username !== "undefined" && (
                                 <div className="flex items-center">
                                   <span className="font-mediu w-40">CWL Username:</span>
-                                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">{match.cwl_username}</span>
+                                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">
+                                    {match.cwl_username}
+                                  </span>
                                 </div>
                               )}
-                            
+
                             {match.vpp_username &&
                               match.vpp_username !== "" &&
                               match.vpp_username !== "null" &&
                               match.vpp_username !== "undefined" && (
                                 <div className="flex items-center">
                                   <span className="font-mediu w-40">VPP Username:</span>
-                                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">{match.vpp_username}</span>
+                                  <span className="font-mono text-xs bg-gray-100 px-1 rounded">
+                                    {match.vpp_username}
+                                  </span>
                                 </div>
                               )}
                           </div>
@@ -600,7 +621,8 @@ const AuthPage = () => {
               <div className="flex flex-col items-center justify-center align-center p-4 m-4 text-center bg-orange-100 border border-orange-400 text-orange-700 rounded">
                 <h2 className="text-lg font-bold">Account Inactive</h2>
                 <p className="mt-2">
-                  Your account is currently inactive. Please contact the administrator for assistance to reactivate your account.
+                  Your account is currently inactive. Please contact the administrator for assistance to reactivate your
+                  account.
                 </p>
               </div>
             )}
@@ -612,18 +634,18 @@ const AuthPage = () => {
             doesUserNeedToReLogin && (
               <div className="w-3/5 flex flex-col items-center justify-center overflow-auto custom-scrollbar">
                 <div className="flex flex-col justify-center text-center p-4 m-4 bg-blue-100 border border-blue-400 text-blue-700 rounded">
-                  <h2 className="text-lg font-bold">Account Approved</h2>
+                  <h2 className="text-lg font-bold">Account Permissions Updated</h2>
                   <p className="mt-2">
                     Your account has been approved and your permissions have been updated.
                     <br />
                     Please sign out and sign in again to continue.
                   </p>
-                  {/* <button
+                  <button
                     onClick={handleSignOut}
                     className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none transition disabled:opacity-50"
                   >
                     Sign Out &amp; Sign In Again
-                  </button> */}
+                  </button>
                 </div>
               </div>
             )}

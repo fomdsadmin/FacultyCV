@@ -7,6 +7,7 @@ import {
   getDepartmentCVDataQuery,
   getFacultyWideCVDataQuery,
   getUserQuery,
+  getUserWithVppUsernameQuery,
   getUserProfileMatchesQuery,
   getAllUsersQuery,
   getAllUniversityInfoQuery,
@@ -201,6 +202,11 @@ export const getUser = async (cwl_username) => {
   return results["data"]["getUser"];
 };
 
+export const getUserWithVPPUsername = async (vpp_username) => {
+  const results = await executeGraphql(getUserWithVppUsernameQuery, { vpp_username: vpp_username });
+  return results["data"]["getUserWithVPPUsername"];
+};
+
 export const getUserProfileMatches = async (first_name, last_name) => {
   const results = await executeGraphql(getUserProfileMatchesQuery, { first_name, last_name });
   return results["data"]["getUserProfileMatches"];
@@ -235,6 +241,8 @@ export const getUserInstitutionId = async (email) => {
   const results = await runGraphql(getUserInstitutionIdQuery(email));
   return results["data"]["getUser"];
 };
+
+
 
 /**
  * Function to get existing user data

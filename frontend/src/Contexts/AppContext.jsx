@@ -2,7 +2,13 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { fetchUserAttributes, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
-import { addToUserGroup, getUser, getUserProfileMatches, changeUsername } from "../graphql/graphqlHelpers.js";
+import {
+  addToUserGroup,
+  getUser,
+  getUserProfileMatches,
+  changeUsername,
+  getUserWithVPPUsername,
+} from "../graphql/graphqlHelpers.js";
 import { use } from "react";
 
 // Create the context
@@ -33,6 +39,8 @@ export const AppProvider = ({ children }) => {
   const [doesUserNeedToReLogin, setDoesUserNeedToReLogin] = useState(false);
   const [userProfileMatches, setUserProfileMatches] = useState([]);
   const [doesUserHaveAProfileInDatabase, setDoesUserHaveAProfileInDatabase] = useState(false);
+  const [isVPPUser, setIsVPPUser] = useState(false);
+  const [hasVPPProfile, setHasVPPProfile] = useState(false);
 
   // Role management state
   const [actualRole, setActualRole] = useState(""); // User's actual assigned role (permissions)
@@ -56,6 +64,11 @@ export const AppProvider = ({ children }) => {
       }
     }
   }, [userInfo, currentViewRole]);
+
+  // Helper function to check if login is VPP (not ending with @ubc.ca)
+  const isVPPLogin = (username) => {
+    return username && !username.endsWith("@ubc.ca");
+  };
 
   // Get user group from Cognito
   async function getUserGroup() {
@@ -158,7 +171,86 @@ export const AppProvider = ({ children }) => {
           setLoading(false);
           return;
         }
-        console.log("Filter: Username fetched:", username);
+        // console.log("Filter: Username fetched:", username);
+
+        // Check if this is a VPP login
+        const isVPP = isVPPLogin(username);
+        setIsVPPUser(isVPP);
+
+        if (isVPP) {
+          console.log("Filter: VPP login detected");
+          // Try to get user with VPP username
+          try {
+            const vppUserData = await getUserWithVPPUsername(username);
+            if (vppUserData && vppUserData.user_id) {
+              console.log("Filter: VPP user found in database");
+              setHasVPPProfile(true);
+              setUserExistsInSqlDatabase(true);
+              setIsUserPending(vppUserData.pending);
+              setIsUserApproved(vppUserData.approved);
+              setIsUserActive(vppUserData.active !== false);
+
+              // If user is approved and active, set up full user context
+              if (vppUserData.approved && !vppUserData.pending && vppUserData.active !== false) {
+                // Set up full user context (similar to getCognitoUser logic)
+                try {
+                  const userData = await getCurrentUser();
+                  setUser(userData);
+
+                  const userGroup = await getUserGroup();
+                  setUserGroup(userGroup);
+
+                  // Set up user info for VPP user
+                  if (vppUserData.role === "Assistant") {
+                    setAssistantUserInfo(vppUserData);
+                  } else {
+                    setUserInfo(vppUserData);
+                  }
+                  console.log("VPP User context setup completed");
+                } catch (error) {
+                  console.error("Error setting up VPP user context:", error);
+                }
+
+                // Add user to Cognito group if they are approved and active
+                if (vppUserData.role && vppUserData.role !== "") {
+                  //console.log("VPP Username: ", username, "Role: ", vppUserData.role);
+                  let result;
+                  if (vppUserData.role.startsWith("Admin-")) {
+                    result = await addToUserGroup(username, "DepartmentAdmin");
+                  } else if (vppUserData.role.startsWith("FacultyAdmin-")) {
+                    result = await addToUserGroup(username, "FacultyAdmin");
+                  } else {
+                    result = await addToUserGroup(username, vppUserData.role);
+                  }
+
+                  // console.log(result);
+                  if (result.includes("SUCCESS")) {
+                    setDoesUserNeedToReLogin(true);
+                    setIsUserApproved(false);
+                    setIsUserPending(true);
+                    console.log("Added cognito group membership for VPP user", result);
+                  }
+                }
+              }
+            } else {
+              console.log("Filter: VPP user not found in database");
+              setHasVPPProfile(false);
+              setUserExistsInSqlDatabase(false);
+              setIsUserPending(false);
+              setIsUserApproved(false);
+              setIsUserActive(true);
+            }
+          } catch (error) {
+            console.log("Filter: Error fetching VPP user or VPP user not found:", error);
+            setHasVPPProfile(false);
+            setUserExistsInSqlDatabase(false);
+            setIsUserPending(false);
+            setIsUserApproved(false);
+            setIsUserActive(true);
+          }
+          setLoading(false);
+          return;
+        }
 
         // Check if user exists in SQL database
         try {
@@ -199,7 +291,7 @@ export const AppProvider = ({ children }) => {
           // Add user to Cognito group if they are approved and active if not already a member
           if (userData.approved && !userData.pending && userData.active !== false) {
             if (userData.role && userData.role !== "") {
-              console.log("Username: ", username, "Role: ", userData.role);
+              // console.log("Username: ", username, "Role: ", userData.role);
               let result;
               if (userData.role.startsWith("Admin-")) {
                 result = await addToUserGroup(username, "DepartmentAdmin");
@@ -209,12 +301,17 @@ export const AppProvider = ({ children }) => {
                 result = await addToUserGroup(username, userData.role);
               }
 
-              console.log(result);
+              // console.log(result);
               if (result.includes("SUCCESS")) {
+                // setDoesUserNeedToReLogin(true);
+                console.log("Added cognito group membership", result);
+                // hard refresh page after 1 sec so membership takes effect
                 setDoesUserNeedToReLogin(true);
                 setIsUserApproved(false);
                 setIsUserPending(true);
-                console.log("Added cognito group membership", result);
+                // setTimeout(() => {
+                //   window.location.reload();
+                // }, 1000);
               }
             }
           }
@@ -235,15 +332,8 @@ export const AppProvider = ({ children }) => {
             username: name || "",
           });
 
-          console.log("User info set for new user:", {
-            first_name: given_name || "",
-            last_name: family_name || "",
-            email: email || "",
-            username: name || "",
-          });
-
           const result = await getUserProfileMatches(given_name, family_name);
-          console.log("User profile matches:", result);
+          // console.log("User profile matches:", result);
 
           if (result && Array.isArray(result) && result.length > 0) {
             setUserProfileMatches(result);
@@ -389,7 +479,7 @@ export const AppProvider = ({ children }) => {
       setManagedUser(null);
       setOriginalUserInfo(null);
       setUserInfo(originalUserInfo);
-      return previousViewRole
+      return previousViewRole;
     }
   };
 
@@ -445,6 +535,12 @@ export const AppProvider = ({ children }) => {
     setDoesUserHaveAProfileInDatabase,
     userProfileMatches,
     setUserProfileMatches,
+
+    // VPP login state
+    isVPPUser,
+    setIsVPPUser,
+    hasVPPProfile,
+    setHasVPPProfile,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
