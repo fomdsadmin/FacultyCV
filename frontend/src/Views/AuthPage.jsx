@@ -612,7 +612,7 @@ const AuthPage = () => {
             doesUserNeedToReLogin && (
               <div className="w-3/5 flex flex-col items-center justify-center overflow-auto custom-scrollbar">
                 <div className="flex flex-col justify-center text-center p-4 m-4 bg-blue-100 border border-blue-400 text-blue-700 rounded">
-                  <h2 className="text-lg font-bold">Account Approved</h2>
+                  <h2 className="text-lg font-bold">Account Permissions Updated</h2>
                   <p className="mt-2">
                     Your account has been approved and your permissions have been updated.
                     <br />
