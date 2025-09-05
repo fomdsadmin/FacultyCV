@@ -305,12 +305,12 @@ export const AppProvider = ({ children }) => {
               if (result.includes("SUCCESS")) {
                 // setDoesUserNeedToReLogin(true);
                 console.log("Added cognito group membership", result);
+                // hard refresh page after 1 sec so membership takes effect
+                setDoesUserNeedToReLogin(true);
+                // setTimeout(() => {
+                //   window.location.reload();
+                // }, 1000);
               }
-
-              // hard refresh page after 1 sec so membership takes effect
-              setTimeout(() => {
-                window.location.reload();
-              }, 1000);
             }
           }
         } catch (error) {
