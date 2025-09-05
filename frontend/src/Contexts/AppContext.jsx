@@ -226,8 +226,8 @@ export const AppProvider = ({ children }) => {
                   // console.log(result);
                   if (result.includes("SUCCESS")) {
                     setDoesUserNeedToReLogin(true);
-                    // setIsUserApproved(false);
-                    // setIsUserPending(true);
+                    setIsUserApproved(false);
+                    setIsUserPending(true);
                     console.log("Added cognito group membership for VPP user", result);
                   }
                 }
@@ -307,6 +307,8 @@ export const AppProvider = ({ children }) => {
                 console.log("Added cognito group membership", result);
                 // hard refresh page after 1 sec so membership takes effect
                 setDoesUserNeedToReLogin(true);
+                setIsUserApproved(false);
+                setIsUserPending(true);
                 // setTimeout(() => {
                 //   window.location.reload();
                 // }, 1000);
