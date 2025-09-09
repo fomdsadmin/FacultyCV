@@ -77,18 +77,19 @@ const TemplateList = ({
 
       {/* Template List */}
       <div className="flex-1 overflow-y-auto custom-scrollbar mb-2">
-        {searchedTemplates.map((template, index) => (
-          <button
-            key={index}
-            className={`w-full text-left text-sm px-4 py-2 mb-2 my-1 rounded transition bg-gray-100 ${selectedTemplate && selectedTemplate.template_id === template.template_id
+        {searchedTemplates
+          .map((template, index) => (
+            <button
+              key={index}
+              className={`w-full text-left text-sm px-4 py-2 mb-2 my-1 rounded transition bg-gray-100 ${selectedTemplate && selectedTemplate.template_id === template.template_id
                 ? "bg-blue-100 border-l-4 border-blue-500 font-semibold"
                 : "hover:bg-gray-200"
-              }`}
-            onClick={() => onTemplateSelect(template)}
-          >
-            {template.title}
-          </button>
-        ))}
+                }`}
+              onClick={() => onTemplateSelect(template)}
+            >
+              {template.title}
+            </button>
+          ))}
       </div>
 
       {/* Date Range Picker and CV Generation Component */}
