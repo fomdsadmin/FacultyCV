@@ -14,13 +14,13 @@ const TemplateCard = ({ onClick, onClone, id, title, createdWithRole }) => {
     }
 
     // Determine which buttons to show based on roles
-    const canManage = currentViewRole === "Admin" || !(createdWithRole === "Admin" && currentViewRole === "Admin-All");
-    const canClone = true; // Everyone can clone
 
-    return (                
+    const canManage = currentViewRole === "Admin" || (createdWithRole === currentViewRole);
+
+    return (
         <div className="bg-base-100 pr-5 my-3 m-4 p-4 shadow-glow rounded-lg">
             <div className="flex justify-between items-center ">
-                
+
                 <div className="flex flex-col justify-center">
                     <h3 className="card-title">{title}</h3>
                     {createdWithRole && (
@@ -34,11 +34,9 @@ const TemplateCard = ({ onClick, onClone, id, title, createdWithRole }) => {
                             Manage
                         </button>
                     )}
-                    {canClone && (
-                        <button onClick={handleClone} className="btn btn-secondary min-h-0 h-8 leading-tight">
-                            Clone
-                        </button>
-                    )}
+                    <button onClick={handleClone} className="btn btn-secondary min-h-0 h-8 leading-tight">
+                        Clone
+                    </button>
                 </div>
 
             </div>

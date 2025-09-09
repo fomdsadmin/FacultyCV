@@ -42,6 +42,7 @@ import { ToastContainer } from "react-toastify";
 import VPPNoMatchPage from "./Views/VPPNoMatchPage";
 import KeycloakLogout from "Components/KeycloakLogout";
 import YourActivityPage from "./Pages/AuditLogPages/YourActivityPage.jsx";
+import GenerateCV from "Pages/GenerateCV/GenerateCV";
 
 const AppContent = () => {
   const {
@@ -182,7 +183,7 @@ const AppContent = () => {
               path="/admin/generate"
               element={
                 userInfo.role === "Admin" && currentViewRole === "Admin" ? (
-                  <AdminGenerateCV userInfo={userInfo} getCognitoUser={getCognitoUser} />
+                  <GenerateCV getCognitoUser={getCognitoUser} />
                 ) : (
                   <Navigate to="/home" />
                 )
@@ -466,11 +467,7 @@ const AppContent = () => {
             <Route
               path="/department-admin/generate"
               element={
-                <DepartmentAdminGenerateCV
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                  department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
-                />
+                <GenerateCV getCognitoUser={getCognitoUser} />
               }
             />
             <Route
@@ -506,11 +503,7 @@ const AppContent = () => {
               element={
                 typeof userInfo.role === "string" &&
                 (userInfo.role.startsWith("FacultyAdmin-") || userInfo.role === "Admin") ? (
-                  <FacultyAdminGenerateCV
-                    userInfo={userInfo}
-                    getCognitoUser={getCognitoUser}
-                    toggleViewMode={toggleViewMode}
-                  />
+                  <GenerateCV getCognitoUser={getCognitoUser} toggleViewMode={toggleViewMode} />
                 ) : (
                   <Navigate to="/home" />
                 )

@@ -453,7 +453,8 @@ export const AppProvider = ({ children }) => {
     setIsManagingUser(true);
     setUserInfo(userToManage);
     setPreviousViewRole(currentViewRole);
-    setCurrentViewRole("Faculty");
+    console.log("JJFILTER userToMange", userToManage)
+    setCurrentViewRole(userToManage.role);
   };
 
   // Stop managing a user (return to delegate view)

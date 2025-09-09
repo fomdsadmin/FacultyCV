@@ -8,7 +8,7 @@ import ReportPreview from './CVGenerationComponent/ReportPreview.jsx';
 import { useApp } from 'Contexts/AppContext.jsx';
 
 const ReportsPage = () => {
-  const { userInfo, getCognitoUser, toggleViewMode, isManagingUser,  } = useApp();
+  const { userInfo, getCognitoUser, toggleViewMode, isManagingUser, currentViewRole } = useApp();
 
   const [user, setUser] = useState(isManagingUser ? isManagingUser : userInfo);
   const [templates, setTemplates] = useState([]);
@@ -19,11 +19,45 @@ const ReportsPage = () => {
     setUser(userInfo);
     const fetchData = async () => {
       setUser(userInfo);
-      const templates = await getAllTemplates();
-      setTemplates(templates);
+      const allTemplates = await getAllTemplates();
+      const filteredTemplates = allTemplates.filter((template) => {
+        const [currentRole,] = currentViewRole.split('-');
+        const currentDept = userInfo.primary_department;
+        console.log(JSON.parse(template.template_structure))
+        const templateCreatedWithRole = JSON.parse(template.template_structure).created_with_role;
+        const [templateRole, templateDept] = templateCreatedWithRole.split('-');
+
+        if (template.title === "Master Template") {
+          return false;
+        }
+
+        // Superadmins can see all templates
+        if (templateCreatedWithRole === "Admin" || templateCreatedWithRole === "Admin-All") {
+          return true;
+        }
+
+        // Admin-dept can see all templates of their dept
+        if (currentRole === "Admin" && currentDept === templateDept) {
+          return true;
+        }
+
+        // FacultyAdmin can see all templates
+        if (currentRole === "FacultyAdmin") {
+          return true;
+        }
+
+        // Regular users can see templates from their department
+        if (currentDept === templateDept && currentDept !== undefined && templateDept !== undefined) {
+          return true;
+        }
+
+        return false;
+      });
+
+      setTemplates(filteredTemplates);
     };
     fetchData();
-  }, [userInfo]);
+  }, [userInfo, currentViewRole]); // Add currentViewRole as dependency
 
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template);
