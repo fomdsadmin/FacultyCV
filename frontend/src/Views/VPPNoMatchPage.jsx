@@ -20,7 +20,7 @@ const VPPNoMatchPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Health Authority Profile Not Found</h2>
@@ -40,29 +40,13 @@ const VPPNoMatchPage = () => {
                 <h3 className="text-sm font-medium text-yellow-800">Health Authority Login Detected</h3>
                 <div className="mt-2 text-sm text-yellow-700">
                   <p>
-                    You've logged in using your Health Authority (VPP) credentials, but we couldn't find a matching
-                    profile in our Faculty CV system.
+                    You've logged in using your Health Authority credentials, but we couldn't find a matching
+                    profile in our system. Please contact the department administrator for access.
                   </p>
                 </div>
               </div>
             </div>
           </div>
-
-          <div className="mt-6 space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <h3 className="text-sm font-medium text-blue-800 mb-2">Do you already have an account?</h3>
-              <p className="text-sm text-blue-700 mb-3">If you already have a Faculty CV account, please contact the administrator at xyz@ubc.ca for access.</p>
-            </div>
-
-            <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
-              <h3 className="text-sm font-medium text-gray-800 mb-2">New to Faculty CV?</h3>
-              <p className="text-sm text-gray-700">
-                If you don't have an account yet, you'll need to create one using your CWL credentials first. Health
-                Authority-only accounts are not supported for initial registration.
-              </p>
-            </div>
-          </div>
-
           <div className="mt-8 space-y-4">
             <button
               onClick={handleCWLLogin}
