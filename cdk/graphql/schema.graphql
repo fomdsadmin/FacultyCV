@@ -270,20 +270,6 @@ type UserConnection {
 	assistant_username: String!
 }
 
-type UserProfileMatch {
-	user_id: String!
-	first_name: String
-	last_name: String
-	email: String
-	role: String
-	institution: String
-	primary_department: String
-	primary_faculty: String
-	pending: Boolean
-	approved: Boolean
-	cwl_username: String!
-	vpp_username: String
-}
 
 type UsersCountResult {
 	total_count: Int!
@@ -474,8 +460,6 @@ type Query {
 	getUser(cwl_username: String!): User
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
 	getUserWithVPPUsername(vpp_username: String!): User
-		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
-	getUserProfileMatches(first_name: String!, last_name: String!): [UserProfileMatch]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
 	getExistingUser(institution_user_id: String!): User
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])

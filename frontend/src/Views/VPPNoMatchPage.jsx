@@ -21,7 +21,7 @@ const VPPNoMatchPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full space-y-8">
+      <div className="max-w-3xl w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Health Authority Profile Not Found</h2>
 
@@ -51,12 +51,7 @@ const VPPNoMatchPage = () => {
           <div className="mt-6 space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <h3 className="text-sm font-medium text-blue-800 mb-2">Do you already have an account?</h3>
-              <p className="text-sm text-blue-700 mb-3">If you already have a Faculty CV account, please:</p>
-              <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
-                <li>Log in using your CWL (Campus Wide Login) credentials</li>
-                <li>Go to your profile settings page</li>
-                <li>Connect your Health Authority (VPP) login to your existing account</li>
-              </ol>
+              <p className="text-sm text-blue-700 mb-3">If you already have a Faculty CV account, please contact the administrator at xyz@ubc.ca for access.</p>
             </div>
 
             <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
@@ -75,32 +70,6 @@ const VPPNoMatchPage = () => {
             >
               Sign Out & Login with CWL
             </button>
-
-            <div className="text-center">
-              <p className="text-xs text-gray-500">
-                This will sign you out of your current Health Authority session and redirect you to login with CWL
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Need help?</span>
-              </div>
-            </div>
-
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">
-                Contact IT support if you need assistance connecting your Health Authority login
-              </p>
-              {/* <a href="/support" className="text-sm text-blue-600 hover:text-blue-500 font-medium">
-                Get Support
-              </a> */}
-            </div>
           </div>
         </div>
       </div>

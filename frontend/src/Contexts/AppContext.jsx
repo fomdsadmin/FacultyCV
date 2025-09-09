@@ -2,13 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { fetchUserAttributes, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
-import {
-  addToUserGroup,
-  getUser,
-  getUserProfileMatches,
-  changeUsername,
-  getUserWithVPPUsername,
-} from "../graphql/graphqlHelpers.js";
+import { addToUserGroup, getUser, changeUsername, getUserWithVPPUsername } from "../graphql/graphqlHelpers.js";
 import { use } from "react";
 
 // Create the context
@@ -37,8 +31,7 @@ export const AppProvider = ({ children }) => {
   const [isUserApproved, setIsUserApproved] = useState(false);
   const [isUserActive, setIsUserActive] = useState(true);
   const [doesUserNeedToReLogin, setDoesUserNeedToReLogin] = useState(false);
-  const [userProfileMatches, setUserProfileMatches] = useState([]);
-  const [doesUserHaveAProfileInDatabase, setDoesUserHaveAProfileInDatabase] = useState(false);
+  // Removed claim profile feature state (userProfileMatches, doesUserHaveAProfileInDatabase)
   const [isVPPUser, setIsVPPUser] = useState(false);
   const [hasVPPProfile, setHasVPPProfile] = useState(false);
 
@@ -332,16 +325,7 @@ export const AppProvider = ({ children }) => {
             username: name || "",
           });
 
-          const result = await getUserProfileMatches(given_name, family_name);
-          // console.log("User profile matches:", result);
-
-          if (result && Array.isArray(result) && result.length > 0) {
-            setUserProfileMatches(result);
-            setDoesUserHaveAProfileInDatabase(true);
-          } else {
-            setUserProfileMatches([]);
-            setDoesUserHaveAProfileInDatabase(false);
-          }
+          // Removed claim profile matching logic
         }
       } catch (error) {
         console.error("Error checking auth session:", error);
@@ -531,10 +515,7 @@ export const AppProvider = ({ children }) => {
     doesUserNeedToReLogin,
     setDoesUserNeedToReLogin,
 
-    doesUserHaveAProfileInDatabase,
-    setDoesUserHaveAProfileInDatabase,
-    userProfileMatches,
-    setUserProfileMatches,
+  // Removed claim profile feature values
 
     // VPP login state
     isVPPUser,

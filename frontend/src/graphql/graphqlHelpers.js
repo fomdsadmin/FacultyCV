@@ -8,7 +8,6 @@ import {
   getFacultyWideCVDataQuery,
   getUserQuery,
   getUserWithVppUsernameQuery,
-  getUserProfileMatchesQuery,
   getAllUsersQuery,
   getAllUniversityInfoQuery,
   getAllNotificationsQuery,
@@ -207,10 +206,6 @@ export const getUserWithVPPUsername = async (vpp_username) => {
   return results["data"]["getUserWithVPPUsername"];
 };
 
-export const getUserProfileMatches = async (first_name, last_name) => {
-  const results = await executeGraphql(getUserProfileMatchesQuery, { first_name, last_name });
-  return results["data"]["getUserProfileMatches"];
-};
 
 /**
  * Function to get user data with institution_user_id
