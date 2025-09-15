@@ -374,6 +374,18 @@ export class ResolverStack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "updateStagingScopusPublications",
+      ["updateStagingScopusPublications"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "getStagingScopusPublications",
       ["getStagingScopusPublications"],
       "Query",

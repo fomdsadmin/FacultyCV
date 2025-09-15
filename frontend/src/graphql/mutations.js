@@ -127,6 +127,18 @@ export const ADD_STAGING_SCOPUS_PUBLICATIONS = `
     }
 `;
 
+export const UPDATE_STAGING_SCOPUS_PUBLICATIONS = `
+    mutation UpdateStagingScopusPublications(
+        $publication_ids: [String!]!,
+        $is_new: Boolean!
+    ) {
+        updateStagingScopusPublications(
+            publication_ids: $publication_ids,
+            is_new: $is_new
+        )
+    }
+`;
+
 export const addUniversityInfoMutation = (type, value) => `
     mutation AddUniversityInfo {
         addUniversityInfo(

@@ -7,10 +7,13 @@ import {
   getUserCVData,
   getAllSections,
   getStagingScopusPublications,
+  updateStagingScopusPublications,
+  updateUserCVDataArchive,
 } from "../graphql/graphqlHelpers";
 import { useNavigate } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
 import PublicationsSelectModal from "./PublicationsSelectModal";
+import { get } from "aws-amplify/api";
 
 const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchData, existingPublications }) => {
   const [allFetchedPublications, setAllFetchedPublications] = useState([]);
@@ -19,10 +22,12 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
   const [fetchingData, setFetchingData] = useState(true);
   const [addingData, setAddingData] = useState(false);
   const [initialRender, setInitialRender] = useState(true);
-  const [currentScopusId, setCurrentScopusId] = useState("");
+
   const [showSelectionModal, setShowSelectionModal] = useState(false);
   const [selectedPublications, setSelectedPublications] = useState(new Set());
   const [matchedPublications, setMatchedPublications] = useState([]);
+  const [journalOnlyPublications, setJournalOnlyPublications] = useState([]); // Only journal publications for "existing" section
+  const [allExistingPublications, setAllExistingPublications] = useState([]); // Combined journal + other publications
 
   const [count, setCount] = useState(1); // Initialize count in state
   const [fetchStage, setFetchStage] = useState(""); // "scopus", "add"
@@ -38,18 +43,16 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     setInitialRender(false);
     setFetchingData(true);
 
+    // Fetch publications from staging table instead of Scopus API
     try {
-      // Fetch publications from staging table instead of Scopus API
-      console.log("Fetching publications from staging table for user:", user.user_id);
-
+      console.log("Fetching publications from staging table for user:", user.first_name + " " + user.last_name);
       const stagingResponse = await getStagingScopusPublications(user.user_id);
 
       if (stagingResponse && stagingResponse.publications) {
-        // Extract the data_details from each staging publication
-        // Parse data_details if it comes as a JSON string
-        const publications = stagingResponse.publications.map((pub) => {
+        // Extract the data_details from each staging publication but preserve staging metadata
+        const publications = stagingResponse.publications.map((pub, index) => {
           let dataDetails = pub.data_details;
-          if (typeof dataDetails === 'string') {
+          if (typeof dataDetails === "string") {
             try {
               dataDetails = JSON.parse(dataDetails);
             } catch (error) {
@@ -57,42 +60,76 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
               dataDetails = {};
             }
           }
-          return dataDetails;
+          // Add staging metadata to track which publications were saved
+          return {
+            ...dataDetails,
+            _staging_id: pub.id, // Preserve staging table ID
+            _staging_is_new: pub.is_new,
+            originalIndex: index, // Add original index for tracking
+          };
         });
         console.log(`Retrieved ${publications.length} publications from staging table`);
-        console.log("Sample publication data:", publications[0]); // Debug log
 
         setAllFetchedPublications(publications);
         setTotalResults(publications.length);
 
         // Fetch existing user publications for comparison
-        let parsedExisting = [];
+        let parsedExistingForMatching = []; // Combined list for matching
+        let parsedExistingJournalOnly = []; // Only journal publications for "existing" section
+        
         try {
+          // journal publications section (current section)
           const existingData = await getUserCVData(user.user_id, section.data_section_id);
-          parsedExisting = existingData.map((data) => ({
+          parsedExistingJournalOnly = existingData.map((data) => ({
             ...data,
             data_details: JSON.parse(data.data_details),
+            section_type: 'Journal Publications' // Add section type for identification
           }));
+          console.log("Fetched ", parsedExistingJournalOnly.length, "existing Journal Publications");
+
+          // Start with journal publications for matching
+          parsedExistingForMatching = [...parsedExistingJournalOnly];
+
+          let dataSections = [];
+          dataSections = await getAllSections();
+          const otherPublicationsSectionId = dataSections.find((section) =>
+            section.title.includes("Other Publication")
+          ).data_section_id;
+
+          // other publications section (for matching only)
+          const existingDataOther = await getUserCVData(user.user_id, otherPublicationsSectionId);
+          const parsedExistingOther = existingDataOther.map((data) => ({
+            ...data,
+            data_details: JSON.parse(data.data_details),
+            section_type: 'Other Publications' // Add section type for identification
+          }));
+          console.log(`Fetched ${parsedExistingOther.length} existing Other Publications`);
+
+          // Add other publications to matching list
+          parsedExistingForMatching = parsedExistingForMatching.concat(parsedExistingOther);
+          console.log('Total for matching: ', parsedExistingForMatching.length);
+          console.log('Journal only for existing section: ', parsedExistingJournalOnly.length);
         } catch (error) {
           console.error("Error fetching existing publications:", error);
         }
 
-        // Find matched publications if there are existing ones
+        // Find matched publications using the combined list
         let matches = [];
-        if (parsedExisting.length > 0 && publications.length > 0) {
-          console.log("Starting to find matches...");
-          console.log("Sample fetched publication:", publications[0]);
-          console.log("Sample existing publication:", parsedExisting[0]);
-          matches = findPublicationMatches(publications, parsedExisting);
-          console.log("Final matches found:", matches.length);
+        if (parsedExistingForMatching.length > 0 && publications.length > 0) {
+          matches = findPublicationMatches(publications, parsedExistingForMatching);
         } else {
-          console.log("No matching performed:", { 
-            existingCount: parsedExisting.length, 
-            fetchedCount: publications.length 
+          console.log("No matching performed:", {
+             existingCount: parsedExistingForMatching.length,
+             fetchedCount: publications.length,
           });
         }
 
         setMatchedPublications(matches);
+        // Set the journal-only publications for the "existing" section
+        setJournalOnlyPublications(parsedExistingJournalOnly);
+        // Set the combined list for the modal
+        setAllExistingPublications(parsedExistingForMatching);
+        // Pass COMBINED list (journal + other) to the selection modal so it can properly identify "Other Publications"
         setFetchingData(false);
         setShowSelectionModal(true);
       } else {
@@ -113,20 +150,10 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
 
   // Helper function to find matches between fetched and existing publications
   const findPublicationMatches = (publications, parsedExisting) => {
-    console.log(
-      "Finding matches between",
-      publications.length,
-      "fetched and",
-      parsedExisting.length,
-      "existing publications"
-    );
-
     const matches = [];
     const usedExistingIds = new Set();
 
     // STEP 1: DOI-based matching (more precise)
-    console.log("=== STEP 1: DOI-based matching ===");
-
     // Extract DOIs from existing publications' citation fields
     const existingDOIs = new Map(); // Map DOI -> Set of existing publications
     parsedExisting.forEach((existingPub, index) => {
@@ -152,15 +179,18 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         existingDOIs.get(doi).add(existingPub);
       });
     });
-    
-    console.log(`Found ${existingDOIs.size} unique DOIs in existing publications:`, Array.from(existingDOIs.keys()).slice(0, 5));
+
+    // console.log(
+    //   `Found ${existingDOIs.size} unique DOIs in existing publications:`,
+    //   Array.from(existingDOIs.keys()).slice(0, 5)
+    // );
 
     // Match publications by DOI
     let matchedFetchedIndices = new Set();
     publications.forEach((fetchedPub, fetchedIndex) => {
       if (fetchedPub.doi) {
         const normalizedScopusDOI = normalizeDOI(fetchedPub.doi);
-        console.log(`Checking Scopus DOI: ${fetchedPub.doi} -> normalized: ${normalizedScopusDOI}`);
+        // console.log(`Checking Scopus DOI: ${fetchedPub.doi} -> normalized: ${normalizedScopusDOI}`);
 
         if (normalizedScopusDOI && existingDOIs.has(normalizedScopusDOI)) {
           const matchedExistingPubsSet = existingDOIs.get(normalizedScopusDOI);
@@ -187,7 +217,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     });
 
     // STEP 2: Title-based matching for remaining publications
-    console.log("=== STEP 2: Title-based matching ===");
+    // console.log("=== STEP 2: Title-based matching ===");
 
     const remainingFetchedPublications = [];
     publications.forEach((pub, index) => {
@@ -203,9 +233,6 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     remainingFetchedPublications.forEach((fetchedPub) => {
       const fetchedIndex = fetchedPub.originalIndex;
       const allMatches = [];
-      
-      console.log(`Checking title matches for: "${fetchedPub.title?.substring(0, 50)}..."`);
-
       remainingExistingPublications.forEach((existingPub) => {
         if (usedExistingIds.has(existingPub.user_cv_data_id)) {
           return;
@@ -246,7 +273,39 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
       }
     });
 
-    console.log("Total matches found:", matches.length);
+    // console.log("Total matches found:", matches.length);
+
+    // Print potential duplicates where Publication type is not "Journal" or "Journals"
+    const nonJournalDuplicates = matches.filter((match) => {
+      // Check both fetched and existing publication types
+      const fetchedPubType = match.fetchedPublication.publication_type || "Journal";
+      const existingPubType = match.existingPublication?.data_details?.publication_type;
+
+      // Check fetched publication type
+      const fetchedIsNonJournal =
+        fetchedPubType && fetchedPubType.toLowerCase() !== "journal" && fetchedPubType.toLowerCase() !== "journals";
+
+      // Check existing publication type
+      const existingIsNonJournal =
+        existingPubType && existingPubType.toLowerCase() !== "journal" && existingPubType.toLowerCase() !== "journals";
+
+      return fetchedIsNonJournal || existingIsNonJournal;
+    });
+
+    console.log(matches);
+    if (nonJournalDuplicates.length > 0) {
+      console.log("=== POTENTIAL DUPLICATES WITH NON-JOURNAL PUBLICATION TYPES ===");
+      nonJournalDuplicates.forEach((match, index) => {
+        const fetchedType = match.fetchedPublication.publication_type || "N/A";
+        const existingType = match.existingPublication?.data_details?.publication_type || "N/A";
+        console.log(`${index + 1}. Fetched Type: "${fetchedType}", Existing Type: "${existingType}"`);
+        console.log(`   Title: "${match.fetchedPublication.title?.substring(0, 100)}..."`);
+        console.log(`   Match Type: ${match.matchType}, Similarity: ${match.similarity}`);
+        console.log(`   DOI: ${match.fetchedPublication.doi || "N/A"}`);
+        console.log("   ---");
+      });
+    }
+
     return matches;
   };
 
@@ -382,16 +441,26 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         section.title.includes("Journal Publication")
       ).data_section_id;
 
-      // Add "Type: Journal" to each publication
-      publications = publications.map((pub) => {
+      // Extract staging IDs only from publications that have them (i.e., from Scopus)
+      const stagingIds = publications
+        .filter((pub) => pub._staging_id) // Only publications with staging IDs
+        .map((pub) => pub._staging_id);
+
+      console.log(`Found ${stagingIds.length} staging publications to mark as processed out of ${publications.length} total publications`);
+
+      // Add "Type: Journal" to each publication and clean staging metadata
+      const cleanedPublications = publications.map((pub) => {
+        // Remove staging metadata before saving to CV
+        const { _staging_id, _staging_is_new, originalIndex, ...cleanPub } = pub;
         return {
-          ...pub,
+          ...cleanPub,
           publication_type: "Journal", // Assuming all fetched publications are journal articles
         };
       });
+
       const payload = {
         arguments: {
-          data_details_list: publications,
+          data_details_list: cleanedPublications,
           user_id: user.user_id,
           data_section_id: publicationsSectionId,
           data_section_title: "Publications",
@@ -409,8 +478,24 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
       });
 
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
-      else {
-        console.log("Added ", payload.arguments.data_details_list.length, " Publications Successfully | 200 OK");
+
+      // console.log("Added ", payload.arguments.data_details_list.length, " Publications Successfully | 200 OK");
+
+      // Update staging table to mark publications as processed (is_new = false)
+      // Only update if we have staging IDs (i.e., publications from Scopus)
+      if (stagingIds.length > 0) {
+        try {
+          // Ensure all IDs are strings
+          const stringIds = stagingIds.map(id => String(id));
+          console.log("Updating staging publications:", stringIds);
+          const updateResult = await updateStagingScopusPublications(stringIds, false);
+          console.log("Staging publications updated:", updateResult);
+        } catch (updateError) {
+          console.error("Error updating staging publications:", updateError);
+          // Don't fail the entire operation if staging update fails
+        }
+      } else {
+        console.log("No staging publications to update (all selected publications were existing duplicates)");
       }
     } catch (error) {
       console.error("Error adding publications:", error);
@@ -440,11 +525,256 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
     }
   };
 
-  const handleAddSelected = async () => {
-    const publicationsToAdd = allFetchedPublications.filter((_, index) => selectedPublications.has(index));
+  const handleBulkSelectPublications = (indices, shouldSelect) => {
+    const newSelected = new Set(selectedPublications);
+
+    indices.forEach((index) => {
+      if (shouldSelect) {
+        newSelected.add(index);
+      } else {
+        newSelected.delete(index);
+      }
+    });
+
+    setSelectedPublications(newSelected);
+  };
+
+  const handleAddSelected = async (selectedExistingPublications = new Set()) => {
+    const publicationsToAdd = [];
+    const publicationsToArchive = []; // Track publications from "Other Publications" section to archive
+
+    // Process each selected Scopus publication
+    for (const index of selectedPublications) {
+      const publication = allFetchedPublications[index];
+
+      // Check if this publication is a potential duplicate
+      const matchingDuplicate = matchedPublications.find((match) => match.fetchedPublication.originalIndex === index);
+
+      if (matchingDuplicate) {
+        // This is a potential duplicate - merge Scopus data with existing data
+        console.log(`Merging duplicate publication at index ${index}`);
+        const mergedPublication = mergePublicationData(
+          publication,
+          matchingDuplicate.existingPublications || [matchingDuplicate.existingPublication]
+        );
+        publicationsToAdd.push(mergedPublication);
+
+        // Identify matched existing publications from "Other Publications" section to archive
+        const existingPubs = matchingDuplicate.existingPublications || [matchingDuplicate.existingPublication];
+        existingPubs.forEach((existingPub) => {
+          if (existingPub.section_type === 'Other Publications') {
+            publicationsToArchive.push(existingPub.user_cv_data_id);
+            console.log(`Marking for archive: "${existingPub.data_details.title}" (ID: ${existingPub.user_cv_data_id}) from Other Publications section`);
+          } else {
+            console.log(`Not archiving: "${existingPub.data_details.title}" from ${existingPub.section_type} section`);
+          }
+        });
+      } else {
+        // This is a new publication, use as-is
+        publicationsToAdd.push(publication);
+      }
+    }
+
+    // Process each selected existing publication (create duplicates)
+    for (const publicationId of selectedExistingPublications) {
+      const existingPublication = allExistingPublications.find(pub => pub.user_cv_data_id === publicationId);
+      if (existingPublication) {
+        // Create a copy of the existing publication data without the user_cv_data_id
+        const { user_cv_data_id, ...publicationDataWithoutId } = existingPublication;
+        const duplicatePublication = {
+          ...existingPublication.data_details,
+          // Add any additional metadata if needed
+          publication_type: existingPublication.data_details.publication_type || "Journal",
+        };
+        publicationsToAdd.push(duplicatePublication);
+        console.log(`Adding duplicate of existing publication: ${existingPublication.data_details.title}`);
+      }
+    }
+
+    // Archive publications from "Other Publications" section before adding new ones
+    if (publicationsToArchive.length > 0) {
+      console.log(`=== ARCHIVING PROCESS ===`);
+      console.log(`Archiving ${publicationsToArchive.length} publications from Other Publications section:`);
+      console.log(`Publication IDs to archive: ${publicationsToArchive.join(', ')}`);
+      
+      try {
+        for (const publicationId of publicationsToArchive) {
+          await updateUserCVDataArchive(publicationId, true);
+          console.log(`✓ Successfully archived publication ID: ${publicationId}`);
+        }
+        console.log(`=== ARCHIVING COMPLETE ===`);
+      } catch (error) {
+        console.error("Error archiving publications from Other Publications section:", error);
+        // Continue with adding new publications even if archiving fails
+      }
+    } else {
+      console.log("No publications from Other Publications section need archiving");
+    }
+
     if (publicationsToAdd.length > 0) {
       await addPublicationsData(publicationsToAdd);
     }
+  };
+
+  // Function to merge Scopus publication data with existing publication data
+  const mergePublicationData = (scopusPublication, existingPublications) => {
+    // Start with all Scopus fields as the base (preserve staging metadata)
+    const mergedPublication = { ...scopusPublication };
+
+    // Collect unique fields from all existing publications that aren't in Scopus
+    const scopusFields = new Set(
+      Object.keys(scopusPublication).filter(
+        (key) =>
+          scopusPublication[key] !== null &&
+          scopusPublication[key] !== undefined &&
+          scopusPublication[key] !== "" &&
+          !key.startsWith("_staging") && // Exclude staging metadata from field comparison
+          key !== "originalIndex"
+      )
+    );
+
+    // Define field priorities - these fields from existing publications should be preferred if they're more complete
+    const preferExistingFields = [
+      "citation",
+      "notes",
+      "comments",
+      "additional_info",
+      "publication_type",
+      "category",
+      "tags",
+      "custom_field",
+    ];
+
+    // Define fields that should be combined rather than replaced
+    const combinableFields = ["keywords", "subjects", "authors"];
+
+    let addedFieldsCount = 0;
+    let updatedFieldsCount = 0;
+
+    existingPublications.forEach((existingPub, index) => {
+      const existingData = existingPub.data_details;
+
+      console.log(
+        `Processing existing publication ${index + 1}/${existingPublications.length}:`,
+        existingData.title?.substring(0, 50)
+      );
+
+      // Iterate through existing publication fields
+      Object.keys(existingData).forEach((field) => {
+        const existingValue = existingData[field];
+        const scopusValue = mergedPublication[field];
+
+        // Skip if existing value is empty or null, or if it's staging metadata
+        if (
+          !existingValue ||
+          existingValue === "" ||
+          existingValue === null ||
+          existingValue === undefined ||
+          existingValue.toString().trim() === "" ||
+          field.startsWith("_staging") ||
+          field === "originalIndex"
+        ) {
+          return;
+        }
+
+        // Case 1: Field doesn't exist in Scopus - add it
+        if (
+          !scopusFields.has(field) ||
+          !scopusValue ||
+          scopusValue === "" ||
+          scopusValue === null ||
+          scopusValue === undefined
+        ) {
+          mergedPublication[field] = existingValue;
+          addedFieldsCount++;
+          console.log(`Added field '${field}':`, existingValue.toString().substring(0, 100));
+          return;
+        }
+
+        // Case 2: Field exists in both, check if we should prefer existing
+        if (preferExistingFields.includes(field)) {
+          if (existingValue.toString().length > scopusValue.toString().length) {
+            mergedPublication[field] = existingValue;
+            updatedFieldsCount++;
+            console.log(`Updated field '${field}' with existing (longer):`, existingValue.toString().substring(0, 100));
+          }
+          return;
+        }
+
+        // Case 3: Combinable fields - merge them intelligently
+        if (combinableFields.includes(field)) {
+          const combined = combineFieldValues(scopusValue, existingValue, field);
+          if (combined !== scopusValue) {
+            mergedPublication[field] = combined;
+            updatedFieldsCount++;
+            console.log(`Combined field '${field}':`, combined.toString().substring(0, 100));
+          }
+          return;
+        }
+
+        // Case 4: Default - keep Scopus value but consider length and completeness
+        if (existingValue.toString().length > scopusValue.toString().length * 1.2) {
+          mergedPublication[field] = existingValue;
+          updatedFieldsCount++;
+          console.log(
+            `Updated field '${field}' with existing (much longer):`,
+            existingValue.toString().substring(0, 100)
+          );
+        }
+      });
+    });
+
+    // Log the merge operation for debugging
+    console.log("Merge operation completed:", {
+      scopusFields: Array.from(scopusFields),
+      originalScopusFields: Object.keys(scopusPublication).length,
+      mergedFields: Object.keys(mergedPublication).length,
+      addedFields: addedFieldsCount,
+      updatedFields: updatedFieldsCount,
+      existingPublicationsProcessed: existingPublications.length,
+      hasStagingId: !!mergedPublication._staging_id,
+    });
+
+    return mergedPublication;
+  };
+
+  // Helper function to intelligently combine field values
+  const combineFieldValues = (scopusValue, existingValue, fieldName) => {
+    if (!scopusValue) return existingValue;
+    if (!existingValue) return scopusValue;
+
+    const scopusStr = scopusValue.toString().toLowerCase();
+    const existingStr = existingValue.toString().toLowerCase();
+
+    // If values are very similar, prefer the longer one
+    if (scopusStr.includes(existingStr) || existingStr.includes(scopusStr)) {
+      return scopusValue.toString().length > existingValue.toString().length ? scopusValue : existingValue;
+    }
+
+    // For authors, try to combine if they seem to be different representations
+    if (fieldName === "authors") {
+      // Simple combination - could be made more sophisticated
+      if (!scopusStr.includes(existingStr.split(",")[0]) && !existingStr.includes(scopusStr.split(",")[0])) {
+        return `${scopusValue}; ${existingValue}`;
+      }
+    }
+
+    // For keywords and subjects, combine unique values
+    if (fieldName === "keywords" || fieldName === "subjects") {
+      const scopusItems = scopusValue
+        .toString()
+        .split(/[,;]/)
+        .map((s) => s.trim().toLowerCase());
+      const existingItems = existingValue
+        .toString()
+        .split(/[,;]/)
+        .map((s) => s.trim().toLowerCase());
+      const uniqueItems = [...new Set([...scopusItems, ...existingItems])];
+      return uniqueItems.join(", ");
+    }
+
+    // Default: return the original Scopus value
+    return scopusValue;
   };
 
   // Helper function to parse publication year and month from various date formats
@@ -654,14 +984,16 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
 
       {showSelectionModal && (
         <PublicationsSelectModal
+          onClose={onClose}
           allFetchedPublications={allFetchedPublications}
-          existingPublications={existingPublications}
+          existingPublications={allExistingPublications} // Pass combined list so modal can identify Other Publications
           matchedPublications={matchedPublications}
           selectedPublications={selectedPublications}
           addingData={addingData}
           getPublicationDateInfo={getPublicationDateInfo}
           handleSelectPublication={handleSelectPublication}
           handleSelectAll={handleSelectAll}
+          handleBulkSelectPublications={handleBulkSelectPublications}
           handleAddSelected={handleAddSelected}
           setShowSelectionModal={setShowSelectionModal}
           extractDOIsFromCitation={extractDOIsFromCitation}

@@ -62,6 +62,7 @@ import {
   ADD_USER_DECLARATION,
   ADD_BATCHED_USER_CV_DATA,
   ADD_STAGING_SCOPUS_PUBLICATIONS,
+  UPDATE_STAGING_SCOPUS_PUBLICATIONS,
   DELETE_USER_DECLARATION,
   UPDATE_USER_DECLARATION,
   ADD_SECTION,
@@ -714,6 +715,14 @@ export const getStagingScopusPublications = async (user_id = null, is_new = null
     offset
   });
   return results["data"]["getStagingScopusPublications"];
+};
+
+export const updateStagingScopusPublications = async (publication_ids, is_new) => {
+  const results = await executeGraphql(UPDATE_STAGING_SCOPUS_PUBLICATIONS, {
+    publication_ids,
+    is_new
+  });
+  return results["data"]["updateStagingScopusPublications"];
 };
 
 /**

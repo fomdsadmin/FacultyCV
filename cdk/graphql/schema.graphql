@@ -413,6 +413,11 @@ editable: Boolean!,
 		publications: [AWSJSON!]!
 	): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+	updateStagingScopusPublications(
+		publication_ids: [String!]!,
+		is_new: Boolean!
+	): String
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	updateUserCVData(
 		user_cv_data_id: String!,
 		data_details: AWSJSON,
