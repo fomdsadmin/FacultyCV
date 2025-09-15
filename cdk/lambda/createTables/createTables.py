@@ -216,6 +216,16 @@ def lambda_handler(event, context):
     query = createQuery('declarations', columns)
     cursor.execute(query)
     
+    # Create Scopus Publications Table
+    columns = []
+    columns.append(createColumn('id', 'UUID', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('user_id', 'TEXT', 'NOT NULL', False))
+    columns.append(createColumn('data_details', 'JSON', '', False))
+    columns.append(createColumn('is_new', 'BOOLEAN', 'DEFAULT TRUE', False))
+    columns.append(createColumn('fetched_at', 'TIMESTAMP', 'DEFAULT CURRENT_TIMESTAMP', True))
+    query = createQuery('scopus_publications', columns)
+    cursor.execute(query)
+    
     # Create Audit View Table
     columns = []
     columns.append(createColumn('log_view_id', 'serial', 'PRIMARY KEY', False))

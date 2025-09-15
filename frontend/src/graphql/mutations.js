@@ -115,6 +115,18 @@ export const ADD_BATCHED_USER_CV_DATA = `
     }
 `;
 
+export const ADD_STAGING_SCOPUS_PUBLICATIONS = `
+    mutation AddStagingScopusPublications(
+        $user_id: String!,
+        $publications: [AWSJSON!]!
+    ) {
+        addStagingScopusPublications(
+            user_id: $user_id,
+            publications: $publications
+        )
+    }
+`;
+
 export const addUniversityInfoMutation = (type, value) => `
     mutation AddUniversityInfo {
         addUniversityInfo(
