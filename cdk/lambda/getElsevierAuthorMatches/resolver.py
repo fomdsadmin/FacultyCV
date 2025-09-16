@@ -15,15 +15,18 @@ def getCredentials():
 
 def getPotentialMatches(arguments):
     credentials = getCredentials()
-    last_name = arguments['last_name']
-    first_name = arguments['first_name']
-    inst = arguments['institution_name'] if 'institution_name' in arguments else None
+    last_name_arg = arguments['last_name']
+    first_name_arg = arguments.get('first_name', None)
+    inst = arguments.get('institution_name', None)
+
     potential_match_list = []
     query = []
-    if last_name:
-        query.append(f"authlast({last_name})")
-    if first_name:
-        query.append(f"authfirst({first_name})")
+
+    # Build query string for Scopus API
+    if last_name_arg:
+        query.append(f"authlast({last_name_arg})")
+    if first_name_arg:
+        query.append(f"authfirst({first_name_arg})")
     if inst:
         query.append(f"affil({inst})")
 
@@ -40,62 +43,62 @@ def getPotentialMatches(arguments):
 
     results = requests.get(url=URL, params=params, headers=headers).json()
 
-    num_results = int(results['search-results']['opensearch:totalResults'])
-    entries = results['search-results']['entry']
-    if num_results == 0:
-        return potential_match_list
-    else:
-        for entry in entries:
-            # NAME
-            last_name = entry['preferred-name']['surname'] if 'surname' in entry['preferred-name'] else ''
-            first_name = entry['preferred-name']['given-name'] if 'given-name' in entry['preferred-name'] else ''
+    num_results = int(results['search-results'].get('opensearch:totalResults', 0))
+    entries = results['search-results'].get('entry', [])
 
-            # NAME VARIANTS
-            name_variants_list = []
-            if 'name-variant' in entry:
-                for name_variant in entry['name-variant']:
-                    name_variants_list.append(name_variant['given-name'] + " " + name_variant['surname'])
-            name_variants = ''
-            for name_variant in name_variants_list:
-                name_variants += name_variant + ", "
-
-            # SCOPUS
-            scopus_id = entry['dc:identifier'].split(':')[1] if 'dc:identifier' in entry else ''
-
-            # ORCID
-            orcid = ''
-            if 'orcid' in entry:
-                orcid = entry['orcid']
-
-            # SUBJECTS
-            subject_list = []
-            if 'subject-area' in entry:
-                subject_list = [ entry['subject-area'] ] if type(entry['subject-area']) is not list else entry['subject-area']
-            subjects = ""
-            for subject in subject_list:
-                subjects = subjects + subject['$'] + ", "
-
-            # AFFILIATIONS
-            curr_affil = ""
-            if 'affiliation-current' in entry:
-                curr_affil = f"{entry['affiliation-current']['affiliation-name']}, {entry['affiliation-current']['affiliation-city']}"  
-
-            result_object = {}
-            result_object['last_name'] = last_name
-            result_object['first_name'] = first_name
-            if name_variants != '':
-                result_object['name_variants'] = name_variants[:-2]
-            if subjects != '':
-                result_object['subjects'] = subjects[:-2]
-            if curr_affil != '':
-                result_object['current_affiliation'] = curr_affil
-            result_object['scopus_id'] = scopus_id
-            if orcid != '':
-                result_object['orcid'] = orcid
-
-            potential_match_list.append(result_object)
+    if num_results == 0 or not entries:
         return potential_match_list
 
+    for entry in entries:
+        # Preferred name
+        last_name_result = entry['preferred-name'].get('surname', '')
+        first_name_result = entry['preferred-name'].get('given-name', '')
+
+        # Strict filter: last name
+        if last_name_arg.lower() != last_name_result.lower():
+            continue
+
+        # Strict filter: first name
+        if first_name_arg:
+         arg_norm = first_name_arg.replace(".", "").replace(" ", "").lower()
+         given_norm = first_name_result.replace(".", "").replace(" ", "").lower()
+         if not given_norm.startswith(arg_norm):
+            continue
+
+        # SCOPUS ID
+        scopus_id = entry.get('dc:identifier', '').split(':')[1] if 'dc:identifier' in entry else ''
+
+        # ORCID
+        orcid = entry.get('orcid', '')
+
+        # SUBJECTS
+        subject_list = entry.get('subject-area', [])
+        if type(subject_list) is dict:
+            subject_list = [subject_list]
+        subjects = ", ".join([s['$'] for s in subject_list]) if subject_list else ''
+
+        # CURRENT AFFILIATION
+        curr_affil_data = entry.get('affiliation-current', {})
+        curr_affil = ""
+        if curr_affil_data:
+            curr_affil = f"{curr_affil_data.get('affiliation-name','')}, {curr_affil_data.get('affiliation-city','')}"
+
+        # Build result object
+        result_object = {
+            'last_name': last_name_result,
+            'first_name': first_name_result,
+            'scopus_id': scopus_id
+        }
+        if subjects:
+            result_object['subjects'] = subjects
+        if curr_affil:
+            result_object['current_affiliation'] = curr_affil
+        if orcid:
+            result_object['orcid'] = orcid
+
+        potential_match_list.append(result_object)
+
+    return potential_match_list
 
 def lambda_handler(event, context):
     return getPotentialMatches(event['arguments'])
