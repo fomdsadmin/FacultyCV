@@ -53,9 +53,9 @@ const FacultyMenu = ({
   }, [isCollapsed, userInfo]);
 
   return (
-    <div className={`${isCollapsed ? "pr-24" : "pr-60"}`}>
+    <div className={`mt-[-2px] ${isCollapsed ? "pr-24" : "pr-60"}`}>
       <div
-        className={`fixed top-18 min-h-[100vh] left-0 z-50 bg-white transition-all duration-150 ease-in-out py-2 border-r-2 border-neutral max-h-[calc(100vh-5rem)] overflow-y-auto
+        className={`fixed min-h-[100vh] left-0  z-50 bg-white transition-all duration-150 ease-in-out py-2 border-r-2 border-neutral max-h-[calc(100vh-5rem)] overflow-y-auto
         ${isCollapsed ? "w-18" : "w-60"}
       `}
         onMouseEnter={() => setIsCollapsed(false)}
@@ -65,7 +65,7 @@ const FacultyMenu = ({
         <ul className="menu rounded-box flex-shrink-0">
           <li
             className={`mb-2 ${
-              location.pathname === "/faculty/dashboard" ? "bg-gray-200 rounded-lg" : ""
+              location.pathname === "/faculty/dashboard" ? "rounded-lg" : ""
             }`}
           >
             <Link to="/faculty/dashboard">
