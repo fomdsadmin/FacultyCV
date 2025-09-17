@@ -65,7 +65,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('cwl_username', 'varchar', '', False))
     columns.append(createColumn('employee_id', 'varchar', '', False))
     columns.append(createColumn('vpp_username', 'varchar', '', False))
-    columns.append(createColumn('active', 'BOOLEAN', 'DEFAULT false', True))
+    columns.append(createColumn('active', 'BOOLEAN', 'DEFAULT false', False))
+    columns.append(createColumn('terminated', 'BOOLEAN', 'DEFAULT false', True))
     query = createQuery('users', columns)
     cursor.execute(query)
 

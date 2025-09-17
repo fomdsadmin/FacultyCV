@@ -34,6 +34,7 @@ def lambda_handler(event, context):
         'obgyn/UBCCourses/',
         'obgyn/VisitOtherTeaching/',
         'obgyn/Affiliations/',
+        'obgyn/HospitalAffiliations/',
         'obgyn/Users/'
     ]
     for folder in folders:
