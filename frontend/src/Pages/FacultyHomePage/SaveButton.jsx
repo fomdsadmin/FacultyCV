@@ -4,6 +4,7 @@ import { updateUser, updateUserAffiliations, getUser } from "../../graphql/graph
 import { useFaculty } from "./FacultyContext";
 import { useLocation } from "react-router-dom"; // <-- import useLocation
 import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext";
+import { useNotification } from "Contexts/NotificationContext";
 
 const SaveButton = ({ affiliationsData }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -12,6 +13,8 @@ const SaveButton = ({ affiliationsData }) => {
   const { setPrevUserInfo, change } = useFaculty();
   const location = useLocation(); // <-- get location
   const { logAction } = useAuditLogger();
+  const { setNotification } = useNotification();
+
 
 
   // Dummy function for affiliations save
@@ -53,6 +56,7 @@ const SaveButton = ({ affiliationsData }) => {
       if (updatedUser) {
         setUserInfo(updatedUser);
       }
+      setNotification({message: "Successfully saved!"});
       setIsSubmitting(false);
     } catch (error) {
       console.error("Error updating user:", error);
