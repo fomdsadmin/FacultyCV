@@ -50,11 +50,12 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
 
       if (stagingResponse && stagingResponse.publications) {
         // Extract the data_details from each staging publication but preserve staging metadata
-        const publications = stagingResponse.publications.map((pub, index) => {
+        let publications = stagingResponse.publications.map((pub, index) => {
           let dataDetails = pub.data_details;
           if (typeof dataDetails === "string") {
             try {
               dataDetails = JSON.parse(dataDetails);
+
             } catch (error) {
               console.error("Error parsing data_details:", error);
               dataDetails = {};
@@ -68,6 +69,9 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
             originalIndex: index, // Add original index for tracking
           };
         });
+        // Filter out non-new publications
+        publications = publications.filter((pub) => pub._staging_is_new);
+
         console.log(`Retrieved ${publications.length} publications from staging table`);
 
         setAllFetchedPublications(publications);
@@ -241,7 +245,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         if (fetchedPub.title && existingPub.data_details.title) {
           const similarity = calculateTitleSimilarity(fetchedPub.title, existingPub.data_details.title);
 
-          if (similarity > 0.8) {
+          if (similarity > 0.95) {
             allMatches.push({
               existingPublication: existingPub,
               similarity: similarity,
@@ -975,7 +979,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
           ) : fetchingData ? (
             <div className="flex flex-col items-center justify-center w-full mt-5 mb-5">
               <div className="block text-lg font-bold mb-2 mt-6 text-zinc-600">
-                Retrieving publications from staging table...
+                Fetching and processing publications...
               </div>
             </div>
           ) : null}
