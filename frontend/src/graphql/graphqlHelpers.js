@@ -36,6 +36,7 @@ import {
   getAuditViewQuery,
   getUserAffiliationsQuery,
   GET_PRESIGNED_GOTENBERG_BUCKET_URL,
+  GET_STAGING_SCOPUS_PUBLICATIONS,
   getDepartmentAffiliationsQuery,
 } from "./queries";
 import {
@@ -60,6 +61,8 @@ import {
   updateLatexConfigurationMutation,
   ADD_USER_DECLARATION,
   ADD_BATCHED_USER_CV_DATA,
+  ADD_STAGING_SCOPUS_PUBLICATIONS,
+  UPDATE_STAGING_SCOPUS_PUBLICATIONS,
   DELETE_USER_DECLARATION,
   UPDATE_USER_DECLARATION,
   ADD_SECTION,
@@ -694,6 +697,32 @@ export const addUserCVData = async (user_id, data_section_id, data_details, edit
 export const addBatchedUserCVData = async (input) => {
   const results = await executeGraphql(ADD_BATCHED_USER_CV_DATA, input);
   return results["data"]["addBatchedUserCVData"];
+};
+
+export const addStagingScopusPublications = async (user_id, publications) => {
+  const results = await executeGraphql(ADD_STAGING_SCOPUS_PUBLICATIONS, {
+    user_id,
+    publications
+  });
+  return results["data"]["addStagingScopusPublications"];
+};
+
+export const getStagingScopusPublications = async (user_id = null, is_new = null, limit = null, offset = 0) => {
+  const results = await executeGraphql(GET_STAGING_SCOPUS_PUBLICATIONS, {
+    user_id,
+    is_new,
+    limit,
+    offset
+  });
+  return results["data"]["getStagingScopusPublications"];
+};
+
+export const updateStagingScopusPublications = async (publication_ids, is_new) => {
+  const results = await executeGraphql(UPDATE_STAGING_SCOPUS_PUBLICATIONS, {
+    publication_ids,
+    is_new
+  });
+  return results["data"]["updateStagingScopusPublications"];
 };
 
 /**

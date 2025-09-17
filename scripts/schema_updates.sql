@@ -69,3 +69,18 @@ ADD COLUMN IF NOT EXISTS vpp_username VARCHAR DEFAULT '';
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT FALSE;
 -- END
+
+-- September 15th: to be done
+CREATE TABLE scopus_publications (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    data_details JSON,
+    is_new BOOLEAN DEFAULT TRUE,
+    fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+-- END
+
+-- September 18th: to be done
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS terminated BOOLEAN DEFAULT FALSE
+-- END

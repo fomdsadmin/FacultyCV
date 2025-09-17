@@ -698,3 +698,31 @@ export const GET_PRESIGNED_GOTENBERG_BUCKET_URL = `
     }
 `;
 
+export const GET_STAGING_SCOPUS_PUBLICATIONS = `
+    query GetStagingScopusPublications(
+        $user_id: String,
+        $is_new: Boolean,
+        $limit: Int,
+        $offset: Int
+    ) {
+        getStagingScopusPublications(
+            user_id: $user_id,
+            is_new: $is_new,
+            limit: $limit,
+            offset: $offset
+        ) {
+            publications {
+                id
+                user_id
+                data_details
+                is_new
+                fetched_at
+            }
+            total_count
+            returned_count
+            offset
+            error
+        }
+    }
+`;
+

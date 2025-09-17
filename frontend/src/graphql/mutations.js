@@ -115,6 +115,30 @@ export const ADD_BATCHED_USER_CV_DATA = `
     }
 `;
 
+export const ADD_STAGING_SCOPUS_PUBLICATIONS = `
+    mutation AddStagingScopusPublications(
+        $user_id: String!,
+        $publications: [AWSJSON!]!
+    ) {
+        addStagingScopusPublications(
+            user_id: $user_id,
+            publications: $publications
+        )
+    }
+`;
+
+export const UPDATE_STAGING_SCOPUS_PUBLICATIONS = `
+    mutation UpdateStagingScopusPublications(
+        $publication_ids: [String!]!,
+        $is_new: Boolean!
+    ) {
+        updateStagingScopusPublications(
+            publication_ids: $publication_ids,
+            is_new: $is_new
+        )
+    }
+`;
+
 export const addUniversityInfoMutation = (type, value) => `
     mutation AddUniversityInfo {
         addUniversityInfo(

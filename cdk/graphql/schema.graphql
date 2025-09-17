@@ -209,6 +209,22 @@ type TotalScopusPublications {
 	error: String
 }
 
+type StagingScopusPublication {
+	id: String!
+	user_id: String!
+	data_details: AWSJSON!
+	is_new: Boolean!
+	fetched_at: String!
+}
+
+type StagingScopusPublicationsResponse {
+	publications: [StagingScopusPublication!]!
+	total_count: Int!
+	returned_count: Int!
+	offset: Int!
+	error: String
+}
+
 type UniversityInfo {
 	university_info_id: String!
 	type: String
@@ -392,6 +408,16 @@ editable: Boolean!,
 		editable: Boolean!
 	): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+	addStagingScopusPublications(
+		user_id: String!,
+		publications: [AWSJSON!]!
+	): String
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+	updateStagingScopusPublications(
+		publication_ids: [String!]!,
+		is_new: Boolean!
+	): String
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	updateUserCVData(
 		user_cv_data_id: String!,
 		data_details: AWSJSON,
@@ -538,6 +564,13 @@ type Query {
 		start_date: String,
 		end_date: String
 	): AuditViewResult
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+	getStagingScopusPublications(
+		user_id: String,
+		is_new: Boolean,
+		limit: Int,
+		offset: Int
+	): StagingScopusPublicationsResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 }
 type Subscription {

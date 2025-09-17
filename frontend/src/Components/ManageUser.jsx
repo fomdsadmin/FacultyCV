@@ -11,6 +11,7 @@ import { IoMdAddCircleOutline } from "react-icons/io";
 import DepartmentAdminUserInsights from "../Views/DepartmentAdminUserInsights"; // Use the same insights component
 import Orcid from "../Pages/FacultyHomePage/Profile/Linkages/Orcid/Orcid";
 import Scopus from "../Pages/FacultyHomePage/Profile/Linkages/Scopus/Scopus";
+import ScopusPublicationsModal from "./ScopusPublicationsModal";
 
 const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
   const [currentUser, setCurrentUser] = useState(user);
@@ -18,6 +19,7 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
   const [isChangeRoleModalOpen, setIsChangeRoleModalOpen] = useState(false);
   const [isUpdateUserModalOpen, setIsUpdateUserModalOpen] = useState(false);
+  const [isScopusPublicationsModalOpen, setIsScopusPublicationsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [pendingConnections, setPendingConnections] = useState([]);
   const [confirmedConnections, setConfirmedConnections] = useState([]);
@@ -138,6 +140,10 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
     setIsUpdateUserModalOpen(true);
   };
 
+  const handleFetchScopusPublications = () => {
+    setIsScopusPublicationsModalOpen(true);
+  };
+
   return (
     <div className="mx-auto px-8 py-2 flex flex-col gap-2">
       {/* Header */}
@@ -216,6 +222,14 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
             </button>
             <button onClick={handleChangeRole} className="btn btn-info px-4 text-white font-semibold">
               Change Role
+            </button>
+            <button 
+              onClick={handleFetchScopusPublications} 
+              className="btn btn-success px-4 text-white font-semibold"
+              disabled={!currentUser.scopus_id}
+              title={!currentUser.scopus_id ? "No Scopus ID found for this user" : "Fetch Scopus Publications"}
+            >
+              Fetch Publications
             </button>
           </div>
         </div>
@@ -352,6 +366,11 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
                   onUpdateSuccess={fetchAllUsers}
                 />
               )}
+              <ScopusPublicationsModal
+                user={currentUser}
+                isOpen={isScopusPublicationsModalOpen}
+                onClose={() => setIsScopusPublicationsModalOpen(false)}
+              />
             </div>
           )}
         </div>

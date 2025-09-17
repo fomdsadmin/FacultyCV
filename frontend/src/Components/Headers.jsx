@@ -299,7 +299,7 @@ const Header = ({ assistantUserInfo }) => {
           </div>
         </div>
         {isManagingUser && (
-          <div className="sticky top-[9vh] z-10">
+          <div className="sticky top-[10vh] z-10">
             <ManagingUserAlert />
           </div>
         )}
