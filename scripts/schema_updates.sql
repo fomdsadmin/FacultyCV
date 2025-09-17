@@ -79,3 +79,8 @@ CREATE TABLE scopus_publications (
     fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- END
+
+-- September 18th: to be done
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS terminated BOOLEAN DEFAULT FALSE
+-- END

@@ -52,21 +52,21 @@ export const DeactivatedUsersModal = ({
   userDepartment = "",
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  
+
   if (!isOpen) return null;
 
   // Get unique departments for filter - handle role-based restrictions
   let departments = [];
   if (userRole === "Admin" || userRole === "Admin-All") {
     // Show all departments
-    departments = Array.from(new Set(deactivatedUsers.map(user => user.primary_department).filter(Boolean))).sort();
+    departments = Array.from(new Set(deactivatedUsers.map((user) => user.primary_department).filter(Boolean))).sort();
   } else if (userRole && userRole.startsWith("Admin-")) {
     // Show only the admin's department
     const adminDept = userRole.replace("Admin-", "");
-    departments = deactivatedUsers.some(user => user.primary_department === adminDept) ? [adminDept] : [];
+    departments = deactivatedUsers.some((user) => user.primary_department === adminDept) ? [adminDept] : [];
   } else {
     // Fallback to all departments for other roles
-    departments = Array.from(new Set(deactivatedUsers.map(user => user.primary_department).filter(Boolean))).sort();
+    departments = Array.from(new Set(deactivatedUsers.map((user) => user.primary_department).filter(Boolean))).sort();
   }
 
   const filteredDeactivatedUsers = deactivatedUsers
@@ -113,10 +113,12 @@ export const DeactivatedUsersModal = ({
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-3">Inactive Members ({filteredDeactivatedUsers.length} of {deactivatedUsers.length})</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-3">
+              Inactive Members ({filteredDeactivatedUsers.length} of {deactivatedUsers.length})
+            </h3>
             {filteredDeactivatedUsers.length > 0 && (
               <button
-                onClick={() => onActivateAll(filteredDeactivatedUsers.map(user => user.user_id))}
+                onClick={() => onActivateAll(filteredDeactivatedUsers.map((user) => user.user_id))}
                 className="btn btn-primary btn-md text-white flex items-center gap-2 shadow-lg"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,16 +158,14 @@ export const DeactivatedUsersModal = ({
                 />
               </svg>
             </label>
-            <select 
-              className="select select-bordered"
-              value={departmentFilter}
-              onChange={onDepartmentChange}
-            >
+            <select className="select select-bordered" value={departmentFilter} onChange={onDepartmentChange}>
               <option value="">All Departments ({deactivatedUsers.length})</option>
-              {departments.map(dept => {
-                const deptCount = deactivatedUsers.filter(user => user.primary_department === dept).length;
+              {departments.map((dept) => {
+                const deptCount = deactivatedUsers.filter((user) => user.primary_department === dept).length;
                 return (
-                  <option key={dept} value={dept}>{dept} ({deptCount})</option>
+                  <option key={dept} value={dept}>
+                    {dept} ({deptCount})
+                  </option>
                 );
               })}
             </select>
@@ -185,7 +185,9 @@ export const DeactivatedUsersModal = ({
                   />
                 </svg>
                 <p className="mt-2 text-sm text-gray-600">
-                  {searchTerm || departmentFilter ? "No inactive members found matching your criteria." : "No inactive members found."}
+                  {searchTerm || departmentFilter
+                    ? "No inactive members found matching your criteria."
+                    : "No inactive members found."}
                 </p>
               </div>
             </div>
@@ -203,6 +205,9 @@ export const DeactivatedUsersModal = ({
                       </th>
                       <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
                         Department
+                      </th>
+                      <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                        CWL
                       </th>
                       <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide">
                         Actions
@@ -232,9 +237,12 @@ export const DeactivatedUsersModal = ({
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className="text-sm font-medium text-gray-700">
-                            {user.primary_department || (
-                              <span className="text-gray-400 italic">Not specified</span>
-            )}
+                            {user.primary_department || <span className="text-gray-400 italic">Not specified</span>}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-sm font-medium text-gray-700">
+                            {user.cwl_username || <span className="text-gray-400 italic">Not specified</span>}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -251,7 +259,12 @@ export const DeactivatedUsersModal = ({
                                 className="btn btn-error btn-sm text-white flex items-center gap-1"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
                                 </svg>
                                 Delete
                               </button>
@@ -276,7 +289,12 @@ export const DeactivatedUsersModal = ({
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                   <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
                   </svg>
                 </div>
                 <div>
@@ -284,21 +302,22 @@ export const DeactivatedUsersModal = ({
                   <p className="text-sm text-gray-500">This action cannot be undone</p>
                 </div>
               </div>
-              
+
               <div className="mb-6">
                 <p className="text-gray-700">
-                  Are you sure you want to permanently delete user <strong>{showDeleteConfirm.first_name} {showDeleteConfirm.last_name}</strong>?
+                  Are you sure you want to permanently delete user{" "}
+                  <strong>
+                    {showDeleteConfirm.first_name} {showDeleteConfirm.last_name}
+                  </strong>
+                  ?
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
                   This will completely remove their account and all associated data from the database.
                 </p>
               </div>
-              
+
               <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(null)}
-                  className="btn btn-secondary"
-                >
+                <button onClick={() => setShowDeleteConfirm(null)} className="btn btn-secondary">
                   Cancel
                 </button>
                 <button

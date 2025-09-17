@@ -55,7 +55,6 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     filterAllUsers();
   }, [users]);
 
-
   useEffect(() => {
     setAffiliations(departmentAffiliations);
   }, [departmentAffiliations]);
@@ -158,7 +157,6 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   );
 
   // Tab bar for roles (copied and adapted from DepartmentAdminUsers)
-
 
   // When user clicks a tab, update the activeTab
   const handleTabSelect = (selectedRole) => {
@@ -317,7 +315,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
 
   const handleActivateAll = (user_ids) => {
     const userCount = user_ids.length;
-    
+
     // Show confirmation dialog
     showModal(
       "Confirm Bulk User Activation",
@@ -334,11 +332,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
           fetchAllUsers();
 
           // Show success message
-          showModal(
-            "Users Activated Successfully",
-            `${userCount} users have been successfully activated.`,
-            "success"
-          );
+          showModal("Users Activated Successfully", `${userCount} users have been successfully activated.`, "success");
         } catch (error) {
           console.error("Error activating users:", error);
           showModal("Error", "Failed to activate users. Please try again.", "error");
@@ -350,29 +344,26 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const handleDeleteUser = async (user) => {
     try {
       console.log("Deleting user:", user);
-      
+
       // Call the removeUser function to permanently delete from database
       const result = await removeUser(user.user_id);
-      
+
       // Log the deletion action
-      await logAction(
-        AUDIT_ACTIONS.DELETE_USER || 'DELETE_USER',
-        {
-          userId: user.user_id,
-          name: `${user.first_name} ${user.last_name}`,
-        }
-      );
-      
+      await logAction(AUDIT_ACTIONS.DELETE_USER || "DELETE_USER", {
+        userId: user.user_id,
+        name: `${user.first_name} ${user.last_name}`,
+      });
+
       // Refresh the users list
       fetchAllUsers();
-      
+
       // Show success message
       showModal(
         "User Deleted Successfully",
         `User ${user.first_name} ${user.last_name} has been permanently deleted.`,
         "success"
       );
-      
+
       console.log("User deletion result:", result);
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -503,10 +494,10 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                     </svg>
                   </label>
                 </div>
-                <AdminUserTabs 
-                  filters={filters} 
-                  activeFilter={activeTab} 
-                  onSelect={handleTabSelect} 
+                <AdminUserTabs
+                  filters={filters}
+                  activeFilter={activeTab}
+                  onSelect={handleTabSelect}
                   users={approvedUsers}
                   searchTerm={searchTerm}
                   departmentFilter={departmentFilter}
@@ -530,6 +521,9 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                           </th>
                           <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Department
+                          </th>
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                            CWL
                           </th>
                           <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
                             Primary Rank
@@ -564,6 +558,15 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                               <span className="text-sm font-medium text-gray-700">
                                 {user.primary_department ? (
                                   user.primary_department
+                                ) : (
+                                  <span className="text-gray-400 italic">Not specified</span>
+                                )}
+                              </span>
+                            </td>
+                            <td className="px-4 py-5 text-center w-1/6">
+                              <span className="text-sm font-medium text-gray-700">
+                                {user.cwl_username ? (
+                                  user.cwl_username
                                 ) : (
                                   <span className="text-gray-400 italic">Not specified</span>
                                 )}
@@ -609,11 +612,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <ManageUser 
-                  user={activeUser} 
-                  onBack={handleBack} 
-                  fetchAllUsers={fetchAllUsers}
-                />
+                <ManageUser user={activeUser} onBack={handleBack} fetchAllUsers={fetchAllUsers} />
               </div>
             )}
           </div>
