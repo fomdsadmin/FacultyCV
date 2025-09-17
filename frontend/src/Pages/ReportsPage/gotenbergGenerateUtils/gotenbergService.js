@@ -31,10 +31,32 @@ export const checkPdfComplete = async (key) => {
       return false;
     }
 
-    console.log('JSON parse failed, using string matching');
     const isComplete = tags.includes('isPdfComplete') && tags.includes('Value=true');
     console.log('PDF complete status from string matching:', isComplete);
     return isComplete;
+
+  } catch (error) {
+    console.log('PDF not ready yet or error checking HTML tags:', error);
+    return false;
+  }
+};
+
+// Check if PDF is complete by checking tags on the HTML file
+export const checkPdfHasError = async (key) => {
+  try {
+    const htmlKey = getHtmlKey(key);
+    console.log('Checking PDF for errors via HTML file tags for key:', htmlKey);
+
+    const tags = await getPresignedGotenbergBucketUrl(htmlKey, 'GET_TAGS');
+    console.log('HTML file tags response for PDF status:', tags);
+
+    if (!tags) {
+      console.log('No HTML tags response - PDF not ready');
+      return false;
+    }
+
+    const hasError = tags.includes('isPdfComplete') && tags.includes('Value=error');
+    return hasError;
 
   } catch (error) {
     console.log('PDF not ready yet or error checking HTML tags:', error);
@@ -80,10 +102,32 @@ export const checkDocxComplete = async (key) => {
       return false;
     }
 
-    console.log('JSON parse failed, using string matching for DOCX');
     const isComplete = tags.includes('isDocxComplete') && tags.includes('Value=true');
     console.log('DOCX complete status from string matching:', isComplete);
     return isComplete;
+
+  } catch (error) {
+    console.log('DOCX not ready yet or error checking PDF tags:', error);
+    return false;
+  }
+};
+
+// Check if DOCX has an error
+export const checkDocxHasError = async (key) => {
+  try {
+    const pdfKey = getPdfKey(key);
+    console.log('Checking DOCX completion via PDF file tags for key:', pdfKey);
+
+    const tags = await getPresignedGotenbergBucketUrl(pdfKey, 'GET_TAGS');
+    console.log('PDF file tags response for DOCX status:', tags);
+
+    if (!tags) {
+      console.log('No PDF tags response - DOCX not ready');
+      return false;
+    }
+
+    const hasError = tags.includes('isDocxComplete') && tags.includes('Value=error');
+    return hasError;
 
   } catch (error) {
     console.log('DOCX not ready yet or error checking PDF tags:', error);
