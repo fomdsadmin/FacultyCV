@@ -2,19 +2,6 @@ type Affiliations {
 	data_details: AWSJSON!
 }
 
-type NotifyGotenbergPayload {
-  key: String! @aws_iam
-}
-
-type DepartmentAffiliation {
-	user_id: String!
-	first_name: String
-	last_name: String
-	primary_unit: AWSJSON
-	joint_units: AWSJSON
-	hospital_affiliations: AWSJSON
-}
-
 input AuditViewInput {
 	logged_user_id: String!
 	logged_user_first_name: String!
@@ -89,6 +76,15 @@ type Declaration {
 	created_on: String!
 }
 
+type DepartmentAffiliation {
+	user_id: String!
+	first_name: String
+	last_name: String
+	primary_unit: AWSJSON
+	joint_units: AWSJSON
+	hospital_affiliations: AWSJSON
+}
+
 type ElsevierAuthorProfile {
 	last_name: String!
 	first_name: String!
@@ -118,6 +114,11 @@ type Notification {
 	date: AWSDate
 	archive: String
 	information_complete: String
+}
+
+type NotifyGotenbergPayload {
+	key: String!
+		@aws_iam
 }
 
 type OrcidAuthorProfile {
@@ -184,6 +185,22 @@ type SecureFunding {
 	data_details: AWSJSON!
 }
 
+type StagingScopusPublication {
+	id: String!
+	user_id: String!
+	data_details: AWSJSON!
+	is_new: Boolean!
+	fetched_at: String!
+}
+
+type StagingScopusPublicationsResponse {
+	publications: [StagingScopusPublication!]!
+	total_count: Int!
+	returned_count: Int!
+	offset: Int!
+	error: String
+}
+
 type TeachingData {
 	teaching_data_id: String!
 	data_details: AWSJSON!
@@ -206,22 +223,6 @@ type TotalOrcidPublications {
 
 type TotalScopusPublications {
 	total_results: Int!
-	error: String
-}
-
-type StagingScopusPublication {
-	id: String!
-	user_id: String!
-	data_details: AWSJSON!
-	is_new: Boolean!
-	fetched_at: String!
-}
-
-type StagingScopusPublicationsResponse {
-	publications: [StagingScopusPublication!]!
-	total_count: Int!
-	returned_count: Int!
-	offset: Int!
 	error: String
 }
 
@@ -258,6 +259,37 @@ type User {
 	cwl_username: String!
 	vpp_username: String!
 	active: Boolean!
+	terminated: Boolean!
+}
+
+type AllUsers {
+	user_id: String!
+	first_name: String
+	last_name: String
+	preferred_name: String
+	email: String
+	role: String
+	bio: String
+	rank: String
+	institution: String
+	primary_department: String
+	secondary_department: String
+	primary_faculty: String
+	secondary_faculty: String
+	primary_affiliation: String
+	secondary_affiliation: String
+	campus: String
+	keywords: String
+	institution_user_id: String
+	scopus_id: String
+	orcid_id: String
+	joined_timestamp: String
+	pending: Boolean
+	approved: Boolean
+	cwl_username: String!
+	vpp_username: String!
+	active: Boolean!
+	terminated: Boolean!
 }
 
 type UserCVData {
@@ -285,7 +317,6 @@ type UserConnection {
 	faculty_username: String!
 	assistant_username: String!
 }
-
 
 type UsersCountResult {
 	total_count: Int!
@@ -333,9 +364,7 @@ type Mutation {
 		primary_faculty: String!
 	): String
 		@aws_auth(cognito_groups: ["Admin","NewlyRegistered"])
-	removeUser(
-		user_id: String!
-	): String
+	removeUser(user_id: String!): String
 		@aws_auth(cognito_groups: ["Admin"])
 	updateUser(
 		user_id: String!,
@@ -352,9 +381,9 @@ type Mutation {
 		keywords: String,
 		institution_user_id: String,
 		scopus_id: String,
-		orcid_id: String,
+		orcid_id: String
 	): String
-		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant", "NewlyRegistered"])
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
 	updateUserPermissions(user_id: String!, pending: Boolean, approved: Boolean): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	updateUserActiveStatus(user_ids: [String!]!, active: Boolean!): String
@@ -408,15 +437,9 @@ editable: Boolean!,
 		editable: Boolean!
 	): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
-	addStagingScopusPublications(
-		user_id: String!,
-		publications: [AWSJSON!]!
-	): String
+	addStagingScopusPublications(user_id: String!, publications: [AWSJSON!]!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
-	updateStagingScopusPublications(
-		publication_ids: [String!]!,
-		is_new: Boolean!
-	): String
+	updateStagingScopusPublications(publication_ids: [String!]!, is_new: Boolean!): String
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	updateUserCVData(
 		user_cv_data_id: String!,
@@ -497,7 +520,12 @@ type Query {
 		@aws_auth(cognito_groups: ["Faculty","Assistant","FacultyAdmin","Admin","DepartmentAdmin"])
 	getAllSectionCVData(data_section_id: String, data_section_id_list: [String]): CVDataResponse
 		@aws_auth(cognito_groups: ["Admin"])
-	getDepartmentCVData(data_section_id: String!, dept: String!, title: String, user_ids: [String]): CVDataResponse
+	getDepartmentCVData(
+		data_section_id: String!,
+		dept: String!,
+		title: String,
+		user_ids: [String]
+	): CVDataResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
 	getFacultyWideCVData(data_section_id: String!, faculty: String!, title: String): CVDataResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin"])
@@ -537,7 +565,7 @@ type Query {
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getRiseDataMatches(first_name: String!, last_name: String!): [RiseData]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
-	getAllUsers: [User]
+	getAllUsers: [AllUsers]
 		@aws_auth(cognito_groups: ["Admin","FacultyAdmin","DepartmentAdmin"])
 	getPatentMatches(first_name: String!, last_name: String!): [Patent]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
@@ -573,6 +601,7 @@ type Query {
 	): StagingScopusPublicationsResponse
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 }
+
 type Subscription {
 	gotenbergGenerationStatusUpdate(key: String!): NotifyGotenbergPayload
 		@aws_subscribe(mutations: ["notifyGotenbergGenerationComplete"])

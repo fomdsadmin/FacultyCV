@@ -64,6 +64,7 @@ const AppContent = () => {
     getUserInfo,
     isVPPUser,
     hasVPPProfile,
+    isUserTerminated
   } = useApp();
 
   return (
@@ -103,6 +104,12 @@ const AppContent = () => {
             <Route path="/*" element={<Navigate to="/vpp-no-match" />} />
           </Routes>
         ) : isUserPending || !isUserApproved || !isUserActive ? (
+          <Routes>
+            <Route path="/keycloak-logout" element={<KeycloakLogout />} />
+            <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />
+            <Route path="/*" element={<Navigate to="/auth" />} />
+          </Routes>
+        ) : isUserTerminated ? (
           <Routes>
             <Route path="/keycloak-logout" element={<KeycloakLogout />} />
             <Route path="/auth" element={<AuthPage getCognitoUser={getCognitoUser} />} />

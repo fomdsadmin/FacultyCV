@@ -23,6 +23,8 @@ const AuthPage = () => {
     setIsUserApproved,
     isUserActive,
     setIsUserActive,
+    isUserTerminated,
+    setIsUserTerminated,
   doesUserNeedToReLogin, // Use this here
   } = useApp();
 
@@ -123,10 +125,10 @@ const AuthPage = () => {
   }, [loading, isUserLoggedIn]);
 
   useEffect(() => {
-    if (!loading && isUserLoggedIn && isUserApproved && !isUserPending && isUserActive && !doesUserNeedToReLogin) {
+    if (!loading && isUserLoggedIn && !isUserTerminated && isUserApproved && !isUserPending && isUserActive && !doesUserNeedToReLogin) {
       window.location.href = "/home";
     }
-  }, [isUserApproved, isUserLoggedIn, isUserPending, isUserActive, loading, doesUserNeedToReLogin]);
+  }, [isUserApproved, isUserLoggedIn, isUserPending, isUserActive, isUserTerminated, loading, doesUserNeedToReLogin]);
 
   const signIn = async () => {
     // console.log("Filter: User redirected to keycloak page");
@@ -191,12 +193,26 @@ const AuthPage = () => {
             userExistsInSqlDatabase &&
             isUserApproved &&
             !isUserPending &&
-            !isUserActive &&
+            !isUserActive && !isUserTerminated &&
             !doesUserNeedToReLogin && (
               <div className="flex flex-col items-center justify-center align-center p-4 m-4 text-center bg-orange-100 border border-orange-400 text-orange-700 rounded">
                 <h2 className="text-lg font-bold">Account Inactive</h2>
                 <p className="mt-2">
                   Your account is currently inactive. Please contact the administrator at xyz@ubc.ca for access.
+                </p>
+              </div>
+            )}
+          {!loading &&
+            isUserLoggedIn &&
+            userExistsInSqlDatabase &&
+            isUserApproved &&
+            !isUserPending &&
+            isUserTerminated &&
+            !doesUserNeedToReLogin && (
+              <div className="flex flex-col items-center justify-center align-center p-4 m-4 text-center bg-orange-100 border border-orange-400 text-orange-700 rounded">
+                <h2 className="text-lg font-bold">Account Terminated</h2>
+                <p className="mt-2">
+                  Your account has been terminated. Please contact the administrator at xyz@ubc.ca for further assistance.
                 </p>
               </div>
             )}

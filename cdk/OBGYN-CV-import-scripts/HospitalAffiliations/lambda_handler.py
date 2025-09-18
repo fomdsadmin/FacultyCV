@@ -15,12 +15,11 @@ DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
-    - Maps employee_id to user_id from users table
-    - Structures data into primary_unit and joint_units format
+    - Maps physician_id to user_id 
     - Fixes encoding issues in text fields
     """
     # Clean and prepare the data
-    df["employee_id"] = df["employee_id"].astype(str).str.strip()
+    df["physician_id"] = df["PhysicianID"].astype(str).str.strip()
 
     # Fix encoding issues in text fields
     def fix_encoding(text):
@@ -54,60 +53,62 @@ def cleanData(df):
         
         return text
     
-    # Apply encoding fixes to text columns
-    df["location"] = df["location"].apply(fix_encoding)
-    df["division"] = df["Division"].fillna('').str.strip()
-    df['medical_program'] = df['medical_program'].fillna('').str.strip()
-    df['health_authority'] = df['health_authority'].fillna('').str.strip()
+    # Apply encoding fixes to text columns that exist
+    if 'Division' in df.columns:
+        df["division"] = df["Division"].fillna('').str.strip().apply(fix_encoding)
+    if 'medical_program' in df.columns:
+        df['program'] = df['medical_program'].fillna('').str.strip().apply(fix_encoding)
+    if 'health_authority' in df.columns:
+        df['health_authority'] = df['health_authority'].fillna('').str.strip().apply(fix_encoding)
+    if 'Rank' in df.columns:
+        df['rank'] = df['Rank'].fillna('').str.strip().apply(fix_encoding)
 
     # Map health authority entries to custom system values
-    health_authority_map = {
-        'PHC': 'Providence Health Care',
-        'PHSA': 'Provincial Health Services Authority',
-        'VCH': 'Vancouver Coastal Health',
-        'FHA': 'Fraser Health Authority',
-        'VCH/FHA': 'VCH/FHA',
-        'VIHA': 'Island Health Authority',
-        'IHA': 'Interior Health Authority',
-        'NHA': 'Northern Health Authority',
-        # Add more mappings as needed
-    }
-    def map_health_authority(val):
-        return health_authority_map.get(val, val)
-    df['health_authority'] = df['health_authority'].apply(map_health_authority)
+    if 'health_authority' in df.columns:
+        health_authority_map = {
+            'PHC': 'Providence Health Care',
+            'PHSA': 'Provincial Health Services Authority',
+            'VCH': 'Vancouver Coastal Health',
+            'FHA': 'Fraser Health Authority',
+            'VCH/FHA': 'VCH/FHA',
+            'VIHA': 'Island Health Authority',
+            'IHA': 'Interior Health Authority',
+            'NHA': 'Northern Health Authority',
+            # Add more mappings as needed
+        }
+        def map_health_authority(val):
+            return health_authority_map.get(val, val)
+        df['health_authority'] = df['health_authority'].apply(map_health_authority)
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     
-    # Keep only relevant columns
-    df = df[["employee_id", "job_profile", "business_title", "type", "apt_percent", "location", "division", "medical_program", "health_authority"]]
-
     return df
 
-def getUserMapping(cursor, employee_ids):
+def getUserMapping(cursor, physician_ids):
     """
-    Get user_id mapping from users table based on employee_id
-    Returns a dictionary mapping employee_id to user_id
+    Get user_id mapping from users table based on physician_id (user_id)
+    Returns a dictionary mapping physician_id to user info
     """
-    if not employee_ids:
+    if not physician_ids:
         return {}
     
     # Create placeholders for the IN clause
-    placeholders = ','.join(['%s'] * len(employee_ids))
+    placeholders = ','.join(['%s'] * len(physician_ids))
     query = f"""
-        SELECT employee_id, user_id, first_name, last_name 
+        SELECT user_id, first_name, last_name 
         FROM users 
-        WHERE employee_id IN ({placeholders})
+        WHERE user_id IN ({placeholders})
     """
     
-    cursor.execute(query, employee_ids)
+    cursor.execute(query, physician_ids)
     results = cursor.fetchall()
     
     # Create mapping dictionary
     user_mapping = {}
     for row in results:
-        employee_id, user_id, first_name, last_name = row
-        user_mapping[str(employee_id)] = {
+        user_id, first_name, last_name = row
+        user_mapping[str(user_id)] = {
             'user_id': user_id,
             'first_name': first_name,
             'last_name': last_name
@@ -115,118 +116,105 @@ def getUserMapping(cursor, employee_ids):
     
     return user_mapping
 
-def structureAffiliationsData(df, user_mapping):
+def updateAffiliationsData(df, user_mapping, cursor):
     """
-    Structure the data into the format expected by the affiliations table:
-    - primary_unit: list for full-time appointments (to handle edge cases with 2 full-time entries)
-    - Only process full-time entries, disregard part-time ones
+    Update existing affiliations records based on CSV data:
+    - Always update hospital affiliations when physician_id matches user_id
+    - Only update division and program for primary appointments when academic rank matches
     """
-    affiliations_data = {}
+    updates_made = 0
     errors = []
-    
-    # Group data by user to handle multiple appointments per user
-    user_appointments = {}
+    skipped_rank_mismatch = 0
+    skipped_no_affiliation = 0
     
     for _, row in df.iterrows():
-        employee_id = str(row['employee_id'])
-
-        # Skip if employee_id not found in users table
-        if employee_id not in user_mapping:
-            errors.append(f"Employee ID {employee_id} not found in users table")
-            continue
-
-        # Skip if not full-time - only process full-time entries
-        # if row['type'].lower() != 'full time':
-        #     continue
-
-        user_info = user_mapping[employee_id]
-        user_id = user_info['user_id']
-
-        # Initialize user's appointments if not exists
-        if user_id not in user_appointments:
-            user_appointments[user_id] = {
-                'user_info': user_info,
-                'full_time': []
-            }
-
-        # Create unit object for full-time appointments only
-        unit_data = {
-            'unit': 'Obstetrics & Gynaecology',
-            'rank': row['job_profile'],
-            'title': row['business_title'],
-            'apt_percent': row['apt_percent'],
-            'location': row['location'],
-            'type': row['type'],
-            'additional_info': {
-                'division': row['division'],
-                'program': row['medical_program'],
-                'start': '',
-                'end': ''
-            }
-        }
-
-        # Add to full-time appointments
-        user_appointments[user_id]['full_time'].append(unit_data)
-    
-    # Now process each user's appointments
-    for user_id, appointments in user_appointments.items():
-        user_info = appointments['user_info']
-        full_time_appointments = appointments['full_time']
-
-        # Find the employee_id for this user_id
-        employee_id_for_user = None
-        for emp_id, info in user_mapping.items():
-            if info['user_id'] == user_id:
-                employee_id_for_user = emp_id
-                break
-
-        # Initialize user's affiliations with primary_unit as a list
-        affiliations_data[user_id] = {
-            'user_id': user_id,
-            'first_name': user_info['first_name'],
-            'last_name': user_info['last_name'],
-            'primary_unit': [],
-            'joint_units': [],
-            'research_affiliations': [],
-            'hospital_affiliations': []
-        }
-
-        # Hospital affiliation: add only one entry, matching primary unit
-        hospital_affiliation_entry = None
-        if employee_id_for_user:
-            # Use the first row for this employee_id
-            row = df[df['employee_id'] == employee_id_for_user].iloc[0]
-            if row['health_authority']:
-                hospital_affiliation_entry = {
-                    'authority': row['health_authority'],
-                    'hospital': '',
-                    'role': '',
-                    'start': '',
-                    'end': ''
-                }
-        if hospital_affiliation_entry:
-            affiliations_data[user_id]['hospital_affiliations'].append(hospital_affiliation_entry)
+        physician_id = str(row['physician_id'])
         
-        # Handle full-time appointments - all go to primary_unit as it's now a list
-        affiliations_data[user_id]['primary_unit'] = full_time_appointments
-    
-    # After processing all appointments, leave percent blank for all units
-    # No logic to assign percent values
-    return affiliations_data, errors
-
-def storeData(affiliations_data, connection, cursor, errors, rows_processed, rows_added_to_db):
-    """
-    Store the structured affiliations data into the database.
-    """
-    for user_id, user_data in affiliations_data.items():
+        # Skip if physician_id not found in users table
+        if physician_id not in user_mapping:
+            errors.append(f"Physician ID {physician_id} not found in users table")
+            continue
+        
+        user_id = user_mapping[physician_id]['user_id']
+        
         try:
-            # Check if record already exists
-            cursor.execute("SELECT COUNT(*) FROM affiliations WHERE user_id = %s", (user_id,))
-            record_exists = cursor.fetchone()[0] > 0
+            # Get existing affiliations for this user
+            cursor.execute("SELECT primary_unit, joint_units, research_affiliations, hospital_affiliations FROM affiliations WHERE user_id = %s", (user_id,))
+            result = cursor.fetchone()
             
-            if record_exists:
-                # Update existing record
-                query = """
+            if not result:
+                skipped_no_affiliation += 1
+                errors.append(f"No existing affiliations found for user {user_id}")
+                continue
+            
+            primary_unit, joint_units, research_affiliations, hospital_affiliations = result
+            
+            # Parse JSON fields - handle both string and already-parsed data
+            def safe_json_parse(data):
+                if data is None:
+                    return []
+                elif isinstance(data, str):
+                    try:
+                        return json.loads(data)
+                    except (json.JSONDecodeError, TypeError):
+                        return []
+                elif isinstance(data, list):
+                    return data
+                else:
+                    return []
+            
+            primary_unit = safe_json_parse(primary_unit)
+            joint_units = safe_json_parse(joint_units)
+            research_affiliations = safe_json_parse(research_affiliations)
+            hospital_affiliations = safe_json_parse(hospital_affiliations)
+            
+            updated = False
+            
+            # Always update hospital affiliations when physician_id matches user_id
+            if 'health_authority' in row and row['health_authority']:
+                # Update or create hospital affiliation
+                hospital_updated = False
+                for hosp in hospital_affiliations:
+                    if isinstance(hosp, dict):
+                        hosp['authority'] = row['health_authority']
+                        hospital_updated = True
+                        break
+                
+                # If no hospital affiliation exists, create one
+                if not hospital_updated:
+                    hospital_affiliations.append({
+                        'authority': row['health_authority'],
+                        'hospital': '',
+                        'role': '',
+                        'start': '',
+                        'end': ''
+                    })
+                updated = True
+            
+            # Check if any primary unit rank matches CSV rank for division/program updates
+            csv_rank = row.get('rank', '').strip()
+            rank_matched = False
+            
+            if csv_rank:
+                # Update division and program only for primary units where rank matches
+                for unit in primary_unit:
+                    if isinstance(unit, dict) and unit.get('rank', '').strip() == csv_rank:
+                        # Update additional_info for division and program
+                        if 'additional_info' not in unit:
+                            unit['additional_info'] = {}
+                        
+                        if 'division' in row and row['division']:
+                            unit['additional_info']['division'] = row['division']
+                        
+                        if 'program' in row and row['program']:
+                            unit['additional_info']['program'] = row['program']
+                        
+                        rank_matched = True
+                        updated = True
+            
+            if updated:
+                # Update the database record
+                update_query = """
                 UPDATE affiliations SET 
                     primary_unit = %s,
                     joint_units = %s,
@@ -234,40 +222,25 @@ def storeData(affiliations_data, connection, cursor, errors, rows_processed, row
                     hospital_affiliations = %s
                 WHERE user_id = %s
                 """
-                cursor.execute(query, (
-                    json.dumps(user_data['primary_unit']),
-                    json.dumps(user_data['joint_units']),
-                    json.dumps(user_data['research_affiliations']),
-                    json.dumps(user_data['hospital_affiliations']),
-                    user_id,
+                cursor.execute(update_query, (
+                    json.dumps(primary_unit),
+                    json.dumps(joint_units),
+                    json.dumps(research_affiliations),
+                    json.dumps(hospital_affiliations),
+                    user_id
                 ))
-            else:
-                # Insert new record
-                query = """
-                INSERT INTO affiliations (
-                    user_id, first_name, last_name,
-                    primary_unit, joint_units, research_affiliations, hospital_affiliations
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """
-                cursor.execute(query, (
-                    user_id,
-                    user_data['first_name'],
-                    user_data['last_name'],
-                    json.dumps(user_data['primary_unit']),
-                    json.dumps(user_data['joint_units']),
-                    json.dumps(user_data['research_affiliations']),
-                    json.dumps(user_data['hospital_affiliations'])
-                ))
+                updates_made += 1
             
-            rows_added_to_db += 1
-            
+            # Track rank mismatch only if no hospital update was made and rank didn't match
+            if not updated or (csv_rank and not rank_matched and 'health_authority' not in row):
+                skipped_rank_mismatch += 1
+                if csv_rank:
+                    errors.append(f"No matching rank '{csv_rank}' found in primary units for user {user_id}")
+                
         except Exception as e:
-            errors.append(f"Error processing user {user_id}: {str(e)}")
-        finally:
-            rows_processed += 1
+            errors.append(f"Error updating user {user_id}: {str(e)}")
     
-    connection.commit()
-    return rows_processed, rows_added_to_db
+    return updates_made, errors, skipped_rank_mismatch, skipped_no_affiliation
 
 def fetchFromS3(bucket, key):
     """
@@ -284,21 +257,33 @@ def fetchFromS3(bucket, key):
 
 def loadData(file_bytes, file_key):
     """
-    Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
+    Loads a DataFrame from file bytes based on file extension (.csv, .xlsx, or .json).
     """
-    if file_key.lower().endswith('.xlsx'):
+    if file_key.lower().endswith('.json'):
+        # For JSON, decode bytes to text, parse, and convert to DataFrame
+        json_str = file_bytes.decode('utf-8')
+        json_data = json.loads(json_str)
+        # Convert JSON to DataFrame
+        if isinstance(json_data, list):
+            return pd.DataFrame(json_data)
+        elif isinstance(json_data, dict):
+            # If it's a dict, assume it's a single record and convert to DataFrame
+            return pd.DataFrame([json_data])
+        else:
+            raise ValueError('JSON data must be a list of objects or a single object')
+    elif file_key.lower().endswith('.xlsx'):
         # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
         # For CSV, decode bytes to text
         return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
     else:
-        raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
+        raise ValueError('Unsupported file type. Only CSV, XLSX, and JSON are supported.')
 
 def lambda_handler(event, context):
     """
-    Processes affiliations upload file (CSV or Excel) uploaded to S3
-    Reads file with pandas, transforms, and adds to affiliations table
+    Processes affiliations update file (CSV or Excel) uploaded to S3
+    Reads file with pandas, matches physician_id with user_id, and updates existing affiliations
     """
     try:
         # Parse S3 event
@@ -306,7 +291,7 @@ def lambda_handler(event, context):
         bucket_name = s3_event["bucket"]["name"]
         file_key = s3_event["object"]["key"]
 
-        print(f"Processing affiliations file: {file_key} from bucket: {bucket_name}")
+        print(f"Processing affiliations update file: {file_key} from bucket: {bucket_name}")
 
         # Fetch file from S3 (as bytes)
         file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
@@ -324,7 +309,7 @@ def lambda_handler(event, context):
         print("Data loaded successfully.")
 
         # Validate required columns
-        required_columns = ['employee_id', 'job_profile', 'business_title', 'type', 'location']
+        required_columns = ['PhysicianID']
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             return {
@@ -342,24 +327,18 @@ def lambda_handler(event, context):
         cursor = connection.cursor()
         print("Connected to database")
 
-        # Get user mapping from employee_id to user_id
-        unique_employee_ids = df['employee_id'].unique().tolist()
-        user_mapping = getUserMapping(cursor, unique_employee_ids)
+        # Get user mapping from physician_id to user info
+        unique_physician_ids = df['physician_id'].unique().tolist()
+        user_mapping = getUserMapping(cursor, unique_physician_ids)
         print(f"Found {len(user_mapping)} users in database")
 
-        # Structure the data for affiliations table
-        affiliations_data, structure_errors = structureAffiliationsData(df, user_mapping)
-        print(f"Structured data for {len(affiliations_data)} users")
+        # Update existing affiliations data
+        updates_made, errors, skipped_rank_mismatch, skipped_no_affiliation = updateAffiliationsData(df, user_mapping, cursor)
+        print(f"Updated {updates_made} affiliations records")
 
-        # Store data in database
-        rows_processed = 0
-        rows_added_to_db = 0
-        errors = structure_errors.copy()
-
-        rows_processed, rows_added_to_db = storeData(
-            affiliations_data, connection, cursor, errors, rows_processed, rows_added_to_db
-        )
-        print("Data stored successfully.")
+        # Commit changes
+        connection.commit()
+        print("Changes committed to database.")
         
         cursor.close()
         connection.close()
@@ -373,20 +352,22 @@ def lambda_handler(event, context):
             'status': 'COMPLETED',
             'total_csv_rows': len(df),
             'unique_users_found': len(user_mapping),
-            'users_processed': rows_processed,
-            'users_added_to_database': rows_added_to_db,
+            'affiliations_updated': updates_made,
+            'skipped_rank_mismatch': skipped_rank_mismatch,
+            'skipped_no_affiliation': skipped_no_affiliation,
             'errors': errors[:20] if errors else [],  # Limit errors to first 20
             'summary': {
-                'primary_units': sum(len(data['primary_unit']) for data in affiliations_data.values()),
-                'joint_units': sum(len(data['joint_units']) for data in affiliations_data.values())
+                'total_processed': len(df),
+                'successful_updates': updates_made,
+                'failed_updates': len(errors)
             }
         }
 
-        print(f"Affiliations import completed: {result}")
+        print(f"Affiliations update completed: {result}")
         return result
 
     except Exception as e:
-        print(f"Error processing affiliations import: {str(e)}")
+        print(f"Error processing affiliations update: {str(e)}")
         return {
             'statusCode': 500,
             'status': 'FAILED',

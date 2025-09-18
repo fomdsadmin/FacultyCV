@@ -18,7 +18,7 @@ def getAllUsers(arguments):
                role, bio, rank, institution, primary_department, secondary_department,
                primary_faculty, secondary_faculty, primary_affiliation, secondary_affiliation, 
                campus, keywords, institution_user_id, scopus_id, orcid_id, joined_timestamp,
-               pending, approved, cwl_username, vpp_username, active
+               pending, approved, cwl_username, vpp_username, active, terminated
         FROM users
     ''')
     results = cursor.fetchall()
@@ -30,7 +30,7 @@ def getAllUsers(arguments):
         'user_id', 'first_name', 'last_name', 'preferred_name', 'email',
         'role', 'bio', 'rank', 'institution', 'primary_department', 'secondary_department',
         'primary_faculty', 'secondary_faculty', 'primary_affiliation', 'secondary_affiliation', 'campus', 'keywords',
-        'institution_user_id', 'scopus_id', 'orcid_id', 'joined_timestamp','pending', 'approved', 'cwl_username', 'vpp_username', 'active'
+        'institution_user_id', 'scopus_id', 'orcid_id', 'joined_timestamp','pending', 'approved', 'cwl_username', 'vpp_username', 'active', 'terminated'
     ]
     
     # Convert query results to a list of dictionaries
