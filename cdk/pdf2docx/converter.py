@@ -179,6 +179,22 @@ def handler(event, context):
 
     except Exception as e:
         print(f"Error in handler: {str(e)}")
+        try:
+            s3_client.put_object_tagging(
+                Bucket=bucket_name,
+                Key=pdf_key,
+                Tagging={
+                    'TagSet': [
+                        {'Key': 'isDocxComplete', 'Value': 'error'}
+                    ]
+                }
+            )
+            print(f"Tagged original PDF {pdf_key} with isDocxComplete:true")
+        except botocore.exceptions.ClientError as tag_error:
+            print(f"Failed to tag PDF: {tag_error}")
+        
+        notify_docx_complete(docx_key)
+        
         return {
             "statusCode": 500,
             "status": "ERROR",

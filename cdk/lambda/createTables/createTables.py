@@ -65,7 +65,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('cwl_username', 'varchar', '', False))
     columns.append(createColumn('employee_id', 'varchar', '', False))
     columns.append(createColumn('vpp_username', 'varchar', '', False))
-    columns.append(createColumn('active', 'BOOLEAN', 'DEFAULT false', True))
+    columns.append(createColumn('active', 'BOOLEAN', 'DEFAULT false', False))
+    columns.append(createColumn('terminated', 'BOOLEAN', 'DEFAULT false', True))
     query = createQuery('users', columns)
     cursor.execute(query)
 
@@ -214,6 +215,16 @@ def lambda_handler(event, context):
     columns.append(createColumn('created_on', 'timestamp', 'DEFAULT CURRENT_TIMESTAMP', False))
     columns.append(createColumn('other_data', 'jsonb', 'NOT NULL', True))
     query = createQuery('declarations', columns)
+    cursor.execute(query)
+    
+    # Create Scopus Publications Table
+    columns = []
+    columns.append(createColumn('id', 'UUID', 'DEFAULT uuid_generate_v4() PRIMARY KEY', False))
+    columns.append(createColumn('user_id', 'TEXT', 'NOT NULL', False))
+    columns.append(createColumn('data_details', 'JSON', '', False))
+    columns.append(createColumn('is_new', 'BOOLEAN', 'DEFAULT TRUE', False))
+    columns.append(createColumn('fetched_at', 'TIMESTAMP', 'DEFAULT CURRENT_TIMESTAMP', True))
+    query = createQuery('scopus_publications', columns)
     cursor.execute(query)
     
     # Create Audit View Table

@@ -147,6 +147,19 @@ def lambda_handler(event, context):
         print("Type:", type(e).__name__)
         print("Message:", str(e))
         traceback.print_exc()
+                # Add Tag to html object
+        s3_client.put_object_tagging(
+            Bucket=bucket_name,
+            Key=html_key,
+            Tagging={
+                "TagSet": [
+                    {"Key": "isPdfComplete", "Value": "error"}
+                ]
+            }
+        )
+
+        notify_generation_complete(pdf_key)
+
         return {
             "status": "ERROR",
             "message": str(e)

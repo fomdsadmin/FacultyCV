@@ -30,6 +30,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
   const [retrievingData, setRetrievingData] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
   const [notification, setNotification] = useState(""); // <-- Add this
+  const [existingPublications, setExistingPublications] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -113,6 +114,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
+      console.log("Fetched existing publications:", parsedData.length);
+      setExistingPublications(parsedData);
 
       const filteredData = parsedData.filter((entry) => {
         const [field1, field2] = rankFields(entry.data_details);
@@ -127,10 +130,134 @@ const PublicationsSection = ({ user, section, onBack }) => {
         return { ...entry, field1, field2 };
       });
 
+      // Helper function to extract year and month from various date formats
+      const extractDateInfo = (dateStr) => {
+        if (!dateStr) return { year: 0, month: 0 };
+
+        const str = String(dateStr).toLowerCase().trim();
+
+        // Handle pure year numbers (like 2025, 2024)
+        if (/^\d{4}$/.test(str)) {
+          const year = parseInt(str);
+          if (year >= 1900 && year <= 2100) {
+            return { year, month: 0 };
+          }
+        }
+
+        // Extract year from various patterns
+        const yearMatch = str.match(/\b(20\d{2}|19\d{2})\b/);
+        const year = yearMatch ? parseInt(yearMatch[1]) : 0;
+
+        // Extract month
+        const monthNames = [
+          "january",
+          "february",
+          "march",
+          "april",
+          "may",
+          "june",
+          "july",
+          "august",
+          "september",
+          "october",
+          "november",
+          "december",
+        ];
+
+        const monthAbbr = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+        let month = 0;
+
+        // Check for full month names
+        for (let i = 0; i < monthNames.length; i++) {
+          if (str.includes(monthNames[i])) {
+            month = i + 1; // 1-based month
+            break;
+          }
+        }
+
+        // Check for abbreviated month names if no full name found
+        if (month === 0) {
+          for (let i = 0; i < monthAbbr.length; i++) {
+            if (str.includes(monthAbbr[i])) {
+              month = i + 1; // 1-based month
+              break;
+            }
+          }
+        }
+
+        // If no month name found, check for numeric month patterns
+        if (month === 0) {
+          // Pattern: YYYY-MM, MM/YYYY, MM-YYYY, YYYY/MM
+          const numericPatterns = [
+            /\b(?:20\d{2}|19\d{2})[-\/](\d{1,2})\b/, // YYYY-MM or YYYY/MM
+            /\b(\d{1,2})[-\/](?:20\d{2}|19\d{2})\b/, // MM-YYYY or MM/YYYY
+          ];
+
+          for (const pattern of numericPatterns) {
+            const match = str.match(pattern);
+            if (match) {
+              const monthNum = parseInt(match[1]);
+              if (monthNum >= 1 && monthNum <= 12) {
+                month = monthNum;
+                break;
+              }
+            }
+          }
+        }
+
+        return { year, month };
+      };
+
       rankedData.sort((a, b) => {
-        const yearA = parseInt(a.field2, 10) || 0;
-        const yearB = parseInt(b.field2, 10) || 0;
-        return yearB - yearA;
+        // Try to get date info from multiple possible sources
+        let dateA = extractDateInfo(a.field2);
+        if (dateA.year === 0) {
+          // Try various date fields in data_details
+          const possibleDateFields = [
+            a.data_details?.end_date,
+            a.data_details?.publication_date,
+            a.data_details?.date,
+            a.data_details?.year,
+            a.data_details?.start_date,
+            a.field1, // Sometimes the date might be in field1
+          ];
+
+          for (const dateField of possibleDateFields) {
+            if (dateField) {
+              dateA = extractDateInfo(dateField);
+              if (dateA.year !== 0) break;
+            }
+          }
+        }
+
+        let dateB = extractDateInfo(b.field2);
+        if (dateB.year === 0) {
+          // Try various date fields in data_details
+          const possibleDateFields = [
+            b.data_details?.end_date,
+            b.data_details?.publication_date,
+            b.data_details?.date,
+            b.data_details?.year,
+            b.data_details?.start_date,
+            b.field1, // Sometimes the date might be in field1
+          ];
+
+          for (const dateField of possibleDateFields) {
+            if (dateField) {
+              dateB = extractDateInfo(dateField);
+              if (dateB.year !== 0) break;
+            }
+          }
+        }
+
+        // First sort by year (descending)
+        if (dateA.year !== dateB.year) {
+          return dateB.year - dateA.year;
+        }
+
+        // If years are the same, sort by month (descending - most recent first)
+        return dateB.month - dateA.month;
       });
 
       setFieldData(rankedData);
@@ -209,9 +336,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
     return (
       <>
-        {details.title && (
-          <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
-        )}
+        {details.title && <h3 className="text-lg font-semibold mb-1">{details.title}</h3>}
         <p className="text-sm text-gray-700 mb-2">
           {formattedDate}
           {details.volume && (
@@ -428,14 +553,16 @@ const PublicationsSection = ({ user, section, onBack }) => {
           <div className="px-4">
             {sortedData.map((entry, index) => (
               <div key={index} className="min-h-8 shadow-glow my-2 px-4 py-4 flex items-center bg-white rounded-lg">
-                <div className="flex-1 w-full">
-                  {renderDataDetails(entry.data_details)}
-                </div>
+                <div className="flex-1 w-full">{renderDataDetails(entry.data_details)}</div>
                 <div className="flex items-center space-x-1">
                   <button className="btn btn-sm btn-circle btn-ghost" onClick={() => handleEdit(entry)} title="Edit">
                     <FaRegEdit className="h-5 w-5" />
                   </button>
-                  <button className="btn btn-sm btn-circle btn-ghost" onClick={() => handleArchive(entry)} title="Delete">
+                  <button
+                    className="btn btn-sm btn-circle btn-ghost"
+                    onClick={() => handleArchive(entry)}
+                    title="Delete"
+                  >
                     <IoClose className="h-5 w-5" />
                   </button>
                 </div>
@@ -474,6 +601,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
               onClose={handleCloseModal}
               setRetrievingData={setRetrievingData}
               fetchData={fetchData}
+              existingPublications={existingPublications}
             />
           )}
         </div>
