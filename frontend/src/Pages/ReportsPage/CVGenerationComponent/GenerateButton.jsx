@@ -4,10 +4,12 @@ const GenerateButton = ({
     generating,
     pdfComplete,
     docxComplete,
+    pdfHasError,
+    docxHasError,
     onGenerate
 }) => {
 
-    const customGenerating = generating || (!pdfComplete ^ !docxComplete);
+    const customGenerating = (generating || (!pdfComplete ^ !docxComplete)) && !(pdfHasError || docxHasError);
 
     const handleGenerate = () => {
         if (onGenerate && !customGenerating) {
@@ -18,6 +20,7 @@ const GenerateButton = ({
     const getGenerateButtonText = () => {
         console.log("JJFilter generating;", customGenerating)
         if (customGenerating) {
+            
             if (!pdfComplete && !docxComplete) {
                 return "Generating PDF & DOCX...";
             } else if (pdfComplete && !docxComplete) {

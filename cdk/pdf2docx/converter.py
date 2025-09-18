@@ -6,6 +6,7 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from pdf2docx import Converter
 from urllib.parse import unquote_plus
+import signal
 
 s3_client = boto3.client("s3")
 
@@ -89,9 +90,22 @@ def upload_file_to_s3(file_name, bucket_name, s3_file_key):
     except botocore.exceptions.ClientError as e:
         print(f"Error uploading file: {e}")
         raise e
+    
+def timeout_handler(signum, frame):
+    raise TimeoutError("Lambda function timed out")
 
 def handler(event, context):
+    bucket_name = None
+    pdf_key = None
+    docx_key = None
     try:
+
+        remaining_time = context.get_remaining_time_in_millis() / 1000.0
+        timeout_buffer = 30  # 30 second buffer
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(int(remaining_time - timeout_buffer))
+
         # Use /tmp/ as writable directory
         os.chdir("/tmp/")
         
@@ -105,6 +119,9 @@ def handler(event, context):
         record = event['Records'][0]['s3']
         bucket_name = record['bucket']['name']
         pdf_key = unquote_plus(record['object']['key'])
+
+        # Construct DOCX key: replace 'pdf/' with 'docx/' and .pdf → .docx
+        docx_key = pdf_key.replace("pdf/", "docx/").rsplit(".", 1)[0] + ".docx"
 
         try:
             s3_client.put_object_tagging(
@@ -143,9 +160,6 @@ def handler(event, context):
         # Verify DOCX
         if not os.path.exists(local_docx_path) or os.path.getsize(local_docx_path) == 0:
             raise Exception("DOCX conversion failed")
-
-        # Construct DOCX key: replace 'pdf/' with 'docx/' and .pdf → .docx
-        docx_key = pdf_key.replace("pdf/", "docx/").rsplit(".", 1)[0] + ".docx"
 
         # Upload DOCX to S3
         upload_file_to_s3(local_docx_path, bucket_name, docx_key)
@@ -194,7 +208,7 @@ def handler(event, context):
             print(f"Failed to tag PDF: {tag_error}")
         
         notify_docx_complete(docx_key)
-        
+
         return {
             "statusCode": 500,
             "status": "ERROR",

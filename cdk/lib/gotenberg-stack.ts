@@ -82,8 +82,8 @@ export class GotenbergStack extends cdk.Stack {
         // Task Definition
         const taskDefinition = new ecs.FargateTaskDefinition(this, 'GotenbergTaskDefinition', {
             family: 'gotenberg-pdf-gen-task',
-            memoryLimitMiB: 1024,
-            cpu: 512,
+            memoryLimitMiB: 2048,
+            cpu: 1024,
         });
 
         // Container Definition
