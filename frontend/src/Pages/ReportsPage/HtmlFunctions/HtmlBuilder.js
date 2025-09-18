@@ -77,7 +77,7 @@ const sortSectionData = (sectionData, dataSectionId) => {
 
     return sectionData.sort((a, b) => {
         const cleanedA = a["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        const cleanedB = b[""][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const cleanedB = b["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
         const monthMatchA = cleanedA.match(/[A-Za-z]+/);
         const yearMatchA = cleanedA.match(/\d+/);
