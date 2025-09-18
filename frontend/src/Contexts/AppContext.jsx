@@ -30,6 +30,7 @@ export const AppProvider = ({ children }) => {
   const [isUserPending, setIsUserPending] = useState(false);
   const [isUserApproved, setIsUserApproved] = useState(false);
   const [isUserActive, setIsUserActive] = useState(true);
+  const [isUserTerminated, setIsUserTerminated] = useState(false);
   const [doesUserNeedToReLogin, setDoesUserNeedToReLogin] = useState(false);
   // Removed claim profile feature state (userProfileMatches, doesUserHaveAProfileInDatabase)
   const [isVPPUser, setIsVPPUser] = useState(false);
@@ -161,6 +162,7 @@ export const AppProvider = ({ children }) => {
           setIsUserPending(false);
           setIsUserApproved(false);
           setIsUserActive(true);
+          setIsUserTerminated(false);
           setLoading(false);
           return;
         }
@@ -181,10 +183,23 @@ export const AppProvider = ({ children }) => {
               setUserExistsInSqlDatabase(true);
               setIsUserPending(vppUserData.pending);
               setIsUserApproved(vppUserData.approved);
-              setIsUserActive(vppUserData.active !== false);
+              setIsUserActive(vppUserData.active);
+              setIsUserTerminated(vppUserData.terminated);
 
-              // If user is approved and active, set up full user context
-              if (vppUserData.approved && !vppUserData.pending && vppUserData.active !== false) {
+              if (vppUserData.terminated) {
+                console.log("Filter: VPP user is terminated");
+                setIsUserTerminated(true);
+                setLoading(false);
+                return;
+              }
+
+              // If user is NOT terminated and is approved and active, set up full user context
+              if (
+                vppUserData.terminated !== true &&
+                vppUserData.approved &&
+                !vppUserData.pending &&
+                vppUserData.active !== false
+              ) {
                 // Set up full user context (similar to getCognitoUser logic)
                 try {
                   const userData = await getCurrentUser();
@@ -204,7 +219,7 @@ export const AppProvider = ({ children }) => {
                   console.error("Error setting up VPP user context:", error);
                 }
 
-                // Add user to Cognito group if they are approved and active
+                // Add user to Cognito group if they are approved and active and not terminated
                 if (vppUserData.role && vppUserData.role !== "") {
                   //console.log("VPP Username: ", username, "Role: ", vppUserData.role);
                   let result;
@@ -232,6 +247,7 @@ export const AppProvider = ({ children }) => {
               setIsUserPending(false);
               setIsUserApproved(false);
               setIsUserActive(true);
+              setIsUserTerminated(false);
             }
           } catch (error) {
             console.log("Filter: Error fetching VPP user or VPP user not found:", error);
@@ -240,6 +256,7 @@ export const AppProvider = ({ children }) => {
             setIsUserPending(false);
             setIsUserApproved(false);
             setIsUserActive(true);
+            setIsUserTerminated(false);
           }
           setLoading(false);
           return;
@@ -251,10 +268,18 @@ export const AppProvider = ({ children }) => {
           setUserExistsInSqlDatabase(true);
           setIsUserPending(userData.pending);
           setIsUserApproved(userData.approved);
-          setIsUserActive(userData.active !== false); // Default to true if active is not explicitly false
+          setIsUserActive(userData.active); // Default to true if active is not explicitly false
+          setIsUserTerminated(userData.terminated);
 
-          // If user is approved and active, set up full user context
-          if (userData.approved && !userData.pending && userData.active !== false) {
+          if (userData.terminated) {
+            console.log("Filter: VPP user is terminated");
+            setIsUserTerminated(true);
+            setLoading(false);
+            return;
+          }
+
+          // If user is NOT terminated and is approved and active, set up full user context
+          if (userData.terminated !== true && userData.approved && !userData.pending && userData.active !== false) {
             // Set up full user context (inline getCognitoUser logic)
             try {
               const userData = await getCurrentUser();
@@ -281,8 +306,8 @@ export const AppProvider = ({ children }) => {
             }
           }
 
-          // Add user to Cognito group if they are approved and active if not already a member
-          if (userData.approved && !userData.pending && userData.active !== false) {
+          // Add user to Cognito group if they are NOT terminated and approved and active and not pending
+          if (userData.terminated !== true && userData.approved && !userData.pending && userData.active !== false) {
             if (userData.role && userData.role !== "") {
               // console.log("Username: ", username, "Role: ", userData.role);
               let result;
@@ -315,6 +340,7 @@ export const AppProvider = ({ children }) => {
           setIsUserPending(false);
           setIsUserApproved(false);
           setIsUserActive(true);
+          setIsUserTerminated(false);
 
           // Still set up basic user info for header display
           const { given_name, family_name, email, name } = await fetchUserAttributes();
@@ -334,6 +360,7 @@ export const AppProvider = ({ children }) => {
         setIsUserPending(false);
         setIsUserApproved(false);
         setIsUserActive(true);
+        setIsUserTerminated(false);
       } finally {
         setLoading(false);
       }
@@ -453,7 +480,7 @@ export const AppProvider = ({ children }) => {
     setIsManagingUser(true);
     setUserInfo(userToManage);
     setPreviousViewRole(currentViewRole);
-    console.log("JJFILTER userToMange", userToManage)
+    console.log("JJFILTER userToMange", userToManage);
     setCurrentViewRole(userToManage.role);
   };
 
@@ -489,6 +516,8 @@ export const AppProvider = ({ children }) => {
     setIsUserApproved,
     isUserActive,
     setIsUserActive,
+    isUserTerminated,
+    setIsUserTerminated,
 
     // Role management
     actualRole,
@@ -516,7 +545,7 @@ export const AppProvider = ({ children }) => {
     doesUserNeedToReLogin,
     setDoesUserNeedToReLogin,
 
-  // Removed claim profile feature values
+    // Removed claim profile feature values
 
     // VPP login state
     isVPPUser,

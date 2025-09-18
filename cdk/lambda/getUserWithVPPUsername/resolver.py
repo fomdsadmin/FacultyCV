@@ -67,7 +67,8 @@ def getUserWithVPPUsername(event):
             'approved': result[22],
             'cwl_username': result[23],
             'vpp_username': result[25],
-            'active': result[26]
+            'active': result[26],
+            'terminated': result[27]
         }
     else:
         user = "User not found"
