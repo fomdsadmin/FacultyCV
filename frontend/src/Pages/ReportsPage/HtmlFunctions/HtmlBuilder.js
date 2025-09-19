@@ -61,62 +61,68 @@ const sortSectionData = (sectionData, dataSectionId) => {
         return sectionData;
     }
 
-    const attributeMapping = JSON.parse(section.attributes);
+    let dateAttribute = null;
 
-    // Look for date-related attributes (year or date)
-    const yearAttribute = attributeMapping['Year'] || attributeMapping['Year Published'];
-    const dateAttribute = attributeMapping['Date'];
+    if (sectionData.length !== 0) {
+        if (sectionData[0]["data_details"]["dates"]) {
+            dateAttribute = "dates";
+        } else if (sectionData[0]["data_details"]["end_date"]) {
+            dateAttribute = "end_date";
+        }
+    }
 
-    // If no date attributes found, return unsorted data
-    if (!yearAttribute && !dateAttribute) {
+    if (dateAttribute === null) {
         return sectionData;
     }
 
     return sectionData.sort((a, b) => {
-        let endYearA = null;
-        let endYearB = null;
+        const cleanedA = a["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const cleanedB = b["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
-        // Try to extract end year from year attribute first
-        if (yearAttribute) {
-            if (a.data_details[yearAttribute]) {
-                const yearValueA = String(a.data_details[yearAttribute]);
-                const yearMatchA = yearValueA.match(/\d{4}/g);
-                if (yearMatchA) {
-                    endYearA = parseInt(yearMatchA[yearMatchA.length - 1]);
-                }
-            }
+        const monthMatchA = cleanedA.match(/[A-Za-z]+/);
+        const yearMatchA = cleanedA.match(/\d+/);
+        const monthMatchB = cleanedB.match(/[A-Za-z]+/);
+        const yearMatchB = cleanedB.match(/\d+/);
 
-            if (b.data_details[yearAttribute]) {
-                const yearValueB = String(b.data_details[yearAttribute]);
-                const yearMatchB = yearValueB.match(/\d{4}/g);
-                if (yearMatchB) {
-                    endYearB = parseInt(yearMatchB[yearMatchB.length - 1]);
-                }
-            }
-        }
+        // Handle null matches with fallbacks
+        const yearA = yearMatchA ? parseInt(yearMatchA[0]) : 0;
+        const monthA = monthMatchA ? monthMatchA[0] : null;
+        const yearB = yearMatchB ? parseInt(yearMatchB[0]) : 0;
+        const monthB = monthMatchB ? monthMatchB[0] : null;
 
-        // If no year found, try to extract from date attribute
-        if (!endYearA && dateAttribute && a.data_details[dateAttribute]) {
-            const dateValueA = String(a.data_details[dateAttribute]);
-            endYearA = extractEndYearFromDateRange(dateValueA);
-        }
-
-        if (!endYearB && dateAttribute && b.data_details[dateAttribute]) {
-            const dateValueB = String(b.data_details[dateAttribute]);
-            endYearB = extractEndYearFromDateRange(dateValueB);
-        }
-
-        // Handle cases where we couldn't extract years
-        // Items without dates go to the end
-        if (!endYearA && !endYearB) return 0;
-        if (!endYearA) return 1;
-        if (!endYearB) return -1;
+        console.log(`JJFILTER SORTING: ${yearA}, ${monthA} and ${yearB}, ${monthB}`)
 
         // Sort by year
-        const comparison = endYearA - endYearB;
+        const yearComparison = yearA - yearB;
+
+        if (yearComparison === 0 && monthA && monthB) {
+            // Convert month names to numbers for comparison
+            const monthToNumber = {
+                'january': 1, 'jan': 1,
+                'february': 2, 'feb': 2,
+                'march': 3, 'mar': 3,
+                'april': 4, 'apr': 4,
+                'may': 5,
+                'june': 6, 'jun': 6,
+                'july': 7, 'jul': 7,
+                'august': 8, 'aug': 8,
+                'september': 9, 'sep': 9, 'sept': 9,
+                'october': 10, 'oct': 10,
+                'november': 11, 'nov': 11,
+                'december': 12, 'dec': 12
+            };
+
+            const monthNumA = monthToNumber[monthA.toLowerCase()] || 0;
+            const monthNumB = monthToNumber[monthB.toLowerCase()] || 0;
+
+            const monthComparison = monthNumA - monthNumB;
+
+            // Apply ascending/descending order
+            return sortAscending ? monthComparison : -monthComparison;
+        }
 
         // Apply ascending/descending order based on sortAscending
-        return sortAscending ? comparison : -comparison;
+        return sortAscending ? yearComparison : -yearComparison;
     });
 };
 
@@ -231,10 +237,10 @@ const buildPublicationRowArray = (data, attributes, section) => {
         if (attribute === 'Author Names') {
             const authorNames = data.data_details[sectionAttributes[AUTHOR_NAMES]];
             const authorIds = data.data_details[sectionAttributes[AUTHOR_IDS]];
-            
+
             // Safe check for authorIds and userInfo.scopus_id
-            const indexOfThisAuthor = (authorIds && Array.isArray(authorIds) && userInfo?.scopus_id) 
-                ? authorIds.indexOf(userInfo.scopus_id) 
+            const indexOfThisAuthor = (authorIds && Array.isArray(authorIds) && userInfo?.scopus_id)
+                ? authorIds.indexOf(userInfo.scopus_id)
                 : -1;
 
             // Check if authorNames is an array before mapping
@@ -626,14 +632,14 @@ export const buildHtml = async (userInfoInput, templateWithEndStartDate) => {
     // Handle both single user and array of users
     const userInfoArray = Array.isArray(userInfoInput) ? userInfoInput : [userInfoInput];
     const isMultipleUsers = userInfoArray.length > 1;
-    
+
     template = templateWithEndStartDate;
     sortAscending = JSON.parse(template.template_structure).sort_ascending;
 
     // Get all sections data once (shared for all users)
     const allSections = await getAllSections();
     const allSectionIds = allSections.map((section) => section.data_section_id);
-    
+
     // Create sectionsMap with data_section_id as key and section as value
     sectionsMap = {};
     allSections.forEach((section) => {

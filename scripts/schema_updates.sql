@@ -84,3 +84,16 @@ CREATE TABLE scopus_publications (
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS terminated BOOLEAN DEFAULT FALSE
 -- END
+
+-- September 19th: to be done
+CREATE TABLE course_catalog (
+    course_id SERIAL PRIMARY KEY,  -- optional unique identifier
+    course VARCHAR NOT NULL,
+    course_subject VARCHAR NOT NULL,
+    course_number VARCHAR NOT NULL,
+    academic_level VARCHAR NOT NULL,
+    course_title VARCHAR NOT NULL,
+    course_description TEXT NOT NULL,
+    course_tags TEXT NOT NULL
+);
+-- END

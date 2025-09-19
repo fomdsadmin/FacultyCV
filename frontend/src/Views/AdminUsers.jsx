@@ -9,7 +9,7 @@ import ManageUser from "../Components/ManageUser.jsx";
 import AddUserModal from "../Components/AddUserModal.jsx";
 import ImportUserModal from "../Components/ImportUserModal.jsx";
 import PendingRequestsModal from "../Components/PendingRequestsModal.jsx";
-import { ConfirmModal, DeactivatedUsersModal } from "../Components/AdminUsersModals.jsx";
+import { ConfirmModal, DeactivatedUsersModal, TerminatedUsersModal } from "../Components/AdminUsersModals.jsx";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
 import { useAdmin } from "Contexts/AdminContext.jsx";
 import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
@@ -22,6 +22,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [users, setUsers] = useState([]);
   const [approvedUsers, setApprovedUsers] = useState([]);
   const [deactivatedUsers, setDeactivatedUsers] = useState([]);
+  const [terminatedUsers, setTerminatedUsers] = useState([]);
   const [affiliations, setAffiliations] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [rejectedUsers, setRejectedUsers] = useState([]);
@@ -30,12 +31,15 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [deactivatedSearchTerm, setDeactivatedSearchTerm] = useState("");
+  const [terminatedSearchTerm, setTerminatedSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [deactivatedDepartmentFilter, setDeactivatedDepartmentFilter] = useState("");
+  const [terminatedDepartmentFilter, setTerminatedDepartmentFilter] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isPendingRequestsModalOpen, setIsPendingRequestsModalOpen] = useState(false);
   const [isImportUsersModalOpen, setIsImportUsersModalOpen] = useState(false);
   const [isDeactivatedUsersModalOpen, setIsDeactivatedUsersModalOpen] = useState(false);
+  const [isTerminatedUsersModalOpen, setIsTerminatedUsersModalOpen] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
@@ -67,15 +71,18 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
       const approvedUsersList = [];
       const rejectedUsersList = [];
       const deactivatedUsersList = [];
+      const terminatedUsersList = [];
 
       users.forEach((user) => {
-        if (user.pending === true && user.approved === false) {
+        if (user.terminated === true && user.active === false) {
+          terminatedUsersList.push(user);
+        } else if (user.pending === true && user.approved === false) {
           pendingUsersList.push(user);
         } else if (user.pending == false && user.approved === false) {
           rejectedUsersList.push(user);
         } else if (user.pending == false && user.approved === true) {
           // Filter based on active field
-          if (user.active === true) {
+          if (user.active === true && user.terminated === false) {
             approvedUsersList.push(user);
           } else {
             deactivatedUsersList.push(user);
@@ -87,6 +94,8 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
       setPendingUsers(pendingUsersList);
       setRejectedUsers(rejectedUsersList);
       setDeactivatedUsers(deactivatedUsersList);
+      setTerminatedUsers(terminatedUsersList);
+      
     } catch (error) {
       console.error("Error fetching users:", error);
     }
@@ -383,6 +392,14 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     setDeactivatedDepartmentFilter(event.target.value);
   };
 
+  const handleTerminatedSearchChange = (event) => {
+    setTerminatedSearchTerm(event.target.value);
+  };
+
+  const handleTerminatedDepartmentFilterChange = (event) => {
+    setTerminatedDepartmentFilter(event.target.value);
+  };
+
   // Get unique departments for active users
   const activeDepartments = Array.from(
     new Set(approvedUsers.map((user) => user.primary_department).filter(Boolean))
@@ -453,6 +470,21 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                       />
                     </svg>
                     Inactive Members ({deactivatedUsers.length})
+                  </button>
+
+                  <button
+                    onClick={() => setIsTerminatedUsersModalOpen(true)}
+                    className="btn btn-secondary ml-4"
+                    title="View Terminated Members"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Terminated Members ({terminatedUsers.length})
                   </button>
                 </div>
 
@@ -654,6 +686,19 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         onReactivateUser={handleReactivateUser}
         onActivateAll={handleActivateAll}
         onDeleteUser={handleDeleteUser}
+        userRole={userInfo.role}
+      />
+
+      <TerminatedUsersModal
+        isOpen={isTerminatedUsersModalOpen}
+        onClose={() => setIsTerminatedUsersModalOpen(false)}
+        terminatedUsers={terminatedUsers}
+        searchTerm={terminatedSearchTerm}
+        onSearchChange={handleTerminatedSearchChange}
+        departmentFilter={terminatedDepartmentFilter}
+        onDepartmentChange={handleTerminatedDepartmentFilterChange}
+        getPrimaryRank={getPrimaryRank}
+        getJointRanks={getJointRanks}
         userRole={userInfo.role}
       />
 

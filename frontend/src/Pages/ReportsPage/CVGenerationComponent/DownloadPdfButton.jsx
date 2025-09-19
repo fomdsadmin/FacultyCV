@@ -4,9 +4,10 @@ const DownloadPdfButton = ({
     pdfUrl,
     pdfComplete,
     generating,
+    pdfHasError,
     downloadName
 }) => {
-    
+
     const handleDownloadPdf = async () => {
         if (pdfUrl) {
             try {
@@ -16,7 +17,7 @@ const DownloadPdfButton = ({
                     throw new Error('Failed to fetch PDF');
                 }
                 const blob = await response.blob();
-                
+
                 // Create download link with blob
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement("a");
@@ -25,7 +26,7 @@ const DownloadPdfButton = ({
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                
+
                 // Clean up the blob URL
                 window.URL.revokeObjectURL(url);
             } catch (error) {
@@ -37,28 +38,34 @@ const DownloadPdfButton = ({
     };
 
     const getPdfButtonState = () => {
-        if (pdfUrl && pdfComplete) {
-            return { 
-                text: "Download PDF", 
-                style: "btn-success", 
-                disabled: false 
+        if (pdfHasError) {
+            return {
+                text: "Error generating PDF please try again",
+                style: "btn-secondary opacity-50 cursor-not-allowed",
+                disabled: true
+            }
+        } else if (pdfUrl && pdfComplete) {
+            return {
+                text: "Download PDF",
+                style: "btn-success",
+                disabled: false
             };
         } else if (generating && !pdfComplete) {
-            return { 
+            return {
                 text: (
                     <span className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></div>
                         PDF Processing...
                     </span>
-                ), 
-                style: "btn-secondary opacity-50 cursor-not-allowed", 
-                disabled: true 
+                ),
+                style: "btn-secondary opacity-50 cursor-not-allowed",
+                disabled: true
             };
         } else {
-            return { 
-                text: "No PDF available - Please generate first", 
-                style: "btn-secondary opacity-50 cursor-not-allowed", 
-                disabled: true 
+            return {
+                text: "No PDF available - Please generate first",
+                style: "btn-secondary opacity-50 cursor-not-allowed",
+                disabled: true
             };
         }
     };

@@ -6,16 +6,6 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
   const { departments, ranks } = useFaculty();
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
 
-  // Handler for primary unit changes - now handles array
-  const handlePrimaryUnitChange = (index, field, value) => {
-    const updatedUnits = [...primaryUnit];
-    updatedUnits[index] = {
-      ...updatedUnits[index],
-      [field]: value,
-    };
-    setPrimaryUnit(updatedUnits);
-  };
-
   // Handler for primary unit additional info changes - now handles array
   const handlePrimaryUnitAdditionalInfoChange = (index, field, value) => {
     const updatedUnits = [...primaryUnit];
@@ -29,14 +19,14 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
     setPrimaryUnit(updatedUnits);
   };
 
-  // Handler for joint units changes
-  const handleJointUnitChange = (index, field, value) => {
-    const updatedUnits = [...jointUnits];
+  // Handler for primary unit main field changes (like location)
+  const handlePrimaryUnitMainFieldChange = (index, field, value) => {
+    const updatedUnits = [...primaryUnit];
     updatedUnits[index] = {
       ...updatedUnits[index],
       [field]: value,
     };
-    setJointUnits(updatedUnits);
+    setPrimaryUnit(updatedUnits);
   };
 
   // Handler for joint units additional info changes
@@ -52,48 +42,14 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
     setJointUnits(updatedUnits);
   };
 
-  // Function to add a new joint unit
-  const handleAddJointUnit = () => {
-    const newUnit = {
-      unit: "",
-      rank: "",
-      title: "",
-      percent: "",
-      location: "",
-      additional_info: {
-        division: "",
-        program: "",
-        start: "",
-        end: "",
-      },
-    };
-    setJointUnits([...jointUnits, newUnit]);
-  };
-
-  // Function to delete a joint unit
-  const handleDeleteJointUnit = (index) => {
+  // Handler for joint unit main field changes (like location)
+  const handleJointUnitMainFieldChange = (index, field, value) => {
     const updatedUnits = [...jointUnits];
-    updatedUnits.splice(index, 1);
+    updatedUnits[index] = {
+      ...updatedUnits[index],
+      [field]: value,
+    };
     setJointUnits(updatedUnits);
-  };
-
-  // Function to initialize primary unit if it's empty - now handles array
-  const initializePrimaryUnit = () => {
-    if (!primaryUnit || primaryUnit.length === 0) {
-      setPrimaryUnit([{
-        unit: "",
-        rank: "",
-        title: "",
-        percent: "",
-        location: "",
-        additional_info: {
-          division: "",
-          program: "",
-          start: "",
-          end: "",
-        },
-      }]);
-    }
   };
 
   // Check if we have any units to display - updated for array
@@ -124,13 +80,16 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                     Business Title (i.e Head)
                   </th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Location
-                  </th>
-                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Appointment %
                   </th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Type
+                    Track Type
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    Start Date
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    End Date
                   </th>
                   {/* <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Actions
@@ -139,7 +98,7 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
               </thead>
               <tbody className="bg-white divide-x divide-white ">
                 {/* Primary Unit Rows - Now handles array */}
-                {hasPrimaryUnit && 
+                {hasPrimaryUnit &&
                   primaryUnit.map((unit, idx) => (
                     <tr key={`primary-${idx}`} className="">
                       <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-blue-700">Primary</td>
@@ -171,15 +130,6 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                         <input
                           type="text"
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                          value={unit.location || ""}
-                          readOnly
-                          placeholder="e.g., Hospital Name"
-                        />
-                      </td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
                           value={unit.apt_percent || ""}
                           readOnly
                         />
@@ -192,9 +142,24 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           readOnly
                         />
                       </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="date"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={(unit.additional_info && unit.additional_info.start) || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="date"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={(unit.additional_info && unit.additional_info.end) || ""}
+                          readOnly
+                        />
+                      </td>
                     </tr>
-                  ))
-                }
+                  ))}
 
                 {/* Joint Units Rows */}
                 {hasJointUnits &&
@@ -245,15 +210,6 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                         <input
                           type="text"
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                          value={unit.location || ""}
-                          readOnly
-                          placeholder="e.g., Hospital Name"
-                        />
-                      </td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
                           value={unit.apt_percent || ""}
                           readOnly
                         />
@@ -263,6 +219,22 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           type="text"
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
                           value={unit.type ? unit.type.toUpperCase() || "" : ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="date"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={(unit.additional_info && unit.additional_info.start) || ""}
+                          readOnly
+                        />
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="date"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
+                          value={(unit.additional_info && unit.additional_info.end) || ""}
                           readOnly
                         />
                       </td>
@@ -291,32 +263,6 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
               </tbody>
             </table>
           )}
-
-          {/* Action buttons */}
-          {/* <div className="mt-2 flex gap-2 justify-end">
-            {!hasPrimaryUnit && (
-              <button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                type="button"
-                onClick={initializePrimaryUnit}
-              >
-                + Add Primary Unit
-              </button>
-            )}
-            <button
-              className={`px-3 py-1 rounded text-sm ${
-                !hasPrimaryUnit 
-                  ? "bg-gray-400 text-gray-600 cursor-not-allowed" 
-                  : "bg-green-500 hover:bg-green-600 text-white"
-              }`}
-              type="button"
-              onClick={handleAddJointUnit}
-              disabled={!hasPrimaryUnit}
-              title={!hasPrimaryUnit ? "Please add a primary unit first" : "Add joint unit"}
-            >
-              + Add Joint Unit
-            </button>
-          </div> */}
         </div>
       </Section>
 
@@ -362,17 +308,14 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                         Program (if applicable)
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Start Date
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        End Date
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Location
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {/* Primary Unit Additional Info - Updated for array */}
-                    {hasPrimaryUnit && 
+                    {hasPrimaryUnit &&
                       primaryUnit.map((unit, idx) => (
                         <tr key={`primary-additional-${idx}`} className="bg-blue-50">
                           <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-700">Primary</td>
@@ -397,25 +340,17 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                               placeholder="Enter program"
                             />
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                             <input
-                              type="date"
+                              type="text"
                               className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                              value={(unit.additional_info && unit.additional_info.start) || ""}
-                              onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "start", e.target.value)}
-                            />
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                            <input
-                              type="date"
-                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                              value={(unit.additional_info && unit.additional_info.end) || ""}
-                              onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "end", e.target.value)}
+                              value={unit.location || ""}
+                              onChange={(e) => handlePrimaryUnitMainFieldChange(idx, "location", e.target.value)}
+                              placeholder="e.g., Hospital Name"
                             />
                           </td>
                         </tr>
-                      ))
-                    }
+                      ))}
 
                     {/* Joint Units Additional Info */}
                     {hasJointUnits &&
@@ -443,20 +378,13 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                               placeholder="Enter program"
                             />
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                          <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                             <input
-                              type="date"
+                              type="text"
                               className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                              value={(unit.additional_info && unit.additional_info.start) || ""}
-                              onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "start", e.target.value)}
-                            />
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                            <input
-                              type="date"
-                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                              value={(unit.additional_info && unit.additional_info.end) || ""}
-                              onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "end", e.target.value)}
+                              value={unit.location || ""}
+                              onChange={(e) => handleJointUnitMainFieldChange(idx, "location", e.target.value)}
+                              placeholder="e.g., Hospital Name"
                             />
                           </td>
                         </tr>

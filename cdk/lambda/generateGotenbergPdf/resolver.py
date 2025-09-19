@@ -8,6 +8,7 @@ import urllib.request
 from urllib.parse import unquote_plus
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
+import signal
 
 GOTENBERG_HOST = os.environ.get('GOTENBERG_HOST')
 GOTENBERG_PATH = "/forms/chromium/convert/html"
@@ -67,10 +68,22 @@ def notify_generation_complete(pdf_key):
         print(f"Failed to send notification: {str(e)}")
         # Don't fail the entire function if notification fails
 
+def timeout_handler(signum, frame):
+    raise TimeoutError("Lambda function timed out")
+
 def lambda_handler(event, context):
+    pdf_key = None
+    html_key = None
+    bucket_name = None
     try:
         print("==== Incoming S3 Event ====")
         print(event)
+
+        remaining_time = context.get_remaining_time_in_millis() / 1000.0
+        timeout_buffer = 30  # 30 second buffer
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(int(remaining_time - timeout_buffer))
 
         # Get S3 info from the event
         record = event['Records'][0]['s3']
@@ -104,6 +117,10 @@ def lambda_handler(event, context):
             "Content-Type": f"multipart/form-data; boundary={FIXED_BOUNDARY}"
         }
 
+        # Construct PDF path using new flat format
+        filename = html_key.split("/")[-1].rsplit(".", 1)[0]  # usernameTemplateID
+        pdf_key = f"pdf/{filename}.pdf"
+
         # Send request to Gotenberg
         conn = http.client.HTTPConnection(GOTENBERG_HOST, 80, timeout=60)
         conn.request("POST", GOTENBERG_PATH, body=body, headers=headers)
@@ -114,9 +131,6 @@ def lambda_handler(event, context):
             print("Gotenberg error body:", pdf_bytes.decode("utf-8", errors="ignore"))
             raise Exception(f"Gotenberg conversion failed: {response.status}")
 
-        # Construct PDF path using new flat format
-        filename = html_key.split("/")[-1].rsplit(".", 1)[0]  # usernameTemplateID
-        pdf_key = f"pdf/{filename}.pdf"
         print(f"Saving PDF to s3://{bucket_name}/{pdf_key}")
 
         # Upload PDF back to S3

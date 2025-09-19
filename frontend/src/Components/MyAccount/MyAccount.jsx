@@ -182,7 +182,7 @@ const MyAccount = ({
               onClick={onSubmit}
               disabled={loading}
             >
-              {loading ? "Submitting..." : "Submit Request"}
+              {loading ? "Submitting..." : "Access Reqeust"}
             </button>
           </div>
         </div>

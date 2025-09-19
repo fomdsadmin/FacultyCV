@@ -5,6 +5,8 @@ import {
     checkDocxComplete,
     doesDocxTagExist,
     doesPdfTagExist,
+    checkDocxHasError,
+    checkPdfHasError,
 } from "../gotenbergGenerateUtils/gotenbergService";
 import { addSubscription } from "../gotenbergGenerateUtils/gotenbergService";
 import { getPdfKey, getDocxKey, getGenericKey, getPdfDownloadUrl, getDocxDownloadUrl, convertHtmlToPdf } from "../gotenbergGenerateUtils/gotenbergService";
@@ -12,6 +14,7 @@ import GenerateButton from "./GenerateButton";
 import DownloadDocxButton from "./DownloadDocxButton";
 import DownloadPdfButton from "./DownloadPdfButton";
 import { useNotification } from "Contexts/NotificationContext";
+import { useRef } from "react";
 
 // onGenerate must return the html content
 const CVGenerationComponent = ({
@@ -31,46 +34,95 @@ const CVGenerationComponent = ({
     const [docxExists, setDocxExists] = useState(false);
     const [pdfComplete, setPdfComplete] = useState(false);
     const [docxComplete, setDocxComplete] = useState(false);
+    const [docxHasError, setDocxHasError] = useState(false);
+    const [pdfHasError, setPdfHasError] = useState(false);
 
     const [pdfUrl, setPdfUrl] = useState(null);
     const [docxUrl, setDocxUrl] = useState(null);
 
     const [generating, setGenerating] = useState(false);
 
-    const getKey = () => {
-        return getGenericKey(userInfo, selectedTemplate, optionalKey);
-    }
+    const currentTemplateRef = useRef();
+
+    useEffect(() => {
+        currentTemplateRef.current = selectedTemplate;
+    }, [selectedTemplate]);
+
 
     const onPdfComplete = async (backendKey) => {
-        if (backendKey === getPdfKey(getKey())) {
-            const pdfUrl = await getPdfDownloadUrl(getKey())
+
+        const currentKey = getGenericKey(userInfo, currentTemplateRef.current, optionalKey);
+
+        console.log("JJFILTER KEYS: ", backendKey, getPdfKey(currentKey))
+
+        const doesPdfHaveError = await checkPdfHasError(backendKey.replace("pdf/", "").replace(".pdf", ""));
+
+        if (doesPdfHaveError) {
+            setNotification({ message: "Error generating PDF and DOCX", type: "error" });
+        }
+
+        if (backendKey === getPdfKey(currentKey)) {
+
+            if (doesPdfHaveError) {
+                setPdfExists(false);
+                setPdfComplete(true);
+                setPdfHasError(true);
+
+                // Docx needs pdf to generate, so if pdf has error, then docx has an error too
+                setDocxHasError(true);
+                return;
+            }
+
+            const pdfUrl = await getPdfDownloadUrl(currentKey);
             setPdfUrl(pdfUrl);
             setPdfPreviewUrl?.(pdfUrl);
             setPdfExists(true);
             setPdfComplete(true);
         }
+
         setNotification({ message: pdfGenerationCompleteMessage });
+
     }
 
     const onDocxComplete = async (backendKey) => {
 
-        if (backendKey === getDocxKey(getKey())) {
-            setDocxUrl(await getDocxDownloadUrl(getKey()));
+        const currentKey = getGenericKey(userInfo, currentTemplateRef.current, optionalKey);
+
+        const docxHaveError = await checkDocxHasError(backendKey.replace("docx/", "").replace(".docx", ""));
+
+        if (docxHaveError) {
+            setNotification({ message: "Error generating DOCX", type: "error" });
+        }
+
+        if (backendKey === getDocxKey(currentKey)) {
+
+            if (docxHaveError) {
+                setDocxExists(false);
+                setDocxComplete(true);
+                setDocxHasError(true);
+                return;
+            }
+
+            setDocxUrl(await getDocxDownloadUrl(currentKey));
             setDocxExists(true);
             setDocxComplete(true);
         }
+
         setNotification({ message: docxGenerationCompleteMessage });
+
     }
 
     const onGenerate = async () => {
         setGenerating(true);
 
         // get key earlier in case user switches templates thus changing the key
-        const key = getKey();
+        const key = getGenericKey(userInfo, currentTemplateRef.current, optionalKey);
 
         setPdfPreviewUrl?.(null);
         setPdfComplete(false);
         setDocxComplete(false);
+        setPdfHasError(false);
+        setDocxHasError(false);
 
         const html = await getHtml();
 
@@ -95,7 +147,7 @@ const CVGenerationComponent = ({
         setDocxUrl(null);
         setPdfPreviewUrl?.(null);
 
-        setGenerating(false);
+        setGenerating(true);
     }
 
     useEffect(() => {
@@ -106,34 +158,42 @@ const CVGenerationComponent = ({
 
     useEffect(() => {
         const setDocumentStates = async () => {
+            const key = getGenericKey(userInfo, currentTemplateRef.current, optionalKey);
             const promises = [
-                checkPdfComplete(getKey()),
-                checkDocxComplete(getKey()),
-                doesDocxTagExist(getKey()),
-                doesPdfTagExist(getKey())
+                checkPdfComplete(key),
+                checkDocxComplete(key),
+                doesDocxTagExist(key),
+                doesPdfTagExist(key),
+                checkDocxHasError(key),
+                checkPdfHasError(key)
             ];
 
             const [
                 pdfComplete,
                 docxComplete,
                 docxTagExists,
-                pdfTagExists
+                pdfTagExists,
+                docxHasError,
+                pdfHasError
             ] = await Promise.all(promises);
 
             setPdfExists(pdfTagExists);
             setDocxExists(docxTagExists);
+            setDocxHasError(docxHasError || pdfHasError);
+            setPdfHasError(pdfHasError);
 
-            if (pdfComplete) {
-                const pdfUrl = await getPdfDownloadUrl(getKey());
+            if (pdfComplete && !pdfHasError) {
+                const pdfUrl = await getPdfDownloadUrl(key);
                 setPdfUrl(pdfUrl);
                 setPdfPreviewUrl(pdfUrl);
                 setPdfComplete(pdfComplete);
             }
 
-            if (docxComplete) {
-                setDocxUrl(await getDocxDownloadUrl(getKey()));
+            if (docxComplete && !docxHasError) {
+                setDocxUrl(await getDocxDownloadUrl(key));
                 setDocxComplete(docxComplete)
             }
+            setGenerating(false);
         }
 
         resetStates();
@@ -142,20 +202,22 @@ const CVGenerationComponent = ({
 
     useEffect(() => {
         if (
-            (generating && !pdfExists && !pdfComplete) ||
-            (pdfExists && !pdfComplete)
+            ((generating && !pdfExists && !pdfComplete) ||
+                (pdfExists && !pdfComplete)) &&
+            !pdfHasError
         ) {
             setGenerating(true);
-            addSubscription(getPdfKey(getKey()), onPdfComplete, onGenerationError);
+            addSubscription(getPdfKey(getGenericKey(userInfo, currentTemplateRef.current, optionalKey)), onPdfComplete, onGenerationError);
         }
     }, [generating, pdfExists, pdfComplete])
 
     useEffect(() => {
-        if ((generating && !docxExists && !docxComplete) ||
-            (docxExists && !docxComplete)
+        if (((generating && !docxExists && !docxComplete) ||
+            (docxExists && !docxComplete)) &&
+            !docxHasError
         ) {
             setGenerating(true);
-            addSubscription(getDocxKey(getKey()), onDocxComplete, onGenerationError);
+            addSubscription(getDocxKey(getGenericKey(userInfo, currentTemplateRef.current, optionalKey)), onDocxComplete, onGenerationError);
         }
     }, [generating, docxExists, docxComplete])
 
@@ -167,6 +229,8 @@ const CVGenerationComponent = ({
                 generating={generating}
                 pdfComplete={pdfComplete}
                 docxComplete={docxComplete}
+                pdfHasError={pdfHasError}
+                docxHasError={docxHasError}
                 onGenerate={onGenerate}
             />
 
@@ -176,6 +240,7 @@ const CVGenerationComponent = ({
                     pdfUrl={pdfUrl}
                     pdfComplete={pdfComplete}
                     generating={generating}
+                    pdfHasError={pdfHasError}
                     downloadName={`${selectedTemplate?.title || 'cv'}${optionalKey}.pdf`}
                 />
 
@@ -183,6 +248,7 @@ const CVGenerationComponent = ({
                     docxUrl={docxUrl}
                     docxComplete={docxComplete}
                     generating={generating}
+                    docxHasError={docxHasError}
                     downloadName={`${selectedTemplate?.title || 'cv'}${optionalKey}.docx`}
                 />
             </div>

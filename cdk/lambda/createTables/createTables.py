@@ -246,6 +246,19 @@ def lambda_handler(event, context):
     query = createQuery('audit_view', columns)
     cursor.execute(query)
     
+    # Create Course Catalog Table
+    columns = []
+    columns.append(createColumn('course_id', 'serial', 'PRIMARY KEY', False))
+    columns.append(createColumn('course', 'varchar', 'NOT NULL', False))
+    columns.append(createColumn('course_subject', 'varchar', 'NOT NULL', False))
+    columns.append(createColumn('course_number', 'varchar', 'NOT NULL', False))
+    columns.append(createColumn('academic_level', 'varchar', 'NOT NULL', False))
+    columns.append(createColumn('course_title', 'varchar', 'NOT NULL', False))
+    columns.append(createColumn('course_description', 'text', 'NOT NULL', False))
+    columns.append(createColumn('course_tags', 'text', 'NOT NULL', True))
+    query = createQuery('course_catalog', columns)
+    cursor.execute(query)
+    
     cursor.close()
     connection.commit()
     connection.close()

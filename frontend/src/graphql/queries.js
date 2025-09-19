@@ -39,6 +39,7 @@ export const getUserQuery = `
             cwl_username
             vpp_username
             active
+            terminated
         }
     }
 `;
@@ -73,6 +74,7 @@ export const getUserWithVppUsernameQuery = `
             cwl_username
             vpp_username
             active
+            terminated
         }
     }
 `;
@@ -133,6 +135,7 @@ export const getAllUsersQuery = () => `
             cwl_username
             vpp_username
             active
+            terminated
         }
     }
 `;

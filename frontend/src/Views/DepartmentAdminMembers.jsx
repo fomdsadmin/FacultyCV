@@ -8,7 +8,7 @@ import ManageUser from "Components/ManageUser.jsx";
 import { useAuditLogger, AUDIT_ACTIONS } from "Contexts/AuditLoggerContext.jsx";
 import { useAdmin } from "../Contexts/AdminContext.jsx";
 import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
-import { ConfirmModal, DeactivatedUsersModal } from "../Components/AdminUsersModals.jsx";
+import { ConfirmModal, DeactivatedUsersModal, TerminatedUsersModal } from "../Components/AdminUsersModals.jsx";
 import AdminUserTabs from "Components/AdminUserTabs.jsx";
 
 const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
@@ -17,6 +17,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [approvedUsers, setApprovedUsers] = useState([]);
   const [deactivatedUsers, setDeactivatedUsers] = useState([]);
+  const [terminatedUsers, setTerminatedUsers] = useState([]);
   const [affiliations, setAffiliations] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const params = useParams();
@@ -24,9 +25,12 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [deactivatedSearchTerm, setDeactivatedSearchTerm] = useState("");
+  const [terminatedSearchTerm, setTerminatedSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [deactivatedDepartmentFilter, setDeactivatedDepartmentFilter] = useState("");
+  const [terminatedDepartmentFilter, setTerminatedDepartmentFilter] = useState("");
   const [isDeactivatedUsersModalOpen, setIsDeactivatedUsersModalOpen] = useState(false);
+  const [isTerminatedUsersModalOpen, setIsTerminatedUsersModalOpen] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
@@ -126,11 +130,14 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         }
       }
 
-      // Filter approved users to only show active ones
-      const approvedActiveUsers = allFilteredUsers.filter((user) => user.active === true);
+      // Filter approved users to only show active ones (not terminated)
+      const approvedActiveUsers = allFilteredUsers.filter((user) => user.active === true && user.terminated !== true);
 
-      // Filter deactivated users
-      const deactivatedUsersList = allFilteredUsers.filter((user) => user.active === false);
+      // Filter deactivated users (inactive but not terminated)
+      const deactivatedUsersList = allFilteredUsers.filter((user) => user.active === false && user.terminated !== true);
+
+      // Filter terminated users
+      const terminatedUsersList = allFilteredUsers.filter((user) => user.terminated === true);
 
       console.log("fetchAllUsers Debug:", {
         userRole: userInfo.role,
@@ -138,6 +145,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         allFilteredUsers: allFilteredUsers.length,
         approvedActiveUsers: approvedActiveUsers.length,
         deactivatedUsers: deactivatedUsersList.length,
+        terminatedUsers: terminatedUsersList.length,
         sampleUsers: allFilteredUsers.slice(0, 3).map((u) => ({
           name: `${u.first_name} ${u.last_name}`,
           role: u.role,
@@ -145,12 +153,14 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
           pending: u.pending,
           approved: u.approved,
           active: u.active,
+          terminated: u.terminated,
         })),
       });
 
       setFilteredUsers(allFilteredUsers);
       setApprovedUsers(approvedActiveUsers);
       setDeactivatedUsers(deactivatedUsersList);
+      setTerminatedUsers(terminatedUsersList);
     } catch (error) {
       console.error(error);
     }
@@ -377,7 +387,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
 
   const handleActivateAll = (user_ids) => {
     const userCount = user_ids.length;
-    
+
     // Show confirmation dialog
     showModal(
       "Confirm Bulk User Activation",
@@ -394,11 +404,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
           fetchAllUsers();
 
           // Show success message
-          showModal(
-            "Users Activated Successfully",
-            `${userCount} users have been successfully activated.`,
-            "success"
-          );
+          showModal("Users Activated Successfully", `${userCount} users have been successfully activated.`, "success");
         } catch (error) {
           console.error("Error activating users:", error);
           showModal("Error", "Failed to activate users. Please try again.", "error");
@@ -417,6 +423,14 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
 
   const handleDeactivatedDepartmentFilterChange = (event) => {
     setDeactivatedDepartmentFilter(event.target.value);
+  };
+
+  const handleTerminatedSearchChange = (event) => {
+    setTerminatedSearchTerm(event.target.value);
+  };
+
+  const handleTerminatedDepartmentFilterChange = (event) => {
+    setTerminatedDepartmentFilter(event.target.value);
   };
 
   // Get unique departments for active users based on role
@@ -468,201 +482,223 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
       <main className="px-16 overflow-auto custom-scrollbar w-full mb-4 mt-4">
         <div>
           {activeUser === null ? (
-              <div className="!overflow-auto !h-full custom-scrollbar">
-                <div className="flex flex-col justify-start align-left items-start mx-4 mb-4">
-                  <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">
-                    Active Members ({approvedUsers.length})
-                  </h1>
-                  <div>
-                    <button
-                      onClick={() => setIsDeactivatedUsersModalOpen(true)}
-                      className="btn btn-secondary"
-                      title="View Inactive Members"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      Inactive Members ({deactivatedUsers.length})
-                    </button>
-                  </div>
-                </div>
-                <div className="ml-4 flex mb-4 gap-2">
-                  {(userInfo.role === "Admin" || userInfo.role === "Admin-All" || allowedDepartments.length > 0) && (
-                    <select
-                      className="select select-bordered min-w-48"
-                      value={departmentFilter}
-                      onChange={handleDepartmentFilterChange}
-                      disabled={
-                        userInfo.role &&
-                        userInfo.role.startsWith("Admin-") &&
-                        userInfo.role !== "Admin-All" &&
-                        allowedDepartments.length === 1
-                      }
-                    >
-                      <option value="">
-                        {userInfo.role === "Admin" || userInfo.role === "Admin-All"
-                          ? `All Departments (${approvedUsers.length})`
-                          : `${allowedDepartments[0] || "Department"} (${approvedUsers.length})`}
-                      </option>
-                      {allowedDepartments.map((dept) => {
-                        const deptCount = approvedUsers.filter((user) => user.primary_department === dept).length;
-                        return (
-                          <option key={dept} value={dept}>
-                            {dept} ({deptCount})
-                          </option>
-                        );
-                      })}
-                    </select>
-                  )}
-                  <label className="input input-bordered flex items-center flex-1">
-                    <input
-                      type="text"
-                      className="grow"
-                      placeholder="Search members..."
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                    />
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 16 16"
-                      fill="currentColor"
-                      className="h-4 w-4 opacity-70"
-                    >
+            <div className="!overflow-auto !h-full custom-scrollbar">
+              <div className="flex flex-col justify-start align-left items-start mx-4 mb-4">
+                <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">
+                  Active Members ({approvedUsers.length})
+                </h1>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsDeactivatedUsersModalOpen(true)}
+                    className="btn btn-secondary"
+                    title="View Inactive Members"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path
                         fillRule="evenodd"
-                        d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                         clipRule="evenodd"
                       />
                     </svg>
-                  </label>
+                    Inactive Members ({deactivatedUsers.length})
+                  </button>
+
+                  <button
+                    onClick={() => setIsTerminatedUsersModalOpen(true)}
+                    className="btn btn-secondary"
+                    title="View Terminated Members"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Terminated Members ({terminatedUsers.length})
+                  </button>
                 </div>
-                <AdminUserTabs
-                  filters={filters}
-                  activeFilter={activeTab}
-                  onSelect={handleTabSelect}
-                  users={approvedUsers}
-                  searchTerm={searchTerm}
-                  departmentFilter={departmentFilter}
-                />
-                {/* Optionally keep Filters below if you want both */}
-                {/* <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters> */}
-                {loading ? (
-                  <div className="flex items-center justify-center w-full">
-                    <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-                  </div>
-                ) : (searchedUsers.length === 0 && !loading) ? (
-                  <div className="flex items-center justify-center w-full">
-                    <div className="block text-m mb-1 mt-6 text-zinc-600">No Users Found</div>
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 overflow-auto max-h-[60vh]">
-                    <table className="w-full table-fixed min-w-[750px] md:overflow-x-auto">
-                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 sticky top-0 z-10">
-                        <tr>
-                          <th className="px-4 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/4">
-                            User
-                          </th>
-                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
-                            Role
-                          </th>
-                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
-                            Department
-                          </th>
-                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
-                            Primary Rank
-                          </th>
-                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/4">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {searchedUsers.map((user, index) => (
-                          <tr
-                            key={user.user_id}
-                            className={`transition-colors duration-150 hover:bg-blue-50/50 ${
-                              index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
-                            }`}
-                          >
-                            <td className="px-4 py-5 w-1/4">
-                              <div className="flex flex-col min-w-0 break-words">
-                                <div className="text-sm font-semibold text-gray-900 mb-1 truncate">
-                                  {user.first_name} {user.last_name}
-                                </div>
-                                <div className="text-sm text-gray-500 truncate">{user.email}</div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-5 text-center w-1/6">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                {user.role === "Assistant" ? "Delegate" : user.role}
-                              </span>
-                            </td>
-                            <td className="px-4 py-5 text-center w-1/6">
-                              <span className="text-sm font-medium text-gray-700">
-                                {user.primary_department ? (
-                                  user.primary_department
-                                ) : (
-                                  <span className="text-gray-400 italic">Not specified</span>
-                                )}
-                              </span>
-                            </td>
-                            <td className="px-4 py-5 text-center w-1/6">
-                              <span className="text-sm font-medium text-gray-700">
-                                {getPrimaryRank(user.user_id) ? (
-                                  getPrimaryRank(user.user_id)
-                                ) : (
-                                  <span className="text-gray-400 italic">Not specified</span>
-                                )}
-                              </span>
-                            </td>
-                            <td className="px-4 py-5 w-1/4">
-                              <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-center gap-2 items-stretch w-full">
-                                <button
-                                  onClick={() => handleImpersonateClick(user.user_id)}
-                                  className="btn btn-accent btn-sm text-white text-xs whitespace-nowrap"
-                                >
-                                  Impersonate
-                                </button>
-                                <button
-                                  onClick={() => handleManageClick(user.user_id)}
-                                  className="btn btn-primary btn-sm text-white text-xs whitespace-nowrap"
-                                >
-                                  Quick Actions
-                                </button>
-                                <button
-                                  onClick={() => handleRemoveUser(user.user_id)}
-                                  className="btn btn-warning btn-sm text-white text-xs whitespace-nowrap"
-                                >
-                                  Deactivate
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+              </div>
+              <div className="ml-4 flex mb-4 gap-2">
+                {(userInfo.role === "Admin" || userInfo.role === "Admin-All" || allowedDepartments.length > 0) && (
+                  <select
+                    className="select select-bordered min-w-48"
+                    value={departmentFilter}
+                    onChange={handleDepartmentFilterChange}
+                    disabled={
+                      userInfo.role &&
+                      userInfo.role.startsWith("Admin-") &&
+                      userInfo.role !== "Admin-All" &&
+                      allowedDepartments.length === 1
+                    }
+                  >
+                    <option value="">
+                      {userInfo.role === "Admin" || userInfo.role === "Admin-All"
+                        ? `All Departments (${approvedUsers.length})`
+                        : `${allowedDepartments[0] || "Department"} (${approvedUsers.length})`}
+                    </option>
+                    {allowedDepartments.map((dept) => {
+                      const deptCount = approvedUsers.filter((user) => user.primary_department === dept).length;
+                      return (
+                        <option key={dept} value={dept}>
+                          {dept} ({deptCount})
+                        </option>
+                      );
+                    })}
+                  </select>
                 )}
+                <label className="input input-bordered flex items-center flex-1">
+                  <input
+                    type="text"
+                    className="grow"
+                    placeholder="Search members..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                  />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    className="h-4 w-4 opacity-70"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </label>
               </div>
-            ) : (
-              <div className="!overflow-auto !h-full custom-scrollbar">
-                <ManageUser
-                  user={activeUser}
-                  onBack={handleBack}
-                  fetchAllUsers={fetchAllUsers}
-                  department={department}
-                ></ManageUser>
-              </div>
-            )}
+              <AdminUserTabs
+                filters={filters}
+                activeFilter={activeTab}
+                onSelect={handleTabSelect}
+                users={approvedUsers}
+                searchTerm={searchTerm}
+                departmentFilter={departmentFilter}
+              />
+              {/* Optionally keep Filters below if you want both */}
+              {/* <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters> */}
+              {loading ? (
+                <div className="flex items-center justify-center w-full">
+                  <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+                </div>
+              ) : searchedUsers.length === 0 && !loading ? (
+                <div className="flex items-center justify-center w-full">
+                  <div className="block text-m mb-1 mt-6 text-zinc-600">No Users Found</div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 overflow-auto max-h-[60vh]">
+                  <table className="w-full table-fixed min-w-[750px] md:overflow-x-auto">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-4 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/4">
+                          User
+                        </th>
+                        <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                          Role
+                        </th>
+                        <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                          Department
+                        </th>
+                        <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                          CWL
+                        </th>
+                        <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                          Primary Rank
+                        </th>
+                        <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/4">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {searchedUsers.map((user, index) => (
+                        <tr
+                          key={user.user_id}
+                          className={`transition-colors duration-150 hover:bg-blue-50/50 ${
+                            index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                          }`}
+                        >
+                          <td className="px-4 py-5 w-1/4">
+                            <div className="flex flex-col min-w-0 break-words">
+                              <div className="text-sm font-semibold text-gray-900 mb-1 truncate">
+                                {user.first_name} {user.last_name}
+                              </div>
+                              <div className="text-sm text-gray-500 truncate">{user.email}</div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-5 text-center w-1/6">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                              {user.role === "Assistant" ? "Delegate" : user.role}
+                            </span>
+                          </td>
+                          <td className="px-4 py-5 text-center w-1/6">
+                            <span className="text-sm font-medium text-gray-700">
+                              {user.primary_department ? (
+                                user.primary_department
+                              ) : (
+                                <span className="text-gray-400 italic">Not specified</span>
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-4 py-5 text-center w-1/6">
+                            <span className="text-sm font-medium text-gray-700">
+                              {user.cwl_username ? (
+                                user.cwl_username
+                              ) : (
+                                <span className="text-gray-400 italic">Not specified</span>
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-4 py-5 text-center w-1/6">
+                            <span className="text-sm font-medium text-gray-700">
+                              {getPrimaryRank(user.user_id) ? (
+                                getPrimaryRank(user.user_id)
+                              ) : (
+                                <span className="text-gray-400 italic">Not specified</span>
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-4 py-5 w-1/4">
+                            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-center gap-2 items-stretch w-full">
+                              <button
+                                onClick={() => handleImpersonateClick(user.user_id)}
+                                className="btn btn-accent btn-sm text-white text-xs whitespace-nowrap"
+                              >
+                                Impersonate
+                              </button>
+                              <button
+                                onClick={() => handleManageClick(user.user_id)}
+                                className="btn btn-primary btn-sm text-white text-xs whitespace-nowrap"
+                              >
+                                Quick Actions
+                              </button>
+                              <button
+                                onClick={() => handleRemoveUser(user.user_id)}
+                                className="btn btn-warning btn-sm text-white text-xs whitespace-nowrap"
+                              >
+                                Deactivate
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="!overflow-auto !h-full custom-scrollbar">
+              <ManageUser
+                user={activeUser}
+                onBack={handleBack}
+                fetchAllUsers={fetchAllUsers}
+                department={department}
+              ></ManageUser>
+            </div>
+          )}
         </div>
       </main>
 
@@ -676,6 +712,19 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         onDepartmentChange={handleDeactivatedDepartmentFilterChange}
         onReactivateUser={handleReactivateUser}
         onActivateAll={handleActivateAll}
+        userRole={userInfo.role}
+      />
+
+      <TerminatedUsersModal
+        isOpen={isTerminatedUsersModalOpen}
+        onClose={() => setIsTerminatedUsersModalOpen(false)}
+        terminatedUsers={terminatedUsers}
+        searchTerm={terminatedSearchTerm}
+        onSearchChange={handleTerminatedSearchChange}
+        departmentFilter={terminatedDepartmentFilter}
+        onDepartmentChange={handleTerminatedDepartmentFilterChange}
+        getPrimaryRank={getPrimaryRank}
+        getJointRanks={getSecondaryRanks}
         userRole={userInfo.role}
       />
 
