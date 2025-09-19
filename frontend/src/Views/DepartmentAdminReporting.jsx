@@ -115,7 +115,7 @@ const COMBINED_TEMPLATES = [
   }
 ];
 
-const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
+const DepartmentAdminReporting = ({ getCognitoUser, userInfo,department }) => {
   const [selectedUsers, setSelectedUsers] = useState([]); // Changed to array for multiple selection
   const [departmentUsers, setDepartmentUsers] = useState([]);
   const [selectedReportType, setSelectedReportType] = useState(""); // publications or other
@@ -625,8 +625,8 @@ const DepartmentAdminReporting = ({ getCognitoUser, userInfo }) => {
           </div>
         ) : (
           <div className="max-w-7xl">
-            <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">Department Reports</h1>
-
+            <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">Academic Sections Report</h1>
+            <h2 className="text-xl font-semibold text-blue-700 mb-4 mt-2">{department}</h2>
             {/* Main Content Grid - Left and Right Sections */}
             <div className="flex flex-col lg:flex-row gap-6 mb-8">
               

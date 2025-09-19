@@ -78,12 +78,22 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             )}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === "/department-admin/reporting" ? "bg-gray-200 rounded-lg" : ""}`}>
+        <li className={`mb-2 ${location.pathname === "/department-admin/declaration" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/department-admin/declaration">
+            <FaUsersCog className="h-5 w-5" />
+            {showText && !isCollapsed && (
+              <p className={`ml-2 ${location.pathname === "/department-admin/declaration" ? "font-bold" : ""}`}>
+                Declarations Report
+              </p>
+            )}
+          </Link>
+        </li>
+           <li className={`mb-2 ${location.pathname === "/department-admin/reporting" ? "bg-gray-200 rounded-lg" : ""}`}>
           <Link to="/department-admin/reporting">
             <FaUsersCog className="h-5 w-5" />
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === "/department-admin/reporting" ? "font-bold" : ""}`}>
-                Department Reporting
+                Academic Sections Report
               </p>
             )}
           </Link>
