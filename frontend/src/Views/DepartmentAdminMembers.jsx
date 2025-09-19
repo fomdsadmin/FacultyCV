@@ -8,7 +8,7 @@ import ManageUser from "Components/ManageUser.jsx";
 import { useAuditLogger, AUDIT_ACTIONS } from "Contexts/AuditLoggerContext.jsx";
 import { useAdmin } from "../Contexts/AdminContext.jsx";
 import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
-import { ConfirmModal, DeactivatedUsersModal } from "../Components/AdminUsersModals.jsx";
+import { ConfirmModal, DeactivatedUsersModal, TerminatedUsersModal } from "../Components/AdminUsersModals.jsx";
 import AdminUserTabs from "Components/AdminUserTabs.jsx";
 
 const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
@@ -17,6 +17,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [approvedUsers, setApprovedUsers] = useState([]);
   const [deactivatedUsers, setDeactivatedUsers] = useState([]);
+  const [terminatedUsers, setTerminatedUsers] = useState([]);
   const [affiliations, setAffiliations] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const params = useParams();
@@ -24,9 +25,12 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [deactivatedSearchTerm, setDeactivatedSearchTerm] = useState("");
+  const [terminatedSearchTerm, setTerminatedSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [deactivatedDepartmentFilter, setDeactivatedDepartmentFilter] = useState("");
+  const [terminatedDepartmentFilter, setTerminatedDepartmentFilter] = useState("");
   const [isDeactivatedUsersModalOpen, setIsDeactivatedUsersModalOpen] = useState(false);
+  const [isTerminatedUsersModalOpen, setIsTerminatedUsersModalOpen] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
   const { startManagingUser } = useApp();
   const navigate = useNavigate();
@@ -126,11 +130,14 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         }
       }
 
-      // Filter approved users to only show active ones
-      const approvedActiveUsers = allFilteredUsers.filter((user) => user.active === true);
+      // Filter approved users to only show active ones (not terminated)
+      const approvedActiveUsers = allFilteredUsers.filter((user) => user.active === true && user.terminated !== true);
 
-      // Filter deactivated users
-      const deactivatedUsersList = allFilteredUsers.filter((user) => user.active === false);
+      // Filter deactivated users (inactive but not terminated)
+      const deactivatedUsersList = allFilteredUsers.filter((user) => user.active === false && user.terminated !== true);
+
+      // Filter terminated users
+      const terminatedUsersList = allFilteredUsers.filter((user) => user.terminated === true);
 
       console.log("fetchAllUsers Debug:", {
         userRole: userInfo.role,
@@ -138,6 +145,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         allFilteredUsers: allFilteredUsers.length,
         approvedActiveUsers: approvedActiveUsers.length,
         deactivatedUsers: deactivatedUsersList.length,
+        terminatedUsers: terminatedUsersList.length,
         sampleUsers: allFilteredUsers.slice(0, 3).map((u) => ({
           name: `${u.first_name} ${u.last_name}`,
           role: u.role,
@@ -145,12 +153,14 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
           pending: u.pending,
           approved: u.approved,
           active: u.active,
+          terminated: u.terminated,
         })),
       });
 
       setFilteredUsers(allFilteredUsers);
       setApprovedUsers(approvedActiveUsers);
       setDeactivatedUsers(deactivatedUsersList);
+      setTerminatedUsers(terminatedUsersList);
     } catch (error) {
       console.error(error);
     }
@@ -415,6 +425,14 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     setDeactivatedDepartmentFilter(event.target.value);
   };
 
+  const handleTerminatedSearchChange = (event) => {
+    setTerminatedSearchTerm(event.target.value);
+  };
+
+  const handleTerminatedDepartmentFilterChange = (event) => {
+    setTerminatedDepartmentFilter(event.target.value);
+  };
+
   // Get unique departments for active users based on role
   let activeDepartments = [];
   let allowedDepartments = [];
@@ -469,7 +487,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                 <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">
                   Active Members ({approvedUsers.length})
                 </h1>
-                <div>
+                <div className="flex gap-2">
                   <button
                     onClick={() => setIsDeactivatedUsersModalOpen(true)}
                     className="btn btn-secondary"
@@ -483,6 +501,21 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                       />
                     </svg>
                     Inactive Members ({deactivatedUsers.length})
+                  </button>
+
+                  <button
+                    onClick={() => setIsTerminatedUsersModalOpen(true)}
+                    className="btn btn-secondary"
+                    title="View Terminated Members"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Terminated Members ({terminatedUsers.length})
                   </button>
                 </div>
               </div>
@@ -679,6 +712,19 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         onDepartmentChange={handleDeactivatedDepartmentFilterChange}
         onReactivateUser={handleReactivateUser}
         onActivateAll={handleActivateAll}
+        userRole={userInfo.role}
+      />
+
+      <TerminatedUsersModal
+        isOpen={isTerminatedUsersModalOpen}
+        onClose={() => setIsTerminatedUsersModalOpen(false)}
+        terminatedUsers={terminatedUsers}
+        searchTerm={terminatedSearchTerm}
+        onSearchChange={handleTerminatedSearchChange}
+        departmentFilter={terminatedDepartmentFilter}
+        onDepartmentChange={handleTerminatedDepartmentFilterChange}
+        getPrimaryRank={getPrimaryRank}
+        getJointRanks={getSecondaryRanks}
         userRole={userInfo.role}
       />
 
