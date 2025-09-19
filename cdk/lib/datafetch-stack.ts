@@ -135,6 +135,25 @@ export class DataFetchStack extends cdk.Stack {
       },
       layers: [apiStack.getLayers()['psycopg2'], apiStack.getLayers()['databaseConnect']]
     });
+
+    const bulkCourseCatalogUpload = new lambda.Function(this, 'facultyCV-bulkCourseCatalogUpload', {
+      functionName: `${resourcePrefix}-bulkCourseCatalogUpload`,
+      runtime: lambda.Runtime.PYTHON_3_9,
+      handler: 'lambda_function.lambda_handler',
+      code: lambda.Code.fromAsset('lambda/bulkCourseCatalogUpload'),
+      timeout: cdk.Duration.minutes(15),
+      role: bulkLoadRole, // assuming the same role can be used
+      memorySize: 512,
+      environment: {
+        S3_BUCKET_NAME: s3Bucket.bucketName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint
+      },
+      vpc: databaseStack.dbCluster.vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+      },
+      layers: [apiStack.getLayers()['psycopg2'], apiStack.getLayers()['databaseConnect']]
+    });
     
     const bulkUniversityInfoUpload = new lambda.Function(this, 'facultyCV-bulkUniversityInfoUpload', {
       functionName: `${resourcePrefix}-bulkUniversityInfoUpload`,
@@ -176,6 +195,16 @@ export class DataFetchStack extends cdk.Stack {
 
     s3Bucket.addEventNotification(
       s3.EventType.OBJECT_CREATED_PUT,
+      new LambdaDestination(bulkCourseCatalogUpload),
+      {
+        prefix: "user_data/course_catalog",
+        suffix: ".csv"
+      }
+    )
+
+
+    s3Bucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED_PUT,
       new LambdaDestination(bulkUniversityInfoUpload),
       {
         prefix: "user_data/university_info",
@@ -195,6 +224,7 @@ export class DataFetchStack extends cdk.Stack {
     // Give the lambdas permission to access the S3 Bucket
     s3Bucket.grantReadWrite(bulkUserUpload);
     s3Bucket.grantReadWrite(bulkDataSectionsUpload);
+    s3Bucket.grantReadWrite(bulkCourseCatalogUpload);
     s3Bucket.grantReadWrite(bulkUniversityInfoUpload);
     s3Bucket.grantReadWrite(bulkTeachingDataUpload);
   }
