@@ -380,6 +380,20 @@ export const getUserDeclarationsQuery = (user_id) => `
     }
 `;
 
+export const getAllUserDeclarationsQuery = (department) => `
+    query getAllUserDeclarations {
+        getAllUserDeclarations (
+            department: "${department}"
+        ) {
+            reporting_year
+            other_data
+            created_on
+            created_by
+            user_id
+        }
+    }
+`;
+
 export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
     query getUserAffiliations {
         getUserAffiliations (

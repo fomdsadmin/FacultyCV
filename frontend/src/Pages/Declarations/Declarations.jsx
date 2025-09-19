@@ -60,6 +60,7 @@ export const normalizeDeclarations = (rawDeclarations) => {
       created_by: decl.created_by,
       created_on: decl.created_on,
       updated_at: other.updated_at || null,
+      user_id: decl.user_id, // Add user_id field
     };
   });
 };

@@ -74,6 +74,7 @@ type Declaration {
 	other_data: AWSJSON!
 	created_by: String!
 	created_on: String!
+	user_id: String!
 }
 
 type DepartmentAffiliation {
@@ -536,6 +537,8 @@ type Query {
 	GetNotifications: [Notification]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getUserDeclarations(user_id: String!): [Declaration!]
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
+	getAllUserDeclarations(department: String!): [Declaration!]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getUserAffiliations(user_id: String!, first_name: String!, last_name: String!): [Affiliations!]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])

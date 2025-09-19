@@ -43,7 +43,7 @@ import VPPNoMatchPage from "./Views/VPPNoMatchPage";
 import KeycloakLogout from "Components/KeycloakLogout";
 import YourActivityPage from "./Pages/AuditLogPages/YourActivityPage.jsx";
 import GenerateCV from "Pages/GenerateCV/GenerateCV";
-import DepartmentAdmindeclaration from "Views/Departmentadmin_declarations.jsx";
+import DepartmentAdminDeclarations from "Views/DepartmentAdminDeclarations.jsx";
 
 const AppContent = () => {
   const {
@@ -492,7 +492,7 @@ const AppContent = () => {
             <Route
               path="/department-admin/declaration"
               element={
-                <DepartmentAdmindeclaration
+                <DepartmentAdminDeclarations
                   userInfo={userInfo}
                   getCognitoUser={getCognitoUser}
                   department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}

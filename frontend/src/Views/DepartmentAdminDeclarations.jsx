@@ -1,0 +1,538 @@
+import React, { useState, useEffect } from "react";
+import PageContainer from "./PageContainer.jsx";
+import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
+import DeclarationViewModal from "../Components/DeclarationViewModal.jsx";
+import { normalizeDeclarations } from "../Pages/Declarations/Declarations.jsx";
+import { getUserDeclarations, getAllUserDeclarations } from "../graphql/graphqlHelpers.js";
+import { useAdmin } from "../Contexts/AdminContext.jsx";
+import { FaDownload, FaSearch, FaSpinner } from "react-icons/fa";
+
+const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) => {
+  const { allUsers, isLoading: adminLoading } = useAdmin();
+
+  const [loading, setLoading] = useState(false);
+  const [departmentUsers, setDepartmentUsers] = useState([]);
+  const [userDeclarations, setUserDeclarations] = useState({});
+  const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedDeclaration, setSelectedDeclaration] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Get current and next year for the filter
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
+  const yearOptions = [
+    { value: "all", label: "All Years" },
+    { value: currentYear, label: currentYear.toString() },
+    { value: nextYear, label: nextYear.toString() }
+  ];
+
+  useEffect(() => {
+    if (!adminLoading && allUsers.length > 0) {
+      filterDepartmentUsers();
+    }
+  }, [allUsers, adminLoading, department]);
+
+  useEffect(() => {
+    if (departmentUsers.length > 0) {
+      fetchAllDeclarations();
+    }
+  }, [departmentUsers, selectedYear]);
+
+  const filterDepartmentUsers = () => {
+    let filteredUsers = [];
+    
+    if (userInfo.role === "Admin" || userInfo.role === "Admin-All") {
+      // For super admin, show all users
+      filteredUsers = allUsers.filter(user => 
+        user.active && 
+        user.approved && 
+        (user.role === "Faculty" || user.role === "Faculty-Admin")
+      );
+    } else if (userInfo.role.startsWith("Admin-")) {
+      // For department admin, filter by department
+      filteredUsers = allUsers.filter(user => 
+        user.active && 
+        user.approved && 
+        user.primary_department === userInfo.role.split("-")[1] &&
+        (user.role !== "Assistant")
+      );
+    }
+
+    setDepartmentUsers(filteredUsers);
+  };
+
+  const fetchAllDeclarations = async () => {
+    setLoading(true);
+    try {
+      const declarationsMap = {};
+      let allDeclarations = [];
+
+      // Fetch all declarations for the department in one call
+      if (userInfo && userInfo.role) {
+        if (userInfo.role === "Admin" || userInfo.role === "Admin-All") {
+          allDeclarations = await getAllUserDeclarations('All');
+        } else if (userInfo.role.startsWith("Admin-")) {
+          let argDepartment = userInfo.role.split("-")[1];
+          allDeclarations = await getAllUserDeclarations(argDepartment);
+        }
+      }
+      const normalizedDeclarations = normalizeDeclarations(allDeclarations);
+      
+      // Group declarations by user_id and filter by selected year
+      normalizedDeclarations.forEach(declaration => {
+        
+        if (selectedYear === "all" || declaration.year === selectedYear) {
+          if (selectedYear === "all") {
+            // For "all" years, create a unique key combining user_id and year
+            // This allows us to show multiple entries per user (one for each year)
+            const uniqueKey = `${declaration.user_id}_${declaration.year}`;
+            declarationsMap[uniqueKey] = {
+              ...declaration,
+              displayKey: uniqueKey, // Add a display key for rendering
+              originalUserId: declaration.user_id // Keep original user_id for reference
+            };
+          } else {
+            // For specific year, use user_id as key (one entry per user)
+            declarationsMap[declaration.user_id] = declaration;
+          }
+        }
+      });
+      
+      // Ensure all department users have an entry (even if null)
+      if (selectedYear !== "all") {
+        // For specific years, ensure each user has an entry
+        departmentUsers.forEach(user => {
+          if (!declarationsMap[user.user_id]) {
+            declarationsMap[user.user_id] = null;
+          }
+        });
+      }
+      // For "all" years, we don't add null entries since we want to show only users who have declarations
+      
+      setUserDeclarations(declarationsMap);
+    } catch (error) {
+      console.error("Error fetching declarations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewDeclaration = (user, declaration) => {
+    setSelectedUser(user);
+    setSelectedDeclaration(declaration);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedUser(null);
+    setSelectedDeclaration(null);
+  };
+
+  const formatSubmissionDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch {
+      return dateString;
+    }
+  };
+
+  const getSubmissionStatus = (declaration) => {
+    if (!declaration) {
+      return { status: "Not Submitted", date: null, hasSubmitted: false };
+    }
+
+    // A declaration is considered submitted if it exists and has meaningful content
+    // Check if any of the key fields are filled (excluding defaults)
+    const hasCoiDeclaration = declaration.coi && declaration.coi !== "";
+    const hasMeritDeclaration = declaration.fomMerit && declaration.fomMerit !== "";
+    const hasPsaDeclaration = declaration.psa && declaration.psa !== "";
+    const hasPromotionDeclaration = declaration.promotion && declaration.promotion !== "";
+    
+    // Also check for any text fields that indicate engagement with the form
+    const hasTextContent = declaration.meritJustification || 
+                          declaration.psaJustification || 
+                          declaration.honorific || 
+                          declaration.supportAnticipated ||
+                          declaration.promotionPathways;
+    
+    const hasDateContent = declaration.coiSubmissionDate ||
+                          declaration.psaSubmissionDate ||
+                          declaration.promotionSubmissionDate ||
+                          declaration.promotionEffectiveDate;
+    
+    const hasSubmitted = hasCoiDeclaration || hasMeritDeclaration || hasPsaDeclaration || 
+                        hasPromotionDeclaration || hasTextContent || hasDateContent;
+    
+    if (hasSubmitted) {
+      return { 
+        status: "Submitted", 
+        date: declaration.created_on || declaration.updated_at,
+        hasSubmitted: true 
+      };
+    }
+
+    return { status: "Not Submitted", date: null, hasSubmitted: false };
+  };
+
+  // Filter users based on search term and status
+  let filteredEntries = [];
+  
+  if (selectedYear === "all") {
+    // For "all" years, start with all department users and add their declarations
+    const userDeclarationPairs = [];
+    
+    // First, add entries for users who have declarations
+    Object.values(userDeclarations)
+      .filter(declaration => declaration != null)
+      .forEach(declaration => {
+        const userId = declaration.originalUserId || declaration.user_id;
+        const user = departmentUsers.find(u => u.user_id === userId);
+        if (user) {
+          userDeclarationPairs.push({ user, declaration });
+        }
+      });
+    
+    // Then, add entries for users who don't have any declarations
+    departmentUsers.forEach(user => {
+      const hasDeclaration = userDeclarationPairs.some(pair => pair.user.user_id === user.user_id);
+      if (!hasDeclaration) {
+        userDeclarationPairs.push({ user, declaration: null });
+      }
+    });
+    
+    // Apply filters
+    filteredEntries = userDeclarationPairs.filter(entry => {
+      const { user, declaration } = entry;
+      const submissionStatus = getSubmissionStatus(declaration);
+      
+      // Search filter
+      const matchesSearch = searchTerm === "" || 
+        `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.preferred_name && user.preferred_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.primary_department.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Status filter
+      const matchesStatus = statusFilter === "all" ||
+        (statusFilter === "submitted" && submissionStatus.hasSubmitted) ||
+        (statusFilter === "pending" && !submissionStatus.hasSubmitted);
+      
+      return matchesSearch && matchesStatus;
+    });
+  } else {
+    // For specific years, use original logic
+    filteredEntries = departmentUsers.filter(user => {
+      const declaration = userDeclarations[user.user_id];
+      const submissionStatus = getSubmissionStatus(declaration);
+      
+      // Search filter
+      const matchesSearch = searchTerm === "" || 
+        `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      // Status filter
+      const matchesStatus = statusFilter === "all" ||
+        (statusFilter === "submitted" && submissionStatus.hasSubmitted) ||
+        (statusFilter === "pending" && !submissionStatus.hasSubmitted);
+      
+      return matchesSearch && matchesStatus;
+    }).map(user => ({ user, declaration: userDeclarations[user.user_id] }));
+  }
+
+  const exportToCSV = () => {
+    const csvData = filteredEntries.map(entry => {
+      const { user, declaration } = entry;
+      const submissionStatus = getSubmissionStatus(declaration);
+      
+      return {
+        "Faculty Name": `${user.first_name} ${user.last_name}`,
+        "Email": user.email,
+        "Department": user.primary_department,
+        ...(selectedYear === "all" && { "Reporting Year": declaration?.year || "" }),
+        "Status": submissionStatus.status,
+        "Submission Date": submissionStatus.date ? formatSubmissionDate(submissionStatus.date) : "",
+        "COI Status": declaration?.coi || "",
+        "Merit Status": declaration?.fomMerit || "",
+        "PSA Status": declaration?.psa || "",
+        "Promotion Status": declaration?.promotion || ""
+      };
+    });
+
+    const headers = Object.keys(csvData[0] || {});
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map(row => headers.map(header => `"${row[header] || ""}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `declarations_report_${department}_${selectedYear === "all" ? "all_years" : selectedYear}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Calculate statistics
+  let submittedCount, pendingCount;
+  
+  if (selectedYear === "all") {
+    // For "all" mode, count unique users with at least one submission
+    const uniqueUsersWithSubmissions = new Set();
+    const uniqueUsersWithoutSubmissions = new Set();
+    
+    filteredEntries.forEach(entry => {
+      const hasSubmitted = getSubmissionStatus(entry.declaration).hasSubmitted;
+      if (hasSubmitted) {
+        uniqueUsersWithSubmissions.add(entry.user.user_id);
+      } else {
+        uniqueUsersWithoutSubmissions.add(entry.user.user_id);
+      }
+    });
+    
+    // Remove users from pending if they have any submissions
+    uniqueUsersWithSubmissions.forEach(userId => {
+      uniqueUsersWithoutSubmissions.delete(userId);
+    });
+    
+    submittedCount = uniqueUsersWithSubmissions.size;
+    pendingCount = uniqueUsersWithoutSubmissions.size;
+  } else {
+    // For specific years, use simple counting
+    submittedCount = filteredEntries.filter(entry => getSubmissionStatus(entry.declaration).hasSubmitted).length;
+    pendingCount = filteredEntries.filter(entry => !getSubmissionStatus(entry.declaration).hasSubmitted).length;
+  }
+  
+  const totalCount = departmentUsers.length;
+
+  return (
+    <PageContainer>
+      <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+      <main className="px-8 lg:px-12 xl:px-16 2xl:px-20 py-4 w-full min-h-screen bg-zinc-50">
+        <div className="mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-zinc-700 mb-1 mt-2">Declarations Report</h1>
+              <h2 className="text-xl font-semibold text-blue-700 mb-4 mt-2">
+                {userInfo.role === "Admin" || userInfo.role === "Admin-All" ? "All Departments" : userInfo.role.split("-")[1]}
+              </h2>
+            </div>
+            
+            {/* Year Filter */}
+            <div className="flex items-center gap-2">
+              <label htmlFor="year-filter" className="text-sm font-medium text-zinc-600">
+                Reporting Year:
+              </label>
+              <select
+                id="year-filter"
+                value={selectedYear}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedYear(value === "all" ? "all" : Number(value));
+                }}
+                className="px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {yearOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Summary Statistics */}
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-zinc-700 mb-2">Total Faculty</h3>
+              <p className="text-2xl font-bold text-blue-600">{totalCount}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-zinc-700 mb-2">
+                {selectedYear === "all" ? "Faculty With Submissions" : "Submitted"}
+              </h3>
+              <p className="text-2xl font-bold text-green-600">{submittedCount}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-zinc-700 mb-2">
+                {selectedYear === "all" ? "Faculty Without Submissions" : "Pending"}
+              </h3>
+              <p className="text-2xl font-bold text-red-600">{pendingCount}</p>
+            </div>
+          </div>
+
+          {/* Filters and Export */}
+          <div className="mb-6 bg-white p-4 rounded-lg shadow-md">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                {/* Search */}
+                <div className="relative">
+                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search faculty..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Status Filter */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">All Status</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </div>
+
+              {/* Export Button */}
+              <button
+                onClick={exportToCSV}
+                disabled={filteredEntries.length === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                <FaDownload />
+                Export CSV
+              </button>
+            </div>
+          </div>
+
+          {/* Declarations Table */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-zinc-200">
+                <thead className="bg-zinc-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                      Faculty Member
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                      Department
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                      Reporting Year
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                      Declaration Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                      Submission Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-zinc-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-4 text-center text-zinc-500">
+                        <div className="flex items-center justify-center gap-2">
+                          <FaSpinner className="animate-spin" />
+                          Loading declarations...
+                        </div>
+                      </td>
+                    </tr>
+                  ) : filteredEntries.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-4 text-center text-zinc-500">
+                        {departmentUsers.length === 0 
+                          ? "No faculty members found for this department."
+                          : "No faculty members match the current filters."
+                        }
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredEntries.map((entry, index) => {
+                      const { user, declaration } = entry;
+                      const submissionStatus = getSubmissionStatus(declaration);
+                      
+                      return (
+                        <tr key={selectedYear === "all" ? `${user.user_id}_${declaration?.year}` : user.user_id} className="hover:bg-zinc-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div>
+                                <div className="text-sm font-medium text-zinc-900">
+                                  {user.first_name} {user.last_name}
+                                </div>
+                                <div className="text-sm text-zinc-500">
+                                  {user.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
+                            {user.primary_department}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
+                            {declaration ? declaration.year : "—"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              submissionStatus.hasSubmitted
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {submissionStatus.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
+                            {submissionStatus.date ? formatSubmissionDate(submissionStatus.date) : "—"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {submissionStatus.hasSubmitted ? (
+                              <button
+                                onClick={() => handleViewDeclaration(user, declaration)}
+                                className="text-blue-600 hover:text-blue-900 transition-colors"
+                              >
+                                View
+                              </button>
+                            ) : (
+                              <span className="text-zinc-400">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Results Info */}
+          {(selectedYear === "all" || filteredEntries.length !== departmentUsers.length) && (
+            <div className="mt-4 text-sm text-zinc-600 text-center">
+              {selectedYear === "all" 
+                ? `Showing ${filteredEntries.length} entries from ${new Set(filteredEntries.map(e => e.user.user_id)).size} faculty members`
+                : `Showing ${filteredEntries.length} of ${departmentUsers.length} faculty members`
+              }
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Declaration View Modal */}
+      <DeclarationViewModal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        declaration={selectedDeclaration}
+        user={selectedUser}
+        year={selectedDeclaration?.year || selectedYear}
+      />
+    </PageContainer>
+  );
+};
+
+export default DepartmentAdminDeclarations;
