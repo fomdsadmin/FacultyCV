@@ -250,32 +250,7 @@ const PublicationsSelectModal = ({
             <div className="text-sm text-gray-600 mt-1">
               {existingPublications.filter((pub) => pub.section_type === "Journal Publications").length} existing
               Journal Publications
-              {existingPublications.filter((pub) => pub.section_type === "Other Publications").length > 0 && (
-                <span className="ml-2 text-orange-600">
-                  (+{existingPublications.filter((pub) => pub.section_type === "Other Publications").length} from Other
-                  Publications for matching)
-                </span>
-              )}
             </div>
-            {doiMatches.some(
-              (dup) =>
-                dup.existingPublications?.some((pub) => pub.section_type === "Other Publications") ||
-                dup.existingPublication?.section_type === "Other Publications"
-            ) ||
-              titleMatches.some(
-                (dup) =>
-                  dup.existingPublications?.some((pub) => pub.section_type === "Other Publications") ||
-                  dup.existingPublication?.section_type === "Other Publications"
-              ) ||
-              (multiDuplicateMatches.some(
-                (dup) =>
-                  dup.existingPublications?.some((pub) => pub.section_type === "Other Publications") ||
-                  dup.existingPublication?.section_type === "Other Publications"
-              ) && (
-                <div className="text-sm text-red-600 mt-1">
-                  🗂️ Matched entries from "Other Publications" will be archived and replaced with merged Scopus data.
-                </div>
-              ))}
           </div>
           <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={handleClose} disabled={addingData}>
             ✕
