@@ -29,7 +29,7 @@ import DepartmentAdminMembers from "./Views/DepartmentAdminMembers.jsx";
 import DepartmentAdminDashboard from "./Views/DepartmentAdminDashboard.jsx";
 import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
 import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
-import DepartmentAdminReporting from "Views/DepartmentAdminReporting";
+import DepartmentAdminAcademicSectionsReporting from "Views/DepartmentAdminAcademicSectionsReporting";
 import AdminGenerateCV from "./Views/AdminGenerateCV.jsx";
 import FacultyAdminHomePage from "./Views/FacultyAdminHomePage.jsx";
 import FacultyAdminUsers from "./Views/FacultyAdminUsers.jsx";
@@ -481,7 +481,7 @@ const AppContent = () => {
             <Route
               path="/department-admin/reporting"
               element={
-                <DepartmentAdminReporting
+                <DepartmentAdminAcademicSectionsReporting
                   userInfo={userInfo}
                   getCognitoUser={getCognitoUser}
                   department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}

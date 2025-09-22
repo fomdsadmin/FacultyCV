@@ -46,7 +46,7 @@ const FacultyMemberSelector = ({
         )}
       </div>
       {/* Faculty List */}
-      <div className="border rounded-lg max-h-80 overflow-y-auto custom-scrollbar bg-white">
+      <div className="border rounded-lg max-h-[36vh] overflow-y-auto custom-scrollbar bg-white">
         {filteredUsers.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             {userSearchTerm ? "No faculty members match your search" : "No faculty members found"}
