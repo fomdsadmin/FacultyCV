@@ -12,6 +12,7 @@ import {
   getAllUniversityInfoQuery,
   getAllNotificationsQuery,
   getUserDeclarationsQuery,
+  getAllUserDeclarationsQuery,
   getElsevierAuthorMatchesQuery,
   getExistingUserQuery,
   getUserConnectionsQuery,
@@ -366,6 +367,11 @@ export const GetNotifications = async () => {
 export const getUserDeclarations = async (user_id) => {
   const results = await runGraphql(getUserDeclarationsQuery(user_id));
   return results["data"]["getUserDeclarations"];
+};
+
+export const getAllUserDeclarations = async (department) => {
+  const results = await runGraphql(getAllUserDeclarationsQuery(department));
+  return results["data"]["getAllUserDeclarations"];
 };
 
 /**

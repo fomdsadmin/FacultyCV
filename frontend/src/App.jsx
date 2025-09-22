@@ -29,7 +29,7 @@ import DepartmentAdminMembers from "./Views/DepartmentAdminMembers.jsx";
 import DepartmentAdminDashboard from "./Views/DepartmentAdminDashboard.jsx";
 import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
 import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
-import DepartmentAdminReporting from "Views/DepartmentAdminReporting";
+import DepartmentAdminAcademicSectionsReporting from "Views/DepartmentAdminAcademicSectionsReporting";
 import AdminGenerateCV from "./Views/AdminGenerateCV.jsx";
 import FacultyAdminHomePage from "./Views/FacultyAdminHomePage.jsx";
 import FacultyAdminUsers from "./Views/FacultyAdminUsers.jsx";
@@ -43,7 +43,7 @@ import VPPNoMatchPage from "./Views/VPPNoMatchPage";
 import KeycloakLogout from "Components/KeycloakLogout";
 import YourActivityPage from "./Pages/AuditLogPages/YourActivityPage.jsx";
 import GenerateCV from "Pages/GenerateCV/GenerateCV";
-import DepartmentAdmindeclaration from "Views/Departmentadmin_declarations.jsx";
+import DepartmentAdminDeclarations from "Views/DepartmentAdminDeclarations.jsx";
 
 const AppContent = () => {
   const {
@@ -481,7 +481,7 @@ const AppContent = () => {
             <Route
               path="/department-admin/reporting"
               element={
-                <DepartmentAdminReporting
+                <DepartmentAdminAcademicSectionsReporting
                   userInfo={userInfo}
                   getCognitoUser={getCognitoUser}
                   department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
@@ -492,7 +492,7 @@ const AppContent = () => {
             <Route
               path="/department-admin/declaration"
               element={
-                <DepartmentAdmindeclaration
+                <DepartmentAdminDeclarations
                   userInfo={userInfo}
                   getCognitoUser={getCognitoUser}
                   department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
