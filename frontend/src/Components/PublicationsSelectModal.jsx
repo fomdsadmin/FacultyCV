@@ -21,7 +21,7 @@ const PublicationsSelectModal = ({
 }) => {
   // State for tracking selected existing publications
   const [selectedExistingPublications, setSelectedExistingPublications] = useState(new Set());
-  
+
   // Ref to track if initial selection has been done
   const initialSelectionDone = React.useRef(false);
 
@@ -167,6 +167,7 @@ const PublicationsSelectModal = ({
   const [doiMatchesExpanded, setDoiMatchesExpanded] = useState(allAreMatches); // Expand by default if all are matches
   const [titleMatchesExpanded, setTitleMatchesExpanded] = useState(allAreMatches); // Expand by default if all are matches
   const [multiDuplicatesExpanded, setMultiDuplicatesExpanded] = useState(false);
+  const [nonDuplicatesExpanded, setNonDuplicatesExpanded] = useState(false);
   const [unmatchedScopusExpanded, setUnmatchedScopusExpanded] = useState(false);
   const [unmatchedExistingExpanded, setUnmatchedExistingExpanded] = useState(false);
 
@@ -196,6 +197,10 @@ const PublicationsSelectModal = ({
 
   const getUnmatchedScopusIndices = () => {
     return unmatchedScopusPublications.map((pub) => pub.originalIndex);
+  };
+
+  const getNonDuplicateIndices = () => {
+    return nonDuplicateMatches.map((dup) => dup.fetchedPublication.originalIndex);
   };
 
   const handleSelectAllCategory = (categoryIndices) => {
@@ -243,7 +248,7 @@ const PublicationsSelectModal = ({
       className="fixed inset-0 flex items-center justify-center p-0 m-0 w-screen h-screen bg-black bg-opacity-40 z-50"
       open
     >
-      <div className="modal-box relative max-w-7xl w-full bg-white p-6 rounded-lg shadow-xl mx-auto min-h-[90vh] overflow-hidden flex flex-col">
+      <div className="modal-box relative max-w-7xl w-full bg-white p-6 rounded-lg shadow-xl mx-auto h-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-lg font-bold">Select Publications to Add</h3>
@@ -257,18 +262,18 @@ const PublicationsSelectModal = ({
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 custom-scrollbar">
+        <div className="overflow-y-auto flex-1 custom-scrollbar pr-2 h-full">
           <div className="space-y-4">
-            {/* Unmatched Existing Publications - only show if not all are matches */}
+            {/* Existing Journal Publications Section */}
             <div className="">
               {!allAreMatches && unmatchedExistingPublications.length > 0 && (
                 <div className="border border-blue-200 rounded-lg">
-                  <div className="p-4 flex items-center justify-between bg-blue-50 rounded-t-lg ">
-                    <div className="flex items-center gap-3 px-4">
+                  <div className="p-3 flex items-center justify-between bg-blue-25 rounded-t-lg">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setUnmatchedExistingExpanded(!unmatchedExistingExpanded)}
-                        className="flex items-center gap-2 hover:bg-blue-100 p-1 rounded transition-colors"
+                        className="flex items-center gap-2 hover:bg-blue-50 p-1 rounded transition-colors"
                       >
                         <svg
                           className={`w-4 h-4 transition-transform ${unmatchedExistingExpanded ? "rotate-90" : ""}`}
@@ -279,13 +284,20 @@ const PublicationsSelectModal = ({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
-                      <span className="font-medium text-blue-800">
+                      <span className="text-md font-medium text-blue-700">
                         Existing Journal Publications ({unmatchedExistingPublications.length})
                       </span>
-                      <span className="text-sm text-blue-600 font-medium">Publications without Scopus Matches</span>
                     </div>
-                    <div className="py-4"> </div>
                   </div>
+
+                  {/* Note about existing publications */}
+                  <div className="p-2 bg-blue-50 border-b border-blue-100">
+                    <p className="text-sm text-blue-600">
+                      <strong>Note:</strong> These publications will remain in your CV and can be edited or deleted
+                      later.
+                    </p>
+                  </div>
+
                   {unmatchedExistingExpanded && (
                     <div className="p-4 pt-0 space-y-3">
                       {unmatchedExistingPublications.map((publication, index) => (
@@ -301,171 +313,240 @@ const PublicationsSelectModal = ({
                 </div>
               )}
             </div>
-            <div>
-              {allFetchedPublications.length > 0 && <h1>SCOPUS Publications: {allFetchedPublications.length}</h1>}
-              {(doiMatches.some((dup) => dup.isMultiMatch) ||
-                titleMatches.some((dup) => dup.isMultiMatch) ||
-                multiDuplicateMatches.length > 0) && (
-                <div className="text-sm text-orange-600 mt-2">⚠️ Some publications match multiple existing entries</div>
-              )}
-            </div>
             {allFetchedPublications.length > 0 && (
-              <div className="space-y-4 p-4 border border-zinc-300 rounded-xl ">
-                {/* DOI Matches - Scopus publications that match existing Journal Publications by DOI */}
-                {doiMatches.length > 0 && (
-                  <div className="border border-blue-200 rounded-lg">
-                    <div className="p-4 flex items-center justify-between bg-blue-50 rounded-t-lg">
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setDoiMatchesExpanded(!doiMatchesExpanded)}
-                          className="flex items-center gap-2 hover:bg-blue-100 p-1 rounded transition-colors"
-                        >
-                          <svg
-                            className={`w-4 h-4 transition-transform ${doiMatchesExpanded ? "rotate-90" : ""}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <span className="font-medium text-blue-800">
-                          DOI Matched Scopus Publications ({doiMatches.length})
-                        </span>
-                        <span className="text-sm text-blue-600 font-medium">
-                          Exact DOI matches with Journal Publications
-                        </span>
+              <div className="space-y-4">
+                {/* Scopus Matches Section - DOI and Title Matches */}
+                {(doiMatches.length > 0 || titleMatches.length > 0) && (
+                  <div className="border border-gray-300 rounded-lg p-4">
+                    <div className="mb-4">
+                      <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                        Scopus Matches Found ({doiMatches.length + titleMatches.length})
+                      </h2>
+                      <div className="bg-gray-100 p-2 rounded-lg">
+                        <p className="text-sm text-gray-700">
+                          <strong>These publications will be enriched with additional Scopus data:</strong>
+                        </p>
+                        <ul className="text-sm text-gray-600 ml-4 list-disc">
+                          <li>DOI, Direct Link, Keywords, Article Number, Volume and other missing fields.</li>
+                        </ul>
                       </div>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline btn-info"
-                        onClick={() => handleSelectAllCategory(getDoiMatchIndices())}
-                        disabled={addingData}
-                      >
-                        {getDoiMatchIndices().every((index) => selectedPublications.has(index))
-                          ? "Deselect All"
-                          : "Select All"}
-                      </button>
                     </div>
-                    {doiMatchesExpanded && (
-                      <div className="p-4 pt-0 space-y-3">
-                        {doiMatches.map((matchedItem, index) => (
-                          <MatchedPublicationCard
-                            key={`doi-match-${index}`}
-                            matchedItem={matchedItem}
-                            selectedPublications={selectedPublications}
-                            handleSelectPublication={handleSelectPublication}
-                          />
-                        ))}
-                      </div>
-                    )}
+
+                    <div className="space-y-3">
+                      {/* DOI Matches */}
+                      {doiMatches.length > 0 && (
+                        <div className="border border-gray-200 rounded-lg">
+                          <div className="p-4 flex items-center justify-between bg-gray-50 rounded-t-lg">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setDoiMatchesExpanded(!doiMatchesExpanded)}
+                                className="flex items-center gap-2 hover:bg-gray-100 p-1 rounded transition-colors"
+                              >
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${doiMatchesExpanded ? "rotate-90" : ""}`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </button>
+                              <span className="font-medium text-gray-800">Exact DOI Matches ({doiMatches.length})</span>
+                              <span className="text-sm text-gray-600">Perfect matches with existing publications</span>
+                            </div>
+                          </div>
+                          {doiMatchesExpanded && (
+                            <div className="p-4 pt-0 space-y-3">
+                              {doiMatches.map((matchedItem, index) => (
+                                <MatchedPublicationCard
+                                  key={`doi-match-${index}`}
+                                  matchedItem={matchedItem}
+                                  selectedPublications={selectedPublications}
+                                  handleSelectPublication={handleSelectPublication}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Title Matches */}
+                      {titleMatches.length > 0 && (
+                        <div className="border border-gray-200 rounded-lg">
+                          <div className="p-4 flex items-center justify-between bg-gray-50 rounded-t-lg">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setTitleMatchesExpanded(!titleMatchesExpanded)}
+                                className="flex items-center gap-2 hover:bg-gray-100 p-1 rounded transition-colors"
+                              >
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${titleMatchesExpanded ? "rotate-90" : ""}`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </button>
+                              <span className="font-medium text-gray-800">
+                                Title Similarity Matches ({titleMatches.length})
+                              </span>
+                              <span className="text-sm text-gray-600">High similarity matches (sorted by % match)</span>
+                            </div>
+                          </div>
+                          {titleMatchesExpanded && (
+                            <div className="p-4 pt-0 space-y-3">
+                              {titleMatches.map((matchedItem, index) => (
+                                <MatchedPublicationCard
+                                  key={`title-match-${index}`}
+                                  matchedItem={matchedItem}
+                                  selectedPublications={selectedPublications}
+                                  handleSelectPublication={handleSelectPublication}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
-                {/* Title Matches - Scopus publications that match existing Journal Publications by title similarity */}
-                {titleMatches.length > 0 && (
-                  <div className="border border-red-200 rounded-lg">
-                    <div className="p-4 flex items-center justify-between bg-red-50 rounded-t-lg">
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setTitleMatchesExpanded(!titleMatchesExpanded)}
-                          className="flex items-center gap-2 hover:bg-red-100 p-1 rounded transition-colors"
-                        >
-                          <svg
-                            className={`w-4 h-4 transition-transform ${titleMatchesExpanded ? "rotate-90" : ""}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <span className="font-medium text-red-800">
-                          Title Matched Scopus Publications ({titleMatches.length})
-                        </span>
-                        <span className="text-sm text-red-600 font-medium">
-                          Similarity matches with Journal Publications (sorted by % match)
-                        </span>
+                {/* Potential Duplicates Section - Requires User Input */}
+                {(multiDuplicateMatches.length > 0 || nonDuplicateMatches.length > 0) && (
+                  <div className="border border-orange-300 rounded-lg p-3">
+                    <div className="mb-2">
+                      <h2 className="text-lg font-semibold text-orange-800 mb-2">
+                        Potential Duplicates - Review Required (
+                        {multiDuplicateMatches.length + nonDuplicateMatches.length})
+                      </h2>
+                      <div className="bg-orange-50 p-2 rounded-lg border border-orange-200">
+                        <p className="text-sm text-orange-700">
+                          Potential Duplicates of existing publications and will be merged into one with the matched
+                          Scopus publication. These can be deselected and manually added later if needed.
+                        </p>
                       </div>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline btn-error"
-                        onClick={() => handleSelectAllCategory(getTitleMatchIndices())}
-                        disabled={addingData}
-                      >
-                        {getTitleMatchIndices().every((index) => selectedPublications.has(index))
-                          ? "Deselect All"
-                          : "Select All"}
-                      </button>
                     </div>
-                    {titleMatchesExpanded && (
-                      <div className="p-4 pt-0 space-y-3">
-                        {titleMatches.map((matchedItem, index) => (
-                          <MatchedPublicationCard key={`title-match-${index}`} matchedItem={matchedItem} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {/* Multi-Duplicate Matches - Scopus publications that match multiple existing entries */}
-                {multiDuplicateMatches.length > 0 && (
-                  <div className="border border-purple-200 rounded-lg">
-                    <div className="p-4 flex items-center justify-between bg-purple-50 rounded-t-lg">
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setMultiDuplicatesExpanded(!multiDuplicatesExpanded)}
-                          className="flex items-center gap-2 hover:bg-purple-100 p-1 rounded transition-colors"
-                        >
-                          <svg
-                            className={`w-4 h-4 transition-transform ${multiDuplicatesExpanded ? "rotate-90" : ""}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <span className="font-medium text-purple-800">
-                          Potential Duplicate Matches ({multiDuplicateMatches.length})
-                        </span>
-                        <span className="text-sm text-purple-600 font-medium">
-                          1 Scopus → Multiple existing entries
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline"
-                        style={{ borderColor: "#7c3aed", color: "#7c3aed" }}
-                        onClick={() => handleSelectAllCategory(getMultiDuplicateIndices())}
-                        disabled={addingData}
-                      >
-                        {getMultiDuplicateIndices().every((index) => selectedPublications.has(index))
-                          ? "Deselect All"
-                          : "Select All"}
-                      </button>
+
+                    <div className="space-y-2">
+                      {/* Multi-Duplicate Matches */}
+                      {multiDuplicateMatches.length > 0 && (
+                        <div className="border border-red-200 rounded-lg">
+                          <div className="p-3 flex items-center justify-between bg-red-50 rounded-t-lg">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setMultiDuplicatesExpanded(!multiDuplicatesExpanded)}
+                                className="flex items-center gap-2 hover:bg-red-100 p-1 rounded transition-colors"
+                              >
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${
+                                    multiDuplicatesExpanded ? "rotate-90" : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </button>
+                              <span className="font-medium text-red-800">
+                                Multiple Matches ({multiDuplicateMatches.length})
+                              </span>
+                              <span className="text-sm text-red-600">
+                                1 Scopus publication → Multiple existing entries
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline btn-error"
+                              onClick={() => handleSelectAllCategory(getMultiDuplicateIndices())}
+                              disabled={addingData}
+                            >
+                              {getMultiDuplicateIndices().every((index) => selectedPublications.has(index))
+                                ? "Deselect All"
+                                : "Select All"}
+                            </button>
+                          </div>
+                          {multiDuplicatesExpanded && (
+                            <div className="p-3 pt-0 space-y-2">
+                              {multiDuplicateMatches.map((matchedItem, index) => (
+                                <MatchedPublicationCard
+                                  key={`multi-duplicate-${index}`}
+                                  matchedItem={matchedItem}
+                                  selectedPublications={selectedPublications}
+                                  handleSelectPublication={handleSelectPublication}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Non-Duplicate Matches (cross-section matches) */}
+                      {nonDuplicateMatches.length > 0 && (
+                        <div className="border border-yellow-200 rounded-lg">
+                          <div className="p-4 flex items-center justify-between bg-yellow-50 rounded-t-lg">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setNonDuplicatesExpanded(!nonDuplicatesExpanded)}
+                                className="flex items-center gap-2 hover:bg-yellow-100 p-1 rounded transition-colors"
+                              >
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${nonDuplicatesExpanded ? "rotate-90" : ""}`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </button>
+                              <span className="font-medium text-yellow-800">
+                                Cross-Section Matches ({nonDuplicateMatches.length})
+                              </span>
+                              <span className="text-sm text-yellow-600">Matches with Other Publications section</span>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline btn-warning"
+                              onClick={() => handleSelectAllCategory(getNonDuplicateIndices())}
+                              disabled={addingData}
+                            >
+                              {getNonDuplicateIndices().every((index) => selectedPublications.has(index))
+                                ? "Deselect All"
+                                : "Select All"}
+                            </button>
+                          </div>
+                          {nonDuplicatesExpanded && (
+                            <div className="p-4 pt-0 space-y-3">
+                              {nonDuplicateMatches.map((matchedItem, index) => (
+                                <MatchedPublicationCard
+                                  key={`non-duplicate-${index}`}
+                                  matchedItem={matchedItem}
+                                  selectedPublications={selectedPublications}
+                                  handleSelectPublication={handleSelectPublication}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {multiDuplicatesExpanded && (
-                      <div className="p-4 pt-0 space-y-3">
-                        {multiDuplicateMatches.map((matchedItem, index) => (
-                          <MatchedPublicationCard key={`multi-duplicate-${index}`} matchedItem={matchedItem} />
-                        ))}
-                      </div>
-                    )}
                   </div>
                 )}
 
-                {/* Unmatched Scopus Publications - only show if not all are matches */}
+                {/* New Publications Section */}
                 {!allAreMatches && unmatchedScopusPublications.length > 0 && (
                   <div className="border border-green-200 rounded-lg">
-                    <div className="p-4 flex items-center justify-between bg-green-50 rounded-t-lg">
+                    <div className="p-3 flex items-center justify-between bg-green-25 rounded-t-lg">
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
                           onClick={() => setUnmatchedScopusExpanded(!unmatchedScopusExpanded)}
-                          className="flex items-center gap-2 hover:bg-green-100 p-1 rounded transition-colors"
+                          className="flex items-center gap-2 hover:bg-green-50 p-1 rounded transition-colors"
                         >
                           <svg
                             className={`w-4 h-4 transition-transform ${unmatchedScopusExpanded ? "rotate-90" : ""}`}
@@ -476,10 +557,10 @@ const PublicationsSelectModal = ({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </button>
-                        <span className="font-medium text-green-800">
+                        <span className="font-medium text-green-700">
                           New Publications from Scopus ({unmatchedScopusPublications.length})
                         </span>
-                        <span className="text-sm text-green-600 font-medium">Safe to Add</span>
+                        <span className="text-sm text-green-600">Safe to add - No duplicates detected</span>
                       </div>
                       <button
                         type="button"
@@ -492,6 +573,14 @@ const PublicationsSelectModal = ({
                           : "Select All"}
                       </button>
                     </div>
+
+                    {/* Note about new publications */}
+                    <div className="p-2 bg-green-50 border-b border-green-100">
+                      <p className="text-sm text-green-600">
+                        <strong>Note:</strong> These are new publications from Scopus that will be added to your CV.
+                      </p>
+                    </div>
+
                     {unmatchedScopusExpanded && (
                       <div className="p-4 pt-0 space-y-3">
                         {unmatchedScopusPublications.map((publication) => (
@@ -509,6 +598,7 @@ const PublicationsSelectModal = ({
                 )}
               </div>
             )}
+
             {/* No publications message */}
             {doiMatches.length === 0 &&
               titleMatches.length === 0 &&
@@ -521,59 +611,55 @@ const PublicationsSelectModal = ({
           </div>
         </div>
         {allFetchedPublications.length > 0 && (
-          <div className="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded">
-            <div className="flex items-center gap-4">
-              {/* Calculate accurate counts */}
-              {(() => {
-                // Count publications from "Other Publications" that will be archived and won't be double-counted
-                const otherPublicationsToArchive = new Set();
+          <div className="fixed bottom-1 w-full">
+            <div className="flex justify-between items-center mt-4 mr-14 mb-4 px-4 py-2 bg-gray-50 rounded">
+              <div className="flex items-center gap-4">
+                {/* Calculate accurate counts */}
+                {(() => {
+                  // Count publications from "Other Publications" that will be archived and won't be double-counted
+                  const otherPublicationsToArchive = new Set();
 
-                // Track selected Scopus publications that match with "Other Publications"
-                selectedPublications.forEach((index) => {
-                  const matchingDuplicate = matchedPublications.find(
-                    (match) => match.fetchedPublication.originalIndex === index
+                  // Track selected Scopus publications that match with "Other Publications"
+                  selectedPublications.forEach((index) => {
+                    const matchingDuplicate = matchedPublications.find(
+                      (match) => match.fetchedPublication.originalIndex === index
+                    );
+                    if (matchingDuplicate) {
+                      const existingPubs = matchingDuplicate.existingPublications || [
+                        matchingDuplicate.existingPublication,
+                      ];
+                      existingPubs.forEach((existingPub) => {
+                        if (existingPub.section_type === "Other Publications") {
+                          otherPublicationsToArchive.add(existingPub.user_cv_data_id);
+                        }
+                      });
+                    }
+                  });
+
+                  // Calculate net additions: Scopus + existing - publications that will be archived
+                  const scopusCount = selectedPublications.size;
+                  const existingCount = selectedExistingPublications.size;
+                  const netTotal = scopusCount + existingCount;
+
+                  return (
+                    <span className="text-sm text-gray-600">
+                      {scopusCount} Scopus + {existingCount} existing = {netTotal} total selected
+                    </span>
                   );
-                  if (matchingDuplicate) {
-                    const existingPubs = matchingDuplicate.existingPublications || [
-                      matchingDuplicate.existingPublication,
-                    ];
-                    existingPubs.forEach((existingPub) => {
-                      if (existingPub.section_type === "Other Publications") {
-                        otherPublicationsToArchive.add(existingPub.user_cv_data_id);
-                      }
-                    });
-                  }
-                });
+                })()}
+              </div>
 
-                // Calculate net additions: Scopus + existing - publications that will be archived
-                const scopusCount = selectedPublications.size;
-                const existingCount = selectedExistingPublications.size;
-                const archiveCount = otherPublicationsToArchive.size;
-                const netTotal = scopusCount + existingCount;
-
-                return (
-                  <span className="text-sm text-gray-600">
-                    {scopusCount} Scopus + {existingCount} existing = {netTotal} total selected
-                    {archiveCount > 0 && (
-                      <span className="text-red-600 ml-2">
-                        ({archiveCount} from Other Publications will be archived)
-                      </span>
-                    )}
-                  </span>
-                );
-              })()}
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleAddSelectedWithExisting}
+                disabled={(selectedPublications.size === 0 && selectedExistingPublications.size === 0) || addingData}
+              >
+                {addingData
+                  ? "Adding..."
+                  : `Add Selected (${selectedPublications.size + selectedExistingPublications.size})`}
+              </button>
             </div>
-
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleAddSelectedWithExisting}
-              disabled={(selectedPublications.size === 0 && selectedExistingPublications.size === 0) || addingData}
-            >
-              {addingData
-                ? "Adding..."
-                : `Add Selected (${selectedPublications.size + selectedExistingPublications.size})`}
-            </button>
           </div>
         )}
       </div>

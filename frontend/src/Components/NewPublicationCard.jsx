@@ -5,14 +5,14 @@ import { truncateAuthors } from "utils/publicationsMergeUtils";
 const NewPublicationCard = ({ publication, index, handleSelectPublication, selectedPublications }) => (
   <div
     key={index}
-    className={`border rounded-lg p-4 cursor-pointer transition-colors my-4 ${
+    className={`border rounded-lg p-3 cursor-pointer transition-colors my-2 ${
       selectedPublications.has(index)
-        ? "border-green-500 bg-green-50 bg-opacity-10"
+        ? "border-gray-500 bg-gray-50"
         : "border-gray-200 hover:border-gray-300"
     }`}
     onClick={() => handleSelectPublication(index)}
   >
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-2">
       <input
         type="checkbox"
         checked={selectedPublications.has(index)}
@@ -20,8 +20,8 @@ const NewPublicationCard = ({ publication, index, handleSelectPublication, selec
         className="mt-1 h-4 w-4 text-blue-600 rounded border-gray-300"
       />
       <div className="flex-1">
-        <h4 className="font-medium text-gray-900 mb-2 leading-tight">{publication.title || "Untitled"}</h4>
-        <div className="text-sm text-gray-600 space-y-1">
+        <h4 className="font-medium text-gray-900 mb-1 leading-tight text-sm">{publication.title || "Untitled"}</h4>
+        <div className="text-xs text-gray-600 space-y-1">
           {publication.end_date && (
             <p>
               <span className="font-medium">Date:</span> {publication.end_date}

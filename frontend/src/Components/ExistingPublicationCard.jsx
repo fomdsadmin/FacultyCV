@@ -10,14 +10,14 @@ const ExistingPublicationCard = ({ publication, selectedExistingPublications, ha
 
   return (
     <div
-      className={`border rounded-lg p-4 cursor-pointer transition-colors my-4 ${
+      className={`border rounded-lg p-3 cursor-pointer transition-colors my-2 ${
         selectedExistingPublications.has(publication.user_cv_data_id)
           ? "border-blue-500 bg-blue-50"
           : "border-gray-200 hover:border-gray-300"
       }`}
       onClick={() => handleSelectExistingPublication(publication.user_cv_data_id)}
     >
-      <div className="flex items-start gap-3 ">
+      <div className="flex items-start gap-2">
         <input
           type="checkbox"
           checked={selectedExistingPublications.has(publication.user_cv_data_id)}
@@ -28,10 +28,10 @@ const ExistingPublicationCard = ({ publication, selectedExistingPublications, ha
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium text-gray-600 bg-gray-200 px-2 py-1 rounded">EXISTING IN CV</span>
           </div>
-          <h4 className="font-medium text-gray-900 mb-2 leading-tight">
+          <h4 className="font-medium text-gray-900 mb-1 leading-tight text-sm">
             {publication.data_details.title || "Untitled"}
           </h4>
-          <div className="text-sm text-gray-600 space-y-1">
+          <div className="text-xs text-gray-600 space-y-1">
             {publication.data_details.end_date && (
               <p>
                 <span className="font-medium">Date:</span> {publication.data_details.end_date}
@@ -75,7 +75,7 @@ const ExistingPublicationCard = ({ publication, selectedExistingPublications, ha
                 </p>
                 {extractedDOIs.length > 0 && (
                   <p className="mt-1">
-                    <span className="font-medium text-blue-600">Extracted DOI(s):</span>
+                    <span className="font-medium text-gray-600">Extracted DOI(s):</span>
                     {extractedDOIs.map((doi, index) => (
                       <span key={index}>
                         <a

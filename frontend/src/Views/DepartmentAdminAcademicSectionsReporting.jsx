@@ -280,7 +280,7 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
   }, [allDataSections]);
 
   useEffect(() => {
-    // Initial load: all users and data sections
+    // Initial load: data sections processing
     const fetchInitialData = async () => {
       setLoading(true);
       try {
@@ -335,27 +335,6 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
         if (allReportTypes.length > 0 && !selectedReportType) {
           setSelectedReportType(allReportTypes[0].value);
         }
-
-        if (userInfo && userInfo.role === "Admin") {
-          const departments = Array.from(
-            new Set(
-              users
-                .filter(
-                  (u) =>
-                    u.primary_department &&
-                    u.primary_department !== "null" &&
-                    u.primary_department !== "undefined" &&
-                    u.primary_department.trim() !== ""
-                )
-                .map((u) => u.primary_department)
-            )
-          ).sort();
-          setAllDepartments(departments);
-          // Add "All" option for super admin
-          if (!selectedDepartment) {
-            setSelectedDepartment("All");
-          }
-        }
       } catch (error) {
         console.error("Error loading data:", error);
       }
@@ -364,19 +343,54 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
     fetchInitialData();
   }, [dataSections]);
 
+  // Separate useEffect for handling department list population for super admin
+  useEffect(() => {
+    if (userInfo && userInfo.role === "Admin" && users.length > 0) {
+      const departments = Array.from(
+        new Set(
+          users
+            .filter(
+              (u) =>
+                u.primary_department &&
+                u.primary_department !== "null" &&
+                u.primary_department !== "undefined" &&
+                u.primary_department.trim() !== ""
+            )
+            .map((u) => u.primary_department)
+        )
+      ).sort();
+      setAllDepartments(departments);
+      // Only set default department if not already set
+      if (!selectedDepartment) {
+        setSelectedDepartment("All");
+      }
+    }
+  }, [users, userInfo]);
+
   // Filter department users when selectedDepartment or allUsers changes (for super admin)
   useEffect(() => {
     if (userInfo && userInfo.role === "Admin" && users.length > 0 && selectedDepartment) {
       let usersInDepartment;
       if (selectedDepartment === "All") {
         usersInDepartment = users.filter(
-          (user) => user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-")
+          (user) =>
+            user.active &&
+            user.approved &&
+            !user.pending &&
+            !user.terminated &&
+            user.role !== "Assistant" &&
+            user.role !== "Admin"
         );
       } else {
         usersInDepartment = users.filter(
           (user) =>
             user.primary_department === selectedDepartment &&
-            (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
+            user.active &&
+            user.approved &&
+            !user.pending &&
+            !user.terminated &&
+            user.role !== "Assistant" &&
+            user.role !== "Admin"
         );
       }
       setDepartmentUsers(usersInDepartment);
@@ -390,12 +404,17 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
 
   // For department admin, filter users once after allUsers is loaded
   useEffect(() => {
-    if (userInfo && userInfo.role && userInfo.role.startsWith("Admin-") && users.length > 0) {
+    if (userInfo && userInfo.role.startsWith("Admin-") && users.length > 0) {
       const departmentName = userInfo.role.split("-")[1];
       const usersInDepartment = users.filter(
         (user) =>
           user.primary_department === departmentName &&
-          (user.role.toLowerCase().includes("faculty") || user.role.toLowerCase().includes("admin-"))
+          user.active &&
+          user.approved &&
+          !user.pending &&
+          !user.terminated &&
+          user.role !== "Assistant" &&
+          user.role !== "Admin"
       );
       setDepartmentUsers(usersInDepartment);
       // Select all users by default
@@ -403,14 +422,14 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
       setSelectAll(true);
     }
     // eslint-disable-next-line
-  }, [users, userInfo]);
+  }, [selectedDepartment, users]);
 
   // When isDepartmentWide changes, update selectedUsers accordingly
   useEffect(() => {
     // Update selectAll state when selectedUsers changes
     setSelectAll(selectedUsers.length === departmentUsers.length && departmentUsers.length > 0);
     // eslint-disable-next-line
-  }, [selectedUsers, departmentUsers]);
+  }, [departmentUsers]);
 
   const handleUserToggle = (userId) => {
     setSelectedUsers((prev) => {
@@ -590,18 +609,17 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
 
         // Extract years from the item data
         const extractedYears = extractYearsFromItem(details);
-        
+
         // If no years found and we're filtering by date, exclude the item
         // (only include items with dates when date filtering is active)
         if (extractedYears.length === 0) return false;
 
         // Check if any of the extracted years fall within the specified range
-        return extractedYears.some(year => {
+        return extractedYears.some((year) => {
           if (startYear && year < parseInt(startYear)) return false;
           if (endYear && year > parseInt(endYear)) return false;
           return true;
         });
-
       } catch (error) {
         console.error("Error filtering item by date:", error);
         return true; // Include items that can't be parsed
@@ -621,29 +639,27 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
     // Handle 'dates' field with various formats
     if (hasValidValue(details.dates)) {
       const datesYears = extractYearsFromDateString(details.dates);
-      datesYears.forEach(year => years.add(year));
+      datesYears.forEach((year) => years.add(year));
     }
 
     // Handle start_date and end_date fields
     if (hasValidValue(details.start_date)) {
       const startYears = extractYearsFromDateString(details.start_date);
-      startYears.forEach(year => years.add(year));
+      startYears.forEach((year) => years.add(year));
     }
-    
+
     if (hasValidValue(details.end_date)) {
       const endYears = extractYearsFromDateString(details.end_date);
-      endYears.forEach(year => years.add(year));
+      endYears.forEach((year) => years.add(year));
     }
 
     // Handle other common date fields as fallback
-    const otherDateFields = [
-      "date", "year", "publication_date", "year_published", 
-    ];
-    
+    const otherDateFields = ["date", "year", "publication_date", "year_published"];
+
     for (const field of otherDateFields) {
       if (hasValidValue(details[field])) {
         const fieldYears = extractYearsFromDateString(details[field]);
-        fieldYears.forEach(year => years.add(year));
+        fieldYears.forEach((year) => years.add(year));
       }
     }
 
@@ -654,20 +670,21 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
   const extractYearsFromDateString = (dateString) => {
     // Check for null, undefined, empty string, or whitespace-only string
     if (!dateString || String(dateString).trim() === "") return [];
-    
+
     const str = String(dateString).trim();
     const years = [];
 
     // Handle different date formats:
     // 'January 2021 - March 2021', 'January, 2021 - March, 2021'
     // 'March 2021', 'March, 2021', '2021'
-    
+
     // Extract all 4-digit years (19xx or 20xx)
     const yearMatches = str.match(/\b(19|20)\d{2}\b/g);
     if (yearMatches) {
-      yearMatches.forEach(match => {
+      yearMatches.forEach((match) => {
         const year = parseInt(match);
-        if (year >= 1900 && year <= 2100) { // Reasonable year range
+        if (year >= 1900 && year <= 2100) {
+          // Reasonable year range
           years.push(year);
         }
       });
@@ -679,32 +696,44 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
   // Helper function to extract month from date string
   const extractMonthFromDateString = (dateString) => {
     if (!dateString || String(dateString).trim() === "") return 0;
-    
+
     const str = String(dateString).trim().toLowerCase();
-    
+
     // Month name to number mapping
     const monthMap = {
-      'january': 1, 'jan': 1,
-      'february': 2, 'feb': 2,
-      'march': 3, 'mar': 3,
-      'april': 4, 'apr': 4,
-      'may': 5,
-      'june': 6, 'jun': 6,
-      'july': 7, 'jul': 7,
-      'august': 8, 'aug': 8,
-      'september': 9, 'sep': 9, 'sept': 9,
-      'october': 10, 'oct': 10,
-      'november': 11, 'nov': 11,
-      'december': 12, 'dec': 12
+      january: 1,
+      jan: 1,
+      february: 2,
+      feb: 2,
+      march: 3,
+      mar: 3,
+      april: 4,
+      apr: 4,
+      may: 5,
+      june: 6,
+      jun: 6,
+      july: 7,
+      jul: 7,
+      august: 8,
+      aug: 8,
+      september: 9,
+      sep: 9,
+      sept: 9,
+      october: 10,
+      oct: 10,
+      november: 11,
+      nov: 11,
+      december: 12,
+      dec: 12,
     };
-    
+
     // Try to find month name
     for (const [monthName, monthNum] of Object.entries(monthMap)) {
       if (str.includes(monthName)) {
         return monthNum;
       }
     }
-    
+
     // If no month name found, return 0 (will sort first)
     return 0;
   };
@@ -713,13 +742,13 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
   const getSortingKey = (details) => {
     const years = extractYearsFromItem(details);
     const earliestYear = years.length > 0 ? Math.min(...years) : 0;
-    
+
     // Check if end_date exists and extract month from it
     let month = 0;
     if (details.end_date && String(details.end_date).trim() !== "") {
       month = extractMonthFromDateString(details.end_date);
     }
-    
+
     return { year: earliestYear, month: month };
   };
 
@@ -744,7 +773,6 @@ const DepartmentAdminAcademicSectionsReporting = ({ getCognitoUser, userInfo, de
 
         // If years are the same, sort by month (when end_date is present)
         return keyA.month - keyB.month;
-
       } catch (error) {
         console.error("Error sorting item by date:", error);
         return 0; // Keep original order if parsing fails
