@@ -5,7 +5,7 @@ import DeclarationViewModal from "../Components/DeclarationViewModal.jsx";
 import { normalizeDeclarations } from "../Pages/Declarations/Declarations.jsx";
 import { getAllUserDeclarations } from "../graphql/graphqlHelpers.js";
 import { useAdmin } from "../Contexts/AdminContext.jsx";
-import { FaDownload, FaSearch, FaSpinner} from "react-icons/fa";
+import { FaDownload, FaSearch, FaSpinner } from "react-icons/fa";
 
 const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) => {
   const { allUsers, isLoading: adminLoading } = useAdmin();
@@ -46,16 +46,26 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
 
     if (userInfo.role === "Admin" || userInfo.role === "Admin-All") {
       // For super admin, show all users
-      filteredUsers = allUsers.filter((user) => user.active && user.approved && !user.terminated);
+      filteredUsers = allUsers.filter(
+        (user) =>
+          user.active &&
+          user.approved &&
+          !user.pending &&
+          !user.terminated &&
+          user.role !== "Assistant" &&
+          user.role !== "Admin"
+      );
     } else if (userInfo.role.startsWith("Admin-")) {
       // For department admin, filter by department
       filteredUsers = allUsers.filter(
         (user) =>
           user.active &&
           user.approved &&
+          !user.pending &&
           !user.terminated &&
           user.primary_department === userInfo.role.split("-")[1] &&
-          user.role !== "Assistant"
+          user.role !== "Assistant" &&
+          user.role !== "Admin"
       );
     }
 
@@ -549,7 +559,7 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                                   >
                                     View
                                   </button>
-                                  <span className="text-gray-300">|</span>
+                                  {/* <span className="text-gray-300">|</span>
                                   <button
                                     onClick={() => handleDownloadPdf(user, declaration)}
                                     disabled={false}
@@ -557,7 +567,7 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                                     title="Download Declaration PDF"
                                   >
                                     <span>Download PDF</span>
-                                  </button>
+                                  </button> */}
                                 </>
                               ) : (
                                 <span className="text-zinc-400">—</span>
