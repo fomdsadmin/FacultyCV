@@ -237,7 +237,7 @@ const Header = ({ assistantUserInfo }) => {
                   className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
-                  <FaUserCircle className="text-gray-700 text-xl" />
+                  <FaUserCircle className="text-gray-700 text-lg" />
                   <span className="font-medium text-gray-700 hidden md:inline">{firstName}</span>
                   <svg
                     className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${

@@ -72,11 +72,11 @@ const ReportsPage = () => {
         toggleViewMode={toggleViewMode}
         userInfo={userInfo}
       />
-      <main className="ml-4 overflow-auto custom-scrollbar w-full">
-        <div className="w-full px-8 pt-4">
+      <main className="overflow-auto custom-scrollbar w-full">
+        <div className="w-full pt-4">
           <h1 className="text-3xl font-bold text-zinc-800 mb-2">Reports</h1>
         </div>
-        <div className="flex w-full h-full px-8 pb-8">
+        <div className="flex w-full h-full pb-8">
           <TemplateList
             templates={templates}
             selectedTemplate={selectedTemplate}
@@ -85,7 +85,7 @@ const ReportsPage = () => {
             setPdfPreviewUrl={setPdfUrl}
           />
 
-          <div className="flex-1 flex flex-col items-center bg-gray-50 rounded-lg shadow-md px-8 overflow-auto custom-scrollbar h-[90vh]">
+          <div className="flex-1 flex flex-col items-center bg-gray-50 rounded-lg shadow-md overflow-auto custom-scrollbar h-[90vh]">
             <ReportPreview pdfUrl={pdfUrl} />
           </div>
         </div>

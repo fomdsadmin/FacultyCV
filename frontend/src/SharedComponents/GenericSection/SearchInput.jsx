@@ -8,8 +8,8 @@ const SearchInput = () => {
     }
 
     return (
-        <div className="m-4 flex">
-            <label className="input input-bordered flex items-center gap-2 flex-1">
+        <div className="flex ml-4">
+            <label className="text-sm input input-bordered flex items-center gap-2 h-10 w-96 max-w-xl">
                 <input
                     type="text"
                     className="grow"

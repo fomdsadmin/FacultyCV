@@ -18,7 +18,7 @@ const EntryList = ({ entries }) => {
   }
 
   return (
-    <div className="px-4">
+    <div className="">
       {dataToRender.map((entry, index) => (
         <GenericEntry
           isArchived={false}

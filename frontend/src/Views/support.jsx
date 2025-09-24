@@ -151,7 +151,7 @@ const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode, currentViewRole
       ) :(
         <DelegateMenu userInfo={userInfo} assistantUserInfo={userInfo} />
       )}
-      <main className="w-full overflow-auto py-6 px-12">
+      <main className="w-full overflow-auto py-6">
         <h2 className="text-3xl font-bold text-zinc-600 mb-4">📬 Support Form</h2>
         <div className="bg-white rounded-lg p-6 shadow-sm border">
           <form onSubmit={handleSubmit} className="space-y-4">

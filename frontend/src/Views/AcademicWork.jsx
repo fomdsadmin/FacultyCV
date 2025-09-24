@@ -254,7 +254,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   const SectionTabs = ({ filters, activeFilter, onSelect, sectionDescriptions }) => {
     return (
       <>
-        <div className="flex flex-wrap gap-4 mb-6 px-4 max-w-full">
+        <div className="flex flex-wrap gap-3 mb-4 max-w-full">
           <button
             className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
               activeFilter === null ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -279,7 +279,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
         </div>
         {showDesc && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white rounded-xl shadow-lg max-w-lg w-full p-6 relative">
+            <div className="bg-white rounded-xl shadow-lg max-w-xl w-full p-6 relative">
               <button
                 className="absolute top-3 right-4 text-xl text-gray-500 hover:text-gray-800"
                 onClick={() => setShowDesc(null)}
@@ -306,9 +306,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
         userInfo={userInfo}
       />
       <main
-        className="px-[1vw] xs:px-[1vw] sm:px-[2vw] md:px-[2vw] lg:px-[2vw] 
-                       xl:px-[5vw] 2xl:px-[8vw] overflow-y-auto custom-scrollbar
-                       mt-4 w-full mb-4 relative"
+        className="overflow-y-auto custom-scrollbar my-2 w-full relative"
       >
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
@@ -318,9 +316,9 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
           <>
             {activeSection === null ? (
               <div className="!overflow-auto !h-full rounded-lg w-full mx-auto">
-                <h1 className="text-left mb-4 text-4xl font-bold text-zinc-600 p-2 ml-2">Academic Work</h1>
+                <h1 className="text-left mb-2 text-4xl font-bold text-zinc-600">Academic Work</h1>
                 {/* Search bar for filtering sections */}
-                <div className="mb-4 flex justify-start items-left ml-4">
+                <div className="mb-4 flex justify-start items-left">
                   <label className="input input-bordered flex items-left gap-2 flex-1">
                     <input
                       type="text"
@@ -361,7 +359,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                 ))}
                 {/* If no results in tab, show matches from other categories distinctly */}
                 {searchTerm && activeTab && searchedSections.length === 0 && otherCategorySections.length > 0 && (
-                  <div className="mt-6 px-6">
+                  <div className="mt-4 px-6">
                     <div className="text-sm font-normal text-gray-600 mb-2 text-center py-2">No results found for search in selected category.</div>
                     <div className="text-md font-semibold text-gray-600 mb-2">Showing results from other categories:</div>
                     {[...otherCategorySections].sort(sectionTitleSort).map((section) => {

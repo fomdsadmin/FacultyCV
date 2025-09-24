@@ -1,29 +1,37 @@
-import BackButton from "./BackButton"
-import NewButton from "./NewButton"
-import SectionTitle from "./SectionTitle"
 import { useGenericSection } from "../GenericSectionContext";
+import { FaArrowLeft } from "react-icons/fa";
 
 const SectionHeader = () => {
-  const { fieldData, handleRemoveAll, notification } = useGenericSection();
+  const { section, onBack, handleNew, fieldData, handleRemoveAll, notification } = useGenericSection();
   let availableData = false;
   if (fieldData.length != 0) {
     availableData = true;
   }
   return (
     <>
-      <BackButton />
-      <div className="m-4 flex items-center pr-4">
-        <SectionTitle />
-        <NewButton />
-        <div className="mx-4 my-1 flex items-center">
+      <div className="ml-2 mr-4 my-2 flex items-center justify-between">
+        {/* Left section: Back Button and Title */}
+        <div className="flex items-center">
+          <button onClick={onBack} className="text-zinc-800 btn btn-ghost min-h-0 h-10 p-2 mr-3 hover:bg-gray-100">
+            <FaArrowLeft className="h-5 w-5 text-zinc-800" />
+          </button>
+          <h2 className="text-3xl font-bold text-zinc-600">{section.title}</h2>
+        </div>
+        
+        {/* Right section: Action Buttons */}
+        <div className="flex items-center gap-3">
+          <button onClick={handleNew} className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight">
+            New
+          </button>
           <button
             onClick={handleRemoveAll}
-            className="text-white btn btn-warning min-h-0 h-8 leading-tight"
-            disabled={availableData ? false : true}
+            className="text-white btn btn-warning min-h-0 h-10 px-4 leading-tight"
+            disabled={!availableData}
           >
             Remove All
           </button>
         </div>
+        
         {/* Notification Toast */}
         {notification && (
           <div className="fixed top-8 right-6 z-50 bg-green-600 text-white px-4 py-2 rounded shadow-lg transition-all">
@@ -35,4 +43,4 @@ const SectionHeader = () => {
   );
 };
 
-export default SectionHeader
+export default SectionHeader;

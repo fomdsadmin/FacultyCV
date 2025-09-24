@@ -24,7 +24,7 @@ const FacultyHomePageContent = (user) => {
         overflow-y-auto custom-scrollbar w-full relative"
       >
         {/* Single container with consistent width */}
-        <div className="mx-auto w-full">
+        <div className="w-full">
           {/* Tabs section below the save button */}
           <div className="w-full mt-6">
             {!loading && <Tabs showCard={false} />}
