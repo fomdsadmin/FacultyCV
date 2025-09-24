@@ -10,7 +10,7 @@ const ManagingUserAlert = () => {
   }
 
   return (
-    <div className="bg-blue-50 py-4 w-full flex justify-center align-center items-center">
+    <div className="bg-blue-50 py-3 w-full flex justify-center align-center items-center">
       <div className="flex items-center">
         <div className="flex-shrink-0">
           <FaInfoCircle className="h-5 w-5 text-blue-400" />

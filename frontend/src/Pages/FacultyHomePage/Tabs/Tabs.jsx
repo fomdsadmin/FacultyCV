@@ -126,7 +126,7 @@ const Tabs = () => {
   };
 
   return (
-    <div className="w-full px-12">
+    <div className="w-full">
       <div className="flex space-x-4 mb-4 overflow-x-auto">
         {Object.values(CATEGORIES).map((title) => (
           <button

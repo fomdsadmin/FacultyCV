@@ -1,40 +1,71 @@
-import EntryList from "./EntryList"
-import EntryModalWrapper from "./EntryModalWrapper"
-import {
-  GenericSectionProvider,
-  useGenericSection,
-} from "./GenericSectionContext";
+import EntryList from "./EntryList";
+import EntryModalWrapper from "./EntryModalWrapper";
+import { GenericSectionProvider, useGenericSection } from "./GenericSectionContext";
 import SearchInput from "./SearchInput";
 import SectionDescription from "./SectionDescription";
 import SectionHeader from "./SectionHeader/SectionHeader";
 
 const GenericSectionContent = () => {
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalPages,
-    paginatedData,
-    fieldData,
-    loading,
-    section,
-  } = useGenericSection();
+  const { currentPage, setCurrentPage, pageSize, setPageSize, totalPages, paginatedData, fieldData, loading, section, sortAscending, toggleSortOrder } =
+    useGenericSection();
 
   return (
     <div>
       <SectionHeader />
       <SectionDescription />
-      <SearchInput />
-
-      {/* Pagination Controls */}
-      <div className="m-4 p-4 rounded-2xl border border-gray-300 shadow-sm bg-white flex flex-wrap justify-between items-center">
-        {/* Left controls */}
-        <div className="flex items-center gap-3">
-          <span className="text-lg font-medium text-gray-700">
+      {/* Left controls */}
+      <div className="flex items-center gap-3 mt-2">
+        <SearchInput />
+        <div className="rounded-lg border border-gray-300 p-2 my-2 flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700">
             Total Entries: <span className="font-semibold text-blue-600">{fieldData.length}</span>
           </span>
+          <button
+            onClick={toggleSortOrder}
+            className="flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors duration-200"
+            title={`Sort by date: ${sortAscending ? 'Oldest first' : 'Newest first'} (click to toggle)`}
+          >
+            <svg 
+              className="w-4 h-4 text-gray-600" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              {sortAscending ? (
+                // Arrow up (oldest first)
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" 
+                />
+              ) : (
+                // Arrow down (newest first)
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M7 4v12m0 0l4-4m-4 4l-4-4m10-8v12m0 0l4-4m-4 4l-4-4" 
+                />
+              )}
+            </svg>
+          </button>
         </div>
+      </div>
+
+      {/* Entries List (paginated) */}
+      {loading ? (
+        <div className="flex items-center justify-center w-full">
+          <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+        </div>
+      ) : (
+        <div className="mx-4 pr-2 my-2 max-h-[50vh] overflow-y-auto rounded-lg">
+          <EntryList entries={paginatedData} />
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      <div className="mx-4 mt-4 rounded-lg flex flex-wrap justify-end items-center">
         {/* Right controls */}
         <div className="flex items-center gap-2">
           {/* Page size dropdown */}
@@ -70,15 +101,6 @@ const GenericSectionContent = () => {
         </div>
       </div>
 
-      {/* Entries List (paginated) */}
-      {loading ? (
-        <div className="flex items-center justify-center w-full">
-          <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-        </div>
-      ) : (
-        <EntryList entries={paginatedData} />
-      )}
-
       <EntryModalWrapper />
     </div>
   );
@@ -92,4 +114,4 @@ const GenericSection = ({ section, onBack }) => {
   );
 };
 
-export default GenericSection
+export default GenericSection;

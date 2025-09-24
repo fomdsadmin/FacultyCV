@@ -5,6 +5,7 @@ import {
   deleteUserCVSectionData,
 } from "../../graphql/graphqlHelpers";
 import { rankFields } from "../../utils/rankingUtils";
+import { sortEntriesByDate } from "../../utils/dateUtils";
 import { useApp } from "../../Contexts/AppContext";
 import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext";
 // Create context
@@ -37,6 +38,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
   // State
   const [searchTerm, setSearchTerm] = useState("");
   const [fieldData, setFieldData] = useState([]);
+  const [sortAscending, setSortAscending] = useState(false); // false = descending (most recent first)
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNew, setIsNew] = useState(false);
@@ -86,39 +88,10 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
         return { ...entry, field1, field2, key1, key2 };
       });
 
-      const extractYear = (dateStr) => {
-        if (!dateStr || typeof dateStr !== "string") return null;
-        if (dateStr.toLowerCase().includes("current")) {
-          return Number.POSITIVE_INFINITY;
-        }
-        const years = dateStr.match(/\b\d{4}\b/g);
-        return years ? Number.parseInt(years[years.length - 1]) : null;
-      };
+      // Sort by date using the new utility
+      const sortedData = sortEntriesByDate(rankedData, sortAscending);
 
-      rankedData.sort((a, b) => {
-        const isDateOrYear = (key) =>
-          key && (key.toLowerCase().includes("date") || key.toLowerCase().includes("year"));
-        const dateA = isDateOrYear(a.key1)
-          ? extractYear(a.field1)
-          : isDateOrYear(a.key2)
-          ? extractYear(a.field2)
-          : null;
-        const dateB = isDateOrYear(b.key1)
-          ? extractYear(b.field1)
-          : isDateOrYear(b.key2)
-          ? extractYear(b.field2)
-          : null;
-        if (dateA !== null && dateB !== null) {
-          return dateB - dateA;
-        } else if (dateA !== null) {
-          return -1;
-        } else if (dateB !== null) {
-          return 1;
-        }
-        return 0;
-      });
-
-      setFieldData(rankedData);
+      setFieldData(sortedData);
       setCurrentPage(1); // Reset to first page on new data
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -183,12 +156,16 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     setIsModalOpen(true);
   };
 
+  const toggleSortOrder = () => {
+    setSortAscending(!sortAscending);
+  };
+
   // Fetch data when search term or section changes
   useEffect(() => {
     setLoading(true);
     setFieldData([]);
     fetchData();
-  }, [searchTerm, section.data_section_id]);
+  }, [searchTerm, section.data_section_id, sortAscending]);
 
   // Reset to first page when search term or page size changes
   useEffect(() => {
@@ -207,6 +184,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     pageSize,
     setPageSize,
     totalPages,
+    sortAscending,
     selectedEntry,
     isModalOpen,
     isNew,
@@ -223,6 +201,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     handleCloseModal,
     handleNew,
     handleRemoveAll,
+    toggleSortOrder,
     onBack,
   };
 

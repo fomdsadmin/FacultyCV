@@ -104,10 +104,10 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
   }, [data_details, field1, field2]);
 
   return (
-    <div className="min-h-8 shadow-glow my-2 px-4 py-4 flex items-center bg-white rounded-lg">
+    <div className="min-h-8 border my-2 px-4 py-2 flex items-center bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-200s">
       <div className="flex-1 w-full">
         {updatedField1 && (
-          <h1 className="text-gray-800 font-bold break-words">
+          <h1 className="text-md text-gray-800 font-bold break-words">
             {isHtmlContent(updatedField1) ? (
               <div 
                 className="html-content inline"
@@ -119,7 +119,7 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
           </h1>
         )}
         {updatedField2 && (
-          <h2 className="text-gray-600 break-words mb-[3px]">
+          <h2 className="text-sm text-gray-600 break-words mb-[3px]">
             {isHtmlContent(updatedField2) ? (
               <div 
                 className="html-content inline"

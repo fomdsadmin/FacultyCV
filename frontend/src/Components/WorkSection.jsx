@@ -15,7 +15,7 @@ const WorkSection = ({ onClick, onDataClick, id, title, category, info, userInfo
   const catName = catArr[catArr.length - 1];
 
   return (
-    <div className="bg-base-100 my-3 m-4 p-4 shadow-glow rounded-lg">
+    <div className="bg-base-100 my-2 mx-1 p-3 shadow-glow rounded-lg">
       <div className="flex flex-row justify-between items-start gap-4">
         <div className="flex flex-col justify-center">
           <h3 className="card-title">{name ? name.trim() : title}</h3>

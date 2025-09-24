@@ -10,10 +10,12 @@ import {
   getAllSections,
 } from "../graphql/graphqlHelpers";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
+import { sortEntriesByDate } from "../utils/dateUtils";
 
 const EmploymentSection = ({ user, section, onBack }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [fieldData, setFieldData] = useState([]);
+  const [sortAscending, setSortAscending] = useState(false); // false = descending (most recent first)
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNew, setIsNew] = useState(false);
@@ -93,6 +95,10 @@ const EmploymentSection = ({ user, section, onBack }) => {
     setIsModalOpen(true);
   };
 
+  const toggleSortOrder = () => {
+    setSortAscending(!sortAscending);
+  };
+
   async function fetchData() {
     setLoading(true);
     try {
@@ -104,7 +110,10 @@ const EmploymentSection = ({ user, section, onBack }) => {
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
-      setFieldData(parsedData);
+      
+      // Sort using the new date utility
+      const sortedData = sortEntriesByDate(parsedData, sortAscending);
+      setFieldData(sortedData);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -113,100 +122,8 @@ const EmploymentSection = ({ user, section, onBack }) => {
 
   useEffect(() => {
     fetchData();
-    // Only fetch when section changes, not on search term
-  }, [section.data_section_id]);
-
-  // Add a function to sort employment entries
-  const sortEmploymentEntries = (entries) => {
-    return [...entries].sort((a, b) => {
-      const typeA = a.data_details.type?.toLowerCase();
-      const typeB = b.data_details.type?.toLowerCase();
-
-      // Put "present" entries first
-      if (typeA === "present" && typeB !== "present") return -1;
-      if (typeA !== "present" && typeB === "present") return 1;
-
-      // Extract start dates from date strings for both entries
-      const getStartDate = (dateStr) => {
-        const parts = dateStr.split(" - ");
-        const startPart = parts[0];
-
-        try {
-          const [month, year] = startPart.split(", ");
-          const monthIndex = [
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December",
-          ].indexOf(month);
-
-          return new Date(parseInt(year), monthIndex);
-        } catch (error) {
-          // Handle any parsing errors
-          return new Date(0);
-        }
-      };
-
-      // For two "present" entries, sort by start date (descending)
-      if (typeA === "present" && typeB === "present") {
-        const startDateA = getStartDate(a.data_details.dates);
-        const startDateB = getStartDate(b.data_details.dates);
-
-        // Sort descending (newer start dates first)
-        return startDateB - startDateA;
-      }
-
-      // For prior entries, sort by end date (descending)
-      if (typeA === "prior" && typeB === "prior") {
-        // Extract end dates from date strings
-        const getEndDate = (dateStr) => {
-          const parts = dateStr.split(" - ");
-          if (parts.length < 2) return new Date(0); // No end date
-
-          const endPart = parts[1];
-          // Parse the end date (format: "Month, Year")
-          try {
-            const [month, year] = endPart.split(", ");
-            const monthIndex = [
-              "January",
-              "February",
-              "March",
-              "April",
-              "May",
-              "June",
-              "July",
-              "August",
-              "September",
-              "October",
-              "November",
-              "December",
-            ].indexOf(month);
-
-            return new Date(parseInt(year), monthIndex);
-          } catch (error) {
-            // Handle any parsing errors
-            return new Date(0);
-          }
-        };
-
-        const dateA = getEndDate(a.data_details.dates);
-        const dateB = getEndDate(b.data_details.dates);
-
-        // Sort descending (newer dates first)
-        return dateB - dateA;
-      }
-
-      return 0;
-    });
-  };
+    // Fetch when section or sort order changes
+  }, [section.data_section_id, sortAscending]);
 
   useEffect(() => {
     if (fieldData.length !== 0) {
@@ -264,7 +181,7 @@ const EmploymentSection = ({ user, section, onBack }) => {
             Remove All
           </button>
         </div>
-        <div className="m-4 flex">
+        <div className="m-4 flex items-center gap-3">
           <label className="input input-bordered flex items-center gap-2 flex-1">
             <input
               type="text"
@@ -286,6 +203,41 @@ const EmploymentSection = ({ user, section, onBack }) => {
               />
             </svg>
           </label>
+          <div className="rounded-lg border border-gray-300 p-2 flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">
+              Total: <span className="font-semibold text-blue-600">{filteredData.length}</span>
+            </span>
+            <button
+              onClick={toggleSortOrder}
+              className="flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors duration-200"
+              title={`Sort by date: ${sortAscending ? 'Oldest first' : 'Newest first'} (click to toggle)`}
+            >
+              <svg 
+                className="w-4 h-4 text-gray-600" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                {sortAscending ? (
+                  // Arrow up (oldest first)
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" 
+                  />
+                ) : (
+                  // Arrow down (newest first)
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M7 4v12m0 0l4-4m-4 4l-4-4m10-8v12m0 0l4-4m-4 4l-4-4" 
+                  />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
       {loading ? (
@@ -296,7 +248,7 @@ const EmploymentSection = ({ user, section, onBack }) => {
         <div>
           <div>
             {filteredData.length > 0 ? (
-              sortEmploymentEntries(filteredData).map((entry, index) => (
+              filteredData.map((entry, index) => (
                 <GenericEntry
                   key={index}
                   onEdit={() => handleEdit(entry)}

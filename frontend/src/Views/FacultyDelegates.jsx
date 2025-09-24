@@ -56,7 +56,7 @@ const FacultyDelegates = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         userName={userInfo.preferred_name || userInfo.first_name}
         getCognitoUser={getCognitoUser}
         toggleViewMode={toggleViewMode} userInfo={userInfo}/>
-      <main className="flex-1 px-8 lg:px-12 py-6 overflow-auto h-full custom-scrollbar">
+      <main className="flex-1 py-2 overflow-auto h-full custom-scrollbar">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div>
