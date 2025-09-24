@@ -6,8 +6,19 @@ import SectionDescription from "./SectionDescription";
 import SectionHeader from "./SectionHeader/SectionHeader";
 
 const GenericSectionContent = () => {
-  const { currentPage, setCurrentPage, pageSize, setPageSize, totalPages, paginatedData, fieldData, loading, section, sortAscending, toggleSortOrder } =
-    useGenericSection();
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    paginatedData,
+    fieldData,
+    loading,
+    section,
+    sortAscending,
+    toggleSortOrder,
+  } = useGenericSection();
 
   return (
     <div>
@@ -20,37 +31,32 @@ const GenericSectionContent = () => {
           <span className="text-sm font-medium text-gray-700">
             Total Entries: <span className="font-semibold text-blue-600">{fieldData.length}</span>
           </span>
-          <button
-            onClick={toggleSortOrder}
-            className="flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors duration-200"
-            title={`Sort by date: ${sortAscending ? 'Oldest first' : 'Newest first'} (click to toggle)`}
-          >
-            <svg 
-              className="w-4 h-4 text-gray-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              {sortAscending ? (
-                // Arrow up (oldest first)
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" 
-                />
-              ) : (
-                // Arrow down (newest first)
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M7 4v12m0 0l4-4m-4 4l-4-4m10-8v12m0 0l4-4m-4 4l-4-4" 
-                />
-              )}
-            </svg>
-          </button>
         </div>
+        <button
+          onClick={toggleSortOrder}
+          className="flex items-center justify-center w-9 h-9 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors duration-200"
+          title={`Sort by date: ${sortAscending ? "Oldest first" : "Newest first"} (click to toggle)`}
+        >
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {sortAscending ? (
+              // Arrow up (oldest first)
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+              />
+            ) : (
+              // Arrow down (newest first)
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 4v12m0 0l4-4m-4 4l-4-4m10-8v12m0 0l4-4m-4 4l-4-4"
+              />
+            )}
+          </svg>
+        </button>
       </div>
 
       {/* Entries List (paginated) */}
