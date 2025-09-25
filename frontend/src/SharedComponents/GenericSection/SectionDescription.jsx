@@ -1,7 +1,7 @@
 import { useGenericSection } from "./GenericSectionContext"
 import { useState, useRef, useEffect } from "react";
 
-const MAX_LINES = 4;
+const MAX_LINES = 3;
 
 const SectionDescription = () => {
     const { section } = useGenericSection();

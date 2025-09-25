@@ -112,6 +112,7 @@ def processAcademicAppointments(user_data, user_id, user_info):
     Logic:
     - If 2+ appointments: put higher roster % in primary, others in joint
     - If 50-50 split: put the one matching user's primary department in primary
+    - If all roster % are 100: check end dates and only add the latest one
     """
     appointments = user_data.get('academicAppointments', [])
     
@@ -150,12 +151,44 @@ def processAcademicAppointments(user_data, user_id, user_info):
         }
         unit_appointments.append(unit_data)
     
-    # Sort appointments by roster percentage (descending)
-    unit_appointments.sort(key=lambda x: x['roster_percentage'], reverse=True)
+    # Check if all roster percentages are 100
+    all_roster_100 = all(apt['roster_percentage'] == 100 for apt in unit_appointments)
+    
+    if all_roster_100 and len(unit_appointments) > 1:
+        # Filter to keep only the latest appointment based on end date
+        from datetime import datetime
+        
+        def parse_date(date_str):
+            """Parse date string and return datetime object, return min date if parsing fails"""
+            if not date_str:
+                return datetime.min
+            try:
+                return datetime.strptime(date_str, '%Y-%m-%d')
+            except:
+                # Try other date formats if needed
+                try:
+                    return datetime.strptime(date_str, '%Y/%m/%d')
+                except:
+                    return datetime.min
+        
+        # Sort by end date (latest first)
+        unit_appointments.sort(key=lambda x: parse_date(x['additional_info']['end']), reverse=True)
+        # Keep only the latest one
+        unit_appointments = [unit_appointments[0]]
+    else:
+        # Sort appointments by roster percentage (descending) for normal processing
+        unit_appointments.sort(key=lambda x: x['roster_percentage'], reverse=True)
     
     if len(unit_appointments) == 1:
         # Single appointment goes to primary
-        affiliations_data['primary_unit'].append(unit_appointments[0])
+        # Remove department_code and roster_percentage from the final data (internal use only)
+        def clean_unit_data(unit):
+            cleaned = unit.copy()
+            cleaned.pop('department_code', None)
+            cleaned.pop('roster_percentage', None)
+            return cleaned
+        
+        affiliations_data['primary_unit'].append(clean_unit_data(unit_appointments[0]))
     else:
         # Multiple appointments - apply logic
         highest_percentage = unit_appointments[0]['roster_percentage']

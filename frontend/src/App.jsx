@@ -296,7 +296,9 @@ const AppContent = () => {
             {/* Other routes - no restrictions for approved users */}
             <Route path="/faculty/home/affiliations" element={<FacultyHomePage tab="affiliations" />} />
             <Route path="/faculty/home/employment" element={<FacultyHomePage tab="employment" />} />
+            <Route path="/faculty/home/employment/:sectionTitle" element={<FacultyHomePage tab="employment" />} />
             <Route path="/faculty/home/education" element={<FacultyHomePage tab="education" />} />
+            <Route path="/faculty/home/education/:sectionTitle" element={<FacultyHomePage tab="education" />} />
             <Route
               path="/support"
               element={
