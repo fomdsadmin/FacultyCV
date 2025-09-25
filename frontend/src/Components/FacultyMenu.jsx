@@ -10,6 +10,7 @@ import { signOut } from "aws-amplify/auth";
 import { useNavigate } from "react-router-dom";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { LuLayoutDashboard } from "react-icons/lu";
+import { useApp } from "Contexts/AppContext";
 import { MdSupportAgent } from "react-icons/md";
 
 const FacultyMenu = ({
@@ -24,22 +25,7 @@ const FacultyMenu = ({
   const [showText, setShowText] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-      getCognitoUser();
-      navigate("/auth");
-    } catch (error) {
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
-
-  const handleToggle = () => {
-    toggleViewMode();
-  };
+  const { isManagingUser } = useApp();
 
   useEffect(() => {
     let timer;
@@ -53,7 +39,7 @@ const FacultyMenu = ({
   }, [isCollapsed, userInfo]);
 
   return (
-    <div className={`mt-[-2px] ${isCollapsed ? "pr-24" : "pr-60"}`}>
+    <div className={` ${isCollapsed ? "pr-24" : "pr-60"} ${isManagingUser ? "mt-[-12px]" : ""}`}>
       <div
         className={`fixed min-h-[100vh] left-0  z-50 bg-white transition-all duration-150 ease-in-out py-2 border-r-2 border-neutral max-h-[calc(100vh-5rem)] overflow-y-auto
         ${isCollapsed ? "w-18" : "w-60"}

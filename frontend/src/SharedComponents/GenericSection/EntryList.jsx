@@ -2,7 +2,7 @@ import GenericEntry from "../GenericEntry";
 import { useGenericSection } from "./GenericSectionContext";
 
 const EntryList = ({ entries }) => {
-  const { fieldData, handleEdit, handleArchive, loading } = useGenericSection();
+  const { fieldData, handleEdit, handleArchive, loading, searchTerm, dropdownFilters } = useGenericSection();
   const dataToRender = entries || fieldData;
 
   if (loading) {
@@ -14,7 +14,11 @@ const EntryList = ({ entries }) => {
   }
 
   if (dataToRender.length === 0) {
-    return <p className="m-4">No data found</p>;
+    return (
+      <div className="text-center py-8 text-gray-500">
+        No existing entries found
+      </div>
+    );
   }
 
   return (
