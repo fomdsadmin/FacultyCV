@@ -120,17 +120,21 @@ const GenericSectionContent = () => {
                     if (!entry.data_details || !entry.data_details[actualKey]) return false;
                     
                     const entryValue = entry.data_details[actualKey];
-                    if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
+                    if (!entryValue && entryValue !== 0 && entryValue !== false) return false;
+                    
+                    // Convert to string for consistent handling
+                    const stringValue = typeof entryValue === 'string' ? entryValue : String(entryValue);
+                    if (stringValue.trim() === "" || stringValue === "—") return false;
                     
                     // Handle "Other (value)" format
-                    if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-                      const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                    if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
+                      const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
                       if (match) {
                         return match[1].trim() === filterValue;
                       }
                     }
                     
-                    return entryValue === filterValue;
+                    return stringValue === filterValue || entryValue === filterValue;
                   });
                 }
               });
@@ -148,17 +152,21 @@ const GenericSectionContent = () => {
                 if (!entry.data_details || !entry.data_details[actualKey]) return false;
                 
                 const entryValue = entry.data_details[actualKey];
-                if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
+                if (!entryValue && entryValue !== 0 && entryValue !== false) return false;
+                
+                // Convert to string for consistent handling
+                const stringValue = typeof entryValue === 'string' ? entryValue : String(entryValue);
+                if (stringValue.trim() === "" || stringValue === "—") return false;
                 
                 // Handle "Other (value)" format
-                if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-                  const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
+                  const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
                   if (match) {
                     return match[1].trim() === optionValue;
                   }
                 }
                 
-                return entryValue === optionValue;
+                return stringValue === optionValue || entryValue === optionValue;
               }).length;
             };
 
@@ -242,17 +250,21 @@ const GenericSectionContent = () => {
                       if (!entry.data_details || !entry.data_details[actualKey]) return false;
                       
                       const entryValue = entry.data_details[actualKey];
-                      if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
+                      if (!entryValue && entryValue !== 0 && entryValue !== false) return false;
+                      
+                      // Convert to string for consistent handling
+                      const stringValue = typeof entryValue === 'string' ? entryValue : String(entryValue);
+                      if (stringValue.trim() === "" || stringValue === "—") return false;
                       
                       // Handle "Other (value)" format
-                      if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-                        const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                      if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
+                        const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
                         if (match) {
                           return match[1].trim() === filterValue;
                         }
                       }
                       
-                      return entryValue === filterValue;
+                      return stringValue === filterValue || entryValue === filterValue;
                     });
                   }
                 });
@@ -270,17 +282,21 @@ const GenericSectionContent = () => {
                   if (!entry.data_details || !entry.data_details[actualKey]) return false;
                   
                   const entryValue = entry.data_details[actualKey];
-                  if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
+                  if (!entryValue && entryValue !== 0 && entryValue !== false) return false;
+                  
+                  // Convert to string for consistent handling
+                  const stringValue = typeof entryValue === 'string' ? entryValue : String(entryValue);
+                  if (stringValue.trim() === "" || stringValue === "—") return false;
                   
                   // Handle "Other (value)" format
-                  if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-                    const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                  if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
+                    const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
                     if (match) {
                       return match[1].trim() === optionValue;
                     }
                   }
                   
-                  return entryValue === optionValue;
+                  return stringValue === optionValue || entryValue === optionValue;
                 }).length;
               };
 

@@ -80,16 +80,25 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     
     fieldData.forEach((entry, index) => {
       if (entry.data_details && entry.data_details[actualKey]) {
-        const value = entry.data_details[actualKey];  
-        if (value && value.trim() !== "" && value !== "—" && value.toLowerCase() !== "null") {
+        const value = entry.data_details[actualKey];
+        
+        // Handle different data types appropriately
+        if (value !== null && value !== undefined && value !== "" && value !== "—") {
+          const stringValue = typeof value === 'string' ? value : String(value);
+          
+          // Skip if it's empty after conversion to string
+          if (stringValue.trim() === "" || stringValue.toLowerCase() === "null") {
+            return;
+          }
+          
           // Handle "Other (value)" format
-          if (typeof value === "string" && /\bother\b/i.test(value) && /\(.*\)$/.test(value)) {
-            const match = value.match(/^(.*Other)\s*\((.*)\)$/i);
+          if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
+            const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
             if (match) {
               values.add(match[1].trim());
             }
           } else {
-            values.add(value);
+            values.add(stringValue);
           }
         }
       }
@@ -126,17 +135,22 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
           if (!entry.data_details || !entry.data_details[actualKey]) return false;
           
           const entryValue = entry.data_details[actualKey];
-          if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
+          if (!entryValue && entryValue !== 0 && entryValue !== false) return false;
+          
+          // Convert to string for consistent handling
+          const stringValue = typeof entryValue === 'string' ? entryValue : String(entryValue);
+          if (stringValue.trim() === "" || stringValue === "—") return false;
           
           // Handle "Other (value)" format
-          if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-            const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+          if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
+            const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
             if (match) {
               return match[1].trim() === filterValue;
             }
           }
           
-          return entryValue === filterValue;
+          // Compare using string representation for consistency
+          return stringValue === filterValue || entryValue === filterValue;
         });
       }
     });
