@@ -330,6 +330,18 @@ export class Resolver2Stack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "getAllCourseCatalogInfo",
+      ["getAllCourseCatalogInfo"],
+      "Query",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "getPresignedUrl",
       ["getPresignedUrl"],
       "Query",

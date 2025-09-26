@@ -10,6 +10,7 @@ import {
   getUserWithVppUsernameQuery,
   getAllUsersQuery,
   getAllUniversityInfoQuery,
+  getAllCourseCatalogInfoQuery,
   getAllNotificationsQuery,
   getUserDeclarationsQuery,
   getAllUserDeclarationsQuery,
@@ -357,6 +358,11 @@ export const getArchivedUserCVData = async (user_id) => {
 export const getAllUniversityInfo = async () => {
   const results = await runGraphql(getAllUniversityInfoQuery());
   return results["data"]["getAllUniversityInfo"];
+};
+
+export const getAllCourseCatalogInfo = async () => {
+  const results = await runGraphql(getAllCourseCatalogInfoQuery());
+  return results["data"]["getAllCourseCatalogInfo"];
 };
 
 export const GetNotifications = async () => {

@@ -140,7 +140,6 @@ export const getAllUsersQuery = () => `
     }
 `;
 
-
 export const getExistingUserQuery = (institution_user_id) => `
     query GetExistingUser {
         getExistingUser (
@@ -350,6 +349,17 @@ export const getAllUniversityInfoQuery = () => `
             university_info_id
             type
             value
+        }
+    }
+`;
+
+export const getAllCourseCatalogInfoQuery = () => `
+    query GetAllCourseCatalogInfo {
+        getAllCourseCatalogInfo {
+            course
+            course_title
+            academic_level
+            course_description
         }
     }
 `;
@@ -742,4 +752,3 @@ export const GET_STAGING_SCOPUS_PUBLICATIONS = `
         }
     }
 `;
-
