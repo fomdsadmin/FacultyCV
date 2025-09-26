@@ -381,6 +381,7 @@ export class UserImportStack extends Stack {
       "VisitOtherTeaching",
       "Affiliations",
       "HospitalAffiliations",
+      "TTPS-Data",
       "Users"
     ];
 

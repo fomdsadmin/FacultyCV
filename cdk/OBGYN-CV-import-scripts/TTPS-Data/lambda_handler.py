@@ -14,64 +14,48 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = "6[a-d]. Employment Record"
+SECTION_TITLE = "8b. Courses Taught"
+SECTION_TITLE_OTHER = "8b.3. Clinical Teaching"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
     # Ensure relevant columns are string type before using .str methods
-    for col in ["PhysicianID", "Details", "Type", "University_Organization", "Notes"]:
+    for col in ["Site", "Receiving Function", "Topic/Description", "Appt Start Date", "Appt End Date", "Type of Teaching", "Course Name", "Course Number", "Paid Total"]:
         if col in df.columns:
             df[col] = df[col].astype(str)
 
-    df["user_id"] = df["PhysicianID"].fillna('').str.strip()
-    
-    # Map the different types from CSV to specific strings
-    type_mapping = {
-        'Prior': 'a. Prior',
-        'At UBC (since first employment)': 'b. At UBC (since first employment)',
-        'Present': 'c. Present', 
-        'At Hospital (since first appointment at UBC)': 'd. At Hospital (since first appointment at UBC)'
-    }
-    
-    # Apply the mapping, defaulting to the original value if not found in mapping
-    df["type"] = df["Type"].fillna('').astype(str).map(type_mapping).fillna(df["Type"].fillna('').astype(str))
-    df["university/organization"] =  df["University_Organization"].fillna('').str.strip()
-    df["rank_or_title"] = df["Details"].fillna('').str.strip()
-    
-    df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(str).str.strip().str.lower().map({'true': True, 'false': False})
+    # Merge Site, Course Name, Receiving Function, Topic/Description into description
+    def merge_description(row):
+        fields = [
+            row.get("Site", ""),
+            row.get("Receiving Function", ""),
+            row.get("Topic/Description", "")
+        ]
+        # Remove empty/null/NaN values and strip whitespace
+        cleaned = [str(f).strip() for f in fields if pd.notna(f) and str(f).strip() != ""]
+        return ", ".join(cleaned)
+    df["description"] = df.apply(merge_description, axis=1)
+    df["type_of_teaching"] =  df["Type of Teaching"].fillna('').str.strip()
 
-    # Handle Dates field - convert Unix timestamps to date strings
-    if "TDate" in df.columns:
-        # Handle zero and negative timestamps - set as blank for invalid values
-        df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
-        df["start_date"] = df["TDate_clean"].apply(lambda x:
-            '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
-        )
-        df["start_date"] = df["start_date"].fillna('').str.strip()
-    else:
-        df["start_date"] = ''
-    
-    if "TDateEnd" in df.columns:
-        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
-        df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
-        df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
-            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
-        )
-        df["end_date"] = df["end_date"].fillna('').str.strip()
-    else:
-        df["end_date"] = ''
 
-    # Combine start and end dates into a single 'dates' column
-    # Only show ranges when both dates exist, avoid empty dashes
+    # Handle start/end dates and combine as a single string (like Affiliations)
+    def format_full_date(val):
+        try:
+            dt = pd.to_datetime(val, errors='coerce')
+            if pd.isna(dt):
+                return ''
+            return dt.strftime('%d %B, %Y')
+        except Exception:
+            return ''
+
+    start_dates = df["Appt Start Date"].apply(format_full_date) if "Appt Start Date" in df.columns else pd.Series(['']*len(df))
+    end_dates = df["Appt End Date"].apply(format_full_date) if "Appt End Date" in df.columns else pd.Series(['']*len(df))
+
     def combine_dates(row):
-        start = row["start_date"].strip()
-        end = row["end_date"].strip()
-
+        start = row["start_date"].strip() if "start_date" in row else ''
+        end = row["end_date"].strip() if "end_date" in row else ''
         if start and end:
             return f"{start} - {end}"
         elif start:
@@ -80,14 +64,32 @@ def cleanData(df):
             return end
         else:
             return ""
+
+    df["start_date"] = start_dates
+    df["end_date"] = end_dates
     df["dates"] = df.apply(combine_dates, axis=1)
+    df["course"] = df["Course Number"].fillna('').str.strip()
+    df["course_title"] = df["Course Name"].fillna('').str.strip()
+    df["total_hours"] = df["Paid Total"].fillna('').str.strip()
 
     # Keep only the cleaned columns
-    df = df[["user_id", "rank_or_title", "type", "university/organization", "highlight_-_notes", "highlight", "dates"]]
+    df = df[["user_id", "description", "type_of_teaching", "course", "course_title", "dates", "total_hours"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
-    return df
+
+    # Split into two DataFrames by 'Type of Teaching'
+    df_courses = df[df["type_of_teaching"].str.lower().str.contains("teaching without patient care")].copy()
+    df_clinical = df[df["type_of_teaching"].str.lower().str.contains("teaching with patient care")].copy()
+
+    # For df_courses, set 'category_-_level-of-student' to 'MD Undergraduate Program' (camel case)
+    df_courses['category_-_level-of-student'] = 'MD Undergraduate Program'
+
+    # Drop 'type_of_teaching' from output if not needed (optional)
+    # df_courses = df_courses.drop(columns=["type_of_teaching"])
+    # df_clinical = df_clinical.drop(columns=["type_of_teaching"])
+
+    return df_courses, df_clinical
 
 
 def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
@@ -163,7 +165,41 @@ def loadData(file_bytes, file_key):
     elif file_key.lower().endswith('.csv'):
         # Try reading as regular CSV first
         try:
-            return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+            df = pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+            
+            # Check if the first column name starts with '[{' - indicates JSON data in CSV
+            if len(df.columns) > 0 and df.columns[0].startswith('[{'):
+                print("Detected JSON data in CSV format, attempting to parse as JSON")
+                # Read the entire file content as text and try to parse as JSON
+                file_content = file_bytes.decode('utf-8').strip()
+                
+                # Try to parse as JSON array directly
+                try:
+                    import json
+                    json_data = json.loads(file_content)
+                    return pd.DataFrame(json_data)
+                except json.JSONDecodeError:
+                    # If that fails, try reading as JSON lines
+                    try:
+                        return pd.read_json(io.StringIO(file_content), lines=True)
+                    except:
+                        # Last resort - reconstruct the JSON from the broken CSV
+                        # Combine all columns back into a single JSON string
+                        combined_json = ''.join(df.columns.tolist())
+                        if len(df) > 0:
+                            # Add the data rows
+                            for _, row in df.iterrows():
+                                row_data = ' '.join([str(val) for val in row.values if pd.notna(val)])
+                                combined_json += ' ' + row_data
+                        
+                        try:
+                            json_data = json.loads(combined_json)
+                            return pd.DataFrame(json_data)
+                        except:
+                            raise ValueError("Could not parse malformed JSON in CSV file")
+            
+            return df
+            
         except Exception as csv_exc:
             print(f"Failed to read as CSV: {csv_exc}")
             # Try reading as JSON lines (NDJSON)
@@ -212,9 +248,6 @@ def lambda_handler(event, context):
                 'error': str(e)
             }
 
-        # Clean the DataFrame
-        df = cleanData(df)
-        print("Data cleaned successfully.")
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
@@ -225,7 +258,44 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
+        # Step 1: Extract unique (Last Name, First Name) combos
+        if 'Last Name' in df.columns and 'First Name' in df.columns:
+            unique_names = df[['Last Name', 'First Name']].drop_duplicates()
+        else:
+            print("CSV missing 'Last Name' or 'First Name' columns.")
+            return {
+                'statusCode': 400,
+                'status': 'FAILED',
+                'error': "CSV missing 'Last Name' or 'First Name' columns."
+            }
+
+        # Step 2: For each unique combo, query users table for user_id
+        def get_user_id(cursor, first_name, last_name):
+            cursor.execute(
+                "SELECT user_id FROM users WHERE first_name = %s AND last_name = %s",
+                (first_name.strip(), last_name.strip())
+            )
+            result = cursor.fetchone()
+            return result[0] if result else None
+
+        # Step 3: For matched user_ids, save cleaned data to the section
+        total_rows = 0
+        for _, name_row in unique_names.iterrows():
+            first_name = name_row['First Name']
+            last_name = name_row['Last Name']
+            user_id = get_user_id(cursor, first_name, last_name)
+            if user_id:
+                # Filter rows for this user
+                user_rows = df[(df['First Name'] == first_name) & (df['Last Name'] == last_name)].copy()
+                # Add PhysicianID column for cleanData
+                user_rows['user_id'] = user_id
+                # Clean and store data for this user
+                cleaned_user_rows = cleanData(user_rows)
+                rows_processed, rows_added_to_db = storeData(cleaned_user_rows, connection, cursor, errors, rows_processed, rows_added_to_db)
+                total_rows += len(cleaned_user_rows)
+            else:
+                errors.append(f"No user_id found for {first_name} {last_name}")
+
         print("Data stored successfully.")
         cursor.close()
         connection.close()
@@ -234,11 +304,10 @@ def lambda_handler(event, context):
         s3_client.delete_object(Bucket=bucket_name, Key=file_key)
         print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
 
-
         result = {
             'statusCode': 200,
             'status': 'COMPLETED',
-            'total_rows': len(df),
+            'total_rows': total_rows,
             'rows_processed': rows_processed,
             'rows_added_to_database': rows_added_to_db,
             'errors': errors[:10] if errors else []

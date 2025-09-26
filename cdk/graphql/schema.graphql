@@ -233,6 +233,13 @@ type UniversityInfo {
 	value: String
 }
 
+type CourseCatalogInfo {
+	course: String!
+	course_title: String!
+	academic_level: String!
+	course_description: String
+}
+
 type User {
 	user_id: String!
 	first_name: String
@@ -555,6 +562,8 @@ type Query {
 	getOrcidAuthorMatches(first_name: String!, last_name: String!, institution_name: String): [OrcidAuthorProfile]!
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
 	getAllUniversityInfo: [UniversityInfo]
+		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
+	getAllCourseCatalogInfo: [CourseCatalogInfo]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant","NewlyRegistered"])
 	getUserConnections(faculty_user_id: String, assistant_user_id: String): [UserConnection]
 		@aws_auth(cognito_groups: ["Admin","DepartmentAdmin","FacultyAdmin","Faculty","Assistant"])
