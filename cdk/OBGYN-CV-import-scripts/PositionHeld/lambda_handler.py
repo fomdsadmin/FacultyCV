@@ -39,9 +39,7 @@ def cleanData(df):
     df["type"] = df["Type"].fillna('').astype(str).map(type_mapping).fillna(df["Type"].fillna('').astype(str))
     df["university/organization"] =  df["University_Organization"].fillna('').str.strip()
     df["rank_or_title"] = df["Details"].fillna('').str.strip()
-    
     df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(str).str.strip().str.lower().map({'true': True, 'false': False})
 
     # Handle Dates field - convert Unix timestamps to date strings
     if "TDate" in df.columns:
@@ -49,7 +47,7 @@ def cleanData(df):
         df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
         df["start_date"] = df["TDate_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["start_date"] = df["start_date"].fillna('').str.strip()
     else:
@@ -60,7 +58,7 @@ def cleanData(df):
         df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
         df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%d %B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["end_date"] = df["end_date"].fillna('').str.strip()
     else:
@@ -83,7 +81,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "rank_or_title", "type", "university/organization", "highlight_-_notes", "highlight", "dates"]]
+    df = df[["user_id", "rank_or_title", "type", "university/organization", "highlight_-_notes", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})

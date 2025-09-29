@@ -18,7 +18,10 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
   const [attributesType, setAttributesType] = useState(JSON.parse(section.attributes_type || "{}"));
   // Special: For Courses Taught autocomplete
   const isCoursesTaughtSection =
-    section?.title?.trim() === "8b. Courses Taught" || section?.title?.trim()?.toLowerCase().includes("courses taught");
+    section?.title?.trim() === "8b. Courses Taught" ||
+    "8b.3. Clinical Teaching" ||
+    section?.title?.trim()?.toLowerCase().includes("courses taught") ||
+    section?.title?.trim()?.toLowerCase().includes("clinical teaching");
   const [courseSearchResults, setCourseSearchResults] = useState([]);
   // Get courses and loading state from AppContext
   const { allCourses = [], isCourseLoading = false } = useApp();
@@ -30,10 +33,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
       return;
     }
     const lowerQuery = query.toLowerCase();
-    const results = allCourses.filter(
-      (c) =>
-        c.course?.toLowerCase().includes(lowerQuery)
-    );
+    const results = allCourses.filter((c) => c.course?.toLowerCase().includes(lowerQuery));
     setCourseSearchResults(results);
   };
 
@@ -290,7 +290,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
   const handleCourseSelect = (courseObj) => {
     setFormData((prev) => ({
       ...prev,
-      course: courseObj.course ? courseObj.course.split('-')[0].trim() : "",
+      course: courseObj.course ? courseObj.course.split("-")[0].trim() : "",
       course_title: courseObj.course_title,
       brief_description: courseObj.course_description,
     }));

@@ -66,15 +66,12 @@ def cleanData(df):
     
     courses_df["course"] = courses_df["Course"].fillna('').str.strip()
     courses_df["footnote_-_notes"] = courses_df["Footnote"].fillna('').str.strip()
-    if "ShowFN" in courses_df.columns:
-        courses_df["footnote"] = courses_df["ShowFN"].fillna('').str.strip().str.upper() == 'TRUE'
-    else:
-        courses_df["footnote"] = False
-    courses_df["scheduled_hours_(per_year)"] = courses_df["Schedule hours per year"].fillna('').str.strip()
-    courses_df["scheduled_hours_(per_year)"] = courses_df["scheduled_hours_(per_year)"].replace('0.00', '')
+
+    courses_df["total_hours"] = courses_df["Schedule hours per year"].fillna('').str.strip()
+    courses_df["total_hours"] = courses_df["total_hours"].replace('0.00', '')
     
-    courses_df["class_size_(per_year)"] = courses_df["Class Size"].fillna('').str.strip()
-    courses_df["class_size_(per_year)"] = courses_df["class_size_(per_year)"].replace('0.00', '')
+    courses_df["number_of_students"] = courses_df["Class Size"].fillna('').str.strip()
+    courses_df["number_of_students"] = courses_df["number_of_students"].replace('0.00', '')
     
     courses_df["lecture_hours_(per_year)"] = courses_df["Lectures"].fillna('').str.strip()
     courses_df["lecture_hours_(per_year)"] = courses_df["lecture_hours_(per_year)"].replace('0.00', '')
@@ -89,11 +86,6 @@ def cleanData(df):
     courses_df["other_hours_(per_year)"] = courses_df["other_hours_(per_year)"].replace('0.00', '')
 
     courses_df["highlight_-_notes"] = courses_df["Notes"].fillna('').str.strip()
-    if "Highlight" in courses_df.columns:
-        courses_df["highlight"] = courses_df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
-    else:
-        courses_df["highlight"] = False
-
     courses_df["brief_description"] = courses_df["Details"].fillna('').str.strip()
 
     # Replace the date handling for courses_df
@@ -102,7 +94,7 @@ def cleanData(df):
         courses_df["TDate_clean"] = pd.to_numeric(courses_df["TDate"], errors='coerce')
         courses_df["start_date"] = courses_df["TDate_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         courses_df["start_date"] = courses_df["start_date"].fillna('').str.strip()
     else:
@@ -113,7 +105,7 @@ def cleanData(df):
         courses_df["TDateEnd_clean"] = pd.to_numeric(courses_df["TDateEnd"], errors='coerce')
         courses_df["end_date"] = courses_df["TDateEnd_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         courses_df["end_date"] = courses_df["end_date"].fillna('').str.strip()
     else:
@@ -122,8 +114,8 @@ def cleanData(df):
     courses_df["dates"] = courses_df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns for courses
-    courses_df = courses_df[["user_id", "brief_description", "session", "course", "footnote_-_notes", "footnote", "scheduled_hours_(per_year)", 
-             "class_size_(per_year)", "lecture_hours_(per_year)", "tutorial_hours_(per_year)", "lab_hours_(per_year)", "other_hours_(per_year)", "highlight_-_notes", "highlight", "dates"]]
+    courses_df = courses_df[["user_id", "brief_description", "session", "course", "footnote_-_notes", "total_hours", 
+             "number_of_students", "lecture_hours_(per_year)", "tutorial_hours_(per_year)", "lab_hours_(per_year)", "other_hours_(per_year)", "highlight_-_notes",  "dates"]]
 
     # Replace NaN with empty string for all columns
     courses_df = courses_df.replace({np.nan: ''}).reset_index(drop=True)

@@ -47,7 +47,6 @@ def cleanData(df):
         invited_df.loc[:, "type"] = invited_df["Type"].fillna('').str.strip()
         invited_df.loc[:, "type_other"] = invited_df["TypeOther"].fillna('').str.strip()
         invited_df.loc[:, "highlight_-_notes"] = invited_df["Notes"].fillna('').str.strip()
-        invited_df.loc[:, "highlight"] = False
 
         # If TypeOther is not empty, set type to "Other ({type_other})"
         mask_other = invited_df["type_other"].str.strip() != ""
@@ -58,7 +57,7 @@ def cleanData(df):
             invited_df["TDate_clean"] = pd.to_numeric(invited_df["TDate"], errors='coerce')
             invited_df["start_date"] = invited_df["TDate_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             invited_df["start_date"] = invited_df["start_date"].fillna('').str.strip()
         else:
@@ -67,13 +66,13 @@ def cleanData(df):
             invited_df["TDateEnd_clean"] = pd.to_numeric(invited_df["TDateEnd"], errors='coerce')
             invited_df["end_date"] = invited_df["TDateEnd_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             invited_df["end_date"] = invited_df["end_date"].fillna('').str.strip()
         else:
             invited_df["end_date"] = ''
         invited_df["dates"] = invited_df.apply(combine_dates, axis=1)
-        invited_df = invited_df[["user_id", "details", "highlight_-_notes", "highlight", "dates", "type"]]
+        invited_df = invited_df[["user_id", "details", "highlight_-_notes", "dates", "type"]]
         invited_df = invited_df.replace({np.nan: ''}).reset_index(drop=True)
     print("Processed invited participations: ", len(invited_df))
 
@@ -82,7 +81,6 @@ def cleanData(df):
         conference_df.loc[:, "user_id"] = conference_df["PhysicianID"].str.strip()
         conference_df.loc[:, "details"] = conference_df["Details"].fillna('').str.strip()
         conference_df.loc[:, "highlight_-_notes"] = conference_df["Notes"].fillna('').str.strip()
-        conference_df.loc[:, "highlight"] = False
         conference_df.loc[:, "role"] = ""
         
         # Handle Dates field - convert Unix timestamps to date strings
@@ -90,7 +88,7 @@ def cleanData(df):
             conference_df["TDate_clean"] = pd.to_numeric(conference_df["TDate"], errors='coerce')
             conference_df["start_date"] = conference_df["TDate_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             conference_df["start_date"] = conference_df["start_date"].fillna('').str.strip()
         else:
@@ -99,13 +97,13 @@ def cleanData(df):
             conference_df["TDateEnd_clean"] = pd.to_numeric(conference_df["TDateEnd"], errors='coerce')
             conference_df["end_date"] = conference_df["TDateEnd_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             conference_df["end_date"] = conference_df["end_date"].fillna('').str.strip()
         else:
             conference_df["end_date"] = ''
         conference_df["dates"] = conference_df.apply(combine_dates, axis=1)
-        conference_df = conference_df[["user_id", "details", "highlight_-_notes", "highlight", "role", "dates"]]
+        conference_df = conference_df[["user_id", "details", "highlight_-_notes", "role", "dates"]]
         conference_df = conference_df.replace({np.nan: ''}).reset_index(drop=True)
     print("Processed conference presentations: ", len(conference_df))
 

@@ -25,7 +25,6 @@ def cleanData(df):
     df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
     df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].fillna('').astype(str).str.strip().str.lower().map({'true': True, 'false': False})
 
     df["student_name"] = df["Student Name"].fillna('').str.strip()
     df["program/department"] = df["Program"].fillna('').str.strip()
@@ -83,7 +82,7 @@ def cleanData(df):
         df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
         df["start_date"] = df["TDate_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["start_date"] = df["start_date"].fillna('').str.strip()
     else:
@@ -94,7 +93,7 @@ def cleanData(df):
         df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
         df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["end_date"] = df["end_date"].fillna('').str.strip()
     else:
@@ -122,7 +121,7 @@ def cleanData(df):
     students_supervised_df = df[df["type_original"] != "Graduate Students Supervisory Committee"].copy()
 
     # Keep only the cleaned columns
-    cleaned_column = ["user_id", "details", "type", "highlight_-_notes", "highlight", "dates", "student_name","program/department", "student_current_position", "awards_received_by_student", "supervisory_role"]
+    cleaned_column = ["user_id", "details", "type", "highlight_-_notes", "dates", "student_name","program/department", "student_current_position", "awards_received_by_student", "supervisory_role"]
     
     # Replace NaN with empty string for all columns
     supervisory_committee_df = supervisory_committee_df[cleaned_column].replace({np.nan: ''})
