@@ -14,7 +14,6 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = "8b. Courses Taught"
 SECTION_TITLE_OTHER = "8b.3. Clinical Teaching"
 
 def cleanData(df):

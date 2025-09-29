@@ -291,8 +291,12 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
     setFormData((prev) => ({
       ...prev,
       course: courseObj.course ? courseObj.course.split("-")[0].trim() : "",
-      course_title: courseObj.course_title,
-      brief_description: courseObj.course_description,
+      course_title: prev.course_title
+        ? `${prev.course_title}; ${courseObj.course_title}`
+        : courseObj.course_title,
+      brief_description: prev.brief_description
+        ? `${courseObj.course_description}; ${prev.brief_description}`
+        : courseObj.course_description,
     }));
     setCourseSearchResults([]);
   };
