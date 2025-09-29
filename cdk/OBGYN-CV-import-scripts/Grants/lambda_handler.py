@@ -77,16 +77,7 @@ def cleanData(df):
     df["principal_investigator"] = df["Principal Investigator"].fillna('').str.strip()
     df["co-investigator"] = df["CoInvestigators"].fillna('').str.strip()
     
-    if "Highlight" in df.columns:
-        df["highlight"] = df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
-    else:
-        df["highlight"] = False
     df["highlight_-_notes"] = df["Funding Details"].fillna('').str.strip()
-    
-    if "ShowFN" in df.columns:
-        df["footnote"] = df["ShowFN"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
-    else:
-        df["footnote"] = False
     df["footnote_-_notes"] = df["Footnote"].fillna('').str.strip()
 
     # Handle Type field - map to grant or contract (MUST come before status processing)
@@ -125,7 +116,7 @@ def cleanData(df):
         df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
         df["start_date"] = df["TDate_clean"].apply(lambda x: 
             '' if pd.isna(x) or x <= 0 else 
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["start_date"] = df["start_date"].fillna('').str.strip()
     else:
@@ -136,7 +127,7 @@ def cleanData(df):
         df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
         df["end_date"] = df["TDateEnd_clean"].apply(lambda x: 
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["end_date"] = df["end_date"].fillna('').str.strip()
     else:
@@ -160,8 +151,7 @@ def cleanData(df):
 
     # Keep only the cleaned columns
     df = df[["user_id", "agency", "title", "comp", "amount", "principal_investigator", 
-             "co-investigator", "type", "status_-_only_for_grants", "highlight", "highlight_-_notes", 
-             "footnote", "footnote_-_notes", "dates"]]
+             "co-investigator", "type", "status_-_only_for_grants", "highlight_-_notes", "footnote_-_notes", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})

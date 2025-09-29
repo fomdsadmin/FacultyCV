@@ -42,17 +42,12 @@ def cleanData(df):
     # Handle Total Hours - convert 0, 0.0, 0.00 to empty string
     if "Total Hours" in df.columns:
         # Convert to numeric first, then check for zero values
-        df["total_contact_hours"] = pd.to_numeric(df["Total Hours"], errors='coerce').fillna(0)
-        df["total_contact_hours"] = df["total_contact_hours"].apply(lambda x: '' if x == 0 else str(int(x)) if x == int(x) else str(x))
+        df["total_hours"] = pd.to_numeric(df["Total Hours"], errors='coerce').fillna(0)
+        df["total_hours"] = df["total_hours"].apply(lambda x: '' if x == 0 else str(int(x)) if x == int(x) else str(x))
     else:
-        df["total_contact_hours"] = ''
-
+        df["total_hours"] = ''
 
     df["highlight_-_notes"] = df["Notes"].fillna('').str.strip()
-    if "Highlight" in df.columns:
-        df["highlight"] = df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
-    else:
-        df["highlight"] = False
 
     # Handle Dates field - convert Unix timestamps to date strings
     if "TDate" in df.columns:
@@ -60,7 +55,7 @@ def cleanData(df):
         df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
         df["start_date"] = df["TDate_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["start_date"] = df["start_date"].fillna('').str.strip()
     else:
@@ -71,7 +66,7 @@ def cleanData(df):
         df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
         df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["end_date"] = df["end_date"].fillna('').str.strip()
     else:
@@ -94,7 +89,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "student_level", "total_contact_hours", "highlight_-_notes", "highlight", "dates"]]
+    df = df[["user_id", "details", "student_level", "total_hours", "highlight_-_notes", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})

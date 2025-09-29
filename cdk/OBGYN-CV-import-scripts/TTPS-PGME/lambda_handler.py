@@ -14,154 +14,77 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE_A = "5a. Post-Secondary Education"
-SECTION_TITLE_B = "5b. Dissertations"
-
-
-# Combine start and end dates into a single 'dates' column
-# Only show ranges when both dates exist, avoid empty dashes
-def combine_dates(row):
-    start = row["start_date"].strip()
-    end = row["end_date"].strip()
-        
-    if start and end:
-        return f"{start} - {end}"
-    elif start:
-        return start
-    elif end:
-        return end
-    else:
-        return ""
+SECTION_TITLE = "8b. Courses Taught"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
-    Returns two DataFrames: a (Post-Secondary Education) and b (Dissertations with non-empty thesis titles)
     """
-    # Make copies for processing different sections
-    a = df.copy()
-    b = df.copy()
-    
     # Ensure relevant columns are string type before using .str methods
-    for col in ["PhysicianID", "University_Organization", "Details","Supervisor","Type", "TypeOther", "Notes"]:
-        if col in a.columns:
-            a[col] = a[col].astype(str)
-        else:
-            print(f"Warning: Column '{col}' not found in DataFrame")
+    for col in ["Track ID", "Teaching Date", "Activity", "Receiving Function", "Topic/Description", "Type of Teaching", "Paid Total" ]:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
             
-    a["user_id"] = a["PhysicianID"].fillna('').str.strip()
-    a["university/organization"] = a["University_Organization"].fillna('').str.strip()
-    a["supervisor"] = a["Supervisor"].fillna('').str.strip()
-
-    a["details"] = a["Details"].fillna('').str.strip()
-    a["highlight_-_notes"] = a["Notes"].fillna('').str.strip() 
+    df["track_id"] =  df["Track ID"].fillna('').str.strip()
+    df['receiving_function'] = df['Receiving Function'].fillna('').str.strip()
+    df['activity'] = df['Activity'].fillna('').str.strip()
+    df['topic_description'] = df['Topic/Description'].fillna('').str.strip()
     
-    # Handle Type field - dropdown with specific values
-    if "Type" in a.columns:
-        a["degree_raw"] = a["Type"].fillna('').str.strip()
-        
-        # Define valid degree types and ensure they are properly trimmed
-        valid_types = ["BA", "BSc", "MA", "MD", "MSc", "PhD", "Other:"]
-        
-        # Map and validate degree types, keeping same values but ensuring proper trimming
-        a["degree"] = a["degree_raw"].apply(lambda x: x if x in valid_types else '')
-
-        # Handle TypeOther logic - if Type is "Other", set degree to "Other ({type_other})"
-        if "TypeOther" in a.columns:
-            a["type_other"] = a["TypeOther"].fillna('').str.strip()
-            mask_other = a["degree"] == "Other:"
-            # Only append TypeOther if it's not empty
-            a.loc[mask_other, "degree"] = "Other (" + a.loc[mask_other, "type_other"] + ")"
-    else:
-        a["degree"] = ''
+    # Merge Receiving Function, Activity, Topic/Description into brief_description
+    def merge_description(row):
+        fields = [
+            row.get("Receiving Function", None),
+            row.get("Activity", None),
+            row.get("Topic/Description", None)
+        ]
+        # Only include non-empty, non-NaN values and exclude string 'nan'
+        cleaned = [
+            str(f).strip()
+            for f in fields
+            if f is not None and pd.notna(f) and str(f).strip() != "" and str(f).strip().lower() != "nan"
+        ]
+        return ", ".join(cleaned) if cleaned else ""
+    df["brief_description"] = df.apply(merge_description, axis=1)
+    df["type_of_teaching"] =  df["Type of Teaching"].fillna('').str.strip()
 
 
-    # Handle Dates field - convert Unix timestamps to date strings
-    if "TDate" in a.columns:
-        # Handle zero and negative timestamps - set as blank for invalid values
-        a["TDate_clean"] = pd.to_numeric(a["TDate"], errors='coerce')
-        a["start_date"] = a["TDate_clean"].apply(lambda x: 
-            '' if pd.isna(x) or x <= 0 else 
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
-        )
-        a["start_date"] = a["start_date"].fillna('').str.strip()
-    else:
-        a["start_date"] = ''
-        
-    if "TDateEnd" in a.columns:
-        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
-        a["TDateEnd_clean"] = pd.to_numeric(a["TDateEnd"], errors='coerce')
-        a["end_date"] = a["TDateEnd_clean"].apply(lambda x: 
-            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
-        )
-        a["end_date"] = a["end_date"].fillna('').str.strip()
-    else:
-        a["end_date"] = ''
+    # Handle start/end dates and combine as a single string (like Affiliations)
+    def format_full_date(val):
+        try:
+            dt = pd.to_datetime(val, errors='coerce')
+            if pd.isna(dt):
+                return ''
+            return dt.strftime('%B %Y')
+        except Exception:
+            return ''
 
-    a["dates"] = a.apply(combine_dates, axis=1)
+    df["dates"] = df["Teaching Date"].apply(format_full_date) if "Teaching Date" in df.columns else pd.Series(['']*len(df))
+    df["total_hours"] = df["Paid Total"].fillna('').str.strip()
 
     # Keep only the cleaned columns
-    a = a[["user_id", "supervisor", "university/organization", "details", "highlight_-_notes", "degree", "dates"]]
+    df = df[["track_id", "user_id", "brief_description", "type_of_teaching", "dates", "total_hours"]]
 
     # Replace NaN with empty string for all columns
-    a = a.replace({np.nan: ''})
-    
-    
-    for col in ["PhysicianID", "Thesis Title", "Supervisor", "Notes"]:
-        if col in b.columns:
-            b[col] = b[col].astype(str)
-        else:
-            print(f"Warning: Column '{col}' not found in DataFrame")
+    df = df.replace({np.nan: ''})
 
-    b["user_id"] = b["PhysicianID"].fillna('').str.strip()
+    # Split into two DataFrames by 'Type of Teaching'
+    df_courses = df[df["type_of_teaching"].str.lower().str.contains("teaching without patient care")].copy()
 
-    b["supervisor"] = b["Supervisor"].fillna('').str.strip()
-    b["title_of_dissertation"] = b["Thesis Title"].fillna('').str.strip()
-    b["highlight_-_notes"] = b["Notes"].fillna('').str.strip() 
+    # For df_courses, set 'category_-_level_of_student' to 'Post-graduate Medical Resident teaching' 
+    df_courses['category_-_level_of_student'] = 'Post-graduate Medical Resident Teaching'
 
-    # Handle Dates field - convert Unix timestamps to date strings
-    if "TDate" in b.columns:
-        # Handle zero and negative timestamps - set as blank for invalid values
-        b["TDate_clean"] = pd.to_numeric(b["TDate"], errors='coerce')
-        b["start_date"] = b["TDate_clean"].apply(lambda x: 
-            '' if pd.isna(x) or x <= 0 else 
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
-        )
-        b["start_date"] = b["start_date"].fillna('').str.strip()
-    else:
-        b["start_date"] = ''
-        
-    if "TDateEnd" in b.columns:
-        # Handle zero and negative timestamps - set as blank for invalid values (including zero)
-        b["TDateEnd_clean"] = pd.to_numeric(b["TDateEnd"], errors='coerce')
-        b["end_date"] = b["TDateEnd_clean"].apply(lambda x: 
-            '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
-        )
-        b["end_date"] = b["end_date"].fillna('').str.strip()
-    else:
-        b["end_date"] = ''
+    # Drop 'type_of_teaching' from output if not needed (optional)
+    # df_courses = df_courses.drop(columns=["type_of_teaching"])
+    # df_clinical = df_clinical.drop(columns=["type_of_teaching"])
 
-    b["dates"] = b.apply(combine_dates, axis=1)
-    # Filter dataframe b to only include entries where title_of_dissertation is not empty
-    b = b[b["title_of_dissertation"].str.strip() != ""]
+    return df_courses
 
-    # Keep only the cleaned columns for dataframe b (dissertations)
-    b = b[["user_id", "supervisor", "title_of_dissertation", "highlight_-_notes", "dates"]]
-
-    # Replace NaN with empty string for all columns
-    b = b.replace({np.nan: ''})
-    
-    return a, b
-
-
-def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
+def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
     """
     Store the cleaned DataFrame into the database.
     Returns updated rows_processed and rows_added_to_db.
     """
-    # Query for the data_section_id where title contains section_title (case insensitive)
+    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
     try:
         cursor.execute(
             """
@@ -169,13 +92,13 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, 
             WHERE title = %s
             LIMIT 1
             """,
-            (section_title,)
+            (SECTION_TITLE,)
         )
         result = cursor.fetchone()
         if result:
             data_section_id = result[0]
         else:
-            errors.append(f"No data_section_id found for '{section_title}'")
+            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
             data_section_id = None
     except Exception as e:
         errors.append(f"Error fetching data_section_id: {str(e)}")
@@ -187,22 +110,42 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, 
 
     for i, row in df.iterrows():
         row_dict = row.to_dict()
+        track_id = row_dict.get('track_id', '').strip()
+        user_id = row_dict.get('user_id', None)
         # Remove user_id from data_details
         row_dict.pop('user_id', None)
         data_details_JSON = json.dumps(row_dict)
+        # Check for existing entry with same track_id and user_id
+        exists = False
         try:
             cursor.execute(
                 """
-                INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
-                VALUES (%s, %s, %s, %s)
+                SELECT 1 FROM user_cv_data
+                WHERE user_id = %s AND data_section_id = %s AND data_details::jsonb ->> 'track_id' = %s
+                LIMIT 1
                 """,
-                (row['user_id'], data_section_id, data_details_JSON, True)
+                (user_id, data_section_id, track_id)
             )
-            rows_added_to_db += 1
+            if cursor.fetchone():
+                exists = True
         except Exception as e:
-            errors.append(f"Error inserting row {i}: {str(e)}")
-        finally:
-            rows_processed += 1
+            errors.append(f"Error checking for existing track_id for row {i}: {str(e)}")
+            exists = False
+        if not exists:
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (user_id, data_section_id, data_details_JSON, True)
+                )
+                rows_added_to_db += 1
+            except Exception as e:
+                errors.append(f"Error inserting row {i}: {str(e)}")
+        else:
+            errors.append(f"Skipped row {i}: track_id '{track_id}' for user_id '{user_id}' already exists.")
+        rows_processed += 1
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -312,9 +255,6 @@ def lambda_handler(event, context):
                 'error': str(e)
             }
 
-        # Clean the DataFrame
-        dfA, dfB = cleanData(df)
-        print("Data cleaned successfully.")
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
@@ -325,8 +265,44 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        rows_processed, rows_added_to_db = storeData(dfA, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_A)
-        rows_processed, rows_added_to_db = storeData(dfB, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_B)
+        # Step 1: Extract unique (Last Name, First Name) combos
+        if 'Last Name' in df.columns and 'First Name' in df.columns:
+            unique_names = df[['Last Name', 'First Name']].drop_duplicates()
+        else:
+            print("CSV missing 'Last Name' or 'First Name' columns.")
+            return {
+                'statusCode': 400,
+                'status': 'FAILED',
+                'error': "CSV missing 'Last Name' or 'First Name' columns."
+            }
+
+        # Step 2: For each unique combo, query users table for user_id
+        def get_user_id(cursor, first_name, last_name):
+            cursor.execute(
+                "SELECT user_id FROM users WHERE first_name = %s AND last_name = %s and primary_department = 'Obstetrics & Gynaecology' LIMIT 1",
+                (first_name.strip(), last_name.strip())
+            )
+            result = cursor.fetchone()
+            return result[0] if result else None
+
+        # Step 3: For matched user_ids, save cleaned data to the section
+        total_rows = 0
+        for _, name_row in unique_names.iterrows():
+            first_name = name_row['First Name']
+            last_name = name_row['Last Name']
+            user_id = get_user_id(cursor, first_name, last_name)
+            if user_id:
+                # Filter rows for this user
+                user_rows = df[(df['First Name'] == first_name) & (df['Last Name'] == last_name)].copy()
+                # Add PhysicianID column for cleanData
+                user_rows['user_id'] = user_id
+                # Clean and store data for this user
+                cleaned_user_rows = cleanData(user_rows)
+                rows_processed, rows_added_to_db = storeData(cleaned_user_rows, connection, cursor, errors, rows_processed, rows_added_to_db)
+                total_rows += len(cleaned_user_rows)
+            else:
+                errors.append(f"No user_id found for {first_name} {last_name}")
+
         print("Data stored successfully.")
         cursor.close()
         connection.close()
@@ -335,11 +311,10 @@ def lambda_handler(event, context):
         s3_client.delete_object(Bucket=bucket_name, Key=file_key)
         print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
 
-
         result = {
             'statusCode': 200,
             'status': 'COMPLETED',
-            'total_rows': len(df),
+            'total_rows': total_rows,
             'rows_processed': rows_processed,
             'rows_added_to_database': rows_added_to_db,
             'errors': errors[:10] if errors else []

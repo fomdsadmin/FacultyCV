@@ -17,6 +17,21 @@ USER_POOL_ID = os.environ.get('USER_POOL_ID')
 SECTION_TITLE_INVITED = "9d. Invited Presentations"
 SECTION_TITLE_OTHER = "9g. Other Presentations"
 
+# Combine start and end dates into a single 'dates' column
+# Only show ranges when both dates exist, avoid empty dashes
+def combine_dates(row):
+    start = row["start_date"].strip()
+    end = row["end_date"].strip()
+        
+    if start and end:
+        return f"{start} - {end}"
+    elif start:
+        return start
+    elif end:
+        return end
+    else:
+        return ""
+        
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
@@ -36,7 +51,6 @@ def cleanData(df):
         invited_df.loc[:, "scale"] = invited_df["Scale"].fillna('').str.strip()
         invited_df.loc[:, "details"] = invited_df["Details"].fillna('').str.strip()
         invited_df.loc[:, "highlight_-_notes"] = invited_df["Notes"].fillna('').str.strip()
-        invited_df.loc[:, "highlight"] = False
         
         # Robust date handling for invited_df
         if "TDate" in invited_df.columns:
@@ -44,7 +58,7 @@ def cleanData(df):
             invited_df["TDate_clean"] = pd.to_numeric(invited_df["TDate"], errors='coerce')
             invited_df["start_date"] = invited_df["TDate_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             invited_df["start_date"] = invited_df["start_date"].fillna('').str.strip()
         else:
@@ -55,29 +69,15 @@ def cleanData(df):
             invited_df["TDateEnd_clean"] = pd.to_numeric(invited_df["TDateEnd"], errors='coerce')
             invited_df["end_date"] = invited_df["TDateEnd_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             invited_df["end_date"] = invited_df["end_date"].fillna('').str.strip()
         else:
             invited_df["end_date"] = ''
-
-        # Combine start and end dates into a single 'dates' column
-        # Only show ranges when both dates exist, avoid empty dashes
-        def combine_dates(row):
-            start = row["start_date"].strip()
-            end = row["end_date"].strip()
-        
-            if start and end:
-                return f"{start} - {end}"
-            elif start:
-                return start
-            elif end:
-                return end
-            else:
-                return ""
+            
         invited_df["dates"] = invited_df.apply(combine_dates, axis=1)
-        
-        invited_df = invited_df[["user_id", "scale", "details", "highlight_-_notes", "highlight", "dates"]]
+
+        invited_df = invited_df[["user_id", "scale", "details", "highlight_-_notes", "dates"]]
         invited_df = invited_df.replace({np.nan: ''}).reset_index(drop=True)
     print("Processed invited presentations: ", len(invited_df))
 
@@ -87,7 +87,6 @@ def cleanData(df):
         other_df.loc[:, "scale"] = other_df["Scale"].fillna('').str.strip()
         other_df.loc[:, "details"] = other_df["Details"].fillna('').str.strip()
         other_df.loc[:, "highlight_-_notes"] = other_df["Notes"].fillna('').str.strip()
-        other_df.loc[:, "highlight"] = False
         # Set type_of_presentation to "Other presentation" for all rows
         other_df.loc[:, "type_of_presentation"] = "Other presentation"
         # Set default values for extra columns (location, organization/institution/event, role)
@@ -101,7 +100,7 @@ def cleanData(df):
             other_df["TDate_clean"] = pd.to_numeric(other_df["TDate"], errors='coerce')
             other_df["start_date"] = other_df["TDate_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             other_df["start_date"] = other_df["start_date"].fillna('').str.strip()
         else:
@@ -112,30 +111,16 @@ def cleanData(df):
             other_df["TDateEnd_clean"] = pd.to_numeric(other_df["TDateEnd"], errors='coerce')
             other_df["end_date"] = other_df["TDateEnd_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             other_df["end_date"] = other_df["end_date"].fillna('').str.strip()
         else:
             other_df["end_date"] = ''
 
-        # Combine start and end dates into a single 'dates' column
-        # Only show ranges when both dates exist, avoid empty dashes
-        def combine_dates_other(row):
-            start = row["start_date"].strip()
-            end = row["end_date"].strip()
-        
-            if start and end:
-                return f"{start} - {end}"
-            elif start:
-                return start
-            elif end:
-                return end
-            else:
-                return ""
-        other_df["dates"] = other_df.apply(combine_dates_other, axis=1)
+        other_df["dates"] = other_df.apply(combine_dates, axis=1)
     
         # Only keep the required columns
-        other_df = other_df[["user_id", "scale", "details", "highlight_-_notes", "highlight", "type_of_presentation", "location", "organization_/_institution_/_event", "role", "dates"]]
+        other_df = other_df[["user_id", "scale", "details", "highlight_-_notes", "type_of_presentation", "location", "organization_/_institution_/_event", "role", "dates"]]
         other_df = other_df.replace({np.nan: ''}).reset_index(drop=True)
     print("Processed other presentations: ", len(other_df))
 
