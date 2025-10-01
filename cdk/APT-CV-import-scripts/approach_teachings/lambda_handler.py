@@ -14,78 +14,42 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = "8b. Courses Taught"
+SECTION_TITLE = ""
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
     # Ensure relevant columns are string type before using .str methods
-    for col in ["Track ID", "Teaching Date", "Course Name", "Course Number", "Activity", "Receiving Function", "Topic/Description", "Type of Teaching", "Paid Total" ]:
+    for col in ["PhysicianID", "Details", "Type", "TypeOther", "Notes"]:
         if col in df.columns:
             df[col] = df[col].astype(str)
-            
-    df["track_id"] =  df["Track ID"].fillna('').str.strip()
-    df['receiving_function'] = df['Receiving Function'].fillna('').str.strip()
-    df['activity'] = df['Activity'].fillna('').str.strip()
-    df['topic_description'] = df['Topic/Description'].fillna('').str.strip()
-    
-    # Merge Receiving Function, Activity, Topic/Description into brief_description
-    def merge_description(row):
-        fields = [
-            row.get("Receiving Function", None),
-            row.get("Activity", None),
-            row.get("Topic/Description", None)
-        ]
-        # Only include non-empty, non-NaN values and exclude string 'nan'
-        cleaned = [
-            str(f).strip()
-            for f in fields
-            if f is not None and pd.notna(f) and str(f).strip() != "" and str(f).strip().lower() != "nan"
-        ]
-        return ", ".join(cleaned) if cleaned else ""
-    df["brief_description"] = df.apply(merge_description, axis=1)
-    df["type_of_teaching"] =  df["Type of Teaching"].fillna('').str.strip()
-    
-    # Handle course fields properly to avoid 'nan' strings
-    def clean_field(val):
-        if pd.isna(val) or str(val).strip().lower() == 'nan':
-            return ''
-        return str(val).strip()
-    
-    df["course"] = df["Course Number"].apply(clean_field)
-    df["course_title"] = df["Course Name"].apply(clean_field)
 
-    # Handle start/end dates and combine as a single string (like Affiliations)
-    def format_full_date(val):
-        try:
-            dt = pd.to_datetime(val, errors='coerce')
-            if pd.isna(dt):
-                return ''
-            return dt.strftime('%B %Y')
-        except Exception:
-            return ''
+    # df["user_id"] = df["PhysicianID"].fillna('').str.strip()
 
-    df["dates"] = df["Teaching Date"].apply(format_full_date) if "Teaching Date" in df.columns else pd.Series(['']*len(df))
-    df["total_hours"] = df["Paid Total"].fillna('').str.strip()
+    # Combine start and end dates into a single 'dates' column
+    # Only show ranges when both dates exist, avoid empty dashes
+    # def combine_dates(row):
+    #     start = row["start_date"].strip()
+    #     end = row["end_date"].strip()
+
+    #     if start and end:
+    #         return f"{start} - {end}"
+    #     elif start:
+    #         return start
+    #     elif end:
+    #         return end
+    #     else:
+    #         return ""
+    # df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["track_id", "user_id", "brief_description", "type_of_teaching", "dates", "total_hours", "course", "course_title"]]
+    # df = df[["user_id", "details", "type_of_leave", "highlight_-_notes", "dates"]]
 
     # Replace NaN with empty string for all columns
-    df = df.replace({np.nan: ''})
+    # df = df.replace({np.nan: ''})
+    return df
 
-    # Split into two DataFrames by 'Type of Teaching'
-    df_courses = df[df["type_of_teaching"].str.lower().str.contains("teaching without patient care")].copy()
-
-    # For df_courses, set 'category_-_level_of_student' to 'Post-graduate Medical Resident teaching' 
-    df_courses['category_-_level_of_student'] = 'Post-graduate Medical Resident Teaching'
-
-    # Drop 'type_of_teaching' from output if not needed (optional)
-    # df_courses = df_courses.drop(columns=["type_of_teaching"])
-    # df_clinical = df_clinical.drop(columns=["type_of_teaching"])
-
-    return df_courses
 
 def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
     """
@@ -118,42 +82,22 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
 
     for i, row in df.iterrows():
         row_dict = row.to_dict()
-        track_id = row_dict.get('track_id', '').strip()
-        user_id = row_dict.get('user_id', None)
         # Remove user_id from data_details
         row_dict.pop('user_id', None)
         data_details_JSON = json.dumps(row_dict)
-        # Check for existing entry with same track_id and user_id
-        exists = False
         try:
             cursor.execute(
                 """
-                SELECT 1 FROM user_cv_data
-                WHERE user_id = %s AND data_section_id = %s AND data_details::jsonb ->> 'track_id' = %s
-                LIMIT 1
+                INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
+                VALUES (%s, %s, %s, %s)
                 """,
-                (user_id, data_section_id, track_id)
+                (row['user_id'], data_section_id, data_details_JSON, True)
             )
-            if cursor.fetchone():
-                exists = True
+            rows_added_to_db += 1
         except Exception as e:
-            errors.append(f"Error checking for existing track_id for row {i}: {str(e)}")
-            exists = False
-        if not exists:
-            try:
-                cursor.execute(
-                    """
-                    INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
-                    VALUES (%s, %s, %s, %s)
-                    """,
-                    (user_id, data_section_id, data_details_JSON, True)
-                )
-                rows_added_to_db += 1
-            except Exception as e:
-                errors.append(f"Error inserting row {i}: {str(e)}")
-        else:
-            errors.append(f"Skipped row {i}: track_id '{track_id}' for user_id '{user_id}' already exists.")
-        rows_processed += 1
+            errors.append(f"Error inserting row {i}: {str(e)}")
+        finally:
+            rows_processed += 1
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -263,6 +207,9 @@ def lambda_handler(event, context):
                 'error': str(e)
             }
 
+        # Clean the DataFrame
+        df = cleanData(df)
+        print("Data cleaned successfully.")
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
@@ -273,44 +220,7 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        # Step 1: Extract unique (Last Name, First Name) combos
-        if 'Last Name' in df.columns and 'First Name' in df.columns:
-            unique_names = df[['Last Name', 'First Name']].drop_duplicates()
-        else:
-            print("CSV missing 'Last Name' or 'First Name' columns.")
-            return {
-                'statusCode': 400,
-                'status': 'FAILED',
-                'error': "CSV missing 'Last Name' or 'First Name' columns."
-            }
-
-        # Step 2: For each unique combo, query users table for user_id
-        def get_user_id(cursor, first_name, last_name):
-            cursor.execute(
-                "SELECT user_id FROM users WHERE first_name = %s AND last_name = %s and primary_department = 'Obstetrics & Gynaecology' LIMIT 1",
-                (first_name.strip(), last_name.strip())
-            )
-            result = cursor.fetchone()
-            return result[0] if result else None
-
-        # Step 3: For matched user_ids, save cleaned data to the section
-        total_rows = 0
-        for _, name_row in unique_names.iterrows():
-            first_name = name_row['First Name']
-            last_name = name_row['Last Name']
-            user_id = get_user_id(cursor, first_name, last_name)
-            if user_id:
-                # Filter rows for this user
-                user_rows = df[(df['First Name'] == first_name) & (df['Last Name'] == last_name)].copy()
-                # Add PhysicianID column for cleanData
-                user_rows['user_id'] = user_id
-                # Clean and store data for this user
-                cleaned_user_rows = cleanData(user_rows)
-                rows_processed, rows_added_to_db = storeData(cleaned_user_rows, connection, cursor, errors, rows_processed, rows_added_to_db)
-                total_rows += len(cleaned_user_rows)
-            else:
-                errors.append(f"No user_id found for {first_name} {last_name}")
-
+        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
         print("Data stored successfully.")
         cursor.close()
         connection.close()
@@ -319,10 +229,11 @@ def lambda_handler(event, context):
         s3_client.delete_object(Bucket=bucket_name, Key=file_key)
         print(f"Processed file {file_key}, and deleted from bucket {bucket_name}")
 
+
         result = {
             'statusCode': 200,
             'status': 'COMPLETED',
-            'total_rows': total_rows,
+            'total_rows': len(df),
             'rows_processed': rows_processed,
             'rows_added_to_database': rows_added_to_db,
             'errors': errors[:10] if errors else []

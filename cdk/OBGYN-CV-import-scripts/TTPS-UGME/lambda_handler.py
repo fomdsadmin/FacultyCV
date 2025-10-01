@@ -14,30 +14,71 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
+SECTION_TITLE = "8b. Courses Taught"
 SECTION_TITLE_OTHER = "8b.3. Clinical Teaching"
+
+def extract_student_name(topic_description):
+    """
+    Extract student name from parentheses in topic description.
+    Examples:
+    - 'GyneOnc elective - 2 wks (Tanya Tewari)' -> 'Tanya Tewari'
+    - '[G6/2026] Preceptor Week (Callahan Brebner)' -> 'Callahan Brebner'
+    - 'Year 4 OSCE' -> ''
+    """
+    import re
+    if not topic_description or pd.isna(topic_description):
+        return ''
+    
+    # Look for content in parentheses
+    match = re.search(r'\(([^)]+)\)', str(topic_description))
+    if match:
+        potential_name = match.group(1).strip()
+        # Check if it looks like a name (contains at least one space and alphabetic characters)
+        if ' ' in potential_name and re.match(r'^[A-Za-z\s]+$', potential_name):
+            return potential_name
+    
+    return ''
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
+    Returns two DataFrames: one for courses taught and one for clinical teaching
     """
     # Ensure relevant columns are string type before using .str methods
-    for col in ["Site", "Receiving Function", "Topic/Description", "Appt Start Date", "Appt End Date", "Type of Teaching", "Course Name", "Course Number", "Paid Total"]:
+    for col in ["Track ID", "Teaching Date", "Course Name", "Course Number", "Activity", "Receiving Function", "Topic/Description", "Type of Teaching", "Paid Total" ]:
         if col in df.columns:
             df[col] = df[col].astype(str)
-
-    # Merge Site, Course Name, Receiving Function, Topic/Description into description
+            
+    df["track_id"] =  df["Track ID"].fillna('').str.strip()
+    df['receiving_function'] = df['Receiving Function'].fillna('').str.strip()
+    df['activity'] = df['Activity'].fillna('').str.strip()
+    df['topic_description'] = df['Topic/Description'].fillna('').str.strip()
+    
+    # Merge Receiving Function, Activity, Topic/Description into brief_description
     def merge_description(row):
         fields = [
-            row.get("Site", ""),
-            row.get("Receiving Function", ""),
-            row.get("Topic/Description", "")
+            row.get("Receiving Function", None),
+            row.get("Activity", None),
+            row.get("Topic/Description", None)
         ]
-        # Remove empty/null/NaN values and strip whitespace
-        cleaned = [str(f).strip() for f in fields if pd.notna(f) and str(f).strip() != ""]
-        return ", ".join(cleaned)
-    df["description"] = df.apply(merge_description, axis=1)
+        # Only include non-empty, non-NaN values and exclude string 'nan'
+        cleaned = [
+            str(f).strip()
+            for f in fields
+            if f is not None and pd.notna(f) and str(f).strip() != "" and str(f).strip().lower() != "nan"
+        ]
+        return ", ".join(cleaned) if cleaned else ""
+    df["brief_description"] = df.apply(merge_description, axis=1)
     df["type_of_teaching"] =  df["Type of Teaching"].fillna('').str.strip()
-
+    
+    # Handle course fields properly to avoid 'nan' strings
+    def clean_field(val):
+        if pd.isna(val) or str(val).strip().lower() == 'nan':
+            return ''
+        return str(val).strip()
+    
+    df["course"] = df["Course Number"].apply(clean_field) if "Course Number" in df.columns else pd.Series(['']*len(df))
+    df["course_title"] = df["Course Name"].apply(clean_field) if "Course Name" in df.columns else pd.Series(['']*len(df))
 
     # Handle start/end dates and combine as a single string (like Affiliations)
     def format_full_date(val):
@@ -45,58 +86,46 @@ def cleanData(df):
             dt = pd.to_datetime(val, errors='coerce')
             if pd.isna(dt):
                 return ''
-            return dt.strftime('%d %B, %Y')
+            return dt.strftime('%B %Y')
         except Exception:
             return ''
 
-    start_dates = df["Appt Start Date"].apply(format_full_date) if "Appt Start Date" in df.columns else pd.Series(['']*len(df))
-    end_dates = df["Appt End Date"].apply(format_full_date) if "Appt End Date" in df.columns else pd.Series(['']*len(df))
-
-    def combine_dates(row):
-        start = row["start_date"].strip() if "start_date" in row else ''
-        end = row["end_date"].strip() if "end_date" in row else ''
-        if start and end:
-            return f"{start} - {end}"
-        elif start:
-            return start
-        elif end:
-            return end
-        else:
-            return ""
-
-    df["start_date"] = start_dates
-    df["end_date"] = end_dates
-    df["dates"] = df.apply(combine_dates, axis=1)
-    df["course"] = df["Course Number"].fillna('').str.strip()
-    df["course_title"] = df["Course Name"].fillna('').str.strip()
+    df["dates"] = df["Teaching Date"].apply(format_full_date) if "Teaching Date" in df.columns else pd.Series(['']*len(df))
     df["total_hours"] = df["Paid Total"].fillna('').str.strip()
 
     # Keep only the cleaned columns
-    df = df[["user_id", "description", "type_of_teaching", "course", "course_title", "dates", "total_hours"]]
+    df = df[["track_id", "user_id", "brief_description", "type_of_teaching", "dates", "total_hours", "course", "course_title", "topic_description"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
 
     # Split into two DataFrames by 'Type of Teaching'
-    df_courses = df[df["type_of_teaching"].str.lower().str.contains("teaching without patient care")].copy()
-    df_clinical = df[df["type_of_teaching"].str.lower().str.contains("teaching with patient care")].copy()
+    df_courses = df[df["type_of_teaching"].str.lower().str.contains("teaching without patient care", na=False)].copy()
+    df_clinical = df[df["type_of_teaching"].str.lower().str.contains("teaching with patient care", na=False)].copy()
 
-    # For df_courses, set 'category_-_level-of-student' to 'MD Undergraduate Program' (camel case)
-    df_courses['category_-_level-of-student'] = 'MD Undergraduate Program'
-
-    # Drop 'type_of_teaching' from output if not needed (optional)
-    # df_courses = df_courses.drop(columns=["type_of_teaching"])
-    # df_clinical = df_clinical.drop(columns=["type_of_teaching"])
+    # For df_courses, set 'category_-_level_of_student' to 'MD Undergraduate Program'
+    if not df_courses.empty:
+        df_courses['category_-_level_of_student'] = 'MD Undergraduate Program'
+        df_courses.drop(columns=['topic_description'], inplace=True, errors='ignore')
+    
+    # For df_clinical, extract student names and set student level
+    if not df_clinical.empty:
+        df_clinical['student_level'] = 'Year 3 (Clinical Clerkship)'
+        df_clinical['student_name(s)'] = df_clinical['topic_description'].apply(extract_student_name)
+        df_clinical.drop(columns=['topic_description'], inplace=True, errors='ignore')
 
     return df_courses, df_clinical
 
-
-def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
+def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
     """
     Store the cleaned DataFrame into the database.
     Returns updated rows_processed and rows_added_to_db.
     """
-    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
+    # Skip if DataFrame is empty
+    if df.empty:
+        return rows_processed, rows_added_to_db
+        
+    # Query for the data_section_id where title contains section_title (case insensitive)
     try:
         cursor.execute(
             """
@@ -104,40 +133,60 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             WHERE title = %s
             LIMIT 1
             """,
-            (SECTION_TITLE,)
+            (section_title,)
         )
         result = cursor.fetchone()
         if result:
             data_section_id = result[0]
         else:
-            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
+            errors.append(f"No data_section_id found for '{section_title}'")
             data_section_id = None
     except Exception as e:
         errors.append(f"Error fetching data_section_id: {str(e)}")
         data_section_id = None
 
     if not data_section_id:
-        errors.append("Skipping insert: data_section_id not found.")
+        errors.append(f"Skipping insert: data_section_id not found for '{section_title}'.")
         return rows_processed, rows_added_to_db
 
     for i, row in df.iterrows():
         row_dict = row.to_dict()
+        track_id = row_dict.get('track_id', '').strip()
+        user_id = row_dict.get('user_id', None)
         # Remove user_id from data_details
         row_dict.pop('user_id', None)
         data_details_JSON = json.dumps(row_dict)
+        # Check for existing entry with same track_id and user_id
+        exists = False
         try:
             cursor.execute(
                 """
-                INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
-                VALUES (%s, %s, %s, %s)
+                SELECT 1 FROM user_cv_data
+                WHERE user_id = %s AND data_section_id = %s AND data_details::jsonb ->> 'track_id' = %s
+                LIMIT 1
                 """,
-                (row['user_id'], data_section_id, data_details_JSON, True)
+                (user_id, data_section_id, track_id)
             )
-            rows_added_to_db += 1
+            if cursor.fetchone():
+                exists = True
         except Exception as e:
-            errors.append(f"Error inserting row {i}: {str(e)}")
-        finally:
-            rows_processed += 1
+            errors.append(f"Error checking for existing track_id for row {i}: {str(e)}")
+            exists = False
+        if not exists:
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (user_id, data_section_id, data_details_JSON, True)
+                )
+                rows_added_to_db += 1
+            except Exception as e:
+                errors.append(f"Error inserting row {i}: {str(e)}")
+        else:
+            errors.append(f"Skipped row {i}: track_id '{track_id}' for user_id '{user_id}' already exists.")
+        rows_processed += 1
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -271,13 +320,13 @@ def lambda_handler(event, context):
         # Step 2: For each unique combo, query users table for user_id
         def get_user_id(cursor, first_name, last_name):
             cursor.execute(
-                "SELECT user_id FROM users WHERE first_name = %s AND last_name = %s",
+                "SELECT user_id FROM users WHERE first_name = %s AND last_name = %s and primary_department = 'Obstetrics & Gynaecology' LIMIT 1",
                 (first_name.strip(), last_name.strip())
             )
             result = cursor.fetchone()
             return result[0] if result else None
 
-        # Step 3: For matched user_ids, save cleaned data to the section
+        # Step 3: For matched user_ids, save cleaned data to the sections
         total_rows = 0
         for _, name_row in unique_names.iterrows():
             first_name = name_row['First Name']
@@ -286,12 +335,26 @@ def lambda_handler(event, context):
             if user_id:
                 # Filter rows for this user
                 user_rows = df[(df['First Name'] == first_name) & (df['Last Name'] == last_name)].copy()
-                # Add PhysicianID column for cleanData
+                # Add user_id column for cleanData
                 user_rows['user_id'] = user_id
                 # Clean and store data for this user
-                cleaned_user_rows = cleanData(user_rows)
-                rows_processed, rows_added_to_db = storeData(cleaned_user_rows, connection, cursor, errors, rows_processed, rows_added_to_db)
-                total_rows += len(cleaned_user_rows)
+                cleaned_courses, cleaned_clinical = cleanData(user_rows)
+                
+                # Store courses data (Teaching without patient care) to 8b. Courses Taught
+                if not cleaned_courses.empty:
+                    rows_processed, rows_added_to_db = storeData(
+                        cleaned_courses, connection, cursor, errors, 
+                        rows_processed, rows_added_to_db, SECTION_TITLE
+                    )
+                    total_rows += len(cleaned_courses)
+                
+                # Store clinical data (Teaching with patient care) to 8b.3. Clinical Teaching
+                if not cleaned_clinical.empty:
+                    rows_processed, rows_added_to_db = storeData(
+                        cleaned_clinical, connection, cursor, errors, 
+                        rows_processed, rows_added_to_db, SECTION_TITLE_OTHER
+                    )
+                    total_rows += len(cleaned_clinical)
             else:
                 errors.append(f"No user_id found for {first_name} {last_name}")
 
