@@ -32,11 +32,11 @@ export const parseDateForSorting = (dateStr) => {
     return Number.POSITIVE_INFINITY;
   }
   
-  // For date ranges, extract the end date (most recent)
+  // For date ranges, extract the start date (earliest date for sorting)
   if (lowerStr.includes(" - ")) {
     const parts = lowerStr.split(" - ");
-    const endDate = parts[1].trim();
-    return parseDateForSorting(endDate);
+    const startDate = parts[0].trim();
+    return parseDateForSorting(startDate);
   }
   
   // Extract year (4 digits)
@@ -70,9 +70,9 @@ export const extractDateValue = (entry) => {
   
   const details = entry.data_details;
   
-  // Priority order for date fields
+  // Priority order for date fields - start_date comes before end_date for sorting
   const dateFields = [
-    'dates', 'end_date', 'start_date', 'year', 'year_published',
+    'dates', 'start_date', 'end_date', 'year', 'year_published',
     'publication_year', 'date', 'completion_date', 'award_date'
   ];
   

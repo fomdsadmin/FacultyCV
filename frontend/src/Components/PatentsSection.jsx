@@ -6,6 +6,7 @@ import PermanentEntryModal from "./PermanentEntryModal";
 import { FaArrowLeft, FaSearch } from "react-icons/fa";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
+import { sortEntriesByDate } from "../utils/dateUtils";
 import PatentsModal from "./PatentsModal";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
@@ -101,20 +102,14 @@ const PatentsSection = ({ user, section, onBack }) => {
   // Get dropdown attributes from section attributes_type
   const getDropdownAttributes = () => {
     try {
-      console.log("Section object:", section);
-      console.log("Section attributes_type:", section.attributes_type);
-      
       if (!section.attributes_type) {
-        console.log("No attributes_type found");
         return [];
       }
       
       const attributesType = typeof section.attributes_type === "string" 
         ? JSON.parse(section.attributes_type) 
         : section.attributes_type;
-      
-      console.log("Parsed attributesType:", attributesType);
-      console.log("Dropdown keys:", Object.keys(attributesType.dropdown || {}));
+    
       
       return Object.keys(attributesType.dropdown || {});
     } catch (error) {
@@ -125,28 +120,17 @@ const PatentsSection = ({ user, section, onBack }) => {
 
   // Get unique values for a dropdown attribute from field data
   const getUniqueDropdownValues = (attribute) => {
-    console.log(`Getting unique values for attribute: ${attribute}`);
-    console.log("Field data length:", fieldData.length);
-    
-    // Show sample data structure for debugging
-    if (fieldData.length > 0) {
-      console.log("Sample data_details keys:", Object.keys(fieldData[0].data_details || {}));
-      console.log("Sample data_details:", fieldData[0].data_details);
-    }
-    
     // Get the actual field key (snake_case) from the display name
     const actualKey = section.attributes && section.attributes[attribute] 
       ? section.attributes[attribute] 
       : attribute.toLowerCase().replace(/\s+/g, '_');
     
-    console.log(`Display name: ${attribute}, Actual key: ${actualKey}`);
     
     const values = new Set();
     
     fieldData.forEach((entry, index) => {
       if (entry.data_details && entry.data_details[actualKey]) {
         const value = entry.data_details[actualKey];
-        console.log(`Entry ${index} - ${actualKey}:`, value);
         
         if (value && value.trim() !== "" && value !== "—" && value.toLowerCase() !== "null") {
           // Handle "Other (value)" format
@@ -163,7 +147,6 @@ const PatentsSection = ({ user, section, onBack }) => {
     });
     
     const result = Array.from(values).sort();
-    console.log(`Unique values for ${attribute} (${actualKey}):`, result);
     return result;
   };
 
@@ -234,14 +217,9 @@ const PatentsSection = ({ user, section, onBack }) => {
         return { ...entry, field1, field2 };
       });
 
-      rankedData.sort((a, b) => {
-        const yearA = parseInt(a.field2, 10) || 0;
-        const yearB = parseInt(b.field2, 10) || 0;
-
-        return yearB - yearA;
-      });
-
-      setFieldData(rankedData);
+      // Sort using the proper date utility
+      const sortedData = sortEntriesByDate(rankedData, sortAscending);
+      setFieldData(sortedData);
 
       //log the retrieval action
       await logAction(AUDIT_ACTIONS.RETRIEVE_EXTERNAL_DATA);
@@ -255,7 +233,7 @@ const PatentsSection = ({ user, section, onBack }) => {
     setLoading(true);
     setFieldData([]);
     fetchData();
-  }, [section.data_section_id]);
+  }, [section.data_section_id, sortAscending]);
 
   // Add this useEffect to track if data is available
   useEffect(() => {

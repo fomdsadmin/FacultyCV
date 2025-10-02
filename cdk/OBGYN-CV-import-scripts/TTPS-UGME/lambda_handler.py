@@ -45,7 +45,7 @@ def cleanData(df):
     Returns two DataFrames: one for courses taught and one for clinical teaching
     """
     # Ensure relevant columns are string type before using .str methods
-    for col in ["Track ID", "Teaching Date", "Course Name", "Course Number", "Activity", "Receiving Function", "Topic/Description", "Type of Teaching", "Paid Total" ]:
+    for col in ["Track ID", "Teaching Date", "Course Name", "Course Number", "Course Year", "Activity", "Receiving Function", "Topic/Description", "Type of Teaching", "Paid Total" ]:
         if col in df.columns:
             df[col] = df[col].astype(str)
             
@@ -79,6 +79,7 @@ def cleanData(df):
     
     df["course"] = df["Course Number"].apply(clean_field) if "Course Number" in df.columns else pd.Series(['']*len(df))
     df["course_title"] = df["Course Name"].apply(clean_field) if "Course Name" in df.columns else pd.Series(['']*len(df))
+    df["course_year"] = df["Course Year"].apply(clean_field) if "Course Year" in df.columns else pd.Series(['']*len(df))
 
     # Handle start/end dates and combine as a single string (like Affiliations)
     def format_full_date(val):
@@ -94,7 +95,7 @@ def cleanData(df):
     df["total_hours"] = df["Paid Total"].fillna('').str.strip()
 
     # Keep only the cleaned columns
-    df = df[["track_id", "user_id", "brief_description", "type_of_teaching", "dates", "total_hours", "course", "course_title", "topic_description"]]
+    df = df[["track_id", "user_id", "brief_description", "type_of_teaching", "dates", "total_hours", "course", "course_title", "topic_description", "course_year"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
@@ -107,10 +108,18 @@ def cleanData(df):
     if not df_courses.empty:
         df_courses['category_-_level_of_student'] = 'MD Undergraduate Program'
         df_courses.drop(columns=['topic_description'], inplace=True, errors='ignore')
+        df_courses.drop(columns=['course_year'], inplace=True, errors='ignore')
     
-    # For df_clinical, extract student names and set student level
+    # For df_clinical, extract student names and set student level based on Course Year
     if not df_clinical.empty:
-        df_clinical['student_level'] = 'Year 3 (Clinical Clerkship)'
+        # Map Course Year values to student levels
+        year_mapping = {
+            '1': 'Year 1',
+            '2': 'Year 2', 
+            '3': 'Year 3 (Clinical Clerkship)',
+            '4': 'Year 4'
+        }
+        df_clinical['student_level'] = df_clinical['course_year'].map(year_mapping).fillna('Year 3 (Clinical Clerkship)')
         df_clinical['student_name(s)'] = df_clinical['topic_description'].apply(extract_student_name)
         df_clinical.drop(columns=['topic_description'], inplace=True, errors='ignore')
 

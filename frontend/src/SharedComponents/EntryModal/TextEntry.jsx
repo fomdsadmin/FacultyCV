@@ -7,7 +7,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange }) => {
   // Helper function to determine if field should span 2 columns
   const shouldSpanTwoColumns = (content, fieldName) => {
     const lower = fieldName.toLowerCase();
-    const charThreshold = 33;
+    const charThreshold = 10;
     
     // Always span 2 columns for certain field types
     if (["title", "details", "description", "note"].some(key => lower.includes(key))) {

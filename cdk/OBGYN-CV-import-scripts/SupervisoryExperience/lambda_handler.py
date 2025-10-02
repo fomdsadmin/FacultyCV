@@ -177,7 +177,6 @@ def storeData(df, section_title, connection, cursor, errors, rows_processed, row
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            print(f"Processed row {i + 1}/{len(df)}")
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -241,7 +240,6 @@ def lambda_handler(event, context):
         try:
             file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
             print("Data fetched successfully.")
-            print(f"File size: {len(file_bytes)} bytes")
         except Exception as fetch_error:
             print(f"Error fetching data from S3: {str(fetch_error)}")
             return {
@@ -255,11 +253,9 @@ def lambda_handler(event, context):
             # Load data into DataFrame
             df = loadData(file_bytes, file_key)
             print("Data loaded successfully.")
-            print(f"DataFrame shape: {df.shape}")
-            print(f"DataFrame columns: {df.columns.tolist()}")
             
             # Check for required columns
-            required_columns = ["PhysicianID", "UserID", "Details", "Type"]
+            required_columns = ["PhysicianID", "Details", "Type"]
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
                 raise ValueError(f"Missing required columns: {missing_columns}")
