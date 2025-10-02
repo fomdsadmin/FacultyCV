@@ -19,9 +19,9 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
   // Special: For Courses Taught autocomplete
   const isCoursesTaughtSection =
     section?.title?.trim() === "8b. Courses Taught" ||
-    "8b.3. Clinical Teaching" ||
-    section?.title?.trim()?.toLowerCase().includes("courses taught") ||
-    section?.title?.trim()?.toLowerCase().includes("clinical teaching");
+    section?.title?.trim() === "8b.3. Clinical Teaching" ||
+    section?.title?.trim().toLowerCase().includes("courses taught") ||
+    section?.title?.trim().toLowerCase().includes("clinical teaching");
   const [courseSearchResults, setCourseSearchResults] = useState([]);
   // Get courses and loading state from AppContext
   const { allCourses = [], isCourseLoading = false } = useApp();
@@ -531,7 +531,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 mt-4 w-full max-w-2xl">
             {/* Render fields in the desired order: date, dropdown, text */}
-            {["date", "dropdown", "text", "boolean"].map((type) => {
+            {["date", "dropdown", "text"].map((type) => {
               const attrsObj = attributesType && attributesType[type];
               if (!attrsObj) return null;
               if (type === "date") {
@@ -635,6 +635,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
                     formData={formData}
                     handleChange={handleChange}
                   />
+                  
                 );
               }
               // ...existing code...

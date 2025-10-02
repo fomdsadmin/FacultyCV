@@ -42,6 +42,7 @@ import YourActivityPage from "./Pages/AuditLogPages/YourActivityPage.jsx";
 import GenerateCV from "Pages/GenerateCV/GenerateCV";
 import DepartmentAdminDeclarations from "Views/DepartmentAdminDeclarations.jsx";
 import DepartmentAdminAffiliations from "Views/DepartmentAdminAffiliations";
+import CVSearch from "Views/CVSearch.jsx";
 
 const AppContent = () => {
   const {
@@ -349,7 +350,8 @@ const AppContent = () => {
               path="/faculty/delegates"
               element={<FacultyDelegates userInfo={userInfo} getCognitoUser={getCognitoUser} />}
             />
-            <Route path="/archive" element={<Archive userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
+            <Route path="/faculty/archive" element={<Archive userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
+            <Route path="/faculty/cv-search" element={<CVSearch userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
             <Route
               path="/assistant/academic-work"
               element={

@@ -132,14 +132,14 @@ export class UserImportStack extends Stack {
     });
 
     // Create S3 bucket for data migration of obgyn data
-    this.dataMigrationAPTS3Bucket = new s3.Bucket(this, "facultyCV-data-migration-APT-s3-bucket", {
+    this.dataMigrationAPTS3Bucket = new s3.Bucket(this, "facultyCV-data-migration-apt-s3-bucket", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       versioned: true,
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
-      bucketName: `${resourcePrefix}-${Stack.of(this).account}-data-migration-APT-s3-bucket`,
+      bucketName: `${resourcePrefix}-${Stack.of(this).account}-data-migration-apt-s3-bucket`,
       cors: [
         {
           allowedMethods: [

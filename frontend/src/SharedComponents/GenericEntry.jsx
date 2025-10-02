@@ -183,7 +183,7 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
       </div>
 
       <div className="flex items-center space-x-1">
-        {!isArchived && (
+        {!isArchived && onEdit && onArchive && (
           <>
             <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onEdit()}>
               <FaRegEdit className="h-5 w-5" />
@@ -194,7 +194,7 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
           </>
         )}
 
-        {isArchived && (
+        {isArchived && onRestore && (
           <button className="btn btn-xs btn-circle btn-ghost" onClick={onRestore}>
             <LuUndo2 className="h-4 w-4" />
           </button>

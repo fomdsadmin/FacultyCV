@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PermanentEntry from "./PermanentEntry";
 import GenericEntry from "../SharedComponents/GenericEntry";
 import PermanentEntryModal from "./PermanentEntryModal";
@@ -8,6 +8,7 @@ import SecureFundingModal from "./SecureFundingModal";
 import SecureFundingEntry from "./SecureFundingEntry";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
+import { sortEntriesByDate } from "../utils/dateUtils";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
 const generateEmptyEntry = (attributes) => {
@@ -39,8 +40,8 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   const [dropdownFilters, setDropdownFilters] = useState({});
   const [showMoreFilters, setShowMoreFilters] = useState(false);
 
-  // Apply all filters to get filtered data
-  const getFilteredData = () => {
+  // Get filtered data and calculate pagination - using useMemo to ensure re-render on sort change
+  const filteredData = useMemo(() => {
     let filtered = fieldData;
 
     // Apply search filter
@@ -81,11 +82,12 @@ const SecureFundingSection = ({ user, section, onBack }) => {
       }
     });
 
-    return filtered;
-  };
+    // Apply sorting after filtering using proper date utilities
+    const sortedData = sortEntriesByDate(filtered, sortAscending);
 
-  // Get filtered data and calculate pagination
-  const filteredData = getFilteredData();
+    return sortedData;
+  }, [fieldData, searchTerm, dropdownFilters, sortAscending, section.attributes]);
+  
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -99,20 +101,13 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   // Get dropdown attributes from section attributes_type
   const getDropdownAttributes = () => {
     try {
-      console.log("Section object:", section);
-      console.log("Section attributes_type:", section.attributes_type);
-      
       if (!section.attributes_type) {
-        console.log("No attributes_type found");
         return [];
       }
       
       const attributesType = typeof section.attributes_type === "string" 
         ? JSON.parse(section.attributes_type) 
         : section.attributes_type;
-      
-      console.log("Parsed attributesType:", attributesType);
-      console.log("Dropdown keys:", Object.keys(attributesType.dropdown || {}));
       
       return Object.keys(attributesType.dropdown || {});
     } catch (error) {
@@ -123,29 +118,16 @@ const SecureFundingSection = ({ user, section, onBack }) => {
 
   // Get unique values for a dropdown attribute from field data
   const getUniqueDropdownValues = (attribute) => {
-    console.log(`Getting unique values for attribute: ${attribute}`);
-    console.log("Field data length:", fieldData.length);
-    
-    // Show sample data structure for debugging
-    if (fieldData.length > 0) {
-      console.log("Sample data_details keys:", Object.keys(fieldData[0].data_details || {}));
-      console.log("Sample data_details:", fieldData[0].data_details);
-    }
     
     // Get the actual field key (snake_case) from the display name
     const actualKey = section.attributes && section.attributes[attribute] 
       ? section.attributes[attribute] 
       : attribute.toLowerCase().replace(/\s+/g, '_');
-    
-    console.log(`Display name: ${attribute}, Actual key: ${actualKey}`);
-    
     const values = new Set();
     
     fieldData.forEach((entry, index) => {
       if (entry.data_details && entry.data_details[actualKey]) {
         const value = entry.data_details[actualKey];
-        console.log(`Entry ${index} - ${actualKey}:`, value);
-        
         if (value && value.trim() !== "" && value !== "—" && value.toLowerCase() !== "null") {
           // Handle "Other (value)" format
           if (typeof value === "string" && /\bother\b/i.test(value) && /\(.*\)$/.test(value)) {
@@ -161,7 +143,6 @@ const SecureFundingSection = ({ user, section, onBack }) => {
     });
     
     const result = Array.from(values).sort();
-    console.log(`Unique values for ${attribute} (${actualKey}):`, result);
     return result;
   };
 
@@ -263,34 +244,9 @@ const SecureFundingSection = ({ user, section, onBack }) => {
         data_details: JSON.parse(data.data_details),
       }));
 
-      const filteredData = parsedData.filter((entry) => {
-        const [field1, field2] = rankFields(entry.data_details);
-
-        return (
-          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-      });
-
-      const rankedData = filteredData.map((entry) => {
+      const rankedData = parsedData.map((entry) => {
         const [field1, field2] = rankFields(entry.data_details);
         return { ...entry, field1, field2 };
-      });
-
-      // Sorting logic
-      rankedData.sort((a, b) => {
-        const isDate = (str) => /\b\d{4}[-/]\d{2}[-/]\d{2}\b/.test(str) || /\b\d{4}\b/.test(str); // Regex to match dates like YYYY-MM-DD or YYYY
-        const dateA = isDate(a.field1) ? new Date(a.field1) : isDate(a.field2) ? new Date(a.field2) : null;
-        const dateB = isDate(b.field1) ? new Date(b.field1) : isDate(b.field2) ? new Date(b.field2) : null;
-
-        if (dateA && dateB) {
-          return dateB - dateA;
-          return -1;
-        } else if (dateB) {
-          return 1;
-        } else {
-          return 0;
-        }
       });
 
       setFieldData(rankedData);
@@ -310,7 +266,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
     setLoading(true);
     setFieldData([]);
     fetchData();
-  }, [searchTerm, section.data_section_id]);
+  }, [section.data_section_id]);
 
   useEffect(() => {
     setCurrentPage(1);
