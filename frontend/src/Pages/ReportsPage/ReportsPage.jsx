@@ -6,6 +6,7 @@ import '../../CustomStyles/scrollbar.css';
 import TemplateList from './TemplateList.jsx';
 import ReportPreview from './CVGenerationComponent/ReportPreview.jsx';
 import { useApp } from 'Contexts/AppContext.jsx';
+import AgGrid from './HtmlFunctions/Grid/AgGrid.jsx';
 
 const ReportsPage = () => {
   const { userInfo, getCognitoUser, toggleViewMode, isManagingUser, currentViewRole } = useApp();
@@ -88,6 +89,8 @@ const ReportsPage = () => {
           <div className="flex-1 flex flex-col items-center bg-gray-50 rounded-lg shadow-md px-8 overflow-auto custom-scrollbar h-[90vh]">
             <ReportPreview pdfUrl={pdfUrl} />
           </div>
+
+          <AgGrid userInfoInput={user} templateWithEndStartDate={selectedTemplate} ></AgGrid>
         </div>
       </main>
     </PageContainer>

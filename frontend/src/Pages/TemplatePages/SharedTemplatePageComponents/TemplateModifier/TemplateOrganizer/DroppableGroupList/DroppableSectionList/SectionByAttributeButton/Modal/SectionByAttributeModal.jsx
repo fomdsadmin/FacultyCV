@@ -61,6 +61,15 @@ const SectionByAttributeModal = ({ isOpen, preparedSection, onClose }) => {
                         hidden_attributes_list: [] // Array that determines which attributes should be hidden
                     }));
 
+                    newSubSections.push({
+                        id: `${preparedSection.data_section_id}_${selectedAttribute}_${newSubSections.length}`,
+                        original_title: "undefined", // Dropdown value
+                        renamed_title: "", // User can customize this
+                        attributes: shownAttributes, // Array of attributes from original section
+                        attributes_rename_dict: {}, // Object to store renamed attribute names,
+                        hidden_attributes_list: [] // Array that determines which attributes should be hidden   
+                    })
+
                     setSubSectionSettings({
                         sub_sections: newSubSections,
                         display_titles: true,
