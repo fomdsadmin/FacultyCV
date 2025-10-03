@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { buildHtml } from './HtmlFunctions/HtmlBuilder.js';
 import { useNotification } from 'Contexts/NotificationContext.jsx';
 import CVGenerationComponent from './CVGenerationComponent/CVGenerationComponent.jsx';
+import { buildCv } from './HtmlFunctions/FormatedData.js';
+import { buildCvs } from './HtmlFunctions/TableBuilder.js';
 
 const TemplateList = ({
   templates,
@@ -46,7 +48,8 @@ const TemplateList = ({
       });
 
       // Generate HTML content
-      const htmlContent = await buildHtml(user, templateWithDates);
+      //const htmlContent = await buildHtml(user, templateWithDates);
+      const htmlContent = buildCvs(await buildCv(user, templateWithDates));
 
       return htmlContent;
 

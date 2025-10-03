@@ -480,7 +480,6 @@ export const AppProvider = ({ children }) => {
     setIsManagingUser(true);
     setUserInfo(userToManage);
     setPreviousViewRole(currentViewRole);
-    console.log("JJFILTER userToMange", userToManage);
     setCurrentViewRole(userToManage.role);
   };
 

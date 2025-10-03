@@ -88,7 +88,7 @@ export class GotenbergStack extends cdk.Stack {
 
         // Container Definition
         taskDefinition.addContainer('GotenbergContainer', {
-            image: ecs.ContainerImage.fromRegistry('gotenberg/gotenberg:7'),
+            image: ecs.ContainerImage.fromRegistry('gotenberg/gotenberg:8'),
             portMappings: [
                 {
                     containerPort: 3000,
