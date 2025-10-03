@@ -64,9 +64,7 @@ const TemplateList = ({
   };
 
   return (
-    <div className="flex flex-col min-w-[320px] max-w-xs bg-white rounded-lg max-h-[90vh] shadow-md p-6 mr-10 h-full">
-      <h2 className="text-2xl font-bold mb-4 text-zinc-700">Templates</h2>
-
+    <div className="flex flex-col min-w-[320px] max-w-xs bg-white rounded-lg max-h-[80vh] shadow-md pr-4 h-full">
       {/* Search Input */}
       <div className="mb-4">
         <input

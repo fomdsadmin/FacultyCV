@@ -494,6 +494,26 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Course catalog state
+  const [allCourses, setAllCourses] = useState([]);
+  const [isCourseLoading, setIsCourseLoading] = useState(false);
+
+  // Fetch all courses once on mount
+  useEffect(() => {
+    setIsCourseLoading(true);
+    import("../graphql/graphqlHelpers.js").then(({ getAllCourseCatalogInfo }) => {
+      getAllCourseCatalogInfo()
+        .then((data) => {
+          setAllCourses(Array.isArray(data) ? data : []);
+        })
+        .catch((err) => {
+          setAllCourses([]);
+          console.error("Error fetching course catalog info:", err);
+        })
+        .finally(() => setIsCourseLoading(false));
+    });
+  }, []);
+
   // Context value
   const value = {
     // User state
@@ -551,6 +571,12 @@ export const AppProvider = ({ children }) => {
     setIsVPPUser,
     hasVPPProfile,
     setHasVPPProfile,
+
+    // Course catalog
+    allCourses,
+    isCourseLoading,
+    setAllCourses,
+    setIsCourseLoading,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

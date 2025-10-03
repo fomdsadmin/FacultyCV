@@ -6,7 +6,7 @@ import { FacultyProvider, useFaculty } from "./FacultyContext.jsx";
 import Tabs from "./Tabs/Tabs.jsx";
 import { useApp } from "../../Contexts/AppContext.jsx";
 
-const FacultyHomePageContent = (user) => {
+const FacultyHomePageContent = ({ tab }) => {
   const { loading, toggleViewMode, userInfo: effectiveUserInfo } = useFaculty();
   const { getCognitoUser} = useApp();
 
@@ -24,10 +24,10 @@ const FacultyHomePageContent = (user) => {
         overflow-y-auto custom-scrollbar w-full relative"
       >
         {/* Single container with consistent width */}
-        <div className="mx-auto w-full">
+        <div className="w-full">
           {/* Tabs section below the save button */}
-          <div className="w-full mt-6">
-            {!loading && <Tabs showCard={false} />}
+          <div className="w-full mt-4">
+            {!loading && <Tabs showCard={false} tab={tab} />}
           </div>
 
           {loading && (
@@ -41,10 +41,10 @@ const FacultyHomePageContent = (user) => {
   );
 };
 
-const FacultyHomePage = () => {
+const FacultyHomePage = ({ tab }) => {
   return (
     <FacultyProvider>
-      <FacultyHomePageContent />
+      <FacultyHomePageContent tab={tab} />
     </FacultyProvider>
   );
 };

@@ -143,8 +143,6 @@ const ChangeRoleModal = ({ currentUser, setActiveUser, setIsModalOpen, fetchAllU
         setActiveUser(result);
       }
 
-      fetchAllUsers();
-
       // Log the role change action
       const roleChangeInfo = JSON.stringify({
         from: oldRole,
@@ -159,6 +157,7 @@ const ChangeRoleModal = ({ currentUser, setActiveUser, setIsModalOpen, fetchAllU
     } finally {
       setIsModalOpen(false);
       setChangingRole(false);
+      fetchAllUsers();
     }
   }
 

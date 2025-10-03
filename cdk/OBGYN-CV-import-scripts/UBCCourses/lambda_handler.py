@@ -14,7 +14,7 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = "8b.1. Courses Taught"
+SECTION_TITLE = "8b. Courses Taught"
 SECTION_TITLE_OTHER = "8b.2. Brief Descriptions for Courses Taught"
 
 def combine_dates(row):
@@ -66,15 +66,12 @@ def cleanData(df):
     
     courses_df["course"] = courses_df["Course"].fillna('').str.strip()
     courses_df["footnote_-_notes"] = courses_df["Footnote"].fillna('').str.strip()
-    if "ShowFN" in courses_df.columns:
-        courses_df["footnote"] = courses_df["ShowFN"].fillna('').str.strip().str.upper() == 'TRUE'
-    else:
-        courses_df["footnote"] = False
-    courses_df["scheduled_hours_(per_year)"] = courses_df["Schedule hours per year"].fillna('').str.strip()
-    courses_df["scheduled_hours_(per_year)"] = courses_df["scheduled_hours_(per_year)"].replace('0.00', '')
+
+    courses_df["total_hours"] = courses_df["Schedule hours per year"].fillna('').str.strip()
+    courses_df["total_hours"] = courses_df["total_hours"].replace('0.00', '')
     
-    courses_df["class_size_(per_year)"] = courses_df["Class Size"].fillna('').str.strip()
-    courses_df["class_size_(per_year)"] = courses_df["class_size_(per_year)"].replace('0.00', '')
+    courses_df["number_of_students"] = courses_df["Class Size"].fillna('').str.strip()
+    courses_df["number_of_students"] = courses_df["number_of_students"].replace('0.00', '')
     
     courses_df["lecture_hours_(per_year)"] = courses_df["Lectures"].fillna('').str.strip()
     courses_df["lecture_hours_(per_year)"] = courses_df["lecture_hours_(per_year)"].replace('0.00', '')
@@ -89,12 +86,7 @@ def cleanData(df):
     courses_df["other_hours_(per_year)"] = courses_df["other_hours_(per_year)"].replace('0.00', '')
 
     courses_df["highlight_-_notes"] = courses_df["Notes"].fillna('').str.strip()
-    if "Highlight" in courses_df.columns:
-        courses_df["highlight"] = courses_df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
-    else:
-        courses_df["highlight"] = False
-        
-    courses_df["details"] = courses_df["Details"].fillna('').str.strip()
+    courses_df["brief_description"] = courses_df["Details"].fillna('').str.strip()
 
     # Replace the date handling for courses_df
     if "TDate" in courses_df.columns:
@@ -102,7 +94,7 @@ def cleanData(df):
         courses_df["TDate_clean"] = pd.to_numeric(courses_df["TDate"], errors='coerce')
         courses_df["start_date"] = courses_df["TDate_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         courses_df["start_date"] = courses_df["start_date"].fillna('').str.strip()
     else:
@@ -113,7 +105,7 @@ def cleanData(df):
         courses_df["TDateEnd_clean"] = pd.to_numeric(courses_df["TDateEnd"], errors='coerce')
         courses_df["end_date"] = courses_df["TDateEnd_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         courses_df["end_date"] = courses_df["end_date"].fillna('').str.strip()
     else:
@@ -122,36 +114,37 @@ def cleanData(df):
     courses_df["dates"] = courses_df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns for courses
-    courses_df = courses_df[["user_id", "details", "session", "course", "footnote_-_notes", "footnote", "scheduled_hours_(per_year)", 
-             "class_size_(per_year)", "lecture_hours_(per_year)", "tutorial_hours_(per_year)", "lab_hours_(per_year)", "other_hours_(per_year)", "highlight_-_notes", "highlight", "dates"]]
+    courses_df = courses_df[["user_id", "brief_description", "session", "course", "footnote_-_notes", "total_hours", 
+             "number_of_students", "lecture_hours_(per_year)", "tutorial_hours_(per_year)", "lab_hours_(per_year)", "other_hours_(per_year)", "highlight_-_notes",  "dates"]]
 
     # Replace NaN with empty string for all columns
     courses_df = courses_df.replace({np.nan: ''}).reset_index(drop=True)
 
-    # --- Brief Descriptions Section (8b.2. Brief Descriptions for Courses Taught) ---
-    descriptions_df = df.copy()
-    descriptions_df["user_id"] = descriptions_df["PhysicianID"].fillna('').str.strip()
-    descriptions_df["details"] = descriptions_df["Details"].fillna('').str.strip()
-    descriptions_df["course"] = descriptions_df["Course"].fillna('').str.strip()
-    descriptions_df["highlight_-_notes"] = descriptions_df["Notes"].fillna('').str.strip()
+    # # --- Brief Descriptions Section (8b.2. Brief Descriptions for Courses Taught) ---
+    # descriptions_df = df.copy()
+    # descriptions_df["user_id"] = descriptions_df["PhysicianID"].fillna('').str.strip()
+    # descriptions_df["details"] = descriptions_df["Details"].fillna('').str.strip()
+    # descriptions_df["course"] = descriptions_df["Course"].fillna('').str.strip()
+    # descriptions_df["highlight_-_notes"] = descriptions_df["Notes"].fillna('').str.strip()
     
-    if "Highlight" in descriptions_df.columns:
-        descriptions_df["highlight"] = descriptions_df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
-    else:
-        descriptions_df["highlight"] = False
+    # if "Highlight" in descriptions_df.columns:
+    #     descriptions_df["highlight"] = descriptions_df["Highlight"].fillna('').astype(str).str.upper().str.strip() == 'TRUE'
+    # else:
+    #     descriptions_df["highlight"] = False
 
 
-    # Keep only the cleaned columns for descriptions
-    descriptions_df = descriptions_df[["user_id", "details", "course", "highlight_-_notes", "highlight"]]
-    descriptions_df = descriptions_df.replace({np.nan: ''}).reset_index(drop=True)
+    # # Keep only the cleaned columns for descriptions
+    # descriptions_df = descriptions_df[["user_id", "details", "course", "highlight_-_notes", "highlight"]]
+    # descriptions_df = descriptions_df.replace({np.nan: ''}).reset_index(drop=True)
 
-    # Filter out entries where both course and details are empty
-    descriptions_df = descriptions_df[
-        (descriptions_df["course"].str.strip() != "") | 
-        (descriptions_df["details"].str.strip() != "")
-    ].reset_index(drop=True)
+    # # Filter out entries where both course and details are empty
+    # descriptions_df = descriptions_df[
+    #     (descriptions_df["course"].str.strip() != "") | 
+    #     (descriptions_df["details"].str.strip() != "")
+    # ].reset_index(drop=True)
 
-    return courses_df, descriptions_df
+    # return courses_df, descriptions_df
+    return courses_df
 
 
 def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
@@ -277,7 +270,8 @@ def lambda_handler(event, context):
             }
 
         # Clean the DataFrame (returns two DataFrames)
-        courses_df, descriptions_df = cleanData(df)
+        # courses_df, descriptions_df = cleanData(df)
+        courses_df = cleanData(df)
         print("Data cleaned successfully.")
 
         # Connect to database
@@ -296,10 +290,10 @@ def lambda_handler(event, context):
             )
         
         # Store descriptions data
-        if not descriptions_df.empty:
-            rows_processed, rows_added_to_db = storeData(
-                descriptions_df, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_OTHER
-            )
+        # if not descriptions_df.empty:
+        #     rows_processed, rows_added_to_db = storeData(
+        #         descriptions_df, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_OTHER
+        #     )
         print("Data stored successfully.")
         cursor.close()
         connection.close()

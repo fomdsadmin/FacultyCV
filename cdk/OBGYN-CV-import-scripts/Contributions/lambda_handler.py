@@ -32,7 +32,6 @@ def cleanData(df):
     # Handle Title field
     df["title"] = df["Title"].fillna('').str.strip()
     df["description_of_contribution_and_impact"] = df["Details"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].str.strip().str.lower().map({'true': True, 'false': False})
     df["highlight_-_notes"] = df["Notes"].fillna('').str.strip() 
     
     
@@ -58,7 +57,7 @@ def cleanData(df):
         df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
         df["start_date"] = df["TDate_clean"].apply(lambda x: 
             '' if pd.isna(x) or x <= 0 else 
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["start_date"] = df["start_date"].fillna('').str.strip()
     else:
@@ -69,7 +68,7 @@ def cleanData(df):
         df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
         df["end_date"] = df["TDateEnd_clean"].apply(lambda x: 
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["end_date"] = df["end_date"].fillna('').str.strip()
     else:
@@ -92,7 +91,7 @@ def cleanData(df):
     df["dates"] = df.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns
-    df = df[["user_id", "title", "description_of_contribution_and_impact", "highlight_-_notes", "type", "dates", "highlight"]]
+    df = df[["user_id", "title", "description_of_contribution_and_impact", "highlight_-_notes", "type", "dates"]]
 
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})

@@ -41,7 +41,6 @@ def cleanData(df):
         subdf["type"] = subdf["Type"].fillna('').str.strip()
         subdf["type_other"] = subdf["TypeOther"].fillna('').str.strip()
         subdf["highlight_-_notes"] = subdf["Notes"].fillna('').str.strip()
-        subdf["highlight"] = False
 
         # If TypeOther is not empty, set type to "Other ({type_other})"
         mask_other = subdf["type_other"].str.strip() != ""
@@ -53,7 +52,7 @@ def cleanData(df):
             subdf["TDate_clean"] = pd.to_numeric(subdf["TDate"], errors='coerce')
             subdf["start_date"] = subdf["TDate_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             subdf["start_date"] = subdf["start_date"].fillna('').str.strip()
         else:
@@ -64,7 +63,7 @@ def cleanData(df):
             subdf["TDateEnd_clean"] = pd.to_numeric(subdf["TDateEnd"], errors='coerce')
             subdf["end_date"] = subdf["TDateEnd_clean"].apply(lambda x:
                 '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+                pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
             )
             subdf["end_date"] = subdf["end_date"].fillna('').str.strip()
         else:
@@ -86,7 +85,7 @@ def cleanData(df):
                 return ""
         subdf["dates"] = subdf.apply(combine_dates, axis=1)
 
-        subdf = subdf[["user_id", "details", "highlight_-_notes", "highlight", "dates", "type"]]
+        subdf = subdf[["user_id", "details", "highlight_-_notes", "dates", "type"]]
         subdf = subdf.replace({np.nan: ''}).reset_index(drop=True)
         print(f"Processed rows for {section_title}: ", len(subdf))
         cleaned[section_title] = subdf

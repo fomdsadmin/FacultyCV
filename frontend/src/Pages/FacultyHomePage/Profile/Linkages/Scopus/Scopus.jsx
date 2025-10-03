@@ -60,7 +60,7 @@ const Scopus = ({ user, setUser, isAdmin }) => {
           .replace(/"/g, '\\"') // escape double quotes
           .replace(/\n/g, "\\n"); // escape newlines
       };
-      
+
       try {
         await updateUser(
           currentUser.user_id,
@@ -106,7 +106,14 @@ const Scopus = ({ user, setUser, isAdmin }) => {
                 />
               </svg>
             </div>
-            <h3 className="text-sm font-semibold text-gray-800">Scopus ID(s)</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800">Scopus ID(s)</h3>
+              {!isAdmin && (
+                <span className="text-xs">
+                  Your Scopus ID is used for fetching <b>Journal Publications</b> from Scopus.
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

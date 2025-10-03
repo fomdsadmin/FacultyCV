@@ -76,13 +76,22 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Academic Rank
                   </th>
-                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                  {/* <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Business Title (i.e Head)
-                  </th>
+                  </th> */}
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Appointment %
                   </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    Division (if applicable)
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    Program (if applicable)
+                  </th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    Location
+                  </th>
+                  {/* <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Track Type
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -90,7 +99,7 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                   </th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     End Date
-                  </th>
+                  </th> */}
                   {/* <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Actions
                   </th> */}
@@ -118,14 +127,14 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           readOnly
                         />
                       </td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                         <input
                           type="text"
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
                           value={unit.title || ""}
                           readOnly
                         />
-                      </td>
+                      </td> */}
                       <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                         <input
                           type="text"
@@ -134,7 +143,34 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           readOnly
                         />
                       </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          value={(unit.additional_info && unit.additional_info.division) || ""}
+                          onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "division", e.target.value)}
+                          placeholder="Enter division"
+                        />
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          value={(unit.additional_info && unit.additional_info.program) || ""}
+                          onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "program", e.target.value)}
+                          placeholder="Enter program"
+                        />
+                      </td>
                       <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          value={unit.location || ""}
+                          onChange={(e) => handlePrimaryUnitMainFieldChange(idx, "location", e.target.value)}
+                          placeholder="e.g., Hospital Name"
+                        />
+                      </td>
+                      {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                         <input
                           type="text"
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
@@ -157,7 +193,7 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           value={(unit.additional_info && unit.additional_info.end) || ""}
                           readOnly
                         />
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
 
@@ -198,14 +234,14 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           readOnly
                         />
                       </td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                         <input
                           type="text"
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
                           value={unit.title || ""}
                           readOnly
                         />
-                      </td>
+                      </td> */}
                       <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                         <input
                           type="text"
@@ -214,7 +250,34 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           readOnly
                         />
                       </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          value={(unit.additional_info && unit.additional_info.division) || ""}
+                          onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "division", e.target.value)}
+                          placeholder="Enter division"
+                        />
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          value={(unit.additional_info && unit.additional_info.program) || ""}
+                          onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "program", e.target.value)}
+                          placeholder="Enter program"
+                        />
+                      </td>
                       <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <input
+                          type="text"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          value={unit.location || ""}
+                          onChange={(e) => handleJointUnitMainFieldChange(idx, "location", e.target.value)}
+                          placeholder="e.g., Hospital Name"
+                        />
+                      </td>
+                      {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                         <input
                           type="text"
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
@@ -237,7 +300,7 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           value={(unit.additional_info && unit.additional_info.end) || ""}
                           readOnly
                         />
-                      </td>
+                      </td> */}
                       {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                       <button
                         onClick={() => handleDeleteJointUnit(idx)}
@@ -268,8 +331,8 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
 
       {/* Only show Additional Academic Information toggle if there are units */}
       {hasAnyUnits && (
-        <div className="">
-          <button
+        <>
+          {/* <button
             onClick={() => setShowAdditionalInfo(!showAdditionalInfo)}
             className="flex items-center justify-between w-full bg-gray-50 hover:bg-gray-100 transition-colors px-4 py-2 rounded border text-left font-semibold text-zinc-600"
           >
@@ -287,10 +350,10 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                 clipRule="evenodd"
               />
             </svg>
-          </button>
+          </button> */}
 
           {/* Collapsible content */}
-          {showAdditionalInfo && (
+          {/* {showAdditionalInfo && (
             <div className="mt-4 border rounded-lg">
               <div className="overflow-x-auto p-4">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -302,19 +365,9 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                         Academic Unit
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Division (if applicable)
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Program (if applicable)
-                      </th>
-                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Location
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {/* Primary Unit Additional Info - Updated for array */}
                     {hasPrimaryUnit &&
                       primaryUnit.map((unit, idx) => (
                         <tr key={`primary-additional-${idx}`} className="bg-blue-50">
@@ -352,7 +405,6 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                         </tr>
                       ))}
 
-                    {/* Joint Units Additional Info */}
                     {hasJointUnits &&
                       jointUnits.map((unit, idx) => (
                         <tr key={`additional-${idx}`}>
@@ -393,8 +445,8 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                 </table>
               </div>
             </div>
-          )}
-        </div>
+          )} */}
+        </>
       )}
     </>
   );

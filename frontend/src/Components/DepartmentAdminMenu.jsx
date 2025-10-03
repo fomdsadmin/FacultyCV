@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaArchive, FaFolderOpen, FaRegClipboard } from "react-icons/fa";
+import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaArchive, FaFolderOpen, FaRegClipboard, FaCertificate, FaGraduationCap } from "react-icons/fa";
 import { MdSupportAgent } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -78,19 +78,29 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             )}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === "/department-admin/declaration" ? "bg-gray-200 rounded-lg" : ""}`}>
-          <Link to="/department-admin/declaration">
+        <li className={`mb-2 ${location.pathname === "/department-admin/declarations" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/department-admin/declarations">
+            <FaCertificate className="h-5 w-5" />
+            {showText && !isCollapsed && (
+              <p className={`ml-2 ${location.pathname === "/department-admin/declarations" ? "font-bold" : ""}`}>
+                Declarations Report
+              </p>
+            )}
+          </Link>
+        </li>
+        <li className={`mb-2 ${location.pathname === "/department-admin/affiliations" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/department-admin/affiliations">
             <FaUsersCog className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/declaration" ? "font-bold" : ""}`}>
-                Declarations Report
+              <p className={`ml-2 ${location.pathname === "/department-admin/affiliations" ? "font-bold" : ""}`}>
+                Affiliations Report
               </p>
             )}
           </Link>
         </li>
            <li className={`mb-2 ${location.pathname === "/department-admin/reporting" ? "bg-gray-200 rounded-lg" : ""}`}>
           <Link to="/department-admin/reporting">
-            <FaUsersCog className="h-5 w-5" />
+            <FaGraduationCap className="h-5 w-5" />
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === "/department-admin/reporting" ? "font-bold" : ""}`}>
                 Academic Sections Report

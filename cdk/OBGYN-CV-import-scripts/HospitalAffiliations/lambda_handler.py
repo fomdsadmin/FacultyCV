@@ -171,19 +171,22 @@ def updateAffiliationsData(df, user_mapping, cursor):
             updated = False
             
             # Always update hospital affiliations when physician_id matches user_id
-            if 'health_authority' in row and row['health_authority']:
+            # Skip if health_authority is N/A, null, or empty
+            health_authority = row.get('health_authority', '').strip()
+            if (health_authority and 
+                health_authority.upper() not in ['N/A', 'NA', 'NULL', 'NONE', '']):
                 # Update or create hospital affiliation
                 hospital_updated = False
                 for hosp in hospital_affiliations:
                     if isinstance(hosp, dict):
-                        hosp['authority'] = row['health_authority']
+                        hosp['authority'] = health_authority
                         hospital_updated = True
                         break
                 
                 # If no hospital affiliation exists, create one
                 if not hospital_updated:
                     hospital_affiliations.append({
-                        'authority': row['health_authority'],
+                        'authority': health_authority,
                         'hospital': '',
                         'role': '',
                         'start': '',

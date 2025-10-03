@@ -5,6 +5,7 @@ import {
   deleteUserCVSectionData,
 } from "../../graphql/graphqlHelpers";
 import { rankFields } from "../../utils/rankingUtils";
+import { sortEntriesByDate } from "../../utils/dateUtils";
 import { useApp } from "../../Contexts/AppContext";
 import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext";
 // Create context
@@ -37,20 +38,139 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
   // State
   const [searchTerm, setSearchTerm] = useState("");
   const [fieldData, setFieldData] = useState([]);
+  const [sortAscending, setSortAscending] = useState(false); // false = descending (most recent first)
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
+  
+  // Filter states
+  const [dropdownFilters, setDropdownFilters] = useState({});
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const totalPages = Math.ceil(fieldData.length / pageSize);
-  const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const { userInfo } = useApp();
   const { logAction } = useAuditLogger();
+
+  // Get dropdown attributes from section attributes_type
+  const getDropdownAttributes = () => {
+    try {
+      const attributesType = typeof section.attributes_type === "string" 
+        ? JSON.parse(section.attributes_type) 
+        : section.attributes_type;
+      return Object.keys(attributesType.dropdown || {});
+    } catch (error) {
+      console.error("Error parsing attributes_type:", error);
+      return [];
+    }
+  };
+
+  // Get unique values for a dropdown attribute from field data
+  const getUniqueDropdownValues = (attribute) => {    
+    // Get the actual field key (snake_case) from the display name
+    const actualKey = section.attributes && section.attributes[attribute] 
+      ? section.attributes[attribute] 
+      : attribute.toLowerCase().replace(/\s+/g, '_');
+    
+    const values = new Set();
+    
+    fieldData.forEach((entry, index) => {
+      if (entry.data_details && entry.data_details[actualKey]) {
+        const value = entry.data_details[actualKey];
+        
+        // Handle different data types appropriately
+        if (value !== null && value !== undefined && value !== "" && value !== "—") {
+          const stringValue = typeof value === 'string' ? value : String(value);
+          
+          // Skip if it's empty after conversion to string
+          if (stringValue.trim() === "" || stringValue.toLowerCase() === "null") {
+            return;
+          }
+          
+          // Handle "Other (value)" format
+          if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
+            const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
+            if (match) {
+              values.add(match[1].trim());
+            }
+          } else {
+            values.add(stringValue);
+          }
+        }
+      }
+    });
+    
+    const result = Array.from(values).sort();
+    return result;
+  };
+
+  // Apply all filters to get filtered data
+  const getFilteredData = () => {
+    let filtered = fieldData;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter((entry) => {
+        const [field1, field2] = rankFields(entry.data_details);
+        return (
+          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+      });
+    }
+
+    // Apply dropdown filters
+    Object.entries(dropdownFilters).forEach(([attribute, filterValue]) => {
+      if (filterValue && filterValue !== "all") {
+        // Get the actual field key (snake_case) from the display name
+        const actualKey = section.attributes && section.attributes[attribute] 
+          ? section.attributes[attribute] 
+          : attribute.toLowerCase().replace(/\s+/g, '_');
+          
+        filtered = filtered.filter((entry) => {
+          if (!entry.data_details || !entry.data_details[actualKey]) return false;
+          
+          const entryValue = entry.data_details[actualKey];
+          if (!entryValue && entryValue !== 0 && entryValue !== false) return false;
+          
+          // Convert to string for consistent handling
+          const stringValue = typeof entryValue === 'string' ? entryValue : String(entryValue);
+          if (stringValue.trim() === "" || stringValue === "—") return false;
+          
+          // Handle "Other (value)" format
+          if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
+            const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
+            if (match) {
+              return match[1].trim() === filterValue;
+            }
+          }
+          
+          // Compare using string representation for consistency
+          return stringValue === filterValue || entryValue === filterValue;
+        });
+      }
+    });
+
+    return filtered;
+  };
+
+  // Get filtered data
+  const filteredData = getFilteredData();
+  
+  // Calculate pagination based on filtered data
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setDropdownFilters({});
+    setCurrentPage(1);
+  };
 
   // Fetch data function
   const fetchData = async () => {
@@ -66,15 +186,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
         data_details: JSON.parse(data.data_details),
       }));
 
-      const filteredData = parsedData.filter((entry) => {
-        const [field1, field2] = rankFields(entry.data_details);
-        return (
-          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-      });
-
-      const rankedData = filteredData.map((entry) => {
+      const rankedData = parsedData.map((entry) => {
         const [field1, field2] = rankFields(entry.data_details);
         const findKeyForField = (field) => {
           return Object.keys(entry.data_details).find(
@@ -86,39 +198,10 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
         return { ...entry, field1, field2, key1, key2 };
       });
 
-      const extractYear = (dateStr) => {
-        if (!dateStr || typeof dateStr !== "string") return null;
-        if (dateStr.toLowerCase().includes("current")) {
-          return Number.POSITIVE_INFINITY;
-        }
-        const years = dateStr.match(/\b\d{4}\b/g);
-        return years ? Number.parseInt(years[years.length - 1]) : null;
-      };
+      // Sort by date using the new utility
+      const sortedData = sortEntriesByDate(rankedData, sortAscending);
 
-      rankedData.sort((a, b) => {
-        const isDateOrYear = (key) =>
-          key && (key.toLowerCase().includes("date") || key.toLowerCase().includes("year"));
-        const dateA = isDateOrYear(a.key1)
-          ? extractYear(a.field1)
-          : isDateOrYear(a.key2)
-          ? extractYear(a.field2)
-          : null;
-        const dateB = isDateOrYear(b.key1)
-          ? extractYear(b.field1)
-          : isDateOrYear(b.key2)
-          ? extractYear(b.field2)
-          : null;
-        if (dateA !== null && dateB !== null) {
-          return dateB - dateA;
-        } else if (dateA !== null) {
-          return -1;
-        } else if (dateB !== null) {
-          return 1;
-        }
-        return 0;
-      });
-
-      setFieldData(rankedData);
+      setFieldData(sortedData);
       setCurrentPage(1); // Reset to first page on new data
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -183,17 +266,21 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     setIsModalOpen(true);
   };
 
-  // Fetch data when search term or section changes
+  const toggleSortOrder = () => {
+    setSortAscending(!sortAscending);
+  };
+
+  // Fetch data when section changes or sort order changes
   useEffect(() => {
     setLoading(true);
     setFieldData([]);
     fetchData();
-  }, [searchTerm, section.data_section_id]);
+  }, [section.data_section_id, sortAscending]);
 
-  // Reset to first page when search term or page size changes
+  // Reset to first page when search term, filters, or page size changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, pageSize]);
+  }, [searchTerm, dropdownFilters, pageSize]);
 
   // Context value
   const value = {
@@ -201,17 +288,25 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     searchTerm,
     setSearchTerm,
     fieldData,
+    filteredData,
     paginatedData,
     currentPage,
     setCurrentPage,
     pageSize,
     setPageSize,
     totalPages,
+    sortAscending,
     selectedEntry,
     isModalOpen,
     isNew,
     loading,
     notification,
+
+    // Filter states
+    dropdownFilters,
+    setDropdownFilters,
+    showMoreFilters,
+    setShowMoreFilters,
 
     // Section data
     section,
@@ -223,6 +318,10 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     handleCloseModal,
     handleNew,
     handleRemoveAll,
+    toggleSortOrder,
+    clearAllFilters,
+    getDropdownAttributes,
+    getUniqueDropdownValues,
     onBack,
   };
 

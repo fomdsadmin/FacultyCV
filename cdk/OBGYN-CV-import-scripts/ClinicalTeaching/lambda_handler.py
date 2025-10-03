@@ -21,9 +21,8 @@ def cleanData(df):
     Cleans the input DataFrame by performing various transformations:
     """
     df["user_id"] = df["PhysicianID"].astype(str).str.strip()
-    df["description"] =  df["Details"].fillna('').str.strip()
+    df["brief_description"] =  df["Details"].fillna('').str.strip()
     df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(str).str.strip().str.lower().map({'true': True, 'false': False})
     df["duration_(eg:_8_weeks)"] = df["Duration"].fillna('').str.strip()
     
     # Clean number_of_students - handle NaN, trailing .0, and other unwanted values
@@ -94,7 +93,7 @@ def cleanData(df):
         df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
         df["start_date"] = df["TDate_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["start_date"] = df["start_date"].fillna('').str.strip()
     else:
@@ -105,7 +104,7 @@ def cleanData(df):
         df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
         df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["end_date"] = df["end_date"].fillna('').str.strip()
     else:
@@ -126,10 +125,11 @@ def cleanData(df):
         else:
             return ""
     df["dates"] = df.apply(combine_dates, axis=1)
+    df["course_title"] = df["Course"].fillna('').str.strip()
 
 
     # Keep only the cleaned columns
-    df = df[["user_id", "description", "student_level", "duration_(eg:_8_weeks)", "number_of_students", "total_hours", "highlight_-_notes", "highlight", "dates"]]
+    df = df[["user_id", "brief_description", "student_level", "duration_(eg:_8_weeks)", "number_of_students", "total_hours", "course_title", "highlight_-_notes", "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
@@ -182,8 +182,6 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            print(f"Processed row {i + 1}/{len(df)}")
-            print(f"Row {i + 1}: number_of_students = '{row['number_of_students']}'")
         
     connection.commit()
     return rows_processed, rows_added_to_db
@@ -204,15 +202,33 @@ def fetchFromS3(bucket, key):
 def loadData(file_bytes, file_key):
     """
     Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
+    Handles CSV, JSON lines, and JSON array files.
     """
     if file_key.lower().endswith('.xlsx'):
-        # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
-        # For CSV, decode bytes to text
-        return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        # Try reading as regular CSV first
+        try:
+            return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        except Exception as csv_exc:
+            print(f"Failed to read as CSV: {csv_exc}")
+            # Try reading as JSON lines (NDJSON)
+            try:
+                return pd.read_json(io.StringIO(file_bytes.decode('utf-8')), lines=True)
+            except Exception as jsonl_exc:
+                print(f"Failed to read as JSON lines: {jsonl_exc}")
+                # Try reading as JSON array
+                try:
+                    return pd.read_json(io.StringIO(file_bytes.decode('utf-8')))
+                except Exception as json_exc:
+                    print(f"Failed to read as JSON array: {json_exc}")
+                    raise ValueError(
+                        f"Could not parse file as CSV, JSON lines, or JSON array. "
+                        f"CSV error: {csv_exc}, JSON lines error: {jsonl_exc}, JSON array error: {json_exc}"
+                    )
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
+
 
 def lambda_handler(event, context):
     """
@@ -231,7 +247,6 @@ def lambda_handler(event, context):
         try:
             file_bytes = fetchFromS3(bucket=bucket_name, key=file_key)
             print("Data fetched successfully.")
-            print(f"File size: {len(file_bytes)} bytes")
         except Exception as fetch_error:
             print(f"Error fetching data from S3: {str(fetch_error)}")
             return {
@@ -245,11 +260,9 @@ def lambda_handler(event, context):
             # Load data into DataFrame
             df = loadData(file_bytes, file_key)
             print("Data loaded successfully.")
-            print(f"DataFrame shape: {df.shape}")
-            print(f"DataFrame columns: {df.columns.tolist()}")
             
             # Check for required columns
-            required_columns = ["PhysicianID", "UserID", "Details", "Type"]
+            required_columns = ["PhysicianID", "Details", "Type"]
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
                 raise ValueError(f"Missing required columns: {missing_columns}")

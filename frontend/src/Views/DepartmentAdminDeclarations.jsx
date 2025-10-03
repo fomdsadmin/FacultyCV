@@ -3,7 +3,7 @@ import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import DeclarationViewModal from "../Components/DeclarationViewModal.jsx";
 import { normalizeDeclarations } from "../Pages/Declarations/Declarations.jsx";
-import { getUserDeclarations, getAllUserDeclarations } from "../graphql/graphqlHelpers.js";
+import { getAllUserDeclarations } from "../graphql/graphqlHelpers.js";
 import { useAdmin } from "../Contexts/AdminContext.jsx";
 import { FaDownload, FaSearch, FaSpinner } from "react-icons/fa";
 
@@ -26,7 +26,7 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
   const yearOptions = [
     { value: "all", label: "All Years" },
     { value: currentYear, label: currentYear.toString() },
-    { value: nextYear, label: nextYear.toString() }
+    { value: nextYear, label: nextYear.toString() },
   ];
 
   useEffect(() => {
@@ -43,21 +43,29 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
 
   const filterDepartmentUsers = () => {
     let filteredUsers = [];
-    
+
     if (userInfo.role === "Admin" || userInfo.role === "Admin-All") {
       // For super admin, show all users
-      filteredUsers = allUsers.filter(user => 
-        user.active && 
-        user.approved && 
-        (user.role === "Faculty" || user.role === "Faculty-Admin")
+      filteredUsers = allUsers.filter(
+        (user) =>
+          user.active &&
+          user.approved &&
+          !user.pending &&
+          !user.terminated &&
+          user.role !== "Assistant" &&
+          user.role !== "Admin"
       );
     } else if (userInfo.role.startsWith("Admin-")) {
       // For department admin, filter by department
-      filteredUsers = allUsers.filter(user => 
-        user.active && 
-        user.approved && 
-        user.primary_department === userInfo.role.split("-")[1] &&
-        (user.role !== "Assistant")
+      filteredUsers = allUsers.filter(
+        (user) =>
+          user.active &&
+          user.approved &&
+          !user.pending &&
+          !user.terminated &&
+          user.primary_department === userInfo.role.split("-")[1] &&
+          user.role !== "Assistant" &&
+          user.role !== "Admin"
       );
     }
 
@@ -73,17 +81,16 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
       // Fetch all declarations for the department in one call
       if (userInfo && userInfo.role) {
         if (userInfo.role === "Admin" || userInfo.role === "Admin-All") {
-          allDeclarations = await getAllUserDeclarations('All');
+          allDeclarations = await getAllUserDeclarations("All");
         } else if (userInfo.role.startsWith("Admin-")) {
           let argDepartment = userInfo.role.split("-")[1];
           allDeclarations = await getAllUserDeclarations(argDepartment);
         }
       }
       const normalizedDeclarations = normalizeDeclarations(allDeclarations);
-      
+
       // Group declarations by user_id and filter by selected year
-      normalizedDeclarations.forEach(declaration => {
-        
+      normalizedDeclarations.forEach((declaration) => {
         if (selectedYear === "all" || declaration.year === selectedYear) {
           if (selectedYear === "all") {
             // For "all" years, create a unique key combining user_id and year
@@ -92,7 +99,7 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
             declarationsMap[uniqueKey] = {
               ...declaration,
               displayKey: uniqueKey, // Add a display key for rendering
-              originalUserId: declaration.user_id // Keep original user_id for reference
+              originalUserId: declaration.user_id, // Keep original user_id for reference
             };
           } else {
             // For specific year, use user_id as key (one entry per user)
@@ -100,18 +107,18 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
           }
         }
       });
-      
+
       // Ensure all department users have an entry (even if null)
       if (selectedYear !== "all") {
         // For specific years, ensure each user has an entry
-        departmentUsers.forEach(user => {
+        departmentUsers.forEach((user) => {
           if (!declarationsMap[user.user_id]) {
             declarationsMap[user.user_id] = null;
           }
         });
       }
       // For "all" years, we don't add null entries since we want to show only users who have declarations
-      
+
       setUserDeclarations(declarationsMap);
     } catch (error) {
       console.error("Error fetching declarations:", error);
@@ -131,6 +138,8 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
     setSelectedUser(null);
     setSelectedDeclaration(null);
   };
+
+  const handleDownloadPdf = async (user, declaration) => {};
 
   const formatSubmissionDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -152,27 +161,34 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
     const hasMeritDeclaration = declaration.fomMerit && declaration.fomMerit !== "";
     const hasPsaDeclaration = declaration.psa && declaration.psa !== "";
     const hasPromotionDeclaration = declaration.promotion && declaration.promotion !== "";
-    
+
     // Also check for any text fields that indicate engagement with the form
-    const hasTextContent = declaration.meritJustification || 
-                          declaration.psaJustification || 
-                          declaration.honorific || 
-                          declaration.supportAnticipated ||
-                          declaration.promotionPathways;
-    
-    const hasDateContent = declaration.coiSubmissionDate ||
-                          declaration.psaSubmissionDate ||
-                          declaration.promotionSubmissionDate ||
-                          declaration.promotionEffectiveDate;
-    
-    const hasSubmitted = hasCoiDeclaration || hasMeritDeclaration || hasPsaDeclaration || 
-                        hasPromotionDeclaration || hasTextContent || hasDateContent;
-    
+    const hasTextContent =
+      declaration.meritJustification ||
+      declaration.psaJustification ||
+      declaration.honorific ||
+      declaration.supportAnticipated ||
+      declaration.promotionPathways;
+
+    const hasDateContent =
+      declaration.coiSubmissionDate ||
+      declaration.psaSubmissionDate ||
+      declaration.promotionSubmissionDate ||
+      declaration.promotionEffectiveDate;
+
+    const hasSubmitted =
+      hasCoiDeclaration ||
+      hasMeritDeclaration ||
+      hasPsaDeclaration ||
+      hasPromotionDeclaration ||
+      hasTextContent ||
+      hasDateContent;
+
     if (hasSubmitted) {
-      return { 
-        status: "Submitted", 
+      return {
+        status: "Submitted",
         date: declaration.created_on || declaration.updated_at,
-        hasSubmitted: true 
+        hasSubmitted: true,
       };
     }
 
@@ -181,99 +197,123 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
 
   // Filter users based on search term and status
   let filteredEntries = [];
-  
+
   if (selectedYear === "all") {
     // For "all" years, start with all department users and add their declarations
     const userDeclarationPairs = [];
-    
+
     // First, add entries for users who have declarations
     Object.values(userDeclarations)
-      .filter(declaration => declaration != null)
-      .forEach(declaration => {
+      .filter((declaration) => declaration != null)
+      .forEach((declaration) => {
         const userId = declaration.originalUserId || declaration.user_id;
-        const user = departmentUsers.find(u => u.user_id === userId);
+        const user = departmentUsers.find((u) => u.user_id === userId);
         if (user) {
           userDeclarationPairs.push({ user, declaration });
         }
       });
-    
+
     // Then, add entries for users who don't have any declarations
-    departmentUsers.forEach(user => {
-      const hasDeclaration = userDeclarationPairs.some(pair => pair.user.user_id === user.user_id);
+    departmentUsers.forEach((user) => {
+      const hasDeclaration = userDeclarationPairs.some((pair) => pair.user.user_id === user.user_id);
       if (!hasDeclaration) {
         userDeclarationPairs.push({ user, declaration: null });
       }
     });
-    
+
     // Apply filters
-    filteredEntries = userDeclarationPairs.filter(entry => {
+    filteredEntries = userDeclarationPairs.filter((entry) => {
       const { user, declaration } = entry;
       const submissionStatus = getSubmissionStatus(declaration);
-      
+
       // Search filter
-      const matchesSearch = searchTerm === "" || 
+      const matchesSearch =
+        searchTerm === "" ||
         `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (user.preferred_name && user.preferred_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.primary_department.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       // Status filter
-      const matchesStatus = statusFilter === "all" ||
+      const matchesStatus =
+        statusFilter === "all" ||
         (statusFilter === "submitted" && submissionStatus.hasSubmitted) ||
         (statusFilter === "pending" && !submissionStatus.hasSubmitted);
-      
+
       return matchesSearch && matchesStatus;
     });
   } else {
     // For specific years, use original logic
-    filteredEntries = departmentUsers.filter(user => {
-      const declaration = userDeclarations[user.user_id];
-      const submissionStatus = getSubmissionStatus(declaration);
-      
-      // Search filter
-      const matchesSearch = searchTerm === "" || 
-        `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      // Status filter
-      const matchesStatus = statusFilter === "all" ||
-        (statusFilter === "submitted" && submissionStatus.hasSubmitted) ||
-        (statusFilter === "pending" && !submissionStatus.hasSubmitted);
-      
-      return matchesSearch && matchesStatus;
-    }).map(user => ({ user, declaration: userDeclarations[user.user_id] }));
+    filteredEntries = departmentUsers
+      .filter((user) => {
+        const declaration = userDeclarations[user.user_id];
+        const submissionStatus = getSubmissionStatus(declaration);
+
+        // Search filter
+        const matchesSearch =
+          searchTerm === "" ||
+          `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+        // Status filter
+        const matchesStatus =
+          statusFilter === "all" ||
+          (statusFilter === "submitted" && submissionStatus.hasSubmitted) ||
+          (statusFilter === "pending" && !submissionStatus.hasSubmitted);
+
+        return matchesSearch && matchesStatus;
+      })
+      .map((user) => ({ user, declaration: userDeclarations[user.user_id] }));
   }
 
   const exportToCSV = () => {
-    const csvData = filteredEntries.map(entry => {
+    const csvData = filteredEntries.map((entry) => {
       const { user, declaration } = entry;
       const submissionStatus = getSubmissionStatus(declaration);
-      
+
       return {
         "Faculty Name": `${user.first_name} ${user.last_name}`,
-        "Email": user.email,
-        "Department": user.primary_department,
+        Email: user.email,
+        Department: user.primary_department,
         ...(selectedYear === "all" && { "Reporting Year": declaration?.year || "" }),
-        "Status": submissionStatus.status,
+        Status: submissionStatus.status,
         "Submission Date": submissionStatus.date ? formatSubmissionDate(submissionStatus.date) : "",
         "COI Status": declaration?.coi || "",
-        "Merit Status": declaration?.fomMerit || "",
+        "COI Submission Date": declaration?.coiSubmissionDate
+          ? formatSubmissionDate(declaration.coiSubmissionDate)
+          : "",
+        "FOM Merit Status": declaration?.fomMerit || "",
         "PSA Status": declaration?.psa || "",
-        "Promotion Status": declaration?.promotion || ""
+        "FOM Merit & PSA Submission Date": declaration?.psaSubmissionDate
+          ? formatSubmissionDate(declaration.psaSubmissionDate)
+          : "",
+        "FOM Promotion Review Status": declaration?.promotion || "",
+        "FOM Promotion Effective Date": declaration?.promotionEffectiveDate
+          ? `July 1, ${declaration.promotionEffectiveDate}`
+          : "",
+        "FOM Promotion Anticipated Pathways": declaration?.promotionPathways || "",
+        "FOM Promotion Support Anticipated": declaration?.supportAnticipated || "",
+        "FOM Promotion Submission Date": declaration?.promotionSubmissionDate
+          ? formatSubmissionDate(declaration.promotionSubmissionDate)
+          : "",
+        "FOM Honorific Impact Report": declaration?.honorific || "",
       };
     });
 
     const headers = Object.keys(csvData[0] || {});
     const csvContent = [
       headers.join(","),
-      ...csvData.map(row => headers.map(header => `"${row[header] || ""}"`).join(","))
+      ...csvData.map((row) => headers.map((header) => `"${row[header] || ""}"`).join(",")),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `declarations_report_${department}_${selectedYear === "all" ? "all_years" : selectedYear}.csv`);
+    link.setAttribute(
+      "download",
+      `declarations_report_${department}_${selectedYear === "all" ? "all_years" : selectedYear}.csv`
+    );
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -282,13 +322,13 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
 
   // Calculate statistics
   let submittedCount, pendingCount;
-  
+
   if (selectedYear === "all") {
     // For "all" mode, count unique users with at least one submission
     const uniqueUsersWithSubmissions = new Set();
     const uniqueUsersWithoutSubmissions = new Set();
-    
-    filteredEntries.forEach(entry => {
+
+    filteredEntries.forEach((entry) => {
       const hasSubmitted = getSubmissionStatus(entry.declaration).hasSubmitted;
       if (hasSubmitted) {
         uniqueUsersWithSubmissions.add(entry.user.user_id);
@@ -296,20 +336,20 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
         uniqueUsersWithoutSubmissions.add(entry.user.user_id);
       }
     });
-    
+
     // Remove users from pending if they have any submissions
-    uniqueUsersWithSubmissions.forEach(userId => {
+    uniqueUsersWithSubmissions.forEach((userId) => {
       uniqueUsersWithoutSubmissions.delete(userId);
     });
-    
+
     submittedCount = uniqueUsersWithSubmissions.size;
     pendingCount = uniqueUsersWithoutSubmissions.size;
   } else {
     // For specific years, use simple counting
-    submittedCount = filteredEntries.filter(entry => getSubmissionStatus(entry.declaration).hasSubmitted).length;
-    pendingCount = filteredEntries.filter(entry => !getSubmissionStatus(entry.declaration).hasSubmitted).length;
+    submittedCount = filteredEntries.filter((entry) => getSubmissionStatus(entry.declaration).hasSubmitted).length;
+    pendingCount = filteredEntries.filter((entry) => !getSubmissionStatus(entry.declaration).hasSubmitted).length;
   }
-  
+
   const totalCount = departmentUsers.length;
 
   return (
@@ -317,62 +357,58 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
       <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
       <main className="px-8 lg:px-12 xl:px-16 2xl:px-20 py-4 w-full min-h-screen bg-zinc-50">
         <div className="mx-auto">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-zinc-700 mb-1 mt-2">Declarations Report</h1>
               <h2 className="text-xl font-semibold text-blue-700 mb-4 mt-2">
-                {userInfo.role === "Admin" || userInfo.role === "Admin-All" ? "All Departments" : userInfo.role.split("-")[1]}
+                {userInfo.role === "Admin" || userInfo.role === "Admin-All"
+                  ? "All Departments"
+                  : userInfo.role.split("-")[1]}
               </h2>
             </div>
-            
-            {/* Year Filter */}
-            <div className="flex items-center gap-2">
-              <label htmlFor="year-filter" className="text-sm font-medium text-zinc-600">
-                Reporting Year:
-              </label>
-              <select
-                id="year-filter"
-                value={selectedYear}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedYear(value === "all" ? "all" : Number(value));
-                }}
-                className="px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {yearOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+
+            {/* Export Button */}
+            <button
+              onClick={exportToCSV}
+              disabled={filteredEntries.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              <FaDownload />
+              Export CSV
+            </button>
           </div>
 
           {/* Summary Statistics */}
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-zinc-700 mb-2">Total Faculty</h3>
-              <p className="text-2xl font-bold text-blue-600">{totalCount}</p>
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white px-4 rounded-lg shadow-md flex justify-between items-center">
+              <h3 className="text-md font-semibold text-zinc-700">Total Faculty</h3>
+              <div className="rounded-2xl bg-blue-100 px-4 py-1">
+                <p className="text-xl font-bold text-blue-600">{totalCount}</p>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-zinc-700 mb-2">
+            <div className="bg-white p-4 rounded-lg shadow-md  flex justify-between items-center">
+              <h3 className="text-md font-semibold text-zinc-700">
                 {selectedYear === "all" ? "Faculty With Submissions" : "Submitted"}
               </h3>
-              <p className="text-2xl font-bold text-green-600">{submittedCount}</p>
+              <div className="rounded-2xl bg-green-100 px-4 py-1">
+                <p className="text-xl font-bold text-green-600">{submittedCount}</p>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-zinc-700 mb-2">
+            <div className="bg-white p-4 rounded-lg shadow-md  flex justify-between items-center">
+              <h3 className="text-md font-semibold text-zinc-700">
                 {selectedYear === "all" ? "Faculty Without Submissions" : "Pending"}
               </h3>
-              <p className="text-2xl font-bold text-red-600">{pendingCount}</p>
+              <div className="rounded-2xl bg-red-100 px-4 py-1">
+                <p className="text-xl font-bold text-red-600">{pendingCount}</p>
+              </div>
             </div>
           </div>
 
           {/* Filters and Export */}
-          <div className="mb-6 bg-white p-4 rounded-lg shadow-md">
+          <div className="mb-4 bg-white p-4 rounded-lg shadow-md">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="flex flex-col md:flex-row gap-4 items-center">
-                {/* Search */}
+              {/* Left side - Search */}
+              <div className="flex items-center">
                 <div className="relative">
                   <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
                   <input
@@ -380,8 +416,33 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                     placeholder="Search faculty..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-10 pr-4 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                   />
+                </div>
+              </div>
+
+              {/* Right side - Year Filter, Status Filter, and Export */}
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                {/* Year Filter */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="year-filter" className="text-sm font-medium text-zinc-600">
+                    Reporting Year:
+                  </label>
+                  <select
+                    id="year-filter"
+                    value={selectedYear}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSelectedYear(value === "all" ? "all" : Number(value));
+                    }}
+                    className="px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {yearOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Status Filter */}
@@ -395,21 +456,11 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                   <option value="pending">Pending</option>
                 </select>
               </div>
-
-              {/* Export Button */}
-              <button
-                onClick={exportToCSV}
-                disabled={filteredEntries.length === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                <FaDownload />
-                Export CSV
-              </button>
             </div>
           </div>
 
           {/* Declarations Table */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-md overflow-y-auto max-h-[55vh]">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-zinc-200">
                 <thead className="bg-zinc-50">
@@ -430,6 +481,9 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                       Submission Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                      Created By
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -437,7 +491,7 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                 <tbody className="bg-white divide-y divide-zinc-200">
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-zinc-500">
+                      <td colSpan="7" className="px-6 py-4 text-center text-zinc-500">
                         <div className="flex items-center justify-center gap-2">
                           <FaSpinner className="animate-spin" />
                           Loading declarations...
@@ -446,29 +500,29 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                     </tr>
                   ) : filteredEntries.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-zinc-500">
-                        {departmentUsers.length === 0 
+                      <td colSpan="7" className="px-6 py-4 text-center text-zinc-500">
+                        {departmentUsers.length === 0
                           ? "No faculty members found for this department."
-                          : "No faculty members match the current filters."
-                        }
+                          : "No faculty members match the current filters."}
                       </td>
                     </tr>
                   ) : (
                     filteredEntries.map((entry, index) => {
                       const { user, declaration } = entry;
                       const submissionStatus = getSubmissionStatus(declaration);
-                      
+
                       return (
-                        <tr key={selectedYear === "all" ? `${user.user_id}_${declaration?.year}` : user.user_id} className="hover:bg-zinc-50">
+                        <tr
+                          key={selectedYear === "all" ? `${user.user_id}_${declaration?.year}` : user.user_id}
+                          className="hover:bg-zinc-50"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div>
                                 <div className="text-sm font-medium text-zinc-900">
                                   {user.first_name} {user.last_name}
                                 </div>
-                                <div className="text-sm text-zinc-500">
-                                  {user.email}
-                                </div>
+                                <div className="text-sm text-zinc-500">{user.cwl_username}</div>
                               </div>
                             </div>
                           </td>
@@ -479,28 +533,46 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                             {declaration ? declaration.year : "—"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              submissionStatus.hasSubmitted
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                submissionStatus.hasSubmitted
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
                               {submissionStatus.status}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
                             {submissionStatus.date ? formatSubmissionDate(submissionStatus.date) : "—"}
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
+                            {declaration ? (declaration.created_by ? declaration.created_by : "—") : "—"}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            {submissionStatus.hasSubmitted ? (
-                              <button
-                                onClick={() => handleViewDeclaration(user, declaration)}
-                                className="text-blue-600 hover:text-blue-900 transition-colors"
-                              >
-                                View
-                              </button>
-                            ) : (
-                              <span className="text-zinc-400">—</span>
-                            )}
+                            <div className="flex items-center space-x-2">
+                              {submissionStatus.hasSubmitted ? (
+                                <>
+                                  <button
+                                    onClick={() => handleViewDeclaration(user, declaration)}
+                                    className="text-blue-600 hover:text-blue-900 transition-colors"
+                                  >
+                                    View
+                                  </button>
+                                  {/* <span className="text-gray-300">|</span>
+                                  <button
+                                    onClick={() => handleDownloadPdf(user, declaration)}
+                                    disabled={false}
+                                    className="flex items-center space-x-1 text-green-600 hover:text-green-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Download Declaration PDF"
+                                  >
+                                    <span>Download PDF</span>
+                                  </button> */}
+                                </>
+                              ) : (
+                                <span className="text-zinc-400">—</span>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -514,10 +586,11 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
           {/* Results Info */}
           {(selectedYear === "all" || filteredEntries.length !== departmentUsers.length) && (
             <div className="mt-4 text-sm text-zinc-600 text-center">
-              {selectedYear === "all" 
-                ? `Showing ${filteredEntries.length} entries from ${new Set(filteredEntries.map(e => e.user.user_id)).size} faculty members`
-                : `Showing ${filteredEntries.length} of ${departmentUsers.length} faculty members`
-              }
+              {selectedYear === "all"
+                ? `Showing ${filteredEntries.length} entries from ${
+                    new Set(filteredEntries.map((e) => e.user.user_id)).size
+                  } faculty members`
+                : `Showing ${filteredEntries.length} of ${departmentUsers.length} faculty members`}
             </div>
           )}
         </div>

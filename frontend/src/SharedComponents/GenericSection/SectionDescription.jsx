@@ -1,7 +1,7 @@
 import { useGenericSection } from "./GenericSectionContext"
 import { useState, useRef, useEffect } from "react";
 
-const MAX_LINES = 4;
+const MAX_LINES = 3;
 
 const SectionDescription = () => {
     const { section } = useGenericSection();
@@ -29,10 +29,10 @@ const SectionDescription = () => {
     }, [section.description]);
 
     return (
-        <div className="m-4 flex flex-col">
+        <div className="mx-4 mt-2 flex flex-col">
             <div
                 ref={textRef}
-                className={`transition-all duration-200 overflow-hidden ${expanded ? "" : "line-clamp-4"}`}
+                className={`text-md transition-all duration-200 overflow-hidden ${expanded ? "" : "line-clamp-4"}`}
                 style={
                     !expanded
                         ? { display: "-webkit-box", WebkitLineClamp: MAX_LINES, WebkitBoxOrient: "vertical" }

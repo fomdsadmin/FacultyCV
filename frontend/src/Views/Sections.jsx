@@ -275,14 +275,18 @@ const Sections = ({ getCognitoUser, userInfo }) => {
         ) : (
           <>
             {openNewSection ? (
-              <NewSection onBack={handleBackFromNewSection} getDataSections={fetchAllDataSections} sections={allDataSections} />
+              <NewSection
+                onBack={handleBackFromNewSection}
+                getDataSections={fetchAllDataSections}
+                sections={allDataSections}
+              />
             ) : activeSection === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Manage Faculty Sections</h1>
-                <button className="btn btn-info text-white m-4" onClick={handleAddNewSection}>
+                <h1 className="text-left mx-4  my-2 text-4xl font-bold text-zinc-600">Manage Faculty Sections</h1>
+                <button className="btn btn-info text-white mx-4 my-2" onClick={handleAddNewSection}>
                   Add New Section
                 </button>
-                <div className="m-4 flex">
+                <div className="mx-4 mb-3 mt-1 flex">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
                       type="text"
@@ -306,7 +310,8 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                   </label>
                 </div>
                 <SectionTabs filters={filters} activeFilter={activeTab} onSelect={handleTabSelect} />
-                {[...searchedSections].sort(sectionTitleSort).map((section) => (
+                <div className="mx-4">
+                  {[...searchedSections].sort(sectionTitleSort).map((section) => (
                     <WorkSection
                       onClick={handleManageClick}
                       onDataClick={handleManageDataClick}
@@ -317,7 +322,8 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                       info={section.info}
                       userInfo={userInfo}
                     />
-                ))}
+                  ))}
+                </div>
               </div>
             ) : (
               <>

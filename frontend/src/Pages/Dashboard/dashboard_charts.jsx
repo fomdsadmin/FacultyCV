@@ -1,13 +1,35 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { getAllSections, getUserCVData } from "../../graphql/graphqlHelpers";
-import { Chart as ChartJS } from "chart.js";
+import { 
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { WordCloudController, WordElement } from "chartjs-chart-wordcloud";
 import AnalyticsCard from "../../Components/AnalyticsCard.jsx";
 import GraphCarousel from "../../Components/GraphCarousel.jsx";
 
-// Register word cloud plugin if not already registered
-ChartJS.register(WordCloudController, WordElement, ChartDataLabels);
+// Register all Chart.js components including scales
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  WordCloudController,
+  WordElement,
+  ChartDataLabels
+);
 
 const Dashboard = ({ userInfo }) => {
   const [user, setUser] = useState(userInfo);
@@ -401,9 +423,21 @@ const Dashboard = ({ userInfo }) => {
       options: {
         responsive: false,
         maintainAspectRatio: false,
+        scales: {
+          // Explicitly disable scales for word cloud
+          x: {
+            display: false,
+            type: 'linear'
+          },
+          y: {
+            display: false,
+            type: 'linear'
+          }
+        },
         plugins: {
           tooltip: { enabled: false },
           datalabels: { display: false },
+          legend: { display: false }
         },
         layout: {
           padding: {

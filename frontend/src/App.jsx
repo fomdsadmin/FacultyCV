@@ -28,12 +28,9 @@ import ArchivedSections from "./Views/ArchivedSections.jsx";
 import DepartmentAdminMembers from "./Views/DepartmentAdminMembers.jsx";
 import DepartmentAdminDashboard from "./Views/DepartmentAdminDashboard.jsx";
 import DepartmentAdminTemplates from "./Views/DepartmentAdminTemplates.jsx";
-import DepartmentAdminGenerateCV from "./Views/DepartmentAdminGenerateCV.jsx";
-import DepartmentAdminReporting from "Views/DepartmentAdminReporting";
-import AdminGenerateCV from "./Views/AdminGenerateCV.jsx";
+import DepartmentAdminAcademicSectionsReporting from "Views/DepartmentAdminAcademicSectionsReporting";
 import FacultyAdminHomePage from "./Views/FacultyAdminHomePage.jsx";
 import FacultyAdminUsers from "./Views/FacultyAdminUsers.jsx";
-import FacultyAdminGenerateCV from "./Views/FacultyAdminGenerateCV.jsx";
 import { NotificationProvider } from "./Contexts/NotificationContext.jsx";
 import FacultyHomePage from "./Pages/FacultyHomePage/FacultyHomePage";
 import { AppProvider, useApp } from "./Contexts/AppContext";
@@ -44,6 +41,8 @@ import KeycloakLogout from "Components/KeycloakLogout";
 import YourActivityPage from "./Pages/AuditLogPages/YourActivityPage.jsx";
 import GenerateCV from "Pages/GenerateCV/GenerateCV";
 import DepartmentAdminDeclarations from "Views/DepartmentAdminDeclarations.jsx";
+import DepartmentAdminAffiliations from "Views/DepartmentAdminAffiliations";
+import CVSearch from "Views/CVSearch.jsx";
 
 const AppContent = () => {
   const {
@@ -65,7 +64,7 @@ const AppContent = () => {
     getUserInfo,
     isVPPUser,
     hasVPPProfile,
-    isUserTerminated
+    isUserTerminated,
   } = useApp();
 
   return (
@@ -298,7 +297,9 @@ const AppContent = () => {
             {/* Other routes - no restrictions for approved users */}
             <Route path="/faculty/home/affiliations" element={<FacultyHomePage tab="affiliations" />} />
             <Route path="/faculty/home/employment" element={<FacultyHomePage tab="employment" />} />
+            <Route path="/faculty/home/employment/:sectionTitle" element={<FacultyHomePage tab="employment" />} />
             <Route path="/faculty/home/education" element={<FacultyHomePage tab="education" />} />
+            <Route path="/faculty/home/education/:sectionTitle" element={<FacultyHomePage tab="education" />} />
             <Route
               path="/support"
               element={
@@ -349,7 +350,8 @@ const AppContent = () => {
               path="/faculty/delegates"
               element={<FacultyDelegates userInfo={userInfo} getCognitoUser={getCognitoUser} />}
             />
-            <Route path="/archive" element={<Archive userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
+            <Route path="/faculty/archive" element={<Archive userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
+            <Route path="/faculty/cv-search" element={<CVSearch userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
             <Route
               path="/assistant/academic-work"
               element={
@@ -472,16 +474,11 @@ const AppContent = () => {
                 />
               }
             />
-            <Route
-              path="/department-admin/generate"
-              element={
-                <GenerateCV getCognitoUser={getCognitoUser} />
-              }
-            />
+            <Route path="/department-admin/generate" element={<GenerateCV getCognitoUser={getCognitoUser} />} />
             <Route
               path="/department-admin/reporting"
               element={
-                <DepartmentAdminReporting
+                <DepartmentAdminAcademicSectionsReporting
                   userInfo={userInfo}
                   getCognitoUser={getCognitoUser}
                   department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
@@ -490,7 +487,7 @@ const AppContent = () => {
             />
 
             <Route
-              path="/department-admin/declaration"
+              path="/department-admin/declarations"
               element={
                 <DepartmentAdminDeclarations
                   userInfo={userInfo}
@@ -500,6 +497,16 @@ const AppContent = () => {
               }
             />
 
+            <Route
+              path="/department-admin/affiliations"
+              element={
+                <DepartmentAdminAffiliations
+                  userInfo={userInfo}
+                  getCognitoUser={getCognitoUser}
+                  department={userInfo && userInfo.role ? userInfo.role.split("-")[1] : ""}
+                />
+              }
+            />
 
             {/* Faculty Admin Routes */}
             <Route
@@ -540,7 +547,6 @@ const AppContent = () => {
   );
 };
 
-
 const App = () => {
   // Use AppProvider and NotificationProvider as usual
   // Wrap AppContent with AdminContextProvider only for admin roles
@@ -550,9 +556,7 @@ const App = () => {
     const isAdmin =
       userInfo &&
       typeof userInfo.role === "string" &&
-      (userInfo.role === "Admin" ||
-        userInfo.role.startsWith("Admin-") ||
-        userInfo.role.startsWith("FacultyAdmin-"));
+      (userInfo.role === "Admin" || userInfo.role.startsWith("Admin-") || userInfo.role.startsWith("FacultyAdmin-"));
     const role = userInfo.role;
     if (isAdmin) {
       return (
