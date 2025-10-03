@@ -53,8 +53,6 @@ const CVGenerationComponent = ({
 
         const currentKey = getGenericKey(userInfo, currentTemplateRef.current, optionalKey);
 
-        console.log("JJFILTER KEYS: ", backendKey, getPdfKey(currentKey))
-
         const doesPdfHaveError = await checkPdfHasError(backendKey.replace("pdf/", "").replace(".pdf", ""));
 
         if (doesPdfHaveError) {

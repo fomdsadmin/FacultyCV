@@ -18,7 +18,6 @@ const GenerateButton = ({
     };
 
     const getGenerateButtonText = () => {
-        console.log("JJFilter generating;", customGenerating)
         if (customGenerating) {
             
             if (!pdfComplete && !docxComplete) {

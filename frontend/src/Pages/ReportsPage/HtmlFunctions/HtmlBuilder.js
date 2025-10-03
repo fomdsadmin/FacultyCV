@@ -90,8 +90,6 @@ const sortSectionData = (sectionData, dataSectionId) => {
         const yearB = yearMatchB ? parseInt(yearMatchB[0]) : 0;
         const monthB = monthMatchB ? monthMatchB[0] : null;
 
-        console.log(`JJFILTER SORTING: ${yearA}, ${monthA} and ${yearB}, ${monthB}`)
-
         // Sort by year
         const yearComparison = yearA - yearB;
 
@@ -411,7 +409,6 @@ const buildTableAttributeGroup = (attributeGroups, attributeRenameMap) => {
 
     for (const attributeGroup of attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID)) {
         const title = attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID ? attributeRenameMap[attributeGroup.title] || attributeGroup.title : '~';
-        console.log("JJFILTER: attribute: ", attributeGroup);
         // Create the cell object in the format cellRowBuilder expects
         const cellObject = {
             textOptions: [textOptions(title, true, 11)], // text, bold=true, size='small'

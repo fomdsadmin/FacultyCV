@@ -1,0 +1,565 @@
+import { HIDDEN_ATTRIBUTE_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
+import { getAllSections } from "graphql/graphqlHelpers";
+import { getUserCVData } from "graphql/graphqlHelpers";
+import { HIDDEN_GROUP_ID } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
+
+let userCvDataMap = {}
+let sectionsMap = {};
+let template = {};
+let sortAscending;
+let userInfo;
+
+
+// Helper function to get CV data for a section
+const getUserCvDataMap = (dataSectionId) => {
+    return userCvDataMap[dataSectionId] || [];
+};
+
+const filterDateRanges = (sectionData, dataSectionId) => {
+
+    const DO_NOT_FILTER_SECTIONS = [
+        '7a. Leaves of Absence',
+        '6[a-d]. Employment Record',
+        '5c. Continuing Education or Training',
+        '5d. Continuing Medical Education',
+        '5e. Professional Qualifications, Certifications and Licenses',
+        '5b. Dissertations',
+        '5a. Post-Secondary Education'
+    ]
+
+    const startYear = Number(template.start_year);
+    const endYear = Number(template.end_year);
+
+    if (startYear === 0 || endYear === 0) {
+        return sectionData;
+    }
+
+    const section = sectionsMap[dataSectionId];
+
+    if (DO_NOT_FILTER_SECTIONS.includes(section.title)) {
+        return sectionData;
+    }
+
+    if (!section) {
+        console.warn(`Section not found for dataSectionId: ${dataSectionId}`);
+        return sectionData;
+    }
+
+    let dateAttribute = null;
+
+    if (sectionData.length !== 0) {
+        if (sectionData[0]["data_details"]["dates"]) {
+            dateAttribute = "dates";
+        } else if (sectionData[0]["data_details"]["end_date"]) {
+            dateAttribute = "end_date";
+        }
+    }
+
+    if (dateAttribute === null) {
+        return sectionData;
+    }
+
+    return sectionData.filter((data) => {
+        const cleaned = data["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const yearMatch = cleaned.match(/\d+/);
+
+        const year = yearMatch ? parseInt(yearMatch[0]) : null;
+
+        if (year === null) {
+            return true;
+        }
+
+        return year >= startYear && year <= endYear;
+    });
+};
+
+const sortSectionData = (sectionData, dataSectionId) => {
+    // Find the section to get the attribute mapping
+    const section = sectionsMap[dataSectionId];
+    if (!section) {
+        console.warn(`Section not found for dataSectionId: ${dataSectionId}`);
+        return sectionData;
+    }
+
+    let dateAttribute = null;
+
+    if (sectionData.length !== 0) {
+        if (sectionData[0]["data_details"]["dates"]) {
+            dateAttribute = "dates";
+        } else if (sectionData[0]["data_details"]["end_date"]) {
+            dateAttribute = "end_date";
+        }
+    }
+
+    if (dateAttribute === null) {
+        return sectionData;
+    }
+
+    return sectionData.sort((a, b) => {
+        const cleanedA = a["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const cleanedB = b["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+        const monthMatchA = cleanedA.match(/[A-Za-z]+/);
+        const yearMatchA = cleanedA.match(/\d+/);
+        const monthMatchB = cleanedB.match(/[A-Za-z]+/);
+        const yearMatchB = cleanedB.match(/\d+/);
+
+        // Handle null matches with fallbacks
+        const yearA = yearMatchA ? parseInt(yearMatchA[0]) : 0;
+        const monthA = monthMatchA ? monthMatchA[0] : null;
+        const yearB = yearMatchB ? parseInt(yearMatchB[0]) : 0;
+        const monthB = monthMatchB ? monthMatchB[0] : null;
+
+        // Sort by year
+        const yearComparison = yearA - yearB;
+
+        if (yearComparison === 0 && monthA && monthB) {
+            // Convert month names to numbers for comparison
+            const monthToNumber = {
+                'january': 1, 'jan': 1,
+                'february': 2, 'feb': 2,
+                'march': 3, 'mar': 3,
+                'april': 4, 'apr': 4,
+                'may': 5,
+                'june': 6, 'jun': 6,
+                'july': 7, 'jul': 7,
+                'august': 8, 'aug': 8,
+                'september': 9, 'sep': 9, 'sept': 9,
+                'october': 10, 'oct': 10,
+                'november': 11, 'nov': 11,
+                'december': 12, 'dec': 12
+            };
+
+            const monthNumA = monthToNumber[monthA.toLowerCase()] || 0;
+            const monthNumB = monthToNumber[monthB.toLowerCase()] || 0;
+
+            const monthComparison = monthNumA - monthNumB;
+
+            // Apply ascending/descending order
+            return sortAscending ? monthComparison : -monthComparison;
+        }
+
+        // Apply ascending/descending order based on sortAscending
+        return sortAscending ? yearComparison : -yearComparison;
+    });
+};
+
+const buildGroupJson = async (group) => {
+    let groupJson = {}
+
+    groupJson["title"] = group.title;
+    groupJson["tables"] = [];
+    for (const preparedSection of group.prepared_sections) {
+        groupJson["tables"].push(...buildPreparedSection(preparedSection, preparedSection.data_section_id));
+    }
+
+    return groupJson;
+};
+
+const buildPreparedSection = (preparedSection, dataSectionId) => {
+    const table = {};
+    console.log(preparedSection);
+
+    // get table sub sections
+    if (preparedSection.sub_section_settings && preparedSection.sub_section_settings.sub_sections.length > 0) {
+
+        const tablesToReturn = buildSubSections(preparedSection);
+
+        if (preparedSection.sub_section_settings.display_section_title) {
+            const titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
+
+            tablesToReturn.unshift({
+                justHeader: true,
+                noPadding: true,
+                columns: [
+                    {
+                        headerName: titleToDisplay,
+                        justHeader: true,
+                    }
+                ],
+                rows: []
+            });
+        }
+
+        return tablesToReturn;
+    }
+
+    table["columns"] = buildTableSectionColumns(preparedSection);
+
+    // get table sub header
+    if (!preparedSection.is_sub_section || (preparedSection.is_sub_section && preparedSection.show_header)) {
+        let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
+
+        if (preparedSection.show_row_count) {
+            let sectionData = getUserCvDataMap(preparedSection.data_section_id);
+            sectionData = filterDateRanges(sectionData, preparedSection.data_section_id);
+            const rowCount = sectionData.length;
+            titleToDisplay += ` (${rowCount})`
+        }
+
+        table["columns"] = [{
+            headerName: titleToDisplay,
+            children: table["columns"],
+        }]
+    }
+
+    table["hide_column_header"] = preparedSection.merge_visible_attributes;
+
+    // get table data entries data
+    table["rows"] = buildDataEntries(preparedSection, dataSectionId);
+
+    // get table notes data
+    table["note_sections"] = buildNotes(preparedSection);
+
+    return [table];
+}
+
+const buildNotes = (preparedSection) => {
+    if (!preparedSection.note_settings || preparedSection.note_settings.length === 0) {
+        return [];
+    }
+
+    const dataSectionId = preparedSection.data_section_id;
+    const sectionData = getUserCvDataMap(dataSectionId);
+    const filteredSectionData = filterDateRanges(sectionData, dataSectionId);
+    const section = sectionsMap[dataSectionId];
+    const sectionAttributes = JSON.parse(section.attributes);
+
+    if (filteredSectionData.length === 0) {
+        return [];
+    }
+
+    const noteSections = [];
+    const attributeRenameMap = preparedSection.attribute_rename_map || {};
+    preparedSection.note_settings.forEach(noteSetting => {
+        const noteSection = {};
+
+        const attributeToAssociateWithNote = noteSetting.attribute_to_associate_note;
+
+        noteSection["notes"] = [];
+        filteredSectionData.forEach(data => {
+            const attributeKey = sectionAttributes[noteSetting.attribute];
+            const noteValueToShow = data.data_details[attributeKey];
+
+            const associationKey = sectionAttributes[attributeToAssociateWithNote];
+            const associationValue = data.data_details[associationKey];
+
+            if (!noteValueToShow || String(noteValueToShow).trim() === '') {
+                return;
+            }
+
+            // Filter out highlighted notes that dont belong to section
+            if (preparedSection.attribute_filter_value) {
+                if (data.data_details[sectionAttributes[preparedSection.section_by_attribute]] !== preparedSection.attribute_filter_value) {
+                    return;
+                }
+            }
+
+            if (attributeToAssociateWithNote && attributeToAssociateWithNote.trim() !== '') {
+                // Get the association value
+                noteSection["notes"].push({
+                    key: associationValue,
+                    value: noteValueToShow
+                });
+            }
+        });
+
+        noteSection["title"] = attributeRenameMap[noteSetting.attribute] || noteSetting.attribute;
+        noteSections.push(noteSection);
+    });
+
+    return noteSections;
+};
+
+const buildDataEntries = (preparedSection, dataSectionId) => {
+    const PUBLICATION_SECTION_ID = "1c23b9a0-b6b5-40b8-a4aa-f822d0567f09";
+    const RESEARCH_OR_EQUIVALENT_GRANTS_AND_CONTRACTS_ID = "26939d15-7ef9-46f6-9b49-22cf95074e88";
+
+
+    const attributeGroups = preparedSection.attribute_groups;
+    const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
+    const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
+
+    // Get section data using helper function
+    let sectionData = getUserCvDataMap(dataSectionId);
+
+    // Apply date range filtering
+    sectionData = filterDateRanges(sectionData, dataSectionId);
+
+    // Apply sorting
+    sectionData = sortSectionData(sectionData, dataSectionId);
+
+    // new logic
+    let rowData = sectionData.map((data, rowCount) => {
+        const section = sectionsMap[dataSectionId];
+
+        if (!section || !data || !data.data_details) {
+            console.warn('Missing section or data:', { section, data, dataSectionId });
+            return null;
+        }
+
+        const sectionAttributes = JSON.parse(section.attributes);
+
+        // Filter out data that does not belong to this section
+
+        if (String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]) !== String(preparedSection.attribute_filter_value)) {
+            return null;
+        }
+
+        const rowDict = {};
+
+        rowDict["id"] = rowCount;
+
+        if (!preparedSection.merge_visible_attributes) {
+            attributes.forEach((attribute) => {
+                rowDict[attribute] = data.data_details[sectionAttributes[attribute]] || '';
+            });
+        } else {
+            rowDict["merged_data"] = attributes
+                .map(attribute => {
+                    const key = sectionAttributes[attribute];
+                    const raw = data.data_details?.[key];
+                    return raw == null ? '' : String(raw).replace(/\u00A0/g, ' ');
+                })
+                .filter(data => data !== "")
+                .join(', ');
+        }
+
+        if (preparedSection.include_row_number_column) {
+            rowDict["Row #"] = rowCount + 1;
+        }
+
+        return rowDict;
+    })
+    rowData = rowData.filter(row => row !== null);
+    return rowData;
+}
+
+const buildTableSectionUnmergedColumns = (preparedSection) => {
+    const columns = [];
+
+    const attributeGroups = preparedSection.attribute_groups;
+    const shownAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
+    const attributeRenameMap = preparedSection.attribute_rename_map;
+
+    const customAttributeGroups = shownAttributeGroups.filter((attributeGroup) => attributeGroup.id !== SHOWN_ATTRIBUTE_GROUP_ID);
+    const attributesWithNoGroup = shownAttributeGroups
+        .filter((attributeGroup) => attributeGroup.id === SHOWN_ATTRIBUTE_GROUP_ID)
+        .flatMap((attributeGroup) => attributeGroup.attributes);
+
+    if (preparedSection.include_row_number_column) {
+        attributesWithNoGroup.unshift("Row #");
+    }
+
+    const attributesWithNoGroupColumns = attributesWithNoGroup.map((attribute) => ({
+        headerName: attributeRenameMap[attribute] || attribute,
+        field: attribute
+    }));
+
+    const attributesWithGroupColumns = customAttributeGroups.map((attributeGroup) => ({
+        headerName: attributeRenameMap[attributeGroup.title] || attributeGroup.title,
+        children: attributeGroup.attributes.map((attribute) => ({
+            headerName: attributeRenameMap[attribute] || attribute,
+            field: attribute
+        }))
+    }));
+
+    columns.push(...attributesWithNoGroupColumns);
+    columns.push(...attributesWithGroupColumns);
+
+    return columns;
+}
+
+const buildTableSectionMergedColumns = (preparedSection) => {
+    const columns = [];
+
+    columns.push({
+        headerName: "",
+        field: "merged_data"
+    })
+
+    if (preparedSection.include_row_number_column) {
+        columns.unshift({
+            headerName: "",
+            field: "Row #"
+        })
+    }
+
+    return columns;
+}
+
+const buildTableSectionColumns = (preparedSection) => {
+    if (!preparedSection.merge_visible_attributes) {
+        return buildTableSectionUnmergedColumns(preparedSection);
+    } else {
+        return buildTableSectionMergedColumns(preparedSection);
+    }
+}
+
+const buildSubSections = (preparedSectionWithSubSections) => {
+    let tables = [];
+
+    const mappedSections = preparedSectionWithSubSections
+        .sub_section_settings
+        .sub_sections
+        .map((subSection) => {
+
+            const updatedAttributeGroups = preparedSectionWithSubSections.attribute_groups.map((attributeGroup) => {
+                const attributesToHide = subSection.hidden_attributes_list || [];
+
+                let updatedAttributeGroup = attributeGroup;
+
+                if (attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID) {
+                    updatedAttributeGroup = {
+                        ...attributeGroup,
+                        attributes: attributeGroup.attributes.filter((attribute) => !attributesToHide.includes(attribute))
+                    }
+                }
+                return updatedAttributeGroup;
+            })
+
+            const section = {
+                ...preparedSectionWithSubSections,
+                sub_section_settings: null,
+                renamed_section_title: subSection.renamed_title || subSection.original_title,
+                attribute_filter_value: subSection.original_title,
+                attribute_rename_map: subSection.attributes_rename_dict,
+                show_header: preparedSectionWithSubSections.sub_section_settings.display_titles,
+                attribute_groups: updatedAttributeGroups,
+                is_sub_section: true
+            }
+            console.log("section: ", section);
+            return section;
+        })
+
+    console.log("mappedSections: ", mappedSections);
+
+    for (const mappedSection of mappedSections) {
+        tables.push(...buildPreparedSection(mappedSection, mappedSection.data_section_id));
+    }
+
+    if (!preparedSectionWithSubSections.sub_section_settings.display_titles) {
+        tables = tables.map((table) => ({
+            ...table,
+            noPadding: true
+        }))
+    }
+
+    return tables;
+}
+
+export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
+    const userProfiles = [];
+    const userInfoArray = Array.isArray(userInfoInput) ? userInfoInput : [userInfoInput];
+
+    template = templateWithEndStartDate;
+    sortAscending = JSON.parse(template.template_structure).sort_ascending;
+
+    // Get all sections data once (shared for all users)
+    const allSections = await getAllSections();
+    const allSectionIds = allSections.map((section) => section.data_section_id);
+
+    // Create sectionsMap with data_section_id as key and section as value
+    sectionsMap = {};
+    allSections.forEach((section) => {
+        sectionsMap[section.data_section_id] = section;
+    });
+
+    // Process each user
+    for (let userIndex = 0; userIndex < userInfoArray.length; userIndex++) {
+        let userProfile = {};
+        const currentUserInfo = userInfoArray[userIndex];
+        console.log(`Building CV for user ${userIndex + 1}/${userInfoArray.length}:`, currentUserInfo.first_name, currentUserInfo.last_name);
+
+        // Get user-specific CV data
+        const unparsedData = await getUserCVData(currentUserInfo.user_id, allSectionIds);
+
+        // Parse user data and create userCvDataMap for this user
+        const userCvData = unparsedData.map((data) => {
+            let dataDetails;
+            try {
+                dataDetails = JSON.parse(data.data_details);
+            } catch (e) {
+                dataDetails = data.data_details;
+            }
+            return { ...data, data_details: dataDetails };
+        });
+
+        // Create userCvDataMap with data_section_id as key and array of CV data as value
+        userCvDataMap = {};
+        userCvData.forEach((cvData) => {
+            const sectionId = cvData.data_section_id;
+            if (!userCvDataMap[sectionId]) {
+                userCvDataMap[sectionId] = [];
+            }
+            userCvDataMap[sectionId].push(cvData);
+        });
+
+        // Build user profile section
+        userProfile = buildUserProfile(currentUserInfo);
+
+        // Parse the template structure and process each group
+        const parsedGroups = JSON.parse(template.template_structure).groups;
+        userProfile["groups"] = [];
+        for (const group of parsedGroups || []) {
+            if (group.id === HIDDEN_GROUP_ID) {
+                continue; // Skip hidden groups
+            }
+
+            userProfile["groups"].push(await buildGroupJson(group))
+        }
+
+        console.log(`Completed CV for user ${userIndex + 1}/${userInfoArray.length}`);
+        userProfiles.push(userProfile);
+    }
+
+
+    console.log(userProfiles);
+    return userProfiles;
+};
+
+const buildUserProfile = (userInfoParam) => {
+    // Get current date in format "Apr 11, 2025"
+    userInfo = userInfoParam;
+
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+
+    // Parse joined timestamp to get rank start date
+    const joinedDate = new Date(userInfo.joined_timestamp);
+    const rankSinceDate = joinedDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: '2-digit'
+    });
+
+    // Extract middle name/initial from preferred_name
+    const middleName = userInfo.preferred_name || "";
+
+    const startYear = template.start_year || 'All';
+    const endYear = template.end_year || 'Present';
+    const sortOrder = sortAscending ? 'Ascending' : 'Descending';
+    const dateRangeText = `(${startYear} - ${endYear}, ${sortOrder})`;
+
+    const userProfile = {
+        current_date: currentDate,
+        joined_date: joinedDate,
+        middle_name: middleName,
+        start_year: startYear,
+        end_year: endYear,
+        sort_order: sortOrder,
+        date_range_text: dateRangeText,
+        template_title: template.title,
+        last_name: userInfo.last_name,
+        first_name: userInfo.first_name,
+        primary_department: userInfo.primary_department,
+        primary_faculty: userInfo.primary_faculty,
+        rank: userInfo.rank,
+        rankSinceDate: rankSinceDate
+    }
+
+    return userProfile;
+};
