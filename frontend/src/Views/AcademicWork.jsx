@@ -323,7 +323,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                     <input
                       type="text"
                       className="grow"
-                      placeholder="Search CV sections by title, category, or description..."
+                      placeholder="Search Academic Works descriptions only. CV data can be searched in the ‘Search CV’ section."
                       value={searchTerm}
                       onChange={handleSearchChange}
                     />
