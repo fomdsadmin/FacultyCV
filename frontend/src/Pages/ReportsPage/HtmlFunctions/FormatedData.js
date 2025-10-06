@@ -156,9 +156,167 @@ const buildGroupJson = async (group) => {
     return groupJson;
 };
 
+const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
+
+    const buildNewStudentObject = (year, duration, totalHours, studentLevel) => {
+        return {
+            year,
+            duration,
+            total_hours: totalHours,
+            student_level: studentLevel,
+            number_of_students: 1
+        }
+    }
+
+    const table = {};
+
+    const section = sectionsMap[dataSectionId];
+
+    const sectionData = getUserCvDataMap(preparedSection.data_section_id);
+
+    function aggregateStudentData(flatData) {
+        const aggregated = {};
+
+        flatData.forEach(({ duration, number_of_students, year, total_hours, student_level }) => {
+            const key = `${year}-${student_level}`;
+
+            if (!aggregated[key]) {
+                aggregated[key] = {
+                    year,
+                    student_level,
+                    totalStudents: 0,
+                    totalHours: 0,
+                    durations: new Set()
+                };
+            }
+
+            aggregated[key].totalStudents += Number(number_of_students);
+            aggregated[key].totalHours += Number(total_hours);
+            if (duration) {
+                aggregated[key].durations.add(duration);
+            }
+        });
+
+        // convert durations back to array/string
+        return Object.values(aggregated).map((item) => ({
+            ...item,
+            durations: Array.from(item.durations).join(", ")
+        }));
+    }
+
+
+    const deaggregatedStudentDataMap = {};
+    sectionData.forEach((data, index) => {
+
+        const dateAttribute = "dates";
+        const cleanedDates = data["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const yearMatch = cleanedDates.match(/\d+/);
+        const year = yearMatch ? yearMatch[0] : null;
+
+        if (data.data_details["student_name(s)"] && data.data_details["student_name(s)"].length > 1) {
+
+            const studentNames = data.data_details["student_name(s)"]
+                .split(",")
+                .map((name) => name.trim());
+
+            studentNames.forEach((name) => {
+
+                if (!deaggregatedStudentDataMap[name]) {
+                    deaggregatedStudentDataMap[name] = {};
+                }
+
+                if (!deaggregatedStudentDataMap[name][year]) {
+                    deaggregatedStudentDataMap[name][year] = {};
+                }
+
+                deaggregatedStudentDataMap[name][year] = buildNewStudentObject(
+                    year,
+                    data.data_details["duration_(eg:_8_weeks)"],
+                    data.data_details["total_hours"],
+                    data.data_details["student_level"],
+                )
+            });
+        } else {
+
+            if (!deaggregatedStudentDataMap[index]) {
+                deaggregatedStudentDataMap[index] = {};
+            }
+
+            if (!deaggregatedStudentDataMap[index][year]) {
+                deaggregatedStudentDataMap[index][year] = {};
+            }
+
+            deaggregatedStudentDataMap[index][year] = buildNewStudentObject(
+                year,
+                data.data_details["duration_(eg:_8_weeks)"],
+                data.data_details["total_hours"],
+                data.data_details["student_level"],
+            )
+        }
+
+    });
+
+    const yearData = Object.entries(deaggregatedStudentDataMap).flatMap(
+        ([name, years]) =>
+            Object.values(years).map((studentObj) => ({
+                name,
+                ...studentObj
+            }))
+    );
+
+    const sortedAggregatedData = aggregateStudentData(yearData).sort((a, b) => {
+        const levelA = String(a.student_level || '').toLowerCase();
+        const levelB = String(b.student_level || '').toLowerCase();
+        return levelA.localeCompare(levelB);
+    });
+
+    console.log("JJFILTER aggregateStudentData: ", sortedAggregatedData)
+
+    const sectionAttributes = JSON.parse(section.attributes);
+    console.log("JJFILTER section attributes: ", sectionAttributes);
+
+    table["rows"] = sortedAggregatedData.map((data) => ({
+        description: "",
+        "Duration (eg: 8 weeks)": data.durations,
+        "Number of Students": data.totalStudents,
+        "Total Hours": data.totalHours,
+        "Student Level": data.student_level,
+        Dates: data.year
+    }));
+
+    table["columns"] = buildTableSectionColumns(preparedSection);
+    table["columns"].unshift({
+        headerName: "description",
+        field: "description"
+    })
+
+    let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
+
+    table["columns"] = [{
+        headerName: titleToDisplay,
+        children: table["columns"],
+    }]
+
+    table["rows"].unshift({
+        description: "Clinical Teachings",
+        "Duration (eg: 8 weeks)": "",
+        "Number of Students": "",
+        "Total Hours": "",
+        "Student Level": "",
+        Dates: ""
+    })
+
+    console.log("JJFILTER columns: ", table);
+    return table;
+}
+
 const buildPreparedSection = (preparedSection, dataSectionId) => {
     const table = {};
     console.log(preparedSection);
+
+    if (preparedSection.title === "8b.3. Clinical Teaching") {
+        return [buildClinicalTeachingSection(preparedSection, dataSectionId)];
+    }
 
     // get table sub sections
     if (preparedSection.sub_section_settings && preparedSection.sub_section_settings.sub_sections.length > 0) {
