@@ -14,49 +14,126 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLE_A = "8b.3. Clinical Teaching"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
+    Returns two DataFrames: a (Post-Secondary Education) and b (Dissertations with non-empty thesis titles)
     """
+    # Make copies for processing different sections
+    a = df.copy()
+    
     # Ensure relevant columns are string type before using .str methods
-    for col in ["PhysicianID", "Details", "Type", "TypeOther", "Notes"]:
-        if col in df.columns:
-            df[col] = df[col].astype(str)
+    for col in ["user_id", "category_name", "duration", "description", "total_hours" ]:
+        if col in a.columns:
+            a[col] = a[col].astype(str)
 
-    # df["user_id"] = df["PhysicianID"].fillna('').str.strip()
+    # Helper function to safely clean string columns
+    def safe_string_clean(series):
+        """Safely clean a pandas series, handling NaN, None, and string representations"""
+        return series.fillna('').astype(str).replace(['nan', 'None', 'null', 'NULL'], '').str.strip()
+    
+    # Process dataframe A (Post-Secondary Education)
+    a["user_id"] = safe_string_clean(a["user_id"])
+    a["category_name"] = safe_string_clean(a["category_name"]) if "category_name" in a.columns else ""
+    a["duration"] = safe_string_clean(a["duration"]) if "duration" in a.columns else ""
+    a["total_hours"] = safe_string_clean(a["total_hours"]) if "total_hours" in a.columns else ""
+    a["brief_description"] = safe_string_clean(a["description"]) if "description" in a.columns else ""
+    
+    # Map category_id values to type column with custom mapping
+    def map_category_to_type(row):
+        category_id = str(row.get('category_name', '')).strip()
+        
+        # Define mapping for category_id values
+        category_mapping = {
+            'Clinical Clerkship': 'Year 3 (Clinical Clerkship)',
+            'Postgraduate': 'Postgraduates', 
+            'Fellowship': 'Fellowship',
+            'Medical students': 'Medical students',
+            'Other': 'Other',
+        }
+        
+        # Get the mapped value or use category_other as fallback
+        if category_id in category_mapping:
+            mapped_value = category_mapping[category_id]
+        
+        # Return in the format "i. Other (mapped_value)" for non-4025 entries
+        if mapped_value:
+            return f"i. Other ({mapped_value})"
+        else:
+            return "i. Other"
+
+    
+    # Apply the mapping logic to create type and title columns
+    a["type_of_teaching"] = a.apply(map_category_to_type, axis=1)
+    
+    # start_date will be taken from year ('2013' , 'Present' (Should map to 'Current')) + month ('01 (should map to 'January')',  'id' (skip))
+    def format_date(year):
+        """
+        Format year and month into a readable date string.
+        Returns empty string if year is 'id' (skip), NaN, null, or empty.
+        """
+        # Handle year - check for NaN, None, empty, or 'id'
+        if pd.isna(year) or year is None or str(year).strip().lower() in ['', 'nan', 'none', 'null', 'id']:
+            return ""
+        
+        year_str = str(year).strip()
+        if year_str.lower() == 'present':
+            year_str = 'Current'
+            return year_str
+        
+
+    # Process start_date and end_date for dataframe A
+    if 'year' in a.columns:
+        a['start_date'] = a.apply(lambda row: format_date(row['year']), axis=1)
+    elif 'start_date' not in a.columns:
+        a['start_date'] = ""
+        
+    if 'end_year' in a.columns:
+        a['end_date'] = a.apply(lambda row: format_date(row['end_year']), axis=1)
+    elif 'end_date' not in a.columns:
+        a['end_date'] = ""
+
+    # Ensure start_date and end_date are strings for dataframe A
+    a['start_date'] = a['start_date'].astype(str).fillna('').str.strip()
+    a['end_date'] = a['end_date'].astype(str).fillna('').str.strip()
 
     # Combine start and end dates into a single 'dates' column
     # Only show ranges when both dates exist, avoid empty dashes
-    # def combine_dates(row):
-    #     start = row["start_date"].strip()
-    #     end = row["end_date"].strip()
+    def combine_dates(row):
+        # Safely get start and end dates, handling NaN/None
+        start = str(row["start_date"]) if pd.notna(row["start_date"]) else ""
+        end = str(row["end_date"]) if pd.notna(row["end_date"]) else ""
+        
+        # Clean the strings
+        start = start.strip() if start not in ['nan', 'None', 'null', 'NULL'] else ""
+        end = end.strip() if end not in ['nan', 'None', 'null', 'NULL'] else ""
 
-    #     if start and end:
-    #         return f"{start} - {end}"
-    #     elif start:
-    #         return start
-    #     elif end:
-    #         return end
-    #     else:
-    #         return ""
-    # df["dates"] = df.apply(combine_dates, axis=1)
+        if start and end:
+            return f"{start} - {end}"
+        elif start:
+            return start
+        elif end:
+            return end
+        else:
+            return ""
+    a["dates"] = a.apply(combine_dates, axis=1)
+    
+    a = a[["user_id", "type_of_teaching", "dates", "brief_description", "duration", "total_hours"]]
 
-    # Keep only the cleaned columns
-    # df = df[["user_id", "details", "type_of_leave", "highlight_-_notes", "dates"]]
-
-    # Replace NaN with empty string for all columns
-    # df = df.replace({np.nan: ''})
-    return df
+    # Comprehensive replacement of NaN, None, and string representations with empty strings
+    a = a.fillna('').replace(['nan', 'None', 'null', 'NULL', np.nan, None], '')
+    
+    return a
 
 
-def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
+def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
     """
     Store the cleaned DataFrame into the database.
     Returns updated rows_processed and rows_added_to_db.
     """
-    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
+    # Query for the data_section_id where title contains section_title (case insensitive)
     try:
         cursor.execute(
             """
@@ -64,13 +141,13 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             WHERE title = %s
             LIMIT 1
             """,
-            (SECTION_TITLE,)
+            (section_title,)
         )
         result = cursor.fetchone()
         if result:
             data_section_id = result[0]
         else:
-            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
+            errors.append(f"No data_section_id found for '{section_title}'")
             data_section_id = None
     except Exception as e:
         errors.append(f"Error fetching data_section_id: {str(e)}")
@@ -84,7 +161,18 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
         row_dict = row.to_dict()
         # Remove user_id from data_details
         row_dict.pop('user_id', None)
-        data_details_JSON = json.dumps(row_dict)
+        
+        # Ensure all values are clean strings, not NaN or None
+        clean_row_dict = {}
+        for key, value in row_dict.items():
+            if pd.isna(value) or value is None:
+                clean_row_dict[key] = ""
+            elif str(value).lower() in ['nan', 'none', 'null']:
+                clean_row_dict[key] = ""
+            else:
+                clean_row_dict[key] = str(value).strip()
+        
+        data_details_JSON = json.dumps(clean_row_dict)
         try:
             cursor.execute(
                 """
@@ -208,7 +296,7 @@ def lambda_handler(event, context):
             }
 
         # Clean the DataFrame
-        df = cleanData(df)
+        dfA = cleanData(df)
         print("Data cleaned successfully.")
 
         # Connect to database
@@ -220,7 +308,8 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
+        rows_processed, rows_added_to_db = storeData(dfA, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_A)
+        # rows_processed, rows_added_to_db = storeData(dfB, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_B)
         print("Data stored successfully.")
         cursor.close()
         connection.close()

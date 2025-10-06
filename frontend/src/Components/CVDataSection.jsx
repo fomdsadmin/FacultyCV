@@ -6,6 +6,7 @@ import EditSectionModal from "./EditSectionModal";
 import AttributeModal from "./AttributeModal.jsx";
 import { getUserCVData, getAllUsers, getAllSectionCVData } from "../graphql/graphqlHelpers"; // updated import
 import { useApp } from "../Contexts/AppContext"; // To get userInfo
+import { useAdmin } from "../Contexts/AdminContext"; // To get all users list
 
 const CVDataSection = ({ section, onBack, getDataSections }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,10 +14,13 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
   const [isUpdateAttributeModalOpen, setIsUpdateAttributeModalOpen] = useState(false);
   const [isDeleteSectionModalOpen, setIsDeleteSectionModalOpen] = useState(false);
   const [dataRows, setDataRows] = useState([]);
+  const [allDataRows, setAllDataRows] = useState([]); // Store all data before filtering
   const [loading, setLoading] = useState(true);
   const [totalRows, setTotalRows] = useState(0); // Track total rows
+  const [selectedDepartment, setSelectedDepartment] = useState("all"); // Department filter state
 
   const { userInfo } = useApp();
+  const { allUsers } = useAdmin(); // Get all users from admin context
 
   const fetchAllUserCVData = async () => {
     let allRows = [];
@@ -44,13 +48,49 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
         };
       });
       
-      allRows = parsedRows; // All rows are already limited to 1000 by the server
+      allRows = parsedRows; // All rows are already limited to 2500 by the server
     } catch (error) {
       // skip user if error
       console.error("Error fetching CV data for section:", error);
     }
 
-    setDataRows(allRows);
+    setAllDataRows(allRows); // Store all data
+    filterDataByDepartment(allRows, selectedDepartment); // Apply current filter
+  };
+
+  // Function to filter data based on selected department
+  const filterDataByDepartment = (data, department) => {
+    if (department === "all") {
+      setDataRows(data);
+      return;
+    }
+
+    // Get user IDs for the selected department
+    const departmentUserIds = allUsers
+      .filter(user => user.primary_department === department)
+      .map(user => user.user_id);
+
+    // Filter data to only include rows from users in the selected department
+    const filteredData = data.filter(row => departmentUserIds.includes(row.user_id));
+    setDataRows(filteredData);
+  };
+
+  // Handle department filter change
+  const handleDepartmentChange = (event) => {
+    const newDepartment = event.target.value;
+    setSelectedDepartment(newDepartment);
+    filterDataByDepartment(allDataRows, newDepartment);
+  };
+
+  // Get unique departments from all users
+  const getDepartments = () => {
+    const departments = allUsers
+      .map(user => user.primary_department)
+      .filter(dept => dept && dept.trim() !== "")
+      .filter((dept, index, arr) => arr.indexOf(dept) === index)
+      .sort();
+    
+    return departments;
   };
 
   useEffect(() => {
@@ -58,6 +98,7 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
       setLoading(true);
       if (!section?.data_section_id) {
         setDataRows([]);
+        setAllDataRows([]);
         setLoading(false);
         return;
       }
@@ -65,11 +106,19 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
         await fetchAllUserCVData();
       } catch {
         setDataRows([]);
+        setAllDataRows([]);
       }
       setLoading(false);
     };
     fetchDataRows();
   }, [section?.data_section_id]);
+
+  // Re-filter when allUsers changes or selected department changes
+  useEffect(() => {
+    if (allDataRows.length > 0 && allUsers.length > 0) {
+      filterDataByDepartment(allDataRows, selectedDepartment);
+    }
+  }, [allUsers, selectedDepartment]);
 
   const handleBack = () => {
     onBack();
@@ -110,9 +159,25 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
         <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
       </div>
       <h2 className="mx-4 mt-4 text-left text-2xl text-zinc-600 flex">{section.data_type}</h2>
-      {/* delete section data button */}
-      <div className="m-4">
-        <button onClick={handleDeleteDataClick} className={`btn btn-primary p-4 leading-tight ${dataRows.length === 0 ? "btn-disabled" : "btn-primary "}`}>
+      {/* delete section data button and department filter */}
+      <div className="m-4 flex items-center gap-4">
+        {/* Department Filter Dropdown */}
+        <select 
+          value={selectedDepartment} 
+          onChange={handleDepartmentChange}
+          className="select select-bordered select-md"
+        >
+          <option value="all">All Departments</option>
+          {getDepartments().map((dept) => (
+            <option key={dept} value={dept}>
+              {dept}
+            </option>
+          ))}
+        </select>
+        <button 
+          onClick={handleDeleteDataClick} 
+          className={`btn btn-primary p-4 leading-tight ${dataRows.length === 0 ? "btn-disabled" : "btn-primary "}`}
+        >
           Delete Section Data
         </button>
       </div>
@@ -120,12 +185,13 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
       {/* Total rows */}
       <div className="m-4">
         <span className="font-semibold text-lg text-zinc-700">
-          Total Data Rows: {loading ? "Loading..." : totalRows}
+          Total Data Rows: {loading ? "Loading..." : `${dataRows.length} of ${totalRows}`}
+          {selectedDepartment !== "all" && ` (filtered by ${selectedDepartment})`}
         </span>
-        {(!loading && totalRows > 1000) && (
-          <span className="ml-2 text-zinc-500 text-sm">(showing first 1000 rows)</span>
+        {(!loading && totalRows > 2500) && (
+          <span className="ml-2 text-zinc-500 text-sm">(showing first 2500 rows)</span>
         )}
-        {(!loading && dataRows.length > 0 && totalRows <= 1000) && (
+        {(!loading && dataRows.length > 0 && totalRows <= 2500 && selectedDepartment === "all") && (
           <span className="ml-2 text-zinc-500 text-sm">(showing all {dataRows.length} rows)</span>
         )}
       </div>
@@ -200,8 +266,17 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
               setIsModalOpen={setIsDeleteSectionModalOpen}
               section={section}
               onBack={onBack}
-              getSectionData={fetchAllUserCVData}
-              totalRows={totalRows} // Pass actual total rows count from server
+              getSectionData={() => {
+                fetchAllUserCVData();
+              }}
+              totalRows={selectedDepartment === "all" ? totalRows : dataRows.length}
+              selectedDepartment={selectedDepartment}
+              departmentUserIds={selectedDepartment !== "all" ? 
+                allUsers
+                  .filter(user => user.primary_department === selectedDepartment)
+                  .map(user => user.user_id) : 
+                null
+              }
             />
           </div>
         </div>

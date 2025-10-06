@@ -5,6 +5,8 @@ import boto3
 import os
 import psycopg2
 import json
+import re
+import html
 from datetime import datetime
 from databaseConnect import get_connection
 
@@ -14,49 +16,99 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLE_A = "8a. Areas of Special Interest and Accomplishments"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
+    Returns two DataFrames: a (Post-Secondary Education) and b (Dissertations with non-empty thesis titles)
     """
+    # Make copies for processing different sections
+    a = df.copy()
+    
     # Ensure relevant columns are string type before using .str methods
-    for col in ["PhysicianID", "Details", "Type", "TypeOther", "Notes"]:
-        if col in df.columns:
-            df[col] = df[col].astype(str)
+    for col in ["user_id", "statement_of_teaching_philosophy", "teaching_strategies_and_practice", "teaching_perspective", "highlighted_teaching_contribution"]:
+        if col in a.columns:
+            a[col] = a[col].astype(str)
 
-    # df["user_id"] = df["PhysicianID"].fillna('').str.strip()
+    # Helper function to safely clean string columns and remove HTML tags
+    def safe_string_clean(series):
+        """Safely clean a pandas series, handling NaN, None, string representations, HTML tags, and HTML entities"""
+        def clean_html(text):
+            """Remove HTML tags and decode HTML entities from text"""
+            if pd.isna(text) or text is None:
+                return ''
+            text_str = str(text).strip()
+            if text_str.lower() in ['nan', 'none', 'null', '']:
+                return ''
+            
+            # First decode HTML entities (like &nbsp;, &rsquo;, &lsquo;, &mdash;, etc.)
+            try:
+                decoded_text = html.unescape(text_str)
+            except Exception:
+                decoded_text = text_str
+            
+            # Remove HTML tags using regex
+            clean_text = re.sub(r'<[^>]+>', '', decoded_text)
+            
+            # Clean up extra whitespace that might be left after tag removal
+            clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+            
+            # Handle any remaining HTML entities that might not be caught by html.unescape
+            # Convert common non-breaking spaces and other entities
+            clean_text = clean_text.replace('\xa0', ' ')  # Non-breaking space
+            clean_text = clean_text.replace('\u2019', "'")  # Right single quotation mark
+            clean_text = clean_text.replace('\u2018', "'")  # Left single quotation mark
+            clean_text = clean_text.replace('\u201c', '"')  # Left double quotation mark
+            clean_text = clean_text.replace('\u201d', '"')  # Right double quotation mark
+            clean_text = clean_text.replace('\u2013', '-')  # En dash
+            clean_text = clean_text.replace('\u2014', '-')  # Em dash
+            clean_text = clean_text.replace('\u2026', '...')  # Horizontal ellipsis
+            
+            # Final cleanup of any extra whitespace
+            clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+            
+            return clean_text
+        
+        return series.fillna('').astype(str).apply(clean_html)
+    
+    def process_user_id(x):
+        """Apply transformation to make user IDs unique - add 10000 to avoid conflicts"""
+        if pd.isna(x) or x == '' or str(x).strip() == '' or str(x) == 'nan':
+            return ""
+        try:
+            original_id = int(float(x))  # Handle cases like "123.0"
+            # Apply transformation to make unique - add 534234 to avoid conflicts with existing IDs
+            unique_id = original_id + 534234
+            return str(unique_id)
+        except (ValueError, TypeError):
+            return str(x).strip()  # If conversion fails, return as string
+    
+    # Process dataframe A (Post-Secondary Education)
+    a["user_id"] = a["user_id"].apply(process_user_id)
+    # Convert user_id to Int64 (nullable integer) to avoid float decimals while preserving NaN
+    a["user_id"] = a["user_id"].astype('Int64')
+    a["statement_of_teaching_philosophy"] = safe_string_clean(a["statement_of_teaching_philosophy"]) if "statement_of_teaching_philosophy" in a.columns else ""
+    a["teaching_strategies_and_practices"] = safe_string_clean(a["teaching_strategies_and_practice"]) if "teaching_strategies_and_practice" in a.columns else ""
+    a["brief_description_of_principal_courses_taught_at_UBC"] = safe_string_clean(a["teaching_perspective"]) if "teaching_perspective" in a.columns else ""
+    a["highlighted_teaching_contribution"] = safe_string_clean(a["highlighted_teaching_contribution"]) if "highlighted_teaching_contribution" in a.columns else ""
+    a["type"] = 'Areas of Special Interest and Accomplishment'
 
-    # Combine start and end dates into a single 'dates' column
-    # Only show ranges when both dates exist, avoid empty dashes
-    # def combine_dates(row):
-    #     start = row["start_date"].strip()
-    #     end = row["end_date"].strip()
+    
+    a = a[["user_id", "statement_of_teaching_philosophy", "teaching_strategies_and_practices", "brief_description_of_principal_courses_taught_at_UBC", "highlighted_teaching_contribution", "type"]]
 
-    #     if start and end:
-    #         return f"{start} - {end}"
-    #     elif start:
-    #         return start
-    #     elif end:
-    #         return end
-    #     else:
-    #         return ""
-    # df["dates"] = df.apply(combine_dates, axis=1)
-
-    # Keep only the cleaned columns
-    # df = df[["user_id", "details", "type_of_leave", "highlight_-_notes", "dates"]]
-
-    # Replace NaN with empty string for all columns
-    # df = df.replace({np.nan: ''})
-    return df
+    # Comprehensive replacement of NaN, None, and string representations with empty strings
+    a = a.fillna('').replace(['nan', 'None', 'null', 'NULL', np.nan, None], '')
+    
+    return a
 
 
-def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
+def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
     """
     Store the cleaned DataFrame into the database.
     Returns updated rows_processed and rows_added_to_db.
     """
-    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
+    # Query for the data_section_id where title contains section_title (case insensitive)
     try:
         cursor.execute(
             """
@@ -64,13 +116,13 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             WHERE title = %s
             LIMIT 1
             """,
-            (SECTION_TITLE,)
+            (section_title,)
         )
         result = cursor.fetchone()
         if result:
             data_section_id = result[0]
         else:
-            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
+            errors.append(f"No data_section_id found for '{section_title}'")
             data_section_id = None
     except Exception as e:
         errors.append(f"Error fetching data_section_id: {str(e)}")
@@ -84,7 +136,18 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
         row_dict = row.to_dict()
         # Remove user_id from data_details
         row_dict.pop('user_id', None)
-        data_details_JSON = json.dumps(row_dict)
+        
+        # Ensure all values are clean strings, not NaN or None
+        clean_row_dict = {}
+        for key, value in row_dict.items():
+            if pd.isna(value) or value is None:
+                clean_row_dict[key] = ""
+            elif str(value).lower() in ['nan', 'none', 'null']:
+                clean_row_dict[key] = ""
+            else:
+                clean_row_dict[key] = str(value).strip()
+        
+        data_details_JSON = json.dumps(clean_row_dict)
         try:
             cursor.execute(
                 """
@@ -208,7 +271,7 @@ def lambda_handler(event, context):
             }
 
         # Clean the DataFrame
-        df = cleanData(df)
+        dfA = cleanData(df)
         print("Data cleaned successfully.")
 
         # Connect to database
@@ -220,7 +283,8 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
+        rows_processed, rows_added_to_db = storeData(dfA, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_A)
+        # rows_processed, rows_added_to_db = storeData(dfB, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_B)
         print("Data stored successfully.")
         cursor.close()
         connection.close()

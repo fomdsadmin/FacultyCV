@@ -28,12 +28,12 @@ def getAllSectionCVData(arguments):
     # Then get the limited data (max 1000 rows)
     if ('data_section_id_list' not in arguments):
         cursor.execute(
-            'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id = %s AND archive != true LIMIT 1000',
+            'SELECT data_section_id, data_details, user_id FROM user_cv_data WHERE data_section_id = %s AND archive != true LIMIT 1000',
             (arguments['data_section_id'],)
         )
     else:
         cursor.execute(
-            'SELECT data_section_id, data_details FROM user_cv_data WHERE data_section_id IN %s AND archive != true LIMIT 1000',
+            'SELECT data_section_id, data_detail, user_id FROM user_cv_data WHERE data_section_id IN %s AND archive != true LIMIT 1000',
             (tuple(arguments['data_section_id_list']),)
         )
     results = cursor.fetchall()
@@ -45,6 +45,7 @@ def getAllSectionCVData(arguments):
         user_cv_data.append({
             'data_section_id': result[0],
             'data_details': result[1],
+            'user_id': result[2]
         })
 
     return {

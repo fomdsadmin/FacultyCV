@@ -14,40 +14,111 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Ensure relevant columns are string type before using .str methods
-    for col in ["PhysicianID", "Details", "Type", "TypeOther", "Notes"]:
-        if col in df.columns:
-            df[col] = df[col].astype(str)
+    
+    # Define expected columns
+    expected_columns = ["id", "first_name", "middle_name", "last_name", "email", "active"]
+    
+    # Handle physician_id FIRST before converting to string type
+    # Convert physician_id to integer if it has a value, otherwise None for auto-generation
+    # Apply a simple transformation to make IDs unique (add offset to avoid conflicts)
+    def process_user_id(x):
+        if pd.isna(x) or x == '' or str(x).strip() == '' or str(x) == 'nan':
+            return None
+        try:
+            original_id = int(x)  # Convert string to integer (e.g., "123" -> 123)
+            # Apply transformation to make unique - add 10000 to avoid conflicts with existing IDs
+            unique_id = original_id + 534234
+            return unique_id
+        except (ValueError, TypeError):
+            return None  # If conversion fails, let DB auto-generate
+    
+    df["user_id"] = df["id"].apply(process_user_id)
+    
+    # Convert user_id to Int64 (nullable integer) to avoid float decimals while preserving NaN
+    df["user_id"] = df["user_id"].astype('Int64')
+    
 
-    # df["user_id"] = df["PhysicianID"].fillna('').str.strip()
+    # Handle name fields - process first_name, middle_name, last_name
+    def safe_string_clean(series, column_name):
+        """Safely clean a pandas series, handling NaN, None, and string representations"""
+        if column_name in df.columns:
+            return series.fillna('').astype(str).replace(['nan', 'None', 'null', 'NULL'], '').str.strip()
+        else:
+            return ''
+    
+    # Clean individual name fields
+    df["first_name"] = safe_string_clean(df.get("first_name", pd.Series(dtype=str)), "first_name")
+    df["middle_name"] = safe_string_clean(df.get("middle_name", pd.Series(dtype=str)), "middle_name")
+    df["last_name"] = safe_string_clean(df.get("last_name", pd.Series(dtype=str)), "last_name")
+    
+    # Combine first_name and middle_name for the final first_name field
+    def combine_first_middle(row):
+        first = str(row["first_name"]).strip() if pd.notna(row["first_name"]) else ""
+        middle = str(row["middle_name"]).strip() if pd.notna(row["middle_name"]) else ""
+        
+        # Clean the strings
+        first = first if first not in ['nan', 'None', 'null', 'NULL', ''] else ""
+        middle = middle if middle not in ['nan', 'None', 'null', 'NULL', ''] else ""
+        
+        if first and middle:
+            return f"{first} {middle}"
+        elif first:
+            return first
+        elif middle:
+            return middle
+        else:
+            return ""
+    
+    df["first_name"] = df.apply(combine_first_middle, axis=1)
+    
+    # Handle email - ensure empty values become empty strings, not 'nan'
+    df["email"] = df["email"].fillna('').astype(str).str.strip()
+    df["email"] = df["email"].apply(lambda x: '' if x == 'nan' or x == 'None' else x)
+    
+    # Handle active column - convert 0/1 to false/true
+    if "active" in df.columns:
+        def convert_active(x):
+            if pd.isna(x) or x == '' or str(x).strip() == '':
+                return False  # Default to false for empty values
+            try:
+                # Convert to int first, then to boolean
+                val = int(float(x))  # Handle cases like "1.0"
+                return bool(val)  # 0 -> False, 1 -> True
+            except (ValueError, TypeError):
+                return False  # Default to false for invalid values
+        
+        df["active"] = df["active"].apply(convert_active)
+    else:
+        df["active"] = False  # Default to false if column doesn't exist
+    
+    df["role"] = 'Faculty'
+    df["faculty"] = 'Faculty of Medicine'
+    df["department"] = 'Anesthesiology, Pharmacology & Therapeutics'
+    
+    # Handle employee_id and username fields if they exist, otherwise set defaults
+    if "employee_id" not in df.columns:
+        df["employee_id"] = ''
+    else:
+        df["employee_id"] = df["employee_id"].fillna('').astype(str).str.strip()
+    
+    if "username" not in df.columns:
+        df["username"] = ''
+    else:
+        df["username"] = df["username"].fillna('').astype(str).str.strip()
 
-    # Combine start and end dates into a single 'dates' column
-    # Only show ranges when both dates exist, avoid empty dashes
-    # def combine_dates(row):
-    #     start = row["start_date"].strip()
-    #     end = row["end_date"].strip()
+    # Keep only the cleaned columns and make an explicit copy to avoid SettingWithCopyWarning
+    df = df[["user_id", "employee_id", "first_name", "last_name", "email", "username", "active", "role", "faculty", "department"]].copy()
 
-    #     if start and end:
-    #         return f"{start} - {end}"
-    #     elif start:
-    #         return start
-    #     elif end:
-    #         return end
-    #     else:
-    #         return ""
-    # df["dates"] = df.apply(combine_dates, axis=1)
-
-    # Keep only the cleaned columns
-    # df = df[["user_id", "details", "type_of_leave", "highlight_-_notes", "dates"]]
-
-    # Replace NaN with empty string for all columns
-    # df = df.replace({np.nan: ''})
+    # Replace NaN with empty string for all columns except user_id
+    for col in df.columns:
+        if col != 'user_id':
+            df.loc[:, col] = df[col].replace({np.nan: ''})
+    
     return df
 
 
@@ -56,42 +127,17 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
     Store the cleaned DataFrame into the database.
     Returns updated rows_processed and rows_added_to_db.
     """
-    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
-    try:
-        cursor.execute(
-            """
-            SELECT data_section_id FROM data_sections
-            WHERE title = %s
-            LIMIT 1
-            """,
-            (SECTION_TITLE,)
-        )
-        result = cursor.fetchone()
-        if result:
-            data_section_id = result[0]
-        else:
-            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
-            data_section_id = None
-    except Exception as e:
-        errors.append(f"Error fetching data_section_id: {str(e)}")
-        data_section_id = None
-
-    if not data_section_id:
-        errors.append("Skipping insert: data_section_id not found.")
-        return rows_processed, rows_added_to_db
-
     for i, row in df.iterrows():
-        row_dict = row.to_dict()
-        # Remove user_id from data_details
-        row_dict.pop('user_id', None)
-        data_details_JSON = json.dumps(row_dict)
         try:
+            # Check if user_id is None or NaN - let the database auto-generate it
+            user_id_value = row['user_id']
             cursor.execute(
                 """
-                INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO users (user_id, last_name, first_name, email, cwl_username, role, primary_faculty, primary_department, active, pending, approved, terminated)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                (row['user_id'], data_section_id, data_details_JSON, True)
+                (user_id_value, row['last_name'], row['first_name'], row['email'], 
+                row['username'], row['role'], row['faculty'], row['department'], row['active'], False, True, False)
             )
             rows_added_to_db += 1
         except Exception as e:
