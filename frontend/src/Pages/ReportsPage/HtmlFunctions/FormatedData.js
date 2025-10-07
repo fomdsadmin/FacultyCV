@@ -2,6 +2,8 @@ import { HIDDEN_ATTRIBUTE_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "Pages/Templ
 import { getAllSections } from "graphql/graphqlHelpers";
 import { getUserCVData } from "graphql/graphqlHelpers";
 import { HIDDEN_GROUP_ID } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
+import { getUserDeclarations } from "graphql/graphqlHelpers";
+import { normalizeDeclarations } from "Pages/Declarations/Declarations";
 
 let userCvDataMap = {}
 let sectionsMap = {};
@@ -270,10 +272,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
         return levelA.localeCompare(levelB);
     });
 
-    console.log("JJFILTER aggregateStudentData: ", sortedAggregatedData)
-
     const sectionAttributes = JSON.parse(section.attributes);
-    console.log("JJFILTER section attributes: ", sectionAttributes);
 
     table["rows"] = sortedAggregatedData.map((data) => ({
         description: "",
@@ -306,7 +305,6 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
         Dates: ""
     })
 
-    console.log("JJFILTER columns: ", table);
     return table;
 }
 
@@ -654,7 +652,7 @@ export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
         });
 
         // Build user profile section
-        userProfile = buildUserProfile(currentUserInfo);
+        userProfile = await buildUserProfile(currentUserInfo);
 
         // Parse the template structure and process each group
         const parsedGroups = JSON.parse(template.template_structure).groups;
@@ -676,9 +674,27 @@ export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
     return userProfiles;
 };
 
-const buildUserProfile = (userInfoParam) => {
+const buildUserProfile = async (userInfoParam) => {
     // Get current date in format "Apr 11, 2025"
     userInfo = userInfoParam;
+
+    const fetchDeclarations = async (user_id) => {
+        try {
+            const result = await getUserDeclarations(user_id);
+            // Normalize the API response to match the UI's expected format
+            return normalizeDeclarations(result);
+        } catch (error) {
+            console.error("Error fetching declarations:", error);
+        }
+        return [];
+    };
+
+    let userDeclarations = null;
+    let latestUserDeclaration = null;
+    if (JSON.parse(template.template_structure).show_declaration) {
+        userDeclarations = await fetchDeclarations(userInfo.user_id);
+        latestUserDeclaration = userDeclarations[userDeclarations.length - 1];
+    }
 
     const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
@@ -716,7 +732,8 @@ const buildUserProfile = (userInfoParam) => {
         primary_department: userInfo.primary_department,
         primary_faculty: userInfo.primary_faculty,
         rank: userInfo.rank,
-        rankSinceDate: rankSinceDate
+        rankSinceDate: rankSinceDate,
+        latest_declaration: latestUserDeclaration
     }
 
     return userProfile;
