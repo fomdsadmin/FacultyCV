@@ -28,7 +28,9 @@ export const TemplateModifierProvider = ({
   onBack,
   setSortAscending,
   createdWithRole,
-  setCreatedWithRole
+  setCreatedWithRole,
+  showDeclaration,
+  setShowDeclaration
 }) => {
 
   const getGroupIdContainingPreparedSectionId = (preparedSectionId) => {
@@ -71,6 +73,8 @@ export const TemplateModifierProvider = ({
     sectionsMap,
     setCreatedWithRole,
     createdWithRole,
+    showDeclaration,
+    setShowDeclaration,
 
     // onBack
     onBack,

@@ -12,7 +12,9 @@ const TemplateModifier = ({
     onBack,
     templateId=null,
     setCreatedWithRole,
-    createdWithRole
+    createdWithRole,
+    showDeclaration,
+    setShowDeclaration
 }) => {
 
     const setGroups = (newGroupsOrUpdater) => {
@@ -53,6 +55,8 @@ const TemplateModifier = ({
             setSortAscending={setSortAscending}
             setCreatedWithRole={setCreatedWithRole}
             createdWithRole={createdWithRole}
+            showDeclaration={showDeclaration}
+            setShowDeclaration={setShowDeclaration}
         >
             <div className="flex justify-end mb-4">
                 <SaveTemplateButton templateId={templateId}></SaveTemplateButton>
