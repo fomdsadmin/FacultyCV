@@ -304,7 +304,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
     //const sectionAttributes = JSON.parse(section.attributes);
 
     const fullRowData = sortedAggregatedData.map((data) => ({
-        description: "",
+        Description: "",
         "Duration (eg: 8 weeks)": data.durations,
         "Number of Students": data.totalStudents,
         "Total Hours": data.totalHours,
@@ -335,7 +335,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
         }
 
         table["rows"].push({
-            description: courseTitle,
+            Description: courseTitle,
             "Duration (eg: 8 weeks)": "",
             "Number of Students": "",
             "Total Hours": "",
@@ -350,8 +350,8 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
 
     table["columns"] = buildTableSectionColumns(preparedSection);
     table["columns"].unshift({
-        headerName: "description",
-        field: "description"
+        headerName: "Description",
+        field: "Description"
     })
 
     console.log("JJFITLER columns, ", table["columns"])
@@ -768,9 +768,6 @@ const buildUserProfile = async (userInfoParam) => {
         day: '2-digit'
     });
 
-    // Extract middle name/initial from preferred_name
-    const middleName = userInfo.preferred_name || "";
-
     const startYear = template.start_year || 'All';
     const endYear = template.end_year || 'Present';
     const sortOrder = sortAscending ? 'Ascending' : 'Descending';
@@ -779,7 +776,7 @@ const buildUserProfile = async (userInfoParam) => {
     const userProfile = {
         current_date: currentDate,
         joined_date: joinedDate,
-        middle_name: middleName,
+
         start_year: startYear,
         end_year: endYear,
         sort_order: sortOrder,
