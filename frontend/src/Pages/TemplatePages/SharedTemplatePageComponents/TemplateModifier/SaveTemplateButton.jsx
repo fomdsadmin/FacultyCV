@@ -18,7 +18,8 @@ const SaveTemplateButton = ({ templateId = null }) => {
         HIDDEN_GROUP_ID,
         onBack,
         sortAscending,
-        createdWithRole // Add this from context
+        createdWithRole,
+        showDeclaration
     } = useTemplateModifier();
 
     const { fetchTemplates } = useTemplatePageContext();
@@ -39,7 +40,8 @@ const SaveTemplateButton = ({ templateId = null }) => {
         const templateStructure = JSON.stringify({
             sort_ascending: sortAscending,
             created_with_role: createdWithRole,
-            groups: clean_groups
+            groups: clean_groups,
+            show_declaration: showDeclaration
         })
         console.log(clean_groups);
 

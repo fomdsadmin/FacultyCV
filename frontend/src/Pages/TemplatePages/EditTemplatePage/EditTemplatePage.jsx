@@ -8,13 +8,16 @@ import { HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } 
 import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext";
 import { syncTemplateSections } from "../SyncTemplateSections"
 import { useApp } from "Contexts/AppContext";
+import { useTemplateModifier } from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 
 const EditTemplatePage = ({ onBack }) => {
+
     const { currentViewRole } = useApp();
     const { activeTemplate } = useTemplatePageContext();
     const [title, setTitle] = useState(activeTemplate?.title || "")
     const [template, setTemplate] = useState({ groups: [], sort_ascending: null, created_with_role: null });
     const [loading, setLoading] = useState(true)
+    const [showDeclaration, setShowDeclaration] = useState(false);
 
     useEffect(() => {
         if (activeTemplate) {
@@ -35,6 +38,9 @@ const EditTemplatePage = ({ onBack }) => {
             if (!templateStructure.created_with_role) {
                 templateStructure.created_with_role = "Admin";
             }
+
+            // Set showDeclaration from template structure, default to false
+            setShowDeclaration(templateStructure.show_declaration || false);
 
             const templateGroups = templateStructure.groups;
 
@@ -69,17 +75,17 @@ const EditTemplatePage = ({ onBack }) => {
                             console.warn('Removing invalid section from template:', section);
                             return false;
                         }
-                        
+
                         // Check if the section still exists in the database
-                        const sectionExists = fetchedSections.some(dbSection => 
+                        const sectionExists = fetchedSections.some(dbSection =>
                             dbSection.data_section_id === section.data_section_id
                         );
-                        
+
                         if (!sectionExists) {
                             console.warn('Removing deleted section from template:', section.data_section_id);
                             return false;
                         }
-                        
+
                         return true;
                     });
                 }
@@ -126,7 +132,8 @@ const EditTemplatePage = ({ onBack }) => {
 
             setTemplate({
                 sort_ascending: templateStructure.sort_ascending,
-                created_with_role: templateStructure.created_with_role, // Make sure this is set
+                created_with_role: templateStructure.created_with_role,
+                show_declaration: templateStructure.show_declaration || false,
                 groups: syncTemplateSections(templateGroups, fetchedSections)
             });
 
@@ -135,6 +142,7 @@ const EditTemplatePage = ({ onBack }) => {
             setTemplate({
                 sort_ascending: true,
                 created_with_role: currentViewRole,
+                show_declaration: false,
                 groups: []
             });
         }
@@ -170,6 +178,14 @@ const EditTemplatePage = ({ onBack }) => {
         });
     };
 
+    const handleShowDeclarationChange = (checked) => {
+        setShowDeclaration(checked);
+        setTemplate(prevTemplate => ({
+            ...prevTemplate,
+            show_declaration: checked
+        }));
+    };
+
     return (
         <div className="">
             <div className="flex justify-between items-center pt-4">
@@ -180,7 +196,19 @@ const EditTemplatePage = ({ onBack }) => {
             </div>
 
             <div className="mt-5 leading-tight mr-4 ml-4">
-                <h2 className="text-2xl font-bold mb-6">Edit Template</h2>
+                <h2 className="text-2xl font-bold mb-4">Edit Template</h2>
+                
+                <div className="mb-6">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <input
+                            type="checkbox"
+                            checked={showDeclaration}
+                            onChange={(e) => handleShowDeclarationChange(e.target.checked)}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                        Show Declaration
+                    </label>
+                </div>
 
                 {loading ? (
                     <div className="w-full h-full flex items-center justify-center">
@@ -194,8 +222,10 @@ const EditTemplatePage = ({ onBack }) => {
                         templateId={activeTemplate.template_id}
                         template={template}
                         setTemplate={setTemplate}
-                        createdWithRole={template.created_with_role} // Pass the value
-                        setCreatedWithRole={(role) => setTemplate(prev => ({...prev, created_with_role: role}))} // Pass setter
+                        createdWithRole={template.created_with_role}
+                        setCreatedWithRole={(role) => setTemplate(prev => ({ ...prev, created_with_role: role }))}
+                        showDeclaration={showDeclaration}
+                        setShowDeclaration={setShowDeclaration}
                     />
                 )}
             </div>

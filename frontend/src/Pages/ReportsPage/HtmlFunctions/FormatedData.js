@@ -2,6 +2,8 @@ import { HIDDEN_ATTRIBUTE_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "Pages/Templ
 import { getAllSections } from "graphql/graphqlHelpers";
 import { getUserCVData } from "graphql/graphqlHelpers";
 import { HIDDEN_GROUP_ID } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
+import { getUserDeclarations } from "graphql/graphqlHelpers";
+import { normalizeDeclarations } from "Pages/Declarations/Declarations";
 
 let userCvDataMap = {}
 let sectionsMap = {};
@@ -158,13 +160,16 @@ const buildGroupJson = async (group) => {
 
 const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
 
-    const buildNewStudentObject = (year, duration, totalHours, studentLevel) => {
+    const buildNewStudentObject = (year, duration, totalHours, studentLevel, course, courseTitle, briefDescription, numberOfStudents = 1) => {
         return {
             year,
             duration,
             total_hours: totalHours,
             student_level: studentLevel,
-            number_of_students: 1
+            number_of_students: numberOfStudents,
+            course,
+            course_title: courseTitle,
+            brief_description: briefDescription
         }
     }
 
@@ -177,13 +182,15 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
     function aggregateStudentData(flatData) {
         const aggregated = {};
 
-        flatData.forEach(({ duration, number_of_students, year, total_hours, student_level }) => {
-            const key = `${year}-${student_level}`;
+        flatData.forEach(({ duration, number_of_students, year, total_hours, student_level, course_title, brief_description }) => {
+            const key = `${year}-${course_title}`;
 
             if (!aggregated[key]) {
                 aggregated[key] = {
                     year,
                     student_level,
+                    course_title,
+                    brief_description,
                     totalStudents: 0,
                     totalHours: 0,
                     durations: new Set()
@@ -211,7 +218,17 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
         const dateAttribute = "dates";
         const cleanedDates = data["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
         const yearMatch = cleanedDates.match(/\d+/);
+
         const year = yearMatch ? yearMatch[0] : null;
+        const briefDescription = data.data_details["brief_description"];
+        const course = data.data_details["course"];
+        const courseTitle = data.data_details["course_title"];
+        const duration = data.data_details["duration_(eg:_8_weeks)"];
+        const totalHours = data.data_details["total_hours"];
+        const studentLevel = data.data_details["student_level"];
+        const numberOfStudents = parseInt(data.data_details["number_of_students"]);
+
+        const normalizedBreifDescription = briefDescription.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
         if (data.data_details["student_name(s)"] && data.data_details["student_name(s)"].length > 1) {
 
@@ -221,36 +238,40 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
 
             studentNames.forEach((name) => {
 
-                if (!deaggregatedStudentDataMap[name]) {
-                    deaggregatedStudentDataMap[name] = {};
-                }
+                deaggregatedStudentDataMap[name] ??= {};
+                deaggregatedStudentDataMap[name][year] ??= {};
+                deaggregatedStudentDataMap[name][year][course] ??= {};
+                deaggregatedStudentDataMap[name][year][course][courseTitle] ??= {};
+                deaggregatedStudentDataMap[name][year][course][courseTitle][normalizedBreifDescription] ??= {};
 
-                if (!deaggregatedStudentDataMap[name][year]) {
-                    deaggregatedStudentDataMap[name][year] = {};
-                }
 
-                deaggregatedStudentDataMap[name][year] = buildNewStudentObject(
+                deaggregatedStudentDataMap[name][year][course][courseTitle][normalizedBreifDescription] = buildNewStudentObject(
                     year,
-                    data.data_details["duration_(eg:_8_weeks)"],
-                    data.data_details["total_hours"],
-                    data.data_details["student_level"],
+                    duration,
+                    totalHours,
+                    studentLevel,
+                    course,
+                    courseTitle,
+                    briefDescription
                 )
             });
         } else {
 
-            if (!deaggregatedStudentDataMap[index]) {
-                deaggregatedStudentDataMap[index] = {};
-            }
+            deaggregatedStudentDataMap[index] ??= {};
+            deaggregatedStudentDataMap[index][year] ??= {};
+            deaggregatedStudentDataMap[index][year][course] ??= {};
+            deaggregatedStudentDataMap[index][year][course][courseTitle] ??= {};
+            deaggregatedStudentDataMap[index][year][course][courseTitle][normalizedBreifDescription] ??= {};
 
-            if (!deaggregatedStudentDataMap[index][year]) {
-                deaggregatedStudentDataMap[index][year] = {};
-            }
-
-            deaggregatedStudentDataMap[index][year] = buildNewStudentObject(
+            deaggregatedStudentDataMap[index][year][course][courseTitle][normalizedBreifDescription] = buildNewStudentObject(
                 year,
-                data.data_details["duration_(eg:_8_weeks)"],
-                data.data_details["total_hours"],
-                data.data_details["student_level"],
+                duration,
+                totalHours,
+                studentLevel,
+                course,
+                courseTitle,
+                briefDescription,
+                numberOfStudents
             )
         }
 
@@ -258,10 +279,20 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
 
     const yearData = Object.entries(deaggregatedStudentDataMap).flatMap(
         ([name, years]) =>
-            Object.values(years).map((studentObj) => ({
-                name,
-                ...studentObj
-            }))
+            Object.entries(years).flatMap(([year, courses]) =>
+                Object.entries(courses).flatMap(([course, courseTitles]) =>
+                    Object.entries(courseTitles).flatMap(([courseTitle, briefDescriptions]) =>
+                        Object.entries(briefDescriptions).map(([briefDescription, studentObj]) => ({
+                            name,
+                            course_title: courseTitle,
+                            brief_description: briefDescription,
+                            year,
+                            course,
+                            ...studentObj
+                        }))
+                    )
+                )
+            )
     );
 
     const sortedAggregatedData = aggregateStudentData(yearData).sort((a, b) => {
@@ -270,25 +301,60 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
         return levelA.localeCompare(levelB);
     });
 
-    console.log("JJFILTER aggregateStudentData: ", sortedAggregatedData)
+    //const sectionAttributes = JSON.parse(section.attributes);
 
-    const sectionAttributes = JSON.parse(section.attributes);
-    console.log("JJFILTER section attributes: ", sectionAttributes);
-
-    table["rows"] = sortedAggregatedData.map((data) => ({
+    const fullRowData = sortedAggregatedData.map((data) => ({
         description: "",
         "Duration (eg: 8 weeks)": data.durations,
         "Number of Students": data.totalStudents,
         "Total Hours": data.totalHours,
         "Student Level": data.student_level,
-        Dates: data.year
+        "Course Title (hidden)": data.course_title,
+        //"Brief Description": data.brief_description,
+        Dates: data.year,
+        //Course: data.course
     }));
+
+    const separatedRows = fullRowData.reduce((acc, row, index) => {
+        const courseTitle = row["Course Title (hidden)"];
+
+        if (!acc[courseTitle]) {
+            acc[courseTitle] = [];
+        }
+
+        acc[courseTitle].push(row);
+        return acc;
+    }, {});
+
+    Object.entries(separatedRows).forEach(([courseTitle, rows]) => {
+        console.log(courseTitle); // <-- this is the course title
+        console.log(rows);        // <-- these are the rows for that course
+
+        if (!table["rows"]) {
+            table["rows"] = [];
+        }
+
+        table["rows"].push({
+            description: courseTitle,
+            "Duration (eg: 8 weeks)": "",
+            "Number of Students": "",
+            "Total Hours": "",
+            "Student Level": "",
+            Dates: "",
+            Course: ""
+        });
+
+        table["rows"].push(...rows);
+    });
+
 
     table["columns"] = buildTableSectionColumns(preparedSection);
     table["columns"].unshift({
         headerName: "description",
         field: "description"
     })
+
+    console.log("JJFITLER columns, ", table["columns"])
 
     let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
 
@@ -297,16 +363,6 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
         children: table["columns"],
     }]
 
-    table["rows"].unshift({
-        description: "Clinical Teachings",
-        "Duration (eg: 8 weeks)": "",
-        "Number of Students": "",
-        "Total Hours": "",
-        "Student Level": "",
-        Dates: ""
-    })
-
-    console.log("JJFILTER columns: ", table);
     return table;
 }
 
@@ -654,7 +710,7 @@ export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
         });
 
         // Build user profile section
-        userProfile = buildUserProfile(currentUserInfo);
+        userProfile = await buildUserProfile(currentUserInfo);
 
         // Parse the template structure and process each group
         const parsedGroups = JSON.parse(template.template_structure).groups;
@@ -676,9 +732,27 @@ export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
     return userProfiles;
 };
 
-const buildUserProfile = (userInfoParam) => {
+const buildUserProfile = async (userInfoParam) => {
     // Get current date in format "Apr 11, 2025"
     userInfo = userInfoParam;
+
+    const fetchDeclarations = async (user_id) => {
+        try {
+            const result = await getUserDeclarations(user_id);
+            // Normalize the API response to match the UI's expected format
+            return normalizeDeclarations(result);
+        } catch (error) {
+            console.error("Error fetching declarations:", error);
+        }
+        return [];
+    };
+
+    let userDeclarations = null;
+    let latestUserDeclaration = null;
+    if (JSON.parse(template.template_structure).show_declaration) {
+        userDeclarations = await fetchDeclarations(userInfo.user_id);
+        latestUserDeclaration = userDeclarations[userDeclarations.length - 1];
+    }
 
     const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
@@ -716,7 +790,8 @@ const buildUserProfile = (userInfoParam) => {
         primary_department: userInfo.primary_department,
         primary_faculty: userInfo.primary_faculty,
         rank: userInfo.rank,
-        rankSinceDate: rankSinceDate
+        rankSinceDate: rankSinceDate,
+        latest_declaration: latestUserDeclaration
     }
 
     return userProfile;

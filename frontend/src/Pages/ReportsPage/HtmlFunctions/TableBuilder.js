@@ -158,7 +158,7 @@ function buildUserInfoTable(cv) {
         primary_faculty,
         rank,
         rankSinceDate,
-        sort_order,
+        sort_order
     } = cv;
 
     // meta as a two-column table (label / value)
@@ -206,6 +206,125 @@ function buildHeader(cv) {
     return html;
 }
 
+function buildDeclarationReport(cv) {
+    const { latest_declaration } = cv;
+    
+    if (!latest_declaration) {
+        return '';
+    }
+
+    // Use the same DECLARATION_LABELS from Declarations.jsx
+    const DECLARATION_LABELS = {
+        coi: {
+            YES: "Yes, my Conflict of Interest and Conflict of Commitment declarations are up to date.",
+            NO: "No, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.",
+        },
+        fomMerit: {
+            YES: "Yes, I do wish to be awarded merit by the Dean for my academic activities performed during",
+            NO: "No, I do NOT wish to be awarded merit by the Dean for my academic activities performed during",
+        },
+        psa: {
+            YES: "Yes, I do wish to be considered for PSA.",
+            NO: "No, I do NOT wish to be considered for PSA.",
+        },
+        promotion: {
+            YES: "Yes, I do wish to be considered for promotion.",
+            NO: "No, I do NOT wish to be considered for promotion.",
+        },
+    };
+
+    let html = '';
+    html += `
+        <div class="group">
+            <h2>
+                <span style="display:inline-block; border-bottom: 3px solid #000;">Declaration</span>
+            </h2>
+        </div>
+    `;
+
+    const currentYear = new Date().getFullYear();
+    const isCurrent = latest_declaration.year === currentYear;
+    const isNext = latest_declaration.year === currentYear + 1;
+    
+    html += `
+        <div style="margin-bottom: 20px; line-height: 1.5;">
+            <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">
+                ${latest_declaration.year}
+                ${isCurrent ? '<span style="margin-left: 10px; padding: 4px 8px; font-size: 14px; background-color: #dbeafe; color: #1e40af; border-radius: 4px; font-weight: 600;">Current</span>' : ''}
+                ${isNext ? '<span style="margin-left: 10px; padding: 4px 8px; font-size: 14px; background-color: #d1fae5; color: #047857; border-radius: 4px; font-weight: 600;">Next</span>' : ''}
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <div style="font-weight: 700; margin-bottom: 4px;"><strong>Conflict of Interest and Commitment:</strong></div>
+                <div style="margin-bottom: 4px;">
+                    ${DECLARATION_LABELS.coi[latest_declaration.coi] || latest_declaration.coi}
+                </div>
+                ${latest_declaration.coiSubmissionDate ? `
+                    <div style="margin-bottom: 4px;">
+                        <strong>Submission Date:</strong> ${latest_declaration.coiSubmissionDate}
+                    </div>
+                ` : ''}
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <div style="font-weight: 700; margin-bottom: 4px;"><strong>FOM Merit & PSA:</strong></div>
+                <div style="margin-bottom: 4px;">
+                    ${DECLARATION_LABELS.fomMerit[latest_declaration.fomMerit]} January 1, ${latest_declaration.year} - December 31, ${latest_declaration.year}
+                </div>
+                <div style="margin-bottom: 4px;">
+                    ${DECLARATION_LABELS.psa[latest_declaration.psa]}
+                </div>
+                ${latest_declaration.psaSubmissionDate ? `
+                    <div style="margin-top: 8px;">
+                        <strong>Submission Date:</strong> ${latest_declaration.psaSubmissionDate}
+                    </div>
+                ` : ''}
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <div style="font-weight: 700; margin-bottom: 4px;"><strong>FOM Promotion Review:</strong></div>
+                <div style="margin-bottom: 4px;">
+                    ${DECLARATION_LABELS.promotion[latest_declaration.promotion] || latest_declaration.promotion}
+                </div>
+                ${latest_declaration.promotionEffectiveDate ? `
+                    <div style="margin-top: 4px;">
+                        <strong>Effective Date:</strong> July 1, ${latest_declaration.promotionEffectiveDate}
+                    </div>
+                ` : ''}
+                ${latest_declaration.promotionPathways ? `
+                    <div style="margin-top: 8px;">
+                        <strong>Research Stream Pathways:</strong><br>
+                        ${latest_declaration.promotionPathways.split(',').map(pathway => 
+                            pathway.trim()
+                        ).join('<br>')}
+                    </div>
+                ` : ''}
+                ${latest_declaration.supportAnticipated ? `
+                    <div style="margin-top: 8px;">
+                        <strong>Support Anticipated:</strong> ${latest_declaration.supportAnticipated}
+                    </div>
+                ` : ''}
+                ${latest_declaration.promotionSubmissionDate ? `
+                    <div style="margin-top: 8px;">
+                        <strong>Submission Date:</strong> ${latest_declaration.promotionSubmissionDate}
+                    </div>
+                ` : ''}
+            </div>
+
+            ${latest_declaration.honorific ? `
+                <div style="margin-bottom: 16px;">
+                    <div style="font-weight: 700; margin-bottom: 4px;"><strong>Honorific Impact Report:</strong></div>
+                    <div>
+                        ${latest_declaration.honorific}
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    return html;
+}
+
 function buildCv(cv) {
     const {
         groups
@@ -223,6 +342,9 @@ function buildCv(cv) {
             html += buildGroup(group);
         });
     }
+
+    // Add declaration at the end
+    html += buildDeclarationReport(cv);
 
     return html;
 }
