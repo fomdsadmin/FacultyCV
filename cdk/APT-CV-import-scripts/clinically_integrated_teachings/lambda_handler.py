@@ -35,9 +35,27 @@ def cleanData(df):
         return series.fillna('').astype(str).replace(['nan', 'None', 'null', 'NULL'], '').str.strip()
     
     # Process dataframe A (Post-Secondary Education)
-    a["user_id"] = safe_string_clean(a["user_id"])
+        # Helper function to process user_id with unique transformation
+    def process_user_id(x):
+        """Apply transformation to make user IDs unique - add 10000 to avoid conflicts"""
+        if pd.isna(x) or x == '' or str(x).strip() == '' or str(x) == 'nan':
+            return ""
+        try:
+            original_id = int(float(x))  # Handle cases like "123.0"
+            # Apply transformation to make unique - add 534234 to avoid conflicts with existing IDs
+            unique_id = original_id + 534234
+            return str(unique_id)
+        except (ValueError, TypeError):
+            return str(x).strip()  # If conversion fails, return as string
+    
+    
+    # Process dataframe A (Post-Secondary Education)
+    a["user_id"] = a["user_id"].apply(process_user_id)
+    # Convert user_id to Int64 (nullable integer) to avoid float decimals while preserving NaN
+    a["user_id"] = a["user_id"].astype('Int64')
+    
     a["category_name"] = safe_string_clean(a["category_name"]) if "category_name" in a.columns else ""
-    a["duration"] = safe_string_clean(a["duration"]) if "duration" in a.columns else ""
+    a["duration_(eg:_8_weeks)"] = safe_string_clean(a["duration"]) if "duration" in a.columns else ""
     a["total_hours"] = safe_string_clean(a["total_hours"]) if "total_hours" in a.columns else ""
     a["brief_description"] = safe_string_clean(a["description"]) if "description" in a.columns else ""
     
@@ -60,13 +78,14 @@ def cleanData(df):
         
         # Return in the format "i. Other (mapped_value)" for non-4025 entries
         if mapped_value:
-            return f"i. Other ({mapped_value})"
+            return mapped_value
         else:
             return "i. Other"
 
     
     # Apply the mapping logic to create type and title columns
-    a["type_of_teaching"] = a.apply(map_category_to_type, axis=1)
+    a["student_level"] = a.apply(map_category_to_type, axis=1)
+    a["type_of_teaching"] = 'Teaching with Patient Care'
     
     # start_date will be taken from year ('2013' , 'Present' (Should map to 'Current')) + month ('01 (should map to 'January')',  'id' (skip))
     def format_date(year):
@@ -81,7 +100,8 @@ def cleanData(df):
         year_str = str(year).strip()
         if year_str.lower() == 'present':
             year_str = 'Current'
-            return year_str
+            
+        return year_str
         
 
     # Process start_date and end_date for dataframe A
@@ -119,8 +139,8 @@ def cleanData(df):
         else:
             return ""
     a["dates"] = a.apply(combine_dates, axis=1)
-    
-    a = a[["user_id", "type_of_teaching", "dates", "brief_description", "duration", "total_hours"]]
+
+    a = a[["user_id", "type_of_teaching", "dates", "student_level", "brief_description", "duration_(eg:_8_weeks)", "total_hours"]]
 
     # Comprehensive replacement of NaN, None, and string representations with empty strings
     a = a.fillna('').replace(['nan', 'None', 'null', 'NULL', np.nan, None], '')

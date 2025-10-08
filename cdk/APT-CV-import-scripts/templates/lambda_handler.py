@@ -25,8 +25,8 @@ SECTION_TITLE_F = "9h. Indigenous Scholarly Activity"
 SECTION_TITLE_G = "9i. Scholarship of Education Activities"
 SECTION_TITLE_H = "9j. Professional Contributions"
 
-SECTION_TITLE_I = "9a. Areas of Special Interest and Accomplishments"
-SECTION_TITLE_J = "9a. Areas of Special Interest and Accomplishments"
+SECTION_TITLE_I = "Journal Publications"
+SECTION_TITLE_J = "Patents"
 SECTION_TITLE_K = "13[a-d]. Awards and Distinctions"
 
 SECTION_TITLE_L = "10a. Areas of Special Interest and Accomplishments"
@@ -40,6 +40,10 @@ SECTION_TITLE_Q = "12[c-f]. Memberships on Scholarly and Other Committees and So
 SECTION_TITLE_R = "12[g-k]. Other Community Service"
 
 SECTION_TITLE_S = "14a. Other Relevant Information"
+
+SECTION_TITLE_T = "Authorship Statement"
+
+SECTION_TITLE_U = "Other Publications"
 
 
 def prepare9aSpecialInterestsDF(df):
@@ -130,20 +134,63 @@ def prepare9jProfessionalContributionsDF(df):
 # ----------------------------------------------------------------------------------------------------
 
 def preparePublicationsDF(df):
-    a = df.copy()
+    # First separate out category IDs 9908 (Submitted) and 9909 (In Progress)
+    in_progress_submitted_df = df[df['category_id'].isin(['9908', '9909'])].copy() if 'category_id' in df.columns else pd.DataFrame()
+    
+    # From remaining data, filter to only keep entries where publication_type is "1. journals"
+    remaining_df = df[~df['category_id'].isin(['9908', '9909'])].copy() if 'category_id' in df.columns else df.copy()
+    journal_df = remaining_df[remaining_df['publication_type'] == '1. journals'].copy() if 'publication_type' in remaining_df.columns else remaining_df.copy()
+    
+    # Combine the separated dataframes
+    combined_df = pd.concat([in_progress_submitted_df, journal_df], ignore_index=True) if not in_progress_submitted_df.empty else journal_df
+    
+    a = combined_df.copy()
     # Clean up html description to english details
-    a["details"] = a["description"]
-    a["type"] = "Areas of Special Interest and Accomplishment"
-    a = a[["user_id", "dates", "type", "details"]]
+    a["citation"] = a["description"]
+    
+    # Map category_id to type
+    def map_category_to_type(row):
+        category_id = str(row.get('category_id', '')).strip()
+        if category_id == '9901':
+            return 'true'
+        elif category_id == '9902':
+            return 'false'
+    
+    a["peer_reviewed"] = a.apply(map_category_to_type, axis=1)
+    a["publication_type"] = 'Journal'
+    
+    def map_category_to_status(row):
+        category_id = str(row.get('category_id', '')).strip()
+        if category_id == '9908':
+            return 'Submitted'
+        elif category_id == '9909':
+            return 'In Progress'
+        else:
+            return 'Published'  # For journal entries, this means "Accepted"
+        
+    a["publication_status"] = a.apply(map_category_to_status, axis=1)
+    
+    a["end_date"] = a["dates"]
+
+    a = a[["user_id", "end_date", "peer_reviewed", "citation", "publication_type", "publication_status"]]
     return a
 
 
 def preparePatentsDF(df):
     a = df.copy()
     # Clean up html description to english details
-    a["details"] = a["description"]
-    a["type"] = "Areas of Special Interest and Accomplishment"
-    a = a[["user_id", "dates", "type", "details"]]
+    a["citation"] = a["description"]
+    
+    # Handle custom year and end_date formatting
+    def format_custom_year(row):
+        end_year = str(row.get('end_year', '')).strip()
+        if end_year.lower() == "present":
+            return "Current"
+        return end_year if end_year not in ['', 'nan', 'None', 'null'] else ''
+    
+    a["year"] = a.apply(format_custom_year, axis=1)
+    
+    a = a[["user_id", "year", "citation"]]
     return a
 
 
@@ -167,10 +214,10 @@ def prepareAwardsDF(df):
             return 'd. Other'
         elif category_id == '9206':
             return 'd. Other (Mentoring Received)'
-        elif category_id == '9207':
-            return 'd. Other (Equity, Diversity, and Inclusion)'
-        elif category_id == '9208':
-            return 'd. Other (Appointment Context)'
+        # elif category_id == '9207':
+        #     return 'd. Other (Equity, Diversity, and Inclusion)'
+        # elif category_id == '9208':
+        #     return 'd. Other (Appointment Context)'
         else:
             return ''
     
@@ -353,6 +400,67 @@ def prepare14aOtherInfoDF(df):
     a = a[["user_id", "dates", "details"]]
     return a
 
+# ----------------------------------------------------------------------------------------------------
+
+def prepareAuthStatementDF(df):
+    a = df.copy()
+    # Clean up html description to english details
+    a["details"] = a["description"]
+    a = a[["user_id", "dates", "details"]]
+    return a
+
+# ----------------------------------------------------------------------------------------------------
+
+def prepareOtherPublicationsDF(df):
+    other_df = df[df['publication_type'] != '1. journals'].copy() if 'publication_type' in df.columns else df.copy()
+    a = other_df.copy()
+    
+    # Clean up html description to english details
+    a["citation"] = a["description"]
+    
+    # Map category_id to type
+    def map_category_to_type(row):
+        category_id = str(row.get('category_id', '')).strip()
+        if category_id == '9901':
+            return 'true'
+        elif category_id == '9902':
+            return 'false'
+    
+    a["peer_reviewed"] = a.apply(map_category_to_type, axis=1)
+    
+    def map_category_to_pub_type(row):
+        pub_type = str(row.get('publication_type', '')).strip()
+        pub_type_other = str(row.get('publication_type_other', '')).strip()
+        category_id = str(row.get('category_id', '')).strip()
+        
+        if category_id in ['9901', '9902']:
+            if pub_type == '2. conference proceedings':
+                return 'Conference Proceedings'
+            elif pub_type == '3. review':
+                return 'Other (Review)'
+            elif pub_type == '4. other':
+                return 'Other'
+            else:
+                return ''
+        else:
+            if category_id == '9903':
+                return 'Books'
+            elif category_id == '9905':
+                return 'Special Copyrights'
+            elif category_id == '9906':
+                return 'Artistic Work'
+            elif category_id == '9907':
+                return f'Other ({pub_type_other})' if pub_type_other else 'Other'
+            
+        
+    a["publication_type"] = a.apply(map_category_to_pub_type, axis=1)
+    a["publication_status"] = 'Published'
+    a["end_date"] = a["dates"]
+
+    a = a[["user_id", "end_date", "peer_reviewed", "citation", "publication_type", "publication_status"]]
+    return a
+
+
 
 def cleanData(df):
     """
@@ -443,12 +551,12 @@ def cleanData(df):
     
     # ------------------------------------------------------------------------------------------
     
-    # Extract dataframe for multiple category IDs: 9905, 9903, 9901, 9910, 9906, 9907, 9908, 9909, 9904, 9902
+    # Extract dataframe for multiple category IDs: 9905, 9903, 9901, 9906, 9907, 9908, 9909, 9904, 9902
     category_ids_list = [
         "9905",
         "9903",
         "9901",
-        "9910",
+        # "9910",
         "9906",
         "9907",
         "9908",
@@ -553,6 +661,35 @@ def cleanData(df):
         else pd.DataFrame()
     )
     df_14a_other_info = prepare14aOtherInfoDF(df_9211)
+    
+    # ------------------------------------------------------------------------------------------
+
+    # Extract new dataframe where category_id = 9910
+    df_9910 = (
+        df[df["category_id"] == "9910"].copy()
+        if "category_id" in df.columns
+        else pd.DataFrame()
+    )
+    df_auth_statement = prepareAuthStatementDF(df_9910)
+    
+    # ------------------------------------------------------------------------------------------
+
+    # Extract dataframe for multiple category IDs: 9905, 9903, 9901, 9906, 9907, 9902
+    category_ids_list = [
+        "9905",
+        "9903",
+        "9901",
+        "9906",
+        "9907",
+        "9902",
+    ]
+    df_multiple_categories = (
+        df[df["category_id"].isin(category_ids_list)].copy()
+        if "category_id" in df.columns
+        else pd.DataFrame()
+    )
+    df_other_publications = prepareOtherPublicationsDF(df_multiple_categories)
+
 
     return (
         df_9a_special_interests,
@@ -574,6 +711,9 @@ def cleanData(df):
         df_12c_hospital_memberships,
         df_12g_other_memberships,
         df_14a_other_info,
+        df_auth_statement,
+        df_other_publications
+        
     )
 
 
@@ -941,7 +1081,7 @@ def lambda_handler(event, context):
             return {"statusCode": 400, "status": "FAILED", "error": str(e)}
 
         # Clean the DataFrame
-        dfA, dfB, dfC, dfD, dfE, dfF, dfG, dfH, dfI, dfJ, dfK, dfL, dfM, dfN, dfO, dfP, dfQ, dfR, dfS = cleanData(df)
+        dfA, dfB, dfC, dfD, dfE, dfF, dfG, dfH, dfI, dfJ, dfK, dfL, dfM, dfN, dfO, dfP, dfQ, dfR, dfS, dfT, dfU= cleanData(df)
         print("Data cleaned successfully.")
 
         # Connect to database
@@ -976,8 +1116,10 @@ def lambda_handler(event, context):
         # rows_processed, rows_added_to_db = storeData(dfQ, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_Q)
         # rows_processed, rows_added_to_db = storeData(dfR, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_R)
         
-        rows_processed, rows_added_to_db = storeData(dfS, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_S)
+        # rows_processed, rows_added_to_db = storeData(dfS, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_S)
+        # rows_processed, rows_added_to_db = storeData(dfT, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_T)
 
+        rows_processed, rows_added_to_db = storeData(dfU, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_U)
         print("Data stored successfully.")
         cursor.close()
         connection.close()
