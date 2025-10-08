@@ -53,29 +53,9 @@ def cleanData(df):
     
     # Clean individual name fields
     df["first_name"] = safe_string_clean(df.get("first_name", pd.Series(dtype=str)), "first_name")
-    df["middle_name"] = safe_string_clean(df.get("middle_name", pd.Series(dtype=str)), "middle_name")
     df["last_name"] = safe_string_clean(df.get("last_name", pd.Series(dtype=str)), "last_name")
     
-    # Combine first_name and middle_name for the final first_name field
-    def combine_first_middle(row):
-        first = str(row["first_name"]).strip() if pd.notna(row["first_name"]) else ""
-        middle = str(row["middle_name"]).strip() if pd.notna(row["middle_name"]) else ""
         
-        # Clean the strings
-        first = first if first not in ['nan', 'None', 'null', 'NULL', ''] else ""
-        middle = middle if middle not in ['nan', 'None', 'null', 'NULL', ''] else ""
-        
-        if first and middle:
-            return f"{first} {middle}"
-        elif first:
-            return first
-        elif middle:
-            return middle
-        else:
-            return ""
-    
-    df["first_name"] = df.apply(combine_first_middle, axis=1)
-    
     # Handle email - ensure empty values become empty strings, not 'nan'
     df["email"] = df["email"].fillna('').astype(str).str.strip()
     df["email"] = df["email"].apply(lambda x: '' if x == 'nan' or x == 'None' else x)
@@ -101,15 +81,15 @@ def cleanData(df):
     df["department"] = 'Anesthesiology, Pharmacology & Therapeutics'
     
     # Handle employee_id and username fields if they exist, otherwise set defaults
-    if "employee_id" not in df.columns:
-        df["employee_id"] = ''
-    else:
-        df["employee_id"] = df["employee_id"].fillna('').astype(str).str.strip()
+    # if "employee_id" not in df.columns:
+    df["employee_id"] = ''
+    # else:
+    #     df["employee_id"] = df["employee_id"].fillna('').astype(str).str.strip()
     
-    if "username" not in df.columns:
-        df["username"] = ''
-    else:
-        df["username"] = df["username"].fillna('').astype(str).str.strip()
+    # if "username" not in df.columns:
+    df["username"] = ''
+    # else:
+    #     df["username"] = df["username"].fillna('').astype(str).str.strip()
 
     # Keep only the cleaned columns and make an explicit copy to avoid SettingWithCopyWarning
     df = df[["user_id", "employee_id", "first_name", "last_name", "email", "username", "active", "role", "faculty", "department"]].copy()

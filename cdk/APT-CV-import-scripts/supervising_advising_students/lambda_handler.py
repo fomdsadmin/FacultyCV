@@ -14,8 +14,8 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE_A = "5a. Post-Secondary Education"
-SECTION_TITLE_B = "5b. Dissertations"
+SECTION_TITLE_A = "8d.1. Students Supervised"
+SECTION_TITLE_B = "8d.2. Graduate Students Supervisory Committee"
 
     # start_date will be taken from year ('2013' , 'Present' (Should map to 'Current')) + month ('01 (should map to 'January')',  'id' (skip))
 def format_date(year, month):
@@ -65,7 +65,7 @@ def cleanData(df):
     b = df.copy()
     
     # Ensure relevant columns are string type before using .str methods
-    for col in ["user_id", "category_id", "student_name", "program", "degree_project", "time_commitment", "supervisor", "co-supervisor", "student_description" ]:
+    for col in ["user_id", "category_id", "student_name", "program", "degree_project", "time_commitment", "supervisor", "co-supervisor", "student_description", "duration" ]:
         if col in a.columns:
             a[col] = a[col].astype(str)
         if col in b.columns:
@@ -120,11 +120,36 @@ def cleanData(df):
     # Filter df A to keep only entries with valid mappings (not None)
     a = a[a["type"].notna()]
     
+    a["student_name"] = safe_string_clean(a["student_name"]) if "student_name" in a.columns else ""
     a["program/department"] = safe_string_clean(a["program"]) if "program" in a.columns else ""
-    a["degree"] = safe_string_clean(a["degree_project"]) if "degree_project" in a.columns else ""
-    a["student_current_position"] = safe_string_clean(a["student_description"]) if "student_description" in a.columns else ""
+    
+
+    # Map degree_project values to degree column with custom mapping
+    def map_category_to_degree(row):
+        degree_project = str(row.get('degree_project', '')).strip()
+        degree_mapping = {
+            'BSc': 'Bachelor of Science (BSc)',
+            'MD': 'Doctor of Medicine (MD)',
+            'MSc': 'Master of Science (MSc)',
+            'PhD': 'Doctor of Philosophy (PhD)',
+            'MSc-PhD': 'Master of Science–Doctor of Philosophy (MSc-PhD)',
+            'Fellowship': 'Fellowship',
+            'MD-PhD': 'Doctor of Medicine–Doctor of Philosophy (MD-PhD)',
+            'Resident': 'Resident',
+            'MPH': 'Master of Public Health (MPH)',
+            'MHA': 'Master of Health Administration (MHA)',
+            'Other': 'Other',
+        }
+        if degree_project in degree_mapping:
+            return degree_mapping[degree_project]
+        else:
+            return ''  # Return None for unmapped categories
+        
+    a["degree_project"] = safe_string_clean(a["degree_project"]) if "degree_project" in a.columns else ""
+    a["degree"] = a.apply(map_category_to_degree, axis=1)
+    
     a["time_commitment"] = safe_string_clean(a["time_commitment"]) if "time_commitment" in a.columns else ""
-    a["subject_area"] = safe_string_clean(a["subject_area"]) if "subject_area" in a.columns else ""
+    a["student_current_position"] = safe_string_clean(a["student_description"]) if "student_description" in a.columns else ""
     a["supervisory_role"] = safe_string_clean(a["supervisor"]) if "supervisor" in a.columns else ""
     a["co-supervisor"] = safe_string_clean(a["co-supervisor"]) if "co-supervisor" in a.columns else ""
     a["details"] = safe_string_clean(a["duration"]) if "duration" in a.columns else ""
@@ -166,7 +191,7 @@ def cleanData(df):
     a["dates"] = a.apply(combine_dates, axis=1)
 
     # Keep only the cleaned columns for dataframe A (entries with valid category mappings)
-    a = a[["user_id", "type", "program/department", "degree", "student_current_position", "time_commitment", "subject_area", "supervisory_role", "co-supervisor", "details", "dates"]]
+    a = a[["user_id", "type", "program/department", "student_name", "degree", "student_current_position", "time_commitment", "supervisory_role", "co-supervisor", "details", "dates"]]
 
     # Comprehensive replacement of NaN, None, and string representations with empty strings
     a = a.fillna('').replace(['nan', 'None', 'null', 'NULL', np.nan, None], '')
@@ -185,14 +210,31 @@ def cleanData(df):
     
     # Process other fields for dataframe B
     b["student_name"] = safe_string_clean(b["student_name"]) if "student_name" in b.columns else ""
-    b["program/department"] = safe_string_clean(b["program"]) if "program" in b.columns else ""
-    b["degree"] = safe_string_clean(b["degree_project"]) if "degree_project" in b.columns else ""
-    b["supervisory_role"] = safe_string_clean(b["supervisor"]) if "supervisor" in b.columns else ""
-    b["co-supervisor"] = safe_string_clean(b["co-supervisor"]) if "co-supervisor" in b.columns else ""
+    b["department/program"] = safe_string_clean(b["program"]) if "program" in b.columns else ""
+    b["details"] = safe_string_clean(b["duration"]) if "duration" in b.columns else ""
+    
+    def map_type_to_degree(row):
+        degree_project = str(row.get('degree_project', '')).strip()
+        degree_mapping = {
+            'MSc': 'MSc',
+            'PhD': 'PhD',
+            'MPH': 'MPH',
+            'MA': 'MA',
+            'MD-PhD': 'MD-PhD',
+        }
+        if degree_project in degree_mapping:
+            return degree_mapping[degree_project]
+        else:
+            return ''  # Return None for unmapped categories
+        
+    b["degree_project"] = safe_string_clean(b["degree_project"]) if "degree_project" in b.columns else ""
+    b["type"] = b.apply(map_type_to_degree, axis=1)
+    
+    b["supervisor"] = safe_string_clean(b["supervisor"]) if "supervisor" in b.columns else ""
     
     # Process start_date and end_date for dataframe B
-    if 'year' in b.columns and 'month' in b.columns:
-        b['start_date'] = b.apply(lambda row: format_date(row['year'], row['month']), axis=1)
+    if 'start_year' in b.columns and 'start_month' in b.columns:
+        b['start_date'] = b.apply(lambda row: format_date(row['start_year'], row['start_month']), axis=1)
     elif 'start_date' not in b.columns:
         b['start_date'] = ""
         
@@ -208,7 +250,7 @@ def cleanData(df):
     b["dates"] = b.apply(combine_dates, axis=1)
     
     # Keep only the cleaned columns for dataframe B (category_id 3005 entries)
-    b = b[["user_id", "student_name", "program/department", "degree", "supervisory_role", "co-supervisor", "dates"]]
+    b = b[["user_id", "type", "student_name", "department/program", "type", "supervisor", "details", "dates"]]
 
     # Comprehensive replacement of NaN, None, and string representations with empty strings
     b = b.fillna('').replace(['nan', 'None', 'null', 'NULL', np.nan, None], '')

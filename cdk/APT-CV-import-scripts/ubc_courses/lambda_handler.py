@@ -14,7 +14,7 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE_A = "8b.1. Courses Taught"
+SECTION_TITLE_A = "8b. Courses Taught"
 
 def cleanData(df):
     """
@@ -26,7 +26,7 @@ def cleanData(df):
     
     # Ensure relevant columns are string type before using .str methods
     for col in ["user_id", "category_id", "course_term", "course_number", "principal_course_brief_description", "contact_hours", 
-                "class_size", "lecture_hours", "tutorial_hours", "lab_hours", "other_hours", "course_role  "]:
+                "class_size", "lecture_hours", "tutorial_hours", "lab_hours", "other_hours", "course_role"]:
         if col in a.columns:
             a[col] = a[col].astype(str)
 
@@ -48,12 +48,28 @@ def cleanData(df):
         except (ValueError, TypeError):
             return str(x).strip()  # If conversion fails, return as string
     
+    # Helper function to convert decimal hours to integers when possible
+    def clean_hours(value):
+        """Convert decimal hours to integers when they have no fractional component"""
+        if pd.isna(value) or value == '' or str(value).strip() == '' or str(value) == 'nan':
+            return ""
+        try:
+            # Convert to float first to handle string numbers
+            float_val = float(str(value).strip())
+            # Check if it's a whole number
+            if float_val.is_integer():
+                return str(int(float_val))
+            else:
+                return str(float_val)
+        except (ValueError, TypeError):
+            return str(value).strip()
+    
     # Process dataframe A (Post-Secondary Education)
     a["user_id"] = a["user_id"].apply(process_user_id)
     # Convert user_id to Int64 (nullable integer) to avoid float decimals while preserving NaN
     a["user_id"] = a["user_id"].astype('Int64')
     a["course"] = safe_string_clean(a["course_number"]) if "course_number" in a.columns else ""
-    a["contact_hours_(per_year)"] = safe_string_clean(a["contact_hours"]) if "contact_hours" in a.columns else ""
+    a["contact_hours_(per_year)"] = a["contact_hours"].apply(clean_hours) if "contact_hours" in a.columns else ""
     a["number_of_students"] = safe_string_clean(a["class_size"]) if "class_size" in a.columns else ""
     a["lecture_hours_(per_year)"] = safe_string_clean(a["lecture_hours"]) if "lecture_hours" in a.columns else ""
     a["tutorial_hours_(per_year)"] = safe_string_clean(a["tutorial_hours"]) if "tutorial_hours" in a.columns else ""
@@ -119,6 +135,8 @@ def cleanData(df):
         if year_str.lower() == 'present':
             year_str = 'Current'
             return year_str
+        
+        return year_str
         
 
     # Process start_date and end_date for dataframe A

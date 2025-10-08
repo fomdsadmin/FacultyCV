@@ -48,7 +48,7 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
         };
       });
       
-      allRows = parsedRows; // All rows are already limited to 2500 by the server
+      allRows = parsedRows; // All rows are already limited to 5000 by the server
     } catch (error) {
       // skip user if error
       console.error("Error fetching CV data for section:", error);
@@ -73,6 +73,7 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
     // Filter data to only include rows from users in the selected department
     const filteredData = data.filter(row => departmentUserIds.includes(row.user_id));
     setDataRows(filteredData);
+    console.log(filteredData)
   };
 
   // Handle department filter change
@@ -188,10 +189,10 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
           Total Data Rows: {loading ? "Loading..." : `${dataRows.length} of ${totalRows}`}
           {selectedDepartment !== "all" && ` (filtered by ${selectedDepartment})`}
         </span>
-        {(!loading && totalRows > 2500) && (
-          <span className="ml-2 text-zinc-500 text-sm">(showing first 2500 rows)</span>
+        {(!loading && totalRows > 5000) && (
+          <span className="ml-2 text-zinc-500 text-sm">(showing first 5000 rows)</span>
         )}
-        {(!loading && dataRows.length > 0 && totalRows <= 2500 && selectedDepartment === "all") && (
+        {(!loading && dataRows.length > 0 && totalRows <= 5000 && selectedDepartment === "all") && (
           <span className="ml-2 text-zinc-500 text-sm">(showing all {dataRows.length} rows)</span>
         )}
       </div>
