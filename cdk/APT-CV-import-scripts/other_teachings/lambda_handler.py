@@ -25,7 +25,7 @@ def cleanData(df):
     a = df.copy()
     
     # Ensure relevant columns are string type before using .str methods
-    for col in ["user_id", "category_name", "duration", "description", "total_hours" ]:
+    for col in ["user_id", "category_name", "category_other", "description", "contact_presentation_time_hr" ]:
         if col in a.columns:
             a[col] = a[col].astype(str)
 
@@ -55,24 +55,22 @@ def cleanData(df):
     a["user_id"] = a["user_id"].astype('Int64')
     
     a["category_name"] = safe_string_clean(a["category_name"]) if "category_name" in a.columns else ""
-    a["duration_(eg:_8_weeks)"] = safe_string_clean(a["duration"]) if "duration" in a.columns else ""
-    a["total_hours"] = safe_string_clean(a["total_hours"]) if "total_hours" in a.columns else ""
-    a["brief_description"] = safe_string_clean(a["description"]) if "description" in a.columns else ""
+    a["total_hours"] = safe_string_clean(a["contact_presentation_time_hr"]) if "contact_presentation_time_hr" in a.columns else ""
+    a["details"] = safe_string_clean(a["description"]) if "description" in a.columns else ""
     
     # Map category_id values to type column with custom mapping
     def map_category_to_type(row):
         category_id = str(row.get('category_name', '')).strip()
+        category_other = str(row.get('category_other', '')).strip()
         
         # Define mapping for category_id values
         category_mapping = {
-            'Clinical Clerkship': 'Year 3 (Clinical Clerkship)',
-            'Postgraduate': 'Postgraduates', 
-            'Fellowship': 'Fellowship',
-            'Medical students': 'Medical students',
-            'Other': 'Other',
+            'Outreach': 'Outreach & community-based educational activities',
+            'Distance': 'Distance education & online courses', 
         }
         
         # Get the mapped value or use category_other as fallback
+        mapped_value = None
         if category_id in category_mapping:
             mapped_value = category_mapping[category_id]
         
@@ -80,15 +78,20 @@ def cleanData(df):
         if mapped_value:
             return mapped_value
         else:
-            return "i. Other"
+            if category_other:
+                if category_other == 'Other Teaching of Undergraduates, Graduates and Postgraduates':
+                    return "Other"
+                else:
+                    return f"Other ({category_other})"
+            else:
+                return "Other"
 
     
     # Apply the mapping logic to create type and title columns
-    a["student_level"] = a.apply(map_category_to_type, axis=1)
-    a["type_of_teaching"] = 'Teaching with Patient Care'
-    
+    a["category"] = a.apply(map_category_to_type, axis=1)
+
     # start_date will be taken from year ('2013' , 'Present' (Should map to 'Current')) + month ('01 (should map to 'January')',  'id' (skip))
-    def format_date(year):
+    def format_date(year, month):
         """
         Format year and month into a readable date string.
         Returns empty string if year is 'id' (skip), NaN, null, or empty.
@@ -100,18 +103,39 @@ def cleanData(df):
         year_str = str(year).strip()
         if year_str.lower() == 'present':
             year_str = 'Current'
-            
-        return year_str
+            return year_str
         
+        # Handle month - check for NaN, None, empty, or 'id'
+        if pd.isna(month) or month is None or str(month).strip().lower() in ['', 'nan', 'none', 'null', 'id']:
+            return year_str
+        
+        month_str = str(month).strip()
+        # Map month numbers to month names
+        month_mapping = {
+            '01': 'January', '02': 'February', '03': 'March', '04': 'April',
+            '05': 'May', '06': 'June', '07': 'July', '08': 'August',
+            '09': 'September', '10': 'October', '11': 'November', '12': 'December',
+            '1': 'January', '2': 'February', '3': 'March', '4': 'April',
+            '5': 'May', '6': 'June', '7': 'July', '8': 'August',
+            '9': 'September'
+        }
+        
+        if month_str in month_mapping:
+            return f"{month_mapping[month_str]} {year_str}"
+        elif month_str.lower() not in ['', 'nan', 'none', 'null', 'id']:
+            # If month is already a name or other format, use as is
+            return f"{month_str} {year_str}"
+        else:
+            return year_str
 
     # Process start_date and end_date for dataframe A
-    if 'year' in a.columns:
-        a['start_date'] = a.apply(lambda row: format_date(row['year']), axis=1)
+    if 'year' in a.columns and 'month' in a.columns:
+        a['start_date'] = a.apply(lambda row: format_date(row['year'], row['month']), axis=1)
     elif 'start_date' not in a.columns:
         a['start_date'] = ""
         
-    if 'end_year' in a.columns:
-        a['end_date'] = a.apply(lambda row: format_date(row['end_year']), axis=1)
+    if 'end_year' in a.columns and 'end_year_month' in a.columns:
+        a['end_date'] = a.apply(lambda row: format_date(row['end_year'], row['end_year_month']), axis=1)
     elif 'end_date' not in a.columns:
         a['end_date'] = ""
 
@@ -140,7 +164,7 @@ def cleanData(df):
             return ""
     a["dates"] = a.apply(combine_dates, axis=1)
 
-    a = a[["user_id", "type_of_teaching", "dates", "student_level", "brief_description", "duration_(eg:_8_weeks)", "total_hours"]]
+    a = a[["user_id", "dates", "details", "total_hours", "category"]]
 
     # Comprehensive replacement of NaN, None, and string representations with empty strings
     a = a.fillna('').replace(['nan', 'None', 'null', 'NULL', np.nan, None], '')
