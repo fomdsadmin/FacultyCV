@@ -5,7 +5,7 @@ import AddOrcidModal from "./AddOrcidModal";
 import ManualOrcidModal from "./ManualOrcidModal";
 import OptionsModal from "../OptionsModal";
 
-const Orcid = ({ user, setUser, isAdmin }) => {
+const Orcid = ({ user, setUser, isAdmin, fetchAllUsers }) => {
   const { userInfo, setUserInfo } = useApp();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
@@ -182,12 +182,15 @@ const Orcid = ({ user, setUser, isAdmin }) => {
         user={currentUser}
         setUser={setUser}
         isAdmin={isAdmin}
+        fetchAllUsers={fetchAllUsers}
       />
       <ManualOrcidModal
         isOpen={showManualModal}
         onClose={handleCloseManualModal}
         user={currentUser}
+        setUser={setUser}
         isAdmin={isAdmin}
+        fetchAllUsers={fetchAllUsers}
       />
     </>
   );

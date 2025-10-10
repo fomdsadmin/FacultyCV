@@ -211,8 +211,8 @@ const ManageUser = ({ user, onBack, fetchAllUsers, department }) => {
           {/* Scopus/ORCID Linkages for Admin */}
           <div className="mt-4">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              <Scopus user={currentUser} setUser={setCurrentUser} isAdmin={true} />
-              <Orcid user={currentUser} setUser={setCurrentUser} isAdmin={true} />
+              <Scopus user={currentUser} setUser={setCurrentUser} isAdmin={true} fetchAllUsers={fetchAllUsers} />
+              <Orcid user={currentUser} setUser={setCurrentUser} isAdmin={true} fetchAllUsers={fetchAllUsers} />
             </div>
           </div>
 

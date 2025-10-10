@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useApp } from "../../../../../Contexts/AppContext"
+import { updateUser } from "../../../../../graphql/graphqlHelpers"
 import ModalStylingWrapper from "../../../../../SharedComponents/ModalStylingWrapper"
 import { toast } from "react-toastify";
 
@@ -9,26 +10,97 @@ function isAllNumbers(str) {
     return /^\d+$/.test(str);
 }
 
-const ManualScopusModal = ({ isOpen, onClose }) => {
-    const { setUserInfo } = useApp()
+const ManualScopusModal = ({ isOpen, onClose, user, setUser, isAdmin, fetchAllUsers }) => {
+    const { userInfo, setUserInfo } = useApp()
     const [manualScopusId, setManualScopusId] = useState("")
 
-    const handleManualScopusLink = () => {
+    // Use correct user object based on isAdmin
+    const currentUser = isAdmin ? user : userInfo;
+
+    const handleManualScopusLink = async () => {
         if (!manualScopusId.trim()) return
 
         if (!isAllNumbers(manualScopusId.trim())) {
-            toast.success("Scopus ID must be a numeric value", { autoClose: 3000 })
+            toast.error("Scopus ID must be a numeric value", { autoClose: 3000 })
             setManualScopusId("");
             return;
         }
 
-        setUserInfo((prev) => ({
-            ...prev,
-            scopus_id: manualScopusId.trim()
-        }))
+        try {
+            // Handle multiple Scopus IDs
+            const newScopusId = manualScopusId.trim();
+            const existingScopusIds = currentUser.scopus_id ? currentUser.scopus_id.split(",").map(id => id.trim()) : [];
+            
+            // Check if this ID already exists
+            if (existingScopusIds.includes(newScopusId)) {
+                toast.warning("This Scopus ID already exists!", { autoClose: 3000 });
+                setManualScopusId("");
+                return;
+            }
+            
+            // Combine existing and new IDs
+            const updatedScopusIds = existingScopusIds.length > 0 
+                ? [...existingScopusIds, newScopusId].join(",")
+                : newScopusId;
 
-        setManualScopusId("")
-        onClose()
+            if (isAdmin) {
+                // Update via GraphQL for admin
+                const sanitizeInput = (input) => {
+                    if (!input) return "";
+                    return input
+                        .replace(/\\/g, "\\\\") // escape backslashes
+                        .replace(/"/g, '\\"') // escape double quotes
+                        .replace(/\n/g, "\\n"); // escape newlines
+                };
+
+                await updateUser(
+                    currentUser.user_id,
+                    currentUser.first_name,
+                    currentUser.last_name,
+                    currentUser.preferred_name,
+                    currentUser.email,
+                    currentUser.role,
+                    sanitizeInput(currentUser.bio),
+                    currentUser.institution,
+                    currentUser.primary_department,
+                    currentUser.primary_faculty,
+                    currentUser.campus,
+                    currentUser.keywords,
+                    currentUser.institution_user_id,
+                    updatedScopusIds, // Update Scopus ID with combined IDs
+                    currentUser.orcid_id
+                );
+
+                // Update the local user state
+                if (setUser) {
+                    setUser(prev => ({
+                        ...prev,
+                        scopus_id: updatedScopusIds
+                    }));
+                }
+
+                toast.success("Scopus ID added successfully!", { autoClose: 3000 });
+                console.log("Scopus ID updated successfully");
+                
+                // Refresh the users list in admin context
+                if (fetchAllUsers) {
+                    await fetchAllUsers();
+                }
+            } else {
+                // Update local state for regular user
+                setUserInfo((prev) => ({
+                    ...prev,
+                    scopus_id: updatedScopusIds
+                }))
+                toast.success("Scopus ID added successfully!", { autoClose: 3000 });
+            }
+
+            setManualScopusId("")
+            onClose()
+        } catch (error) {
+            console.error("Error updating Scopus ID:", error);
+            toast.error("Failed to add Scopus ID. Please try again.", { autoClose: 3000 });
+        }
     }
 
     if (!isOpen) return null
