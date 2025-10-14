@@ -118,7 +118,8 @@ def processUserData(user_data_list, connection, cursor):
 
 def insertUsers(user_data, cursor):
     """
-    Insert or update user information in the users table - cwl_username, employee_id, active, terminated, and email
+    Insert new user information in the users table - cwl_username, employee_id, active, terminated, and email
+    Note: Only new users are processed as existing users are filtered out before calling this function
     """
     try:
         # Extract relevant fields from JSON
@@ -129,7 +130,7 @@ def insertUsers(user_data, cursor):
         employee_id = str(user_data.get('employeeId', ''))
         
         # Handle active and terminated status
-        is_active = user_data.get('isActiveEmployee', False)
+        is_active = user_data.get('isActiveEmployee', True)
         is_terminated = user_data.get('isTerminatedEmployee', False)
         first_name = user_data.get('givenName', '')
         last_name = user_data.get('familyName', '')
@@ -144,22 +145,13 @@ def insertUsers(user_data, cursor):
             # Use single email attribute if present
             email = user_data.get('email', '')
         
-        # Update user record
-        update_query = """
+        # Insert new user record (we already filtered out existing users)
+        insert_query = """
         INSERT INTO users (first_name, last_name, cwl_username, employee_id, active, terminated, email, primary_department, primary_faculty, role ) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s , 'Anesthesiology, Pharmacology & Therapeutics', 'Faculty of Medicine', 'Faculty') 
-        ON CONFLICT (employee_id) DO UPDATE SET
-            first_name = EXCLUDED.first_name,
-            last_name = EXCLUDED.last_name,
-            cwl_username = EXCLUDED.cwl_username,
-            employee_id = EXCLUDED.employee_id,
-            active = EXCLUDED.active,
-            terminated = EXCLUDED.terminated,
-            email = EXCLUDED.email
-            
+        VALUES (%s, %s, %s, %s, %s, %s, %s, 'Anesthesiology, Pharmacology & Therapeutics', 'Faculty of Medicine', 'Faculty')
         """
         
-        cursor.execute(update_query, (
+        cursor.execute(insert_query, (
             first_name,
             last_name,
             cwl,

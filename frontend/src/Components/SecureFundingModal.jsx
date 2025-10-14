@@ -5,6 +5,7 @@ import SecureFundingEntry from "./SecureFundingEntry";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { getSecureFundingMatches, getRiseDataMatches, addUserCVData, getAllSections } from "../graphql/graphqlHelpers";
 import GenericEntry from "SharedComponents/GenericEntry";
+import { sortEntriesByDate } from "../utils/dateUtils";
 
 const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
   const [allSecureFundingData, setAllSecureFundingData] = useState([]);
@@ -29,6 +30,49 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     "Canada Foundation for Innovation",
     "CFI",
   ];
+
+  // Function to sort secure funding data by date (most recent first)
+  const sortSecureFundingByDate = (data) => {
+    return [...data].sort((a, b) => {
+      // Extract date from 'dates' field
+      const dateA = a.dates || '';
+      const dateB = b.dates || '';
+      
+      // Handle empty dates (put them at the end)
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      
+      // Handle "current" or "present" - should be sorted as most recent
+      const lowerDateA = dateA.toLowerCase();
+      const lowerDateB = dateB.toLowerCase();
+      
+      if (lowerDateA.includes("current") || lowerDateA.includes("present")) {
+        return -1; // A is more recent
+      }
+      if (lowerDateB.includes("current") || lowerDateB.includes("present")) {
+        return 1; // B is more recent
+      }
+      
+      // For date ranges, extract the start year
+      const extractYear = (dateStr) => {
+        if (!dateStr) return 0;
+        
+        // Split on dash and take the first part (start date)
+        const startDate = dateStr.split('-')[0].trim();
+        
+        // Extract 4-digit year
+        const yearMatch = startDate.match(/\b(\d{4})\b/);
+        return yearMatch ? parseInt(yearMatch[1]) : 0;
+      };
+      
+      const yearA = extractYear(dateA);
+      const yearB = extractYear(dateB);
+      
+      // Sort by year descending (most recent first)
+      return yearB - yearA;
+    });
+  };
 
   // Function to check if sponsor contains Canadian funding agencies
   const isCanadianFundingAgency = (item) => {
@@ -545,8 +589,8 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
         {/* Step 3: Grants Display with Override Warning */}
         {currentStep === "grants-display" && (
           <div className="w-full h-full p-6 overflow-y-auto">
-            {/* Override Warning Section */}
-            <div className="mb-6">
+            {/* Header */}
+            <div className="mb-2">
               <button
                 type="button"
                 className="btn btn-outline btn-sm mb-2"
@@ -579,14 +623,14 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
               </div> */}
 
               {/* Date Range Display */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-left mb-2 flex justify-between items-center gap-4">
-                <span className="font-mono text-sm font-semibold text-blue-800">
+              <div className="text-left flex justify-between items-center gap-2">
+                <span className="text-lg text-zinc-800 font-semibold ">
                   {dateRangeOption === "all"
-                    ? `Imported ${selectedSource === "rise" ? "RISE" : "External"} Grants for [All available years]`
+                    ? `IMPORTED ${selectedSource === "rise" ? "RISE" : "External"} GRANTS FOR [All available years]`
                     : customStartYear
-                    ? `Imported ${
+                    ? `IMPORTED ${
                         selectedSource === "rise" ? "RISE" : "External"
-                      } Grants for [${customStartYear} onwards]`
+                      } GRANTS FOR [${customStartYear} onwards]`
                     : "[All available years]"}{" "}
                   {/* <span className=" bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
                     {selectedSecureFundingData.length} selected
@@ -601,7 +645,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                   </button>
                   <button
                     type="button"
-                    className="btn btn-secondary px-6 py-2 ml-2 text-white rounded-lg shadow hover:shadow-md transition"
+                    className="btn btn-primary btn-success px-6 py-2 ml-2 text-white rounded-lg shadow hover:shadow-md transition"
                     onClick={addSecureFundingData}
                     disabled={addingData || selectedSecureFundingData.length === 0}
                   >
@@ -615,6 +659,24 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
               </div>
             </div>
 
+            {/* Helper Information Section */}
+            <div className="mb-2">
+              <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-green-600 text-lg">ℹ️</span>
+                  <div className="text-sm text-green-800 leading-relaxed">
+                    <div className="font-medium mb-1">Note:</div>
+                    <ul className="space-y-1 text-xs">
+                      <li>• These grants were imported from {selectedSource === "rise" ? "RISE database" : "external sources (CIHR, NSERC, SSHRC, CFI)"}</li>
+                      <li>• Selected entries will be <strong>added</strong> to your CV's Research or Equivalent Grants section</li>
+                      <li>• Your original CV data for this section will <strong>remain intact</strong> - nothing will be overwritten</li>
+                      <li>• You can review and edit imported entries after they're added to your profile</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {allSecureFundingData.length === 0 ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center text-gray-500 text-lg">No grants data found for selected criteria</div>
@@ -623,7 +685,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
               <>
                 {/* Grants list */}
                 <div className="space-y-2">
-                  {allSecureFundingData.map((secureFundingData, index) => (
+                  {sortSecureFundingByDate(allSecureFundingData).map((secureFundingData, index) => (
                     <SecureFundingEntry
                       key={index}
                       secureFundingData={secureFundingData}
