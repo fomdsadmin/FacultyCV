@@ -59,6 +59,9 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
   const [attributes, setAttributes] = useState([]);
   const [updatedField1, setUpdatedField1] = useState(field1);
   const [updatedField2, setUpdatedField2] = useState(field2);
+  
+  // Check if this is an imported entry
+  const isImported = data_details && data_details.isImported;
 
   useEffect(() => {
     const newAttributes = Object.entries(data_details)
@@ -141,11 +144,18 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
             return <></>;
           }
 
+          // Track id for imported TTPS-UGME/PGME Data
           if (label.trim().toLowerCase() === "track id") {
             return <></>;
           }
 
+          // redundant boolean variable not in use anymore
           if (label.trim().toLowerCase() === "highlight" || label.trim().toLowerCase() === "footnote") {
+            return <></>;
+          }
+
+          // for imported entries
+          if (label.trim().toLowerCase() === "isimported") {
             return <></>;
           }
 
@@ -183,11 +193,21 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
       </div>
 
       <div className="flex items-center space-x-1">
+        {/* Show Imported label for imported entries */}
+        {isImported && (
+          <span className="bg-green-100 text-green-700 text-sm font-bold px-3 py-1 rounded-md mr-1">
+            Automatic from ORCID
+          </span>
+        )}
+        
         {!isArchived && onEdit && onArchive && (
           <>
-            <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onEdit()}>
-              <FaRegEdit className="h-5 w-5" />
-            </button>
+            {/* Only show edit button if not imported */}
+            {!isImported && (
+              <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onEdit()}>
+                <FaRegEdit className="h-5 w-5" />
+              </button>
+            )}
             <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onArchive()}>
               <IoClose className="h-5 w-5" />
             </button>
