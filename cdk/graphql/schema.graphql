@@ -48,6 +48,7 @@ type BioResponse {
 type CVData {
 	data_section_id: String!
 	data_details: AWSJSON!
+	user_id: String!
 }
 
 type CVDataResponse {

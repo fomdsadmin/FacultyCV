@@ -241,6 +241,7 @@ export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
             data {
                 data_section_id
                 data_details
+                user_id
             }
             total_count
             returned_count
@@ -255,6 +256,7 @@ export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
             data {
                 data_section_id
                 data_details
+                user_id
             }
             total_count
             returned_count

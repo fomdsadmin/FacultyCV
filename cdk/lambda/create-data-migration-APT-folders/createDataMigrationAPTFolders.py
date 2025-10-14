@@ -33,6 +33,8 @@ def lambda_handler(event, context):
         'APT/ubc_courses/',
         'APT/university_institutions/',
         'APT/users/',
+        'APT/mulesoft_users/',
+        'APT/workday_users/',
         'APT/visiting_lecturers/',
     ]
     for folder in folders:

@@ -1,17 +1,40 @@
 import React, { useState } from "react";
 import "../CustomStyles/scrollbar.css";
 import "../CustomStyles/modal.css";
-import { deleteSectionCVData } from "../graphql/graphqlHelpers";
+import { deleteSectionCVData, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
 
-const DeleteSectionDataModal = ({ setIsModalOpen, section, onBack, getSectionData, totalRows }) => {
+const DeleteSectionDataModal = ({ 
+  setIsModalOpen, 
+  section, 
+  onBack, 
+  getSectionData, 
+  totalRows, 
+  selectedDepartment = "all",
+  departmentUserIds = null 
+}) => {
   const [deletingSectionData, setDeletingSectionData] = useState(false);
   const { logAction } = useAuditLogger();
 
   async function deleteSectionData() {
     setDeletingSectionData(true);
     try {
-      await deleteSectionCVData(section.data_section_id);
+      if (selectedDepartment === "all") {
+        // Delete all data for the section
+        await deleteSectionCVData(section.data_section_id);
+      } else {
+        // Delete data only for users in the selected department
+        if (departmentUserIds && departmentUserIds.length > 0) {
+          // Delete data for each user in the department
+          const deletePromises = departmentUserIds.map(user_id => 
+            deleteUserCVSectionData({
+              user_id: user_id,
+              data_section_id: section.data_section_id
+            })
+          );
+          await Promise.all(deletePromises);
+        }
+      }
       // Log the section delete action
       await logAction(AUDIT_ACTIONS.DELETE_SECTION_DATA);
     } catch (error) {
@@ -24,9 +47,9 @@ const DeleteSectionDataModal = ({ setIsModalOpen, section, onBack, getSectionDat
   }
 
   return (
-    <dialog className="modal-dialog ml-2" open>
+    <dialog className="modal-dialog ml-4" open>
       <div className="modal-content">
-        <div>
+        <div className="p-6">
           <button
             type="button"
             className="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
@@ -34,29 +57,60 @@ const DeleteSectionDataModal = ({ setIsModalOpen, section, onBack, getSectionDat
           >
             ✕
           </button>
-          <p className="mt-10 font-semibold ">
-            This will remove all rows for the section
-            <br />
-            <span className="text-lg flex items-center justify-center p-2 mt-4 bg-gray-200 rounded-lg">
-              <b>{section.title}</b>
-            </span>
-            <span className="text-md flex items-center justify-center p-2 mt-2 bg-gray-100 rounded-lg">
-              <b>Total Rows: {totalRows}</b>
-            </span>
-            <br />
-            Are you sure you want to do this?
-          </p>
-          <div className="mt-2 flex justify-end">
+          
+          <div className="mb-6">
+            <h3 className="text-lg font-bold mb-4">
+              Delete Section Data
+            </h3>
+            
+            <p className="text-gray-700 mb-4">
+              This will remove {selectedDepartment === "all" ? "all rows" : `rows for ${selectedDepartment} department`} for the section:
+            </p>
+            
+            <div className="space-y-3">
+              <div className="bg-gray-200 rounded-lg p-3 text-center">
+                <span className="font-bold text-lg">{section.title}</span>
+              </div>
+              
+              <div className="bg-gray-100 rounded-lg p-3 text-center">
+                <span className="font-semibold">
+                  {selectedDepartment === "all" 
+                    ? `Total Rows: ${totalRows}` 
+                    : `${selectedDepartment} Department Rows: ${totalRows}`
+                  }
+                </span>
+              </div>
+            </div>
+            
+            <p className="text-gray-700 mt-4 font-medium">
+              Are you sure you want to do this? This action cannot be undone.
+            </p>
+          </div>
+          
+          <div className="flex justify-end gap-3">
+            <button 
+              type="button" 
+              className="btn btn-outline" 
+              onClick={() => setIsModalOpen(false)}
+              disabled={deletingSectionData}
+            >
+              Cancel
+            </button>
             <button
               type="button"
-              className={`btn btn-warning  mr-2 text-white`}
+              className="btn btn-error text-white"
               onClick={deleteSectionData}
               disabled={deletingSectionData}
             >
-              {deletingSectionData ? "Deleting Section..." : "Delete Section"}
-            </button>
-            <button type="button" className="btn btn-info text-white" onClick={() => setIsModalOpen(false)}>
-              Cancel
+              {deletingSectionData 
+                ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Deleting...
+                  </>
+                ) 
+                : `Delete${selectedDepartment !== "all" ? ` (${selectedDepartment})` : ""}`
+              }
             </button>
           </div>
         </div>

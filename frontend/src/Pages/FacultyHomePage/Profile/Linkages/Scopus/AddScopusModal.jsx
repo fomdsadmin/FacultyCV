@@ -5,8 +5,8 @@ import { getElsevierAuthorMatches, getOrcidAuthorMatches, updateUser } from "../
 import { useApp } from "../../../../../Contexts/AppContext";
 import ModalStylingWrapper from "../../../../../SharedComponents/ModalStylingWrapper";
 
-// Accept user, isAdmin, and onUpdateUser props
-const AddScopusModal = ({ isOpen, onClose, user, setUser, isAdmin }) => {
+// Accept user, isAdmin, and fetchAllUsers props
+const AddScopusModal = ({ isOpen, onClose, user, setUser, isAdmin, fetchAllUsers }) => {
   const { userInfo, setUserInfo } = useApp();
   const [loading, setLoading] = useState(false);
   const [authors, setAuthors] = useState([]);
@@ -103,7 +103,21 @@ const AddScopusModal = ({ isOpen, onClose, user, setUser, isAdmin }) => {
           currentUser.orcid_id
         );
         console.log("Scopus ID saved successfully:");
-        window.location.reload();
+        
+        // Update local user state
+        if (setUser) {
+          setUser(prev => ({
+            ...prev,
+            scopus_id: scopusId
+          }));
+        }
+        
+        // Refresh the users list in admin context
+        if (fetchAllUsers) {
+          await fetchAllUsers();
+        } else {
+          window.location.reload();
+        }
       } catch (error) {
         console.error("Error saving Scopus ID:", error);
       }

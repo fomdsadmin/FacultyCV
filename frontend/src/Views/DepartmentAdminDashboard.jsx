@@ -406,7 +406,9 @@ const DepartmentAdminDashboard = ({ getCognitoUser, userInfo, department }) => {
         const type = details.type || "Other";
         if (type && typeof type === "string" && type.trim().length > 0) {
           const cleanType = type.trim();
-          typeCounts[cleanType] = (typeCounts[cleanType] || 0) + 1;
+          // Group all types that start with "Other" together
+          const groupedType = cleanType.toLowerCase().startsWith("other") ? "Other Publications" : cleanType;
+          typeCounts[groupedType] = (typeCounts[groupedType] || 0) + 1;
         }
       } catch (e) {
         console.error("Error parsing other publication data for types:", e, pub);

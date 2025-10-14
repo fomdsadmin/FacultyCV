@@ -14,49 +14,174 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
+SECTION_TITLE_A = "7a. Leaves of Absence"
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
+    Returns two DataFrames: a (Post-Secondary Education) and b (Dissertations with non-empty thesis titles)
     """
+    # Make copies for processing different sections
+    a = df.copy()
+    
     # Ensure relevant columns are string type before using .str methods
-    for col in ["PhysicianID", "Details", "Type", "TypeOther", "Notes"]:
-        if col in df.columns:
-            df[col] = df[col].astype(str)
+    for col in ["user_id", "university_company_organization", "rank_or_title", "type_of_leave" ]:
+        if col in a.columns:
+            a[col] = a[col].astype(str)
 
-    # df["user_id"] = df["PhysicianID"].fillna('').str.strip()
+    # Helper function to safely clean string columns
+    def safe_string_clean(series):
+        """Safely clean a pandas series, handling NaN, None, and string representations"""
+        return series.fillna('').astype(str).replace(['nan', 'None', 'null', 'NULL'], '').str.strip()
+    
+    # Helper function to process user_id with unique transformation
+    def process_user_id(x):
+        """Apply transformation to make user IDs unique - add 10000 to avoid conflicts"""
+        if pd.isna(x) or x == '' or str(x).strip() == '' or str(x) == 'nan':
+            return ""
+        try:
+            original_id = int(float(x))  # Handle cases like "123.0"
+            # Apply transformation to make unique - add 534234 to avoid conflicts with existing IDs
+            unique_id = original_id + 534234
+            return str(unique_id)
+        except (ValueError, TypeError):
+            return str(x).strip()  # If conversion fails, return as string
+    
+    # Process dataframe A (Post-Secondary Education)
+    a["user_id"] = a["user_id"].apply(process_user_id)
+    # Convert user_id to Int64 (nullable integer) to avoid float decimals while preserving NaN
+    a["user_id"] = a["user_id"].astype('Int64')
+    a["university/organization"] = safe_string_clean(a["university_company_organization"]) if "university_company_organization" in a.columns else ""
+    a["rank_or_title"] = safe_string_clean(a["rank_or_title"]) if "rank_or_title" in a.columns else ""
+    
+    # Map the different types from CSV to specific strings (similar to OBGYN mapping)
+    type_mapping = {
+        'Administrative leave': 'Administrative Leave',
+        'Parental Leave': 'Maternity / Paternity Leave',
+        'Maternity leave': 'Maternity / Paternity Leave',
+        'Parental': 'Maternity / Paternity Leave',
+        'Parental leave ': 'Maternity / Paternity Leave',
+        'Medical': 'Medical Leave',
+        'Medical Leave of Absence': 'Medical Leave',
+        'Pregnancy-related medical leave': 'Medical Leave',
+        'Study Leave (Sabbatical': 'Study Leave',
+        'Study Leave (Sabbatical)': 'Study Leave',
+        'Sabbatical Leave': 'Sabbatical', 
+        'Sabbatical': 'Sabbatical',
+        'Academic leave of absence (sabbatical)': 'Sabbatical',
+    }
+    
+    # Apply the mapping logic: if matches map -> "custom", else if not null/empty -> put in details
+    if "type_of_leave" in a.columns:
+        def map_type_logic(original_value):
+            if pd.isna(original_value) or str(original_value).strip() in ['', 'nan', 'None', 'null', 'NULL']:
+                return "", ""  # type, details
+            
+            original_str = str(original_value).strip()
+            
+            # If it matches an entry in the mapping, set type to "custom" and put mapped value in details
+            if original_str in type_mapping:
+                return type_mapping[original_str], ""
+            
+            # If not in map and not null/empty, put original string in details column
+            return "", original_str
+        
+        # Apply the mapping logic
+        mapped_results = a["type_of_leave"].apply(map_type_logic)
+        a["type_of_leave"] = [result[0] for result in mapped_results]
+        a["details"] = [result[1] for result in mapped_results]
+    else:
+        a["type_of_leave"] = ""
+        a["details"] = ""
+    
+    # start_date will be taken from year ('2013' , 'Present' (Should map to 'Current')) + month ('01 (should map to 'January')',  'id' (skip))
+    def format_date(year, month):
+        """
+        Format year and month into a readable date string.
+        Returns empty string if year is 'id' (skip), NaN, null, or empty.
+        """
+        # Handle year - check for NaN, None, empty, or 'id'
+        if pd.isna(year) or year is None or str(year).strip().lower() in ['', 'nan', 'none', 'null', 'id']:
+            return ""
+        
+        year_str = str(year).strip()
+        if year_str.lower() == 'present':
+            year_str = 'Current'
+            return year_str
+        
+        # Handle month - check for NaN, None, empty, or 'id'
+        if pd.isna(month) or month is None or str(month).strip().lower() in ['', 'nan', 'none', 'null', 'id']:
+            return year_str
+        
+        month_str = str(month).strip()
+        # Map month numbers to month names
+        month_mapping = {
+            '01': 'January', '02': 'February', '03': 'March', '04': 'April',
+            '05': 'May', '06': 'June', '07': 'July', '08': 'August',
+            '09': 'September', '10': 'October', '11': 'November', '12': 'December',
+            '1': 'January', '2': 'February', '3': 'March', '4': 'April',
+            '5': 'May', '6': 'June', '7': 'July', '8': 'August',
+            '9': 'September'
+        }
+        
+        if month_str in month_mapping:
+            return f"{month_mapping[month_str]} {year_str}"
+        elif month_str.lower() not in ['', 'nan', 'none', 'null', 'id']:
+            # If month is already a name or other format, use as is
+            return f"{month_str} {year_str}"
+        else:
+            return year_str
+
+    # Process start_date and end_date for dataframe A
+    if 'start_year' in a.columns and 'start_month' in a.columns:
+        a['start_date'] = a.apply(lambda row: format_date(row['start_year'], row['start_month']), axis=1)
+    elif 'start_date' not in a.columns:
+        a['start_date'] = ""
+        
+    if 'end_year' in a.columns and 'end_month' in a.columns:
+        a['end_date'] = a.apply(lambda row: format_date(row['end_year'], row['end_month']), axis=1)
+    elif 'end_date' not in a.columns:
+        a['end_date'] = ""
+
+    # Ensure start_date and end_date are strings for dataframe A
+    a['start_date'] = a['start_date'].astype(str).fillna('').str.strip()
+    a['end_date'] = a['end_date'].astype(str).fillna('').str.strip()
 
     # Combine start and end dates into a single 'dates' column
     # Only show ranges when both dates exist, avoid empty dashes
-    # def combine_dates(row):
-    #     start = row["start_date"].strip()
-    #     end = row["end_date"].strip()
+    def combine_dates(row):
+        # Safely get start and end dates, handling NaN/None
+        start = str(row["start_date"]) if pd.notna(row["start_date"]) else ""
+        end = str(row["end_date"]) if pd.notna(row["end_date"]) else ""
+        
+        # Clean the strings
+        start = start.strip() if start not in ['nan', 'None', 'null', 'NULL'] else ""
+        end = end.strip() if end not in ['nan', 'None', 'null', 'NULL'] else ""
 
-    #     if start and end:
-    #         return f"{start} - {end}"
-    #     elif start:
-    #         return start
-    #     elif end:
-    #         return end
-    #     else:
-    #         return ""
-    # df["dates"] = df.apply(combine_dates, axis=1)
+        if start and end:
+            return f"{start} - {end}"
+        elif start:
+            return start
+        elif end:
+            return end
+        else:
+            return ""
+    a["dates"] = a.apply(combine_dates, axis=1)
+    
+    a = a[["user_id", "university/organization", "rank_or_title", "type_of_leave", "details", "dates"]]
 
-    # Keep only the cleaned columns
-    # df = df[["user_id", "details", "type_of_leave", "highlight_-_notes", "dates"]]
-
-    # Replace NaN with empty string for all columns
-    # df = df.replace({np.nan: ''})
-    return df
+    # Comprehensive replacement of NaN, None, and string representations with empty strings
+    a = a.fillna('').replace(['nan', 'None', 'null', 'NULL', np.nan, None], '')
+    
+    return a
 
 
-def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
+def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db, section_title):
     """
     Store the cleaned DataFrame into the database.
     Returns updated rows_processed and rows_added_to_db.
     """
-    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
+    # Query for the data_section_id where title contains section_title (case insensitive)
     try:
         cursor.execute(
             """
@@ -64,13 +189,13 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
             WHERE title = %s
             LIMIT 1
             """,
-            (SECTION_TITLE,)
+            (section_title,)
         )
         result = cursor.fetchone()
         if result:
             data_section_id = result[0]
         else:
-            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
+            errors.append(f"No data_section_id found for '{section_title}'")
             data_section_id = None
     except Exception as e:
         errors.append(f"Error fetching data_section_id: {str(e)}")
@@ -84,7 +209,18 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
         row_dict = row.to_dict()
         # Remove user_id from data_details
         row_dict.pop('user_id', None)
-        data_details_JSON = json.dumps(row_dict)
+        
+        # Ensure all values are clean strings, not NaN or None
+        clean_row_dict = {}
+        for key, value in row_dict.items():
+            if pd.isna(value) or value is None:
+                clean_row_dict[key] = ""
+            elif str(value).lower() in ['nan', 'none', 'null']:
+                clean_row_dict[key] = ""
+            else:
+                clean_row_dict[key] = str(value).strip()
+        
+        data_details_JSON = json.dumps(clean_row_dict)
         try:
             cursor.execute(
                 """
@@ -208,7 +344,7 @@ def lambda_handler(event, context):
             }
 
         # Clean the DataFrame
-        df = cleanData(df)
+        dfA = cleanData(df)
         print("Data cleaned successfully.")
 
         # Connect to database
@@ -220,7 +356,8 @@ def lambda_handler(event, context):
         rows_added_to_db = 0
         errors = []
 
-        rows_processed, rows_added_to_db = storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db)
+        rows_processed, rows_added_to_db = storeData(dfA, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_A)
+        # rows_processed, rows_added_to_db = storeData(dfB, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_B)
         print("Data stored successfully.")
         cursor.close()
         connection.close()
