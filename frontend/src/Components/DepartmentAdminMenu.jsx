@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaArchive, FaFolderOpen, FaRegClipboard, FaCertificate, FaGraduationCap } from "react-icons/fa";
+import {
+  FaUsers,
+  FaChartLine,
+  FaFileAlt,
+  FaUsersCog,
+  FaArchive,
+  FaFolderOpen,
+  FaRegClipboard,
+  FaCertificate,
+  FaGraduationCap,
+  FaChevronDown,
+  FaChevronUp,
+} from "react-icons/fa";
 import { MdSupportAgent } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +20,7 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showText, setShowText] = useState(true);
+  const [isReportingDropdownOpen, setIsReportingDropdownOpen] = useState(false);
 
   const handleToggle = () => {
     // toggleViewMode(); // Call the toggle function passed as a prop
@@ -18,16 +31,36 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
     }
   };
 
+  // Check if any reporting route is active
+  const isReportingActive = [
+    "/department-admin/declarations",
+    "/department-admin/affiliations",
+    "/department-admin/reporting",
+    "/department-admin/generate",
+  ].includes(location.pathname);
+
+  const toggleReportingDropdown = () => {
+    setIsReportingDropdownOpen(!isReportingDropdownOpen);
+  };
+
   useEffect(() => {
     let timer;
     if (!isCollapsed) {
       timer = setTimeout(() => setShowText(true), 150);
     } else {
       setShowText(false);
+      setIsReportingDropdownOpen(false); // Close dropdown when sidebar collapses
     }
 
     return () => clearTimeout(timer);
   }, [isCollapsed]);
+
+  // Auto-open reporting dropdown if user is on a reporting page
+  useEffect(() => {
+    if (isReportingActive && !isCollapsed) {
+      setIsReportingDropdownOpen(true);
+    }
+  }, [isReportingActive, isCollapsed]);
 
   return (
     <div
@@ -63,48 +96,82 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             <FaFolderOpen className="h-5 w-5" /> {/* Changed to folder icon */}
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === "/department-admin/templates" ? "font-bold" : ""}`}>
-                CV Templates
+                Templates
               </p>
             )}
           </Link>
         </li>
-        <li className={`mb-2 ${location.pathname === "/department-admin/generate" ? "bg-gray-200 rounded-lg" : ""}`}>
-          <Link to="/department-admin/generate">
-            <FaFileAlt className="h-5 w-5" />
-            {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/generate" ? "font-bold" : ""}`}>
-                Generate CV
-              </p>
-            )}
-          </Link>
+
+        {/* Reporting Dropdown */}
+        <li className={`mb-2 ${isReportingActive ? "bg-gray-200 rounded-lg" : ""}`}>
+          <div
+            className={`flex items-center justify-between cursor-pointer p-2 ${isReportingActive ? "font-bold" : ""}`}
+            onClick={showText && !isCollapsed ? toggleReportingDropdown : undefined}
+          >
+            <div className="flex items-center">
+              <FaChartLine className="h-5 w-5 ml-2" />
+              {showText && !isCollapsed && <p className="ml-4">Reporting</p>}
+            </div>
+            {showText &&
+              !isCollapsed &&
+              (isReportingDropdownOpen ? <FaChevronUp className="h-3 w-3" /> : <FaChevronDown className="h-3 w-3" />)}
+          </div>
+
+          {/* Dropdown Items */}
+          {showText && !isCollapsed && isReportingDropdownOpen && (
+            <ul className="p-2 mt-1 space-y-1">
+              <li className={`${location.pathname === "/department-admin/generate" ? "bg-blue-100 rounded" : ""}`}>
+                <Link
+                  to="/department-admin/generate"
+                  className="flex items-center p-2 text-sm hover:bg-gray-100 rounded"
+                >
+                  <FaFileAlt className="h-4 w-4 mr-2" />
+                  <span className={location.pathname === "/department-admin/generate" ? "font-semibold" : ""}>
+                    Generate CV/AAR
+                  </span>
+                </Link>
+              </li>
+              <li className={`${location.pathname === "/department-admin/declarations" ? "bg-blue-100 rounded" : ""}`}>
+                <Link
+                  to="/department-admin/declarations"
+                  className="flex items-center p-2 text-sm hover:bg-gray-100 rounded"
+                >
+                  <FaCertificate className="h-4 w-4 mr-2" />
+                  <span className={location.pathname === "/department-admin/declarations" ? "font-semibold" : ""}>
+                    Declarations Report
+                  </span>
+                </Link>
+              </li>
+              <li className={`${location.pathname === "/department-admin/reporting" ? "bg-blue-100 rounded" : ""}`}>
+                <Link
+                  to="/department-admin/reporting"
+                  className="flex items-center p-2 text-sm hover:bg-gray-100 rounded"
+                >
+                  <FaGraduationCap className="h-4 w-4 mr-2" />
+                  <span className={location.pathname === "/department-admin/reporting" ? "font-semibold" : ""}>
+                    Academic Sections Report
+                  </span>
+                </Link>
+              </li>
+              <li className={`${location.pathname === "/department-admin/affiliations" ? "bg-blue-100 rounded" : ""}`}>
+                <Link
+                  to="/department-admin/affiliations"
+                  className="flex items-center p-2 text-sm hover:bg-gray-100 rounded"
+                >
+                  <FaUsersCog className="h-4 w-4 mr-2" />
+                  <span className={location.pathname === "/department-admin/affiliations" ? "font-semibold" : ""}>
+                    Affiliations Report
+                  </span>
+                </Link>
+              </li>
+            </ul>
+          )}
         </li>
-        <li className={`mb-2 ${location.pathname === "/department-admin/declarations" ? "bg-gray-200 rounded-lg" : ""}`}>
-          <Link to="/department-admin/declarations">
-            <FaCertificate className="h-5 w-5" />
+        <li className={`mb-2 ${location.pathname === "/support" ? "bg-gray-200 rounded-lg" : ""}`}>
+          <Link to="/support">
+            <MdSupportAgent className="h-5 w-5" />
             {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/declarations" ? "font-bold" : ""}`}>
-                Declarations Report
-              </p>
-            )}
-          </Link>
-        </li>
-        <li className={`mb-2 ${location.pathname === "/department-admin/affiliations" ? "bg-gray-200 rounded-lg" : ""}`}>
-          <Link to="/department-admin/affiliations">
-            <FaUsersCog className="h-5 w-5" />
-            {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/affiliations" ? "font-bold" : ""}`}>
-                Affiliations Report
-              </p>
-            )}
-          </Link>
-        </li>
-           <li className={`mb-2 ${location.pathname === "/department-admin/reporting" ? "bg-gray-200 rounded-lg" : ""}`}>
-          <Link to="/department-admin/reporting">
-            <FaGraduationCap className="h-5 w-5" />
-            {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/department-admin/reporting" ? "font-bold" : ""}`}>
-                Academic Sections Report
-              </p>
+              <p className={`ml-2 ${location.pathname === "/support" ? "font-bold" : ""}`}>Support</p>
             )}
           </Link>
         </li>
@@ -113,14 +180,6 @@ const AdminMenu = ({ userName, getCognitoUser, toggleViewMode }) => {
             <FaRegClipboard className="h-5 w-5" />
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === "/loggings" ? "font-bold" : ""}`}>Access Logs</p>
-            )}
-          </Link>
-        </li>
-        <li className={`mb-2 ${location.pathname === "/support" ? "bg-gray-200 rounded-lg" : ""}`}>
-          <Link to="/support">
-            <MdSupportAgent className="h-5 w-5" />
-            {showText && !isCollapsed && (
-              <p className={`ml-2 ${location.pathname === "/support" ? "font-bold" : ""}`}>Support</p>
             )}
           </Link>
         </li>

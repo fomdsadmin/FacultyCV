@@ -15,7 +15,7 @@ const TemplateList = ({
   const { setNotification } = useNotification();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [startYear, setStartYear] = useState(new Date().getFullYear() - 10);
+  const [startYear, setStartYear] = useState(new Date().getFullYear());
   const [endYear, setEndYear] = useState(new Date().getFullYear());
 
   const yearOptions = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
@@ -98,34 +98,71 @@ const TemplateList = ({
         <div className="mt-auto space-y-4">
           {/* Date Range Picker */}
           <div>
-            <label className="block mb-2 font-medium text-zinc-600">
-              Select Date Range (Year)
-            </label>
-            <div className="flex space-x-2">
-              <select
-                className="border rounded px-2 py-1 flex-1"
-                value={startYear}
-                onChange={(e) => setStartYear(Number(e.target.value))}
-              >
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-              <span className="self-center">to</span>
-              <select
-                className="border rounded px-2 py-1 flex-1"
-                value={endYear}
-                onChange={(e) => setEndYear(Number(e.target.value))}
-              >
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {(() => {
+              // Check if this is an Annual Activity Report (contains "Annual" in title)
+              const isAnnualReport = selectedTemplate.title && 
+                selectedTemplate.title.toLowerCase().includes('annual');
+              
+              if (isAnnualReport) {
+                // Single year picker for Annual Activity Reports
+                return (
+                  <>
+                    <label className="block mb-2 font-medium text-zinc-600">
+                      Select Reporting Year
+                    </label>
+                    <select
+                      className="border rounded px-2 py-1 w-full"
+                      value={startYear}
+                      onChange={(e) => {
+                        const year = Number(e.target.value);
+                        setStartYear(year);
+                        setEndYear(year); // Set both start and end to the same year
+                      }}
+                    >
+                      {yearOptions.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                );
+              }
+              
+              // Default date range picker for other templates
+              return (
+                <>
+                  <label className="block mb-2 font-medium text-zinc-600">
+                    Select Date Range (Year)
+                  </label>
+                  <div className="flex space-x-2">
+                    <select
+                      className="border rounded px-2 py-1 flex-1"
+                      value={startYear}
+                      onChange={(e) => setStartYear(Number(e.target.value))}
+                    >
+                      {yearOptions.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="self-center">to</span>
+                    <select
+                      className="border rounded px-2 py-1 flex-1"
+                      value={endYear}
+                      onChange={(e) => setEndYear(Number(e.target.value))}
+                    >
+                      {yearOptions.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* CV Generation Component */}

@@ -351,8 +351,39 @@ const GenerateCV = ({ getCognitoUser, toggleViewMode }) => {
     </div>
   );
 
-  const DateRangePicker = () =>
-    selectedTemplate && (
+  const DateRangePicker = () => {
+    if (!selectedTemplate) return null;
+    
+    // Check if this is an Annual Activity Report (contains "Annual" in title)
+    const isAnnualReport = selectedTemplate.title && 
+      selectedTemplate.title.toLowerCase().includes('annual');
+    
+    if (isAnnualReport) {
+      // Single year picker for Annual Activity Reports
+      return (
+        <div className="my-4">
+          <label className="block font-medium text-zinc-600 mb-2">Select Reporting Year</label>
+          <select
+            className="border rounded px-3 py-2 w-full"
+            value={startYear}
+            onChange={(e) => {
+              const year = Number(e.target.value);
+              setStartYear(year);
+              setEndYear(year); // Set both start and end to the same year
+            }}
+          >
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+    
+    // Default date range picker for other templates
+    return (
       <div className="my-4">
         <label className="block font-medium text-zinc-600 mb-2">Select Date Range (Year)</label>
         <div className="flex space-x-2">
@@ -382,6 +413,7 @@ const GenerateCV = ({ getCognitoUser, toggleViewMode }) => {
         </div>
       </div>
     );
+  };
 
   const SelectedUsersSummary = () =>
     selectedUsers.length > 0 &&
@@ -430,7 +462,7 @@ const GenerateCV = ({ getCognitoUser, toggleViewMode }) => {
       <main className="px-16 overflow-auto custom-scrollbar w-full mb-4">
         <div className="">
           <h1 className="text-left my-4 text-4xl font-bold text-zinc-600">
-            Generate {canSelectMultiple ? "Bulk " : ""}CV
+            Generate {canSelectMultiple ? "Bulk " : ""}CV/AAR
           </h1>
 
           <div className="flex gap-6 mb-8 h-[80vh]">

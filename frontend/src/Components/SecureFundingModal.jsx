@@ -296,15 +296,6 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     fetchSecureFundingData();
   };
 
-  const handleCancelImport = () => {
-    setCurrentStep("source-selection");
-    setSelectedSource("");
-    setDateRangeOption("all");
-    setCustomStartYear("");
-    setAllSecureFundingData([]);
-    setSelectedSecureFundingData([]);
-  };
-
   const handleToggleSelectAll = () => {
     if (selectedSecureFundingData.length === allSecureFundingData.length) {
       // All items are selected, deselect all
@@ -325,6 +316,8 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     for (const data of tempData) {
       data.year = data.dates.split("-")[0];
       delete data.dates;
+      delete data.dates_0;
+      delete data.dates_1;
       data.type = "Grant";
       fname = data.first_name || "";
       lname = data.last_name || "";
@@ -406,7 +399,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       setRetrievingData(false);
       fetchData();
       onClose();
-    }, 2500);
+    }, 500);
   }
 
   return (
