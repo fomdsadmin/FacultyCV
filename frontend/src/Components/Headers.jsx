@@ -111,7 +111,7 @@ const Header = ({ assistantUserInfo }) => {
 
   const handleExitManaging = () => {
     const previousViewRole = stopManagingUser();
-    console.log(previousViewRole, currentViewRole)
+    // console.log(previousViewRole, currentViewRole)
     if (previousViewRole && previousViewRole.startsWith("Admin-")) {
       navigate("/department-admin/members");
       return;
