@@ -132,7 +132,7 @@ const DateEntry = ({ attrsObj, attributes, formData, handleChange, years, sectio
 
     // Helper to check if section is publications/other publications
     const isPublicationSection =
-      sectionName && ["publications", "other publications"].includes(sectionName.toLowerCase());
+      sectionName && ["journal publications", "other publications"].includes(sectionName.toLowerCase());
 
     if (attrName && attrName.toLowerCase().includes("dates")) {
       // Render Start/End Month/Year dropdowns for "dates" field
@@ -273,7 +273,7 @@ const DateEntry = ({ attrsObj, attributes, formData, handleChange, years, sectio
       return (
         <div key={attrName} className="mb-1 col-span-2">
           <label className="block text-sm capitalize font-semibold mb-1">
-            {isPublicationSection ? "Year Published" : "End Date 1"}
+            {isPublicationSection ? "Year Published" : "End Date"}
           </label>
           <div className="flex space-x-2">
             {needsDayOptions && (

@@ -18,6 +18,7 @@ const PublicationsSelectModal = ({
   handleBulkSelectPublications,
   handleAddSelected,
   setShowSelectionModal,
+  user, // Add user prop to detect department
 }) => {
   // State for tracking selected existing publications
   const [selectedExistingPublications, setSelectedExistingPublications] = useState(new Set());
@@ -25,10 +26,14 @@ const PublicationsSelectModal = ({
   // Ref to track if initial selection has been done
   const initialSelectionDone = React.useRef(false);
 
+  // Check if user is from APT department
+  const isAPTDepartment = user?.primary_department?.includes("Anesthesiology, Pharmacology & Therapeutics") || false;
+
   // Group publications into DOI matches, title matches, multi-matches, non-duplicate matches, unmatched from Scopus, and unmatched from existing
   const groupPublications = () => {
     const doiMatches = [];
     const titleMatches = [];
+    const aptMatches = []; // Add APT-specific matches
     const multiDuplicateMatches = [];
     const nonDuplicateMatches = [];
     const unmatchedScopusPublications = [];
@@ -36,7 +41,7 @@ const PublicationsSelectModal = ({
     const matchedFetchedIndices = new Set();
     const matchedExistingIds = new Set();
 
-    // Process matches - separate into DOI matches, title matches, multi-duplicates, and non-duplicate matches
+    // Process matches - separate into DOI matches, title matches, APT matches, multi-duplicates, and non-duplicate matches
     matchedPublications.forEach((match) => {
       const fetchedIndex = match.fetchedPublication.originalIndex;
       const existingPubs = match.existingPublications || [match.existingPublication];
@@ -55,6 +60,11 @@ const PublicationsSelectModal = ({
         matchType: match.matchType,
         matchTypes: [match.matchType], // Convert to array for consistency
         doi: match.doi,
+        // APT-specific fields
+        titleInCitation: match.titleInCitation,
+        dateMatch: match.dateMatch,
+        titleSimilarity: match.titleSimilarity,
+        matchReason: match.matchReason,
       };
 
       if (isDuplicate) {
@@ -62,11 +72,13 @@ const PublicationsSelectModal = ({
         if (isMultiMatch) {
           multiDuplicateMatches.push(matchData);
         } else {
-          // Separate DOI matches from title matches
+          // Separate different match types
           if (match.matchType === "doi") {
             doiMatches.push(matchData);
           } else if (match.matchType === "title") {
             titleMatches.push(matchData);
+          } else if (match.matchType === "apt_citation_title_date") {
+            aptMatches.push(matchData);
           } else {
             // Fallback for any other match types
             doiMatches.push(matchData);
@@ -135,9 +147,16 @@ const PublicationsSelectModal = ({
     titleMatches.sort((a, b) => {
       return (b.similarity || 0) - (a.similarity || 0);
     });
+
+    // Sort APT matches by confidence score (highest first)
+    aptMatches.sort((a, b) => {
+      return (b.similarity || 0) - (a.similarity || 0);
+    });
+
     return {
       doiMatches,
       titleMatches,
+      aptMatches,
       multiDuplicateMatches,
       nonDuplicateMatches,
       unmatchedScopusPublications,
@@ -152,6 +171,7 @@ const PublicationsSelectModal = ({
   const {
     doiMatches,
     titleMatches,
+    aptMatches,
     multiDuplicateMatches,
     nonDuplicateMatches,
     unmatchedScopusPublications,
@@ -160,12 +180,13 @@ const PublicationsSelectModal = ({
 
   // Determine if all publications are matches
   const allAreMatches =
-    doiMatches.length + titleMatches.length + multiDuplicateMatches.length + nonDuplicateMatches.length ===
+    doiMatches.length + titleMatches.length + aptMatches.length + multiDuplicateMatches.length + nonDuplicateMatches.length ===
       allFetchedPublications.length &&
-    doiMatches.length + titleMatches.length + multiDuplicateMatches.length === existingPublications.length;
+    doiMatches.length + titleMatches.length + aptMatches.length + multiDuplicateMatches.length === existingPublications.length;
 
   const [doiMatchesExpanded, setDoiMatchesExpanded] = useState(allAreMatches); // Expand by default if all are matches
   const [titleMatchesExpanded, setTitleMatchesExpanded] = useState(allAreMatches); // Expand by default if all are matches
+  const [aptMatchesExpanded, setAptMatchesExpanded] = useState(allAreMatches); // Expand by default if all are matches
   const [multiDuplicatesExpanded, setMultiDuplicatesExpanded] = useState(false);
   const [nonDuplicatesExpanded, setNonDuplicatesExpanded] = useState(false);
   const [unmatchedScopusExpanded, setUnmatchedScopusExpanded] = useState(false);
@@ -182,14 +203,6 @@ const PublicationsSelectModal = ({
     setSelectedExistingPublications(newSelected);
   };
 
-  // Helper functions for category-specific select all
-  const getDoiMatchIndices = () => {
-    return doiMatches.map((dup) => dup.fetchedPublication.originalIndex);
-  };
-
-  const getTitleMatchIndices = () => {
-    return titleMatches.map((dup) => dup.fetchedPublication.originalIndex);
-  };
 
   const getMultiDuplicateIndices = () => {
     return multiDuplicateMatches.map((dup) => dup.fetchedPublication.originalIndex);
@@ -315,12 +328,12 @@ const PublicationsSelectModal = ({
             </div>
             {allFetchedPublications.length > 0 && (
               <div className="space-y-4">
-                {/* Scopus Matches Section - DOI and Title Matches */}
-                {(doiMatches.length > 0 || titleMatches.length > 0) && (
+                {/* Scopus Matches Section - DOI, Title, and APT Matches */}
+                {(doiMatches.length > 0 || titleMatches.length > 0 || aptMatches.length > 0) && (
                   <div className="border border-gray-300 rounded-lg p-4">
                     <div className="mb-4">
                       <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                        Scopus Matches Found ({doiMatches.length + titleMatches.length})
+                        Scopus Matches Found ({doiMatches.length + titleMatches.length + aptMatches.length})
                       </h2>
                       <div className="bg-gray-100 p-2 rounded-lg">
                         <p className="text-sm text-gray-700">
@@ -328,6 +341,9 @@ const PublicationsSelectModal = ({
                         </p>
                         <ul className="text-sm text-gray-600 ml-4 list-disc">
                           <li>DOI, Direct Link, Keywords, Article Number, Volume and other missing fields.</li>
+                          {isAPTDepartment && (
+                            <li>APT matching uses title and date matching against citation fields instead of DOI extraction.</li>
+                          )}
                         </ul>
                       </div>
                     </div>
@@ -364,6 +380,48 @@ const PublicationsSelectModal = ({
                                   matchedItem={matchedItem}
                                   selectedPublications={selectedPublications}
                                   handleSelectPublication={handleSelectPublication}
+                                  isAPTDepartment={isAPTDepartment}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* APT Citation Matches */}
+                      {isAPTDepartment && aptMatches.length > 0 && (
+                        <div className="border border-purple-200 rounded-lg">
+                          <div className="p-4 flex items-center justify-between bg-purple-50 rounded-t-lg">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setAptMatchesExpanded(!aptMatchesExpanded)}
+                                className="flex items-center gap-2 hover:bg-purple-100 p-1 rounded transition-colors"
+                              >
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${aptMatchesExpanded ? "rotate-90" : ""}`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </button>
+                              <span className="font-medium text-purple-800">
+                                APT Citation Matches ({aptMatches.length})
+                              </span>
+                              <span className="text-sm text-purple-600">Title and date found in citation fields</span>
+                            </div>
+                          </div>
+                          {aptMatchesExpanded && (
+                            <div className="p-4 pt-0 space-y-3">
+                              {aptMatches.map((matchedItem, index) => (
+                                <MatchedPublicationCard
+                                  key={`apt-match-${index}`}
+                                  matchedItem={matchedItem}
+                                  selectedPublications={selectedPublications}
+                                  handleSelectPublication={handleSelectPublication}
+                                  isAPTDepartment={isAPTDepartment}
                                 />
                               ))}
                             </div>
@@ -404,6 +462,7 @@ const PublicationsSelectModal = ({
                                   matchedItem={matchedItem}
                                   selectedPublications={selectedPublications}
                                   handleSelectPublication={handleSelectPublication}
+                                  isAPTDepartment={isAPTDepartment}
                                 />
                               ))}
                             </div>
@@ -560,7 +619,7 @@ const PublicationsSelectModal = ({
                         <span className="font-medium text-green-700">
                           New Publications from Scopus ({unmatchedScopusPublications.length})
                         </span>
-                        <span className="text-sm text-green-600">Safe to add - No duplicates detected</span>
+                        <span className="text-sm text-green-600">Safe to add</span>
                       </div>
                       <button
                         type="button"
@@ -602,6 +661,7 @@ const PublicationsSelectModal = ({
             {/* No publications message */}
             {doiMatches.length === 0 &&
               titleMatches.length === 0 &&
+              aptMatches.length === 0 &&
               multiDuplicateMatches.length === 0 &&
               nonDuplicateMatches.length === 0 &&
               unmatchedScopusPublications.length === 0 &&
