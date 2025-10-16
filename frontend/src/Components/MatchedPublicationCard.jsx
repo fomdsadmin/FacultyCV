@@ -2,7 +2,7 @@ import React from "react";
 import { extractDOIsFromCitation } from "../utils/publicationsMergeUtils";
 import { truncateAuthors } from "utils/publicationsMergeUtils";
 
-const MatchedPublicationCard = ({ matchedItem, selectedPublications, handleSelectPublication }) => {
+const MatchedPublicationCard = ({ matchedItem, selectedPublications, handleSelectPublication, isAPTDepartment = false }) => {
   // Determine if this is a multi-match scenario
   const isMultiMatch = matchedItem.isMultiMatch;
   const existingPublications = matchedItem.existingPublications || [matchedItem.existingPublication];
@@ -11,6 +11,7 @@ const MatchedPublicationCard = ({ matchedItem, selectedPublications, handleSelec
   const matchType = matchedItem.matchType;
   const hasTitleMatch = matchType === "title";
   const hasDOIMatch = matchType === "doi";
+  const hasAPTMatch = matchType === "apt_citation_title_date";
 
   return (
     <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 my-2">
@@ -54,7 +55,46 @@ const MatchedPublicationCard = ({ matchedItem, selectedPublications, handleSelec
               )}
             </>
           )}
-          {!hasDOIMatch && !hasTitleMatch && (
+          {hasAPTMatch && (
+            <>
+              <span className="text-xs text-purple-700 bg-purple-200 px-2 py-1 rounded">
+                APT Citation Match
+              </span>
+              <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                {Math.round(matchedItem.similarity * 100)}% Confidence
+              </span>
+              {matchedItem.titleInCitation && (
+                <span className="text-xs text-green-700 bg-green-200 px-2 py-1 rounded">
+                  Title in Citation
+                </span>
+              )}
+              {matchedItem.dateMatch && (
+                <span className="text-xs text-blue-700 bg-blue-200 px-2 py-1 rounded">
+                  Date Match
+                </span>
+              )}
+              {matchedItem.titleSimilarity !== undefined && matchedItem.titleSimilarity > 0 && (
+                <span className="text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded">
+                  {Math.round(matchedItem.titleSimilarity * 100)}% Title Similarity
+                </span>
+              )}
+              {matchedItem.matchReason && (
+                <span className="text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded">
+                  {matchedItem.matchReason === "title_in_citation" ? "Title in Citation" : 
+                   matchedItem.matchReason === "title_similarity" ? "Title Similarity" :
+                   matchedItem.matchReason === "title_author_combined" ? "Title+Author Combined" :
+                   matchedItem.matchReason === "title_date_in_citation" ? "Title+Date in Citation" :
+                   matchedItem.matchReason}
+                </span>
+              )}
+              {matchedItem.authorSimilarity !== undefined && matchedItem.authorSimilarity > 0 && (
+                <span className="text-xs text-blue-700 bg-blue-200 px-2 py-1 rounded">
+                  {Math.round(matchedItem.authorSimilarity * 100)}% Author
+                </span>
+              )}
+            </>
+          )}
+          {!hasDOIMatch && !hasTitleMatch && !hasAPTMatch && (
             <span className="text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded">Match</span>
           )}
 
@@ -170,9 +210,16 @@ const MatchedPublicationCard = ({ matchedItem, selectedPublications, handleSelec
                   </p>
                 )}
                 {existingPub.data_details.citation && (
-                  <p>
-                    <span className="font-medium">Citation:</span> {existingPub.data_details.citation}
-                  </p>
+                  <div>
+                    <span className="font-medium">Citation:</span> 
+                    {hasAPTMatch && (matchedItem.titleInCitation || matchedItem.matchReason) ? (
+                      <div className="text-xs text-gray-600 mt-1 p-2 bg-purple-50 border border-purple-200 rounded">
+                        <div className="">{existingPub.data_details.citation}</div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-600"> {existingPub.data_details.citation}</span>
+                    )}
+                  </div>
                 )}
                 {/* Show extracted DOI information for DOI matches */}
                 {hasDOIMatch && existingPub.doiSource && (

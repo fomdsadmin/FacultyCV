@@ -177,7 +177,8 @@ def lambda_handler(event, context):
     columns.append(createColumn('title', 'varchar', '', False))
     columns.append(createColumn('amount', 'int', '', False))
     columns.append(createColumn('dates', 'varchar', '', False))
-    columns.append(createColumn('sponsor', 'varchar', '', True)) # New column for rise sponsor
+    columns.append(createColumn('sponsor', 'varchar', '', False)) # New column for rise sponsor
+    columns.append(createColumn('record_id', 'varchar', 'NOT NULL', True)) # New column for rise record_id
     query = createQuery('rise_data', columns)
     cursor.execute(query)
 

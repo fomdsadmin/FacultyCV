@@ -483,11 +483,18 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
 
     // Only keep snake_case keys as defined in section.attributes
     const allowedKeys = section.attributes ? Object.values(section.attributes) : [];
+    
+    // Special handling: preserve record_id if it exists (for RISE grant data)
+    if (finalFormData.record_id !== undefined) {
+      allowedKeys.push('record_id');
+      console.log("🔑 Preserving record_id in grant update:", finalFormData.record_id);
+    }
+    
     const filteredFormData = Object.fromEntries(
       Object.entries(finalFormData).filter(([key]) => allowedKeys.includes(key))
     );
 
-    console.log("Submitting form data:", finalFormData);
+    console.log("Submitting form data:", filteredFormData);
     try {
       if (isNew) {
         // Add new CV data
