@@ -224,21 +224,29 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
   };
 
   // Component to display a grant with potential duplicates (read-only, no checkbox)
-  const GrantWithDuplicates = ({ grantItem, duplicates }) => {
+  const GrantWithDuplicates = ({ grantItem, duplicates, hasNewGrants = true }) => {
     const maxSimilarity = Math.max(...duplicates.map((d) => d.similarity.overall));
+    
+    // Use red colors when there are new grants, amber when all are duplicates
+    const borderColor = hasNewGrants ? 'border-red-200' : 'border-amber-200';
+    const bgColor = hasNewGrants ? 'bg-red-50' : 'bg-amber-50';
+    const iconBgColor = hasNewGrants ? 'bg-red-100' : 'bg-amber-100';
+    const iconBorderColor = hasNewGrants ? 'border-red-300' : 'border-amber-300';
+    const iconTextColor = hasNewGrants ? 'text-red-600' : 'text-amber-600';
+    const labelTextColor = hasNewGrants ? 'text-red-800' : 'text-amber-800';
 
     return (
-      <div className="border border-red-200 rounded-lg p-4 bg-red-50">
+      <div className={`border ${borderColor} rounded-lg p-4 ${bgColor}`}>
         <div className="flex items-start gap-3">
           {/* Skip indicator instead of checkbox */}
           <div className="flex-shrink-0 mt-1">
-            <div className="w-6 h-6 bg-red-100 border-2 border-red-300 rounded flex items-center justify-center">
-              <span className="text-red-600 text-sm font-bold">✕</span>
+            <div className={`w-6 h-6 ${iconBgColor} border-2 ${iconBorderColor} rounded flex items-center justify-center`}>
+              <span className={`${iconTextColor} text-sm font-bold`}>✕</span>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 flex-1">
             <div className="mb-3">
-              <div className="text-sm font-medium text-red-800 mb-2">
+              <div className={`text-sm font-medium ${labelTextColor} mb-2`}>
                 📥 Imported Grant ({maxSimilarity}% similarity)
               </div>
               <div className="border border-blue-200 rounded-lg p-3 bg-white">
@@ -979,17 +987,32 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                             <div className="text-gray-600">Available to Add</div>
                           </div>
                         </div>
+                        
+                        {/* Special case: All grants are duplicates */}
+                        {newGrants.length === 0 && duplicateGrants.length > 0 && (
+                          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <span className="text-yellow-600 text-xl">ℹ️</span>
+                              <div>
+                                <div className="font-medium text-yellow-800">All Found Grants Are Already in Your CV</div>
+                                <div className="text-sm text-yellow-700">
+                                  We found {duplicateGrants.length} grants, but they all appear to match existing entries in your profile. No new grants will be added.
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Potential Duplicates Section - Step 1 */}
+                      {/* Potential Duplicates Section */}
                       {duplicateGrants.length > 0 ? (
-                        <div className="border border-red-300 rounded-lg">
-                          <div className="p-3 flex items-center justify-between bg-red-50 rounded-t-lg">
+                        <div className={`border ${newGrants.length > 0 ? 'border-red-300' : 'border-amber-300'} rounded-lg`}>
+                          <div className={`p-3 flex items-center justify-between ${newGrants.length > 0 ? 'bg-red-50' : 'bg-amber-50'} rounded-t-lg`}>
                             <div className="flex items-center gap-3">
                               <button
                                 type="button"
                                 onClick={() => setDuplicatesExpanded(!duplicatesExpanded)}
-                                className="flex items-center gap-2 hover:bg-red-100 p-1 rounded transition-colors"
+                                className={`flex items-center gap-2 ${newGrants.length > 0 ? 'hover:bg-red-100' : 'hover:bg-amber-100'} p-1 rounded transition-colors`}
                               >
                                 <svg
                                   className={`w-4 h-4 transition-transform ${duplicatesExpanded ? "rotate-90" : ""}`}
@@ -1000,18 +1023,28 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
                               </button>
-                              <span className="font-medium text-red-800">
-                                Step 1: Potential Duplicates - Will Be Skipped ({duplicateGrants.length})
+                              <span className={`font-medium ${newGrants.length > 0 ? 'text-red-800' : 'text-amber-800'}`}>
+                                {newGrants.length > 0 
+                                  ? `Step 1: Potential Duplicates - Will Be Skipped (${duplicateGrants.length})`
+                                  : `Existing Grants Found - Will Be Skipped (${duplicateGrants.length})`
+                                }
                               </span>
                             </div>
                           </div>
 
-                          <div className="px-3 pb-2 bg-red-50 border-b border-red-200">
-                            <p className="text-sm font-medium text-red-700">
-                              ✋ <strong>These grants will NOT be imported</strong> because they appear to match
-                              existing entries in your CV. Your existing grants will remain unchanged and the duplicates
-                              will be skipped automatically.
-                            </p>
+                          <div className={`px-3 pb-2 ${newGrants.length > 0 ? 'bg-red-50 border-b border-red-200' : 'bg-amber-50 border-b border-amber-200'}`}>
+                            {newGrants.length > 0 ? (
+                              <p className="text-sm font-medium text-red-700">
+                                ✋ <strong>These grants will NOT be imported</strong> because they appear to match
+                                existing entries in your CV. Your existing grants will remain unchanged and the duplicates
+                                will be skipped automatically.
+                              </p>
+                            ) : (
+                              <p className="text-sm font-medium text-amber-700">
+                                  {/*  <strong>All found grants are already in your CV.</strong> */}
+                                  These entries match your existing grants data, so no import is needed. Your existing grants remain unchanged.
+                              </p>
+                            )}
                           </div>
 
                           {duplicatesExpanded && (
@@ -1021,6 +1054,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                   key={`duplicate-${index}`}
                                   grantItem={grantItem}
                                   duplicates={grantItem.duplicates}
+                                  hasNewGrants={newGrants.length > 0}
                                 />
                               ))}
                             </div>
@@ -1031,7 +1065,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                           <div className="flex items-center gap-2">
                             <span className="text-green-600 text-xl">✅</span>
                             <div>
-                              <div className="font-medium text-green-800">Step 1: No Duplicates Found</div>
+                              <div className="font-medium text-green-800">No Duplicates Found</div>
                               <div className="text-sm text-green-700">
                                 All imported grants appear to be new entries that don't match your existing CV data.
                               </div>
@@ -1040,7 +1074,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                         </div>
                       )}
 
-                      {/* New Grants Section - Step 2 */}
+                      {/* New Grants Section */}
                       {newGrants.length > 0 ? (
                         <div className="border border-green-200 rounded-lg">
                           <div className="p-3 flex items-center justify-between bg-green-50 rounded-t-lg">
@@ -1060,7 +1094,10 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                 </svg>
                               </button>
                               <span className="font-medium text-green-700">
-                                Step 2: New Grants Available for Import ({newGrants.length})
+                                {duplicateGrants.length > 0 
+                                  ? `Step 2: New Grants Available for Import (${newGrants.length})`
+                                  : `New Grants Available for Import (${newGrants.length})`
+                                }
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1076,12 +1113,12 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                       onClick={() => {
                                         const newGrantsOnly = newGrants.map((item) => item.grant);
                                         if (selectedNewGrants.length === newGrants.length) {
-                                          // Deselect all new grants
+                                          // Deselect all new grants (keep any duplicates out of selection)
                                           setSelectedSecureFundingData((prev) =>
                                             prev.filter((item) => !newGrantsOnly.includes(item))
                                           );
                                         } else {
-                                          // Select all new grants
+                                          // Select all new grants (never include duplicates)
                                           setSelectedSecureFundingData((prev) => {
                                             const filtered = prev.filter((item) => !newGrantsOnly.includes(item));
                                             return [...filtered, ...newGrantsOnly];
@@ -1089,6 +1126,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                         }
                                       }}
                                       disabled={newGrants.length === 0}
+                                      title={`Select/deselect all ${newGrants.length} new grants. Duplicates are automatically skipped.`}
                                     >
                                       {selectedNewGrants.length === newGrants.length
                                         ? "Deselect All New"
@@ -1099,10 +1137,11 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                       className="btn btn-primary btn-success px-6 py-2 text-white rounded-lg shadow hover:shadow-md transition"
                                       onClick={addSecureFundingData}
                                       disabled={addingData || selectedSecureFundingData.length === 0}
+                                      title={`Add ${selectedSecureFundingData.length} selected new grants. ${duplicateGrants.length} duplicates will be automatically skipped.`}
                                     >
                                       {addingData
                                         ? "Adding grants data..."
-                                        : `Add ${selectedSecureFundingData.length} Grant${
+                                        : `Add ${selectedSecureFundingData.length} New Grant${
                                             selectedSecureFundingData.length !== 1 ? "s" : ""
                                           }`}
                                     </button>
@@ -1135,16 +1174,36 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                         </div>
                       ) : (
                         <div className="border border-gray-200 rounded-lg bg-gray-50 p-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600 text-xl">📋</span>
-                            <div>
-                              <div className="font-medium text-gray-800">Step 2: No New Grants to Import</div>
-                              <div className="text-sm text-gray-600">
-                                {duplicateGrants.length > 0
-                                  ? "All imported grants appear to be duplicates of your existing entries."
-                                  : "No grants were found that can be imported."}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600 text-xl">📋</span>
+                              <div>
+                                <div className="font-medium text-gray-800">
+                                  {duplicateGrants.length > 0 
+                                    ? "No New Grants to Import"
+                                    : `${duplicateGrants.length > 0 ? "Step 2: " : ""}No New Grants to Import`
+                                  }
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {duplicateGrants.length > 0
+                                    ? "All imported grants appear to be duplicates of your existing entries."
+                                    : "No grants were found that can be imported."}
+                                </div>
                               </div>
                             </div>
+                            
+                            {/* Show completion button when all are duplicates */}
+                            {duplicateGrants.length > 0 && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  className="btn btn-outline btn-sm"
+                                  onClick={onClose}
+                                >
+                                  Close
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
