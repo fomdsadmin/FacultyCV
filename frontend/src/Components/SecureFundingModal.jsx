@@ -206,6 +206,25 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       }
     });
 
+    // Apply additional record_id-based filtering to new grants (RISE data only)
+    const recordIdFilteredNewGrants = newGrants.filter((grantItem) => {
+      const grant = grantItem.grant;
+      // Only apply record_id filtering for RISE data and if grant has a valid record_id
+      if (selectedSource === "rise" && grant.record_id && grant.record_id.trim() !== "") {
+        // Check if this record_id already exists in user's CV
+        const recordIdExists = existingGrantsData.some((existingGrant) => {
+          const existingRecordId = existingGrant.data_details?.record_id;
+          return existingRecordId && existingRecordId.trim() !== "" && existingRecordId === grant.record_id;
+        });
+        
+        if (recordIdExists) {
+          console.log(`✋ Filtering out grant with duplicate record_id: ${grant.record_id} - ${grant.title}`);
+          return false;
+        }
+      }
+      return true;
+    });
+
     // Get unmatched existing grants (those that don't appear in duplicates)
     const unmatchedExistingGrants = existingGrantsData.filter((_, index) => !existingGrantsMatched.has(index));
 
@@ -215,7 +234,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
         const maxSimilarityB = Math.max(...b.duplicates.map((d) => d.similarity.overall));
         return maxSimilarityB - maxSimilarityA;
       }),
-      newGrants: sortSecureFundingByDate(newGrants.map((item) => item.grant)).map((grant) => ({
+      newGrants: sortSecureFundingByDate(recordIdFilteredNewGrants.map((item) => item.grant)).map((grant) => ({
         grant,
         importedIndex: allSecureFundingData.indexOf(grant),
       })),
@@ -473,6 +492,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
         for (const dataObject of riseResults) {
           const { data_details } = dataObject;
           const data_details_json = JSON.parse(data_details);
+          
           const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}-${data_details_json.sponsor}`;
           if (!uniqueRiseData.has(uniqueKey)) {
             uniqueRiseData.add(uniqueKey);
@@ -616,8 +636,13 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     let fname, lname;
     const tempData = [...selectedSecureFundingData];
     for (const data of tempData) {
-      data.year = data.dates.split("-")[0];
-      delete data.dates;
+      // Extract year from dates for year field
+      if (data.dates) {
+        const datesParts = data.dates.split("-");
+        if (datesParts.length > 0) {
+          data.year = datesParts[0].trim();
+        }
+      }
       delete data.dates_0;
       delete data.dates_1;
       data.type = "Grant";
@@ -651,6 +676,9 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       }
       delete data.first_name;
       delete data.last_name;
+      // Preserve record_id if it exists (for RISE data)
+      // record_id will be kept in the data object for future duplicate detection
+      
       newBatchedData.push(data);
     }
 

@@ -50,6 +50,7 @@ def getRiseDataMatches(arguments):
                     'amount': result[8],
                     'dates': result[9],
                     'sponsor': result[10],
+                    'record_id': result[11] if len(result) > 11 else None,
                 }
             })
 

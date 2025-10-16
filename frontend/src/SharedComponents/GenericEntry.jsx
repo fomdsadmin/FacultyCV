@@ -149,6 +149,11 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
             return <></>;
           }
 
+          // Track id for imported Rise Grant Data
+          if (label.trim().toLowerCase() === "record id") {
+            return <></>;
+          }
+
           // redundant boolean variable not in use anymore
           if (label.trim().toLowerCase() === "highlight" || label.trim().toLowerCase() === "footnote") {
             return <></>;
