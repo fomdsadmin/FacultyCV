@@ -2,6 +2,7 @@
 // Keeps parent groups only if they have surviving children.
 function removeEmptyColumns(cols, rows) {
     if (!Array.isArray(cols)) return [];
+    if (!Array.isArray(rows)) rows = [];
     return cols
         .map(col => {
             if (col.children && col.children.length) {
@@ -153,34 +154,66 @@ function buildUserInfoTable(cv) {
         first_name,
         joined_date,
         last_name,
-        primary_department,
         primary_faculty,
-        rank,
-        rankSinceDate,
         sort_order
     } = cv;
 
-    // meta as a two-column table (label / value)
-    let html = `<table class="cv-meta" style="color:#222;margin-bottom:10px;line-height:1.3;border-collapse:collapse;width:100%;font-size:16px">`;
+    const {
+        rank,
+        title,
+        unit
+    } = cv.primary_unit
 
-    const addRow = (label, value) => {
+    // meta as a two-column table (label / value)
+    let html = `<table class="cv-meta" 
+  style="
+    color:#222;
+    margin-bottom:10px;
+    line-height:1.3;
+    width:100%;
+    font-size:16px;
+    border-collapse:collapse;
+  ">
+  <style>
+    .cv-meta tr {
+      display: flex;
+      width: 100%;
+    }
+    .cv-meta th,
+    .cv-meta td {
+      flex: 1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+      box-sizing: border-box;
+      border: 1px solid #ccc; /* optional: for clarity */
+    }
+  </style>
+`;
+
+    const addRow = (lablesValuesArray) => {
         html += `<tr>`;
-        html += `<th>${label}</th>`;
-        html += `<td>${value}</td>`;
+        html += lablesValuesArray.map((lablesValues, index) => {
+            if (index % 2 === 0) {
+                return `<th>${lablesValues}</th>`
+            } else {
+                return `<td>${lablesValues}</td>`
+            }
+        }).join('');
         html += `</tr>`;
     };
 
     const fullName = [first_name, last_name].filter(Boolean).join(' ');
 
-    if (fullName) addRow('Name:', fullName);
-    if (rank) addRow('Rank:', rank);
-    if (primary_department) addRow('Department:', primary_department);
-    if (primary_faculty) addRow('Faculty:', primary_faculty);
-    if (date_range_text) addRow('Date Range:', date_range_text);
-    if (current_date) addRow('Generated:', current_date);
-    if (joined_date) addRow('Joined:', joined_date);
-    if (rankSinceDate) addRow('Rank Since:', rankSinceDate);
-    if (sort_order !== undefined) addRow('Sort Order:', sort_order);
+    addRow(['Name:', fullName]);
+    addRow(['Rank:', cv?.primary_unit?.[0]?.rank || "", "Since:", cv?.primary_unit?.[0]?.additional_info?.start || ""]);
+    addRow(['Timeline for next promotion review:', ""])
+    addRow(['Department:', cv?.primary_unit?.[0]?.unit || ""]);
+    addRow(['Joint Department:', ""]);
+    addRow(['Centre Affiliation:', cv.institution]);
+    addRow(['Distributed Site:', cv?.hospital_affiliations?.[0]?.authority] || "");
+    addRow(['Assigned Mentor:', ""]);
+    addRow(['Submission Date:', new Date().toLocaleDateString('en-CA')]);
 
     html += `</table>`;
     html += `</div>`; // .cv-root
@@ -196,8 +229,19 @@ function buildHeader(cv) {
         sort_order
     } = cv;
     console.log(cv);
+
+    const includeFomLogo = String(template_title || '').toLowerCase().includes('fom');
+    const fomLogoUrl = "https://med-fom-mednet.sites.olt.ubc.ca/files/2022/10/Faculty-of-Medicine-Unit-Signature-940x157.jpeg";
+
+
     let html = '';
     html += '<div style="background-color: white; color: black; padding: 20px; text-align: center;">';
+
+    if (includeFomLogo) {
+        html += `<div style="flex:0 0 auto;"><img src="${fomLogoUrl}" alt="UBC Faculty of Medicine - Faculty of Medicine Logo" style="height:96px; display:block;" /></div>`;
+    }
+
+
     html += '<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 5px;">University of British Columbia</div>';
     html += `<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;">${template_title}</div>`;
     html += `<div style="font-size: 1rem; font-weight: 700;">(${start_year} - ${end_year}, ${sort_order})</div>`;

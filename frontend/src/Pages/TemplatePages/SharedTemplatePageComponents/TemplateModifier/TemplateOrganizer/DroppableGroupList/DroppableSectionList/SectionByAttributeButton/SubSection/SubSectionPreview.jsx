@@ -1,6 +1,6 @@
 import SubSectionItem from "./SubSectionItem";
 
-const SubSectionPreview = ({ subSections, setSubSectionSettings, preparedSection }) => {
+const SubSectionPreview = ({ subSections, setSubSectionSettings, preparedSection, toggleSubSectionHidden }) => {
     if (subSections.length === 0) {
         return (
             <p className="text-xs text-gray-500 mt-2">
@@ -23,6 +23,7 @@ const SubSectionPreview = ({ subSections, setSubSectionSettings, preparedSection
                             index={index}
                             preparedSection={preparedSection}
                             setSubSectionSettings={setSubSectionSettings}
+                            toggleSubSectionHidden={toggleSubSectionHidden}
                         />
                     ))}
                 </div>
