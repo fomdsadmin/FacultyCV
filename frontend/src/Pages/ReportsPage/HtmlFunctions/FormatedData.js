@@ -380,9 +380,13 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 
         const tablesToReturn = buildSubSections(preparedSection);
 
-        if (preparedSection.sub_section_settings.display_section_title) {
-            const titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
+        const totalNumRowsInTables = tablesToReturn.reduce(
+            (total, table) => total + table.rows.length,
+            0
+        );
 
+        if (preparedSection.sub_section_settings.display_section_title && totalNumRowsInTables > 0) {
+            const titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
             tablesToReturn.unshift({
                 justHeader: true,
                 noPadding: true,

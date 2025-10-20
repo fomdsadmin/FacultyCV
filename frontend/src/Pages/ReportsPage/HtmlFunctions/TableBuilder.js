@@ -148,21 +148,6 @@ ${bodyContent}
 }
 
 function buildUserInfoTable(cv) {
-    const {
-        current_date,
-        date_range_text,
-        first_name,
-        joined_date,
-        last_name,
-        primary_faculty,
-        sort_order
-    } = cv;
-
-    const {
-        rank,
-        title,
-        unit
-    } = cv.primary_unit
 
     // meta as a two-column table (label / value)
     let html = `<table class="cv-meta" 
@@ -203,7 +188,7 @@ function buildUserInfoTable(cv) {
         html += `</tr>`;
     };
 
-    const fullName = [first_name, last_name].filter(Boolean).join(' ');
+    const fullName = [cv?.first_name, cv?.last_name].filter(Boolean).join(' ');
 
     addRow(['Name:', fullName]);
     addRow(['Rank:', cv?.primary_unit?.[0]?.rank || "", "Since:", cv?.primary_unit?.[0]?.additional_info?.start || ""]);
