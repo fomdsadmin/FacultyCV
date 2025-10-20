@@ -1,5 +1,29 @@
 import React from 'react';
 
+// Helper: format option display labels for frontend-only display.
+// - Strip leading letter bullets like "a. " or "1. "
+// - If the remaining text contains trailing digits (e.g. option1), separate them and convert small digits to words
+//   (1 -> one, 2 -> two, 3 -> three) for nicer display.
+const formatOptionLabel = (label) => {
+  if (typeof label !== 'string') return label;
+  let s = label.trim();
+
+  // Remove common leading bullets like 'a. ', 'a) ', '1. ', 'i. '
+  s = s.replace(/^\s*[a-zA-Z0-9]+[\.)]\s*/, '');
+
+  // Separate trailing digits from a word, e.g. 'option1' -> ['option','1']
+  const m = s.match(/^(.*?)(\d+)$/);
+  if (m) {
+    const base = m[1].trim();
+    const num = m[2];
+    const numWords = { '1': 'one', '2': 'two', '3': 'three', '4': 'four', '5': 'five' };
+    const numWord = numWords[num] || num;
+    return `${base} ${numWord}`.trim();
+  }
+
+  return s;
+};
+
 const DropdownEntry = ({ attrsObj, attributes, formData, handleChange, section }) => {
   if (!attrsObj) return null;
   return Object.entries(attrsObj).map(([attrName, options]) => {
@@ -49,7 +73,7 @@ const DropdownEntry = ({ attrsObj, attributes, formData, handleChange, section }
           {Array.isArray(options) &&
             options.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {formatOptionLabel(option)}
               </option>
             ))}
         </select>
