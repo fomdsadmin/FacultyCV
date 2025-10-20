@@ -4,6 +4,7 @@ import { getUserCVData } from "graphql/graphqlHelpers";
 import { HIDDEN_GROUP_ID } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 import { getUserDeclarations } from "graphql/graphqlHelpers";
 import { normalizeDeclarations } from "Pages/Declarations/Declarations";
+import { getUserAffiliations } from "graphql/graphqlHelpers";
 
 let userCvDataMap = {}
 let sectionsMap = {};
@@ -304,7 +305,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
     //const sectionAttributes = JSON.parse(section.attributes);
 
     const fullRowData = sortedAggregatedData.map((data) => ({
-        description: "",
+        Description: "",
         "Duration (eg: 8 weeks)": data.durations,
         "Number of Students": data.totalStudents,
         "Total Hours": data.totalHours,
@@ -335,7 +336,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
         }
 
         table["rows"].push({
-            description: courseTitle,
+            Description: courseTitle,
             "Duration (eg: 8 weeks)": "",
             "Number of Students": "",
             "Total Hours": "",
@@ -350,8 +351,8 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
 
     table["columns"] = buildTableSectionColumns(preparedSection);
     table["columns"].unshift({
-        headerName: "description",
-        field: "description"
+        headerName: "Description",
+        field: "Description"
     })
 
     console.log("JJFITLER columns, ", table["columns"])
@@ -379,9 +380,13 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 
         const tablesToReturn = buildSubSections(preparedSection);
 
-        if (preparedSection.sub_section_settings.display_section_title) {
-            const titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
+        const totalNumRowsInTables = tablesToReturn.reduce(
+            (total, table) => total + table.rows.length,
+            0
+        );
 
+        if (preparedSection.sub_section_settings.display_section_title && totalNumRowsInTables > 0) {
+            const titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
             tablesToReturn.unshift({
                 justHeader: true,
                 noPadding: true,
@@ -404,17 +409,17 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
     if (!preparedSection.is_sub_section || (preparedSection.is_sub_section && preparedSection.show_header)) {
         let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
 
+        const rowCount = getNumberOfRowsInPreparedSection(preparedSection, preparedSection.data_section_id);
         if (preparedSection.show_row_count) {
-            let sectionData = getUserCvDataMap(preparedSection.data_section_id);
-            sectionData = filterDateRanges(sectionData, preparedSection.data_section_id);
-            const rowCount = sectionData.length;
             titleToDisplay += ` (${rowCount})`
         }
 
-        table["columns"] = [{
-            headerName: titleToDisplay,
-            children: table["columns"],
-        }]
+        if (rowCount !== 0) {
+            table["columns"] = [{
+                headerName: titleToDisplay,
+                children: table["columns"],
+            }]
+        }
     }
 
     table["hide_column_header"] = preparedSection.merge_visible_attributes;
@@ -484,6 +489,32 @@ const buildNotes = (preparedSection) => {
 
     return noteSections;
 };
+
+const getNumberOfRowsInPreparedSection = (preparedSection, dataSectionId) => {
+
+    // Get section data using helper function
+    let sectionData = getUserCvDataMap(dataSectionId);
+
+    // Apply date range filtering
+    sectionData = filterDateRanges(sectionData, dataSectionId);
+
+    // new logic
+    let rows = sectionData.filter((data) => {
+        const section = sectionsMap[dataSectionId];
+
+        if (!section || !data || !data.data_details) {
+            console.warn('Missing section or data:', { section, data, dataSectionId });
+            return false;
+        }
+
+        const sectionAttributes = JSON.parse(section.attributes);
+
+        // Only keep data that belongs to this section
+        return String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]) ===
+            String(preparedSection.attribute_filter_value);
+    }).length;
+    return rows
+}
 
 const buildDataEntries = (preparedSection, dataSectionId) => {
     const PUBLICATION_SECTION_ID = "1c23b9a0-b6b5-40b8-a4aa-f822d0567f09";
@@ -616,8 +647,8 @@ const buildSubSections = (preparedSectionWithSubSections) => {
     const mappedSections = preparedSectionWithSubSections
         .sub_section_settings
         .sub_sections
+        .filter((subSection) => !Boolean(subSection.hidden))
         .map((subSection) => {
-
             const updatedAttributeGroups = preparedSectionWithSubSections.attribute_groups.map((attributeGroup) => {
                 const attributesToHide = subSection.hidden_attributes_list || [];
 
@@ -736,6 +767,27 @@ const buildUserProfile = async (userInfoParam) => {
     // Get current date in format "Apr 11, 2025"
     userInfo = userInfoParam;
 
+    const response = await getUserAffiliations(userInfo.user_id, userInfo.first_name, userInfo.last_name);
+
+    let userAfiliations;
+
+    if (response && response.length > 0 && response[0].data_details) {
+        let data = response[0].data_details;
+        if (typeof data === "string") {
+            try {
+                data = JSON.parse(data);
+                if (typeof data === "string") {
+                    data = JSON.parse(data);
+                }
+            } catch (e) {
+                console.error("Error parsing affiliations data:", e, data);
+                data = {};
+            }
+        }
+        userAfiliations = data;
+    }
+
+
     const fetchDeclarations = async (user_id) => {
         try {
             const result = await getUserDeclarations(user_id);
@@ -762,14 +814,6 @@ const buildUserProfile = async (userInfoParam) => {
 
     // Parse joined timestamp to get rank start date
     const joinedDate = new Date(userInfo.joined_timestamp);
-    const rankSinceDate = joinedDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: '2-digit'
-    });
-
-    // Extract middle name/initial from preferred_name
-    const middleName = userInfo.preferred_name || "";
 
     const startYear = template.start_year || 'All';
     const endYear = template.end_year || 'Present';
@@ -779,19 +823,14 @@ const buildUserProfile = async (userInfoParam) => {
     const userProfile = {
         current_date: currentDate,
         joined_date: joinedDate,
-        middle_name: middleName,
         start_year: startYear,
         end_year: endYear,
         sort_order: sortOrder,
         date_range_text: dateRangeText,
         template_title: template.title,
-        last_name: userInfo.last_name,
-        first_name: userInfo.first_name,
-        primary_department: userInfo.primary_department,
-        primary_faculty: userInfo.primary_faculty,
-        rank: userInfo.rank,
-        rankSinceDate: rankSinceDate,
-        latest_declaration: latestUserDeclaration
+        latest_declaration: latestUserDeclaration,
+        ...userInfoParam,
+        ...userAfiliations
     }
 
     return userProfile;
