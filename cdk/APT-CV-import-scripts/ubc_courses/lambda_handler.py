@@ -77,6 +77,7 @@ def cleanData(df):
     a["other_hours_(per_year)"] = safe_string_clean(a["other_hours"])
     a["category"] = safe_string_clean(a["category_id"]) if "category_id" in a.columns else ""
     a["brief_description"] = safe_string_clean(a["principal_course_brief_description"]) if "principal_course_brief_description" in a.columns else ""
+    a["details"] = safe_string_clean(a["course_role"]) if "course_role" in a.columns else ""
     
     # Map category_id values to type column with custom mapping
     def map_category_to_type(row):
@@ -176,7 +177,7 @@ def cleanData(df):
     a["dates"] = a.apply(combine_dates, axis=1)
     
     a = a[["user_id", "category_-_level_of_student", "course", "brief_description", "dates", "contact_hours_(per_year)", 
-           "number_of_students", "lecture_hours_(per_year)", "tutorial_hours_(per_year)", "lab_hours_(per_year)", "other_hours_(per_year)", "session"]]
+           "number_of_students", "lecture_hours_(per_year)", "tutorial_hours_(per_year)", "lab_hours_(per_year)", "other_hours_(per_year)", "session", "details"]]
 
     # Comprehensive replacement of NaN, None, and string representations with empty strings
     a = a.fillna('').replace(['nan', 'None', 'null', 'NULL', np.nan, None], '')

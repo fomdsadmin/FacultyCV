@@ -26,13 +26,13 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
     let allRows = [];
     try {
       const response = await getAllSectionCVData(section.data_section_id);
-      
+
       // Handle new response structure with total_count and data array
       const rows = response.data || response; // Fallback for backward compatibility
       const totalCount = response.total_count || rows.length;
-      
+
       setTotalRows(totalCount); // Set total rows count from server
-      
+
       const parsedRows = rows.map((row) => {
         let details = row.data_details;
         if (typeof details === "string") {
@@ -47,7 +47,7 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
           ...details,
         };
       });
-      
+
       allRows = parsedRows; // All rows are already limited to 5000 by the server
     } catch (error) {
       // skip user if error
@@ -67,13 +67,13 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
 
     // Get user IDs for the selected department
     const departmentUserIds = allUsers
-      .filter(user => user.primary_department === department)
-      .map(user => user.user_id);
+      .filter((user) => user.primary_department === department)
+      .map((user) => user.user_id);
 
     // Filter data to only include rows from users in the selected department
-    const filteredData = data.filter(row => departmentUserIds.includes(row.user_id));
+    const filteredData = data.filter((row) => departmentUserIds.includes(row.user_id));
     setDataRows(filteredData);
-    console.log(filteredData)
+    console.log(filteredData);
   };
 
   // Handle department filter change
@@ -86,11 +86,11 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
   // Get unique departments from all users
   const getDepartments = () => {
     const departments = allUsers
-      .map(user => user.primary_department)
-      .filter(dept => dept && dept.trim() !== "")
+      .map((user) => user.primary_department)
+      .filter((dept) => dept && dept.trim() !== "")
       .filter((dept, index, arr) => arr.indexOf(dept) === index)
       .sort();
-    
+
     return departments;
   };
 
@@ -148,23 +148,25 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
 
   return (
     <div className="">
-      <div className="flex justify-between items-center pt-4">
-        <button onClick={handleBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4">
-          <FaArrowLeft className="h-6 w-6 text-zinc-800" />
-        </button>
+      <div className="flex justify-between items-center pt-2">
+        <div className="flex items-center">
+          <button onClick={handleBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight">
+            <FaArrowLeft className="h-6 w-6 text-zinc-800" />
+          </button>
+          <div className="m-2 flex items-center">
+            <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
+          </div>
+        </div>
         <button onClick={handleTrashClick} className="text-red-600 btn btn-ghost bg-min-h-0 h-8 leading-tight">
           <FaTrash className="h-8 w-8 text-red-600" />
         </button>
       </div>
-      <div className="m-4 flex items-center">
-        <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
-      </div>
-      <h2 className="mx-4 mt-4 text-left text-2xl text-zinc-600 flex">{section.data_type}</h2>
+      <h2 className="mx-4 mt-2 text-left text-2xl text-zinc-600 flex">{section.data_type}</h2>
       {/* delete section data button and department filter */}
       <div className="m-4 flex items-center gap-4">
         {/* Department Filter Dropdown */}
-        <select 
-          value={selectedDepartment} 
+        <select
+          value={selectedDepartment}
           onChange={handleDepartmentChange}
           className="select select-bordered select-md"
         >
@@ -175,8 +177,8 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
             </option>
           ))}
         </select>
-        <button 
-          onClick={handleDeleteDataClick} 
+        <button
+          onClick={handleDeleteDataClick}
           className={`btn btn-primary p-4 leading-tight ${dataRows.length === 0 ? "btn-disabled" : "btn-primary "}`}
         >
           Delete Section Data
@@ -189,43 +191,49 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
           Total Data Rows: {loading ? "Loading..." : `${dataRows.length} of ${totalRows}`}
           {selectedDepartment !== "all" && ` (filtered by ${selectedDepartment})`}
         </span>
-        {(!loading && totalRows > 5000) && (
-          <span className="ml-2 text-zinc-500 text-sm">(showing first 5000 rows)</span>
-        )}
-        {(!loading && dataRows.length > 0 && totalRows <= 5000 && selectedDepartment === "all") && (
+        {!loading && totalRows > 5000 && <span className="ml-2 text-zinc-500 text-sm">(showing first 5000 rows)</span>}
+        {!loading && dataRows.length > 0 && totalRows <= 5000 && selectedDepartment === "all" && (
           <span className="ml-2 text-zinc-500 text-sm">(showing all {dataRows.length} rows)</span>
         )}
       </div>
 
       {/* Data Table */}
-      <div className="m-4 overflow-x-auto">
+      <div className="my-2 mx-4">
         {loading ? (
-          <div className="text-zinc-500 italic">Loading data...</div>
+          <div className="text-zinc-500 text-md italic">Loading data...</div>
         ) : dataRows.length > 0 ? (
-          <table className="table table-zebra w-full border rounded-lg">
-            <thead>
-              <tr>
-                {attributes &&
-                  Object.keys(attributes).map((key) => (
-                    <th key={key} className="px-4 py-2 text-left bg-gray-100 text-gray-700">
-                      {key}
-                    </th>
+          <div className="border rounded-lg overflow-hidden">
+            {/* Single table with sticky header and scrollable body */}
+            <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-370px)]">
+              <table className="w-full table-zebra">
+                <thead className="sticky top-0 z-10 bg-gray-100">
+                  <tr>
+                    {attributes &&
+                      Object.keys(attributes).map((key) => (
+                        <th
+                          key={key}
+                          className="px-4 py-3 text-left bg-gray-100 text-gray-700 border-b-2 border-gray-200 whitespace-nowrap text-sm"
+                        >
+                          {key}
+                        </th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {dataRows.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      {attributes &&
+                        Object.values(attributes).map((attrKey) => (
+                          <td key={attrKey} className="px-4 py-2 border-b whitespace-wrap text-sm">
+                            {row[attrKey] !== undefined ? String(row[attrKey]) : ""}
+                          </td>
+                        ))}
+                    </tr>
                   ))}
-              </tr>
-            </thead>
-            <tbody>
-              {dataRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-gray-50">
-                  {attributes &&
-                    Object.values(attributes).map((attrKey) => (
-                      <td key={attrKey} className="px-4 py-2 border-b">
-                        {row[attrKey] !== undefined ? String(row[attrKey]) : ""}
-                      </td>
-                    ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </tbody>
+              </table>
+            </div>
+          </div>
         ) : (
           <div className="text-zinc-500 italic">No data rows found for this section.</div>
         )}
@@ -272,11 +280,12 @@ const CVDataSection = ({ section, onBack, getDataSections }) => {
               }}
               totalRows={selectedDepartment === "all" ? totalRows : dataRows.length}
               selectedDepartment={selectedDepartment}
-              departmentUserIds={selectedDepartment !== "all" ? 
-                allUsers
-                  .filter(user => user.primary_department === selectedDepartment)
-                  .map(user => user.user_id) : 
-                null
+              departmentUserIds={
+                selectedDepartment !== "all"
+                  ? allUsers
+                      .filter((user) => user.primary_department === selectedDepartment)
+                      .map((user) => user.user_id)
+                  : null
               }
             />
           </div>

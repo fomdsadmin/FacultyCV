@@ -65,7 +65,7 @@ def cleanData(df):
     b = df.copy()
     
     # Ensure relevant columns are string type before using .str methods
-    for col in ["user_id", "category_id", "student_name", "program", "degree_project", "time_commitment", "supervisor", "co-supervisor", "student_description", "duration" ]:
+    for col in ["user_id", "category_id", "student_name", "program", "degree_project", "time_commitment", "supervisor", "co_supervisor", "student_description", "duration" ]:
         if col in a.columns:
             a[col] = a[col].astype(str)
         if col in b.columns:
@@ -151,7 +151,7 @@ def cleanData(df):
     a["time_commitment"] = safe_string_clean(a["time_commitment"]) if "time_commitment" in a.columns else ""
     a["student_current_position"] = safe_string_clean(a["student_description"]) if "student_description" in a.columns else ""
     a["supervisory_role"] = safe_string_clean(a["supervisor"]) if "supervisor" in a.columns else ""
-    a["co-supervisor"] = safe_string_clean(a["co-supervisor"]) if "co-supervisor" in a.columns else ""
+    a["co-supervisor"] = safe_string_clean(a["co_supervisor"]) if "co_supervisor" in a.columns else ""
     a["details"] = safe_string_clean(a["duration"]) if "duration" in a.columns else ""
 
     # Process start_date and end_date for dataframe A
