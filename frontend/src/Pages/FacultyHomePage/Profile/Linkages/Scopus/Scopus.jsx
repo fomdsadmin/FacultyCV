@@ -5,7 +5,7 @@ import AddScopusModal from "./AddScopusModal";
 import ManualScopusModal from "./ManualScopusModal";
 import OptionsModal from "../OptionsModal";
 
-const Scopus = ({ user, setUser, isAdmin }) => {
+const Scopus = ({ user, setUser, isAdmin, fetchAllUsers }) => {
   const { userInfo, setUserInfo } = useApp();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
@@ -179,12 +179,15 @@ const Scopus = ({ user, setUser, isAdmin }) => {
         user={currentUser}
         setUser={setUser}
         isAdmin={isAdmin}
+        fetchAllUsers={fetchAllUsers}
       />
       <ManualScopusModal
         isOpen={showManualModal}
         onClose={handleCloseManualModal}
         user={currentUser}
+        setUser={setUser}
         isAdmin={isAdmin}
+        fetchAllUsers={fetchAllUsers}
       />
     </>
   );

@@ -25,7 +25,6 @@ const EmploymentSection = ({ user, section, onBack }) => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [sortDescending, setSortDescending] = useState(true);
   const [sortAscending, setSortAscending] = useState(false);
   
   // Filter states for dropdowns
@@ -85,7 +84,6 @@ const EmploymentSection = ({ user, section, onBack }) => {
 
   const toggleSortOrder = () => {
     setSortAscending(!sortAscending);
-    setSortDescending(!sortDescending);
   };
 
   // Get dropdown attributes from section attributes_type
@@ -164,10 +162,6 @@ const EmploymentSection = ({ user, section, onBack }) => {
     }
   };
 
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
   const handleArchive = async (entry) => {
     setLoading(true);
     setFieldData([]);
@@ -229,6 +223,8 @@ const EmploymentSection = ({ user, section, onBack }) => {
       // Sort using the new date utility
       const sortedData = sortEntriesByDate(parsedData, sortAscending);
       setFieldData(sortedData);
+
+      // setFieldData(parsedData);
     } catch (error) {
       console.error("Error fetching data:", error);
     }

@@ -562,6 +562,8 @@ export class UserImportStack extends Stack {
       "ubc_courses",
       "university_institutions",
       "users",
+      "mulesoft_users",
+      "workday_users",
       "visiting_lecturers",
     ];
 

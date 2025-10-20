@@ -431,6 +431,7 @@ const AppContent = () => {
                   userInfo={{ ...userInfo, role: currentViewRole }}
                   getCognitoUser={getCognitoUser}
                   department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
+                  currentViewRole={currentViewRole}
                 />
               }
             />
@@ -441,6 +442,7 @@ const AppContent = () => {
                   userInfo={{ ...userInfo, role: currentViewRole }}
                   getCognitoUser={getCognitoUser}
                   department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
+                  currentViewRole={currentViewRole}
                 />
               }
             />
@@ -451,6 +453,7 @@ const AppContent = () => {
                   userInfo={{ ...userInfo, role: currentViewRole }}
                   getCognitoUser={getCognitoUser}
                   department={currentViewRole && currentViewRole.split ? currentViewRole.split("-")[1] || "" : ""}
+                  currentViewRole={currentViewRole}
                 />
               }
             />

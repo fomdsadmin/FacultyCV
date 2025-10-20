@@ -595,8 +595,8 @@ const EducationSection = ({ user, section, onBack = null }) => {
                 <GenericEntry
                   key={index}
                   onEdit={() => handleEdit(entry)}
-                  field1={entry.data_details.degree}
-                  field2={entry.data_details.end_year}
+                  field1={entry.data_details['university/organization']}
+                  field2={entry.data_details.dates}
                   data_details={entry.data_details}
                   onArchive={() => handleArchive(entry)}
                 />

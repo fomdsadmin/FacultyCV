@@ -96,4 +96,9 @@ CREATE TABLE course_catalog (
     course_description TEXT NOT NULL,
     course_tags TEXT NOT NULL
 );
+
+-- October 16th: to be done
+ALTER TABLE rise_data
+ADD COLUMN IF NOT EXISTS record_id VARCHAR NOT NULL;
+
 -- END

@@ -51,6 +51,7 @@ def storeData():
             'Title': str,
             'Keywords': str, 
             'Dates': str, 
+            'Record Id': str,
         }
     else: 
         data_types = {
@@ -72,7 +73,7 @@ def storeData():
 
     # rearrange columns order
     if filename == 'rise':
-        columns_order = ['First Name', 'Last Name', 'Keywords', 'Agency', 'Sponsor', 'Department','Program', 'Title', 'Amount', 'Dates']
+        columns_order = ['First Name', 'Last Name', 'Keywords', 'Agency', 'Sponsor', 'Department','Program', 'Title', 'Amount', 'Dates', 'Record Id']
     else:
         columns_order = ['First Name', 'Last Name', 'Keywords', 'Agency', 'Department','Program', 'Title', 'Amount', 'Dates']
                 
@@ -96,7 +97,7 @@ def storeData():
 
     # Check for duplicate insertion
     if df_id['Agency'].iloc[0] == 'Rise':
-        query = f"SELECT first_name, last_name, keywords, agency, sponsor, department, program, title, amount, dates FROM {target_table}"
+        query = f"SELECT first_name, last_name, keywords, agency, sponsor, department, program, title, amount, dates, record_id FROM {target_table}"
     else:
         query = f"SELECT first_name, last_name, keywords, agency, department, program, title, amount, dates FROM {target_table}"
         
@@ -108,7 +109,7 @@ def storeData():
     
     # Inserting to db
     if df_id['Agency'].iloc[0] == 'Rise':
-        query = f"INSERT INTO {target_table} (first_name, last_name, keywords, agency, sponsor, department, program, title, amount, dates) VALUES %s"
+        query = f"INSERT INTO {target_table} (first_name, last_name, keywords, agency, sponsor, department, program, title, amount, dates, record_id) VALUES %s"
     else:
         query = f"INSERT INTO {target_table} (first_name, last_name, keywords, agency, department, program, title, amount, dates) VALUES %s"
     extras.execute_values(cursor, query, listOfValuesToInsert)

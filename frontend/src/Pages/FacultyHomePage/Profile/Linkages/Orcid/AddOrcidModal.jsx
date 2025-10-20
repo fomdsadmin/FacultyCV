@@ -5,8 +5,8 @@ import { getOrcidAuthorMatches, updateUser } from "../../../../../graphql/graphq
 import { useApp } from "../../../../../Contexts/AppContext";
 import ModalStylingWrapper from "../../../../../SharedComponents/ModalStylingWrapper";
 
-// Accept user, isAdmin, and onUpdateUser props
-const AddOrcidModal = ({ isOpen, onClose, user, setUser, isAdmin, onUpdateUser }) => {
+// Accept user, isAdmin, and fetchAllUsers props
+const AddOrcidModal = ({ isOpen, onClose, user, setUser, isAdmin, fetchAllUsers }) => {
   const { userInfo, setUserInfo } = useApp();
   const [loading, setLoading] = useState(false);
   const [authors, setAuthors] = useState([]);
@@ -81,7 +81,21 @@ const AddOrcidModal = ({ isOpen, onClose, user, setUser, isAdmin, onUpdateUser }
           orcidId
         );
         console.log("ORCID ID saved successfully:");
-        window.location.reload();
+        
+        // Update local user state
+        if (setUser) {
+          setUser(prev => ({
+            ...prev,
+            orcid_id: orcidId
+          }));
+        }
+        
+        // Refresh the users list in admin context
+        if (fetchAllUsers) {
+          await fetchAllUsers();
+        } else {
+          window.location.reload();
+        }
       } catch (error) {
         console.error("Error saving ORCID ID:", error);
       }

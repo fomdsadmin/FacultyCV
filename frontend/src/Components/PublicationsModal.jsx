@@ -99,15 +99,17 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         // Find matched publications
         let matches = [];
         if (parsedExistingJournalPublications.length > 0 && newStagingPublications.length > 0) {
-          matches = findPublicationMatches(newStagingPublications, parsedExistingJournalPublications);
-        } else {
-          console.log("No matching performed:", {
-            existingCount: parsedExistingJournalPublications.length,
-            fetchedCount: newStagingPublications.length,
-          });
+          if (user.primary_department.includes("Obstetrics & Gynaecology")) {
+            matches = findPublicationMatches(newStagingPublications, parsedExistingJournalPublications);
+          } else if (user.primary_department.includes("Anesthesiology, Pharmacology & Therapeutics")) {
+            matches = findAPTPublicationMatches(newStagingPublications, parsedExistingJournalPublications);
+          } else {
+            console.log("No matching performed:", {
+              existingCount: parsedExistingJournalPublications.length,
+              fetchedCount: newStagingPublications.length,
+            });
+          }
         }
-
-        console.log(matches);
         setMatchedPublications(matches);
         // Set the combined list for the modal
         setAllExistingPublications(parsedExistingJournalPublications);
@@ -232,8 +234,7 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
             // Accept if combined score is good OR if DOI similarity is very high
             if (
               (doiSimilarity > 0.9 && doiSimilarity > bestSimilarity) ||
-              combinedScore > bestSimilarity &&
-              combinedScore > 0.75
+              (combinedScore > bestSimilarity && combinedScore > 0.75)
             ) {
               bestMatch = existingDOI;
               bestSimilarity = combinedScore;
@@ -339,9 +340,217 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         matchedFetchedIndices.add(fetchedIndex);
       }
     });
+    return matches;
+  };
 
-    console.log("=== ENHANCED TITLE + AUTHOR MATCHING SUMMARY ===");
-    console.log(`Total matches found: ${matches.length}`);
+  // Helper function to find matches between fetched and existing publications (APT-specific)
+  const findAPTPublicationMatches = (publications, parsedExisting) => {
+    const matches = [];
+    const usedExistingIds = new Set();
+
+    // Filter out existing publications that have already been merged from Scopus
+    const existingToMatch = parsedExisting.filter((existingPub) => {
+      const alreadyMerged = hasBeenMergedFromScopus(existingPub);
+      return !alreadyMerged;
+    });
+
+    console.log(
+      `APT Filtering: ${parsedExisting.length} existing publications -> ${existingToMatch.length} to match (${
+        parsedExisting.length - existingToMatch.length
+      } already merged from Scopus)`
+    );
+
+    // Early exit if no data to process
+    if (publications.length === 0 || existingToMatch.length === 0) {
+      return matches;
+    }
+
+    // Memoization cache for title similarity calculations
+    const similarityCache = new Map();
+    
+    const getCachedSimilarity = (title1, title2) => {
+      const key = `${title1}|||${title2}`;
+      if (similarityCache.has(key)) {
+        return similarityCache.get(key);
+      }
+      const similarity = calculateTitleSimilarity(title1, title2);
+      similarityCache.set(key, similarity);
+      return similarity;
+    };
+
+    // PRE-PROCESS: Extract and normalize all data once
+    const processedExistingPubs = existingToMatch.map((existingPub) => {
+      const citation = existingPub.data_details.citation || "";
+      const directTitle = existingPub.data_details.title ? existingPub.data_details.title.toLowerCase().trim() : "";
+      
+      if (!citation && !directTitle) {
+        return {
+          ...existingPub,
+          normalizedCitation: "",
+          citationSentences: [],
+          directTitle: "",
+          titleWords: new Set(),
+          hasContent: false
+        };
+      }
+
+      const normalizedCitation = citation.toLowerCase().trim();
+      
+      // Helper function to clean square bracket text from sentences
+      const cleanSquareBrackets = (text) => {
+        return text.replace(/\[.*?\]/g, '').trim();
+      };
+      
+      // Extract all sentences from citation using multiple delimiters (FIXED - back to original logic)
+      const allSentences = new Set();
+      if (citation) {
+        // Split by different delimiters and collect unique sentences
+        ['.', ',', '?'].forEach(delimiter => {
+          normalizedCitation.split(delimiter)
+            .map(sentence => cleanSquareBrackets(sentence.trim()))
+            .filter(sentence => sentence.length > 10)
+            .forEach(sentence => allSentences.add(sentence));
+        });
+      }
+
+      // Create word set for fast pre-filtering (extract ALL meaningful words, no stop word filtering)
+      const titleWords = new Set();
+      const allText = `${directTitle} ${Array.from(allSentences).join(' ')}`;
+      if (allText.trim()) {
+        // Extract words that are 3+ characters (removed stop words filtering)
+        const words = allText.match(/\b[a-z]{3,}\b/g) || [];
+        words.forEach(word => titleWords.add(word));
+      }
+
+      return {
+        ...existingPub,
+        normalizedCitation,
+        citationSentences: Array.from(allSentences),
+        directTitle,
+        titleWords,
+        hasContent: allSentences.size > 0 || directTitle.length > 0
+      };
+    });
+
+    // Pre-filter existing publications that have content
+    const validExistingPubs = processedExistingPubs.filter(pub => pub.hasContent);
+
+    console.log(`Pre-filtered ${processedExistingPubs.length} -> ${validExistingPubs.length} existing publications with content`);
+
+    let matchedFetchedIndices = new Set();
+
+    // Process fetched publications
+    publications.forEach((fetchedPub, fetchedIndex) => {
+      if (!fetchedPub.title) return;
+
+      const fetchedTitle = fetchedPub.title.toLowerCase().trim();
+      
+      // Extract words from fetched title for pre-filtering (removed stop words filtering)
+      const fetchedWords = new Set();
+      const words = fetchedTitle.match(/\b[a-z]{3,}\b/g) || [];
+      words.forEach(word => fetchedWords.add(word));
+
+      const allMatches = [];
+
+      // More lenient pre-filtering: only process publications with some word overlap
+      const candidatePublications = validExistingPubs.filter(processedExisting => {
+        if (usedExistingIds.has(processedExisting.user_cv_data_id)) {
+          return false;
+        }
+        
+        // More lenient word overlap check - at least 1 word in common for short titles, 2+ for longer titles
+        const commonWords = [...fetchedWords].filter(word => processedExisting.titleWords.has(word));
+        const minCommonWords = fetchedWords.size <= 3 ? 1 : Math.max(1, Math.floor(fetchedWords.size * 0.25));
+        return commonWords.length >= minCommonWords;
+      });
+      
+      // Only process promising candidates
+      candidatePublications.forEach((processedExisting) => {
+        let bestTitleSimilarity = 0;
+        let bestSentenceMatch = null;
+
+        // Check direct title first (usually faster)
+        if (processedExisting.directTitle) {
+          const directSimilarity = getCachedSimilarity(fetchedTitle, processedExisting.directTitle);
+          if (directSimilarity > bestTitleSimilarity) {
+            bestTitleSimilarity = directSimilarity;
+            bestSentenceMatch = null;
+          }
+          // Early exit if direct title match is very high
+          if (directSimilarity > 0.95) {
+            bestTitleSimilarity = directSimilarity;
+          }
+        }
+
+        // Only check citation sentences if direct title wasn't good enough
+        if (bestTitleSimilarity < 0.95 && processedExisting.citationSentences.length > 0) {
+          for (const sentence of processedExisting.citationSentences) {
+            const titleSimilarity = getCachedSimilarity(fetchedTitle, sentence);
+            if (titleSimilarity > bestTitleSimilarity) {
+              bestTitleSimilarity = titleSimilarity;
+              bestSentenceMatch = sentence;
+            }
+            // Early exit if we find a very high similarity
+            if (titleSimilarity > 0.95) break;
+          }
+        }
+
+        // Early exit if similarity is too low
+        if (bestTitleSimilarity <= 0.85) return;
+
+        // Calculate author similarity for additional confidence (only if we have a good title match)
+        let authorSimilarity = 0;
+        if (fetchedPub.author_names && processedExisting.data_details.author_names) {
+          authorSimilarity = calculateAuthorSimilarity(fetchedPub, processedExisting.data_details);
+        }
+
+        // Calculate combined confidence score: 70% title + 30% author
+        const confidenceScore = (bestTitleSimilarity * 0.7) + (authorSimilarity * 0.3);
+        
+        allMatches.push({
+          existingPublication: processedExisting,
+          titleInCitation: bestSentenceMatch !== null,
+          dateMatch: true,
+          titleSimilarity: bestTitleSimilarity,
+          authorSimilarity: authorSimilarity,
+          confidenceScore: confidenceScore,
+          matchReason: bestSentenceMatch ? "title_in_citation" : "direct_title_match",
+          matchedSentence: bestSentenceMatch
+        });
+      });
+
+      if (allMatches.length > 0) {
+        // Sort by confidence score (only sort once)
+        allMatches.sort((a, b) => b.confidenceScore - a.confidenceScore);
+
+        const bestMatch = allMatches[0];
+
+        matches.push({
+          fetchedPublication: { ...fetchedPub, originalIndex: fetchedIndex },
+          existingPublications: allMatches.map((m) => m.existingPublication),
+          primaryExistingPublication: bestMatch.existingPublication,
+          existingPublication: bestMatch.existingPublication,
+          matchType: "apt_citation_title_date",
+          similarity: bestMatch.confidenceScore,
+          titleInCitation: bestMatch.titleInCitation,
+          dateMatch: bestMatch.dateMatch,
+          titleSimilarity: bestMatch.titleSimilarity,
+          authorSimilarity: bestMatch.authorSimilarity,
+          matchReason: bestMatch.matchReason,
+          isMultiMatch: allMatches.length > 1,
+          matchIndex: 0,
+          allConfidenceScores: allMatches.map((m) => m.confidenceScore),
+          allMatchReasons: allMatches.map((m) => m.matchReason),
+          allAuthorSimilarities: allMatches.map((m) => m.authorSimilarity),
+        });
+
+        // Mark all matched existing publications as used
+        allMatches.forEach((match) => {
+          usedExistingIds.add(match.existingPublication.user_cv_data_id);
+        });
+        matchedFetchedIndices.add(fetchedIndex);
+      }
+    });
     return matches;
   };
 
@@ -604,18 +813,6 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
         }
       });
     });
-
-    // Log the merge operation for debugging
-    console.log("Merge operation completed:", {
-      scopusFields: Array.from(scopusFields),
-      originalScopusFields: Object.keys(scopusPublication).length,
-      mergedFields: Object.keys(mergedPublication).length,
-      addedFields: addedFieldsCount,
-      updatedFields: updatedFieldsCount,
-      existingPublicationsProcessed: existingPublications.length,
-      hasStagingId: !!mergedPublication._staging_id,
-    });
-
     return mergedPublication;
   };
 
@@ -661,20 +858,12 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
   // Helper function to parse publication year and month from various date formats
   const getPublicationDateInfo = (publication) => {
     // Try multiple possible date fields
-    const possibleDateFields = [
-      publication.end_date,
-      publication.publication_date,
-      publication.date,
-      publication.year,
-      publication.start_date,
-    ];
+    const possibleDateFields = [publication.end_date];
 
-    for (const dateStr of possibleDateFields) {
-      if (dateStr) {
-        const result = extractDateFromString(dateStr);
-        if (result.year !== null) {
-          return result;
-        }
+    if (publication.end_date) {
+      const result = extractDateFromString(publication.end_date);
+      if (result.year !== null) {
+        return result;
       }
     }
 
@@ -878,10 +1067,12 @@ const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchDat
           handleAddSelected={handleAddSelected}
           setShowSelectionModal={setShowSelectionModal}
           extractDOIsFromCitation={extractDOIsFromCitation}
+          user={user} // Pass user for department detection
         />
       )}
     </>
   );
 };
+
 
 export default PublicationsModal;

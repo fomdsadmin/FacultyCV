@@ -14,10 +14,10 @@ function removeEmptyColumns(cols, rows) {
             // leaf column without a field -> keep
             if (!col.field) return col;
 
-            const hasValue = rows.some(r => {
+            const hasValue = rows ? rows.some(r => {
                 const v = r?.[col.field];
                 return v !== undefined && v !== null && String(v).trim() !== "";
-            });
+            }) : false;
 
             return hasValue ? col : null;
         })

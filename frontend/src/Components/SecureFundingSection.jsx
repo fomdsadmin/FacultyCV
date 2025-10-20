@@ -35,7 +35,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
   const [pageSize, setPageSize] = useState(20);
   const [sortDescending, setSortDescending] = useState(true);
   const [sortAscending, setSortAscending] = useState(false);
-  
+
   // Filter states for dropdowns
   const [dropdownFilters, setDropdownFilters] = useState({});
   const [showMoreFilters, setShowMoreFilters] = useState(false);
@@ -59,16 +59,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
     Object.entries(dropdownFilters).forEach(([attribute, filterValue]) => {
       if (filterValue && filterValue !== "all") {
         // Get the actual field key (snake_case) from the display name
-        const actualKey = section.attributes && section.attributes[attribute] 
-          ? section.attributes[attribute] 
-          : attribute.toLowerCase().replace(/\s+/g, '_');
-          
+        const actualKey =
+          section.attributes && section.attributes[attribute]
+            ? section.attributes[attribute]
+            : attribute.toLowerCase().replace(/\s+/g, "_");
+
         filtered = filtered.filter((entry) => {
           if (!entry.data_details || !entry.data_details[actualKey]) return false;
-          
+
           const entryValue = entry.data_details[actualKey];
           if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
-          
+
           // Handle "Other (value)" format
           if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
             const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
@@ -76,7 +77,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
               return match[1].trim() === filterValue;
             }
           }
-          
+
           return entryValue === filterValue;
         });
       }
@@ -87,7 +88,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
 
     return sortedData;
   }, [fieldData, searchTerm, dropdownFilters, sortAscending, section.attributes]);
-  
+
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -104,11 +105,10 @@ const SecureFundingSection = ({ user, section, onBack }) => {
       if (!section.attributes_type) {
         return [];
       }
-      
-      const attributesType = typeof section.attributes_type === "string" 
-        ? JSON.parse(section.attributes_type) 
-        : section.attributes_type;
-      
+
+      const attributesType =
+        typeof section.attributes_type === "string" ? JSON.parse(section.attributes_type) : section.attributes_type;
+
       return Object.keys(attributesType.dropdown || {});
     } catch (error) {
       console.error("Error parsing attributes_type:", error);
@@ -118,13 +118,13 @@ const SecureFundingSection = ({ user, section, onBack }) => {
 
   // Get unique values for a dropdown attribute from field data
   const getUniqueDropdownValues = (attribute) => {
-    
     // Get the actual field key (snake_case) from the display name
-    const actualKey = section.attributes && section.attributes[attribute] 
-      ? section.attributes[attribute] 
-      : attribute.toLowerCase().replace(/\s+/g, '_');
+    const actualKey =
+      section.attributes && section.attributes[attribute]
+        ? section.attributes[attribute]
+        : attribute.toLowerCase().replace(/\s+/g, "_");
     const values = new Set();
-    
+
     fieldData.forEach((entry, index) => {
       if (entry.data_details && entry.data_details[actualKey]) {
         const value = entry.data_details[actualKey];
@@ -141,7 +141,7 @@ const SecureFundingSection = ({ user, section, onBack }) => {
         }
       }
     });
-    
+
     const result = Array.from(values).sort();
     return result;
   };
@@ -287,10 +287,14 @@ const SecureFundingSection = ({ user, section, onBack }) => {
           </button>
           <h2 className="text-3xl font-bold text-zinc-600">{section.title}</h2>
         </div>
-        
+
         {/* Right section: Action Buttons */}
         <div className="flex items-center gap-3">
-          <button onClick={handleNew} className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight" disabled={retrievingData}>
+          <button
+            onClick={handleNew}
+            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight"
+            disabled={retrievingData}
+          >
             New
           </button>
           <button
@@ -320,293 +324,321 @@ const SecureFundingSection = ({ user, section, onBack }) => {
       {/* Only show Filters and Search if there's data - matches GenericSection layout */}
       {fieldData.length > 0 && (
         <div className="mb-2 bg-white px-4 py-3 rounded-lg shadow-md mt-2 ml-4 mr-4">
-        {/* Basic Filters Row */}
-        <div className="flex flex-wrap gap-3 items-end mb-1">
-          {/* Search Bar */}
-          <div className="">
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Search Entries</label>
-            <div className="relative max-w-md">
-              <FaSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 text-sm" />
-              <input
-                type="text"
-                placeholder="Search entries..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              />
+          {/* Basic Filters Row */}
+          <div className="flex flex-wrap gap-3 items-end mb-1">
+            {/* Search Bar */}
+            <div className="">
+              <label className="block text-xs font-medium text-zinc-600 mb-1">Search Entries</label>
+              <div className="relative max-w-md">
+                <FaSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 text-sm" />
+                <input
+                  type="text"
+                  placeholder="Search entries..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Date Sort Button */}
-          <div className="">
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Date Order</label>
-            <button
-              onClick={toggleSortOrder}
-              className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors duration-200 text-sm"
-              title={`Sort by date: ${sortAscending ? "Oldest first" : "Newest first"} (click to toggle)`}
-            >
-              <svg className="w-4 h-4 text-gray-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {sortAscending ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 4v12m0 0l4-4m-4 4l-4-4m10-8v12m0 0l4-4m-4 4l-4-4"
-                  />
-                )}
-              </svg>
-              {sortAscending ? "Oldest" : "Newest"}
-            </button>
-          </div>
+            {/* Date Sort Button */}
+            <div className="">
+              <label className="block text-xs font-medium text-zinc-600 mb-1">Date Order</label>
+              <button
+                onClick={toggleSortOrder}
+                className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors duration-200 text-sm"
+                title={`Sort by date: ${sortAscending ? "Oldest first" : "Newest first"} (click to toggle)`}
+              >
+                <svg className="w-4 h-4 text-gray-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {sortAscending ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 4v12m0 0l4-4m-4 4l-4-4m10-8v12m0 0l4-4m-4 4l-4-4"
+                    />
+                  )}
+                </svg>
+                {sortAscending ? "Oldest" : "Newest"}
+              </button>
+            </div>
 
-          {/* First few dropdown filters */}
-          {getDropdownAttributes().slice(0, 2).map((attribute) => {
-            const uniqueValues = getUniqueDropdownValues(attribute);
-            if (uniqueValues.length === 0) return null;
+            {/* First few dropdown filters */}
+            {getDropdownAttributes()
+              .slice(0, 2)
+              .map((attribute) => {
+                const uniqueValues = getUniqueDropdownValues(attribute);
+                if (uniqueValues.length === 0) return null;
 
-            // Get data filtered by everything except the current attribute
-            const getCountForOption = (optionValue) => {
-              let dataForCounting = fieldData;
-              
-              // Apply search filter
-              if (searchTerm) {
-                dataForCounting = dataForCounting.filter((entry) => {
-                  const [field1, field2] = rankFields(entry.data_details);
-                  return (
-                    (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                  );
-                });
-              }
+                // Get data filtered by everything except the current attribute
+                const getCountForOption = (optionValue) => {
+                  let dataForCounting = fieldData;
 
-              // Apply other dropdown filters (excluding current attribute)
-              Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
-                if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
-                  const actualKey = section.attributes && section.attributes[filterAttribute] 
-                    ? section.attributes[filterAttribute] 
-                    : filterAttribute.toLowerCase().replace(/\s+/g, '_');
-                    
-                  dataForCounting = dataForCounting.filter((entry) => {
+                  // Apply search filter
+                  if (searchTerm) {
+                    dataForCounting = dataForCounting.filter((entry) => {
+                      const [field1, field2] = rankFields(entry.data_details);
+                      return (
+                        (field1 &&
+                          typeof field1 === "string" &&
+                          field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                        (field2 &&
+                          typeof field2 === "string" &&
+                          field2.toLowerCase().includes(searchTerm.toLowerCase()))
+                      );
+                    });
+                  }
+
+                  // Apply other dropdown filters (excluding current attribute)
+                  Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
+                    if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
+                      const actualKey =
+                        section.attributes && section.attributes[filterAttribute]
+                          ? section.attributes[filterAttribute]
+                          : filterAttribute.toLowerCase().replace(/\s+/g, "_");
+
+                      dataForCounting = dataForCounting.filter((entry) => {
+                        if (!entry.data_details || !entry.data_details[actualKey]) return false;
+
+                        const entryValue = entry.data_details[actualKey];
+                        if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
+
+                        // Handle "Other (value)" format
+                        if (
+                          typeof entryValue === "string" &&
+                          /\bother\b/i.test(entryValue) &&
+                          /\(.*\)$/.test(entryValue)
+                        ) {
+                          const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                          if (match) {
+                            return match[1].trim() === filterValue;
+                          }
+                        }
+
+                        return entryValue === filterValue;
+                      });
+                    }
+                  });
+
+                  // Now count items matching this specific option
+                  if (optionValue === "all") {
+                    return dataForCounting.length;
+                  }
+
+                  const actualKey =
+                    section.attributes && section.attributes[attribute]
+                      ? section.attributes[attribute]
+                      : attribute.toLowerCase().replace(/\s+/g, "_");
+
+                  return dataForCounting.filter((entry) => {
                     if (!entry.data_details || !entry.data_details[actualKey]) return false;
-                    
+
                     const entryValue = entry.data_details[actualKey];
                     if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
-                    
+
                     // Handle "Other (value)" format
                     if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
                       const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
                       if (match) {
-                        return match[1].trim() === filterValue;
+                        return match[1].trim() === optionValue;
                       }
                     }
-                    
-                    return entryValue === filterValue;
-                  });
-                }
-              });
 
-              // Now count items matching this specific option
-              if (optionValue === "all") {
-                return dataForCounting.length;
-              }
+                    return entryValue === optionValue;
+                  }).length;
+                };
 
-              const actualKey = section.attributes && section.attributes[attribute] 
-                ? section.attributes[attribute] 
-                : attribute.toLowerCase().replace(/\s+/g, '_');
+                return (
+                  <div key={attribute} className="max-w-56">
+                    <label className="block text-xs font-medium text-zinc-600 mb-1">
+                      {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                    </label>
+                    <select
+                      value={dropdownFilters[attribute] || "all"}
+                      onChange={(e) => {
+                        const newFilters = { ...dropdownFilters };
+                        if (e.target.value === "all") {
+                          delete newFilters[attribute];
+                        } else {
+                          newFilters[attribute] = e.target.value;
+                        }
+                        setDropdownFilters(newFilters);
+                        setCurrentPage(1);
+                      }}
+                      className="w-full px-2 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                    >
+                      <option value="all">All ({getCountForOption("all")})</option>
+                      {uniqueValues.map((value) => (
+                        <option key={value} value={value}>
+                          {value} ({getCountForOption(value)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
 
-              return dataForCounting.filter((entry) => {
-                if (!entry.data_details || !entry.data_details[actualKey]) return false;
-                
-                const entryValue = entry.data_details[actualKey];
-                if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
-                
-                // Handle "Other (value)" format
-                if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-                  const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
-                  if (match) {
-                    return match[1].trim() === optionValue;
-                  }
-                }
-                
-                return entryValue === optionValue;
-              }).length;
-            };
+            {/* Show More Filters Button */}
+            {getDropdownAttributes().length > 2 && (
+              <button
+                onClick={() => setShowMoreFilters(!showMoreFilters)}
+                className="px-3 py-2 text-xs text-blue-600 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+              >
+                {showMoreFilters ? "Show Less" : `Show More Filters (${getDropdownAttributes().length - 2})`}
+              </button>
+            )}
 
-            return (
-              <div key={attribute} className="max-w-56">
-                <label className="block text-xs font-medium text-zinc-600 mb-1">
-                  {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                </label>
-                <select
-                  value={dropdownFilters[attribute] || "all"}
-                  onChange={(e) => {
-                    const newFilters = { ...dropdownFilters };
-                    if (e.target.value === "all") {
-                      delete newFilters[attribute];
-                    } else {
-                      newFilters[attribute] = e.target.value;
-                    }
-                    setDropdownFilters(newFilters);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-2 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                >
-                  <option value="all">All ({getCountForOption("all")})</option>
-                  {uniqueValues.map((value) => (
-                    <option key={value} value={value}>
-                      {value} ({getCountForOption(value)})
-                    </option>
-                  ))}
-                </select>
+            {/* Spacer to push total entries to the right */}
+            <div className="flex-1"></div>
+
+            {/* Total Entries - styled like other buttons */}
+            <div className="">
+              <label className="block text-xs font-medium text-zinc-600 mb-1">Total Entries</label>
+              <div className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 border border-gray-300 text-sm">
+                <span className="font-bold text-blue-600">{filteredData.length}</span>
               </div>
-            );
-          })}
-
-          {/* Show More Filters Button */}
-          {getDropdownAttributes().length > 2 && (
-            <button
-              onClick={() => setShowMoreFilters(!showMoreFilters)}
-              className="px-3 py-2 text-xs text-blue-600 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
-            >
-              {showMoreFilters ? "Show Less" : `Show More Filters (${getDropdownAttributes().length - 2})`}
-            </button>
-          )}
-
-          {/* Spacer to push total entries to the right */}
-          <div className="flex-1"></div>
-
-          {/* Total Entries - styled like other buttons */}
-          <div className="">
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Total Entries</label>
-            <div className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 border border-gray-300 text-sm">
-              <span className="font-bold text-blue-600">{filteredData.length}</span>
             </div>
           </div>
-        </div>
 
-        {/* Advanced Filters (Conditional) */}
-        {showMoreFilters && getDropdownAttributes().length > 2 && (
-          <div className="flex flex-wrap gap-3 items-end border-t border-zinc-200 pt-3 mt-1">
-            {/* Remaining dropdown filters */}
-            {getDropdownAttributes().slice(2).map((attribute) => {
-              const uniqueValues = getUniqueDropdownValues(attribute);
-              if (uniqueValues.length === 0) return null;
+          {/* Advanced Filters (Conditional) */}
+          {showMoreFilters && getDropdownAttributes().length > 2 && (
+            <div className="flex flex-wrap gap-3 items-end border-t border-zinc-200 pt-3 mt-1">
+              {/* Remaining dropdown filters */}
+              {getDropdownAttributes()
+                .slice(2)
+                .map((attribute) => {
+                  const uniqueValues = getUniqueDropdownValues(attribute);
+                  if (uniqueValues.length === 0) return null;
 
-              // Get data filtered by everything except the current attribute
-              const getCountForOption = (optionValue) => {
-                let dataForCounting = fieldData;
-                
-                // Apply search filter
-                if (searchTerm) {
-                  dataForCounting = dataForCounting.filter((entry) => {
-                    const [field1, field2] = rankFields(entry.data_details);
-                    return (
-                      (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                      (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                    );
-                  });
-                }
+                  // Get data filtered by everything except the current attribute
+                  const getCountForOption = (optionValue) => {
+                    let dataForCounting = fieldData;
 
-                // Apply other dropdown filters (excluding current attribute)
-                Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
-                  if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
-                    const actualKey = section.attributes && section.attributes[filterAttribute] 
-                      ? section.attributes[filterAttribute] 
-                      : filterAttribute.toLowerCase().replace(/\s+/g, '_');
-                      
-                    dataForCounting = dataForCounting.filter((entry) => {
+                    // Apply search filter
+                    if (searchTerm) {
+                      dataForCounting = dataForCounting.filter((entry) => {
+                        const [field1, field2] = rankFields(entry.data_details);
+                        return (
+                          (field1 &&
+                            typeof field1 === "string" &&
+                            field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (field2 &&
+                            typeof field2 === "string" &&
+                            field2.toLowerCase().includes(searchTerm.toLowerCase()))
+                        );
+                      });
+                    }
+
+                    // Apply other dropdown filters (excluding current attribute)
+                    Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
+                      if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
+                        const actualKey =
+                          section.attributes && section.attributes[filterAttribute]
+                            ? section.attributes[filterAttribute]
+                            : filterAttribute.toLowerCase().replace(/\s+/g, "_");
+
+                        dataForCounting = dataForCounting.filter((entry) => {
+                          if (!entry.data_details || !entry.data_details[actualKey]) return false;
+
+                          const entryValue = entry.data_details[actualKey];
+                          if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
+
+                          // Handle "Other (value)" format
+                          if (
+                            typeof entryValue === "string" &&
+                            /\bother\b/i.test(entryValue) &&
+                            /\(.*\)$/.test(entryValue)
+                          ) {
+                            const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                            if (match) {
+                              return match[1].trim() === filterValue;
+                            }
+                          }
+
+                          return entryValue === filterValue;
+                        });
+                      }
+                    });
+
+                    // Now count items matching this specific option
+                    if (optionValue === "all") {
+                      return dataForCounting.length;
+                    }
+
+                    const actualKey =
+                      section.attributes && section.attributes[attribute]
+                        ? section.attributes[attribute]
+                        : attribute.toLowerCase().replace(/\s+/g, "_");
+
+                    return dataForCounting.filter((entry) => {
                       if (!entry.data_details || !entry.data_details[actualKey]) return false;
-                      
+
                       const entryValue = entry.data_details[actualKey];
                       if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
-                      
+
                       // Handle "Other (value)" format
-                      if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
+                      if (
+                        typeof entryValue === "string" &&
+                        /\bother\b/i.test(entryValue) &&
+                        /\(.*\)$/.test(entryValue)
+                      ) {
                         const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
                         if (match) {
-                          return match[1].trim() === filterValue;
+                          return match[1].trim() === optionValue;
                         }
                       }
-                      
-                      return entryValue === filterValue;
-                    });
-                  }
-                });
 
-                // Now count items matching this specific option
-                if (optionValue === "all") {
-                  return dataForCounting.length;
-                }
+                      return entryValue === optionValue;
+                    }).length;
+                  };
 
-                const actualKey = section.attributes && section.attributes[attribute] 
-                  ? section.attributes[attribute] 
-                  : attribute.toLowerCase().replace(/\s+/g, '_');
+                  return (
+                    <div key={attribute} className="max-w-56">
+                      <label className="block text-xs font-medium text-zinc-600 mb-1">
+                        {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </label>
+                      <select
+                        value={dropdownFilters[attribute] || "all"}
+                        onChange={(e) => {
+                          const newFilters = { ...dropdownFilters };
+                          if (e.target.value === "all") {
+                            delete newFilters[attribute];
+                          } else {
+                            newFilters[attribute] = e.target.value;
+                          }
+                          setDropdownFilters(newFilters);
+                          setCurrentPage(1);
+                        }}
+                        className="w-full px-2 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                      >
+                        <option value="all">All ({getCountForOption("all")})</option>
+                        {uniqueValues.map((value) => (
+                          <option key={value} value={value}>
+                            {value} ({getCountForOption(value)})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
 
-                return dataForCounting.filter((entry) => {
-                  if (!entry.data_details || !entry.data_details[actualKey]) return false;
-                  
-                  const entryValue = entry.data_details[actualKey];
-                  if (!entryValue || entryValue.trim() === "" || entryValue === "—") return false;
-                  
-                  // Handle "Other (value)" format
-                  if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-                    const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
-                    if (match) {
-                      return match[1].trim() === optionValue;
-                    }
-                  }
-                  
-                  return entryValue === optionValue;
-                }).length;
-              };
-
-              return (
-                <div key={attribute} className="max-w-56">
-                  <label className="block text-xs font-medium text-zinc-600 mb-1">
-                    {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </label>
-                  <select
-                    value={dropdownFilters[attribute] || "all"}
-                    onChange={(e) => {
-                      const newFilters = { ...dropdownFilters };
-                      if (e.target.value === "all") {
-                        delete newFilters[attribute];
-                      } else {
-                        newFilters[attribute] = e.target.value;
-                      }
-                      setDropdownFilters(newFilters);
-                      setCurrentPage(1);
-                    }}
-                    className="w-full px-2 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                  >
-                    <option value="all">All ({getCountForOption("all")})</option>
-                    {uniqueValues.map((value) => (
-                      <option key={value} value={value}>
-                        {value} ({getCountForOption(value)})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              );
-            })}
-
-            {/* Clear Filters Button */}
-            <button
-              onClick={clearAllFilters}
-              className="px-3 py-2 text-xs text-zinc-600 border border-zinc-300 rounded-md hover:bg-zinc-50 transition-colors"
-            >
-              Clear All
-            </button>
-          </div>
-        )}
-      </div>
+              {/* Clear Filters Button */}
+              <button
+                onClick={clearAllFilters}
+                className="px-3 py-2 text-xs text-zinc-600 border border-zinc-300 rounded-md hover:bg-zinc-50 transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
+        </div>
       )}
       {loading ? (
         <div className="flex items-center justify-center w-full">
@@ -631,20 +663,18 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                   </div>
                 ) : (
                   <div key={index} className="w-full">
-                    <PermanentEntry
+                    <GenericEntry
                       onEdit={() => handleEdit(entry)}
                       field1={entry.field1}
                       field2={entry.field2}
-                      data_details={{ ...filteredDetails, sponsor: agency }}
-                      onView={() => handleView(entry)}
+                      data_details={entry.data_details} // For edit, just omit agency
+                      onArchive={() => handleArchive(entry)}
                     />
                   </div>
                 );
               })
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                No existing entries found
-              </div>
+              <div className="text-center py-8 text-gray-500">No existing entries found</div>
             )}
           </div>
         </div>
@@ -653,40 +683,40 @@ const SecureFundingSection = ({ user, section, onBack }) => {
       {/* Only show Pagination Controls if there's data */}
       {fieldData.length > 0 && (
         <div className="mr-4 mt-4 rounded-lg flex flex-wrap justify-end items-center">
-        {/* Right controls */}
-        <div className="flex items-center gap-2">
-          {/* Page size dropdown */}
-          <select
-            className="select select-sm select-bordered"
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-          >
-            <option value={10}>10 per page</option>
-            <option value={20}>20 per page</option>
-            <option value={50}>50 per page</option>
-            <option value={100}>100 per page</option>
-            <option value={1000}>All</option>
-          </select>
-          {/* Pagination controls */}
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          <span className="text-sm text-gray-700">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
+          {/* Right controls */}
+          <div className="flex items-center gap-2">
+            {/* Page size dropdown */}
+            <select
+              className="select select-sm select-bordered"
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+            >
+              <option value={10}>10 per page</option>
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+              <option value={100}>100 per page</option>
+              <option value={1000}>All</option>
+            </select>
+            {/* Pagination controls */}
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Modals */}

@@ -53,6 +53,17 @@ export const DeactivatedUsersModal = ({
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
+  // Auto-set department filter for department admins when modal opens
+  React.useEffect(() => {
+    if (isOpen && userRole && userRole.startsWith("Admin-") && userRole !== "Admin-All" && !departmentFilter) {
+      const adminDept = userRole.replace("Admin-", "");
+      if (deactivatedUsers.some(user => user.primary_department === adminDept)) {
+        // Only set if there are users in that department
+        onDepartmentChange({ target: { value: adminDept } });
+      }
+    }
+  }, [isOpen, userRole, departmentFilter, deactivatedUsers, onDepartmentChange]);
+
   if (!isOpen) return null;
 
   // Get unique departments for filter - handle role-based restrictions
@@ -159,9 +170,19 @@ export const DeactivatedUsersModal = ({
                 />
               </svg>
             </label>
-            <select className="select select-bordered" value={departmentFilter} onChange={onDepartmentChange}>
-              <option value="">All Departments ({deactivatedUsers.length})</option>
-              {departments.map((dept) => {
+            <select 
+              className="select select-bordered" 
+              value={departmentFilter} 
+              onChange={onDepartmentChange}
+              disabled={isLocked}
+            >
+              <option value="">
+                {isLocked 
+                  ? `${departments[0]} (${deactivatedUsers.filter(user => user.primary_department === departments[0]).length})`
+                  : `All Departments (${deactivatedUsers.length})`
+                }
+              </option>
+              {!isLocked && departments.map((dept) => {
                 const deptCount = deactivatedUsers.filter((user) => user.primary_department === dept).length;
                 return (
                   <option key={dept} value={dept}>
@@ -406,6 +427,8 @@ export const TerminatedUsersModal = ({
       return 0;
     });
 
+  const isLocked = userRole && userRole.startsWith("Admin-") && userRole !== "Admin-All";
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full h-[85vh] flex flex-col">
@@ -448,9 +471,19 @@ export const TerminatedUsersModal = ({
                 />
               </svg>
             </label>
-            <select className="select select-bordered" value={departmentFilter} onChange={onDepartmentChange}>
-              <option value="">All Departments ({terminatedUsers.length})</option>
-              {departments.map((dept) => {
+            <select 
+              className="select select-bordered" 
+              value={departmentFilter} 
+              onChange={onDepartmentChange}
+              disabled={isLocked}
+            >
+              <option value="">
+                {isLocked 
+                  ? `${departments[0]} (${terminatedUsers.filter(user => user.primary_department === departments[0]).length})`
+                  : `All Departments (${terminatedUsers.length})`
+                }
+              </option>
+              {!isLocked && departments.map((dept) => {
                 const deptCount = terminatedUsers.filter((user) => user.primary_department === dept).length;
                 return (
                   <option key={dept} value={dept}>

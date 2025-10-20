@@ -11,7 +11,7 @@ import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
 import { ConfirmModal, DeactivatedUsersModal, TerminatedUsersModal } from "../Components/AdminUsersModals.jsx";
 import AdminUserTabs from "Components/AdminUserTabs.jsx";
 
-const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode }) => {
+const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode, currentViewRole }) => {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -92,20 +92,22 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
       let allFilteredUsers;
       setLoading(true);
 
-      // Handle role-based filtering
-      if (userInfo.role === "Admin") {
+      // Handle role-based filtering using currentViewRole
+      const roleToCheck = currentViewRole || userInfo.role;
+      
+      if (roleToCheck === "Admin") {
         // Regular Admin sees all approved users except other Admins
         allFilteredUsers = users.filter(
           (user) => user.role !== "Admin" && user.pending === false && user.approved === true
         );
-      } else if (userInfo.role === "Admin-All") {
+      } else if (roleToCheck === "Admin-All") {
         // Admin-All sees all approved users except other Admins (same as regular Admin)
         allFilteredUsers = users.filter(
           (user) => user.role !== "Admin" && user.pending === false && user.approved === true
         );
-      } else if (userInfo.role && userInfo.role.startsWith("Admin-")) {
+      } else if (roleToCheck && roleToCheck.startsWith("Admin-")) {
         // Department admin sees only their department users
-        const deptFromRole = userInfo.role.replace("Admin-", "");
+        const deptFromRole = roleToCheck.replace("Admin-", "");
         allFilteredUsers = users.filter(
           (user) =>
             user.primary_department === deptFromRole &&
@@ -134,7 +136,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
       const approvedActiveUsers = allFilteredUsers.filter((user) => user.active === true && user.terminated !== true);
 
       // Filter deactivated users (inactive but not terminated)
-      const deactivatedUsersList = allFilteredUsers.filter((user) => user.active === false && user.terminated !== true);
+      const deactivatedUsersList = allFilteredUsers.filter((user) => user.active === false && !user.terminated);
 
       // Filter terminated users
       const terminatedUsersList = allFilteredUsers.filter((user) => user.terminated === true);
@@ -433,19 +435,43 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     setTerminatedDepartmentFilter(event.target.value);
   };
 
+  // Function to handle opening deactivated users modal with proper department pre-selection
+  const handleOpenDeactivatedUsersModal = () => {
+    // For department admins, automatically set their department filter
+    const roleToUse = currentViewRole || userInfo.role;
+    if (roleToUse && roleToUse.startsWith("Admin-") && roleToUse !== "Admin-All") {
+      const adminDept = roleToUse.replace("Admin-", "");
+      setDeactivatedDepartmentFilter(adminDept);
+    }
+    setIsDeactivatedUsersModalOpen(true);
+  };
+
+  // Function to handle opening terminated users modal with proper department pre-selection
+  const handleOpenTerminatedUsersModal = () => {
+    // For department admins, automatically set their department filter
+    const roleToUse = currentViewRole || userInfo.role;
+    if (roleToUse && roleToUse.startsWith("Admin-") && roleToUse !== "Admin-All") {
+      const adminDept = roleToUse.replace("Admin-", "");
+      setTerminatedDepartmentFilter(adminDept);
+    }
+    setIsTerminatedUsersModalOpen(true);
+  };
+
   // Get unique departments for active users based on role
   let activeDepartments = [];
   let allowedDepartments = [];
+  
+  const roleToCheck = currentViewRole || userInfo.role;
 
-  if (userInfo.role === "Admin" || userInfo.role === "Admin-All") {
+  if (roleToCheck === "Admin" || roleToCheck === "Admin-All") {
     // Admin and Admin-All can see all departments
     activeDepartments = Array.from(
       new Set(approvedUsers.map((user) => user.primary_department).filter(Boolean))
     ).sort();
     allowedDepartments = activeDepartments;
-  } else if (userInfo.role && userInfo.role.startsWith("Admin-")) {
+  } else if (roleToCheck && roleToCheck.startsWith("Admin-")) {
     // Department admin can only see their specific department
-    const deptFromRole = userInfo.role.replace("Admin-", "");
+    const deptFromRole = roleToCheck.replace("Admin-", "");
     activeDepartments = Array.from(
       new Set(approvedUsers.map((user) => user.primary_department).filter(Boolean))
     ).sort();
@@ -489,7 +515,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                 </h1>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setIsDeactivatedUsersModalOpen(true)}
+                    onClick={handleOpenDeactivatedUsersModal}
                     className="btn btn-secondary"
                     title="View Inactive Members"
                   >
@@ -504,7 +530,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                   </button>
 
                   <button
-                    onClick={() => setIsTerminatedUsersModalOpen(true)}
+                    onClick={handleOpenTerminatedUsersModal}
                     className="btn btn-secondary"
                     title="View Terminated Members"
                   >
@@ -520,20 +546,20 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                 </div>
               </div>
               <div className="ml-4 flex mb-4 gap-2">
-                {(userInfo.role === "Admin" || userInfo.role === "Admin-All" || allowedDepartments.length > 0) && (
+                {(roleToCheck === "Admin" || roleToCheck === "Admin-All" || allowedDepartments.length > 0) && (
                   <select
                     className="select select-bordered min-w-48"
                     value={departmentFilter}
                     onChange={handleDepartmentFilterChange}
                     disabled={
-                      userInfo.role &&
-                      userInfo.role.startsWith("Admin-") &&
-                      userInfo.role !== "Admin-All" &&
+                      roleToCheck &&
+                      roleToCheck.startsWith("Admin-") &&
+                      roleToCheck !== "Admin-All" &&
                       allowedDepartments.length === 1
                     }
                   >
                     <option value="">
-                      {userInfo.role === "Admin" || userInfo.role === "Admin-All"
+                      {roleToCheck === "Admin" || roleToCheck === "Admin-All"
                         ? `All Departments (${approvedUsers.length})`
                         : `${allowedDepartments[0] || "Department"} (${approvedUsers.length})`}
                     </option>
@@ -712,7 +738,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         onDepartmentChange={handleDeactivatedDepartmentFilterChange}
         onReactivateUser={handleReactivateUser}
         onActivateAll={handleActivateAll}
-        userRole={userInfo.role}
+        userRole={currentViewRole || userInfo.role}
       />
 
       <TerminatedUsersModal
@@ -725,7 +751,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
         onDepartmentChange={handleTerminatedDepartmentFilterChange}
         getPrimaryRank={getPrimaryRank}
         getJointRanks={getSecondaryRanks}
-        userRole={userInfo.role}
+        userRole={currentViewRole || userInfo.role}
       />
 
       <ConfirmModal
