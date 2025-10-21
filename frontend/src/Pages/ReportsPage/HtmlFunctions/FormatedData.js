@@ -227,7 +227,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
         const year = yearMatch ? yearMatch[0] : null;
         const briefDescription = data.data_details["brief_description"];
         const course = data.data_details["course"];
-        const courseTitle = data.data_details["course_title"];
+        const courseTitle = data.data_details["course_title"] || "No description (course title) entered";
         const duration = data.data_details["duration_(eg:_8_weeks)"];
         const totalHours = data.data_details["total_hours"];
         const studentLevel = data.data_details["student_level"];
@@ -358,8 +358,6 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
         headerName: "Description",
         field: "Description"
     })
-
-    console.log("JJFITLER columns, ", table["columns"])
 
     let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
 
