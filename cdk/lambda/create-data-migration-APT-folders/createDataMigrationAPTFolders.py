@@ -36,6 +36,7 @@ def lambda_handler(event, context):
         'APT/mulesoft_users/',
         'APT/workday_users/',
         'APT/visiting_lecturers/',
+        'APT/location/',
     ]
     for folder in folders:
         s3.put_object(Bucket=bucket, Key=folder)
