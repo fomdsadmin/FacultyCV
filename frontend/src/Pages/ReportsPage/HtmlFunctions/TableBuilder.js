@@ -196,7 +196,7 @@ function buildUserInfoTable(cv) {
     addRow(['Department:', cv?.primary_unit?.[0]?.unit || ""]);
     addRow(['Joint Department:', ""]);
     addRow(['Centre Affiliation:', cv.institution]);
-    addRow(['Distributed Site:', cv?.hospital_affiliations?.[0]?.authority] || "");
+    addRow(['Distributed Site:', cv?.hospital_affiliations?.[0]?.authority || ""]);
     addRow(['Assigned Mentor:', ""]);
     addRow(['Submission Date:', new Date().toLocaleDateString('en-CA')]);
 
