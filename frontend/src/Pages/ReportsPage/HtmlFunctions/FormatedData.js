@@ -64,7 +64,7 @@ const filterDateRanges = (sectionData, dataSectionId) => {
 
     return sectionData.filter((data) => {
         const cleaned = data["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        const yearMatch = cleaned.match(/\d+/);
+        const yearMatch = cleaned.match(/\d{4}/);
 
         const year = yearMatch ? parseInt(yearMatch[0]) : null;
 
@@ -167,7 +167,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
             duration,
             total_hours: totalHours,
             student_level: studentLevel,
-            number_of_students: numberOfStudents,
+            number_of_students: numberOfStudents ?? 0,
             course,
             course_title: courseTitle,
             brief_description: briefDescription
@@ -175,8 +175,6 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
     }
 
     const table = {};
-
-    const section = sectionsMap[dataSectionId];
 
     const sectionData = getUserCvDataMap(preparedSection.data_section_id);
 
@@ -198,7 +196,13 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
                 };
             }
 
-            aggregated[key].totalStudents += Number(number_of_students);
+            if (Number.isNaN(aggregated[key].totalStudents)) {
+                aggregated[key].totalStudents = "";
+            }
+
+            if (aggregated[key].totalStudents !== "") {
+                aggregated[key].totalStudents += Number(number_of_students);
+            }
             aggregated[key].totalHours += Number(total_hours);
             if (duration) {
                 aggregated[key].durations.add(duration);
@@ -218,7 +222,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
 
         const dateAttribute = "dates";
         const cleanedDates = data["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        const yearMatch = cleanedDates.match(/\d+/);
+        const yearMatch = cleanedDates.match(/\d{4}/);
 
         const year = yearMatch ? yearMatch[0] : null;
         const briefDescription = data.data_details["brief_description"];
@@ -380,6 +384,8 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 
         const tablesToReturn = buildSubSections(preparedSection);
 
+        //console.log("JJFILTER tablesToReturn: ", tablesToReturn);
+
         const totalNumRowsInTables = tablesToReturn.reduce(
             (total, table) => total + table.rows.length,
             0
@@ -429,7 +435,6 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 
     // get table notes data
     table["note_sections"] = buildNotes(preparedSection);
-
     return [table];
 }
 
@@ -520,7 +525,6 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     const PUBLICATION_SECTION_ID = "1c23b9a0-b6b5-40b8-a4aa-f822d0567f09";
     const RESEARCH_OR_EQUIVALENT_GRANTS_AND_CONTRACTS_ID = "26939d15-7ef9-46f6-9b49-22cf95074e88";
 
-
     const attributeGroups = preparedSection.attribute_groups;
     const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
     const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
@@ -547,8 +551,23 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
 
         // Filter out data that does not belong to this section
 
-        if (String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]) !== String(preparedSection.attribute_filter_value)) {
-            return null;
+        //console.log("JJFILTER data at attribute filter: ", String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]).toLowerCase())
+
+        const attributeFilterValue = String(preparedSection.attribute_filter_value).toLowerCase();
+
+        if (attributeFilterValue === "other") {
+            const filterAttributedata = String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]).toLowerCase();
+            //console.log("JJFILTER preparedSection.section_by_attribute]: ", preparedSection.section_by_attribute);
+            if (!filterAttributedata.includes("other") && filterAttributedata !== "undefined") {
+                return null;
+            }
+            if (filterAttributedata === "undefined") {
+                data.data_details[sectionAttributes[preparedSection.section_by_attribute]] = "Other (no selection)"
+            }
+        } else {
+            if (String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]) !== String(preparedSection.attribute_filter_value)) {
+                return null;
+            }
         }
 
         const rowDict = {};
