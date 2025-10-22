@@ -110,22 +110,16 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                 {hasPrimaryUnit &&
                   primaryUnit.map((unit, idx) => (
                     <tr key={`primary-${idx}`} className="">
-                      <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-blue-700">Primary</td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                          value={unit.unit || ""}
-                          readOnly
-                        />
+                      <td className="px-2 py-4 text-sm font-medium text-blue-700">Primary</td>
+                      <td className="px-2 py-4 text-sm text-gray-700">
+                        <div className="py-2 min-h-[2rem] break-words">
+                          {unit.unit || ""}
+                        </div>
                       </td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                          value={unit.rank || ""}
-                          readOnly
-                        />
+                      <td className="px-2 py-4 text-sm text-gray-700">
+                        <div className="py-2 min-h-[2rem] break-words">
+                          {unit.rank || ""}
+                        </div>
                       </td>
                       {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                         <input
@@ -135,39 +129,39 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           readOnly
                         />
                       </td> */}
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                          value={unit.apt_percent || ""}
-                          readOnly
-                        />
+                      <td className="px-2 py-4 text-sm text-gray-700">
+                        <div className="py-2 min-h-[2rem] break-words">
+                          {unit.apt_percent || ""}
+                        </div>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                      <td className="px-4 py-4 text-sm text-gray-700">
+                        <textarea
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm resize-none min-h-[2rem]"
+                          rows="1"
                           value={(unit.additional_info && unit.additional_info.division) || ""}
                           onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "division", e.target.value)}
                           placeholder="Enter division"
+                          style={{ fieldSizing: 'content' }}
                         />
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                      <td className="px-4 py-4 text-sm text-gray-700">
+                        <textarea
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm resize-none min-h-[2rem]"
+                          rows="1"
                           value={(unit.additional_info && unit.additional_info.program) || ""}
                           onChange={(e) => handlePrimaryUnitAdditionalInfoChange(idx, "program", e.target.value)}
                           placeholder="Enter program"
+                          style={{ fieldSizing: 'content' }}
                         />
                       </td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                      <td className="px-2 py-4 text-sm text-gray-700">
+                        <textarea
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm resize-none min-h-[2rem]"
+                          rows="1"
                           value={unit.location || ""}
                           onChange={(e) => handlePrimaryUnitMainFieldChange(idx, "location", e.target.value)}
                           placeholder="e.g., Hospital Name"
+                          style={{ fieldSizing: 'content' }}
                         />
                       </td>
                       {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -201,8 +195,8 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                 {hasJointUnits &&
                   jointUnits.map((unit, idx) => (
                     <tr key={idx}>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm font-medium text-gray-600">Joint</td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <td className="px-2 py-4 text-sm font-medium text-gray-600">Joint</td>
+                      <td className="px-2 py-4 text-sm text-gray-700">
                         {/* <Dropdown
                           name="unit"
                           value={unit.unit || ""}
@@ -211,14 +205,11 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           readOnly
                           disabled
                         /> */}
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                          value={unit.unit || ""}
-                          readOnly
-                        />
+                        <div className="py-2 min-h-[2rem] break-words">
+                          {unit.unit || ""}
+                        </div>
                       </td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <td className="px-2 py-4 text-sm text-gray-700">
                         {/* <Dropdown
                           name="rank"
                           value={unit.rank || ""}
@@ -227,12 +218,9 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           readOnly
                           disabled
                         /> */}
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                          value={unit.rank || ""}
-                          readOnly
-                        />
+                        <div className="py-2 min-h-[2rem] break-words">
+                          {unit.rank || ""}
+                        </div>
                       </td>
                       {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
                         <input
@@ -242,39 +230,39 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           readOnly
                         />
                       </td> */}
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm bg-gray-100 cursor-not-allowed"
-                          value={unit.apt_percent || ""}
-                          readOnly
-                        />
+                      <td className="px-2 py-4 text-sm text-gray-700">
+                        <div className="py-2 min-h-[2rem] break-words">
+                          {unit.apt_percent || ""}
+                        </div>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                      <td className="px-4 py-4 text-sm text-gray-700">
+                        <textarea
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm resize-none min-h-[2rem]"
+                          rows="1"
                           value={(unit.additional_info && unit.additional_info.division) || ""}
                           onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "division", e.target.value)}
                           placeholder="Enter division"
+                          style={{ fieldSizing: 'content' }}
                         />
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                      <td className="px-4 py-4 text-sm text-gray-700">
+                        <textarea
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm resize-none min-h-[2rem]"
+                          rows="1"
                           value={(unit.additional_info && unit.additional_info.program) || ""}
                           onChange={(e) => handleJointUnitAdditionalInfoChange(idx, "program", e.target.value)}
                           placeholder="Enter program"
+                          style={{ fieldSizing: 'content' }}
                         />
                       </td>
-                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <input
-                          type="text"
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                      <td className="px-2 py-4 text-sm text-gray-700">
+                        <textarea
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm resize-none min-h-[2rem]"
+                          rows="1"
                           value={unit.location || ""}
                           onChange={(e) => handleJointUnitMainFieldChange(idx, "location", e.target.value)}
                           placeholder="e.g., Hospital Name"
+                          style={{ fieldSizing: 'content' }}
                         />
                       </td>
                       {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
