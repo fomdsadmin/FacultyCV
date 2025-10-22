@@ -565,6 +565,7 @@ export class UserImportStack extends Stack {
       "mulesoft_users",
       "workday_users",
       "visiting_lecturers",
+      "location",
     ];
 
     // For each subfolder, create a Lambda and add S3 event notification
