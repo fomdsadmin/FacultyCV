@@ -26,9 +26,14 @@ const SecureFundingEntry = ({ secureFundingData, onSelect, selected }) => {
         </span>
         <p className="text-sm break-words">{secureFundingData.title}</p>
         {secureFundingData.agency && secureFundingData.agency.toLowerCase() === "rise" ? (
-          <p className="text-sm break-words">
-            <b>Agency:</b> {secureFundingData.sponsor}{" "}
-          </p>
+          <>
+            <p className="text-sm break-words">
+              <b>Agency:</b> {secureFundingData.agency}{" "}
+            </p>
+            <p className="text-sm break-words">
+              <b>Sponsor:</b> {secureFundingData.sponsor}{" "}
+            </p>
+          </>
         ) : (
           <p className="text-sm break-words">
             <b>Agency:</b> {secureFundingData.agency}

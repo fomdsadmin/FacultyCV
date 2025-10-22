@@ -45,6 +45,11 @@ SECTION_TITLE_T = "Authorship Statement"
 
 SECTION_TITLE_U = "Other Publications"
 
+SECTION_TITLE_V = "Mentoring Received"
+SECTION_TITLE_W = "Equity, Diversity and Inclusion (EDI)"
+SECTION_TITLE_X = "Appointment Context"
+
+
 
 def prepare9aSpecialInterestsDF(df):
     a = df.copy()
@@ -212,12 +217,6 @@ def prepareAwardsDF(df):
             return 'd. Research'
         elif category_id == '9204':
             return 'd. Other'
-        elif category_id == '9206':
-            return 'd. Other (Mentoring Received)'
-        # elif category_id == '9207':
-        #     return 'd. Other (Equity, Diversity, and Inclusion)'
-        # elif category_id == '9208':
-        #     return 'd. Other (Appointment Context)'
         else:
             return ''
     
@@ -460,7 +459,30 @@ def prepareOtherPublicationsDF(df):
     a = a[["user_id", "end_date", "peer_reviewed", "citation", "publication_type", "publication_status"]]
     return a
 
+# ----------------------------------------------------------------------------------------------------
 
+def prepareEDIDF(df):
+    a = df.copy()
+    # Clean up html description to english details
+    a["details"] = a["description"]
+    a = a[["user_id", "dates", "details"]]
+    return a
+
+def prepareMentoringReceivedDF(df):
+    a = df.copy()
+    # Clean up html description to english details
+    a["details"] = a["description"]
+    a = a[["user_id", "dates", "details"]]
+    return a
+
+def prepareAptContextDF(df):
+    a = df.copy()
+    # Clean up html description to english details
+    a["details"] = a["description"]
+    a = a[["user_id", "dates", "details"]]
+    return a
+
+# ----------------------------------------------------------------------------------------------------
 
 def cleanData(df):
     """
@@ -577,7 +599,7 @@ def cleanData(df):
     )
     df_patents = preparePatentsDF(df_9904)
 
-    # Extract dataframe for multiple category IDs: 9905, 9903, 9901, 9910, 9906, 9907, 9908, 9909, 9904, 9902
+    # Extract dataframe for multiple category IDs: 9905, 9903, 9901, 9910, 9909, 9904, 9902
     category_ids_list = ["9205", "9201", "9202", "9203", "9204", "9206", "9207", "9208"]
     df_multiple = (
         df[df["category_id"].isin(category_ids_list)].copy()
@@ -689,6 +711,36 @@ def cleanData(df):
         else pd.DataFrame()
     )
     df_other_publications = prepareOtherPublicationsDF(df_multiple_categories)
+    
+    # ------------------------------------------------------------------------------------------
+
+    # Extract new dataframe where category_id = 9206
+    df_9206 = (
+        df[df["category_id"] == "9206"].copy()
+        if "category_id" in df.columns
+        else pd.DataFrame()
+    )
+    df_mentoring_received = prepareMentoringReceivedDF(df_9206)
+    
+    
+    # Extract new dataframe where category_id = 9207
+    df_9207 = (
+        df[df["category_id"] == "9207"].copy()
+        if "category_id" in df.columns
+        else pd.DataFrame()
+    )
+    df_EDI = prepareEDIDF(df_9207)
+    
+    # Extract new dataframe where category_id = 9208
+    df_9208 = (
+        df[df["category_id"] == "9208"].copy()
+        if "category_id" in df.columns
+        else pd.DataFrame()
+    )
+    df_apt_context = prepareAptContextDF(df_9208)
+    
+    # ------------------------------------------------------------------------------------------
+    
 
 
     return (
@@ -712,8 +764,10 @@ def cleanData(df):
         df_12g_other_memberships,
         df_14a_other_info,
         df_auth_statement,
-        df_other_publications
-        
+        df_other_publications,
+        df_mentoring_received,
+        df_EDI,
+        df_apt_context
     )
 
 
@@ -1081,7 +1135,7 @@ def lambda_handler(event, context):
             return {"statusCode": 400, "status": "FAILED", "error": str(e)}
 
         # Clean the DataFrame
-        dfA, dfB, dfC, dfD, dfE, dfF, dfG, dfH, dfI, dfJ, dfK, dfL, dfM, dfN, dfO, dfP, dfQ, dfR, dfS, dfT, dfU= cleanData(df)
+        dfA, dfB, dfC, dfD, dfE, dfF, dfG, dfH, dfI, dfJ, dfK, dfL, dfM, dfN, dfO, dfP, dfQ, dfR, dfS, dfT, dfU, dfV, dfW, dfX= cleanData(df)
         print("Data cleaned successfully.")
 
         # Connect to database
@@ -1104,7 +1158,7 @@ def lambda_handler(event, context):
 
         # rows_processed, rows_added_to_db = storeData(dfI, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_I)
         # rows_processed, rows_added_to_db = storeData(dfJ, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_J)
-        # rows_processed, rows_added_to_db = storeData(dfK, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_K)
+        rows_processed, rows_added_to_db = storeData(dfK, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_K)
         
         # rows_processed, rows_added_to_db = storeData(dfL, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_L)
         # rows_processed, rows_added_to_db = storeData(dfM, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_M)
@@ -1119,7 +1173,11 @@ def lambda_handler(event, context):
         # rows_processed, rows_added_to_db = storeData(dfS, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_S)
         # rows_processed, rows_added_to_db = storeData(dfT, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_T)
 
-        rows_processed, rows_added_to_db = storeData(dfU, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_U)
+        # rows_processed, rows_added_to_db = storeData(dfU, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_U)
+        
+        rows_processed, rows_added_to_db = storeData(dfV, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_V)
+        rows_processed, rows_added_to_db = storeData(dfW, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_W)
+        rows_processed, rows_added_to_db = storeData(dfX, connection, cursor, errors, rows_processed, rows_added_to_db, SECTION_TITLE_X)
         print("Data stored successfully.")
         cursor.close()
         connection.close()
