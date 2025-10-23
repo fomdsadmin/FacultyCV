@@ -93,12 +93,14 @@ const sortSectionData = (sectionData, dataSectionId) => {
 
     let dateAttribute = null;
 
-    if (sectionData.length !== 0) {
-        if (sectionData[0]["data_details"]["dates"]) {
-            dateAttribute = "dates";
-        } else if (sectionData[0]["data_details"]["end_date"]) {
-            dateAttribute = "end_date";
-        }
+    const sectionAttributesSet = new Set(Object.values(JSON.parse(section.attributes)));
+
+    if (sectionAttributesSet.has("dates")) {
+        dateAttribute = "dates";
+    } else if (sectionAttributesSet.has("end_date")) {
+        dateAttribute = "end_date";
+    } else if (sectionAttributesSet.has("year")) {
+        dateAttribute = "year";
     }
 
     if (dateAttribute === null) {
@@ -106,13 +108,13 @@ const sortSectionData = (sectionData, dataSectionId) => {
     }
 
     return sectionData.sort((a, b) => {
-        const cleanedA = a["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        const cleanedB = b["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const cleanedA = a["data_details"]?.[dateAttribute]?.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const cleanedB = b["data_details"]?.[dateAttribute]?.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
-        const monthMatchA = cleanedA.match(/[A-Za-z]+/);
-        const yearMatchA = cleanedA.match(/\d+/);
-        const monthMatchB = cleanedB.match(/[A-Za-z]+/);
-        const yearMatchB = cleanedB.match(/\d+/);
+        const monthMatchA = cleanedA?.match(/[A-Za-z]+/);
+        const yearMatchA = cleanedA?.match(/\d{4}/);
+        const monthMatchB = cleanedB?.match(/[A-Za-z]+/);
+        const yearMatchB = cleanedB?.match(/\d{4}/);
 
         // Handle null matches with fallbacks
         const yearA = yearMatchA ? parseInt(yearMatchA[0]) : 0;
