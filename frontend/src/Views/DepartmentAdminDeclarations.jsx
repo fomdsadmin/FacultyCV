@@ -13,7 +13,8 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
   const [loading, setLoading] = useState(false);
   const [departmentUsers, setDepartmentUsers] = useState([]);
   const [userDeclarations, setUserDeclarations] = useState({});
-  const [selectedYear, setSelectedYear] = useState("all");
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedDeclaration, setSelectedDeclaration] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -267,6 +268,15 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
       .map((user) => ({ user, declaration: userDeclarations[user.user_id] }));
   }
 
+  // Sort filtered entries by user's first name, then last name
+  filteredEntries.sort((a, b) => {
+    const firstNameComparison = a.user.first_name.localeCompare(b.user.first_name);
+    if (firstNameComparison !== 0) {
+      return firstNameComparison;
+    }
+    return a.user.last_name.localeCompare(b.user.last_name);
+  });
+
   const exportToCSV = () => {
     const csvData = filteredEntries.map((entry) => {
       const { user, declaration } = entry;
@@ -358,16 +368,21 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
     { value: "all", label: "All Years" },
     ...availableYears.map(year => ({
       value: year,
-      label: year.toString()
+      label: year === currentYear ? `Current (${year})` : year.toString()
     }))
   ];
 
   // Reset selected year if it's no longer available in the data
   useEffect(() => {
     if (selectedYear !== "all" && availableYears.length > 0 && !availableYears.includes(Number(selectedYear))) {
-      setSelectedYear("all");
+      // If current year is available, default to it, otherwise fall back to "all"
+      if (availableYears.includes(currentYear)) {
+        setSelectedYear(currentYear);
+      } else {
+        setSelectedYear("all");
+      }
     }
-  }, [availableYears, selectedYear]);
+  }, [availableYears, selectedYear, currentYear]);
 
   return (
     <PageContainer>
@@ -543,11 +558,14 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
+                          <td className="px-6 py-4 whitespace-wrap text-sm text-zinc-900">
                             {user.primary_department}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
-                            {declaration ? declaration.year : "—"}
+                            {selectedYear === "all" 
+                              ? (declaration ? declaration.year : "—")
+                              : selectedYear
+                            }
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
