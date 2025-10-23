@@ -629,23 +629,24 @@ function buildFomHonorificImpactReport(latest_declaration, userInfo) {
 // Insert the FOM/PSA page into the declaration flow
 // filepath: same file - modify buildDeclarationReport to append honorific page (no change to early-return logic)
 function buildDeclarationReport(cv) {
-    const { latest_declaration } = cv || {};
+    const { declaration_to_use } = cv || {};
 
-    if (!latest_declaration) {
-        return '';
+    if (!declaration_to_use) {
+        const year = cv?.start_year ?? '';
+        return `<div style="font-weight:700; margin:12px 0;">Declaration not filled out for year ${year}</div>`;
     }
 
     // build conflict page fragment (Tailwind classes used so it matches provided template)
-    const conflictOfInterestPage = buildConflictOfInterestPage(latest_declaration, cv);
+    const conflictOfInterestPage = buildConflictOfInterestPage(declaration_to_use, cv);
 
     // build FOM Merit & PSA page
-    const fomMeritAndPsaPage = buildFomMeritAndPsa(latest_declaration, cv);
+    const fomMeritAndPsaPage = buildFomMeritAndPsa(declaration_to_use, cv);
 
     // build Promotion Review page
-    const promotionReviewPage = buildPromotionReview(latest_declaration, cv);
+    const promotionReviewPage = buildPromotionReview(declaration_to_use, cv);
 
     // build Honorific Impact Report page
-    const honorificPage = buildFomHonorificImpactReport(latest_declaration, cv);
+    const honorificPage = buildFomHonorificImpactReport(declaration_to_use, cv);
 
     // combine and return: conflict page, then FOM/PSA page, promotion page, honorific page, then summary
     let html = '';
@@ -711,12 +712,13 @@ function buildTable(table) {
     if (!justHeader) {
         // prune empty columns first
         filteredColumns = removeEmptyColumns(columns, rows);
-
-        // if no columns remain or no rows, treat table as empty and don't render it
-        if (!filteredColumns || filteredColumns.length === 0 || !rows || rows.length === 0) {
-            return '';
-        }
     }
+
+    // If pruning removed every column, fall back to the original columns
+    // so we still render the header (title/subsection) even for empty tables.
+    const columnsToRender = (Array.isArray(filteredColumns) && filteredColumns.length > 0)
+        ? filteredColumns
+        : (Array.isArray(columns) ? columns : []);
 
     // Helper: calculate max depth of columns
     function getDepth(cols) {
@@ -726,7 +728,7 @@ function buildTable(table) {
         }, 0);
     }
 
-    const depth = getDepth(filteredColumns || columns);
+    const depth = getDepth(columnsToRender);
 
     // Build header rows
     const headerRows = Array.from({ length: depth }, () => []);
@@ -747,7 +749,7 @@ function buildTable(table) {
         return col.children.reduce((sum, c) => sum + countLeafColumns(c), 0);
     }
 
-    (filteredColumns || columns).forEach(col => processColumn(col, 0));
+    columnsToRender.forEach(col => processColumn(col, 0));
 
     // remove any header rows that contain only empty names (e.g. ["", ""])
     const visibleHeaderRows = headerRows.filter(row =>
@@ -767,9 +769,9 @@ function buildTable(table) {
         return cols.flatMap(c => (c.children ? flattenColumns(c.children) : c));
     }
 
-    const flatColumns = flattenColumns(filteredColumns || columns);
+    const flatColumns = flattenColumns(columnsToRender);
 
-    // Build students supervised summary rows (placed above data rows, below the header)
+    // Build students supervised summary (plain bold text, placed below header and above rows)
     let studentsSupervisedSummaryHtml = "";
     if (table?.studentsSupervisedSummary) {
         const keys = Object.keys(table.studentsSupervisedSummary || {});
@@ -784,9 +786,19 @@ function buildTable(table) {
         }
     }
 
-    const bodyHtml = rows
-        .map(row => '<tr>' + flatColumns.map(c => `<td>${dataStyler(row[c.field] ?? '')}</td>`).join('') + '</tr>')
-        .join('\n');
+    // Build body: if there are no rows (or no surviving leaf columns), show "No data" under the header
+    let bodyHtml;
+    const noRows = !Array.isArray(rows) || rows.length === 0;
+    const noLeafColumns = !Array.isArray(flatColumns) || flatColumns.length === 0;
+
+    if (noRows || noLeafColumns) {
+        const colspan = Math.max(flatColumns.length, 1);
+        bodyHtml = `<tr><td colspan="${colspan}" style="text-align:center; font-style:italic; padding:12px;">No data</td></tr>`;
+    } else {
+        bodyHtml = rows
+            .map(row => '<tr>' + flatColumns.map(c => `<td>${dataStyler(row[c.field] ?? '')}</td>`).join('') + '</tr>')
+            .join('\n');
+    }
 
     // Return full table HTML
     const wrapperClass = noPadding ? 'table-with-notes no-padding' : 'table-with-notes';
