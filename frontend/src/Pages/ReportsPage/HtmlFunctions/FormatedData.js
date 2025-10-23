@@ -50,12 +50,14 @@ const filterDateRanges = (sectionData, dataSectionId) => {
 
     let dateAttribute = null;
 
-    if (sectionData.length !== 0) {
-        if (sectionData[0]["data_details"]["dates"]) {
-            dateAttribute = "dates";
-        } else if (sectionData[0]["data_details"]["end_date"]) {
-            dateAttribute = "end_date";
-        }
+    const sectionAttributesSet = new Set(Object.values(JSON.parse(section.attributes)));
+
+    if (sectionAttributesSet.has("dates")) {
+        dateAttribute = "dates";
+    } else if (sectionAttributesSet.has("end_date")) {
+        dateAttribute = "end_date";
+    } else if (sectionAttributesSet.has("year")) {
+        dateAttribute = "year";
     }
 
     if (dateAttribute === null) {
@@ -63,6 +65,11 @@ const filterDateRanges = (sectionData, dataSectionId) => {
     }
 
     return sectionData.filter((data) => {
+
+        if (!data["data_details"][dateAttribute]) {
+            return true;
+        }
+
         const cleaned = data["data_details"][dateAttribute].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
         const yearMatch = cleaned.match(/\d{4}/);
 
@@ -372,7 +379,6 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
 const buildPreparedSection = (preparedSection, dataSectionId) => {
     const table = {};
     console.log(preparedSection);
-
     if (preparedSection.title === "8b.3. Clinical Teaching") {
         return [buildClinicalTeachingSection(preparedSection, dataSectionId)];
     }
@@ -381,8 +387,6 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
     if (preparedSection.sub_section_settings && preparedSection.sub_section_settings.sub_sections.length > 0) {
 
         const tablesToReturn = buildSubSections(preparedSection);
-
-        //console.log("JJFILTER tablesToReturn: ", tablesToReturn);
 
         const totalNumRowsInTables = tablesToReturn.reduce(
             (total, table) => total + table.rows.length,
@@ -433,6 +437,9 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 
     // get table notes data
     table["note_sections"] = buildNotes(preparedSection);
+
+    table["originalPreparedSection"] = preparedSection;
+
     return [table];
 }
 
@@ -530,7 +537,6 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     // Get section data using helper function
     let sectionData = getUserCvDataMap(dataSectionId);
 
-    // Apply date range filtering
     sectionData = filterDateRanges(sectionData, dataSectionId);
 
     // Apply sorting
@@ -549,13 +555,11 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
 
         // Filter out data that does not belong to this section
 
-        //console.log("JJFILTER data at attribute filter: ", String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]).toLowerCase())
-
         const attributeFilterValue = String(preparedSection.attribute_filter_value).toLowerCase();
 
         if (attributeFilterValue === "other") {
             const filterAttributedata = String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]).toLowerCase();
-            //console.log("JJFILTER preparedSection.section_by_attribute]: ", preparedSection.section_by_attribute);
+
             if (!filterAttributedata.includes("other") && filterAttributedata !== "undefined") {
                 return null;
             }
@@ -707,7 +711,139 @@ const buildSubSections = (preparedSectionWithSubSections) => {
         }))
     }
 
+    if (preparedSectionWithSubSections.title === "8d.1. Students Supervised") {
+        tables = tables.map((table) => ({
+            ...table,
+            studentsSupervisedSummary: buildStudentSupervisedSummaryCount(table.originalPreparedSection, preparedSectionWithSubSections.data_section_id)
+        }))
+    }
+
     return tables;
+}
+
+const buildStudentSupervisedSummaryCount = (preparedSection, dataSectionId) => {
+    // Get section data using helper function
+    let sectionData = getUserCvDataMap(dataSectionId);
+
+    sectionData = sectionData.filter((data) => {
+        const section = sectionsMap[dataSectionId];
+
+        if (!section || !data || !data.data_details) {
+            console.warn('Missing section or data:', { section, data, dataSectionId });
+            return false;
+        }
+
+        const sectionAttributes = JSON.parse(section.attributes);
+
+        // Filter out data that does not belong to this section
+        const attributeFilterValue = String(preparedSection.attribute_filter_value).toLowerCase();
+
+        if (attributeFilterValue === "other") {
+            const filterAttributedata = String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]).toLowerCase();
+
+            if (!filterAttributedata.includes("other") && filterAttributedata !== "undefined") {
+                return false;
+            }
+            if (filterAttributedata === "undefined") {
+                data.data_details[sectionAttributes[preparedSection.section_by_attribute]] = "Other (no selection)"
+            }
+        } else {
+            if (String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]) !== String(preparedSection.attribute_filter_value)) {
+                return false;
+            }
+        }
+        return true;
+    })
+
+    let degreeAggregationDict = {};
+
+    const programCodeMap = {
+        "Bachelor of Arts (BA)": "BA",
+        "Bachelor of Medical Laboratory Science (BMLSc)": "BMLSc",
+        "Bachelor of Science (BSc)": "BSc",
+        "Co-op Student": "Co-op",
+        "Diploma": "Diploma",
+        "Directed Studies": "Directed Studies",
+        "Fellowship": "Fellowship",
+        "Master of Arts (MA)": "MA",
+        "Doctor of Medicine (MD)": "MD",
+        "Doctor of Medicine–Doctor of Philosophy (MD-PhD)": "MD-PhD",
+        "Master of Health Administration (MHA)": "MHA",
+        "Master of Occupational Therapy (MOT)": "MOT",
+        "Master of Public Health (MPH)": "MPH",
+        "Master of Physical Therapy (MPT)": "MPT",
+        "Master of Science (MSc)": "MSc",
+        "Master of Science–Doctor of Philosophy (MSc-PhD)": "MSc-PhD",
+        "Other": "Other",
+        "Doctor of Philosophy (PhD)": "PhD",
+        "Postdoctoral Study": "Postdoctoral Study",
+        "Resident": "Resident",
+        "Residency": "Residency",
+        "Summer Student": "Summer Student"
+    };
+
+    degreeAggregationDict = {
+        "BA": { total: 0, current: 0, completed: 0 },
+        "BMLSc": { total: 0, current: 0, completed: 0 },
+        "BSc": { total: 0, current: 0, completed: 0 },
+        "Co-op": { total: 0, current: 0, completed: 0 },
+        "Diploma": { total: 0, current: 0, completed: 0 },
+        "Directed Studies": { total: 0, current: 0, completed: 0 },
+        "Fellowship": { total: 0, current: 0, completed: 0 },
+        "MA": { total: 0, current: 0, completed: 0 },
+        "MD": { total: 0, current: 0, completed: 0 },
+        "MD-PhD": { total: 0, current: 0, completed: 0 },
+        "MHA": { total: 0, current: 0, completed: 0 },
+        "MOT": { total: 0, current: 0, completed: 0 },
+        "MPH": { total: 0, current: 0, completed: 0 },
+        "MPT": { total: 0, current: 0, completed: 0 },
+        "MSc": { total: 0, current: 0, completed: 0 },
+        "MSc-PhD": { total: 0, current: 0, completed: 0 },
+        "Other": { total: 0, current: 0, completed: 0 },
+        "No Degree Listed": { total: 0, current: 0, completed: 0 },
+        "PhD": { total: 0, current: 0, completed: 0 },
+        "Postdoctoral Study": { total: 0, current: 0, completed: 0 },
+        "Resident": { total: 0, current: 0, completed: 0 },
+        "Residency": { total: 0, current: 0, completed: 0 },
+        "Summer Student": { total: 0, current: 0, completed: 0 }
+    };
+
+    sectionData.forEach((data) => {
+        const degree = data.data_details.degree;
+        const degreeKey = programCodeMap[degree] || "No Degree Listed";
+        const dates = data.data_details.dates;
+
+        const isDegreeInProgress = () => {
+            const dateArray = dates.split("-");
+            // 2022 - 2024 will give us an array of length 2, thus if the array is of length 1
+            // that means there is no end date and the degree is still in progress
+
+            if (dateArray.length === 1) {
+                return true;
+            } else if (dateArray.length === 2 && dateArray[1].toLowerCase().includes("current")) {
+                return true;
+            } else {
+                return false
+            }
+        }
+
+        degreeAggregationDict[degreeKey]["total"] += 1;
+
+        if (isDegreeInProgress()) {
+            degreeAggregationDict[degreeKey]["current"] += 1;
+        } else {
+            degreeAggregationDict[degreeKey]["completed"] += 1;
+        }
+    });
+
+    Object.keys(degreeAggregationDict).forEach((key) => {
+        const { total, current, completed } = degreeAggregationDict[key];
+        if (total === 0 && current === 0 && completed === 0) {
+            delete degreeAggregationDict[key];
+        }
+    })
+
+    return degreeAggregationDict
 }
 
 export const buildCv = async (userInfoInput, templateWithEndStartDate) => {

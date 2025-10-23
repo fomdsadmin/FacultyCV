@@ -769,6 +769,21 @@ function buildTable(table) {
 
     const flatColumns = flattenColumns(filteredColumns || columns);
 
+    // Build students supervised summary rows (placed above data rows, below the header)
+    let studentsSupervisedSummaryHtml = "";
+    if (table?.studentsSupervisedSummary) {
+        const keys = Object.keys(table.studentsSupervisedSummary || {});
+        const lines = keys.map(key => {
+            const { total = 0, completed = 0, current = 0 } = table.studentsSupervisedSummary[key] || {};
+            return `${key} Total: ${total}, ${current} current, ${completed} completed`;
+        }).filter(Boolean);
+
+        if (lines.length) {
+            // plain text (bold), separated by <br/>, not inside the table
+            studentsSupervisedSummaryHtml = `<div style="font-weight:700; margin:8px 0;">${lines.join('<br/>')}</div>`;
+        }
+    }
+
     const bodyHtml = rows
         .map(row => '<tr>' + flatColumns.map(c => `<td>${dataStyler(row[c.field] ?? '')}</td>`).join('') + '</tr>')
         .join('\n');
@@ -779,6 +794,7 @@ function buildTable(table) {
     return `<div class="${wrapperClass}">
             <table border="1" cellspacing="0" cellpadding="5">
             <thead>
+            ${studentsSupervisedSummaryHtml}
             ${headerHtml}
             </thead>
             <tbody>
