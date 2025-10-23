@@ -30,14 +30,14 @@ const filterDateRanges = (sectionData, dataSectionId) => {
         '5a. Post-Secondary Education'
     ]
 
+    const section = sectionsMap[dataSectionId];
+
     const startYear = Number(template.start_year);
     const endYear = Number(template.end_year);
 
     if (startYear === 0 || endYear === 0) {
         return sectionData;
     }
-
-    const section = sectionsMap[dataSectionId];
 
     if (DO_NOT_FILTER_SECTIONS.includes(section.title)) {
         return sectionData;
@@ -64,7 +64,7 @@ const filterDateRanges = (sectionData, dataSectionId) => {
         return sectionData;
     }
 
-    return sectionData.filter((data) => {
+    sectionData = sectionData.filter((data) => {
 
         if (!data["data_details"][dateAttribute]) {
             return true;
@@ -81,6 +81,8 @@ const filterDateRanges = (sectionData, dataSectionId) => {
 
         return year >= startYear && year <= endYear;
     });
+
+    return sectionData;
 };
 
 const sortSectionData = (sectionData, dataSectionId) => {
@@ -390,12 +392,7 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 
         const tablesToReturn = buildSubSections(preparedSection);
 
-        const totalNumRowsInTables = tablesToReturn.reduce(
-            (total, table) => total + table.rows.length,
-            0
-        );
-
-        if (preparedSection.sub_section_settings.display_section_title && totalNumRowsInTables > 0) {
+        if (preparedSection.sub_section_settings.display_section_title) {
             const titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
             tablesToReturn.unshift({
                 justHeader: true,
@@ -424,12 +421,10 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
             titleToDisplay += ` (${rowCount})`
         }
 
-        if (rowCount !== 0) {
-            table["columns"] = [{
-                headerName: titleToDisplay,
-                children: table["columns"],
-            }]
-        }
+        table["columns"] = [{
+            headerName: titleToDisplay,
+            children: table["columns"],
+        }]
     }
 
     table["hide_column_header"] = preparedSection.merge_visible_attributes;
@@ -700,8 +695,6 @@ const buildSubSections = (preparedSectionWithSubSections) => {
             return section;
         })
 
-    console.log("mappedSections: ", mappedSections);
-
     for (const mappedSection of mappedSections) {
         tables.push(...buildPreparedSection(mappedSection, mappedSection.data_section_id));
     }
@@ -957,10 +950,13 @@ const buildUserProfile = async (userInfoParam) => {
     };
 
     let userDeclarations = null;
-    let latestUserDeclaration = null;
+    let declarationToUse = null;
     if (JSON.parse(template.template_structure).show_declaration) {
         userDeclarations = await fetchDeclarations(userInfo.user_id);
-        latestUserDeclaration = userDeclarations[userDeclarations.length - 1];
+
+        declarationToUse = userDeclarations.find(
+            (declaration) => template.start_year <= declaration.year && template.end_year >= declaration.year
+        );
     }
 
     const currentDate = new Date().toLocaleDateString('en-US', {
@@ -985,7 +981,7 @@ const buildUserProfile = async (userInfoParam) => {
         sort_order: sortOrder,
         date_range_text: dateRangeText,
         template_title: template.title,
-        latest_declaration: latestUserDeclaration,
+        declaration_to_use: declarationToUse,
         ...userInfoParam,
         ...userAfiliations
     }
