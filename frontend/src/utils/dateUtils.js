@@ -20,19 +20,15 @@ const monthNameToNumber = {
 /**
  * Parse various date formats and return a sortable value
  * @param {string} dateStr - Date string to parse
- * @returns {number} - Sortable value (timestamp for dates, year for years, Infinity for current)
+ * @returns {number} - Sortable value (timestamp for dates, year for years)
  */
 export const parseDateForSorting = (dateStr) => {
   if (!dateStr || typeof dateStr !== "string") return 0;
   
   const lowerStr = dateStr.toLowerCase().trim();
   
-  // Handle "current" or "present" - should be sorted as most recent
-  if (lowerStr.includes("current") || lowerStr.includes("present")) {
-    return Number.POSITIVE_INFINITY;
-  }
-  
   // For date ranges, extract the start date (earliest date for sorting)
+  // This handles cases like "April 2019 - Current" by extracting "April 2019"
   if (lowerStr.includes(" - ")) {
     const parts = lowerStr.split(" - ");
     const startDate = parts[0].trim();

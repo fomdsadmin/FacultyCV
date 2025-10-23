@@ -233,7 +233,7 @@ const Affiliations = () => {
   };
 
   return (
-    <div className="mx-auto p-4">
+    <div className="mx-auto p-2">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 xl:gap-2">
         <Section title="Institution">
           <div className="gap-x-2 gap-y-4 grid grid-cols-1">
