@@ -120,6 +120,11 @@ def cleanRise(bucket, key_raw, key_clean):
     df["Dates"] = from_year + "-" + to_year
     df["Record Id"] = df["Record Id"].astype(str)
 
+    # Remove duplicates based on specified fields: Researcher Name, Sponsor Name, Program Name, Amount, Project Title, From Year, To Year
+    # Keep only the first occurrence of each unique combination
+    duplicate_check_fields = ["Researcher Name", "Sponsor Name", "Program Name", "Amount", "Project Title", "From Year", "To Year"]
+    df = df.drop_duplicates(subset=duplicate_check_fields, keep='first')
+
     # Keep only the custom columns we created
     df = df[["First Name", "Last Name", "Keywords", "Department", "Agency", "Sponsor", "Program", "Amount", "Title", "Dates", "Record Id"]]
 
