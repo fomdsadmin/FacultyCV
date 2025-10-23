@@ -757,6 +757,8 @@ const buildStudentSupervisedSummaryCount = (preparedSection, dataSectionId) => {
         return true;
     })
 
+    sectionData = filterDateRanges(sectionData, dataSectionId);
+
     let degreeAggregationDict = {};
 
     const programCodeMap = {
