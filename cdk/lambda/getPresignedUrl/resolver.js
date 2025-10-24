@@ -35,6 +35,8 @@ exports.lambda_handler = async(event, context) => {
     const type = event['arguments']['type'];
     const purpose = event['arguments']['purpose'] || "cv"; // Add this argument
 
+    console.log(purpose)
+
     const verifier = JwtRsaVerifier.create([{
         issuer: process.env.USER_POOL_ISS,
         audience: null,
@@ -62,9 +64,11 @@ exports.lambda_handler = async(event, context) => {
     if (purpose === "user-import") {
         bucketName = process.env.USER_IMPORT_BUCKET_NAME;
         actualFileKey = 'import/' + fileKey; // Use import/ prefix to match S3 event notifications
+        console.log("Send to user import bucket");
     } else {
         bucketName = process.env.BUCKET_NAME;
         actualFileKey = payload.username + '/' + fileKey;
+        console.log("Send to CV bucket");
     }
 
     // For CV GET requests, check freshness

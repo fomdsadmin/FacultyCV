@@ -204,17 +204,35 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
     sectionDescriptions[section.data_type] = section.description;
   });
 
-  const searchedSections = dataSections.filter((entry) => {
+  // Enhanced search: if no match in selected tab, show matches from other categories distinctly
+  const search = searchTerm.toLowerCase();
+  const matchesInTab = dataSections.filter((entry) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
     const info = entry.info || "";
-    const search = searchTerm.toLowerCase();
-    const matchesSearch = section.toLowerCase().includes(search) || 
-                         category.toLowerCase().includes(search) || 
-                         info.toLowerCase().includes(search);
+    const matchesSearch =
+      section.toLowerCase().includes(search) ||
+      category.toLowerCase().includes(search) ||
+      info.toLowerCase().includes(search);
     const matchesFilter = !activeTab || category === activeTab;
     return matchesSearch && matchesFilter;
   });
+
+  let searchedSections = matchesInTab;
+  let otherCategorySections = [];
+  if (searchTerm && activeTab && matchesInTab.length === 0) {
+    // Show matches from other categories
+    otherCategorySections = dataSections.filter((entry) => {
+      const section = entry.title || "";
+      const category = entry.data_type || "";
+      const info = entry.info || "";
+      const matchesSearch =
+        section.toLowerCase().includes(search) ||
+        category.toLowerCase().includes(search) ||
+        info.toLowerCase().includes(search);
+      return matchesSearch && category !== activeTab;
+    });
+  }
 
   // Use category from URL for filtering
   useEffect(() => {
@@ -222,9 +240,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
       // Find the original category name from slug
       const matched = filters.find((f) => {
         const fullSlug = slugify(f);
-        const cleanedSlug = fullSlug.split("-")[0].match(/\d/) 
-          ? fullSlug.split("-").slice(1).join("-") 
-          : fullSlug;
+        const cleanedSlug = fullSlug.split("-")[0].match(/\d/) ? fullSlug.split("-").slice(1).join("-") : fullSlug;
         return fullSlug === category || cleanedSlug === category;
       });
       setActiveTab(matched || null);
@@ -238,7 +254,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
   const SectionTabs = ({ filters, activeFilter, onSelect, sectionDescriptions }) => {
     return (
       <>
-        <div className="flex flex-wrap gap-4 mb-6 px-4 max-w-full">
+        <div className="flex flex-wrap gap-3 mb-4 max-w-full">
           <button
             className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
               activeFilter === null ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -263,7 +279,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
         </div>
         {showDesc && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white rounded-xl shadow-lg max-w-lg w-full p-6 relative">
+            <div className="bg-white rounded-xl shadow-lg max-w-xl w-full p-6 relative">
               <button
                 className="absolute top-3 right-4 text-xl text-gray-500 hover:text-gray-800"
                 onClick={() => setShowDesc(null)}
@@ -290,9 +306,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
         userInfo={userInfo}
       />
       <main
-        className="px-[1vw] xs:px-[1vw] sm:px-[2vw] md:px-[2vw] lg:px-[2vw] 
-                       xl:px-[5vw] 2xl:px-[8vw] overflow-y-auto custom-scrollbar
-                       mt-4 w-full mb-4 relative"
+        className="overflow-y-auto custom-scrollbar my-2 w-full relative"
       >
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
@@ -302,14 +316,14 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
           <>
             {activeSection === null ? (
               <div className="!overflow-auto !h-full rounded-lg w-full mx-auto">
-                <h1 className="text-left mb-4 text-4xl font-bold text-zinc-600 p-2 ml-2">Academic Work</h1>
+                <h1 className="text-left mb-2 text-4xl font-bold text-zinc-600">Academic Work</h1>
                 {/* Search bar for filtering sections */}
-                <div className="mb-4 flex justify-start items-left ml-4">
-                  <label className="input input-bordered flex items-left gap-2 flex-1 max-w-xl">
+                <div className="mb-4 flex justify-start items-left">
+                  <label className="input input-bordered flex items-left gap-2 flex-1">
                     <input
                       type="text"
                       className="grow"
-                      placeholder="Search"
+                      placeholder="Search Academic Works descriptions only. CV data can be searched in the ‘Search CV’ section."
                       value={searchTerm}
                       onChange={handleSearchChange}
                     />
@@ -343,10 +357,38 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                     info={section.info}
                   />
                 ))}
+                {/* If no results in tab, show matches from other categories distinctly */}
+                {searchTerm && activeTab && searchedSections.length === 0 && otherCategorySections.length > 0 && (
+                  <div className="mt-4 px-6">
+                    <div className="text-sm font-normal text-gray-600 mb-2 text-center py-2">No results found for search in selected category.</div>
+                    <div className="text-md font-semibold text-gray-600 mb-2">Showing results from other categories:</div>
+                    {[...otherCategorySections].sort(sectionTitleSort).map((section) => {
+                      // Clean category name similar to tab cleaning
+                      const cat = section.data_type;
+                      const catParts = cat.split(".");
+                      let cleanedCat = catParts[1] ? catParts[1].trim() : cat;
+                      return (
+                        <div
+                          key={section.data_section_id}
+                          className="border-l-4 border-yellow-400 bg-yellow-50 p-2 mb-2 rounded"
+                        >
+                          <div className="text-xs text-yellow-700 mb-1">{cleanedCat}</div>
+                          <WorkSection
+                            onClick={handleManageClick}
+                            id={section.data_section_id}
+                            title={section.title}
+                            category={section.data_type}
+                            info={section.info}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="!overflow-auto !h-full custom-scrollbar max-w-6xl w-full mx-auto">
-                {activeSection.title === "Publications" && (
+              <div className="!overflow-auto !h-full custom-scrollbar w-full mx-auto">
+                {activeSection.title === "Journal Publications" && (
                   <PublicationsSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {activeSection.title.includes("Patents") && (
@@ -356,7 +398,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                   <SecureFundingSection user={userInfo} section={activeSection} onBack={handleBack} />
                 )}
                 {!(
-                  activeSection.title === "Publications" ||
+                  activeSection.title === "Journal Publications" ||
                   activeSection.title.includes("Patents") ||
                   activeSection.title.includes("Research or Equivalent Grants")
                 ) && <GenericSection user={userInfo} section={activeSection} onBack={handleBack} />}

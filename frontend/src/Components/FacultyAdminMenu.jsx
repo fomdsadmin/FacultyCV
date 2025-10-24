@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaCog, FaHome } from "react-icons/fa";
+import { FaUsers, FaChartLine, FaFileAlt, FaUsersCog, FaCog, FaHome, FaRegClipboard } from "react-icons/fa";
 import { HiSwitchHorizontal } from "react-icons/hi";
 import { Link, useLocation } from "react-router-dom";
 import { signOut } from "aws-amplify/auth";
@@ -25,14 +25,13 @@ const FacultyAdminMenu = ({ userName, getCognitoUser, userInfo, toggleViewMode }
   }, [isCollapsed]);
 
   // Determine faculty from role
-  const faculty = userInfo?.role === 'Admin' ? 'All' : 
+  const faculty = userInfo?.role === 'Admin' ? 'All' :
     userInfo?.role?.startsWith('FacultyAdmin-') ? userInfo.role.split('FacultyAdmin-')[1] : '';
 
   return (
     <div
-      className={`relative transition-all duration-150 ease-in-out py-2 border-r-2 border-neutral max-h-screen ${
-        isCollapsed ? "w-18" : "w-60"
-      }`}
+      className={`relative transition-all duration-150 ease-in-out py-2 border-r-2 border-neutral max-h-screen ${isCollapsed ? "w-18" : "w-60"
+        }`}
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
     >
@@ -70,6 +69,23 @@ const FacultyAdminMenu = ({ userName, getCognitoUser, userInfo, toggleViewMode }
               </p>
             )}
           </Link>
+        </li>
+        <li
+          className={`mb-2 ${location.pathname === "/audit" ? "bg-gray-200 rounded-lg" : ""
+            }`}
+        >
+          <Link to="/audit">
+            <FaRegClipboard className="h-5 w-5" />
+            {showText && !isCollapsed && (
+              <p
+                className={`ml-2 ${location.pathname === "/audit" ? "font-bold" : ""
+                  }`}
+              >
+                Activity Logs
+              </p>
+            )}
+          </Link>
+
         </li>
       </ul>
 

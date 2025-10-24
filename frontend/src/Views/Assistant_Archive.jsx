@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import AssistantMenu from "../Components/AssistantMenu";
-import Assistant_FacultyMenu from "../Components/Assistant_FacultyMenu";
+import DelegateMenu from "../Components/DelegateMenu";
 import { rankFields } from '../utils/rankingUtils';
 import GenericEntry from "../SharedComponents/GenericEntry";
 import { getArchivedUserCVData, getAllSections, updateUserCVDataArchive } from "../graphql/graphqlHelpers";
@@ -115,7 +114,7 @@ const Assistant_Archive = ({ assistantUserInfo, userInfo, getCognitoUser }) => {
     return (
       <div>
         <PageContainer>
-          <Assistant_FacultyMenu userInfo={userInfo} assistantUserInfo={assistantUserInfo} />
+          <DelegateMenu userInfo={userInfo} assistantUserInfo={assistantUserInfo} />
           <main className='px-[2vw] md:px-[3vw] lg:px-[5vw] overflow-auto custom-scrollbar w-full mb-4'>
           <h1 className="text-left mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
           {loading ? (

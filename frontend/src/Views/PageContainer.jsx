@@ -1,8 +1,10 @@
-import React from 'react';
+import React from "react";
+import { useApp } from "../Contexts/AppContext";
 
 const PageContainer = ({ children }) => {
+  const { isManagingUser, userInfo, currentViewRole } = useApp();
   return (
-    <div className="mx-auto flex min-h-screen box-border">
+    <div className={`${currentViewRole && currentViewRole.startsWith('Admin') ? '' : 'px-12 lg:px-16 xl:px-20'} flex min-h-screen box-border ${isManagingUser ? 'mt-14' : ''}`}>
       {children}
     </div>
   );

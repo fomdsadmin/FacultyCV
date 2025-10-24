@@ -4,7 +4,8 @@ import GenericEntry from "../SharedComponents/GenericEntry";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import PermanentEntryModal from "./PermanentEntryModal";
 import PublicationsModal from "./PublicationsModal";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaRegEdit, FaSearch } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import { LuBrainCircuit } from "react-icons/lu";
@@ -29,18 +30,132 @@ const PublicationsSection = ({ user, section, onBack }) => {
   const [retrievingData, setRetrievingData] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
   const [notification, setNotification] = useState(""); // <-- Add this
+  const [existingPublications, setExistingPublications] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sortDescending, setSortDescending] = useState(true);
+  const [sortAscending, setSortAscending] = useState(false);
+  
+  // Filter states for dropdowns
+  const [dropdownFilters, setDropdownFilters] = useState({});
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
 
-  const totalPages = Math.ceil(fieldData.length / pageSize);
-  const paginatedData = fieldData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Apply all filters to get filtered data
+  const getFilteredData = () => {
+    let filtered = fieldData;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter((entry) => {
+        const [field1, field2] = rankFields(entry.data_details);
+        return (
+          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+      });
+    }
+
+    // Apply dropdown filters
+    Object.entries(dropdownFilters).forEach(([attribute, filterValue]) => {
+      if (filterValue && filterValue !== "all") {
+        // Get the actual field key (snake_case) from the display name
+        const actualKey = section.attributes && section.attributes[attribute] 
+          ? section.attributes[attribute] 
+          : attribute.toLowerCase().replace(/\s+/g, '_');
+          
+        filtered = filtered.filter((entry) => {
+          if (!entry.data_details || !entry.data_details[actualKey]) return false;
+          
+          const entryValue = entry.data_details[actualKey];
+          if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
+          
+          // Handle "Other (value)" format
+          if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
+            const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+            if (match) {
+              return match[1].trim() === filterValue;
+            }
+          }
+          
+          return String(entryValue) === filterValue;
+        });
+      }
+    });
+
+    return filtered;
+  };
+
+  // Get filtered data and calculate pagination
+  const filteredData = getFilteredData();
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const { logAction } = useAuditLogger();
+
+  const toggleSortOrder = () => {
+    setSortAscending(!sortAscending);
+    setSortDescending(!sortDescending);
+  };
+
+  // Get dropdown attributes from section attributes_type
+  const getDropdownAttributes = () => {
+    try { 
+      if (!section.attributes_type) {
+        return [];
+      }
+      const attributesType = typeof section.attributes_type === "string" 
+        ? JSON.parse(section.attributes_type) 
+        : section.attributes_type;
+
+      return Object.keys(attributesType.dropdown || {});
+    } catch (error) {
+      console.error("Error parsing attributes_type:", error);
+      return [];
+    }
+  };
+
+  // Get unique values for a dropdown attribute from field data
+  const getUniqueDropdownValues = (attribute) => {
+    // Get the actual field key (snake_case) from the display name
+    const actualKey = section.attributes && section.attributes[attribute] 
+      ? section.attributes[attribute] 
+      : attribute.toLowerCase().replace(/\s+/g, '_');
+    
+    const values = new Set();
+    
+    fieldData.forEach((entry, index) => {
+      if (entry.data_details && entry.data_details[actualKey]) {
+        const value = entry.data_details[actualKey];
+        
+        if (value !== null && value !== undefined && String(value).trim() !== "" && String(value) !== "—" && String(value).toLowerCase() !== "null") {
+          // Handle "Other (value)" format
+          if (typeof value === "string" && /\bother\b/i.test(value) && /\(.*\)$/.test(value)) {
+            const match = value.match(/^(.*Other)\s*\((.*)\)$/i);
+            if (match) {
+              values.add(match[1].trim());
+            }
+          } else {
+            // Convert value to string for consistency, handling booleans and other types
+            values.add(String(value));
+          }
+        }
+      }
+    });
+    
+    const result = Array.from(values).sort();
+    return result;
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setDropdownFilters({});
+    setCurrentPage(1);
+  };
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, pageSize]);
+  }, [searchTerm, pageSize, dropdownFilters]);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -112,24 +227,142 @@ const PublicationsSection = ({ user, section, onBack }) => {
         ...data,
         data_details: JSON.parse(data.data_details),
       }));
+      console.log("Fetched existing publications:", parsedData.length);
+      setExistingPublications(parsedData);
 
-      const filteredData = parsedData.filter((entry) => {
-        const [field1, field2] = rankFields(entry.data_details);
-        return (
-          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-      });
-
-      const rankedData = filteredData.map((entry) => {
+      const rankedData = parsedData.map((entry) => {
         const [field1, field2] = rankFields(entry.data_details);
         return { ...entry, field1, field2 };
       });
 
+      // Helper function to extract year and month from various date formats
+      const extractDateInfo = (dateStr) => {
+        if (!dateStr) return { year: 0, month: 0 };
+
+        const str = String(dateStr).toLowerCase().trim();
+
+        // Handle pure year numbers (like 2025, 2024)
+        if (/^\d{4}$/.test(str)) {
+          const year = parseInt(str);
+          if (year >= 1900 && year <= 2100) {
+            return { year, month: 0 };
+          }
+        }
+
+        // Extract year from various patterns
+        const yearMatch = str.match(/\b(20\d{2}|19\d{2})\b/);
+        const year = yearMatch ? parseInt(yearMatch[1]) : 0;
+
+        // Extract month
+        const monthNames = [
+          "january",
+          "february",
+          "march",
+          "april",
+          "may",
+          "june",
+          "july",
+          "august",
+          "september",
+          "october",
+          "november",
+          "december",
+        ];
+
+        const monthAbbr = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+        let month = 0;
+
+        // Check for full month names
+        for (let i = 0; i < monthNames.length; i++) {
+          if (str.includes(monthNames[i])) {
+            month = i + 1; // 1-based month
+            break;
+          }
+        }
+
+        // Check for abbreviated month names if no full name found
+        if (month === 0) {
+          for (let i = 0; i < monthAbbr.length; i++) {
+            if (str.includes(monthAbbr[i])) {
+              month = i + 1; // 1-based month
+              break;
+            }
+          }
+        }
+
+        // If no month name found, check for numeric month patterns
+        if (month === 0) {
+          // Pattern: YYYY-MM, MM/YYYY, MM-YYYY, YYYY/MM
+          const numericPatterns = [
+            /\b(?:20\d{2}|19\d{2})[-\/](\d{1,2})\b/, // YYYY-MM or YYYY/MM
+            /\b(\d{1,2})[-\/](?:20\d{2}|19\d{2})\b/, // MM-YYYY or MM/YYYY
+          ];
+
+          for (const pattern of numericPatterns) {
+            const match = str.match(pattern);
+            if (match) {
+              const monthNum = parseInt(match[1]);
+              if (monthNum >= 1 && monthNum <= 12) {
+                month = monthNum;
+                break;
+              }
+            }
+          }
+        }
+
+        return { year, month };
+      };
+
       rankedData.sort((a, b) => {
-        const yearA = parseInt(a.field2, 10) || 0;
-        const yearB = parseInt(b.field2, 10) || 0;
-        return yearB - yearA;
+        // Try to get date info from multiple possible sources
+        let dateA = extractDateInfo(a.field2);
+        if (dateA.year === 0) {
+          // Try various date fields in data_details
+          const possibleDateFields = [
+            a.data_details?.end_date,
+            a.data_details?.publication_date,
+            a.data_details?.date,
+            a.data_details?.year,
+            a.data_details?.start_date,
+            a.field1, // Sometimes the date might be in field1
+          ];
+
+          for (const dateField of possibleDateFields) {
+            if (dateField) {
+              dateA = extractDateInfo(dateField);
+              if (dateA.year !== 0) break;
+            }
+          }
+        }
+
+        let dateB = extractDateInfo(b.field2);
+        if (dateB.year === 0) {
+          // Try various date fields in data_details
+          const possibleDateFields = [
+            b.data_details?.end_date,
+            b.data_details?.publication_date,
+            b.data_details?.date,
+            b.data_details?.year,
+            b.data_details?.start_date,
+            b.field1, // Sometimes the date might be in field1
+          ];
+
+          for (const dateField of possibleDateFields) {
+            if (dateField) {
+              dateB = extractDateInfo(dateField);
+              if (dateB.year !== 0) break;
+            }
+          }
+        }
+
+        // First sort by year (descending)
+        if (dateA.year !== dateB.year) {
+          return dateB.year - dateA.year;
+        }
+
+        // If years are the same, sort by month (descending - most recent first)
+        return dateB.month - dateA.month;
       });
 
       setFieldData(rankedData);
@@ -143,7 +376,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
     setLoading(true);
     setFieldData([]);
     fetchData();
-  }, [searchTerm, section.data_section_id]);
+  }, [section.data_section_id]);
 
   useEffect(() => {
     if (fieldData.length !== 0) {
@@ -155,33 +388,32 @@ const PublicationsSection = ({ user, section, onBack }) => {
     onBack();
   };
 
-  const GenericEntry = ({ field1, field2, data_details, onEdit, onArchive }) => (
-    <div className="entry">
-      <h2>{field1}</h2>
-      <div className="m-2 flex">
-        <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
-          X
-        </button>
-      </div>
-      <p>{field2}</p>
-      <div>{data_details}</div>
-    </div>
-  );
-  const PermanentEntry = ({ field1, field2, data_details, isArchived, onEdit, onArchive }) => (
-    <div className={`entry ${isArchived ? "archived" : ""}`}>
-      <h2>{field1}</h2>
-      <div className="m-2 flex">
-        <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
-          X
-        </button>
-      </div>
-      <p>{field2}</p>
-      <div>{data_details}</div>
-    </div>
-  );
+  // const GenericEntry = ({ field1, field2, data_details, onEdit, onArchive }) => (
+  //   <div className="entry">
+  //     <h2>{field1}</h2>
+  //     <div className="m-2 flex">
+  //       <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
+  //         X
+  //       </button>
+  //     </div>
+  //     <p>{field2}</p>
+  //     <div>{data_details}</div>
+  //   </div>
+  // );
+  // const PermanentEntry = ({ field1, field2, data_details, isArchived, onEdit, onArchive }) => (
+  //   <div className={`entry ${isArchived ? "archived" : ""}`}>
+  //     <h2>{field1}</h2>
+  //     <div className="m-2 flex">
+  //       <button onClick={onArchive} className="ml-auto text-white btn btn-danger min-h-0 h-8 leading-tight">
+  //         X
+  //       </button>
+  //     </div>
+  //     <p>{field2}</p>
+  //     <div>{data_details}</div>
+  //   </div>
+  // );
 
   const renderDataDetails = (details) => {
-    // console.log(details);
     if (!details || typeof details !== "object") return null;
 
     const authorList = Array.isArray(details.author_names) ? details.author_names : [details.author_names];
@@ -194,7 +426,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
     if (details.end_date) {
       formattedDate = details.end_date.trim();
     }
-    
+
     // Map author names, bold the one matching user's scopus_id
     const authorDisplay = authorList.map((name, idx) => {
       if (user.scopus_id && authorIds && authorIds[idx] && String(authorIds[idx]) === String(user.scopus_id)) {
@@ -208,8 +440,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
     });
 
     return (
-      <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-semibold mb-1">{details.title}</h3>
+      <>
+        {details.title && <h3 className="text-lg font-semibold mb-1">{details.title}</h3>}
         <p className="text-sm text-gray-700 mb-2">
           {formattedDate}
           {details.volume && (
@@ -239,9 +471,10 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </p>
         )}
 
-        {keywordsList?.length > 0 && keywordsList.some(keyword => keyword && keyword.trim() !== '') && (
+        {keywordsList?.length > 0 && keywordsList.some((keyword) => keyword && keyword.trim() !== "") && (
           <p className="text-sm text-gray-700 mb-1">
-            <span className="font-semibold">Keywords:</span> {keywordsList.filter(keyword => keyword && keyword.trim() !== '').join(", ")}
+            <span className="font-semibold">Keywords:</span>{" "}
+            {keywordsList.filter((keyword) => keyword && keyword.trim() !== "").join(", ")}
           </p>
         )}
 
@@ -265,118 +498,405 @@ const PublicationsSection = ({ user, section, onBack }) => {
           .filter(([key, value]) => {
             // Exclude fields that are already displayed above
             const displayedFields = [
-              'title', 'end_date', 'volume', 'article_number', 'author_names', 
-              'author_ids', 'doi', 'keywords', 'link', 
-              'publication_id',
+              "title",
+              "end_date",
+              "volume",
+              "article_number",
+              "author_names",
+              "author_ids",
+              "doi",
+              "keywords",
+              "link",
+              "publication_id",
             ];
-            return !displayedFields.includes(key) && value && value !== '' && value !== null;
+            return !displayedFields.includes(key) && value && value !== "" && value !== null;
           })
           .map(([key, value]) => (
             <p key={key} className="text-sm text-gray-700 mb-1">
-              <span className="font-semibold">{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span>{' '}
-              {Array.isArray(value) ? value.join(', ') : String(value)}
+              <span className="font-semibold">{key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}:</span>{" "}
+              {Array.isArray(value) ? value.join(", ") : String(value)}
             </p>
           ))}
-        
-      </div>
+      </>
     );
   };
 
-  const sortedData = sortDescending ? paginatedData : [...paginatedData].reverse();
+  const sortedData = sortAscending ? [...paginatedData].reverse() : paginatedData;
 
   return (
     <div>
-      <div>
-        <button onClick={handleBack} className="text-zinc-800 btn btn-ghost min-h-0 h-8 leading-tight mr-4 mt-5">
-          <FaArrowLeft className="h-6 w-6 text-zinc-800" />
-        </button>
-        <div className="mt-4 mx-4 flex">
-          <h2 className="text-left text-4xl font-bold text-zinc-600">{section.title}</h2>
-          <button
-            onClick={handleNew}
-            className="ml-auto text-white btn btn-success min-h-0 h-8 leading-tight"
-            disabled={retrievingData}
-          >
+      {/* Header Section - matches GenericSection layout */}
+      <div className="ml-2 mr-4 my-2 flex items-center justify-between">
+        {/* Left section: Back Button and Title */}
+        <div className="flex items-center">
+          <button onClick={handleBack} className="text-zinc-800 btn btn-ghost min-h-0 h-10 p-2 mr-3 hover:bg-gray-100">
+            <FaArrowLeft className="h-5 w-5 text-zinc-800" />
+          </button>
+          <h2 className="text-3xl font-bold text-zinc-600">{section.title}</h2>
+        </div>
+        
+        {/* Right section: Action Buttons */}
+        <div className="flex items-center gap-3">
+          <button onClick={handleNew} className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight" disabled={retrievingData}>
             New
           </button>
           <button
             onClick={() => setRetrievingData(true)}
-            className="ml-2 text-white btn btn-info min-h-0 h-8 leading-tight"
+            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight"
             disabled={retrievingData}
           >
             {retrievingData ? "Retrieving..." : "Retrieve Data"}
           </button>
-        </div>
-        <div className="mx-4 my-1 flex items-center">
-          <div className="flex-1">{section.description}</div>
           <button
             onClick={handleDelete}
-            className="text-white btn btn-warning min-h-0 h-8 leading-tight"
-            disabled={isAvailable ? false : true}
+            className="text-white btn btn-warning min-h-0 h-10 px-4 leading-tight"
+            disabled={!isAvailable}
           >
             Remove All
           </button>
         </div>
-        <div className="m-4 flex">
-          <label className="input input-bordered flex items-center gap-2 flex-1">
-            <input
-              type="text"
-              className="grow"
-              placeholder={`Search ${section.title}`}
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 16 16"
-              fill="currentColor"
-              className="h-4 w-4 opacity-70"
-            >
-              <path
-                fillRule="evenodd"
-                d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </label>
+      </div>
+
+      {/* Description Section - matches GenericSection layout */}
+      <div className="mx-4 mt-2 flex flex-col">
+        <div className="text-md">
+          <span>{section.description}</span>
         </div>
       </div>
 
-      <div className="m-4 p-4 rounded-2xl border border-gray-300 shadow-sm bg-white flex flex-wrap justify-between items-center">
-        {/* Left controls */}
-        <div className="flex items-center gap-3">
-          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2h-6a2 2 0 00-2 2v14z"
-            />
-          </svg>
-          <span className="text-lg font-medium text-gray-700">
-            Total Publications: <span className="font-semibold text-blue-600">{fieldData.length}</span>
-          </span>
+      {/* Only show Filters and Search if there's data - matches GenericSection layout */}
+      {fieldData.length > 0 && (
+        <div className="mb-2 bg-white px-4 py-3 rounded-lg shadow-md mt-2 ml-4 mr-4">
+        {/* Basic Filters Row */}
+        <div className="flex flex-wrap gap-3 items-end mb-1">
+          {/* Search Bar */}
+          <div className="">
+            <label className="block text-xs font-medium text-zinc-600 mb-1">Search Entries</label>
+            <div className="relative max-w-md">
+              <FaSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 text-sm" />
+              <input
+                type="text"
+                placeholder="Search entries..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Date Sort Button */}
+          <div className="">
+            <label className="block text-xs font-medium text-zinc-600 mb-1">Date Order</label>
+            <button
+              onClick={toggleSortOrder}
+              className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors duration-200 text-sm"
+              title={`Sort by date: ${sortAscending ? "Oldest first" : "Newest first"} (click to toggle)`}
+            >
+              <svg className="w-4 h-4 text-gray-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {sortAscending ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 4v12m0 0l4-4m-4 4l-4-4m10-8v12m0 0l4-4m-4 4l-4-4"
+                  />
+                )}
+              </svg>
+              {sortAscending ? "Oldest" : "Newest"}
+            </button>
+          </div>
+
+          {/* First few dropdown filters */}
+          {getDropdownAttributes().filter(attribute => 
+            attribute.toLowerCase() !== 'publication type' && 
+            attribute.toLowerCase() !== 'publication_type'
+          ).slice(0, 2).map((attribute) => {
+            const uniqueValues = getUniqueDropdownValues(attribute);
+            if (uniqueValues.length === 0) return null;
+
+            // Get data filtered by everything except the current attribute
+            const getCountForOption = (optionValue) => {
+              let dataForCounting = fieldData;
+              
+              // Apply search filter
+              if (searchTerm) {
+                dataForCounting = dataForCounting.filter((entry) => {
+                  const [field1, field2] = rankFields(entry.data_details);
+                  return (
+                    (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+                  );
+                });
+              }
+
+              // Apply other dropdown filters (excluding current attribute)
+              Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
+                if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
+                  const actualKey = section.attributes && section.attributes[filterAttribute] 
+                    ? section.attributes[filterAttribute] 
+                    : filterAttribute.toLowerCase().replace(/\s+/g, '_');
+                    
+                  dataForCounting = dataForCounting.filter((entry) => {
+                    if (!entry.data_details || !entry.data_details[actualKey]) return false;
+                    
+                    const entryValue = entry.data_details[actualKey];
+                    if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
+                    
+                    // Handle "Other (value)" format
+                    if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
+                      const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                      if (match) {
+                        return match[1].trim() === filterValue;
+                      }
+                    }
+                    
+                    return String(entryValue) === filterValue;
+                  });
+                }
+              });
+
+              // Now count items matching this specific option
+              if (optionValue === "all") {
+                return dataForCounting.length;
+              }
+
+              const actualKey = section.attributes && section.attributes[attribute] 
+                ? section.attributes[attribute] 
+                : attribute.toLowerCase().replace(/\s+/g, '_');
+
+              return dataForCounting.filter((entry) => {
+                if (!entry.data_details || !entry.data_details[actualKey]) return false;
+                
+                const entryValue = entry.data_details[actualKey];
+                if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
+                
+                // Handle "Other (value)" format
+                if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
+                  const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                  if (match) {
+                    return match[1].trim() === optionValue;
+                  }
+                }
+                
+                return String(entryValue) === optionValue;
+              }).length;
+            };
+
+            return (
+              <div key={attribute} className="max-w-56">
+                <label className="block text-xs font-medium text-zinc-600 mb-1">
+                  {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                </label>
+                <select
+                  value={dropdownFilters[attribute] || "all"}
+                  onChange={(e) => setDropdownFilters((prev) => ({ ...prev, [attribute]: e.target.value }))}
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  <option value="all">All ({getCountForOption("all")})</option>
+                  {uniqueValues.map((value) => {
+                    const count = getCountForOption(value);
+                    return (
+                      <option key={value} value={value}>
+                        {value} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            );
+          })}
+
+          {/* Show More Filters Button */}
+          {getDropdownAttributes().filter(attribute => 
+            attribute.toLowerCase() !== 'publication type' && 
+            attribute.toLowerCase() !== 'publication_type'
+          ).length > 2 && (
+            <button
+              onClick={() => setShowMoreFilters(!showMoreFilters)}
+              className="px-3 py-2 text-xs text-blue-600 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+            >
+              {showMoreFilters ? "Show Less" : `Show More Filters (${getDropdownAttributes().filter(attribute => 
+                attribute.toLowerCase() !== 'publication type' && 
+                attribute.toLowerCase() !== 'publication_type'
+              ).length - 2})`}
+            </button>
+          )}
+
+          {/* Spacer to push total entries to the right */}
+          <div className="flex-1"></div>
+
+          {/* Total Entries - styled like other buttons */}
+          <div className="">
+            <label className="block text-xs font-medium text-zinc-600 mb-1">Total Entries</label>
+            <div className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 border border-gray-300 text-sm">
+              <span className="font-bold text-blue-600">{filteredData.length}</span>
+            </div>
+          </div>
         </div>
+
+        {/* Advanced Filters (Conditional) */}
+        {showMoreFilters && getDropdownAttributes().filter(attribute => 
+          attribute.toLowerCase() !== 'publication type' && 
+          attribute.toLowerCase() !== 'publication_type'
+        ).length > 2 && (
+          <div className="flex flex-wrap gap-3 items-end border-t border-zinc-200 pt-3 mt-1">
+            {/* Remaining dropdown filters */}
+            {getDropdownAttributes().filter(attribute => 
+              attribute.toLowerCase() !== 'publication type' && 
+              attribute.toLowerCase() !== 'publication_type'
+            ).slice(2).map((attribute) => {
+              const uniqueValues = getUniqueDropdownValues(attribute);
+              if (uniqueValues.length === 0) return null;
+
+              // Get data filtered by everything except the current attribute
+              const getCountForOption = (optionValue) => {
+                let dataForCounting = fieldData;
+                
+                // Apply search filter
+                if (searchTerm) {
+                  dataForCounting = dataForCounting.filter((entry) => {
+                    const [field1, field2] = rankFields(entry.data_details);
+                    return (
+                      (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                      (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
+                    );
+                  });
+                }
+
+                // Apply other dropdown filters (excluding current attribute)
+                Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
+                  if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
+                    const actualKey = section.attributes && section.attributes[filterAttribute] 
+                      ? section.attributes[filterAttribute] 
+                      : filterAttribute.toLowerCase().replace(/\s+/g, '_');
+                      
+                    dataForCounting = dataForCounting.filter((entry) => {
+                      if (!entry.data_details || !entry.data_details[actualKey]) return false;
+                      
+                      const entryValue = entry.data_details[actualKey];
+                      if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
+                      
+                      // Handle "Other (value)" format
+                      if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
+                        const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                        if (match) {
+                          return match[1].trim() === filterValue;
+                        }
+                      }
+                      
+                      return String(entryValue) === filterValue;
+                    });
+                  }
+                });
+
+                // Now count items matching this specific option
+                if (optionValue === "all") {
+                  return dataForCounting.length;
+                }
+
+                const actualKey = section.attributes && section.attributes[attribute] 
+                  ? section.attributes[attribute] 
+                  : attribute.toLowerCase().replace(/\s+/g, '_');
+
+                return dataForCounting.filter((entry) => {
+                  if (!entry.data_details || !entry.data_details[actualKey]) return false;
+                  
+                  const entryValue = entry.data_details[actualKey];
+                  if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
+                  
+                  // Handle "Other (value)" format
+                  if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
+                    const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                    if (match) {
+                      return match[1].trim() === optionValue;
+                    }
+                  }
+                  
+                  return String(entryValue) === optionValue;
+                }).length;
+              };
+
+              return (
+                <div key={attribute} className="max-w-56">
+                  <label className="block text-xs font-medium text-zinc-600 mb-1">
+                    {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                  </label>
+                  <select
+                    value={dropdownFilters[attribute] || "all"}
+                    onChange={(e) => setDropdownFilters((prev) => ({ ...prev, [attribute]: e.target.value }))}
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  >
+                    <option value="all">All ({getCountForOption("all")})</option>
+                    {uniqueValues.map((value) => {
+                      const count = getCountForOption(value);
+                      return (
+                        <option key={value} value={value}>
+                          {value} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              );
+            })}
+
+            {/* Clear Filters Button */}
+            <button
+              onClick={clearAllFilters}
+              className="px-3 py-2 text-xs text-zinc-600 border border-zinc-300 rounded-md hover:bg-zinc-50 transition-colors"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* Entries List (paginated) */}
+      {loading ? (
+        <div className="flex items-center justify-center w-full">
+          <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
+        </div>
+      ) : (
+        <div className="mx-4 pr-2 my-2 max-h-[50vh] overflow-y-auto rounded-lg">
+          {sortedData.length > 0 ? (
+            sortedData.map((entry, index) => (
+              <div key={index} className="min-h-8 shadow-glow my-2 px-4 py-4 flex items-center bg-white rounded-lg">
+                <div className="flex-1 w-full">{renderDataDetails(entry.data_details)}</div>
+                <div className="flex items-center space-x-1">
+                  <button className="btn btn-sm btn-circle btn-ghost" onClick={() => handleEdit(entry)} title="Edit">
+                    <FaRegEdit className="h-5 w-5" />
+                  </button>
+                  <button
+                    className="btn btn-sm btn-circle btn-ghost"
+                    onClick={() => handleArchive(entry)}
+                    title="Delete"
+                  >
+                    <IoClose className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No existing entries found
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Only show Pagination Controls if there's data */}
+      {fieldData.length > 0 && (
+        <div className="mr-4 mt-4 rounded-lg flex flex-wrap justify-end items-center">
         {/* Right controls */}
         <div className="flex items-center gap-2">
-          {/* Sort control */}
-          <span className="text-gray-700 text-sm font-medium">Sort:</span>
-          <button
-            className="flex items-center px-3 py-1 border rounded hover:bg-gray-100"
-            onClick={() => setSortDescending((prev) => !prev)}
-            title="Sort by Year"
-            type="button"
-          >
-            <span className="mr-1 text-sm">Year</span>
-            {sortDescending ? (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            )}
-          </button>
           {/* Page size dropdown */}
           <select
             className="select select-sm select-bordered"
@@ -409,99 +929,47 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </button>
         </div>
       </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center w-full">
-          <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
-        </div>
-      ) : (
-        <div>
-          <div>
-            {sortedData.map((entry, index) =>
-              entry.editable ? (
-                <GenericEntry
-                  key={index}
-                  onEdit={() => handleEdit(entry)}
-                  data_details={renderDataDetails(entry.data_details)}
-                  onArchive={() => handleArchive(entry)}
-                />
-              ) : (
-                <GenericEntry
-                  key={index}
-                  onEdit={() => handleEdit(entry)}
-                  data_details={renderDataDetails(entry.data_details)}
-                  onArchive={() => handleArchive(entry)}
-                />
-              )
-            )}
-          </div>
-
-          {isModalOpen &&
-            selectedEntry &&
-            !isNew &&
-            (selectedEntry.editable ? (
-              <EntryModal
-                isNew={false}
-                user={user}
-                section={section}
-                fields={selectedEntry.fields}
-                user_cv_data_id={selectedEntry.data_id}
-                entryType={section.title}
-                fetchData={fetchData}
-                onClose={handleCloseModal}
-              />
-            ) : (
-              <PermanentEntryModal
-                isNew={false}
-                user={user}
-                section={section}
-                fields={selectedEntry.fields}
-                user_cv_data_id={selectedEntry.data_id}
-                entryType={section.title}
-                fetchData={fetchData}
-                onClose={handleCloseModal}
-              />
-            ))}
-          {isModalOpen && selectedEntry && isNew && (
-            <EntryModal
-              isNew={true}
-              user={user}
-              section={section}
-              fields={selectedEntry.fields}
-              user_cv_data_id={selectedEntry.data_id}
-              entryType={section.title}
-              fetchData={fetchData}
-              onClose={handleCloseModal}
-            />
-          )}
-          {/* // (selectedEntry.editable ? (
-
-            // ) : (
-            //   PermanentEntryModal
-            //     isNew={true}
-            //     user={user}
-            //     section={section}
-            //     fields={selectedEntry.fields}
-            //     user_cv_data_id={selectedEntry.data_id}
-            //     entryType={section.title}
-            //     fetchData={fetchData}
-            //     onClose={handleCloseModal}
-            //   />
-            // ))} */}
-          {retrievingData && (
-            <PublicationsModal
-              user={user}
-              section={section}
-              onClose={handleCloseModal}
-              setRetrievingData={setRetrievingData}
-              fetchData={fetchData}
-            />
-          )}
-        </div>
       )}
+
+      {/* Modals */}
+      {isModalOpen && selectedEntry && !isNew && (
+        <EntryModal
+          isNew={false}
+          user={user}
+          section={section}
+          fields={selectedEntry.fields}
+          user_cv_data_id={selectedEntry.data_id}
+          entryType={section.title}
+          fetchData={fetchData}
+          onClose={handleCloseModal}
+        />
+      )}
+      {isModalOpen && selectedEntry && isNew && (
+        <EntryModal
+          isNew={true}
+          user={user}
+          section={section}
+          fields={selectedEntry.fields}
+          user_cv_data_id={selectedEntry.data_id}
+          entryType={section.title}
+          fetchData={fetchData}
+          onClose={handleCloseModal}
+        />
+      )}
+      {retrievingData && (
+        <PublicationsModal
+          user={user}
+          section={section}
+          onClose={handleCloseModal}
+          setRetrievingData={setRetrievingData}
+          fetchData={fetchData}
+          existingPublications={existingPublications}
+        />
+      )}
+
       {/* Notification Toast */}
       {notification && (
-        <div className="fixed top-6 right-6 z-50 bg-green-600 text-white px-4 py-2 rounded shadow-lg transition-all">
+        <div className="fixed top-8 right-6 z-50 bg-green-600 text-white px-4 py-2 rounded shadow-lg transition-all">
           {notification}
         </div>
       )}

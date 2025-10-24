@@ -15,17 +15,17 @@ const truncateText = (text, maxLength) => {
 
 const truncateHtml = (html, maxLength) => {
   // Strip HTML tags for length calculation
-  const textOnly = html.replace(/<[^>]*>/g, '');
+  const textOnly = html.replace(/<[^>]*>/g, "");
   if (textOnly.length <= maxLength) {
     return html;
   }
-  
+
   // Truncate the text and add ellipsis
   const truncatedText = textOnly.substring(0, maxLength);
   // Find the last complete word
-  const lastSpaceIndex = truncatedText.lastIndexOf(' ');
+  const lastSpaceIndex = truncatedText.lastIndexOf(" ");
   const finalText = lastSpaceIndex > 0 ? truncatedText.substring(0, lastSpaceIndex) : truncatedText;
-  
+
   return `${finalText}...`;
 };
 
@@ -37,7 +37,7 @@ const isHtmlContent = (content) => {
 const isRichTextField = (key) => {
   // Check if field name suggests it's a rich text field
   const lowerKey = key.toLowerCase();
-  return lowerKey.includes('details') || lowerKey.includes('note');
+  return lowerKey.includes("details") || lowerKey.includes("note");
 };
 
 const capitalizeWords = (string) => {
@@ -59,6 +59,9 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
   const [attributes, setAttributes] = useState([]);
   const [updatedField1, setUpdatedField1] = useState(field1);
   const [updatedField2, setUpdatedField2] = useState(field2);
+  
+  // Check if this is an imported entry
+  const isImported = data_details && data_details.isImported;
 
   useEffect(() => {
     const newAttributes = Object.entries(data_details)
@@ -104,12 +107,12 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
   }, [data_details, field1, field2]);
 
   return (
-    <div className="min-h-8 shadow-glow my-2 px-4 py-4 flex items-center bg-white rounded-lg">
+    <div className="min-h-8 border my-2 px-4 py-2 flex items-center bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-200s">
       <div className="flex-1 w-full">
         {updatedField1 && (
-          <h1 className="text-gray-800 font-bold break-words">
+          <h1 className="text-md text-gray-800 font-bold break-words">
             {isHtmlContent(updatedField1) ? (
-              <div 
+              <div
                 className="html-content inline"
                 dangerouslySetInnerHTML={{ __html: truncateHtml(updatedField1, MAX_CHAR_LENGTH) }}
               />
@@ -119,9 +122,9 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
           </h1>
         )}
         {updatedField2 && (
-          <h2 className="text-gray-600 break-words mb-[3px]">
+          <h2 className="text-sm text-gray-600 break-words mb-[3px]">
             {isHtmlContent(updatedField2) ? (
-              <div 
+              <div
                 className="html-content inline"
                 dangerouslySetInnerHTML={{ __html: truncateHtml(updatedField2, MAX_CHAR_LENGTH) }}
               />
@@ -134,40 +137,55 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
           // Split "Label: Value"
           const [label, ...rest] = attribute.split(": ");
           const value = rest.join(": ");
-          const originalKey = Object.keys(data_details).find(k => 
-            capitalizeWords(k) === label.trim()
-          );
-          
+          const originalKey = Object.keys(data_details).find((k) => capitalizeWords(k) === label.trim());
+
           // Special case: Only show Agency if value is not 'rise' (case-insensitive)
           if (label.trim() === "Agency" && value.trim().toLowerCase() === "rise") {
             return <></>;
           }
-          if (label.trim().toLowerCase() === "highlight") {
+
+          // Track id for imported TTPS-UGME/PGME Data
+          if (label.trim().toLowerCase() === "track id") {
             return <></>;
           }
-          
+
+          // Track id for imported Rise Grant Data
+          if (label.trim().toLowerCase() === "record id") {
+            return <></>;
+          }
+
+          // redundant boolean variable not in use anymore
+          if (label.trim().toLowerCase() === "highlight" || label.trim().toLowerCase() === "footnote") {
+            return <></>;
+          }
+
+          // for imported entries
+          if (label.trim().toLowerCase() === "isimported") {
+            return <></>;
+          }
+
           const isRichField = originalKey && isRichTextField(originalKey);
           const isHtml = isHtmlContent(value);
-          
+
           // Check if rich text field is empty
           if (isRichField && isHtml) {
             // Strip HTML tags and check if content is empty
-            const textOnly = value.replace(/<[^>]*>/g, '').trim();
-            if (!textOnly || textOnly === '') {
+            const textOnly = value.replace(/<[^>]*>/g, "").trim();
+            if (!textOnly || textOnly === "") {
               return <></>;
             }
           }
-          
+
           // Check if regular text field is empty
-          if (!isRichField && (!value || value.trim() === '')) {
+          if (!isRichField && (!value || value.trim() === "")) {
             return <></>;
           }
-          
+
           return (
             <div key={index} className="text-gray-600 break-words text-sm">
               <span className="font-bold">{label}:</span>
               {isRichField && isHtml ? (
-                <div 
+                <div
                   className="html-content inline"
                   dangerouslySetInnerHTML={{ __html: truncateHtml(value, MAX_CHAR_LENGTH) }}
                 />
@@ -180,18 +198,28 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
       </div>
 
       <div className="flex items-center space-x-1">
-        {!isArchived && (
+        {/* Show Imported label for imported entries */}
+        {isImported && (
+          <span className="bg-green-100 text-green-700 text-sm font-bold px-3 py-1 rounded-md mr-1">
+            Automatic from ORCID
+          </span>
+        )}
+        
+        {!isArchived && onEdit && onArchive && (
           <>
-            <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onEdit()}>
-              <FaRegEdit className="h-5 w-5" />
-            </button>
+            {/* Only show edit button if not imported */}
+            {!isImported && (
+              <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onEdit()}>
+                <FaRegEdit className="h-5 w-5" />
+              </button>
+            )}
             <button className="btn btn-sm btn-circle btn-ghost" onClick={() => onArchive()}>
               <IoClose className="h-5 w-5" />
             </button>
           </>
         )}
 
-        {isArchived && (
+        {isArchived && onRestore && (
           <button className="btn btn-xs btn-circle btn-ghost" onClick={onRestore}>
             <LuUndo2 className="h-4 w-4" />
           </button>

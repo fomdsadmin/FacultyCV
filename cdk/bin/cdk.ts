@@ -19,6 +19,7 @@ import { Resolver3Stack } from '../lib/resolver3-stack';
 import { SupportFormStack } from '../lib/supportform-stack';
 import { BatchApiGatewayStack } from '../lib/batch-apigateway-stack';
 import { OidcAuthStack } from '../lib/oidc-auth-stack';
+import { GotenbergStack } from '../lib/gotenberg-stack';
 
 const app = new cdk.App();
 
@@ -89,6 +90,10 @@ const dataFetchStack = new DataFetchStack(app, `${resourcePrefix}-DataFetchStack
 );
 
 const patentDataStack = new PatentDataStack(app, `${resourcePrefix}-PatentDataStack`, grantDataStack, databaseStack,
+  {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
+);
+
+const gotenbergStack = new GotenbergStack(app, `${resourcePrefix}-GotenbergStack`, apiStack,
   {env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }}
 );
 

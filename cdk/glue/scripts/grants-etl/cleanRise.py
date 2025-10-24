@@ -104,6 +104,8 @@ def cleanRise(bucket, key_raw, key_clean):
     # Amount column
     df["Award Amount"] = df["Award Amount"].str.replace(",", "")
     df["Award Amount"] = df["Award Amount"].str.replace("$", "", regex=False)
+    # Handle parentheses (negative amounts) by removing them and applying negative sign
+    df["Award Amount"] = df["Award Amount"].str.replace(r'^\((.*)\)$', r'-\1', regex=True)
     df["Award Amount"] = df["Award Amount"].replace(r"^\s*$", "0", regex=True)
     df["Amount"] = df["Award Amount"].astype(float).fillna(0).astype(int)
 
@@ -111,19 +113,20 @@ def cleanRise(bucket, key_raw, key_clean):
     df["Title"] = df["Project Title"]
 
     # Extract year from "From Year" column
-    funding_decision_year = df["From Year"].astype(str)
+    from_year = df["From Year"].astype(str)
+    to_year = df["To Year"].astype(str)
 
     # Create "Dates" column
-    df["Dates"] = funding_decision_year + "-"
+    df["Dates"] = from_year + "-" + to_year
+    df["Record Id"] = df["Record Id"].astype(str)
 
-    # Drop redundant columns
-    df = df.drop(columns=[
-        "From Year", "Application Number", "Researcher Name", "PI Rank", 
-        "Award Type", "Project Title", "Award Amount", "Sector", 
-        "Sponsor Type", "Sponsor Name","Government", "Tri-Council Code", 
-        "Program Name", "CFI BCKDF", "Faculty", "Researcher Home Faculty", 
-        "FoM Department", "Researcher Home Department", "FoM Research Institute", 
-        "Institution Name", "FoM Research Centre Name "])
+    # Remove duplicates based on specified fields: Researcher Name, Sponsor Name, Program Name, Amount, Project Title, From Year, To Year
+    # Keep only the first occurrence of each unique combination
+    duplicate_check_fields = ["Researcher Name", "Sponsor Name", "Program Name", "Amount", "Project Title", "From Year", "To Year"]
+    df = df.drop_duplicates(subset=duplicate_check_fields, keep='first')
+
+    # Keep only the custom columns we created
+    df = df[["First Name", "Last Name", "Keywords", "Department", "Agency", "Sponsor", "Program", "Amount", "Title", "Dates", "Record Id"]]
 
     putToS3(df, bucket, key=key_clean)
 

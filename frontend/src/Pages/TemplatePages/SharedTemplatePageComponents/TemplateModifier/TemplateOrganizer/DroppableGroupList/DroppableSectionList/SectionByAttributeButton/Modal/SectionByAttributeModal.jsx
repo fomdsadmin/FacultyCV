@@ -48,8 +48,15 @@ const SectionByAttributeModal = ({ isOpen, preparedSection, onClose }) => {
 
                 // Check if subsections already exist for this attribute
                 if (preparedSection.sub_section_settings && preparedSection.section_by_attribute === selectedAttribute) {
-                    // Use existing subsections
-                    setSubSectionSettings(preparedSection.sub_section_settings);
+                    // Use existing subsections, ensure each has a 'hidden' flag
+                    const normalized = {
+                        ...preparedSection.sub_section_settings,
+                        sub_sections: (preparedSection.sub_section_settings.sub_sections || []).map(s => ({
+                            ...s,
+                            hidden: typeof s.hidden === "boolean" ? s.hidden : false
+                        }))
+                    };
+                    setSubSectionSettings(normalized);
                 } else {
                     // Generate new subsections
                     const newSubSections = values.map((value, index) => ({
@@ -58,7 +65,8 @@ const SectionByAttributeModal = ({ isOpen, preparedSection, onClose }) => {
                         renamed_title: "", // User can customize this
                         attributes: shownAttributes, // Array of attributes from original section
                         attributes_rename_dict: {}, // Object to store renamed attribute names,
-                        hidden_attributes_list: [] // Array that determines which attributes should be hidden
+                        hidden_attributes_list: [], // Array that determines which attributes should be hidden
+                        hidden: false // new: whether this sub-section is hidden
                     }));
 
                     setSubSectionSettings({
@@ -74,6 +82,14 @@ const SectionByAttributeModal = ({ isOpen, preparedSection, onClose }) => {
             setSubSectionSettings({ sub_sections: [], display_titles: true });
         }
     }, [selectedAttribute, sectionsMap, preparedSection]);
+
+    // toggle hidden state for a subsection
+    const toggleSubSectionHidden = (id) => {
+        setSubSectionSettings(prev => {
+            const subs = (prev.sub_sections || []).map(s => s.id === id ? { ...s, hidden: !s.hidden } : s);
+            return { ...prev, sub_sections: subs };
+        });
+    };
 
     if (!isOpen) return null;
 
@@ -113,6 +129,7 @@ const SectionByAttributeModal = ({ isOpen, preparedSection, onClose }) => {
                             subSections={subSectionSettings.sub_sections}
                             setSubSectionSettings={setSubSectionSettings}
                             preparedSection={preparedSection}
+                            toggleSubSectionHidden={toggleSubSectionHidden} // new prop to allow hide button actions
                         />
                     </div>
 

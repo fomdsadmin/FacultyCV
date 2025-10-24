@@ -1,96 +1,101 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import { useApp } from "../Contexts/AppContext.jsx";
+import { useNavigate } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import AdminMenu from "../Components/AdminMenu.jsx";
-import Filters from "../Components/Filters.jsx";
+// import Filters from "../Components/Filters.jsx";
 import ManageUser from "../Components/ManageUser.jsx";
-import UserCard from "../Components/UserCard.jsx";
 import AddUserModal from "../Components/AddUserModal.jsx";
 import ImportUserModal from "../Components/ImportUserModal.jsx";
 import PendingRequestsModal from "../Components/PendingRequestsModal.jsx";
-import { getAllUsers, removeUser } from "../graphql/graphqlHelpers.js";
-
-// Custom Modal Component
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = "confirm" }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800">{title}</h3>
-        <p className="text-gray-600 mb-6 whitespace-pre-line">{message}</p>
-        <div className="flex justify-end gap-3">
-          {type === "confirm" && (
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Cancel
-            </button>
-          )}
-          <button
-            onClick={type === "confirm" ? onConfirm : onClose}
-            className={`px-4 py-2 rounded-lg text-white transition-colors ${
-              type === "confirm"
-                ? "bg-red-600 hover:bg-red-700"
-                : type === "error"
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {type === "confirm" ? "Confirm" : "OK"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { ConfirmModal, DeactivatedUsersModal, TerminatedUsersModal } from "../Components/AdminUsersModals.jsx";
+import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext.jsx";
+import { useAdmin } from "Contexts/AdminContext.jsx";
+import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
+import { removeUser } from "../graphql/graphqlHelpers.js";
+import AdminUserTabs from "Components/AdminUserTabs.jsx";
+import { use } from "react";
 
 const AdminUsers = ({ userInfo, getCognitoUser }) => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
+  const [approvedUsers, setApprovedUsers] = useState([]);
+  const [deactivatedUsers, setDeactivatedUsers] = useState([]);
+  const [terminatedUsers, setTerminatedUsers] = useState([]);
+  const [affiliations, setAffiliations] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [rejectedUsers, setRejectedUsers] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [deactivatedSearchTerm, setDeactivatedSearchTerm] = useState("");
+  const [terminatedSearchTerm, setTerminatedSearchTerm] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [deactivatedDepartmentFilter, setDeactivatedDepartmentFilter] = useState("");
+  const [terminatedDepartmentFilter, setTerminatedDepartmentFilter] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isPendingRequestsModalOpen, setIsPendingRequestsModalOpen] = useState(false);
   const [isImportUsersModalOpen, setIsImportUsersModalOpen] = useState(false);
+  const [isDeactivatedUsersModalOpen, setIsDeactivatedUsersModalOpen] = useState(false);
+  const [isTerminatedUsersModalOpen, setIsTerminatedUsersModalOpen] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "confirm", onConfirm: null });
+  const { startManagingUser } = useApp();
+  const navigate = useNavigate();
+
+  const { logAction } = useAuditLogger();
+  const { isLoading, setIsLoading, allUsers, departmentAffiliations, fetchAllUsers } = useAdmin();
 
   useEffect(() => {
-    fetchAllUsers();
-  }, []);
+    setLoading(isLoading);
+  }, [isLoading]);
 
-  async function fetchAllUsers() {
+  useEffect(() => {
+    setUsers(allUsers);
+  }, [allUsers]);
+
+  useEffect(() => {
+    filterAllUsers();
+  }, [users]);
+
+  useEffect(() => {
+    setAffiliations(departmentAffiliations);
+  }, [departmentAffiliations]);
+
+  async function filterAllUsers() {
     setLoading(true);
     try {
-      const users = await getAllUsers();
-
       // Clear and rebuild the arrays
       const pendingUsersList = [];
       const approvedUsersList = [];
       const rejectedUsersList = [];
+      const deactivatedUsersList = [];
+      const terminatedUsersList = [];
 
       users.forEach((user) => {
-        if (user.pending === true && user.approved === false) {
+        if (user.terminated === true && user.active === false) {
+          terminatedUsersList.push(user);
+        } else if (user.pending === true && user.approved === false) {
           pendingUsersList.push(user);
         } else if (user.pending == false && user.approved === false) {
           rejectedUsersList.push(user);
         } else if (user.pending == false && user.approved === true) {
-          approvedUsersList.push(user);
+          // Filter based on active field
+          if (user.active === true && user.terminated === false) {
+            approvedUsersList.push(user);
+          } else {
+            deactivatedUsersList.push(user);
+          }
         }
       });
 
-      setUsers(approvedUsersList);
+      setApprovedUsers(approvedUsersList);
       setPendingUsers(pendingUsersList);
       setRejectedUsers(rejectedUsersList);
-
-      console.log("Pending users count:", pendingUsersList.length, pendingUsersList);
-      console.log("Rejected users count:", rejectedUsersList.length, rejectedUsersList);
-      console.log("Approved users count:", approvedUsersList.length, approvedUsersList);
+      setDeactivatedUsers(deactivatedUsersList);
+      setTerminatedUsers(terminatedUsersList);
+      
     } catch (error) {
       console.error("Error fetching users:", error);
     }
@@ -101,35 +106,66 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
     setSearchTerm(event.target.value);
   };
 
+  // Function to get primary rank for a user from affiliations data
+  const getPrimaryRank = (userId) => {
+    const userAffiliation = affiliations.find((aff) => aff.user_id === userId);
+
+    if (userAffiliation && userAffiliation.primary_unit) {
+      try {
+        // Parse the primary_unit string to JSON array
+        const primaryUnits =
+          typeof userAffiliation.primary_unit === "string"
+            ? JSON.parse(userAffiliation.primary_unit)
+            : userAffiliation.primary_unit;
+
+        // Handle array of primary units - return first one's rank if available
+        if (Array.isArray(primaryUnits) && primaryUnits.length > 0 && primaryUnits[0].rank) {
+          return primaryUnits[0].rank;
+        }
+      } catch (error) {
+        console.error("Error parsing primary_unit JSON:", error, userAffiliation.primary_unit);
+      }
+    }
+
+    return null;
+  };
+
+  // Function to get joint ranks for a user from affiliations data
+  const getJointRanks = (userId) => {
+    const userAffiliation = affiliations.find((aff) => aff.user_id === userId);
+
+    if (userAffiliation && userAffiliation.joint_units) {
+      try {
+        // Parse the joint_units string to JSON array
+        const jointUnits =
+          typeof userAffiliation.joint_units === "string"
+            ? JSON.parse(userAffiliation.joint_units)
+            : userAffiliation.joint_units;
+
+        if (Array.isArray(jointUnits) && jointUnits.length > 0) {
+          // Extract ranks from joint units and filter out empty ones
+          const ranks = jointUnits.map((unit) => unit.rank).filter((rank) => rank && rank.trim() !== "");
+
+          if (ranks.length > 0) {
+            // Remove duplicates by converting to Set and back to array
+            const uniqueRanks = [...new Set(ranks)];
+            return uniqueRanks.join(", ");
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing joint_units JSON:", error, userAffiliation.joint_units);
+      }
+    }
+
+    return null;
+  };
+
   // All unique roles for tabs and filters
-  const filters = Array.from(new Set(users.map((user) => user.role)));
+  const filters = Array.from(
+    new Set(approvedUsers.map((user) => (user.role === "Assistant" ? "Delegate" : user.role)))
+  );
 
   // Tab bar for roles (copied and adapted from DepartmentAdminUsers)
-  const UserTabs = ({ filters, activeFilter, onSelect }) => (
-    <div className="flex flex-wrap gap-4 mb-6 px-4 max-w-full">
-      <button
-        className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-          activeFilter === null ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-        }`}
-        onClick={() => onSelect(null)}
-      >
-        All
-      </button>
-      {[...filters]
-        .sort((a, b) => a.localeCompare(b))
-        .map((filter) => (
-          <button
-            key={filter}
-            className={`text-md font-bold px-5 py-2 rounded-lg transition-colors duration-200 min-w-max whitespace-nowrap ${
-              activeFilter === filter ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-            onClick={() => onSelect(filter)}
-          >
-            {filter}
-          </button>
-        ))}
-    </div>
-  );
 
   // When user clicks a tab, update the activeTab
   const handleTabSelect = (selectedRole) => {
@@ -138,25 +174,48 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   };
 
   const handleManageClick = (value) => {
-    const user = users.filter((user) => user.user_id === value);
+    const user = approvedUsers.filter((user) => user.user_id === value);
     setActiveUser(user[0]);
   };
 
-  const searchedUsers = users
+  const handleImpersonateClick = async (value) => {
+    const user = approvedUsers.find((user) => user.user_id === value);
+    if (user) {
+      // Log the impersonation action with the impersonated user details
+      await logAction(AUDIT_ACTIONS.IMPERSONATE, {
+        impersonated_user: {
+          user_id: user.user_id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          role: user.role,
+        },
+      });
+
+      startManagingUser(user);
+      navigate("/faculty/home");
+    }
+  };
+
+  const searchedUsers = approvedUsers
     .filter((user) => {
       const firstName = user.first_name || "";
       const lastName = user.last_name || "";
       const email = user.email || "";
+      const fullName = `${firstName} ${lastName}`.toLowerCase();
 
       const matchesSearch =
-        firstName.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-        lastName.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-        email.toLowerCase().startsWith(searchTerm.toLowerCase());
+        firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        fullName.includes(searchTerm.toLowerCase());
 
-      const matchesTab = !activeTab || user.role === activeTab;
+      // Fix: If activeTab is 'Delegate', match users with role 'Assistant'
+      const matchesTab = !activeTab || (activeTab === "Delegate" ? user.role === "Assistant" : user.role === activeTab);
       const matchesFilter = activeFilters.length === 0 || !activeFilters.includes(user.role);
+      const matchesDepartment = !departmentFilter || user.primary_department === departmentFilter;
 
-      return matchesSearch && matchesTab && matchesFilter;
+      return matchesSearch && matchesTab && matchesFilter && matchesDepartment;
     })
     .sort((a, b) => {
       const firstNameA = a.first_name.toLowerCase();
@@ -190,7 +249,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
   };
 
   const handleRemoveUser = async (userId) => {
-    const userToRemove = users.find((user) => user.user_id === userId);
+    const userToRemove = approvedUsers.find((user) => user.user_id === userId);
 
     if (!userToRemove) {
       console.error("User not found");
@@ -199,39 +258,152 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
 
     // Show confirmation dialog
     showModal(
-      "Confirm User Removal",
-      `Are you sure you want to remove user "${userToRemove.first_name} ${userToRemove.last_name}" (${userToRemove.email})?\n\nThis action cannot be undone.`,
+      "Confirm User Deactivation",
+      `Are you sure you want to deactivate user \n"${userToRemove.first_name} ${userToRemove.last_name}"?\n\nDeactivated users can be reactivated later.`,
       "confirm",
       async () => {
         try {
-          console.log("Removing user:", userToRemove);
+          console.log("Deactivating user:", userToRemove);
 
-          // Call the removeUser function
-          const result = await removeUser(
-            userToRemove.user_id,
-            userToRemove.email,
-            userToRemove.first_name,
-            userToRemove.last_name
-          );
-
-          console.log("User removal result:", result);
+          // Call the updateUserActiveStatus function to set active: false
+          const result = await updateUserActiveStatus(userToRemove.user_id, false);
 
           // Refresh the users list
           fetchAllUsers();
 
           // Show success message
           showModal(
-            "User Removed Successfully",
-            `User ${userToRemove.first_name} ${userToRemove.last_name} has been successfully removed.`,
+            "User Deactivated Successfully",
+            `User ${userToRemove.first_name} ${userToRemove.last_name} has been successfully deactivated.`,
             "success"
           );
         } catch (error) {
-          console.error("Error removing user:", error);
-          showModal("Error", "Failed to remove user. Please try again.", "error");
+          console.error("Error deactivating user:", error);
+          showModal("Error", "Failed to deactivate user. Please try again.", "error");
         }
       }
     );
   };
+
+  const handleReactivateUser = async (userId) => {
+    const userToReactivate = deactivatedUsers.find((user) => user.user_id === userId);
+
+    if (!userToReactivate) {
+      console.error("User not found");
+      return;
+    }
+
+    // Show confirmation dialog
+    showModal(
+      "Confirm User Activation",
+      `Are you sure you want to activate user: \n \n '${userToReactivate.first_name} ${userToReactivate.last_name}'`,
+      "confirm",
+      async () => {
+        try {
+          console.log("Reactivating user:", userToReactivate);
+
+          // Call updateUserActiveStatus to set active: true
+          const result = await updateUserActiveStatus(userToReactivate.user_id, true);
+
+          // Refresh the users list
+          fetchAllUsers();
+
+          // Show success message
+          showModal(
+            "User Activated Successfully",
+            `User ${userToReactivate.first_name} ${userToReactivate.last_name} has been successfully activated.`,
+            "success"
+          );
+        } catch (error) {
+          console.error("Error reactivating user:", error);
+          showModal("Error", "Failed to reactivate user. Please try again.", "error");
+        }
+      }
+    );
+  };
+
+  const handleActivateAll = (user_ids) => {
+    const userCount = user_ids.length;
+
+    // Show confirmation dialog
+    showModal(
+      "Confirm Bulk User Activation",
+      `Are you sure you want to activate all ${userCount} filtered users?`,
+      "confirm",
+      async () => {
+        try {
+          console.log("Activating multiple users:", user_ids);
+
+          // Call updateUserActiveStatus with array of user_ids
+          const result = await updateUserActiveStatus(user_ids, true);
+
+          // Refresh the users list
+          fetchAllUsers();
+
+          // Show success message
+          showModal("Users Activated Successfully", `${userCount} users have been successfully activated.`, "success");
+        } catch (error) {
+          console.error("Error activating users:", error);
+          showModal("Error", "Failed to activate users. Please try again.", "error");
+        }
+      }
+    );
+  };
+
+  const handleDeleteUser = async (user) => {
+    try {
+      console.log("Deleting user:", user);
+
+      // Call the removeUser function to permanently delete from database
+      const result = await removeUser(user.user_id);
+
+      // Log the deletion action
+      await logAction(AUDIT_ACTIONS.DELETE_USER || "DELETE_USER", {
+        userId: user.user_id,
+        name: `${user.first_name} ${user.last_name}`,
+      });
+
+      // Refresh the users list
+      fetchAllUsers();
+
+      // Show success message
+      showModal(
+        "User Deleted Successfully",
+        `User ${user.first_name} ${user.last_name} has been permanently deleted.`,
+        "success"
+      );
+
+      console.log("User deletion result:", result);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      showModal("Error", "Failed to delete user. Please try again.", "error");
+    }
+  };
+
+  const handleDeactivatedSearchChange = (event) => {
+    setDeactivatedSearchTerm(event.target.value);
+  };
+
+  const handleDepartmentFilterChange = (event) => {
+    setDepartmentFilter(event.target.value);
+  };
+
+  const handleDeactivatedDepartmentFilterChange = (event) => {
+    setDeactivatedDepartmentFilter(event.target.value);
+  };
+
+  const handleTerminatedSearchChange = (event) => {
+    setTerminatedSearchTerm(event.target.value);
+  };
+
+  const handleTerminatedDepartmentFilterChange = (event) => {
+    setTerminatedDepartmentFilter(event.target.value);
+  };
+
+  // Get unique departments for active users
+  const activeDepartments = Array.from(
+    new Set(approvedUsers.map((user) => user.primary_department).filter(Boolean))
+  ).sort();
 
   return (
     <PageContainer>
@@ -245,48 +417,98 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
           <div>
             {activeUser === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Users ({users.length})</h1>
-                <button
-                  onClick={() => setIsAddUserModalOpen(true)}
-                  className="btn btn-primary ml-4"
-                  title="Add New User"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                  </svg>
-                  Add New User
-                </button>
-                <button
-                  onClick={() => setIsPendingRequestsModalOpen(true)}
-                  className="btn btn-primary ml-4"
-                  title={`Pending Requests`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Pending Requests ({pendingUsers.length})
-                </button>
-                <button
-                  onClick={() => setIsImportUsersModalOpen(true)}
-                  className="btn btn-primary m-4"
-                  title={`Import Users`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 2a1 1 0 011 1v5.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L9 8.586V3a1 1 0 011-1z" />
-                    <path d="M3 14a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
-                  </svg>
-                  Import Users
-                </button>
-                <div className="m-4 flex">
-                  <label className="input input-bordered flex items-center gap-2 flex-1">
+                <h1 className="text-left mx-4 text-4xl font-bold text-zinc-600">
+                  Active Members ({approvedUsers.length})
+                </h1>
+                <div className="flex justify-start my-4">
+                  <button
+                    onClick={() => setIsAddUserModalOpen(true)}
+                    className="btn btn-primary ml-4"
+                    title="Add New User"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                    </svg>
+                    Add New User
+                  </button>
+                  <button
+                    onClick={() => setIsPendingRequestsModalOpen(true)}
+                    className="btn btn-primary ml-4"
+                    title={`Pending Requests`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Pending Requests ({pendingUsers.length})
+                  </button>
+                  <button
+                    onClick={() => setIsImportUsersModalOpen(true)}
+                    className="btn btn-primary ml-4"
+                    title={`Import Users`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 2a1 1 0 011 1v5.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L9 8.586V3a1 1 0 011-1z" />
+                      <path d="M3 14a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
+                    </svg>
+                    Import Users
+                  </button>
+
+                  <button
+                    onClick={() => setIsDeactivatedUsersModalOpen(true)}
+                    className="btn btn-secondary ml-4"
+                    title="View Inactive Members"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Inactive Members ({deactivatedUsers.length})
+                  </button>
+
+                  <button
+                    onClick={() => setIsTerminatedUsersModalOpen(true)}
+                    className="btn btn-secondary ml-4"
+                    title="View Terminated Members"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Terminated Members ({terminatedUsers.length})
+                  </button>
+                </div>
+
+                <div className="mx-4 flex mb-4 gap-2">
+                  <select
+                    className="select select-bordered min-w-48"
+                    value={departmentFilter}
+                    onChange={handleDepartmentFilterChange}
+                  >
+                    <option value="">All Departments ({approvedUsers.length})</option>
+                    {activeDepartments.map((dept) => {
+                      const deptCount = approvedUsers.filter((user) => user.primary_department === dept).length;
+                      return (
+                        <option key={dept} value={dept}>
+                          {dept} ({deptCount})
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <label className="input input-bordered flex items-center flex-1">
                     <input
                       type="text"
                       className="grow"
-                      placeholder="Search"
+                      placeholder="Search members..."
                       value={searchTerm}
                       onChange={handleSearchChange}
                     />
@@ -304,7 +526,14 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                     </svg>
                   </label>
                 </div>
-                <UserTabs filters={filters} activeFilter={activeTab} onSelect={handleTabSelect} />
+                <AdminUserTabs
+                  filters={filters}
+                  activeFilter={activeTab}
+                  onSelect={handleTabSelect}
+                  users={approvedUsers}
+                  searchTerm={searchTerm}
+                  departmentFilter={departmentFilter}
+                />
                 {/* Optionally keep Filters below if you want both */}
                 {/* <Filters activeFilters={activeFilters} onFilterChange={setActiveFilters} filters={filters}></Filters> */}
                 {searchedUsers.length === 0 ? (
@@ -312,23 +541,110 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                     <div className="block text-m mb-1 mt-6 text-zinc-600">No Users Found</div>
                   </div>
                 ) : (
-                  searchedUsers.map((user) => (
-                    <UserCard
-                      onClick={handleManageClick}
-                      onRemove={handleRemoveUser}
-                      key={user.user_id}
-                      id={user.user_id}
-                      firstName={user.first_name}
-                      lastName={user.last_name}
-                      email={user.email}
-                      role={user.role}
-                    ></UserCard>
-                  ))
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 mx-4 overflow-auto max-h-[60vh]">
+                    <table className="w-full table-fixed min-w-[650px] md:overflow-x-auto">
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 sticky top-0 z-10">
+                        <tr>
+                          <th className="px-4 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                            User
+                          </th>
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                            Role
+                          </th>
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                            Department
+                          </th>
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                            CWL
+                          </th>
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/6">
+                            Primary Rank
+                          </th>
+                          <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700 uppercase tracking-wide w-1/4">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {searchedUsers.map((user, index) => (
+                          <tr
+                            key={user.user_id}
+                            className={`transition-colors duration-150 hover:bg-blue-50/50 ${
+                              index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                            }`}
+                          >
+                            <td className="px-4 py-5 w-1/6">
+                              <div className="flex flex-col min-w-0 break-words">
+                                <div className="text-sm font-semibold text-gray-900 mb-1 truncate">
+                                  {user.first_name} {user.last_name}
+                                </div>
+                                <div className="text-sm text-gray-500 truncate">{user.email}</div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-center w-1/6">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                {user.role === "Assistant" ? "Delegate" : user.role}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-center w-1/6">
+                              <span className="text-sm font-medium text-gray-700">
+                                {user.primary_department ? (
+                                  user.primary_department
+                                ) : (
+                                  <span className="text-gray-400 italic">Not specified</span>
+                                )}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-center w-1/6">
+                              <span className="text-sm font-medium text-gray-700">
+                                {user.cwl_username ? (
+                                  user.cwl_username
+                                ) : (
+                                  <span className="text-gray-400 italic">Not specified</span>
+                                )}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-center w-1/6">
+                              <span className="text-sm font-medium text-gray-700">
+                                {getPrimaryRank(user.user_id) ? (
+                                  getPrimaryRank(user.user_id)
+                                ) : (
+                                  <span className="text-gray-400 italic">Not specified</span>
+                                )}
+                              </span>
+                            </td>
+                            <td className="px-4 py-5 w-1/4">
+                              <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-center gap-2 items-stretch w-full">
+                                <button
+                                  onClick={() => handleImpersonateClick(user.user_id)}
+                                  className="btn btn-accent btn-sm text-white shadow text-xs whitespace-nowrap"
+                                >
+                                  Impersonate
+                                </button>
+                                <button
+                                  onClick={() => handleManageClick(user.user_id)}
+                                  className="btn btn-primary btn-sm text-white text-xs whitespace-nowrap"
+                                >
+                                  Quick Actions
+                                </button>
+                                <button
+                                  onClick={() => handleRemoveUser(user.user_id)}
+                                  className="btn btn-warning btn-sm text-white text-xs whitespace-nowrap"
+                                >
+                                  Deactivate
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             ) : (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <ManageUser user={activeUser} onBack={handleBack} fetchAllUsers={fetchAllUsers}></ManageUser>
+                <ManageUser user={activeUser} onBack={handleBack} fetchAllUsers={fetchAllUsers} />
               </div>
             )}
           </div>
@@ -355,6 +671,35 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
         setRejectedUsers={setRejectedUsers}
         refreshUsers={fetchAllUsers}
         onClose={() => setIsPendingRequestsModalOpen(false)}
+      />
+
+      <DeactivatedUsersModal
+        isOpen={isDeactivatedUsersModalOpen}
+        onClose={() => setIsDeactivatedUsersModalOpen(false)}
+        deactivatedUsers={deactivatedUsers}
+        searchTerm={deactivatedSearchTerm}
+        onSearchChange={handleDeactivatedSearchChange}
+        departmentFilter={deactivatedDepartmentFilter}
+        onDepartmentChange={handleDeactivatedDepartmentFilterChange}
+        getPrimaryRank={getPrimaryRank}
+        getJointRanks={getJointRanks}
+        onReactivateUser={handleReactivateUser}
+        onActivateAll={handleActivateAll}
+        onDeleteUser={handleDeleteUser}
+        userRole={userInfo.role}
+      />
+
+      <TerminatedUsersModal
+        isOpen={isTerminatedUsersModalOpen}
+        onClose={() => setIsTerminatedUsersModalOpen(false)}
+        terminatedUsers={terminatedUsers}
+        searchTerm={terminatedSearchTerm}
+        onSearchChange={handleTerminatedSearchChange}
+        departmentFilter={terminatedDepartmentFilter}
+        onDepartmentChange={handleTerminatedDepartmentFilterChange}
+        getPrimaryRank={getPrimaryRank}
+        getJointRanks={getJointRanks}
+        userRole={userInfo.role}
       />
 
       <ConfirmModal

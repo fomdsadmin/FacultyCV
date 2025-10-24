@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import PageContainer from '../../Views/PageContainer.jsx';
-import FacultyMenu from '../../Components/FacultyMenu.jsx';
-import { Link } from 'react-router-dom';
-import Dashboard from './dashboard_charts.jsx'; // ← Import chart component
-import {
-  GetNotifications,
-  getUserDeclarations,
-} from "../../graphql/graphqlHelpers.js";
+import React, { useState, useEffect } from "react";
+import PageContainer from "../../Views/PageContainer.jsx";
+import FacultyMenu from "../../Components/FacultyMenu.jsx";
+import { Link } from "react-router-dom";
+import Dashboard from "./dashboard_charts.jsx"; // ← Import chart component
+import { GetNotifications, getUserDeclarations, getStagingScopusPublications } from "../../graphql/graphqlHelpers.js";
 import { normalizeDeclarations } from "../Declarations/Declarations.jsx";
+import { getAuditViewData } from "../../graphql/graphqlHelpers.js";
 
 const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [notifications, setNotifications] = useState([]);
   const [declarations, setDeclarations] = useState([]);
+  const [newPublicationsCount, setNewPublicationsCount] = useState(0);
+  const [loadingPublications, setLoadingPublications] = useState(false);
+
+  const [lastVisit, setLastVisit] = useState(null);
+  const [loadingLastVisit, setLoadingLastVisit] = useState(false);
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -28,14 +32,99 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   useEffect(() => {
     async function fetchDeclarations() {
       if (userInfo?.first_name && userInfo?.last_name) {
-        const data = await getUserDeclarations(
-          userInfo.user_id
-        );
+        const data = await getUserDeclarations(userInfo.user_id);
         setDeclarations(normalizeDeclarations(data));
       }
     }
     fetchDeclarations();
   }, [userInfo]);
+
+  useEffect(() => {
+    async function fetchNewPublications() {
+      if (!userInfo?.user_id) return;
+
+      setLoadingPublications(true);
+      try {
+        // Get new publications from staging table
+        const result = await getStagingScopusPublications(userInfo.user_id, true); // is_new = true
+        setNewPublicationsCount(result?.returned_count || 0);
+      } catch (error) {
+        console.error("Error fetching new publications:", error);
+        setNewPublicationsCount(0);
+      } finally {
+        setLoadingPublications(false);
+      }
+    }
+
+    fetchNewPublications();
+  }, [userInfo]);
+
+  // fetch latest visit timestamp from the first page audit view data
+  useEffect(() => {
+    async function fetchLastVisitAuth() {
+      if (!userInfo?.user_id) return;
+
+      setLoadingLastVisit(true);
+      let pageNumber = 1;
+      let found = null;
+
+      try {
+        while (!found) {
+          const response = await getAuditViewData({
+            logged_user_id: userInfo.user_id,
+            page_number: pageNumber,
+            page_size: 50, // fetch in batches
+          });
+
+          const records = response?.records || [];
+          if (!records.length) break; // no more pages
+
+          // Look for /auth page in this batch
+          const match = records.find((r) => r.page === "/auth" || r.page === "/");
+          if (match) {
+            found = match.ts;
+            break;
+          }
+
+          pageNumber++;
+        }
+
+        setLastVisit(found);
+      } catch (err) {
+        console.error("Error fetching last visit:", err);
+      } finally {
+        setLoadingLastVisit(false);
+      }
+    }
+
+    fetchLastVisitAuth();
+  }, [userInfo]);
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return "";
+
+    try {
+      let parsedTimestamp = timestamp;
+
+      if (typeof timestamp === "string" && timestamp.includes(" ") && !timestamp.includes("T")) {
+        parsedTimestamp = timestamp.replace(" ", "T") + "Z";
+      }
+
+      const date = new Date(parsedTimestamp);
+
+      return date.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZoneName: "short",
+      });
+    } catch {
+      return timestamp;
+    }
+  };
 
   return (
     <PageContainer>
@@ -48,15 +137,14 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       />
 
       {/* Main content */}
-      <main className="px-[1vw] sm:px-[2vw] md:px-[3vw] lg:px-[4vw] w-full overflow-auto py-4">
+      <main className="w-full overflow-auto py-4">
         {/* Header */}
         <div className="flex justify-between items-start mb-2">
           <div>
-            <div className="text-xl font-semibold text-gray-800">
-              Welcome, Dr. {userInfo.last_name}
-            </div>
+            <div className="text-xl font-semibold text-gray-800">Welcome, Dr. {userInfo.last_name}</div>
             <div className="text-sm text-gray-500">
-              Last visit: 6 Nov 2025, 3:16PM (static)
+              Last visit:{" "}
+              {loadingLastVisit ? <span>Loading...</span> : lastVisit ? formatTimestamp(lastVisit) : "No record found"}
             </div>
           </div>
           <div>
@@ -72,12 +160,9 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             <h1 className="text-lg font-semibold">Overview</h1>
             <div className="relative flex flex-col items-center">
               {/* Declarations Section - existing code */}
-              {declarations &&
-              declarations.some((d) => d.year === new Date().getFullYear()) ? (
+              {declarations && declarations.some((d) => d.year === new Date().getFullYear()) ? (
                 (() => {
-                  const currentDecl = declarations.find(
-                    (d) => d.year === new Date().getFullYear()
-                  );
+                  const currentDecl = declarations.find((d) => d.year === new Date().getFullYear());
                   return (
                     <div className="relative mt-4 w-full h-full flex flex-col bg-green-50 border-l-8 border-green-500 rounded-xl shadow-lg px-4 py-4 mb-6">
                       <div className="flex items-center gap-2">
@@ -88,26 +173,16 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                           strokeWidth={2}
                           viewBox="0 0 24 24"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                         <div className="flex-1 xl:pr-32">
                           {" "}
                           {/* Add right padding on large screens */}
                           <div className="text-md font-bold text-green-800 mb-1">
-                            Declaration submitted for{" "}
-                            <span>{currentDecl.year}</span>
+                            Declaration submitted for <span>{currentDecl.year}</span>
                           </div>
                           <div className="text-xs text-gray-700">
-                            Created on:{" "}
-                            <b>
-                              {currentDecl.created_on
-                                ? currentDecl.created_on.split(" ")[0]
-                                : "N/A"}
-                            </b>
+                            Created on: <b>{currentDecl.created_on ? currentDecl.created_on.split(" ")[0] : "N/A"}</b>
                           </div>
                         </div>
                       </div>
@@ -118,9 +193,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                           Submitted
                         </span>
                         <Link to="/faculty/declarations">
-                          <button className="btn btn-xs btn-outline btn-success">
-                            View Declarations
-                          </button>
+                          <button className="btn btn-xs btn-outline btn-success">View Declarations</button>
                         </Link>
                       </div>
                     </div>
@@ -146,12 +219,10 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                       {" "}
                       {/* Add right padding on large screens */}
                       <div className="text-md font-bold text-yellow-800 mb-1">
-                        No declaration found for{" "}
-                        <span> {new Date().getFullYear()}</span>
+                        No declaration found for <span> {new Date().getFullYear()}</span>
                       </div>
                       <div className="text-xs text-gray-700">
-                        <b>Action Required:</b> Please submit your annual
-                        declaration to stay compliant.
+                        <b>Action Required:</b> Please submit your annual declaration to stay compliant.
                       </div>
                     </div>
                   </div>
@@ -159,10 +230,72 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                   {/* Button positioned differently for mobile vs desktop */}
                   <div className="mt-4 flex justify-start xl:absolute xl:top-3 xl:right-3 xl:mt-0">
                     <Link to="/faculty/declarations">
-                      <button className="btn btn-xs btn-warning">
-                        Declare Now
-                      </button>
+                      <button className="btn btn-xs btn-warning">Declare Now</button>
                     </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* New Publications Alert */}
+              {!loadingPublications && (
+                <div className={`relative w-full h-full flex flex-col ${newPublicationsCount > 0 ? 'bg-blue-50 border-blue-500' : 'bg-gray-50 border-gray-500'} border-l-8 rounded-xl shadow-lg px-4 py-4 mb-6`}>
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className={`w-6 h-6 ${newPublicationsCount > 0 ? 'text-blue-500' : 'text-gray-500'}`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                      />
+                    </svg>
+                    <div className="flex-1 xl:pr-32">
+                      {newPublicationsCount > 0 ? (
+                        <>
+                          <div className="text-md font-bold text-blue-800 mb-1">
+                            You have {newPublicationsCount} new publication{newPublicationsCount > 1 ? "s" : ""} from Scopus
+                          </div>
+                          <div className="text-xs text-gray-700">
+                            <b>Action Required:</b> Review and add new publications to your CV.
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-md font-bold text-gray-800 mb-1">
+                            No new publications from Scopus
+                          </div>
+                          <div className="text-xs text-gray-700">
+                            <b>Fetch the latest now.</b>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Button positioned differently for mobile vs desktop */}
+                  <div className="mt-4 flex justify-start gap-2 xl:absolute xl:top-3 xl:right-3 xl:mt-0 px-1">
+                    {newPublicationsCount > 0 ? (
+                      <>
+                        <span className="inline-block px-2 py-1 rounded-full bg-blue-200 text-blue-800 font-semibold text-xs shadow">
+                          {newPublicationsCount} New
+                        </span>
+                        <Link to="/faculty/academic-work/publications-and-patents/journal-publications">
+                          <button className="btn btn-xs btn-outline btn-primary">
+                            Review Publications
+                          </button>
+                        </Link>
+                      </>
+                    ) : (
+                      <Link to="/faculty/academic-work/publications-and-patents/journal-publications">
+                        <button className="btn btn-xs btn-outline btn-secondary">
+                          Fetch Latest
+                        </button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               )}
@@ -348,12 +481,8 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
               ) : (
                 notifications.map((note) => (
                   <details key={note.record_id} className="mb-2 py-1">
-                    <summary className="font-medium cursor-pointer">
-                      {note.title}
-                    </summary>
-                    <p className="text-sm mt-1 text-gray-700">
-                      {note.description}
-                    </p>
+                    <summary className="font-medium cursor-pointer">{note.title}</summary>
+                    <p className="text-sm mt-1 text-gray-700">{note.description}</p>
                   </details>
                 ))
               )}
@@ -372,9 +501,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
           {/* Fac360 video */}
           <div className="mb-10 gap-6 items-start">
             <div>
-              <h2 className="text-lg font-semibold mb-6">
-                What is Fac360(CV)?
-              </h2>
+              <h2 className="text-lg font-semibold mb-6">What is Fac360(CV)?</h2>
               <div className="aspect-video w-full">
                 <iframe
                   width="100%"
@@ -393,29 +520,20 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             <h2 className="text-lg font-semibold mb-6">Training Resources</h2>
             <div className=" flex flex-col gap-4">
               <div className="border rounded-lg p-4 shadow-sm bg-white">
-                <h3 className="font-semibold text-gray-700 mb-1">
-                  🧭 First Setup
-                </h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  Learn how to set up your account for the first time.
-                </p>
+                <h3 className="font-semibold text-gray-700 mb-1">🧭 First Setup</h3>
+                <p className="text-sm text-gray-600 mb-2">Learn how to set up your account for the first time.</p>
                 <button className="btn btn-sm btn-primary">Learn more</button>
               </div>
               <div className="border rounded-lg p-4 shadow-sm bg-white">
-                <h3 className="font-semibold text-gray-700 mb-1">
-                  👥 Delegate(s)
-                </h3>
+                <h3 className="font-semibold text-gray-700 mb-1">👥 Delegate(s)</h3>
                 <p className="text-sm text-gray-600 mb-2">
-                  Learn how to setup Delegates to access your profile on your
-                  behalf.
+                  Learn how to setup Delegates to access your profile on your behalf.
                 </p>
                 <button className="btn btn-sm btn-primary">Learn more</button>
               </div>
               <div className="border rounded-lg p-4 shadow-sm bg-white">
                 <h3 className="font-semibold text-gray-700 mb-1">📄 Reports</h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  Create reports, including UBC CV.
-                </p>
+                <p className="text-sm text-gray-600 mb-2">Create reports, including UBC CV.</p>
                 <button className="btn btn-sm btn-primary">Learn more</button>
               </div>
             </div>

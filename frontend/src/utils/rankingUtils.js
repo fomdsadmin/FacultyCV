@@ -1,7 +1,8 @@
 export const rankFields = (entry) => {
   const importance = {
     title: 1,
-    course: 2,
+    course: 1,
+    course_title: 2,
     session: 3,
     "university/organization": 4,
     "university/organization/company": 5,
@@ -20,6 +21,11 @@ export const rankFields = (entry) => {
     rank: 12,
     role: 13,
     department: 14,
+    program: 14,
+    'program/department': 14,
+    'department/program': 14,
+    'category-levelofstudent': 14,
+    'typeofteaching': 1,
     physician: 15,
     publisher: 16,
     journal: 17,

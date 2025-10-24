@@ -1,71 +1,104 @@
-CREATE TABLE declarations (
-    id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    reporting_year INT NOT NULL,
-    created_by TEXT NOT NULL,
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    other_data JSONB NOT NULL
-);
-
-CREATE TABLE audit_view (
-    log_view_id SERIAL PRIMARY KEY,
-    ts TIMESTAMP NOT NULL,
- 
-    logged_user_id INTEGER NOT NULL,
-    logged_user_first_name TEXT NOT NULL,
-    logged_user_last_name TEXT NOT NULL,
-    logged_user_role TEXT,
-    logged_user_email TEXT NOT NULL,
-    logged_user_action TEXT,
-    assistant BOOLEAN,
-    profile_record TEXT,
-
-    page TEXT,
-    session_id TEXT,
-    ip TEXT,
-    browser_version TEXT
-);
+-- August 15th : to be done
+DROP TABLE affiliations;
 
 CREATE TABLE affiliations (
+    user_affiliation_id varchar DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id TEXT NOT NULL,
     first_name TEXT,
     last_name TEXT,
-    hospital_affiliations JSON,
-    institution JSON,
-    academic_units JSON,
-    research_affiliations JSON,
-    faculty JSON
+    primary_unit JSON,
+    joint_units JSON,
+	research_affiliations JSON,
+    hospital_affiliations JSON
 );
 
+-- August 19th : to be done
+ALTER TABLE user_connections
+ADD COLUMN IF NOT EXISTS faculty_username VARCHAR DEFAULT '';
+
+ALTER TABLE user_connections
+ADD COLUMN IF NOT EXISTS assistant_username VARCHAR DEFAULT '';
+-- END
+
+-- August 25th : to be done
+update university_info
+set value = 'Fraser Health Authority'
+where value = 'Fraser Health'
+
+update university_info
+set type = 'Authority - Fraser Health Authority'
+where type = 'Authority - Fraser Health'
+
+update university_info
+set value = 'Interior Health Authority'
+where value = 'Interior Health'
+
+update university_info
+set type = 'Authority - Interior Health Authority'
+where type = 'Authority - Interior Health'
+
+update university_info
+set value = 'Island Health Authority'
+where value = 'Island Health'
+
+update university_info
+set type = 'Authority - Island Health Authority'
+where type = 'Authority - Island Health'
+
+update university_info
+set value = 'Northern Health Authority'
+where value = 'Northern Health'
+
+update university_info
+set type = 'Authority - Northern Health Authority'
+where type = 'Authority - Northern Health'
+
+INSERT INTO university_info (type, value)
+VALUES ('Authority', 'VCH/FHA')
+-- END
+
+-- August 28th : to be done
+ALTER TABLE users
+RENAME username TO cwl_username;
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS vpp_username VARCHAR DEFAULT '';
+-- END
+
+-- August 29th: to be done
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT FALSE;
+-- END
+
+-- September 15th: to be done
+CREATE TABLE scopus_publications (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    data_details JSON,
+    is_new BOOLEAN DEFAULT TRUE,
+    fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+-- END
+
+-- September 18th: to be done
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS terminated BOOLEAN DEFAULT FALSE
+-- END
+
+-- September 19th: to be done
+CREATE TABLE course_catalog (
+    course_id SERIAL PRIMARY KEY,  -- optional unique identifier
+    course VARCHAR NOT NULL,
+    course_subject VARCHAR NOT NULL,
+    course_number VARCHAR NOT NULL,
+    academic_level VARCHAR NOT NULL,
+    course_title VARCHAR NOT NULL,
+    course_description TEXT NOT NULL,
+    course_tags TEXT NOT NULL
+);
+
+-- October 16th: to be done
 ALTER TABLE rise_data
-ADD COLUMN IF NOT EXISTS sponsor TEXT;
+ADD COLUMN IF NOT EXISTS record_id VARCHAR NOT NULL;
 
-ALTER TABLE templates 
-RENAME data_section_ids TO template_structure;
-
-ALTER TABLE data_sections
-ADD COLUMN IF NOT EXISTS attributes_type JSON;
-
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS cwl TEXT;
-
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS vpp TEXT;
-
-ALTER TABLE data_sections
-ADD COLUMN IF NOT EXISTS info TEXT DEFAULT 'Summary of section description';
-
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS pending BOOLEAN DEFAULT true;
-
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT false;
-
-ALTER TABLE declarations
-ADD COLUMN IF NOT EXISTS user_id TEXT NOT NULL
-
-ALTER TABLE users
-ALTER COLUMN institution SET DEFAULT 'University of British Columbia';
-
-UPDATE users
-SET institution = 'University of British Columbia'
+-- END

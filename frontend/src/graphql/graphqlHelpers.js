@@ -4,11 +4,16 @@ import {
   getArchivedSectionsQuery,
   getUserCVDataQuery,
   getAllSectionCVDataQuery,
+  getDepartmentCVDataQuery,
+  getFacultyWideCVDataQuery,
   getUserQuery,
+  getUserWithVppUsernameQuery,
   getAllUsersQuery,
   getAllUniversityInfoQuery,
+  getAllCourseCatalogInfoQuery,
   getAllNotificationsQuery,
   getUserDeclarationsQuery,
+  getAllUserDeclarationsQuery,
   getElsevierAuthorMatchesQuery,
   getExistingUserQuery,
   getUserConnectionsQuery,
@@ -32,6 +37,9 @@ import {
   GET_BIO_RESPONSE_DATA,
   getAuditViewQuery,
   getUserAffiliationsQuery,
+  GET_PRESIGNED_GOTENBERG_BUCKET_URL,
+  GET_STAGING_SCOPUS_PUBLICATIONS,
+  getDepartmentAffiliationsQuery,
 } from "./queries";
 import {
   ADD_USER,
@@ -39,6 +47,7 @@ import {
   updateUserCVDataMutation,
   updateUserMutation,
   updateUserPermissionsMutation,
+  updateUserActiveStatusMutation,
   updateUniversityInfoMutation,
   linkScopusIdMutation,
   addUserConnectionMutation,
@@ -54,6 +63,8 @@ import {
   updateLatexConfigurationMutation,
   ADD_USER_DECLARATION,
   ADD_BATCHED_USER_CV_DATA,
+  ADD_STAGING_SCOPUS_PUBLICATIONS,
+  UPDATE_STAGING_SCOPUS_PUBLICATIONS,
   DELETE_USER_DECLARATION,
   UPDATE_USER_DECLARATION,
   ADD_SECTION,
@@ -68,8 +79,10 @@ import {
   EDIT_SECTION_DETAILS,
   UPDATE_USER_AFFILIATIONS,
   CHANGE_USERNAME,
+  CREATE_GOTENBERG_PDF
 } from "./mutations";
 import { getUserId } from "../getAuthToken";
+import { GOTENBERG_GENERATION_STATUS_UPDATE } from "./subscriptions";
 
 const executeGraphql = async (query, variables = null) => {
   const client = generateClient();
@@ -187,11 +200,17 @@ export const getArchivedSections = async () => {
  *      orcid_id
  *   }
  */
-export const getUser = async (username) => {
-  const results = await executeGraphql(getUserQuery, { username: username });
+export const getUser = async (cwl_username) => {
+  const results = await executeGraphql(getUserQuery, { cwl_username: cwl_username });
   console.log(results);
   return results["data"]["getUser"];
 };
+
+export const getUserWithVPPUsername = async (vpp_username) => {
+  const results = await executeGraphql(getUserWithVppUsernameQuery, { vpp_username: vpp_username });
+  return results["data"]["getUserWithVPPUsername"];
+};
+
 
 /**
  * Function to get user data with institution_user_id
@@ -222,6 +241,8 @@ export const getUserInstitutionId = async (email) => {
   const results = await runGraphql(getUserInstitutionIdQuery(email));
   return results["data"]["getUser"];
 };
+
+
 
 /**
  * Function to get existing user data
@@ -281,10 +302,26 @@ export const getAllSectionCVData = async (data_section_id, data_section_ids) => 
   return results["data"]["getAllSectionCVData"];
 };
 
+export const getDepartmentCVData = async (data_section_id, dept, title, user_ids) => {
+  const results = await runGraphql(getDepartmentCVDataQuery(data_section_id, dept, title, user_ids));
+  return results["data"]["getDepartmentCVData"];
+};
+
+export const getFacultyWideCVData = async (data_section_id, faculty, title) => {
+  const results = await runGraphql(getFacultyWideCVDataQuery(data_section_id, faculty, title));
+  return results["data"]["getFacultyWideCVData"];
+};
+
 export const getUserAffiliations = async (user_id, first_name, last_name) => {
   const query = getUserAffiliationsQuery(user_id, first_name, last_name);
   const results = await executeGraphql(query);
   return results["data"]["getUserAffiliations"];
+};
+
+export const getDepartmentAffiliations = async (department) => {
+  const query = getDepartmentAffiliationsQuery(department);
+  const results = await executeGraphql(query);
+  return results["data"]["getDepartmentAffiliations"];
 };
 
 /**
@@ -323,6 +360,11 @@ export const getAllUniversityInfo = async () => {
   return results["data"]["getAllUniversityInfo"];
 };
 
+export const getAllCourseCatalogInfo = async () => {
+  const results = await runGraphql(getAllCourseCatalogInfoQuery());
+  return results["data"]["getAllCourseCatalogInfo"];
+};
+
 export const GetNotifications = async () => {
   const results = await runGraphql(getAllNotificationsQuery());
   return results["data"]["GetNotifications"];
@@ -331,6 +373,11 @@ export const GetNotifications = async () => {
 export const getUserDeclarations = async (user_id) => {
   const results = await runGraphql(getUserDeclarationsQuery(user_id));
   return results["data"]["getUserDeclarations"];
+};
+
+export const getAllUserDeclarations = async (department) => {
+  const results = await runGraphql(getAllUserDeclarationsQuery(department));
+  return results["data"]["getAllUserDeclarations"];
 };
 
 /**
@@ -563,7 +610,7 @@ export const getPatentMatches = async (first_name, last_name) => {
  * Return value:
  * String - the presigned URL
  */
-export const getPresignedUrl = async (jwt, fileKey, type, purpose = "cv") => {
+export const getPresignedUrl = async (jwt, fileKey, type, purpose) => {
   const results = await runGraphql(getPresignedUrlQuery(jwt, fileKey, type, purpose));
   return results["data"]["getPresignedUrl"];
 };
@@ -664,6 +711,32 @@ export const addBatchedUserCVData = async (input) => {
   return results["data"]["addBatchedUserCVData"];
 };
 
+export const addStagingScopusPublications = async (user_id, publications) => {
+  const results = await executeGraphql(ADD_STAGING_SCOPUS_PUBLICATIONS, {
+    user_id,
+    publications
+  });
+  return results["data"]["addStagingScopusPublications"];
+};
+
+export const getStagingScopusPublications = async (user_id = null, is_new = null, limit = null, offset = 0) => {
+  const results = await executeGraphql(GET_STAGING_SCOPUS_PUBLICATIONS, {
+    user_id,
+    is_new,
+    limit,
+    offset
+  });
+  return results["data"]["getStagingScopusPublications"];
+};
+
+export const updateStagingScopusPublications = async (publication_ids, is_new) => {
+  const results = await executeGraphql(UPDATE_STAGING_SCOPUS_PUBLICATIONS, {
+    publication_ids,
+    is_new
+  });
+  return results["data"]["updateStagingScopusPublications"];
+};
+
 /**
  * Function to add a section to data_sections table
  * Arguments:
@@ -689,32 +762,23 @@ export const addSection = async (title, description, data_type, attributes) => {
  * Arguments (Note - specify all arguments, send a null value or empty string if data unavailable):
  *      first_name
  *      last_name
- *      preferred_name
  *      email
  *      role
- *      bio
- *      rank
  *      primary_department
- *      secondary_department
  *      primary_faculty
- *      secondary_faculty
- *      campus
- *      keywords
- *      institution_user_id
- *      scopus_id
- *      orcid_id
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const addUser = async (first_name, last_name, email, role, username, primary_department, primary_faculty) => {
+export const addUser = async (first_name, last_name, email, role, pending = true, approved = false, cwl_username, vpp_username, primary_department, primary_faculty) => {
   const results = await executeGraphql(ADD_USER, {
     first_name,
     last_name,
     email,
     role,
-    pending: true, // Default to pending
-    approved: false, // Default to not approved
-    username,
+    pending,
+    approved,
+    cwl_username,
+    vpp_username,
     primary_department,
     primary_faculty
   });
@@ -731,12 +795,9 @@ export const addUser = async (first_name, last_name, email, role, username, prim
  * Return value:
  * String saying SUCCESS if call succeeded, anything else means call failed
  */
-export const removeUser = async (user_id, email, first_name, last_name) => {
+export const removeUser = async (user_id) => {
   const results = await executeGraphql(REMOVE_USER, {
-    user_id,
-    email,
-    first_name,
-    last_name,
+    user_id
   });
   return results["data"]["removeUser"];
 };
@@ -770,7 +831,9 @@ export const addUserConnection = async (
   assistant_first_name,
   assistant_last_name,
   assistant_email,
-  status
+  status,
+  faculty_username,
+  assistant_username
 ) => {
   const results = await runGraphql(
     addUserConnectionMutation(
@@ -782,7 +845,9 @@ export const addUserConnection = async (
       assistant_first_name,
       assistant_last_name,
       assistant_email,
-      status
+      status,
+      faculty_username,
+      assistant_username
     )
   );
   return results["data"]["addUserConnection"];
@@ -933,14 +998,9 @@ export const updateUser = async (
   email,
   role,
   bio,
-  rank,
   institution,
   primary_department,
-  secondary_department,
   primary_faculty,
-  secondary_faculty,
-  primary_affiliation,
-  secondary_affiliation,
   campus,
   keywords,
   institution_user_id,
@@ -957,20 +1017,14 @@ export const updateUser = async (
       email,
       role,
       bio,
-      rank,
       institution,
       primary_department,
-      secondary_department,
       primary_faculty,
-      secondary_faculty,
-      primary_affiliation,
-      secondary_affiliation,
       campus,
       keywords,
       institution_user_id,
       scopus_id,
       orcid_id,
-      cognito_user_id
     )
   );
   return results["data"]["updateUser"];
@@ -986,10 +1040,11 @@ export const updateUserAffiliations = async (user_id, first_name, last_name, aff
   return results["data"]["updateUserAffiliations"];
 };
 
-export const changeUsername = async (user_id, username) => {
+export const changeUsername = async (user_id, cwl_username, vpp_username) => {
   const results = await executeGraphql(CHANGE_USERNAME, {
     user_id: user_id,
-    username: username,
+    cwl_username: cwl_username,
+    vpp_username: vpp_username,
   });
   return results["data"]["changeUsername"];
 };
@@ -1004,6 +1059,19 @@ export const changeUsername = async (user_id, username) => {
 export const updateUserPermissions = async (user_id, pending, approved) => {
   const results = await runGraphql(updateUserPermissionsMutation(user_id, pending, approved));
   return results["data"]["updateUserPermissions"];
+};
+
+/**
+ * Updates user active status
+ * @param {string|array} user_ids - The ID(s) of the user(s) to update (can be single ID or array)
+ * @param {boolean} active - Whether the user is active
+ * @returns {Promise<string>} String saying SUCCESS if call succeeded, anything else means call failed
+ */
+export const updateUserActiveStatus = async (user_ids, active) => {
+  // Convert single ID to array if needed
+  const idsArray = Array.isArray(user_ids) ? user_ids : [user_ids];
+  const results = await runGraphql(updateUserActiveStatusMutation(idsArray, active));
+  return results["data"]["updateUserActiveStatus"];
 };
 
 /**
@@ -1224,3 +1292,61 @@ export const getBioResponseData = async (username_input) => {
   });
   return results["data"]["getBioResponseData"];
 };
+
+export const getPresignedGotenbergBucketUrl = async (key, method) => {
+  const results = await executeGraphql(GET_PRESIGNED_GOTENBERG_BUCKET_URL, { key, method });
+  console.log(results);
+  return results["data"]["getPresignedGotenbergBucketUrl"];
+};
+
+/**
+ * Subscribe to Gotenberg generation status updates
+ * Arguments:
+ * key - The S3 key to listen for updates (e.g., "pdf/username_templateid.pdf" or "docx/username_templateid.docx")
+ * onData - Callback function called when data is received
+ * onError - Callback function called on error
+ * Return value:
+ * Subscription object with unsubscribe method
+ */
+export const subscribeToGotenbergStatus = (key, onData, onError) => {
+  console.log('Setting up subscription for key:', key);
+  
+  const client = generateClient();
+  
+  try {
+    const subscription = client.graphql({
+      query: GOTENBERG_GENERATION_STATUS_UPDATE,
+      variables: { key }
+    }).subscribe({
+      next: (data) => {
+        console.log('Gotenberg status update received:', data);
+        console.log('Full data object:', JSON.stringify(data, null, 2));
+        if (onData) {
+          // Access the nested key from the payload
+          const payload = data.data.gotenbergGenerationStatusUpdate;
+          onData(payload ? payload.key : key);
+        }
+      },
+      error: (error) => {
+        console.error('Subscription error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        if (onError) {
+          onError(error);
+        }
+      },
+      complete: () => {
+        console.log('Subscription completed for key:', key);
+      }
+    });
+
+    console.log('Subscription created successfully for key:', key);
+    return subscription;
+  } catch (error) {
+    console.error('Failed to create subscription:', error);
+    if (onError) {
+      onError(error);
+    }
+    return null;
+  }
+};
+

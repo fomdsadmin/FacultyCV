@@ -1,14 +1,19 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaArrowLeft, FaTrash } from "react-icons/fa";
 import DeleteSectionModal from "./DeleteSectionModal";
 import EditSectionModal from "./EditSectionModal";
 import AttributeModal from "./AttributeModal.jsx";
+import { useAdmin } from "../Contexts/AdminContext.jsx";
 
-const ManageSection = ({ section, onBack, getDataSections }) => {
+const ManageSection = ({ section: initialSection, onBack, getDataSections }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditSectionModalOpen, setIsEditSectionModalOpen] = useState(false);
   const [isUpdateAttributeModalOpen, setIsUpdateAttributeModalOpen] = useState(false);
+  const { allDataSections } = useAdmin();
+
+  // Get the current section data from context to ensure we have the latest updates
+  const section = allDataSections.find((s) => s.data_section_id === initialSection.data_section_id) || initialSection;
 
   const handleBack = () => {
     onBack();
@@ -76,32 +81,33 @@ const ManageSection = ({ section, onBack, getDataSections }) => {
               </tr>
             </thead>
             <tbody>
-              {Object.entries(attributesType).map(([type, attrsObj]) => {
-                if (type === "dropdown") {
-                  // attrsObj: { Type: ["A", "B"] }
+              {attributesType &&
+                Object.entries(attributesType).map(([type, attrsObj]) => {
+                  if (type === "dropdown") {
+                    // attrsObj: { Type: ["A", "B"] }
+                    if (!attrsObj || typeof attrsObj !== "object") return null;
+                    return Object.entries(attrsObj).map(([attrName, options], idx) => (
+                      <tr key={type + attrName + idx} className="hover:bg-gray-50">
+                        <td className="py-2 px-4 border-b font-medium">{attrName}</td>
+                        <td className="py-2 px-4 border-b capitalize">{type}</td>
+                        <td className="py-2 px-4 border-b text-gray-600">
+                          <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
+                            {Array.isArray(options) ? options.join(", ") : ""}
+                          </span>
+                        </td>
+                      </tr>
+                    ));
+                  }
+                  // For other types, attrsObj is an object: { Note: "", Details: "" }
                   if (!attrsObj || typeof attrsObj !== "object") return null;
-                  return Object.entries(attrsObj).map(([attrName, options], idx) => (
+                  return Object.keys(attrsObj).map((attrName, idx) => (
                     <tr key={type + attrName + idx} className="hover:bg-gray-50">
                       <td className="py-2 px-4 border-b font-medium">{attrName}</td>
                       <td className="py-2 px-4 border-b capitalize">{type}</td>
-                      <td className="py-2 px-4 border-b text-gray-600">
-                        <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
-                          {Array.isArray(options) ? options.join(", ") : ""}
-                        </span>
-                      </td>
+                      <td className="py-2 px-4 border-b text-gray-600">--</td>
                     </tr>
                   ));
-                }
-                // For other types, attrsObj is an object: { Note: "", Details: "" }
-                if (!attrsObj || typeof attrsObj !== "object") return null;
-                return Object.keys(attrsObj).map((attrName, idx) => (
-                  <tr key={type + attrName + idx} className="hover:bg-gray-50">
-                    <td className="py-2 px-4 border-b font-medium">{attrName}</td>
-                    <td className="py-2 px-4 border-b capitalize">{type}</td>
-                    <td className="py-2 px-4 border-b text-gray-600">--</td>
-                  </tr>
-                ));
-              })}
+                })}
             </tbody>
           </table>
         </div>

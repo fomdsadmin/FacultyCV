@@ -17,14 +17,13 @@ def changeUsername(arguments):
 
     # Prepare the UPDATE query
     query = """
-    UPDATE users SET 
-        username = %s, 
-    WHERE user_id = %s
+    UPDATE users SET cwl_username = %s, vpp_username = %s WHERE user_id = %s
     """
 
     # Execute the query with the provided arguments
     cursor.execute(query, (
-        arguments['username'],
+        arguments['cwl_username'],
+        arguments['vpp_username'],
         arguments['user_id']
     ))
 

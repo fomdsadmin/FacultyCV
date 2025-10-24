@@ -1,3 +1,5 @@
+import { Title } from "chart.js";
+
 export const GET_BIO_RESPONSE_DATA = `
     query GetBioResponseData($username_input: String!) {
         getBioResponseData(username_input: $username_input) {
@@ -5,12 +7,12 @@ export const GET_BIO_RESPONSE_DATA = `
             error
         }
     }
-`
+`;
 
 export const getUserQuery = `
-    query GetUser($username: String!) {
+    query GetUser($cwl_username: String!) {
         getUser(
-            username: $username
+            cwl_username: $cwl_username
         ){
             user_id
             first_name
@@ -34,7 +36,45 @@ export const getUserQuery = `
             joined_timestamp   
             pending
             approved
-            username
+            cwl_username
+            vpp_username
+            active
+            terminated
+        }
+    }
+`;
+
+export const getUserWithVppUsernameQuery = `
+    query getUserWithVPPUsername($vpp_username: String!) {
+        getUserWithVPPUsername(
+            vpp_username: $vpp_username
+        ){
+            user_id
+            first_name
+            last_name
+            preferred_name
+            email
+            role
+            bio
+            rank
+            institution
+            primary_department
+            secondary_department
+            primary_faculty
+            secondary_faculty
+            primary_affiliation
+            secondary_affiliation
+            campus
+            keywords
+            scopus_id
+            orcid_id
+            joined_timestamp   
+            pending
+            approved
+            cwl_username
+            vpp_username
+            active
+            terminated
         }
     }
 `;
@@ -92,7 +132,10 @@ export const getAllUsersQuery = () => `
             joined_timestamp
             pending
             approved
-            username
+            cwl_username
+            vpp_username
+            active
+            terminated
         }
     }
 `;
@@ -156,13 +199,13 @@ export const getArchivedSectionsQuery = () => `
 `;
 
 export const getUserCVDataQuery = (user_id, data_section_ids) => {
-    if (Array.isArray(data_section_ids)) {
-        let data_section_ids_string = "[";
-        data_section_ids.forEach((id) => {
-            data_section_ids_string += `"${id}",`;
-        });
-        data_section_ids_string = data_section_ids_string.slice(0, -1) + "]";
-        return `query GetUserCVData {
+  if (Array.isArray(data_section_ids)) {
+    let data_section_ids_string = "[";
+    data_section_ids.forEach((id) => {
+      data_section_ids_string += `"${id}",`;
+    });
+    data_section_ids_string = data_section_ids_string.slice(0, -1) + "]";
+    return `query GetUserCVData {
         getUserCVData (
             user_id: "${user_id}",
             data_section_id_list: ${data_section_ids_string}
@@ -174,8 +217,8 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
             editable
         }
     }`;
-    } else
-        return `query GetUserCVData {
+  } else
+    return `query GetUserCVData {
         getUserCVData (
             user_id: "${user_id}",
             data_section_id: "${data_section_ids}"
@@ -189,26 +232,46 @@ export const getUserCVDataQuery = (user_id, data_section_ids) => {
     }`;
 };
 
-
 export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
-    if (data_section_id) 
-        return `query GetAllSectionCVData {
+  if (data_section_id)
+    return `query GetAllSectionCVData {
         getAllSectionCVData (
             data_section_id: "${data_section_id}"
         ) {
             data {
                 data_section_id
                 data_details
+                user_id
             }
             total_count
             returned_count
         }
     }`;
-    
-    if (data_section_ids) 
-        return `query GetAllSectionCVData {
+
+  if (data_section_ids)
+    return `query GetAllSectionCVData {
         getAllSectionCVData (
-            data_section_id_list: [${data_section_ids.map(id => `"${id}"`).join(', ')}]
+            data_section_id_list: [${data_section_ids.map((id) => `"${id}"`).join(", ")}]
+        ) {
+            data {
+                data_section_id
+                data_details
+                user_id
+            }
+            total_count
+            returned_count
+        }
+    }`;
+};
+
+export const getDepartmentCVDataQuery = (data_section_id, dept, title, user_ids) => {
+  if (user_ids) {
+    return `query GetDepartmentCVData {
+        getDepartmentCVData (
+            data_section_id: "${data_section_id}",
+            dept: "${dept}",
+            title: "${title}",
+            user_ids: [${user_ids.map((id) => `"${id}"`).join(", ")}]
         ) {
             data {
                 data_section_id
@@ -218,7 +281,53 @@ export const getAllSectionCVDataQuery = (data_section_id, data_section_ids) => {
             returned_count
         }
     }`;
+  } else if (title) {
+    return `query GetDepartmentCVData {
+        getDepartmentCVData (
+            data_section_id: "${data_section_id}",
+            dept: "${dept}",
+            title: "${title}"
+        ) {
+            data {
+                data_section_id
+                data_details
+            }
+            total_count
+            returned_count
+        }
+    }`;
+  } else {
+    return `query GetDepartmentCVData {
+          getDepartmentCVData (
+              data_section_id: "${data_section_id}",
+              dept: "${dept}"
+          ) {
+              data {
+                  data_section_id
+                  data_details
+              }
+              total_count
+              returned_count
+          }
+      }`;
+  }
 };
+
+export const getFacultyWideCVDataQuery = (data_section_id, faculty, title = "") => `
+    query GetFacultyWideCVData {
+        getFacultyWideCVData (
+            data_section_id: "${data_section_id}",
+            faculty: "${faculty}",
+            title: "${title}"
+        ) {
+            data {
+                data_section_id
+                data_details
+            }
+            total_count
+            returned_count
+        }
+    }`;
 
 export const getArchivedUserCVDataQuery = (user_id) => `
     query GetArchivedUserCVData {
@@ -242,6 +351,17 @@ export const getAllUniversityInfoQuery = () => `
             university_info_id
             type
             value
+        }
+    }
+`;
+
+export const getAllCourseCatalogInfoQuery = () => `
+    query GetAllCourseCatalogInfo {
+        getAllCourseCatalogInfo {
+            course
+            course_title
+            academic_level
+            course_description
         }
     }
 `;
@@ -272,6 +392,20 @@ export const getUserDeclarationsQuery = (user_id) => `
     }
 `;
 
+export const getAllUserDeclarationsQuery = (department) => `
+    query getAllUserDeclarations {
+        getAllUserDeclarations (
+            department: "${department}"
+        ) {
+            reporting_year
+            other_data
+            created_on
+            created_by
+            user_id
+        }
+    }
+`;
+
 export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
     query getUserAffiliations {
         getUserAffiliations (
@@ -282,58 +416,57 @@ export const getUserAffiliationsQuery = (user_id, first_name, last_name) => `
     }
 `;
 
-export const getAuditViewQuery = (logged_user_id) => {
-    if (logged_user_id !== undefined && logged_user_id !== null) {
-        return `
-            query getAuditView {
-                getAuditView(logged_user_id: ${logged_user_id}) {
-                    log_view_id
-                    ts
-                    logged_user_id
-                    logged_user_first_name
-                    logged_user_last_name
-                    ip
-                    browser_version
-                    page
-                    session_id
-                    assistant
-                    profile_record
-                    logged_user_role,
-                    logged_user_email,
-                    logged_user_action
-                }
-            }
-        `;
-    } else {
-        return `
-            query getAuditView {
-                getAuditView {
-                    log_view_id
-                    ts
-                    logged_user_id
-                    logged_user_first_name
-                    logged_user_last_name
-                    ip
-                    browser_version
-                    page
-                    session_id
-                    assistant
-                    profile_record
-                    logged_user_role,
-                    logged_user_email,
-                    logged_user_action
-                }
-            }
-        `;
+export const getDepartmentAffiliationsQuery = (department) => `
+    query getDepartmentAffiliations {
+        getDepartmentAffiliations (
+            department: "${department}"
+        ) {
+            user_id
+            first_name
+            last_name
+            primary_unit
+            joint_units
+            hospital_affiliations
+        }
     }
+`;
+
+export const getAuditViewQuery = (args = {}) => {
+  const argList = [];
+  if (args.logged_user_id) argList.push(`logged_user_id: "${args.logged_user_id}"`);
+  if (args.page_number) argList.push(`page_number: ${args.page_number}`);
+  if (args.page_size) argList.push(`page_size: ${args.page_size}`);
+  if (args.email) argList.push(`email: "${args.email}"`);
+  if (args.first_name) argList.push(`first_name: "${args.first_name}"`);
+  if (args.last_name) argList.push(`last_name: "${args.last_name}"`);
+  if (args.action) argList.push(`action: "${args.action}"`);
+  if (args.start_date) argList.push(`start_date: "${args.start_date}"`);
+  if (args.end_date) argList.push(`end_date: "${args.end_date}"`);
+
+  return `query getAuditView {
+        getAuditView(${argList.join(", ")}) {
+            records {
+                log_view_id
+                ts
+                logged_user_id
+                logged_user_first_name
+                logged_user_last_name
+                ip
+                browser_version
+                page
+                session_id
+                assistant
+                profile_record
+                logged_user_role
+                logged_user_email
+                logged_user_action
+            }
+            total_count
+    }
+}`;
 };
 
-
-export const getElsevierAuthorMatchesQuery = (
-    first_name,
-    last_name,
-    institution_name
-) => `
+export const getElsevierAuthorMatchesQuery = (first_name, last_name, institution_name) => `
     query getElsevierAuthorMatches {
         getElsevierAuthorMatches (
             first_name: "${first_name}", last_name: "${last_name}", institution_name: "${institution_name}"
@@ -349,11 +482,7 @@ export const getElsevierAuthorMatchesQuery = (
     }
 `;
 
-export const getOrcidAuthorMatchesQuery = (
-    first_name,
-    last_name,
-    institution_name
-) => `
+export const getOrcidAuthorMatchesQuery = (first_name, last_name, institution_name) => `
     query getOrcidAuthorMatches {
         getOrcidAuthorMatches (
             first_name: "${first_name}", last_name: "${last_name}", institution_name: "${institution_name}"
@@ -411,7 +540,6 @@ export const getTotalScopusPublicationsQuery = (scopus_id) => `
     }
 `;
 
-
 export const getOrcidPublicationQuery = (orcid_id, put_codes) => `
     query getOrcidPublication {
         getOrcidPublication (
@@ -446,10 +574,12 @@ export const getUserConnectionsQuery = (user_id, isFaculty = true) => `
             faculty_first_name
             faculty_last_name
             faculty_email
+            faculty_username
             assistant_user_id
             assistant_first_name
             assistant_last_name
             assistant_email
+            assistant_username
             status
         }
     }
@@ -479,11 +609,7 @@ export const getTeachingDataMatchesQuery = (institution_user_id) => `
     }
 `;
 
-export const getPublicationMatchesQuery = (
-    scopus_id,
-    page_number,
-    results_per_page
-) => `
+export const getPublicationMatchesQuery = (scopus_id, page_number, results_per_page) => `
     query GetPublicationMatches {
         getPublicationMatches (
             scopus_id: "${scopus_id}",
@@ -551,25 +677,26 @@ export const getPatentMatchesQuery = (first_name, last_name) => `
     }
 `;
 
-export const getPresignedUrlQuery = (jwt, fileKey, type) => `
+export const getPresignedUrlQuery = (jwt, fileKey, type, purpose) => `
     query GetPresignedUrl {
         getPresignedUrl (
             jwt: "${jwt}",
             key: "${fileKey}",
-            type: "${type}"
+            type: "${type}",
+            purpose: "${purpose}"
         )
     }
 `;
 
 export const getNumberOfGeneratedCVsQuery = (department) => {
-    if (!department)
-        return `
+  if (!department)
+    return `
     query GetNumberOfGeneratedCVs {
         getNumberOfGeneratedCVs
     }
     `;
-    else
-        return `
+  else
+    return `
     query GetNumberOfGeneratedCVs {
         getNumberOfGeneratedCVs (
             department: "${department}"
@@ -591,5 +718,39 @@ export const cvIsUpToDateQuery = (cognito_user_id, user_id, template_id) => `
 export const getLatexConfigurationQuery = () => `
     query GetLatexConfiguration {
         getLatexConfiguration
+    }
+`;
+
+export const GET_PRESIGNED_GOTENBERG_BUCKET_URL = `
+    query GetPresignedGotenbergBucketUrl($key: String!, $method: String!) {
+        getPresignedGotenbergBucketUrl(key: $key, method: $method)
+    }
+`;
+
+export const GET_STAGING_SCOPUS_PUBLICATIONS = `
+    query GetStagingScopusPublications(
+        $user_id: String,
+        $is_new: Boolean,
+        $limit: Int,
+        $offset: Int
+    ) {
+        getStagingScopusPublications(
+            user_id: $user_id,
+            is_new: $is_new,
+            limit: $limit,
+            offset: $offset
+        ) {
+            publications {
+                id
+                user_id
+                data_details
+                is_new
+                fetched_at
+            }
+            total_count
+            returned_count
+            offset
+            error
+        }
     }
 `;

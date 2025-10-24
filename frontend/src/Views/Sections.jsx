@@ -2,57 +2,48 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import AdminMenu from "../Components/AdminMenu.jsx";
-import { getAllSections } from "../graphql/graphqlHelpers.js";
+import { useAdmin } from "Contexts/AdminContext.jsx";
 import WorkSection from "../Components/WorkSection.jsx";
 import ManageSection from "../Components/ManageSection.jsx";
 import NewSection from "../Components/NewSection.jsx";
 import CVDataSection from "../Components/CVDataSection.jsx";
 
 const Sections = ({ getCognitoUser, userInfo }) => {
+  const [allDataSections, setAllDataSections] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeTab, setActiveTab] = useState(null);
   const [activeSection, setActiveSection] = useState(null);
-  const [dataSections, setDataSections] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { allDataSections: allAdminDataSections, fetchAllDataSections, loading, setLoading } = useAdmin();
   const [openNewSection, setOpenNewSection] = useState(false);
   const navigate = useNavigate();
   const { category, title } = useParams();
   const location = useLocation();
 
   useEffect(() => {
-    getDataSections();
-  }, []);
-
-  const getDataSections = async () => {
-    setDataSections([]);
-    const retrievedSections = await getAllSections();
-
-    const parsedSections = retrievedSections.map((section) => ({
-      ...section,
-      attributes: JSON.parse(section.attributes),
-      attributes_type: JSON.parse(section.attributes_type || "{}"),
-    }));
-
-    parsedSections.sort((a, b) => a.title.localeCompare(b.title));
-
-    setDataSections(parsedSections);
-    setLoading(false);
-  };
+    setAllDataSections(allAdminDataSections);
+  }, [allAdminDataSections]);
 
   // Open section if URL param is present
   useEffect(() => {
-    if (title && dataSections.length > 0) {
-      const found = dataSections.find((s) => slugify(s.title) === title && slugify(s.data_type) === category);
+    if (title && allDataSections.length > 0) {
+      const found = allDataSections.find((s) => slugify(s.title) === title && slugify(s.data_type) === category);
       if (found) setActiveSection(found);
     }
-  }, [title, category, dataSections]);
+  }, [title, category, allDataSections]);
 
-  const filters = Array.from(new Set(dataSections.map((section) => section.data_type)));
+  const filters = Array.from(new Set(allDataSections.map((section) => section.data_type)));
   // Set active tab from URL param
   useEffect(() => {
     if (category && filters.length > 0) {
-      const matched = filters.find((f) => slugify(f) === category);
+      // Find the filter that matches the slugified category
+      const matched = filters.find((f) => {
+        const slugified = slugify(f);
+        // Handle the case where slugified categories might have leading numbers removed
+        const categorySlugClean = slugified.split("-")[0].match(/\d/) ? slugified.split("-").slice(1).join("-") : slugified;
+        const urlCategoryClean = category.split("-")[0].match(/\d/) ? category.split("-").slice(1).join("-") : category;
+        return categorySlugClean === urlCategoryClean || slugified === category;
+      });
       setActiveTab(matched || null);
     } else if (!category) {
       setActiveTab(null);
@@ -103,7 +94,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
 
   // When user clicks a section, update the URL
   const handleManageClick = (value) => {
-    const section = dataSections.find((section) => section.data_section_id == value);
+    const section = allDataSections.find((section) => section.data_section_id === value);
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
@@ -127,7 +118,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
 
   // When user clicks a section, update the URL
   const handleManageDataClick = (value) => {
-    const section = dataSections.find((section) => section.data_section_id == value);
+    const section = allDataSections.find((section) => section.data_section_id === value);
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
@@ -149,7 +140,7 @@ const Sections = ({ getCognitoUser, userInfo }) => {
     }
   };
 
-  const searchedSections = dataSections.filter((entry) => {
+  const searchedSections = allDataSections.filter((entry) => {
     const section = entry.title || "";
     const category = entry.data_type || "";
     const search = searchTerm.toLowerCase();
@@ -165,9 +156,9 @@ const Sections = ({ getCognitoUser, userInfo }) => {
   // When user clicks back, return to /sections/:category if tab is selected, else /sections
   const handleBack = () => {
     setActiveSection(null);
-    if (activeTab) {
-      const categorySlug = slugify(activeTab);
-      navigate(`/sections/${categorySlug}`);
+    // Use URL params instead of activeTab state to ensure proper navigation
+    if (category) {
+      navigate(`/sections/${category}`);
     } else {
       navigate("/sections");
     }
@@ -180,9 +171,9 @@ const Sections = ({ getCognitoUser, userInfo }) => {
 
   const handleBackFromNewSection = () => {
     setOpenNewSection(false);
-    if (activeTab) {
-      const categorySlug = slugify(activeTab);
-      navigate(`/sections/${categorySlug}`);
+    // Use URL params instead of activeTab state to ensure proper navigation
+    if (category) {
+      navigate(`/sections/${category}`);
     } else {
       navigate("/sections");
     }
@@ -291,14 +282,18 @@ const Sections = ({ getCognitoUser, userInfo }) => {
         ) : (
           <>
             {openNewSection ? (
-              <NewSection onBack={handleBackFromNewSection} getDataSections={getDataSections} sections={dataSections} />
+              <NewSection
+                onBack={handleBackFromNewSection}
+                getDataSections={fetchAllDataSections}
+                sections={allDataSections}
+              />
             ) : activeSection === null ? (
               <div className="!overflow-auto !h-full custom-scrollbar">
-                <h1 className="text-left m-4 text-4xl font-bold text-zinc-600">Manage Faculty Sections</h1>
-                <button className="btn btn-info text-white m-4" onClick={handleAddNewSection}>
+                <h1 className="text-left mx-4  my-2 text-4xl font-bold text-zinc-600">Manage Faculty Sections</h1>
+                <button className="btn btn-info text-white mx-4 my-2" onClick={handleAddNewSection}>
                   Add New Section
                 </button>
-                <div className="m-4 flex">
+                <div className="mx-4 mb-3 mt-1 flex">
                   <label className="input input-bordered flex items-center gap-2 flex-1">
                     <input
                       type="text"
@@ -322,26 +317,28 @@ const Sections = ({ getCognitoUser, userInfo }) => {
                   </label>
                 </div>
                 <SectionTabs filters={filters} activeFilter={activeTab} onSelect={handleTabSelect} />
-                {[...searchedSections].sort(sectionTitleSort).map((section) => (
-                  <WorkSection
-                    onClick={handleManageClick}
-                    onDataClick={handleManageDataClick}
-                    key={section.data_section_id}
-                    id={section.data_section_id}
-                    title={section.title}
-                    category={section.data_type}
-                    info={section.info}
-                    userInfo={userInfo}
-                  />
-                ))}
+                <div className="mx-4">
+                  {[...searchedSections].sort(sectionTitleSort).map((section) => (
+                    <WorkSection
+                      onClick={handleManageClick}
+                      onDataClick={handleManageDataClick}
+                      key={section.data_section_id}
+                      id={section.data_section_id}
+                      title={section.title}
+                      category={section.data_type}
+                      info={section.info}
+                      userInfo={userInfo}
+                    />
+                  ))}
+                </div>
               </div>
             ) : (
               <>
                 <div className="!overflow-auto !h-full custom-scrollbar">
                   {location.pathname.endsWith("/data") ? (
-                    <CVDataSection section={activeSection} onBack={handleBack} getDataSections={getDataSections} />
+                    <CVDataSection section={activeSection} onBack={handleBack} getDataSections={fetchAllDataSections} />
                   ) : (
-                    <ManageSection section={activeSection} onBack={handleBack} getDataSections={getDataSections} />
+                    <ManageSection section={activeSection} onBack={handleBack} getDataSections={fetchAllDataSections} />
                   )}
                 </div>
               </>

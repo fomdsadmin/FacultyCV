@@ -38,7 +38,6 @@ def cleanData(df):
     df["user_id"] = df["PhysicianID"].astype(str).str.strip()
     df["details"] =  df["Details"].fillna('').str.strip()
     df["highlight_-_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].str.strip().str.lower().map({'true': True, 'false': False})
 
     # If Type is "Other:", set type_of_leave to "Other ({type_other})"
     df["type"] =  df["Type"].fillna('').str.strip()
@@ -67,7 +66,7 @@ def cleanData(df):
         df["TDate_clean"] = pd.to_numeric(df["TDate"], errors='coerce')
         df["start_date"] = df["TDate_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["start_date"] = df["start_date"].fillna('').str.strip()
     else:
@@ -78,7 +77,7 @@ def cleanData(df):
         df["TDateEnd_clean"] = pd.to_numeric(df["TDateEnd"], errors='coerce')
         df["end_date"] = df["TDateEnd_clean"].apply(lambda x:
             '' if pd.isna(x) or x <= 0 else  # Zero and negative are blank
-            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B, %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
+            pd.to_datetime(x, unit='s', errors='coerce').strftime('%B %Y') if not pd.isna(pd.to_datetime(x, unit='s', errors='coerce')) else ''
         )
         df["end_date"] = df["end_date"].fillna('').str.strip()
     else:
@@ -97,7 +96,7 @@ def cleanData(df):
 
 
     # Keep only the cleaned columns
-    df = df[["user_id", "details", "type", "highlight_-_notes", "highlight", "dates"]]
+    df = df[["user_id", "details", "type", "highlight_-_notes",  "dates"]]
     # Replace NaN with empty string for all columns
     df = df.replace({np.nan: ''})
     return df
@@ -257,7 +256,7 @@ def lambda_handler(event, context):
             print(f"DataFrame columns: {df.columns.tolist()}")
             
             # Check for required columns
-            required_columns = ["PhysicianID", "UserID", "Details", "Type"]
+            required_columns = ["PhysicianID", "Details", "Type"]
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
                 raise ValueError(f"Missing required columns: {missing_columns}")

@@ -17,7 +17,7 @@ def getArchivedUserCVData(arguments):
     connection.close()
     archived_user_cv_data = []
     if len(results) == 0:
-        return {}
+        return []
     for result in results:
         archived_user_cv_data.append({
             'user_cv_data_id': result[0],

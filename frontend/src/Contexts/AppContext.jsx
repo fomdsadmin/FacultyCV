@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { fetchUserAttributes, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
-import { addToUserGroup, getUser } from "../graphql/graphqlHelpers.js";
+import { addToUserGroup, getUser, changeUsername, getUserWithVPPUsername } from "../graphql/graphqlHelpers.js";
 import { use } from "react";
 
 // Create the context
@@ -29,11 +29,23 @@ export const AppProvider = ({ children }) => {
   const [userExistsInSqlDatabase, setUserExistsInSqlDatabase] = useState(false);
   const [isUserPending, setIsUserPending] = useState(false);
   const [isUserApproved, setIsUserApproved] = useState(false);
+  const [isUserActive, setIsUserActive] = useState(true);
+  const [isUserTerminated, setIsUserTerminated] = useState(false);
   const [doesUserNeedToReLogin, setDoesUserNeedToReLogin] = useState(false);
+  // Removed claim profile feature state (userProfileMatches, doesUserHaveAProfileInDatabase)
+  const [isVPPUser, setIsVPPUser] = useState(false);
+  const [hasVPPProfile, setHasVPPProfile] = useState(false);
 
   // Role management state
   const [actualRole, setActualRole] = useState(""); // User's actual assigned role (permissions)
   const [currentViewRole, setCurrentViewRole] = useState(""); // Current active view role
+  const [previousViewRole, setPreviousViewRole] = useState(""); // Previous view role before switching
+
+  // Delegate management state
+  const [managedUser, setManagedUser] = useState(null); // User being managed by delegate
+  const [isManagingUser, setIsManagingUser] = useState(false); // Flag for when delegate is managing someone
+  const [originalUserInfo, setOriginalUserInfo] = useState(null); // Store original delegate info
+  const [hasActiveConnections, setHasActiveConnections] = useState(false); // Track if delegate has active connections
 
   // Initialize actual role when userInfo changes
   useEffect(() => {
@@ -46,6 +58,11 @@ export const AppProvider = ({ children }) => {
       }
     }
   }, [userInfo, currentViewRole]);
+
+  // Helper function to check if login is VPP (not ending with @ubc.ca)
+  const isVPPLogin = (username) => {
+    return username && !username.endsWith("@ubc.ca");
+  };
 
   // Get user group from Cognito
   async function getUserGroup() {
@@ -63,11 +80,12 @@ export const AppProvider = ({ children }) => {
   async function getUserInfo(username) {
     try {
       if (username && username !== "") {
-        // ("Fetching user info for:", username);
         const userInformation = await getUser(username);
         // console.log("User info fetched:", userInformation)
         if (userInformation.role === "Assistant") {
+          // For delegates, only set assistantUserInfo
           setAssistantUserInfo(userInformation);
+          // Don't set userInfo for delegates initially
         } else {
           setUserInfo(userInformation);
         }
@@ -143,6 +161,103 @@ export const AppProvider = ({ children }) => {
           setUserExistsInSqlDatabase(false);
           setIsUserPending(false);
           setIsUserApproved(false);
+          setIsUserActive(true);
+          setIsUserTerminated(false);
+          setLoading(false);
+          return;
+        }
+        // console.log("Filter: Username fetched:", username);
+
+        // Check if this is a VPP login
+        const isVPP = isVPPLogin(username);
+        setIsVPPUser(isVPP);
+
+        if (isVPP) {
+          console.log("Filter: VPP login detected");
+          // Try to get user with VPP username
+          try {
+            const vppUserData = await getUserWithVPPUsername(username);
+            if (vppUserData && vppUserData.user_id) {
+              console.log("Filter: VPP user found in database");
+              setHasVPPProfile(true);
+              setUserExistsInSqlDatabase(true);
+              setIsUserPending(vppUserData.pending);
+              setIsUserApproved(vppUserData.approved);
+              setIsUserActive(vppUserData.active);
+              setIsUserTerminated(vppUserData.terminated);
+
+              if (vppUserData.terminated) {
+                console.log("Filter: VPP user is terminated");
+                setIsUserTerminated(true);
+                setLoading(false);
+                return;
+              }
+
+              // If user is NOT terminated and is approved and active, set up full user context
+              if (
+                vppUserData.terminated !== true &&
+                vppUserData.approved &&
+                !vppUserData.pending &&
+                vppUserData.active !== false
+              ) {
+                // Set up full user context (similar to getCognitoUser logic)
+                try {
+                  const userData = await getCurrentUser();
+                  setUser(userData);
+
+                  const userGroup = await getUserGroup();
+                  setUserGroup(userGroup);
+
+                  // Set up user info for VPP user
+                  if (vppUserData.role === "Assistant") {
+                    setAssistantUserInfo(vppUserData);
+                  } else {
+                    setUserInfo(vppUserData);
+                  }
+                  console.log("VPP User context setup completed");
+                } catch (error) {
+                  console.error("Error setting up VPP user context:", error);
+                }
+
+                // Add user to Cognito group if they are approved and active and not terminated
+                if (vppUserData.role && vppUserData.role !== "") {
+                  //console.log("VPP Username: ", username, "Role: ", vppUserData.role);
+                  let result;
+                  if (vppUserData.role.startsWith("Admin-")) {
+                    result = await addToUserGroup(username, "DepartmentAdmin");
+                  } else if (vppUserData.role.startsWith("FacultyAdmin-")) {
+                    result = await addToUserGroup(username, "FacultyAdmin");
+                  } else {
+                    result = await addToUserGroup(username, vppUserData.role);
+                  }
+
+                  // console.log(result);
+                  if (result.includes("SUCCESS")) {
+                    setDoesUserNeedToReLogin(true);
+                    setIsUserApproved(false);
+                    setIsUserPending(true);
+                    console.log("Added cognito group membership for VPP user", result);
+                  }
+                }
+              }
+            } else {
+              console.log("Filter: VPP user not found in database");
+              setHasVPPProfile(false);
+              setUserExistsInSqlDatabase(false);
+              setIsUserPending(false);
+              setIsUserApproved(false);
+              setIsUserActive(true);
+              setIsUserTerminated(false);
+            }
+          } catch (error) {
+            console.log("Filter: Error fetching VPP user or VPP user not found:", error);
+            setHasVPPProfile(false);
+            setUserExistsInSqlDatabase(false);
+            setIsUserPending(false);
+            setIsUserApproved(false);
+            setIsUserActive(true);
+            setIsUserTerminated(false);
+          }
           setLoading(false);
           return;
         }
@@ -153,9 +268,18 @@ export const AppProvider = ({ children }) => {
           setUserExistsInSqlDatabase(true);
           setIsUserPending(userData.pending);
           setIsUserApproved(userData.approved);
+          setIsUserActive(userData.active); // Default to true if active is not explicitly false
+          setIsUserTerminated(userData.terminated);
 
-          // If user is approved, set up full user context
-          if (userData.approved && !userData.pending) {
+          if (userData.terminated) {
+            console.log("Filter: VPP user is terminated");
+            setIsUserTerminated(true);
+            setLoading(false);
+            return;
+          }
+
+          // If user is NOT terminated and is approved and active, set up full user context
+          if (userData.terminated !== true && userData.approved && !userData.pending && userData.active !== false) {
             // Set up full user context (inline getCognitoUser logic)
             try {
               const userData = await getCurrentUser();
@@ -182,27 +306,41 @@ export const AppProvider = ({ children }) => {
             }
           }
 
-          // Add user to Cognito group if they are approved if not already a member
-          if (userData.approved && !userData.pending) {
+          // Add user to Cognito group if they are NOT terminated and approved and active and not pending
+          if (userData.terminated !== true && userData.approved && !userData.pending && userData.active !== false) {
             if (userData.role && userData.role !== "") {
-              console.log("Username: ", username, "Role: ", userData.role);
-              const result = await addToUserGroup(username, userData.role);
-              console.log(result)
+              // console.log("Username: ", username, "Role: ", userData.role);
+              let result;
+              if (userData.role.startsWith("Admin-")) {
+                result = await addToUserGroup(username, "DepartmentAdmin");
+              } else if (userData.role.startsWith("FacultyAdmin-")) {
+                result = await addToUserGroup(username, "FacultyAdmin");
+              } else {
+                result = await addToUserGroup(username, userData.role);
+              }
+
+              // console.log(result);
               if (result.includes("SUCCESS")) {
-                setDoesUserNeedToReLogin(true)
-                setIsUserApproved(false)
-                setIsUserPending(true)
+                // setDoesUserNeedToReLogin(true);
                 console.log("Added cognito group membership", result);
-              } 
+                // hard refresh page after 1 sec so membership takes effect
+                setDoesUserNeedToReLogin(true);
+                setIsUserApproved(false);
+                setIsUserPending(true);
+                // setTimeout(() => {
+                //   window.location.reload();
+                // }, 1000);
+              }
             }
           }
         } catch (error) {
-          console.error("Error fetching user data:", error);
-          // console.log("Filter: User does not exist in SQL database");
+          console.log("Filter: User does not exist in SQL database");
           // User does not exist in SQL database
           setUserExistsInSqlDatabase(false);
           setIsUserPending(false);
           setIsUserApproved(false);
+          setIsUserActive(true);
+          setIsUserTerminated(false);
 
           // Still set up basic user info for header display
           const { given_name, family_name, email, name } = await fetchUserAttributes();
@@ -212,6 +350,8 @@ export const AppProvider = ({ children }) => {
             email: email || "",
             username: name || "",
           });
+
+          // Removed claim profile matching logic
         }
       } catch (error) {
         console.error("Error checking auth session:", error);
@@ -219,6 +359,8 @@ export const AppProvider = ({ children }) => {
         setUserExistsInSqlDatabase(false);
         setIsUserPending(false);
         setIsUserApproved(false);
+        setIsUserActive(true);
+        setIsUserTerminated(false);
       } finally {
         setLoading(false);
       }
@@ -229,21 +371,27 @@ export const AppProvider = ({ children }) => {
 
   // Get available roles based on user's permission level
   const getAvailableRoles = () => {
-    if (!userInfo || !userInfo.role) return [];
+    // For delegates, use assistantUserInfo when not managing, userInfo when managing
+    const effectiveUser =
+      assistantUserInfo && assistantUserInfo.role === "Assistant" && !isManagingUser ? assistantUserInfo : userInfo;
 
-    const isAdmin = userInfo.role === "Admin";
-    const isDepartmentAdmin = userInfo.role.startsWith("Admin-");
-    const isFacultyAdmin = userInfo.role.startsWith("FacultyAdmin-");
-    const department = isDepartmentAdmin ? userInfo.role.split("Admin-")[1] : "";
-    const faculty = isFacultyAdmin ? userInfo.role.split("FacultyAdmin-")[1] : "";
+    if (!effectiveUser || !effectiveUser.role) return [];
+
+    const isAdmin = effectiveUser.role === "Admin";
+    const isDepartmentAdmin = effectiveUser.role.startsWith("Admin-");
+    const isFacultyAdmin = effectiveUser.role.startsWith("FacultyAdmin-");
+    const department = isDepartmentAdmin ? effectiveUser.role.split("Admin-")[1] : "";
+    const faculty = isFacultyAdmin ? effectiveUser.role.split("FacultyAdmin-")[1] : "";
+
+    let roles = [];
 
     if (isAdmin) {
-      return [
+      roles = [
         { label: "Admin", value: "Admin", route: "/admin/home" },
         {
           label: `Department Admin - ${department || "All"}`,
           value: `Admin-${department || "All"}`,
-          route: "/department-admin/home",
+          route: "/department-admin/dashboard",
         },
         {
           label: `Faculty Admin - ${faculty || "All"}`,
@@ -251,26 +399,57 @@ export const AppProvider = ({ children }) => {
           route: "/faculty-admin/home",
         },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
+        { label: "Delegate", value: "Assistant", route: "/delegate/home" },
       ];
     } else if (isDepartmentAdmin) {
-      return [
-        { label: `Department Admin - ${department}`, value: `Admin-${department}`, route: "/department-admin/home" },
+      roles = [
+        {
+          label: `Department Admin - ${department}`,
+          value: `Admin-${department}`,
+          route: "/department-admin/dashboard",
+        },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
       ];
     } else if (isFacultyAdmin) {
-      return [
+      roles = [
         { label: `Faculty Admin - ${faculty}`, value: `FacultyAdmin-${faculty}`, route: "/faculty-admin/home" },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
       ];
     } else {
-      return [
+      roles = [
         {
-          label: userInfo.role,
-          value: userInfo.role,
-          route: userInfo.role === "Faculty" ? "/faculty/home" : "/assistant/home",
+          label: effectiveUser.role === "Assistant" ? "Delegate" : effectiveUser.role,
+          value: effectiveUser.role,
+          route:
+            effectiveUser.role === "Faculty"
+              ? "/faculty/home"
+              : effectiveUser.role === "Assistant"
+              ? "/delegate/home"
+              : "/home",
         },
       ];
     }
+
+    // If delegate is managing someone, add Faculty View option
+    if (assistantUserInfo && assistantUserInfo.role === "Assistant" && (isManagingUser || hasActiveConnections)) {
+      if (isManagingUser && managedUser) {
+        roles.push({
+          label: `Faculty View - ${managedUser.first_name} ${managedUser.last_name}`,
+          value: "Faculty",
+          route: "/faculty/home",
+          isManaging: true,
+        });
+      } else if (hasActiveConnections && !isManagingUser) {
+        roles.push({
+          label: "Faculty View",
+          value: "Faculty",
+          route: "/faculty/home",
+          isManaging: false,
+        });
+      }
+    }
+
+    return roles;
   };
 
   // Get department from role
@@ -293,6 +472,48 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Start managing a user (for delegates)
+  const startManagingUser = (userToManage) => {
+    // Store the original user info and role for any role
+    setOriginalUserInfo({ ...userInfo });
+    setManagedUser(userToManage);
+    setIsManagingUser(true);
+    setUserInfo(userToManage);
+    setPreviousViewRole(currentViewRole);
+    setCurrentViewRole(userToManage.role);
+  };
+
+  // Stop managing a user (return to delegate view)
+  const stopManagingUser = () => {
+    if (isManagingUser && originalUserInfo) {
+      setIsManagingUser(false);
+      setManagedUser(null);
+      setOriginalUserInfo(null);
+      setUserInfo(originalUserInfo);
+      return previousViewRole;
+    }
+  };
+
+  // Course catalog state
+  const [allCourses, setAllCourses] = useState([]);
+  const [isCourseLoading, setIsCourseLoading] = useState(false);
+
+  // Fetch all courses once on mount
+  useEffect(() => {
+    setIsCourseLoading(true);
+    import("../graphql/graphqlHelpers.js").then(({ getAllCourseCatalogInfo }) => {
+      getAllCourseCatalogInfo()
+        .then((data) => {
+          setAllCourses(Array.isArray(data) ? data : []);
+        })
+        .catch((err) => {
+          setAllCourses([]);
+          console.error("Error fetching course catalog info:", err);
+        })
+        .finally(() => setIsCourseLoading(false));
+    });
+  }, []);
+
   // Context value
   const value = {
     // User state
@@ -312,12 +533,25 @@ export const AppProvider = ({ children }) => {
     setIsUserPending,
     isUserApproved,
     setIsUserApproved,
+    isUserActive,
+    setIsUserActive,
+    isUserTerminated,
+    setIsUserTerminated,
 
     // Role management
     actualRole,
     currentViewRole,
     setCurrentViewRole,
     getAvailableRoles,
+
+    // Delegate management
+    managedUser,
+    isManagingUser,
+    originalUserInfo,
+    hasActiveConnections,
+    setHasActiveConnections,
+    startManagingUser,
+    stopManagingUser,
 
     // Functions
     getUserInfo,
@@ -329,6 +563,20 @@ export const AppProvider = ({ children }) => {
     // Re-login state for group memberships
     doesUserNeedToReLogin,
     setDoesUserNeedToReLogin,
+
+    // Removed claim profile feature values
+
+    // VPP login state
+    isVPPUser,
+    setIsVPPUser,
+    hasVPPProfile,
+    setHasVPPProfile,
+
+    // Course catalog
+    allCourses,
+    isCourseLoading,
+    setAllCourses,
+    setIsCourseLoading,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

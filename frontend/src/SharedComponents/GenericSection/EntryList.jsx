@@ -1,8 +1,9 @@
 import GenericEntry from "../GenericEntry";
 import { useGenericSection } from "./GenericSectionContext";
 
-const EntryList = () => {
-  const { fieldData, handleEdit, handleArchive, loading } = useGenericSection();
+const EntryList = ({ entries }) => {
+  const { fieldData, handleEdit, handleArchive, loading, searchTerm, dropdownFilters } = useGenericSection();
+  const dataToRender = entries || fieldData;
 
   if (loading) {
     return (
@@ -12,25 +13,28 @@ const EntryList = () => {
     );
   }
 
-  if (fieldData.length === 0) {
-    return <p className="m-4">No data found</p>;
+  if (dataToRender.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        No existing entries found
+      </div>
+    );
   }
 
   return (
-    <div>
-      {fieldData.map((entry, index) => (
+    <div className="">
+      {dataToRender.map((entry, index) => (
         <GenericEntry
-        isArchived={false}
-        key={index}
-        onEdit={() => handleEdit(entry)}
-        field1={entry.field1}
-        field2={entry.field2}
-        data_details={entry.data_details}
-        onArchive={() => handleArchive(entry)}
-        onRestore={undefined}
+          isArchived={false}
+          key={index}
+          onEdit={() => handleEdit(entry)}
+          field1={entry.field1}
+          field2={entry.field2}
+          data_details={entry.data_details}
+          onArchive={() => handleArchive(entry)}
+          onRestore={undefined}
         />
       ))}
-      {console.log(fieldData)}
     </div>
   );
 };

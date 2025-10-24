@@ -14,46 +14,68 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-SECTION_TITLE = ""
 
 def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    # Only keep rows where UserID is a string of expected length (e.g., 32)
-    df["user_id"] = df["UserID"].str.strip()
-    df["details"] =  df["Details"].fillna('').str.strip()
-    df["highlight_notes"] =  df["Notes"].fillna('').str.strip()
-    df["highlight"] = df["Highlight"].astype(bool)
-
-    # If Type is "Other:", set type_of_leave to "Other ({type_other})"
-    df["type_of_leave"] =  df["Type"].fillna('').str.strip()
-    df["type_other"] =  df["TypeOther"].fillna('').str.strip()
-    mask_other = df["Type"].str.strip() == "Other:"
-    df.loc[mask_other, "type_of_leave"] = "Other (" + df.loc[mask_other, "type_other"] + ")"
-
-    # Convert Unix timestamps to date strings; if missing or invalid, result is empty string
-    df["start_date"] = pd.to_datetime(df["TDate"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["end_date"] = pd.to_datetime(df["TDateEnd"], unit='s', errors='coerce').dt.strftime('%d %B, %Y')
-    df["start_date"] = df["start_date"].fillna('').str.strip()
-    df["end_date"] = df["end_date"].fillna('').str.strip()
-    # Combine start and end dates into a single 'dates' column:
-    def combine_dates(row):
-        if row["start_date"] and row["end_date"]:
-            return f"{row['start_date']} - {row['end_date']}"
-        elif row["start_date"]:
-            return row["start_date"]
-        elif row["end_date"]:
-            return row["end_date"]
+    # Print available columns for debugging
+    print(f"Available columns in DataFrame: {df.columns.tolist()}")
+    
+    # Define expected columns
+    expected_columns = ["physician_id", "employee_id", "last_name", "first_name", "email", "username", "role", "faculty", "department"]
+    
+    # Handle physician_id FIRST before converting to string type
+    # Convert physician_id to integer if it has a value, otherwise None for auto-generation
+    def process_user_id(x):
+        if pd.isna(x) or x == '' or str(x).strip() == '' or str(x) == 'nan':
+            return None
+        try:
+            return int(x)  # Convert string to integer (e.g., "123" -> 123)
+        except (ValueError, TypeError):
+            return None  # If conversion fails, let DB auto-generate
+    
+    df["user_id"] = df["physician_id"].apply(process_user_id)
+    
+    # Convert user_id to Int64 (nullable integer) to avoid float decimals while preserving NaN
+    df["user_id"] = df["user_id"].astype('Int64')
+    
+    # Now ensure relevant columns are string type before using .str methods
+    for col in expected_columns:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
         else:
-            return ""
-    df["dates"] = df.apply(combine_dates, axis=1)
+            print(f"Warning: Column '{col}' not found in DataFrame")
+            # Add missing column with empty string values
+            # df[col] = ''
 
+    # Handle physician_id - if empty, set to None for auto-generation
+    df["physician_id"] = df["physician_id"].fillna('').str.strip()
+    
+    df["employee_id"] = df["employee_id"].fillna('').str.strip()
+    
+    df["last_name"] = df["last_name"].fillna('').str.strip()
+    df["first_name"] = df["first_name"].fillna('').str.strip()
+    
+    # Handle email - ensure empty values become empty strings, not 'nan'
+    df["email"] = df["email"].fillna('').astype(str).str.strip()
+    df["email"] = df["email"].apply(lambda x: '' if x == 'nan' or x == 'None' else x)
+    
+    # Handle username - ensure empty values become empty strings, not 'nan'
+    df["username"] = df["username"].apply(lambda x: '' if x == 'nan' or x == 'None' else x)
+    
+    df["role"] = df["role"].fillna('').str.strip()
+    df["faculty"] = df["faculty"].fillna('').str.strip()
+    df["department"] = df["department"].fillna('').str.strip()
 
-    # Keep only the cleaned columns
-    df = df[["user_id", "details", "type_of_leave", "highlight_notes", "highlight", "dates"]]
-    # Replace NaN with empty string for all columns
-    df = df.replace({np.nan: ''})
+    # Keep only the cleaned columns and make an explicit copy to avoid SettingWithCopyWarning
+    df = df[["user_id", "employee_id", "last_name", "first_name", "email", "username", "role", "faculty", "department"]].copy()
+
+    # Replace NaN with empty string for all columns except user_id
+    for col in df.columns:
+        if col != 'user_id':
+            df.loc[:, col] = df[col].replace({np.nan: ''})
+    
     return df
 
 
@@ -62,49 +84,33 @@ def storeData(df, connection, cursor, errors, rows_processed, rows_added_to_db):
     Store the cleaned DataFrame into the database.
     Returns updated rows_processed and rows_added_to_db.
     """
-    # Query for the data_section_id where title contains SECTION_TITLE (case insensitive)
-    try:
-        cursor.execute(
-            """
-            SELECT data_section_id FROM data_sections
-            WHERE title = %s
-            LIMIT 1
-            """,
-            (SECTION_TITLE,)
-        )
-        result = cursor.fetchone()
-        if result:
-            data_section_id = result[0]
-        else:
-            errors.append(f"No data_section_id found for '{SECTION_TITLE}'")
-            data_section_id = None
-    except Exception as e:
-        errors.append(f"Error fetching data_section_id: {str(e)}")
-        data_section_id = None
-
-    if not data_section_id:
-        errors.append("Skipping insert: data_section_id not found.")
-        return rows_processed, rows_added_to_db
-
     for i, row in df.iterrows():
-        row_dict = row.to_dict()
-        # Remove user_id from data_details
-        row_dict.pop('user_id', None)
-        data_details_JSON = json.dumps(row_dict)
         try:
-            cursor.execute(
-                """
-                INSERT INTO user_cv_data (user_id, data_section_id, data_details, editable)
-                VALUES (%s, %s, %s, %s)
-                """,
-                (row['user_id'], data_section_id, data_details_JSON, True)
-            )
+            # Check if user_id is None or NaN - let the database auto-generate it
+            user_id_value = row['user_id']
+            if user_id_value is None or pd.isna(user_id_value):
+                cursor.execute(
+                    """
+                    INSERT INTO users (employee_id, last_name, first_name, email, cwl_username, role, primary_faculty, primary_department, pending, approved)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (row['employee_id'], row['last_name'], row['first_name'], row['email'], 
+                     row['username'], row['role'], row['faculty'], row['department'], False, True)
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO users (user_id, employee_id, last_name, first_name, email, cwl_username, role, primary_faculty, primary_department, pending, approved)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (user_id_value, row['employee_id'], row['last_name'], row['first_name'], row['email'], 
+                     row['username'], row['role'], row['faculty'], row['department'], False, True)
+                )
             rows_added_to_db += 1
         except Exception as e:
             errors.append(f"Error inserting row {i}: {str(e)}")
         finally:
             rows_processed += 1
-            print(f"Processed row {i + 1}/{len(df)}")
     connection.commit()
     return rows_processed, rows_added_to_db
 
@@ -124,13 +130,64 @@ def fetchFromS3(bucket, key):
 def loadData(file_bytes, file_key):
     """
     Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
+    Handles CSV, JSON lines, and JSON array files.
     """
     if file_key.lower().endswith('.xlsx'):
-        # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
-        # For CSV, decode bytes to text
-        return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        # Try reading as regular CSV first
+        try:
+            df = pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+            
+            # Check if the first column name starts with '[{' - indicates JSON data in CSV
+            if len(df.columns) > 0 and df.columns[0].startswith('[{'):
+                print("Detected JSON data in CSV format, attempting to parse as JSON")
+                # Read the entire file content as text and try to parse as JSON
+                file_content = file_bytes.decode('utf-8').strip()
+                
+                # Try to parse as JSON array directly
+                try:
+                    import json
+                    json_data = json.loads(file_content)
+                    return pd.DataFrame(json_data)
+                except json.JSONDecodeError:
+                    # If that fails, try reading as JSON lines
+                    try:
+                        return pd.read_json(io.StringIO(file_content), lines=True)
+                    except:
+                        # Last resort - reconstruct the JSON from the broken CSV
+                        # Combine all columns back into a single JSON string
+                        combined_json = ''.join(df.columns.tolist())
+                        if len(df) > 0:
+                            # Add the data rows
+                            for _, row in df.iterrows():
+                                row_data = ' '.join([str(val) for val in row.values if pd.notna(val)])
+                                combined_json += ' ' + row_data
+                        
+                        try:
+                            json_data = json.loads(combined_json)
+                            return pd.DataFrame(json_data)
+                        except:
+                            raise ValueError("Could not parse malformed JSON in CSV file")
+            
+            return df
+            
+        except Exception as csv_exc:
+            print(f"Failed to read as CSV: {csv_exc}")
+            # Try reading as JSON lines (NDJSON)
+            try:
+                return pd.read_json(io.StringIO(file_bytes.decode('utf-8')), lines=True)
+            except Exception as jsonl_exc:
+                print(f"Failed to read as JSON lines: {jsonl_exc}")
+                # Try reading as JSON array
+                try:
+                    return pd.read_json(io.StringIO(file_bytes.decode('utf-8')))
+                except Exception as json_exc:
+                    print(f"Failed to read as JSON array: {json_exc}")
+                    raise ValueError(
+                        f"Could not parse file as CSV, JSON lines, or JSON array. "
+                        f"CSV error: {csv_exc}, JSON lines error: {jsonl_exc}, JSON array error: {json_exc}"
+                    )
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
 
@@ -154,19 +211,18 @@ def lambda_handler(event, context):
         # Load data into DataFrame
         try:
             df = loadData(file_bytes, file_key)
+            print("Data loaded successfully.")
         except ValueError as e:
-            
+            print(f"Error loading data: {str(e)}")
             return {
                 'statusCode': 400,
                 'status': 'FAILED',
                 'error': str(e)
             }
-        print("Data loaded successfully.")
 
         # Clean the DataFrame
         df = cleanData(df)
         print("Data cleaned successfully.")
-        print(df.to_string())
 
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)

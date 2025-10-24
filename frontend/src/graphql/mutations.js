@@ -61,7 +61,7 @@ export const ADD_SECTION = `
 `;
 
 export const ADD_USER = `
-    mutation AddUser($first_name: String!, $last_name: String!, $email: String!, $role: String!, $pending: Boolean!, $approved: Boolean!, $username: String!, $primary_department: String!, $primary_faculty: String!) {
+    mutation AddUser($first_name: String!, $last_name: String!, $email: String!, $role: String!, $pending: Boolean!, $approved: Boolean!, $cwl_username: String!, $vpp_username: String!, $primary_department: String!, $primary_faculty: String!) {
         addUser(
             first_name: $first_name,
             last_name: $last_name,
@@ -69,7 +69,8 @@ export const ADD_USER = `
             role: $role,
             pending: $pending,
             approved: $approved,
-            username: $username,
+            cwl_username: $cwl_username,
+            vpp_username: $vpp_username,
             primary_department: $primary_department,
             primary_faculty: $primary_faculty
         )
@@ -77,12 +78,9 @@ export const ADD_USER = `
 `;
 
 export const REMOVE_USER = `
-    mutation RemoveUser($user_id: String!, $email: String!, $first_name: String!, $last_name: String!) {
+    mutation RemoveUser($user_id: String!) {
         removeUser(
-            user_id: $user_id,
-            email: $email,
-            first_name: $first_name,
-            last_name: $last_name
+            user_id: $user_id
         )
     }
 `;
@@ -117,6 +115,30 @@ export const ADD_BATCHED_USER_CV_DATA = `
     }
 `;
 
+export const ADD_STAGING_SCOPUS_PUBLICATIONS = `
+    mutation AddStagingScopusPublications(
+        $user_id: String!,
+        $publications: [AWSJSON!]!
+    ) {
+        addStagingScopusPublications(
+            user_id: $user_id,
+            publications: $publications
+        )
+    }
+`;
+
+export const UPDATE_STAGING_SCOPUS_PUBLICATIONS = `
+    mutation UpdateStagingScopusPublications(
+        $publication_ids: [String!]!,
+        $is_new: Boolean!
+    ) {
+        updateStagingScopusPublications(
+            publication_ids: $publication_ids,
+            is_new: $is_new
+        )
+    }
+`;
+
 export const addUniversityInfoMutation = (type, value) => `
     mutation AddUniversityInfo {
         addUniversityInfo(
@@ -135,7 +157,9 @@ export const addUserConnectionMutation = (
     assistant_first_name,
     assistant_last_name,
     assistant_email,
-    status
+    status,
+    faculty_username,
+    assistant_username
 ) => `
     mutation AddUserConnection {
         addUserConnection(
@@ -148,6 +172,8 @@ export const addUserConnectionMutation = (
             assistant_last_name: "${assistant_last_name}"
             assistant_email: "${assistant_email}"
             status: "${status}"
+            faculty_username: "${faculty_username}"
+            assistant_username: "${assistant_username}"
         )
     }
 `;
@@ -203,20 +229,14 @@ export const updateUserMutation = (
     email,
     role,
     bio,
-    rank,
     institution,
     primary_department,
-    secondary_department,
     primary_faculty,
-    secondary_faculty,
-    primary_affiliation,
-    secondary_affiliation,
     campus,
     keywords,
     institution_user_id,
     scopus_id,
     orcid_id,
-    cognito_user_id
 ) => `
     mutation UpdateUser {
         updateUser(
@@ -226,21 +246,15 @@ export const updateUserMutation = (
             email: "${email}"
             role: "${role}"
             bio: "${bio}"
-            rank: "${rank}"
             institution: "${institution}"
             primary_department: "${primary_department}"
-            secondary_department: "${secondary_department}"
             primary_faculty: "${primary_faculty}"
-            secondary_faculty: "${secondary_faculty}"
-            primary_affiliation: "${primary_affiliation}"
-            secondary_affiliation: "${secondary_affiliation}"
             campus: "${campus}"
             keywords: "${keywords}"
             institution_user_id: "${institution_user_id}"
             scopus_id: "${scopus_id}"
             orcid_id: "${orcid_id}"
             user_id: "${user_id}"
-            cognito_user_id: "${cognito_user_id}"
         )
     }
 `;
@@ -259,6 +273,15 @@ export const updateUserPermissionsMutation = (
     }
 `;
 
+export const updateUserActiveStatusMutation = (user_ids, active) => `
+    mutation UpdateUserActiveStatus {
+        updateUserActiveStatus(
+            user_ids: [${user_ids.map(id => `"${id}"`).join(', ')}]
+            active: ${active}
+        )
+    }
+`;
+
 export const UPDATE_SECTION = `
     mutation UpdateSection($data_section_id: String!, $archive: Boolean, $attributes: AWSJSON, $attributes_type: AWSJSON) {
         updateSection(
@@ -271,10 +294,11 @@ export const UPDATE_SECTION = `
 `;
 
 export const CHANGE_USERNAME = `
-    mutation ChangeUsername($user_id: String!, $username: String!) {
+    mutation ChangeUsername($user_id: String!, $cwl_username: String!, $vpp_username: String!) {
         changeUsername(
             user_id: $user_id,
-            username: $username
+            cwl_username: $cwl_username,
+            vpp_username: $vpp_username
         )
     }
 `;

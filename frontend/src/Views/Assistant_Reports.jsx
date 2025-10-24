@@ -3,14 +3,14 @@ import PageContainer from './PageContainer.jsx';
 import FacultyMenu from 'Components/FacultyMenu.jsx';
 import { cvIsUpToDate, getAllTemplates } from 'graphql/graphqlHelpers.js';
 import '../CustomStyles/scrollbar.css';
-import { getDownloadUrl, uploadLatexToS3 } from '../utils/reportManagement.js';
+import { getDownloadUrl, uploadLatexToS3 } from '../Pages/ReportsPage/gotenbergGenerateUtils/reportManagement.js';
 import { useNotification } from '../Contexts/NotificationContext.jsx';
 import { getUserId } from '../getAuthToken.js';
 import TemplateList from 'Pages/ReportsPage/TemplateList.jsx';
 import ReportPreview from 'Pages/ReportsPage/ReportPreview.jsx';
 import { buildLatex } from 'Pages/ReportsPage/LatexFunctions/LatexBuilder.js';
 import { useApp } from 'Contexts/AppContext.jsx';
-import Assistant_FacultyMenu from 'Components/Assistant_FacultyMenu.jsx';
+import DelegateMenu from 'Components/DelegateMenu.jsx';
 
 const Assistant_Reports = () => {
   const {userInfo, getCognitoUser, toggleViewMode} = useApp();
@@ -96,7 +96,7 @@ const Assistant_Reports = () => {
 
   return (
     <PageContainer className="custom-scrollbar">
-      <Assistant_FacultyMenu
+      <DelegateMenu
         userName={user.preferred_name || user.first_name}
         getCognitoUser={getCognitoUser}
         toggleViewMode={toggleViewMode} userInfo={userInfo}/>

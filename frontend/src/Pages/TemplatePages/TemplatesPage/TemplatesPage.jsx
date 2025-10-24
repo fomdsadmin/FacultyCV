@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import PageContainer from '../../../Views/PageContainer.jsx';
 import AdminMenu from '../../../Components/AdminMenu.jsx';
+import FacultyAdminMenu from '../../../Components/FacultyAdminMenu.jsx';
+import DepartmentAdminMenu from '../../../Components/DepartmentAdminMenu.jsx';
 import NewTemplatePage from '../NewTemplatePage.jsx';
 import TemplateCard from '../../../Components/TemplateCard.jsx';
 import EditReportFormatting from '../../../Components/EditReportFormat.jsx';
@@ -11,13 +13,18 @@ import { addTemplate } from '../../../graphql/graphqlHelpers';
 import { toast } from 'react-toastify';
 
 const TemplatesPageContent = () => {
-  const { getCognitoUser, userInfo } = useApp();
+  const { getCognitoUser, userInfo, currentViewRole, toggleViewMode } = useApp();
   const { templates, activeTemplate, handleManageClick, handleBack, loading, fetchTemplates } = useTemplatePageContext();
   
   // Local state only
   const [searchTerm, setSearchTerm] = useState('');
   const [openNewTemplate, setOpenNewTemplate] = useState(false);
   const [editReportFormatting, setEditReportFormatting] = useState(false);
+
+  // Determine user capabilities based on role
+  const isAdmin = currentViewRole === "Admin";
+  const isFacultyAdmin = currentViewRole?.startsWith("FacultyAdmin");
+  const isDeptAdmin = currentViewRole?.startsWith("Admin-");
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -48,6 +55,7 @@ const TemplatesPageContent = () => {
   const handleCloneTemplate = async (templateId) => {
     const templateToClone = templates.find(t => t.template_id === templateId);
     if (!templateToClone) return;
+    
     // Generate unique title
     const baseTitle = `Copy of ${templateToClone.title}`;
     let newTitle = baseTitle;
@@ -57,10 +65,15 @@ const TemplatesPageContent = () => {
       newTitle = `Copy (${copyNumber}) of ${templateToClone.title}`;
       copyNumber++;
     }
+    
     try {
+      // Parse the template structure and update created_with_role
+      const templateStructure = JSON.parse(templateToClone.template_structure);
+      templateStructure.created_with_role = currentViewRole;
+      
       await addTemplate(
         newTitle,
-        templateToClone.template_structure,
+        JSON.stringify(templateStructure), // Convert back to string
         templateToClone.start_year,
         templateToClone.end_year
       );
@@ -71,9 +84,28 @@ const TemplatesPageContent = () => {
     }
   };
 
+  // Render Menu based on role
+  const renderMenu = () => {
+    if (isAdmin) {
+      return <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />;
+    } else if (isFacultyAdmin) {
+      return (
+        <FacultyAdminMenu
+          getCognitoUser={getCognitoUser}
+          userName={userInfo.preferred_name || userInfo.first_name}
+          userInfo={userInfo}
+          toggleViewMode={toggleViewMode}
+        />
+      );
+    } else if (isDeptAdmin) {
+      return <DepartmentAdminMenu getCognitoUser={getCognitoUser} userName={userInfo.first_name} />;
+    }
+    return null;
+  };
+
   return (
     <PageContainer>
-      <AdminMenu getCognitoUser={getCognitoUser} userName={userInfo.preferred_name || userInfo.first_name} />
+      {renderMenu()}
       <main className='px-12 mt-4 overflow-auto custom-scrollbar w-full mb-4'>
         {loading ? (
           <div className='w-full h-full flex items-center justify-center'>
@@ -129,6 +161,7 @@ const TemplatesPageContent = () => {
                     key={template.template_id} 
                     id={template.template_id} 
                     title={template.title}
+                    createdWithRole={JSON.parse(template.template_structure).created_with_role}
                   />
                 ))}
               </div>

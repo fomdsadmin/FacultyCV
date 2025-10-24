@@ -10,7 +10,6 @@ import {
   FaArrowLeft,
 } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { signOut } from "aws-amplify/auth";
 
 const AdminMenu = ({ userName, getCognitoUser }) => {
   const location = useLocation();
@@ -18,18 +17,6 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [showText, setShowText] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
-
-  // const handleSignOut = async () => {
-  //   setIsSigningOut(true);
-  //   try {
-  //     await signOut();
-  //     getCognitoUser();
-  //     navigate("/auth");
-  //   } catch (error) {
-  //   } finally {
-  //     setIsSigningOut(false);
-  //   }
-  // };
 
   useEffect(() => {
     let timer;
@@ -42,10 +29,6 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
 
     return () => clearTimeout(timer);
   }, [isCollapsed]);
-
-  const handleBackToHome = () => {
-    navigate("/faculty/dashboard");
-  };
 
   return (
     <div
@@ -94,7 +77,7 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
             )}
           </Link>
         </li>
-        <li
+        {/* <li
           className={`mb-2 ${
             location.pathname === "/admin/generate" ? "bg-gray-200 rounded-lg" : ""
           }`}
@@ -111,7 +94,7 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
               </p>
             )}
           </Link>
-        </li>
+        </li> */}
         <li
           className={`mb-2 ${
             location.pathname === "/templates" ? "bg-gray-200 rounded-lg" : ""
@@ -181,25 +164,12 @@ const AdminMenu = ({ userName, getCognitoUser }) => {
                   location.pathname === "/audit" ? "font-bold" : ""
                 }`}
               >
-                Audit
+                Activity Logs
               </p>
             )}
           </Link>
         </li>
       </ul>
-
-      {/* Sign Out Button */}
-      {/* <div className="left-0 w-full flex justify-center">
-        {!isCollapsed && showText && (
-          <button
-            className="text-white btn btn-warning py-1 px-4 w-44 min-h-0 h-8 leading-tight focus:outline-none hover:bg-warning-dark"
-            onClick={handleSignOut}
-            disabled={isSigningOut}
-          >
-            {isSigningOut ? "Signing Out..." : "Sign Out"}
-          </button>
-        )}
-      </div> */}
     </div>
   );
 };

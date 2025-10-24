@@ -118,15 +118,15 @@ const Archive = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       <PageContainer>
         <FacultyMenu userName={userInfo.preferred_name || userInfo.first_name} getCognitoUser={getCognitoUser}
           toggleViewMode={toggleViewMode} userInfo={userInfo} />
-        <main className='px-12 mt-4 overflow-auto custom-scrollbar w-full mb-4'>
-          <h1 className="text-left ml-4 mt-4 text-4xl font-bold text-zinc-600">Archive</h1>
+        <main className='mt-2 overflow-auto custom-scrollbar w-full mb-4'>
+          <h1 className="text-left text-4xl font-bold text-zinc-600">Archive</h1>
           {loading ? (
             <div className='flex items-center justify-center w-full'>
               <div className="block text-m mb-1 mt-6 text-zinc-600">Loading...</div>
             </div>
           ) : (
             <>
-              <div className='m-4 flex'>
+              <div className='my-4 flex'>
                 <label className="input input-bordered flex items-center gap-2 flex-1">
                   <input
                     type="text"

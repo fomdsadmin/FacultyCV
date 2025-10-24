@@ -19,28 +19,25 @@ const EditSectionModal = ({ setIsModalOpen, section, onBack, getDataSections }) 
       setError("Title and Type are required.");
       return;
     }
-    const data_type = type;
     setUpdating(true);
     try {
-      console.log("Updating section with data:", {
-        title,
-        data_type,
-        description,
-        info,
-      });
-      await editSectionDetails(section.data_section_id, title, data_type, description, info);
+      let trimmedTitle = title.trim();
+      let trimmedType = type.trim();
+      let trimmedDescription = description.trim();
+      let trimmedInfo = info.trim();
 
-      // Log the section update action
+      await editSectionDetails(section.data_section_id, trimmedTitle, trimmedType, trimmedDescription, trimmedInfo);
+      console.log("Section updated successfully:", section.title);
+
       await logAction(AUDIT_ACTIONS.EDIT_SECTION_DETAILS);
 
-      await getDataSections();
       setIsModalOpen(false);
-      onBack();
+      setUpdating(false);
+      getDataSections();
     } catch (err) {
       setError("Failed to update section.");
       console.error(err);
       setUpdating(false);
-      // After successful update
     }
   };
 

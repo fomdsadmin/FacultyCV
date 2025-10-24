@@ -1,19 +1,32 @@
 const DownloadButtons = ({ 
   downloadUrl, 
-  downloadUrlDocx, 
+  downloadBlob,
+  downloadUrlDocx,
+  downloadBlobDocx,
   selectedTemplate, 
-  user, 
-  buildingLatex 
+  user,
+  docxTagExists,
+  pdfTagExists,
+  isGenerating,
+  isPdfReady,
+  isDocxReady
 }) => {
   const handleDownload_pdf = async () => {
-    if (!downloadUrl) {
-      console.error("No download URL available");
+    if (!downloadUrl && !downloadBlob) {
+      console.error("No download URL or blob available");
       return;
     }
 
     try {
-      const response = await fetch(downloadUrl, { mode: "cors" });
-      const blob = await response.blob();
+      let blob;
+      
+      if (downloadBlob) {
+        blob = downloadBlob;
+      } else {
+        const response = await fetch(downloadUrl, { mode: "cors" });
+        blob = await response.blob();
+      }
+      
       const url = window.URL.createObjectURL(blob);
 
       const element = document.createElement("a");
@@ -25,19 +38,26 @@ const DownloadButtons = ({
 
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading the file:", error);
+      console.error("Error downloading the PDF file:", error);
     }
   };
 
   const handleDownload_docx = async () => {
-    if (!downloadUrlDocx) {
-      console.error("No download URL available");
+    if (!downloadUrlDocx && !downloadBlobDocx) {
+      console.error("No download URL or blob available for DOCX");
       return;
     }
 
     try {
-      const response = await fetch(downloadUrlDocx, { mode: "cors" });
-      const blob = await response.blob();
+      let blob;
+      
+      if (downloadBlobDocx) {
+        blob = downloadBlobDocx;
+      } else {
+        const response = await fetch(downloadUrlDocx, { mode: "cors" });
+        blob = await response.blob();
+      }
+      
       const url = window.URL.createObjectURL(blob);
 
       const element = document.createElement("a");
@@ -49,29 +69,115 @@ const DownloadButtons = ({
 
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading the file:", error);
+      console.error("Error downloading the DOCX file:", error);
     }
   };
 
-  if (!downloadUrl) {
+  const pdfAvailable = !!(downloadUrl || downloadBlob);
+  const docxAvailable = !!(downloadUrlDocx || downloadBlobDocx);
+  
+  // PDF Button Logic
+  const getPdfButtonState = () => {
+    if (pdfAvailable) {
+      // File is ready to download
+      return { 
+        text: "Download PDF", 
+        style: "btn-success", 
+        disabled: false 
+      };
+    } else if (isGenerating && pdfTagExists) {
+      // Currently generating
+      return { 
+        text: (
+          <span className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></div>
+            PDF Processing...
+          </span>
+        ), 
+        style: "btn-secondary opacity-50 cursor-not-allowed", 
+        disabled: true 
+      };
+    } else if (!pdfTagExists) {
+      // No file exists in database
+      return { 
+        text: "No PDF available - Please generate first", 
+        style: "btn-secondary opacity-50 cursor-not-allowed", 
+        disabled: true 
+      };
+    } else {
+      // Tag exists but not generating (shouldn't happen but fallback)
+      return { 
+        text: "PDF not ready", 
+        style: "btn-secondary opacity-50 cursor-not-allowed", 
+        disabled: true 
+      };
+    }
+  };
+
+  // DOCX Button Logic
+  const getDocxButtonState = () => {
+    if (docxAvailable) {
+      // File is ready to download
+      return { 
+        text: "Download DOCX", 
+        style: "btn-success", 
+        disabled: false 
+      };
+    } else if (isGenerating && docxTagExists) {
+      // Currently generating
+      return { 
+        text: (
+          <span className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></div>
+            DOCX Processing...
+          </span>
+        ), 
+        style: "btn-secondary opacity-50 cursor-not-allowed", 
+        disabled: true 
+      };
+    } else if (!docxTagExists) {
+      // No file exists in database
+      return { 
+        text: "No DOCX available - Please generate first", 
+        style: "btn-secondary opacity-50 cursor-not-allowed", 
+        disabled: true 
+      };
+    } else {
+      // Tag exists but not generating (shouldn't happen but fallback)
+      return { 
+        text: "DOCX not ready", 
+        style: "btn-secondary opacity-50 cursor-not-allowed", 
+        disabled: true 
+      };
+    }
+  };
+  
+  // Always show buttons if a template is selected
+  if (!selectedTemplate) {
     return null;
   }
 
+  const pdfButtonState = getPdfButtonState();
+  const docxButtonState = getDocxButtonState();
+
   return (
-    <div className="mt-auto flex flex-col space-y-4 pt-4">
+    <div className="flex flex-col space-y-3">
+      {/* PDF Download Button */}
       <button
         onClick={handleDownload_pdf}
-        className="btn btn-success"
-        disabled={buildingLatex}
+        className={`btn ${pdfButtonState.style}`}
+        disabled={pdfButtonState.disabled}
       >
-        {buildingLatex ? <span className="loader"></span> : "Download PDF"}
+        {pdfButtonState.text}
       </button>
+      
+      {/* DOCX Download Button */}
       <button
         onClick={handleDownload_docx}
-        className="btn btn-success"
-        disabled={buildingLatex}
+        className={`btn ${docxButtonState.style}`}
+        disabled={docxButtonState.disabled}
       >
-        {buildingLatex ? <span className="loader"></span> : "Download DOCX"}
+        {docxButtonState.text}
       </button>
     </div>
   );

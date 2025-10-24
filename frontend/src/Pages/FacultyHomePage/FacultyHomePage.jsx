@@ -5,19 +5,18 @@ import "react-toastify/dist/ReactToastify.css";
 import { FacultyProvider, useFaculty } from "./FacultyContext.jsx";
 import Tabs from "./Tabs/Tabs.jsx";
 import { useApp } from "../../Contexts/AppContext.jsx";
-import SaveButton from "./SaveButton.jsx";
 
-const FacultyHomePageContent = (user) => {
-  const { loading, toggleViewMode } = useFaculty();
-  const { userInfo, getCognitoUser} = useApp();
+const FacultyHomePageContent = ({ tab }) => {
+  const { loading, toggleViewMode, userInfo: effectiveUserInfo } = useFaculty();
+  const { getCognitoUser} = useApp();
 
   return (
     <PageContainer>
       <FacultyMenu
         getCognitoUser={getCognitoUser}
-        userName={userInfo.preferred_name || userInfo.first_name}
+        userName={effectiveUserInfo?.preferred_name || effectiveUserInfo?.first_name}
         toggleViewMode={toggleViewMode}
-        userInfo={userInfo}
+        userInfo={effectiveUserInfo}
       />
 
       <main
@@ -25,15 +24,10 @@ const FacultyHomePageContent = (user) => {
         overflow-y-auto custom-scrollbar w-full relative"
       >
         {/* Single container with consistent width */}
-        <div className="mx-auto w-full">
-          {/* Save button positioned absolutely at the top right
-          <div className="flex justify-end mt-6 mr-4">
-            <SaveButton />
-          </div>
-           */}
+        <div className="w-full">
           {/* Tabs section below the save button */}
-          <div className="w-full mt-6">
-            {!loading && <Tabs showCard={false} />}
+          <div className="w-full mt-4">
+            {!loading && <Tabs showCard={false} tab={tab} />}
           </div>
 
           {loading && (
@@ -47,10 +41,10 @@ const FacultyHomePageContent = (user) => {
   );
 };
 
-const FacultyHomePage = () => {
+const FacultyHomePage = ({ tab }) => {
   return (
     <FacultyProvider>
-      <FacultyHomePageContent />
+      <FacultyHomePageContent tab={tab} />
     </FacultyProvider>
   );
 };

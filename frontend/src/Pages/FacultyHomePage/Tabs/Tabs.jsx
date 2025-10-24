@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import CoursesTaughtSection from "../../../Components/CoursesTaughtSection";
 import EducationSection from "../../../Components/EducationSection";
 import EmploymentSection from "../../../Components/EmploymentSection";
@@ -12,7 +12,33 @@ import Affiliations from "../Affiliations/Affiliations";
 import Profile from "../Profile/Profile";
 import { get } from "aws-amplify/api";
 
-const Tabs = () => {
+// WorkSection component for Education and Employment sections
+const WorkSection = ({ onClick, title, category, info }) => {
+  const handleClick = () => {
+    onClick(title);
+  };
+
+  const arr = title.split(".");
+  const name = arr[arr.length - 1];
+
+  return (
+    <div className="bg-base-100 my-2 mx-1 p-3 shadow-glow rounded-lg">
+      <div className="flex flex-row justify-between items-center gap-4">
+        <div className="flex flex-col justify-center">
+          <h3 className="card-title">{name ? name.trim() : title}</h3>
+          <p className="text-sm text-gray-600">{info}</p>
+        </div>
+        <div className="card-actions flex flex-row gap-2 min-w-max">
+          <button onClick={handleClick} className="text-white bg-blue-600 hover:bg-blue-700 btn min-h-0 h-8 leading-tight border-none">
+            Manage
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Tabs = ({ tab }) => {
   const { academicSections } = useFaculty();
 
   const CATEGORIES = Object.freeze({
@@ -24,22 +50,78 @@ const Tabs = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { sectionTitle } = useParams();
 
   const [activeTab, setActiveTab] = useState(CATEGORIES.PROFILE);
+  const [activeSection, setActiveSection] = useState(null);
 
+  // Set active tab based on prop or pathname
   useEffect(() => {
-    if (location.pathname === "/faculty/home") {
+    if (tab) {
+      setActiveTab(tab.charAt(0).toUpperCase() + tab.slice(1));
+    } else if (location.pathname === "/faculty/home") {
       setActiveTab(CATEGORIES.PROFILE);
     } else if (location.pathname === "/faculty/home/affiliations") {
       setActiveTab(CATEGORIES.AFFILIATIONS);
-    } else if (location.pathname === "/faculty/home/employment") {
+    } else if (location.pathname.includes("/faculty/home/employment")) {
       setActiveTab(CATEGORIES.EMPLOYMENT);
-    } else if (location.pathname === "/faculty/home/education") {
+    } else if (location.pathname.includes("/faculty/home/education")) {
       setActiveTab(CATEGORIES.EDUCATION);
     }
-  }, [location.pathname]);
+  }, [location.pathname, tab]);
+
+  // Handle section parameter from URL
+  useEffect(() => {
+    if (sectionTitle && academicSections.length > 0) {
+      // Convert URL slug back to section title and find the section
+      const decodedTitle = decodeURIComponent(sectionTitle).replace(/-/g, ' ');
+      const section = academicSections.find((s) => 
+        s.title.toLowerCase().includes(decodedTitle.toLowerCase()) ||
+        slugify(s.title).includes(sectionTitle)
+      );
+      if (section) {
+        setActiveSection(section);
+      }
+    } else {
+      setActiveSection(null);
+    }
+  }, [sectionTitle, academicSections]);
 
   const { userInfo } = useApp();
+
+  // Handle manage click for sections - navigate to section URL
+  const handleManageClick = (sectionTitle) => {
+    const section = academicSections.find((s) => s.title.includes(sectionTitle));
+    if (section) {
+      const titleSlug = slugify(sectionTitle);
+      if (activeTab.includes("Education")) {
+        navigate(`/faculty/home/education/${titleSlug}`);
+      } else if (activeTab.includes("Employment")) {
+        navigate(`/faculty/home/employment/${titleSlug}`);
+      }
+    }
+  };
+
+  // Handle back navigation
+  const handleBack = () => {
+    if (activeTab.includes("Education")) {
+      navigate("/faculty/home/education");
+    } else if (activeTab.includes("Employment")) {
+      navigate("/faculty/home/employment");
+    }
+    setActiveSection(null);
+  };
+
+  // Slugify function to convert strings to URL-friendly format
+  function slugify(str) {
+    return str
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "")
+      .replace(/\-\-+/g, "-");
+  }
 
   const getTitlesForCategory = (category) => {
     if (category.includes("Education")) {
@@ -59,74 +141,71 @@ const Tabs = () => {
   };
 
   const getSection = (category, index) => {
+    // Only show section cards when no active section is selected
     return (
       <>
-        {activeTab.includes(category) && (
-          <Accordion key={index}>
-            {/* Filter out the sections which use custom modals from the list */}
-            {activeTab.includes("Employment") && (
-              <AccordionItem key="Employment Record" title={"6. Employment Record"}>
-                <EmploymentSection
-                  user={userInfo}
-                  section={academicSections.filter((s) => s.title.includes("Employment Record"))[0]}
-                  onBack={undefined}
-                ></EmploymentSection>
-              </AccordionItem>
-            )}
-            {activeTab.includes("Education") && (
-              <AccordionItem key="Post-Secondary Education" title={"5a. Post-Secondary Education"}>
-                <EducationSection
-                  user={userInfo}
-                  section={academicSections.filter((s) => s.title.includes("Post-Secondary Education"))[0]}
-                  onBack={undefined}
-                ></EducationSection>
-              </AccordionItem>
-            )}
-            {getTitlesForCategory(category)
-              .filter(
-                (title) =>
-                  title !== "Courses Taught" &&
-                  !title.includes("Post-Secondary Education") &&
-                  !title.includes("Employment Record")
-              )
-              .sort((a, b) => {
-                // Extract the prefix (e.g., "5a.", "5b.") and compare
-                const getPrefix = (str) => {
-                  const match = str.match(/^(\d+[a-z]?)/i);
-                  return match ? match[1] : str;
-                };
-                return getPrefix(a).localeCompare(getPrefix(b), undefined, { numeric: true });
-              })
-              .map((title, innerIndex) => {
-                // send remaining sections to GenericSection
-                if (title.includes("Leaves of Absence")) {
+        {activeTab.includes(category) && !activeSection && (
+          <div key={index}>
+            {/* Show WorkSection cards for Education and Employment */}
+            {(activeTab.includes("Education") || activeTab.includes("Employment")) && (
+              <div className="space-y-2">
+                {getTitlesForCategory(category).map((title) => {
+                  const section = academicSections.find((s) => s.title.includes(title));
+                  if (!section) return null;
+                  
                   return (
-                    <AccordionItem key={title} title={"7. Leaves of Absence"}>
-                      <GenericSection
-                        section={academicSections.filter((s) => s.title.includes(title))[0]}
-                        onBack={null}
-                      />
-                    </AccordionItem>
+                    <WorkSection
+                      key={title}
+                      onClick={handleManageClick}
+                      title={title}
+                      category={activeTab}
+                      info={section.description || ""}
+                    />
                   );
-                } else {
-                  return (
-                    <AccordionItem key={title} title={title}>
-                      <GenericSection
-                        section={academicSections.filter((s) => s.title.includes(title))[0]}
-                        onBack={null}
-                      />
-                    </AccordionItem>
-                  );
-                }
-              })}
-          </Accordion>
+                })}
+              </div>
+            )}
+          </div>
         )}
       </>
     );
   };
 
+  const renderActiveSection = () => {
+    if (!activeSection) return null;
+
+    if (activeSection.title.includes("Post-Secondary Education")) {
+      return (
+        <EducationSection
+          key={activeSection.data_section_id}
+          user={userInfo}
+          section={activeSection}
+          onBack={handleBack}
+        />
+      );
+    } else if (activeSection.title.includes("Employment Record")) {
+      return (
+        <EmploymentSection
+          key={activeSection.data_section_id}
+          user={userInfo}
+          section={activeSection}
+          onBack={handleBack}
+        />
+      );
+    } else {
+      return (
+        <GenericSection
+          key={activeSection.data_section_id}
+          user={userInfo}
+          section={activeSection}
+          onBack={handleBack}
+        />
+      );
+    }
+  };
+
   return (
-    <div className="w-full px-12">
+    <div className="w-full">
       <div className="flex space-x-4 mb-4 overflow-x-auto">
         {Object.values(CATEGORIES).map((title) => (
           <button
@@ -153,9 +232,19 @@ const Tabs = () => {
       </div>
 
       <div className="border border-gray-200 rounded-md bg-white p-4 w-full">
-        {Object.values(CATEGORIES).map((category, index) => getSection(category, index))}
-        {activeTab === "Affiliations" && <Affiliations />}
-        {activeTab === "Profile" && <Profile />}
+        {/* If we have an active section, show only that section */}
+        {activeSection ? (
+          <div className="w-full">
+            {renderActiveSection()}
+          </div>
+        ) : (
+          /* Otherwise show the normal tab content */
+          <div className="w-full">
+            {Object.values(CATEGORIES).map((category, index) => getSection(category, index))}
+            {activeTab === "Affiliations" && <Affiliations />}
+            {activeTab === "Profile" && <Profile />}
+          </div>
+        )}
       </div>
     </div>
   );

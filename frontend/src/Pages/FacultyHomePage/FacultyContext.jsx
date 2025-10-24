@@ -39,10 +39,34 @@ export const FacultyProvider = ({ children }) => {
   // Academic sections state
   const [academicSections, setAcademicSections] = useState([]);
 
+  // Courses catalog state
+  const [allCourses, setAllCourses] = useState([]);
+  const [isCourseLoading, setIsCourseLoading] = useState(false);
+
+  // Fetch all courses once on mount
   useEffect(() => {
-    // get latest user info on render
-    getUserInfo(userInfo.email);
+    async function fetchCourses() {
+      setIsCourseLoading(true);
+      try {
+        const { getAllCourseCatalogInfo } = await import("../../graphql/graphqlHelpers.js");
+        const data = await getAllCourseCatalogInfo();
+        setAllCourses(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setAllCourses([]);
+        console.error("Error fetching course catalog info:", err);
+      } finally {
+        setIsCourseLoading(false);
+      }
+    }
+    fetchCourses();
   }, []);
+
+  // useEffect(() => {
+  //   // get latest user info on render
+  //   if (userInfo?.email || userInfo?.username) {
+  //     getUserInfo(userInfo.username || userInfo.email);
+  //   }
+  // }, [userInfo]);
 
   // This effect will ensure prevUserInfo is set only once
   useEffect(() => {
@@ -143,6 +167,7 @@ export const FacultyProvider = ({ children }) => {
   // Provide all values and functions to children
   const value = {
     // User state
+    userInfo,
     change,
     handleInputChange,
 
@@ -159,6 +184,10 @@ export const FacultyProvider = ({ children }) => {
 
     // Academic sections
     academicSections,
+
+    // Courses catalog
+    allCourses,
+    isCourseLoading,
 
     // External functions from AppContext
     toggleViewMode,

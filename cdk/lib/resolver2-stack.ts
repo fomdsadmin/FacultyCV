@@ -115,6 +115,30 @@ export class Resolver2Stack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "getDepartmentCVData",
+      ["getDepartmentCVData"],
+      "Query",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "getFacultyWideCVData",
+      ["getFacultyWideCVData"],
+      "Query",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "getArchivedUserCVData",
       ["getArchivedUserCVData"],
       "Query",
@@ -232,6 +256,18 @@ export class Resolver2Stack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "getAllUserDeclarations",
+      ["getAllUserDeclarations"],
+      "Query",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "addUserDeclaration",
       ["addUserDeclaration"],
       "Mutation",
@@ -284,6 +320,18 @@ export class Resolver2Stack extends cdk.Stack {
       apiStack.getApi(),
       "getAllUniversityInfo",
       ["getAllUniversityInfo"],
+      "Query",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "getAllCourseCatalogInfo",
+      ["getAllCourseCatalogInfo"],
       "Query",
       {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,

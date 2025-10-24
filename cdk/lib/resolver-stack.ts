@@ -117,11 +117,36 @@ export class ResolverStack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "getUserWithVPPUsername",
+      ["getUserWithVPPUsername"],
+      "Query",
+      {
+        USER_POOL_ID: apiStack.getUserPoolId(),
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "getUserAffiliations",
       ["getUserAffiliations"],
       "Query",
       {
         USER_POOL_ID: apiStack.getUserPoolId(),
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "getDepartmentAffiliations",
+      ["getDepartmentAffiliations"],
+      "Query",
+      {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpointReader,
       },
       resolverRole,
@@ -227,6 +252,18 @@ export class ResolverStack extends cdk.Stack {
 
     createResolver(
       apiStack.getApi(),
+      "updateUserActiveStatus",
+      ["updateUserActiveStatus"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
       "updateUserAffiliations",
       ["updateUserAffiliations"],
       "Mutation",
@@ -317,6 +354,42 @@ export class ResolverStack extends cdk.Stack {
       "Mutation",
       {
         TABLE_NAME: cvGenStack.dynamoDBTable.tableName,
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "addStagingScopusPublications",
+      ["addStagingScopusPublications"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "updateStagingScopusPublications",
+      ["updateStagingScopusPublications"],
+      "Mutation",
+      {
+        DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
+      },
+      resolverRole,
+      [psycopgLayer, databaseConnectLayer]
+    );
+
+    createResolver(
+      apiStack.getApi(),
+      "getStagingScopusPublications",
+      ["getStagingScopusPublications"],
+      "Query",
+      {
         DB_PROXY_ENDPOINT: databaseStack.rdsProxyEndpoint,
       },
       resolverRole,

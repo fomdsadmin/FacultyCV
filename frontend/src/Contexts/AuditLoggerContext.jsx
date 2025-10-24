@@ -1,56 +1,104 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { addAuditView } from '../graphql/graphqlHelpers';
+import { useApp } from './AppContext';
 
 const AuditLoggerContext = createContext(null);
 
 export const AUDIT_ACTIONS = {
     VIEW_PAGE: 'View page',
+    LOGIN_REQUEST_SUBMITTED: 'Login request submitted',
     UPDATE_PROFILE: 'Update profile',
     UPDATE_AFFILIATIONS: 'Update affiliations',
 
-    EDIT_SECTION_DETAILS: 'Update section details', //admin
-    UPDATE_SECTION_ATTRIBUTES: 'Update section attributes', // admin
-    ARCHIVE_SECTION: 'Archive section', // admin
-    DELETE_SECTION_DATA: 'Delete section Data', // admin
-    SEND_CONNECTION_INVITE: 'Send connection invite', // admin
-    DELETE_CONNECTION: 'Delete connection', // admin
-    ACCEPT_CONNECTION: 'Accept connection', // admin
-    CHANGE_USER_ROLE: 'Change role', // admin
-    
-    FORM_CONNECTION: 'Form connection', 
-    
+    FORM_CONNECTION: 'Form connection',
+
     ADD_USER_DECLARATION: 'Add declaration',
     UPDATE_USER_DECLARATION: 'Update declaration',
     DELETE_USER_DECLARATION: 'Delete declaration',
-    
+
     ADD_CV_DATA: 'Add CV data',
     UPDATE_CV_DATA: 'Update CV data',
     DELETE_CV_DATA: 'Delete all CV data',
     ARCHIVE_CV_DATA: 'Archive CV data',
     RETRIEVE_EXTERNAL_DATA: 'Retrieve external data',
-    // TODO add more actions
+    GENERATE_CV: 'Generate CV',
+
+    // admin actions (all admin actions)
+    GENERATE_DEPT_REPORT: 'Generate department report', // department Admin
+
+    EDIT_SECTION_DETAILS: 'Update section details',
+    UPDATE_SECTION_ATTRIBUTES: 'Update section attributes',
+    ARCHIVE_SECTION: 'Archive section',
+    DELETE_SECTION_DATA: 'Delete section Data',
+
+    SEND_CONNECTION_INVITE: 'Send connection invite',
+    DELETE_CONNECTION: 'Delete connection',
+    ACCEPT_CONNECTION: 'Accept connection',
+
+    CHANGE_USER_ROLE: 'Change role',
+    EDIT_CV_TEMPLATE: 'Edit CV template',
+    ADD_NEW_TEMPLATE: 'Add new template',
+    DELETE_CV_TEMPLATE: 'Delete CV template',
+    EDIT_REPORT_FORMAT: 'Edit report format',
+    ADD_USER: 'Add user',
+    UPDATE_USER: 'Update user profile',
+    IMPORT_USER: 'Import user',
+    APPROVE_USER: 'Approve user',
+    REJECT_USER: 'Reject user',
+    ACCEPT_USER: 'Accept user',
+    IMPERSONATE: 'Impersonate user',
 };
+
+export const ACTION_CATEGORIES = {
+    ADMIN_ACTIONS: [
+        AUDIT_ACTIONS.EDIT_SECTION_DETAILS,
+        AUDIT_ACTIONS.UPDATE_SECTION_ATTRIBUTES,
+        AUDIT_ACTIONS.ARCHIVE_SECTION,
+        AUDIT_ACTIONS.DELETE_SECTION_DATA,
+        AUDIT_ACTIONS.SEND_CONNECTION_INVITE,
+        AUDIT_ACTIONS.DELETE_CONNECTION,
+        AUDIT_ACTIONS.ACCEPT_CONNECTION,
+        AUDIT_ACTIONS.CHANGE_USER_ROLE,
+        AUDIT_ACTIONS.EDIT_CV_TEMPLATE,
+        AUDIT_ACTIONS.ADD_NEW_TEMPLATE,
+        AUDIT_ACTIONS.DELETE_CV_TEMPLATE,
+        AUDIT_ACTIONS.EDIT_REPORT_FORMAT,
+        AUDIT_ACTIONS.ADD_USER,
+        AUDIT_ACTIONS.UPDATE_USER,
+        AUDIT_ACTIONS.IMPORT_USER,
+        AUDIT_ACTIONS.APPROVE_USER,
+        AUDIT_ACTIONS.REJECT_USER,
+        AUDIT_ACTIONS.ACCEPT_USER,
+        AUDIT_ACTIONS.GENERATE_DEPT_REPORT,
+        AUDIT_ACTIONS.IMPERSONATE
+    ],
+
+};
+
+// All actions that aren't admin actions
+ACTION_CATEGORIES.OTHER_ACTIONS = Object.values(AUDIT_ACTIONS).filter(
+    action => !ACTION_CATEGORIES.ADMIN_ACTIONS.includes(action)
+);
 
 export const AuditLoggerProvider = ({ children, userInfo }) => {
     const [ip, setIp] = useState('Unknown');
     const location = useLocation();
     const previousPath = useRef(null);
 
+    const { isManagingUser, managedUser, originalUserInfo } = useApp();
+
     // Log page views automatically
     useEffect(() => {
         const logPageView = async () => {
             // Skip logging for certain paths or if userInfo is not available
-            if (!userInfo || !userInfo.email) {
-                console.log("Page view logging skipped - no user info available");
+            if (!userInfo || userInfo.approved !== true) {
+                console.log("Page view logging skipped - no user info available/ user not approved");
                 return;
             }
-
             if (location.pathname !== previousPath.current) {
                 previousPath.current = location.pathname;
-
                 await logAction(AUDIT_ACTIONS.VIEW_PAGE);
-                // console.log(`Logged page view: ${location.pathname}`);
             }
         };
 
@@ -75,21 +123,55 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             console.warn("Cannot log action - no user info available");
             return;
         }
+        // Convert profileRecord to string if it's an object
+        let recordValue = profileRecord;
+        if (typeof profileRecord === 'object') {
+            try {
+                recordValue = JSON.stringify(profileRecord);
+            } catch (e) {
+                recordValue = String(profileRecord);
+            }
+        }
 
+        // Determine if this is an impersonation scenario
+        const isImpersonation = isManagingUser && managedUser && originalUserInfo;
+
+        let finalProfileRecord = recordValue;
+        if (isImpersonation) {
+            const impersonationContext = {
+                action_data: recordValue || '',
+                impersonated_by: {
+                    user_id: originalUserInfo.user_id,
+                    first_name: originalUserInfo.first_name,
+                    last_name: originalUserInfo.last_name,
+                    email: originalUserInfo.email,
+                    role: originalUserInfo.role
+                },
+                impersonated_user: {
+                    user_id: managedUser.user_id,
+                    first_name: managedUser.first_name,
+                    last_name: managedUser.last_name,
+                    email: managedUser.email,
+                    role: managedUser.role
+                }
+            };
+            finalProfileRecord = JSON.stringify(impersonationContext);
+        }
 
         const auditInput = {
-            logged_user_first_name: userInfo?.first_name || 'Unknown',
-            logged_user_last_name: userInfo?.last_name || 'Unknown',
-            logged_user_role: userInfo?.role || 'Unknown',
+            // Log as the impersonated user but include impersonator info in profile_record
+            logged_user_id: isImpersonation ? managedUser.user_id : userInfo?.user_id || 'Unknown',
+            logged_user_first_name: isImpersonation ? managedUser.first_name : userInfo?.first_name || 'Unknown',
+            logged_user_last_name: isImpersonation ? managedUser.last_name : userInfo?.last_name || 'Unknown',
+            logged_user_role: isImpersonation ? managedUser.role : userInfo?.role || 'Unknown',
+            logged_user_email: isImpersonation ? managedUser.email : userInfo?.email || 'Unknown',
             ip,
             browser_version: navigator.userAgent,
             page: location.pathname,
             session_id: localStorage.getItem('session_id') || 'Unknown',
-            assistant: userInfo?.role === 'Assistant',
-            profile_record: profileRecord,
-            logged_user_email: userInfo?.email || 'Unknown',
+            assistant: userInfo?.role === 'Assistant' ? "true" : "false",
+            profile_record: finalProfileRecord,
             logged_user_action: actionType,
-
         };
 
         // console.log('Audit Log Action:', actionType, auditInput);
@@ -99,7 +181,6 @@ export const AuditLoggerProvider = ({ children, userInfo }) => {
             console.error("Failed to log audit action:", error);
         }
         return;
-
     };
 
     const contextValue = {

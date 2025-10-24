@@ -6,6 +6,9 @@ import { toast } from "react-toastify"
 import { useTemplateModifier } from "./TemplateModifierContext"
 import { useTemplatePageContext } from "Pages/TemplatePages/TemplatesPage/TemplatePageContext"
 
+import { useAuditLogger } from '../../../../Contexts/AuditLoggerContext';
+import { AUDIT_ACTIONS } from '../../../../Contexts/AuditLoggerContext';
+
 const SaveTemplateButton = ({ templateId = null }) => {
     const {
         title,
@@ -14,11 +17,13 @@ const SaveTemplateButton = ({ templateId = null }) => {
         groups,
         HIDDEN_GROUP_ID,
         onBack,
-        sortAscending
+        sortAscending,
+        createdWithRole,
+        showDeclaration
     } = useTemplateModifier();
 
     const { fetchTemplates } = useTemplatePageContext();
-
+    const { logAction } = useAuditLogger();
     const [addingTemplate, setAddingTemplate] = useState(false)
 
     const saveTemplate = async () => {
@@ -31,10 +36,12 @@ const SaveTemplateButton = ({ templateId = null }) => {
         const clean_groups = groups.filter(group => group.id !== HIDDEN_GROUP_ID)
         console.log(HIDDEN_GROUP_ID)
 
-        // Build template structure from groups data
+        // Build template structure from groups data - INCLUDE created_with_role
         const templateStructure = JSON.stringify({
             sort_ascending: sortAscending,
-            groups: clean_groups
+            created_with_role: createdWithRole,
+            groups: clean_groups,
+            show_declaration: showDeclaration
         })
         console.log(clean_groups);
 
@@ -42,8 +49,10 @@ const SaveTemplateButton = ({ templateId = null }) => {
         try {
             if (!templateId) {
                 await addTemplate(title, templateStructure, startYear, endYear)
+                await logAction(AUDIT_ACTIONS.ADD_NEW_TEMPLATE);
             } else {
                 await updateTemplate(templateId, title, templateStructure, startYear, endYear);
+                await logAction(AUDIT_ACTIONS.EDIT_CV_TEMPLATE);
             }
             toast.success("Template saved successfully!", { autoClose: 3000 })
             fetchTemplates();

@@ -1,16 +1,21 @@
 import Orcid from "./Orcid/Orcid"
 import Scopus from "./Scopus/Scopus"
+import InfoCard from "../../../../Components/InfoCard/InfoCard"
 
-const Linkages = () => {
+const Linkages = ({ user, isAdmin }) => {
+  const helpText = "Connect your profile to external research databases and platforms. These IDs help identify your publications, employment history, and post-secondary education data.";
 
   return (
-    <div className="">
-      <h1 className="text-lg font-bold mt-4 mb-2 text-zinc-500">Linkages</h1>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
-        <Scopus />
-        <Orcid />
+    <InfoCard 
+      title="Academic Linkages" 
+      helpText={helpText}
+      className="h-fit"
+    >
+      <div className="space-y-4">
+        <Orcid user={user} isAdmin={isAdmin} />
+        <Scopus user={user} isAdmin={isAdmin} />
       </div>
-    </div>
+    </InfoCard>
   );
 }
 
