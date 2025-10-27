@@ -173,6 +173,8 @@ const TemplateList = ({
             setPdfPreviewUrl={setPdfPreviewUrl}
             pdfGenerationCompleteMessage={`PDF for "${selectedTemplate.title}" finished generating!`}
             docxGenerationCompleteMessage={`DOCX for "${selectedTemplate.title}" finished generating!`}
+            startYear={startYear}
+            endYear={endYear}
           />
         </div>
       )}
