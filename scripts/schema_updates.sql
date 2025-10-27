@@ -99,6 +99,6 @@ CREATE TABLE course_catalog (
 
 -- October 16th: to be done
 ALTER TABLE rise_data
-ADD COLUMN IF NOT EXISTS record_id VARCHAR NOT NULL;
+ADD COLUMN IF NOT EXISTS record_id VARCHAR NOT NULL DEFAULT '';
 
 -- END

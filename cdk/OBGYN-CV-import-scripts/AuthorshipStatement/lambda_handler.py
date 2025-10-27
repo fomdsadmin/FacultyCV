@@ -20,8 +20,21 @@ def cleanData(df):
     """
     Cleans the input DataFrame by performing various transformations:
     """
-    df["user_id"] = df["PhysicianID"].astype(str).str.strip()
-    df["details"] =  df["Details"].fillna('').str.strip()
+    # Print columns for debugging
+    print(f"DataFrame columns: {list(df.columns)}")
+    
+    # Strip whitespace from column names
+    df.columns = df.columns.str.strip()
+    
+    # Check if required columns exist
+    if "PhysicianID" not in df.columns:
+        raise KeyError(f"'PhysicianID' column not found. Available columns: {list(df.columns)}")
+    if "Details" not in df.columns:
+        raise KeyError(f"'Details' column not found. Available columns: {list(df.columns)}")
+    
+    # Convert to string first, then fill NaN and strip
+    df["user_id"] = df["PhysicianID"].astype(str).replace('nan', '').str.strip()
+    df["details"] = df["Details"].astype(str).replace('nan', '').str.strip()
 
     # Keep only the cleaned columns
     df = df[["user_id", "details"]]
@@ -96,13 +109,30 @@ def fetchFromS3(bucket, key):
 def loadData(file_bytes, file_key):
     """
     Loads a DataFrame from file bytes based on file extension (.csv or .xlsx).
+    For CSV files containing JSON, parses the JSON first.
     """
     if file_key.lower().endswith('.xlsx'):
         # For Excel, read as bytes
         return pd.read_excel(io.BytesIO(file_bytes))
     elif file_key.lower().endswith('.csv'):
         # For CSV, decode bytes to text
-        return pd.read_csv(io.StringIO(file_bytes.decode('utf-8')), skiprows=0, header=0)
+        csv_text = file_bytes.decode('utf-8')
+        
+        # Check if the CSV contains JSON data (starts with '[{' or just '{')
+        if csv_text.strip().startswith('[{') or csv_text.strip().startswith('{'):
+            # Parse as JSON
+            try:
+                json_data = json.loads(csv_text)
+                if isinstance(json_data, list):
+                    return pd.DataFrame(json_data)
+                else:
+                    return pd.DataFrame([json_data])
+            except json.JSONDecodeError:
+                # If JSON parsing fails, try normal CSV
+                return pd.read_csv(io.StringIO(csv_text), skiprows=0, header=0)
+        else:
+            # Normal CSV
+            return pd.read_csv(io.StringIO(csv_text), skiprows=0, header=0)
     else:
         raise ValueError('Unsupported file type. Only CSV and XLSX are supported.')
 
