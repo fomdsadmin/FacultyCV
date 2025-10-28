@@ -36,7 +36,14 @@ const Sections = ({ getCognitoUser, userInfo }) => {
   // Set active tab from URL param
   useEffect(() => {
     if (category && filters.length > 0) {
-      const matched = filters.find((f) => slugify(f) === category);
+      // Find the filter that matches the slugified category
+      const matched = filters.find((f) => {
+        const slugified = slugify(f);
+        // Handle the case where slugified categories might have leading numbers removed
+        const categorySlugClean = slugified.split("-")[0].match(/\d/) ? slugified.split("-").slice(1).join("-") : slugified;
+        const urlCategoryClean = category.split("-")[0].match(/\d/) ? category.split("-").slice(1).join("-") : category;
+        return categorySlugClean === urlCategoryClean || slugified === category;
+      });
       setActiveTab(matched || null);
     } else if (!category) {
       setActiveTab(null);
@@ -149,9 +156,9 @@ const Sections = ({ getCognitoUser, userInfo }) => {
   // When user clicks back, return to /sections/:category if tab is selected, else /sections
   const handleBack = () => {
     setActiveSection(null);
-    if (activeTab) {
-      const categorySlug = slugify(activeTab);
-      navigate(`/sections/${categorySlug}`);
+    // Use URL params instead of activeTab state to ensure proper navigation
+    if (category) {
+      navigate(`/sections/${category}`);
     } else {
       navigate("/sections");
     }
@@ -164,9 +171,9 @@ const Sections = ({ getCognitoUser, userInfo }) => {
 
   const handleBackFromNewSection = () => {
     setOpenNewSection(false);
-    if (activeTab) {
-      const categorySlug = slugify(activeTab);
-      navigate(`/sections/${categorySlug}`);
+    // Use URL params instead of activeTab state to ensure proper navigation
+    if (category) {
+      navigate(`/sections/${category}`);
     } else {
       navigate("/sections");
     }

@@ -651,21 +651,18 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       if (data.agency.toLowerCase() === "rise") {
         let sponsor = data.sponsor.toLowerCase() || "";
         if (sponsor.includes("cihr") || sponsor.includes("canadian institutes of health research")) {
-          data.agency = "CIHR";
+          data.sponsor = "CIHR";
         } else if (sponsor.includes("nserc") || sponsor.includes("natural sciences and engineering research council")) {
-          data.agency = "NSERC";
+          data.sponsor = "NSERC";
         } else if (sponsor.includes("sshrc") || sponsor.includes("social sciences and humanities research council")) {
-          data.agency = "SSHRC";
+          data.sponsor = "SSHRC";
         } else if (
           sponsor.includes("cfi") ||
           sponsor.includes("canada foundation for innovation") ||
           sponsor.includes("canadian foundation for innovation")
         ) {
-          data.agency = "CFI";
-        } else {
-          data.agency = "Other (" + data.sponsor + ")";
-        }
-        delete data.sponsor;
+          data.sponsor = "CFI";
+        } 
       }
       data["status_-_only_for_grants"] = "Approved";
       if (fname) {

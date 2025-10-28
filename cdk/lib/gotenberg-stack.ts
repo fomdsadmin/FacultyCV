@@ -33,8 +33,8 @@ export class GotenbergStack extends cdk.Stack {
         });
 
         // S3 Bucket for Gotenberg documents
-        const gotenbergBucket = new s3.Bucket(this, 'GotenbergDocumentsBucket', {
-            bucketName: `${resourcePrefix}-gotenberg-documents`,
+        const gotenbergBucket = new s3.Bucket(this, process.env.ENVIRONMENT === 'dev' ? 'GotenbergDocumentsBucket' : 'GotenbergDocumentsBucketProd', {
+            bucketName: process.env.ENVIRONMENT === 'dev' ? `${resourcePrefix}-gotenberg-documents` : `${resourcePrefix}-gotenberg-documents-prod`,
             cors: [
                 {
                     allowedHeaders: ['*'],
@@ -330,7 +330,7 @@ def handler(event, context):
         });
 
         // Outputs
-        new cdk.CfnOutput(this, 'GotenbergBucketName', {
+        new cdk.CfnOutput(this, 'GotenbergBucketNameProd', {
             value: gotenbergBucket.bucketName,
             description: 'Gotenberg Documents S3 Bucket Name',
         });

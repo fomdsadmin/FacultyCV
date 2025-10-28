@@ -13,142 +13,112 @@ cognito_client = boto3.client('cognito-idp')
 DB_PROXY_ENDPOINT = os.environ.get('DB_PROXY_ENDPOINT')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
 
-def addUserToDatabase(row, conn, cursor):
-    """
-    Returns 1 if user was added, 0 if user already exists or failed
-    """
-    try:
-        # Check if user already exists
-        cursor.execute("SELECT user_id FROM users WHERE cwl_username = %s", (row['cwl_username'],))
-        existing_user = cursor.fetchone()
-        
-        if existing_user:
-            print(f"User {row['cwl_username']} already exists, skipping")
-            return 0
 
-        # Insert new user
-        cursor.execute("""
-            INSERT INTO users (
-                first_name, last_name, email, cwl_username, primary_department, role, primary_faculty, pending, approved
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            row['first_name'], 
-            row['last_name'], 
-            row['email'], 
-            row['cwl_username'],
-            row['department'], 
-            row['role'], 
-            row['faculty'],
-            False,  # pending
-            True   # approved
-        ))
-        
-        conn.commit()
-        print(f"Successfully added user: {row['email']}")
-        return 1
-        
-    except Exception as e:
-        print(f"Error adding user {row['email']}: {str(e)}")
-        conn.rollback()
+def insert_row_dynamic(row, conn, cursor, table_name):
+    """
+    Insert a CSV row (dict) into specified table exactly as-is.
+    Uses CSV headers as column names and inserts all values.
+    Converts None/null to empty strings before saving.
+    Returns 1 when inserted.
+    """
+    cols = list(row.keys())
+    if not cols:
         return 0
 
-def validate_row(row):
-    """
-    Validates that a row has all required fields
-    """
-    required_fields = ['first_name', 'last_name', 'email', 'department', 'role', 'faculty']
-    for field in required_fields:
-        if field not in row or not row[field] or row[field].strip() == '':
-            return False, f"Missing or empty field: {field}"
+    quoted_cols = [f'"{c}"' for c in cols]
+    col_list = ",".join(quoted_cols)
+    placeholders = ",".join(["%s"] * len(cols))
+    query = f"INSERT INTO {table_name} ({col_list}) VALUES ({placeholders})"
+
+    # Convert None/null to empty strings, empty strings remain as empty strings
+    values = [row[c] if row[c] not in ["", None, "None", "null"] else '' for c in cols]
     
-    # Validate role
-    valid_roles = ['Faculty', 'Assistant', 'Admin', 'DepartmentAdmin']
-    if row['role'] not in valid_roles:
-        return False, f"Invalid role: {row['role']}. Must be one of: {', '.join(valid_roles)}"
-    
-    # Basic email validation
-    if '@' not in row['email']:
-        return False, f"Invalid email format: {row['email']}"
-        
-    return True, ""
+    cursor.execute(query, tuple(values))
+    return 1
+
 
 def lambda_handler(event, context):
     """
-    Processes user import file uploaded to S3
-    Expected file format: CSV with columns: first_name, last_name, email, department, role, institution
+    Processes bulk import file uploaded to S3.
+    Supports:
+    - bulkUserUpload: inserts into users table
+    - bulkAffiliationsUpload: inserts into affiliations table
+    - templates: inserts into templates table
+    - university_info: inserts into university_info table
     """
     try:
         # Parse S3 event
         s3_event = event["Records"][0]["s3"]
         bucket_name = s3_event["bucket"]["name"]
         file_key = s3_event["object"]["key"]
-        
-        print(f"Processing user import file: {file_key} from bucket: {bucket_name}")
-        
+
+        print(f"Processing import file: {file_key} from bucket: {bucket_name}")
+
+        # Determine table name based on file key
+        if "bulkUserUpload" in file_key:
+            table_name = "users"
+        elif "bulkUserAffiliations" in file_key:
+            table_name = "affiliations"
+        elif "templates" in file_key.lower():
+            table_name = "templates"
+        elif "university_info" in file_key.lower():
+            table_name = "university_info"
+        else:
+            raise Exception(f"Unknown file key: {file_key}. Expected 'bulkUserUpload', 'bulkAffiliationsUpload', 'templates', or 'university_info'")
+
+        print(f"Target table: {table_name}")
+
         # Download and process the CSV file
         data = s3_client.get_object(Bucket=bucket_name, Key=file_key)
-        
-        # Determine if it's CSV or Excel based on file extension
-        if file_key.lower().endswith('.xlsx'):
-            # For Excel files, we'd need pandas or openpyxl
-            # For now, return an error asking for CSV format
-            return {
-                'statusCode': 400,
-                'status': 'FAILED',
-                'error': 'Excel files not yet supported. Please convert to CSV format.'
-            }
-        
+
         # Process CSV file
         table_rows = list(csv.DictReader(codecs.getreader("utf-8-sig")(data["Body"])))
-        print(table_rows)
-        
+        print(f"Read {len(table_rows)} rows")
+
         # Connect to database
         connection = get_connection(psycopg2, DB_PROXY_ENDPOINT)
         cursor = connection.cursor()
         print("Connected to database")
-        
+
         # Process each row
         rows_processed = 0
         rows_added_to_db = 0
         rows_added_to_cognito = 0
         errors = []
-        
-        for i, row in enumerate(table_rows):
-            # Clean up row data (strip whitespace)
-            row = {k: v.strip() if isinstance(v, str) else v for k, v in row.items()}
-            
-            # Validate row
-            is_valid, error_message = validate_row(row)
-            if not is_valid:
-                errors.append(f"Row {i+2}: {error_message}")
-                continue
-            rows_processed += 1
-            
-            # Add to database
-            if addUserToDatabase(row, connection, cursor):
-                rows_added_to_db += 1
-            else:
-                errors.append(f"Row {i+2}: Failed to add to database")
-        
+
+        if len(table_rows) == 0:
+            print("No rows to process")
+        else:
+            for i, row in enumerate(table_rows):
+                 # Normalize values (strip strings)
+                row = {k: v.strip() if isinstance(v, str) else v for k, v in row.items()}
+                try:
+                    rows_added_to_db += insert_row_dynamic(row, connection, cursor, table_name)
+                    rows_processed += 1
+                except Exception as e:
+                    errors.append(f"Row {i+2}: Failed to insert row dynamically: {str(e)}")
+
+        connection.commit()
         cursor.close()
         connection.close()
-        
+
         # Clean up - delete the processed file
         s3_client.delete_object(Bucket=bucket_name, Key=file_key)
-        
+
         result = {
             'statusCode': 200,
             'status': 'COMPLETED',
+            'table': table_name,
             'total_rows': len(table_rows),
             'rows_processed': rows_processed,
             'rows_added_to_database': rows_added_to_db,
             'rows_added_to_cognito': rows_added_to_cognito,
             'errors': errors[:10] if errors else []  # Limit to first 10 errors
         }
-        
-        print(f"User import completed: {result}")
+
+        print(f"Import completed: {result}")
         return result
-        
+
     except Exception as e:
         print(f"Error processing user import: {str(e)}")
         return {

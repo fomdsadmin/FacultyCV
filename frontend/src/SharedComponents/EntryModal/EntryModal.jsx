@@ -102,6 +102,12 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
         year = parts[1];
         return { day, month, year };
       }
+      // Try just "Year" (e.g., "2024")
+      match = trimmed.match(/^(\d{4})$/);
+      if (match) {
+        year = match[1];
+        return { day, month, year };
+      }
       return { day, month, year };
     }
 
@@ -121,11 +127,11 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
           lowerSection.includes("employment record") || lowerSection.includes("leaves of absence");
         if (datesStr.includes(" - ")) {
           const [start, end] = datesStr.split(" - ");
-          const startParts = parseDateParts(start, needsDayOptions);
+          const startParts = parseDateParts(start.trim(), needsDayOptions);
           startDateDay = startParts.day;
           startDateMonth = startParts.month;
           startDateYear = startParts.year;
-          const endParts = parseDateParts(end, needsDayOptions);
+          const endParts = parseDateParts(end.trim(), needsDayOptions);
           endDateDay = endParts.day;
           endDateMonth = endParts.month;
           endDateYear = endParts.year;
@@ -177,6 +183,9 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
               const parts = val.trim().split(" ");
               newFormData[`${prefix}DateMonth`] = parts[0];
               newFormData[`${prefix}DateYear`] = parts[1];
+            } else if (/^\d{4}$/.test(val.trim())) {
+              // e.g. 2024 (just year)
+              newFormData[`${prefix}DateYear`] = val.trim();
             } else if (val === "Current" || val === "None") {
               newFormData[`${prefix}DateDay`] = val;
               newFormData[`${prefix}DateMonth`] = val;
@@ -197,10 +206,10 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
         const snakeKey =
           section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
         const val = fields[snakeKey];
-        // Match any option that contains "Other" and is followed by " (value)"
-        if (Array.isArray(options) && typeof val === "string" && /\bother\b/i.test(val) && /\(.*\)$/.test(val)) {
-          // Extract the option text (e.g., "i. Other") and the value in parentheses
-          const match = val.match(/^(.*Other)\s*\((.*)\)$/i);
+        // Match any option that contains "Other" or "Others" and is followed by " (value)"
+        if (Array.isArray(options) && typeof val === "string" && /\bothers?\b/i.test(val) && /\(.*\)$/.test(val)) {
+          // Extract the option text (e.g., "i. Other", "ii. Others", "Others") and the value in parentheses
+          const match = val.match(/^(.*?\bothers?\b.*?)\s*\((.*)\)$/i);
           if (match) {
             setFormData((prev) => ({
               ...prev,
@@ -366,52 +375,94 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
       const needsDayOptions = lowerSection.includes("employment record") || lowerSection.includes("leaves of absence");
       let dates = "";
       // Only start date filled
-      if (startDateMonth && startDateYear && (!endDateMonth || !endDateYear)) {
-        if (needsDayOptions) {
-          dates = startDateDay
-            ? `${startDateDay}, ${startDateMonth}, ${startDateYear}`
-            : `${startDateMonth}, ${startDateYear}`;
-        } else {
-          dates = `${startDateMonth}, ${startDateYear}`;
+      if ((startDateMonth && startDateYear) || startDateYear) {
+        if (!endDateMonth && !endDateYear) {
+          if (startDateMonth && startDateYear) {
+            if (needsDayOptions) {
+              dates = startDateDay
+                ? `${startDateDay}, ${startDateMonth}, ${startDateYear}`
+                : `${startDateMonth}, ${startDateYear}`;
+            } else {
+              dates = `${startDateMonth}, ${startDateYear}`;
+            }
+          } else if (startDateYear) {
+            // Only year provided
+            dates = startDateYear;
+          }
         }
       }
       // Only end date filled
-      else if ((!startDateMonth || !startDateYear) && endDateMonth && endDateYear) {
-        if (needsDayOptions) {
-          dates = endDateDay ? `${endDateDay}, ${endDateMonth}, ${endDateYear}` : `${endDateMonth}, ${endDateYear}`;
-        } else {
-          dates = `${endDateMonth}, ${endDateYear}`;
+      else if ((!startDateMonth && !startDateYear) && ((endDateMonth && endDateYear) || endDateYear)) {
+        if (endDateMonth && endDateYear) {
+          if (needsDayOptions) {
+            dates = endDateDay ? `${endDateDay}, ${endDateMonth}, ${endDateYear}` : `${endDateMonth}, ${endDateYear}`;
+          } else {
+            dates = `${endDateMonth}, ${endDateYear}`;
+          }
+        } else if (endDateYear) {
+          // Only year provided
+          dates = endDateYear;
         }
       }
       // Both filled
-      else if (startDateMonth && startDateYear && endDateMonth && endDateYear) {
-        if (endDateMonth === "Current") {
-          if (needsDayOptions) {
-            dates = startDateDay
-              ? `${startDateDay}, ${startDateMonth}, ${startDateYear} - ${endDateMonth}`
-              : `${startDateMonth}, ${startDateYear} - ${endDateMonth}`;
+      else if ((startDateMonth && startDateYear) || startDateYear) {
+        if ((endDateMonth && endDateYear) || endDateYear) {
+          if (endDateMonth === "Current") {
+            if (startDateMonth && startDateYear) {
+              if (needsDayOptions) {
+                dates = startDateDay
+                  ? `${startDateDay}, ${startDateMonth}, ${startDateYear} - ${endDateMonth}`
+                  : `${startDateMonth}, ${startDateYear} - ${endDateMonth}`;
+              } else {
+                dates = `${startDateMonth}, ${startDateYear} - ${endDateMonth}`;
+              }
+            } else if (startDateYear) {
+              dates = `${startDateYear} - ${endDateMonth}`;
+            }
+          } else if (endDateMonth === "None") {
+            if (startDateMonth && startDateYear) {
+              if (needsDayOptions) {
+                dates = startDateDay
+                  ? `${startDateDay}, ${startDateMonth}, ${startDateYear}`
+                  : `${startDateMonth}, ${startDateYear}`;
+              } else {
+                dates = `${startDateMonth}, ${startDateYear}`;
+              }
+            } else if (startDateYear) {
+              dates = startDateYear;
+            }
           } else {
-            dates = `${startDateMonth}, ${startDateYear} - ${endDateMonth}`;
-          }
-        } else if (endDateMonth === "None") {
-          if (needsDayOptions) {
-            dates = startDateDay
-              ? `${startDateDay}, ${startDateMonth}, ${startDateYear}`
-              : `${startDateMonth}, ${startDateYear}`;
-          } else {
-            dates = `${startDateMonth}, ${startDateYear}`;
-          }
-        } else {
-          if (needsDayOptions) {
-            const startStr = startDateDay
-              ? `${startDateDay}, ${startDateMonth}, ${startDateYear}`
-              : `${startDateMonth}, ${startDateYear}`;
-            const endStr = endDateDay
-              ? `${endDateDay}, ${endDateMonth}, ${endDateYear}`
-              : `${endDateMonth}, ${endDateYear}`;
-            dates = `${startStr} - ${endStr}`;
-          } else {
-            dates = `${startDateMonth}, ${startDateYear} - ${endDateMonth}, ${endDateYear}`;
+            // Both dates filled normally
+            let startStr = "";
+            let endStr = "";
+            
+            if (startDateMonth && startDateYear) {
+              if (needsDayOptions) {
+                startStr = startDateDay
+                  ? `${startDateDay}, ${startDateMonth}, ${startDateYear}`
+                  : `${startDateMonth}, ${startDateYear}`;
+              } else {
+                startStr = `${startDateMonth}, ${startDateYear}`;
+              }
+            } else if (startDateYear) {
+              startStr = startDateYear;
+            }
+            
+            if (endDateMonth && endDateYear) {
+              if (needsDayOptions) {
+                endStr = endDateDay
+                  ? `${endDateDay}, ${endDateMonth}, ${endDateYear}`
+                  : `${endDateMonth}, ${endDateYear}`;
+              } else {
+                endStr = `${endDateMonth}, ${endDateYear}`;
+              }
+            } else if (endDateYear) {
+              endStr = endDateYear;
+            }
+            
+            if (startStr && endStr) {
+              dates = `${startStr} - ${endStr}`;
+            }
           }
         }
       }
@@ -434,6 +485,9 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
             finalFormData[snakeKey] = `${day}, ${month}, ${year}`;
           } else if (month && year) {
             finalFormData[snakeKey] = `${month}, ${year}`;
+          } else if (year) {
+            // Only year provided
+            finalFormData[snakeKey] = year;
           }
           // Remove the temporary fields from finalFormData
           delete finalFormData[`${prefix}DateDay`];
@@ -450,11 +504,11 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
           section.attributes && section.attributes[displayName] ? section.attributes[displayName] : displayName;
         const selectedValue = finalFormData[snakeKey];
         const otherVal = finalFormData[`${snakeKey}_other`] || "";
-        // If the selected value contains "Other" (case-insensitive) and there is an other value
+        // If the selected value contains "Other" or "Others" (case-insensitive) and there is an other value
         if (
-          options.some((opt) => opt.toLowerCase().includes("other")) &&
+          options.some((opt) => /\bothers?\b/i.test(opt)) &&
           typeof selectedValue === "string" &&
-          selectedValue.toLowerCase().includes("other") &&
+          /\bothers?\b/i.test(selectedValue) &&
           otherVal.trim() !== ""
         ) {
           finalFormData[snakeKey] = `${selectedValue} (${otherVal})`;

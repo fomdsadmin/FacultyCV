@@ -13,21 +13,14 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
   const [loading, setLoading] = useState(false);
   const [departmentUsers, setDepartmentUsers] = useState([]);
   const [userDeclarations, setUserDeclarations] = useState({});
-  const [selectedYear, setSelectedYear] = useState("all");
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedDeclaration, setSelectedDeclaration] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  // Get current and next year for the filter
-  const currentYear = new Date().getFullYear();
-  const nextYear = currentYear + 1;
-  const yearOptions = [
-    { value: "all", label: "All Years" },
-    { value: currentYear, label: currentYear.toString() },
-    { value: nextYear, label: nextYear.toString() },
-  ];
+  const [availableYears, setAvailableYears] = useState([]);
 
   useEffect(() => {
     if (!adminLoading && allUsers.length > 0) {
@@ -75,7 +68,6 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
   const fetchAllDeclarations = async () => {
     setLoading(true);
     try {
-      const declarationsMap = {};
       let allDeclarations = [];
 
       // Fetch all declarations for the department in one call
@@ -89,35 +81,45 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
       }
       const normalizedDeclarations = normalizeDeclarations(allDeclarations);
 
-      // Group declarations by user_id and filter by selected year
+      // Extract unique years from declarations and update available years
+      const uniqueYears = [...new Set(normalizedDeclarations.map(declaration => Number(declaration.year)))]
+        .filter(year => year && !isNaN(year) && year !== null && year !== undefined)
+        .sort((a, b) => b - a); // Sort in descending order (newest first)
+      
+      setAvailableYears(uniqueYears);
+
+      // Store all declarations and let the filtering logic handle year filtering
+      // This simplifies the logic and avoids issues with stale selectedYear values
+      const declarationsMap = {};
+      
       normalizedDeclarations.forEach((declaration) => {
-        if (selectedYear === "all" || declaration.year === selectedYear) {
-          if (selectedYear === "all") {
-            // For "all" years, create a unique key combining user_id and year
-            // This allows us to show multiple entries per user (one for each year)
-            const uniqueKey = `${declaration.user_id}_${declaration.year}`;
-            declarationsMap[uniqueKey] = {
-              ...declaration,
-              displayKey: uniqueKey, // Add a display key for rendering
-              originalUserId: declaration.user_id, // Keep original user_id for reference
-            };
-          } else {
-            // For specific year, use user_id as key (one entry per user)
+        if (selectedYear === "all") {
+          // For "all" years, create a unique key combining user_id and year
+          const uniqueKey = `${declaration.user_id}_${declaration.year}`;
+          declarationsMap[uniqueKey] = {
+            ...declaration,
+            displayKey: uniqueKey,
+            originalUserId: declaration.user_id,
+          };
+        } else {
+          // For specific year, only include declarations matching the selected year
+          const declarationYear = Number(declaration.year);
+          const filterYear = Number(selectedYear);
+          
+          if (declarationYear === filterYear) {
             declarationsMap[declaration.user_id] = declaration;
           }
         }
       });
 
-      // Ensure all department users have an entry (even if null)
+      // For specific years, ensure all department users have an entry (even if null)
       if (selectedYear !== "all") {
-        // For specific years, ensure each user has an entry
         departmentUsers.forEach((user) => {
           if (!declarationsMap[user.user_id]) {
             declarationsMap[user.user_id] = null;
           }
         });
       }
-      // For "all" years, we don't add null entries since we want to show only users who have declarations
 
       setUserDeclarations(declarationsMap);
     } catch (error) {
@@ -266,6 +268,15 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
       .map((user) => ({ user, declaration: userDeclarations[user.user_id] }));
   }
 
+  // Sort filtered entries by user's first name, then last name
+  filteredEntries.sort((a, b) => {
+    const firstNameComparison = a.user.first_name.localeCompare(b.user.first_name);
+    if (firstNameComparison !== 0) {
+      return firstNameComparison;
+    }
+    return a.user.last_name.localeCompare(b.user.last_name);
+  });
+
   const exportToCSV = () => {
     const csvData = filteredEntries.map((entry) => {
       const { user, declaration } = entry;
@@ -351,6 +362,27 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
   }
 
   const totalCount = departmentUsers.length;
+
+  // Generate year options dynamically based on available years in the data
+  const yearOptions = [
+    { value: "all", label: "All Years" },
+    ...availableYears.map(year => ({
+      value: year,
+      label: year === currentYear ? `Current (${year})` : year.toString()
+    }))
+  ];
+
+  // Reset selected year if it's no longer available in the data
+  useEffect(() => {
+    if (selectedYear !== "all" && availableYears.length > 0 && !availableYears.includes(Number(selectedYear))) {
+      // If current year is available, default to it, otherwise fall back to "all"
+      if (availableYears.includes(currentYear)) {
+        setSelectedYear(currentYear);
+      } else {
+        setSelectedYear("all");
+      }
+    }
+  }, [availableYears, selectedYear, currentYear]);
 
   return (
     <PageContainer>
@@ -526,11 +558,14 @@ const DepartmentAdminDeclarations = ({ getCognitoUser, userInfo, department }) =
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
+                          <td className="px-6 py-4 whitespace-wrap text-sm text-zinc-900">
                             {user.primary_department}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
-                            {declaration ? declaration.year : "—"}
+                            {selectedYear === "all" 
+                              ? (declaration ? declaration.year : "—")
+                              : selectedYear
+                            }
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
