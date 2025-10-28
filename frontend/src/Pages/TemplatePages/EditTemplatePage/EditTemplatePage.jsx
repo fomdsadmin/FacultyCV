@@ -71,14 +71,14 @@ const EditTemplatePage = ({ onBack }) => {
             templateGroups.forEach(group => {
                 if (group.prepared_sections) {
                     group.prepared_sections = group.prepared_sections.filter(section => {
-                        if (!section || !section.data_section_id) {
+                        if (!section || !section.title) {
                             console.warn('Removing invalid section from template:', section);
                             return false;
                         }
 
                         // Check if the section still exists in the database
                         const sectionExists = fetchedSections.some(dbSection =>
-                            dbSection.data_section_id === section.data_section_id
+                            dbSection.title.toLowerCase() === section.title.toLowerCase()
                         );
 
                         if (!sectionExists) {
@@ -197,7 +197,7 @@ const EditTemplatePage = ({ onBack }) => {
 
             <div className="mt-5 leading-tight mr-4 ml-4">
                 <h2 className="text-2xl font-bold mb-4">Edit Template</h2>
-                
+
                 <div className="mb-6">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                         <input
