@@ -227,8 +227,8 @@ function buildHeader(cv) {
     }
 
 
-    html += '<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 5px;">University of British Columbia</div>';
-    html += `<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;">${template_title}</div>`;
+    //html += '<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 5px;">University of British Columbia</div>';
+    html += `<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;">${template_title.replace("FoM", "")}</div>`;
     html += `<div style="font-size: 1rem; font-weight: 700;">(${start_year} - ${end_year}, ${sort_order})</div>`;
     html += '</div>';
     return html;
@@ -693,10 +693,6 @@ function buildGroup(group) {
             </h2>
     `;
 
-    if (tables.flatMap((t) => t.rows).length === 0) {
-        html += "No data entries"
-    }
-
     tables.forEach(table => {
         html += buildTable(table);
     });
@@ -800,10 +796,16 @@ function buildTable(table) {
             .join('\n');
     }
 
+    const underlinedTitle = table.underlinedTitle;
+    const underlinedTitleHtml = underlinedTitle
+    ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedTitle}</h3>`
+    : '';
+
     // Return full table HTML
     const wrapperClass = noPadding ? 'table-with-notes no-padding' : 'table-with-notes';
     const notesHtml = buildNotes(table.note_sections);
     return `<div class="${wrapperClass}">
+            ${underlinedTitleHtml}
             <table border="1" cellspacing="0" cellpadding="5">
             <thead>
             ${studentsSupervisedSummaryHtml}

@@ -382,7 +382,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
 
 const buildPreparedSection = (preparedSection, dataSectionId) => {
     const table = {};
-    console.log(preparedSection);
+
     if (preparedSection.title === "8b.3. Clinical Teaching") {
         return [buildClinicalTeachingSection(preparedSection, dataSectionId)];
     }
@@ -436,6 +436,10 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
     table["note_sections"] = buildNotes(preparedSection);
 
     table["originalPreparedSection"] = preparedSection;
+
+    if (preparedSection.title === "Patents") {
+        return separateIntoRefereedAndNonRefereed([table], preparedSection);
+    }
 
     return [table];
 }
@@ -529,7 +533,9 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
 
     const attributeGroups = preparedSection.attribute_groups;
     const displayedAttributeGroups = attributeGroups.filter((attributeGroup) => attributeGroup.id !== HIDDEN_ATTRIBUTE_GROUP_ID);
-    const attributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
+
+    const filteredAttributes = displayedAttributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
+    const nonFilteredAttributes = attributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
 
     // Get section data using helper function
     let sectionData = getUserCvDataMap(dataSectionId);
@@ -574,11 +580,11 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
         rowDict["id"] = rowCount;
 
         if (!preparedSection.merge_visible_attributes) {
-            attributes.forEach((attribute) => {
+            nonFilteredAttributes.forEach((attribute) => {
                 rowDict[attribute] = data.data_details[sectionAttributes[attribute]] || '';
             });
         } else {
-            rowDict["merged_data"] = attributes
+            rowDict["merged_data"] = filteredAttributes
                 .map(attribute => {
                     const key = sectionAttributes[attribute];
                     const raw = data.data_details?.[key];
@@ -586,6 +592,9 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
                 })
                 .filter(data => data !== "")
                 .join(', ');
+            nonFilteredAttributes.forEach((attribute) => {
+                rowDict[attribute] = data.data_details[sectionAttributes[attribute]] || '';
+            });
         }
 
         if (preparedSection.include_row_number_column) {
@@ -713,8 +722,78 @@ const buildSubSections = (preparedSectionWithSubSections) => {
         }))
     }
 
+    if (preparedSectionWithSubSections.title === "Journal Publications" ||
+        preparedSectionWithSubSections.title === "Other Publications"
+    ) {
+        tables = separateIntoRefereedAndNonRefereed(tables, preparedSectionWithSubSections);
+    }
+
     return tables;
 }
+
+const separateIntoRefereedAndNonRefereed = (tables, preparedSection) => {
+    const result = [];
+
+    tables.forEach((table) => {
+        const refereedRows = table.rows.filter((row) => row["Peer reviewed"] === "true");
+        const nonRefereedRows = table.rows.filter((row) => row["Peer reviewed"] !== "true");
+
+        let baseHeaderName = table.columns[0]?.headerName || "Untitled";
+        let refereedHeaderName = baseHeaderName;
+        let nonRefereedHeaderName = baseHeaderName;
+
+        if (baseHeaderName.includes("(") && baseHeaderName.includes(")")) {
+            const indexOfFirstLeftBracket = baseHeaderName.indexOf("(");
+            baseHeaderName = baseHeaderName.substring(0, indexOfFirstLeftBracket).trim(); // part before "("
+            refereedHeaderName = `${baseHeaderName} (${refereedRows.length})`;
+            nonRefereedHeaderName = `${baseHeaderName} (${nonRefereedRows.length})`;
+        } else {
+            refereedHeaderName = `${baseHeaderName}`;
+            nonRefereedHeaderName = `${baseHeaderName}`;
+        }
+
+        result.push({
+            ...table,
+            columns: [
+                {
+                    ...table.columns[0],
+                    headerName: `Refereed ${refereedHeaderName}`,
+                },
+            ],
+            rows: refereedRows,
+        });
+
+
+        result.push({
+            ...table,
+            columns: [
+                {
+                    ...table.columns[0],
+                    headerName: `Non-Refereed ${nonRefereedHeaderName}`,
+                },
+            ],
+            rows: nonRefereedRows,
+        });
+    });
+
+    // refereed tables first
+
+    const sortedTables = result.sort((a, b) => {
+        const aIsRef = a.columns[0].headerName.startsWith("Refereed");
+        const bIsRef = b.columns[0].headerName.startsWith("Refereed");
+
+        if (aIsRef === bIsRef) return 0; // keep original order if both same type
+        return aIsRef ? -1 : 1; // refereed first
+    });
+
+    sortedTables[0] = {
+        underlinedTitle: preparedSection.title,
+        ...sortedTables[0]
+    }
+
+    return sortedTables;
+
+};
 
 const buildStudentSupervisedSummaryCount = (preparedSection, dataSectionId) => {
     // Get section data using helper function
@@ -811,9 +890,13 @@ const buildStudentSupervisedSummaryCount = (preparedSection, dataSectionId) => {
         const dates = data.data_details.dates;
 
         const isDegreeInProgress = () => {
-            const dateArray = dates.split("-");
+            const dateArray = dates?.split("-");
             // 2022 - 2024 will give us an array of length 2, thus if the array is of length 1
             // that means there is no end date and the degree is still in progress
+
+            if (!dateArray) {
+                return true;
+            }
 
             if (dateArray.length === 1) {
                 return true;
