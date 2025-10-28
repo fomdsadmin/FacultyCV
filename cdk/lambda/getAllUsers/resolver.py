@@ -36,7 +36,7 @@ def getAllUsers(arguments):
     # Convert query results to a list of dictionaries
     users = []
     for result in results:
-        user = {columns[i]: result[i] for i in range(len(columns))}
+        user = {columns[i]: (result[i] if result[i] is not None else '') for i in range(len(columns))}
         users.append(user)
     
     return users
