@@ -15,6 +15,7 @@ import DownloadDocxButton from "./DownloadDocxButton";
 import DownloadPdfButton from "./DownloadPdfButton";
 import { useNotification } from "Contexts/NotificationContext";
 import { useRef } from "react";
+import { getUserDeclarations } from "graphql/graphqlHelpers";
 
 // onGenerate must return the html content
 const CVGenerationComponent = ({
@@ -23,7 +24,9 @@ const CVGenerationComponent = ({
     selectedTemplate,
     setPdfPreviewUrl,
     pdfGenerationCompleteMessage,
-    docxGenerationCompleteMessage
+    docxGenerationCompleteMessage,
+    startYear,
+    endYear
 }) => {
 
     const { userInfo: user, managedUser } = useApp();
@@ -112,6 +115,23 @@ const CVGenerationComponent = ({
 
     const onGenerate = async () => {
         setGenerating(true);
+
+        if (JSON.parse(selectedTemplate.template_structure).show_declaration) {
+            const userDeclarations = await getUserDeclarations(userInfo.user_id);
+
+            const declarationExistsForThisYear = userDeclarations.some(
+                (declaration) => startYear <= declaration.reporting_year && endYear >= declaration.reporting_year
+            );
+
+            if (!declarationExistsForThisYear) {
+                setGenerating(false);
+                setNotification({
+                    message: "Fill out declaration before generating!",
+                    type: 'warning'
+                })
+                return;
+            }
+        }
 
         // get key earlier in case user switches templates thus changing the key
         const key = getGenericKey(userInfo, currentTemplateRef.current, optionalKey);

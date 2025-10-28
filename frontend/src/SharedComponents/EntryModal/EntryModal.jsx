@@ -41,163 +41,102 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
   const { logAction } = useAuditLogger();
 
   useEffect(() => {
-    // Initialize formData with all fields
-    setFormData(fields);
-
-    // --- Date fields autofill ---
-    // Helper to robustly parse date parts from a string
-    function parseDateParts(str, needsDayOptions) {
-      let day = "";
-      let month = "";
-      let year = "";
-      if (!str) return { day, month, year };
+    // Helper to parse date strings into day/month/year components
+    const parseDateParts = (str, needsDayOptions) => {
+      if (!str) return { day: "", month: "", year: "" };
+      
       const trimmed = str.trim();
-      // Handle "Current" or "None"
+      
+      // Handle special values
       if (trimmed === "Current" || trimmed === "None") {
-        day = month = year = trimmed;
-        return { day, month, year };
+        return { day: trimmed, month: trimmed, year: trimmed };
       }
-      // Try "Day Month Year" (no comma)
-      let match = trimmed.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
-      if (match) {
-        day = match[1];
-        month = match[2];
-        year = match[3];
-        return { day, month, year };
+      
+      // Try "Day, Month, Year" (with commas)
+      if (needsDayOptions && trimmed.includes(", ")) {
+        const parts = trimmed.split(", ").map(p => p.trim());
+        if (parts.length === 3) {
+          return { day: parts[0], month: parts[1], year: parts[2] };
+        }
       }
-      // Try "Day Month, Year"
-      match = trimmed.match(/^(\d{1,2})\s+([A-Za-z]+),\s*(\d{4})$/);
-      if (match) {
-        day = match[1];
-        month = match[2];
-        year = match[3];
-        return { day, month, year };
+      
+      // Try "Month, Year" (with comma - legacy format)
+      if (trimmed.includes(", ")) {
+        const parts = trimmed.split(", ").map(p => p.trim());
+        if (parts.length === 2) {
+          return { day: "", month: parts[0], year: parts[1] };
+        }
       }
-      // Try "Day, Month, Year"
-      if (needsDayOptions && trimmed.includes(", ") && trimmed.split(", ").length === 3) {
-        const parts = trimmed.split(", ").map((p) => p.trim());
-        day = parts[0];
-        month = parts[1];
-        year = parts[2];
-        return { day, month, year };
+      
+      // Try "Month Year" (space separated - preferred format)
+      const monthYearMatch = trimmed.match(/^([A-Za-z]+)\s+(\d{4})$/);
+      if (monthYearMatch) {
+        return { day: "", month: monthYearMatch[1], year: monthYearMatch[2] };
       }
-      // Try "Month Year"
-      match = trimmed.match(/^([A-Za-z]+)\s+(\d{4})$/);
-      if (match) {
-        month = match[1];
-        year = match[2];
-        return { day, month, year };
+      
+      // Try just "Year"
+      const yearMatch = trimmed.match(/^(\d{4})$/);
+      if (yearMatch) {
+        return { day: "", month: "", year: yearMatch[1] };
       }
-      // Try "Month, Year"
-      match = trimmed.match(/^([A-Za-z]+),\s*(\d{4})$/);
-      if (match) {
-        month = match[1];
-        year = match[2];
-        return { day, month, year };
-      }
-      // Try "Month, Year" (split)
-      if (trimmed.includes(", ") && trimmed.split(", ").length === 2) {
-        const parts = trimmed.split(", ").map((p) => p.trim());
-        month = parts[0];
-        year = parts[1];
-        return { day, month, year };
-      }
-      // Try just "Year" (e.g., "2024")
-      match = trimmed.match(/^(\d{4})$/);
-      if (match) {
-        year = match[1];
-        return { day, month, year };
-      }
-      return { day, month, year };
-    }
+      
+      return { day: "", month: "", year: "" };
+    };
 
-    // Handle "dates" (start/end date range)
+    const lowerSection = section.title ? section.title.toLowerCase() : "";
+    const needsDayOptions = lowerSection.includes("employment record") || lowerSection.includes("leaves of absence");
+    
+    let newFormData = { ...fields };
+
+    // Handle "dates" field (start/end date range)
     if ("dates" in fields) {
       setDateFieldName("dates");
       const datesStr = fields.dates || "";
+      
       if (datesStr) {
-        let startDateDay = "";
-        let startDateMonth = "";
-        let startDateYear = "";
-        let endDateDay = "";
-        let endDateMonth = "";
-        let endDateYear = "";
-        const lowerSection = section.title ? section.title.toLowerCase() : "";
-        const needsDayOptions =
-          lowerSection.includes("employment record") || lowerSection.includes("leaves of absence");
         if (datesStr.includes(" - ")) {
-          const [start, end] = datesStr.split(" - ");
-          const startParts = parseDateParts(start.trim(), needsDayOptions);
-          startDateDay = startParts.day;
-          startDateMonth = startParts.month;
-          startDateYear = startParts.year;
-          const endParts = parseDateParts(end.trim(), needsDayOptions);
-          endDateDay = endParts.day;
-          endDateMonth = endParts.month;
-          endDateYear = endParts.year;
-        } else if (datesStr) {
+          const [startStr, endStr] = datesStr.split(" - ").map(s => s.trim());
+          const startParts = parseDateParts(startStr, needsDayOptions);
+          const endParts = parseDateParts(endStr, needsDayOptions);
+          
+          newFormData.startDateDay = startParts.day;
+          newFormData.startDateMonth = startParts.month;
+          newFormData.startDateYear = startParts.year;
+          newFormData.endDateDay = endParts.day;
+          newFormData.endDateMonth = endParts.month;
+          newFormData.endDateYear = endParts.year;
+        } else {
+          // Only start date present
           const startParts = parseDateParts(datesStr, needsDayOptions);
-          startDateDay = startParts.day;
-          startDateMonth = startParts.month;
-          startDateYear = startParts.year;
+          newFormData.startDateDay = startParts.day;
+          newFormData.startDateMonth = startParts.month;
+          newFormData.startDateYear = startParts.year;
         }
-        setFormData((prev) => ({
-          ...prev,
-          startDateDay,
-          startDateMonth,
-          startDateYear,
-          endDateDay,
-          endDateMonth,
-          endDateYear,
-        }));
       }
     }
 
-    // Handle single start/end date fields (e.g., "Start Date", "End Date")
+    // Handle single start/end date fields
     if (section.attributes) {
-      let newFormData = { ...fields };
-      const lowerSection = section.title ? section.title.toLowerCase() : "";
-      const needsDayOptions = lowerSection.includes("employment record") || lowerSection.includes("leaves of absence");
       Object.entries(section.attributes).forEach(([displayName, snakeKey]) => {
+        // Map display name values to snake_case keys
         if (fields[displayName] !== undefined) {
           newFormData[snakeKey] = fields[displayName];
         }
-        // For single start/end date fields, parse and set day/month/year
-        if (displayName.toLowerCase().includes("start date") || displayName.toLowerCase().includes("end date")) {
-          // Use the snake_case key for value if present, else fallback to displayName
+        
+        // Parse individual date fields
+        const lowerDisplayName = displayName.toLowerCase();
+        if (lowerDisplayName.includes("start date") || lowerDisplayName.includes("end date")) {
           const val = fields[snakeKey] !== undefined ? fields[snakeKey] : fields[displayName];
-          const prefix = displayName.toLowerCase().includes("start") ? "start" : "end";
+          const prefix = lowerDisplayName.includes("start") ? "start" : "end";
+          
           if (val && typeof val === "string") {
-            if (needsDayOptions && val.includes(", ") && val.split(", ").length === 3) {
-              // Format: "Day, Month, Year"
-              const parts = val.split(", ");
-              newFormData[`${prefix}DateDay`] = parts[0];
-              newFormData[`${prefix}DateMonth`] = parts[1];
-              newFormData[`${prefix}DateYear`] = parts[2];
-            } else if (val.includes(", ")) {
-              const [month, year] = val.split(", ");
-              newFormData[`${prefix}DateMonth`] = month;
-              newFormData[`${prefix}DateYear`] = year;
-            } else if (/^[A-Za-z]+ \d{4}$/.test(val.trim())) {
-              // e.g. October 2006
-              const parts = val.trim().split(" ");
-              newFormData[`${prefix}DateMonth`] = parts[0];
-              newFormData[`${prefix}DateYear`] = parts[1];
-            } else if (/^\d{4}$/.test(val.trim())) {
-              // e.g. 2024 (just year)
-              newFormData[`${prefix}DateYear`] = val.trim();
-            } else if (val === "Current" || val === "None") {
-              newFormData[`${prefix}DateDay`] = val;
-              newFormData[`${prefix}DateMonth`] = val;
-              newFormData[`${prefix}DateYear`] = val;
-            }
+            const parts = parseDateParts(val, needsDayOptions);
+            newFormData[`${prefix}DateDay`] = parts.day;
+            newFormData[`${prefix}DateMonth`] = parts.month;
+            newFormData[`${prefix}DateYear`] = parts.year;
           }
         }
       });
-      setFormData((prev) => ({
-        ...prev,
-        ...newFormData,
-      }));
     }
 
     // Autofill "Other" fields for dropdowns
@@ -211,11 +150,8 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
           // Extract the option text (e.g., "i. Other", "ii. Others", "Others") and the value in parentheses
           const match = val.match(/^(.*?\bothers?\b.*?)\s*\((.*)\)$/i);
           if (match) {
-            setFormData((prev) => ({
-              ...prev,
-              [snakeKey]: match[1].trim(),
-              [`${snakeKey}_other`]: match[2],
-            }));
+            newFormData[snakeKey] = match[1].trim();
+            newFormData[`${snakeKey}_other`] = match[2];
           }
         }
       });
@@ -229,14 +165,14 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
 
         // If the value exists with the snake_case key, map it to the display name for the checkbox
         if (fields[snakeKey] !== undefined) {
-          setFormData((prev) => ({
-            ...prev,
-            [displayName]: !!fields[snakeKey], // Convert to true boolean
-          }));
+          newFormData[displayName] = !!fields[snakeKey]; // Convert to true boolean
         }
       });
     }
-  }, [fields]); // Added isNew to dependencies as it's used in parsing
+
+    // Set all form data at once
+    setFormData(newFormData);
+  }, [fields]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -367,129 +303,78 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
     }
 
     // --- Date fields saving ---
-    // For "dates" field, construct the string as before
+    const lowerSection = section.title ? section.title.toLowerCase() : "";
+    const needsDayOptions = lowerSection.includes("employment record") || lowerSection.includes("leaves of absence");
+
+    // Helper function to construct a date string from day/month/year
+    const constructDateString = (day, month, year, needsDay) => {
+      if (!month && !year) return "";
+      if (month === "Current" || month === "None") return month;
+      if (year === "Current" || year === "None") return year;
+      
+      if (month && year) {
+        if (needsDay && day) {
+          return `${day}, ${month}, ${year}`;
+        }
+        return `${month} ${year}`; // No comma between month and year
+      }
+      if (year) return year; // Only year provided
+      return "";
+    };
+
+    // For "dates" field (date range with startDate* and endDate*)
     if (dateFieldName) {
-      const { startDateDay, startDateMonth, startDateYear, endDateDay, endDateMonth, endDateYear, ...rest } =
-        finalFormData;
-      const lowerSection = section.title ? section.title.toLowerCase() : "";
-      const needsDayOptions = lowerSection.includes("employment record") || lowerSection.includes("leaves of absence");
+      const startDateDay = finalFormData.startDateDay;
+      const startDateMonth = finalFormData.startDateMonth;
+      const startDateYear = finalFormData.startDateYear;
+      const endDateDay = finalFormData.endDateDay;
+      const endDateMonth = finalFormData.endDateMonth;
+      const endDateYear = finalFormData.endDateYear;
+
+      const startStr = constructDateString(startDateDay, startDateMonth, startDateYear, needsDayOptions);
+      const endStr = constructDateString(endDateDay, endDateMonth, endDateYear, needsDayOptions);
+
       let dates = "";
-      // Only start date filled
-      if ((startDateMonth && startDateYear) || startDateYear) {
-        if (!endDateMonth && !endDateYear) {
-          if (startDateMonth && startDateYear) {
-            if (needsDayOptions) {
-              dates = startDateDay
-                ? `${startDateDay}, ${startDateMonth}, ${startDateYear}`
-                : `${startDateMonth}, ${startDateYear}`;
-            } else {
-              dates = `${startDateMonth}, ${startDateYear}`;
-            }
-          } else if (startDateYear) {
-            // Only year provided
-            dates = startDateYear;
-          }
+      if (startStr && endStr) {
+        // Special case: if end is "None", only show start date
+        if (endStr === "None") {
+          dates = startStr;
+        } else {
+          dates = `${startStr} - ${endStr}`;
         }
+      } else if (startStr) {
+        dates = startStr;
+      } else if (endStr) {
+        dates = endStr;
       }
-      // Only end date filled
-      else if ((!startDateMonth && !startDateYear) && ((endDateMonth && endDateYear) || endDateYear)) {
-        if (endDateMonth && endDateYear) {
-          if (needsDayOptions) {
-            dates = endDateDay ? `${endDateDay}, ${endDateMonth}, ${endDateYear}` : `${endDateMonth}, ${endDateYear}`;
-          } else {
-            dates = `${endDateMonth}, ${endDateYear}`;
-          }
-        } else if (endDateYear) {
-          // Only year provided
-          dates = endDateYear;
-        }
-      }
-      // Both filled
-      else if ((startDateMonth && startDateYear) || startDateYear) {
-        if ((endDateMonth && endDateYear) || endDateYear) {
-          if (endDateMonth === "Current") {
-            if (startDateMonth && startDateYear) {
-              if (needsDayOptions) {
-                dates = startDateDay
-                  ? `${startDateDay}, ${startDateMonth}, ${startDateYear} - ${endDateMonth}`
-                  : `${startDateMonth}, ${startDateYear} - ${endDateMonth}`;
-              } else {
-                dates = `${startDateMonth}, ${startDateYear} - ${endDateMonth}`;
-              }
-            } else if (startDateYear) {
-              dates = `${startDateYear} - ${endDateMonth}`;
-            }
-          } else if (endDateMonth === "None") {
-            if (startDateMonth && startDateYear) {
-              if (needsDayOptions) {
-                dates = startDateDay
-                  ? `${startDateDay}, ${startDateMonth}, ${startDateYear}`
-                  : `${startDateMonth}, ${startDateYear}`;
-              } else {
-                dates = `${startDateMonth}, ${startDateYear}`;
-              }
-            } else if (startDateYear) {
-              dates = startDateYear;
-            }
-          } else {
-            // Both dates filled normally
-            let startStr = "";
-            let endStr = "";
-            
-            if (startDateMonth && startDateYear) {
-              if (needsDayOptions) {
-                startStr = startDateDay
-                  ? `${startDateDay}, ${startDateMonth}, ${startDateYear}`
-                  : `${startDateMonth}, ${startDateYear}`;
-              } else {
-                startStr = `${startDateMonth}, ${startDateYear}`;
-              }
-            } else if (startDateYear) {
-              startStr = startDateYear;
-            }
-            
-            if (endDateMonth && endDateYear) {
-              if (needsDayOptions) {
-                endStr = endDateDay
-                  ? `${endDateDay}, ${endDateMonth}, ${endDateYear}`
-                  : `${endDateMonth}, ${endDateYear}`;
-              } else {
-                endStr = `${endDateMonth}, ${endDateYear}`;
-              }
-            } else if (endDateYear) {
-              endStr = endDateYear;
-            }
-            
-            if (startStr && endStr) {
-              dates = `${startStr} - ${endStr}`;
-            }
-          }
-        }
-      }
-      finalFormData = { ...rest, [dateFieldName]: dates };
+
+      finalFormData[dateFieldName] = dates;
+
+      // Remove temporary date fields
+      delete finalFormData.startDateDay;
+      delete finalFormData.startDateMonth;
+      delete finalFormData.startDateYear;
+      delete finalFormData.endDateDay;
+      delete finalFormData.endDateMonth;
+      delete finalFormData.endDateYear;
     }
 
-    // For single start/end date fields, construct their value as "Day, Month, Year" or "Month, Year" or "Current"/"None"
+    // For single start/end date fields (individual start_date or end_date attributes)
     if (section.attributes) {
-      const lowerSection = section.title ? section.title.toLowerCase() : "";
-      const needsDayOptions = lowerSection.includes("employment record") || lowerSection.includes("leaves of absence");
       Object.entries(section.attributes).forEach(([displayName, snakeKey]) => {
-        if (displayName.toLowerCase().includes("start date") || displayName.toLowerCase().includes("end date")) {
-          const prefix = displayName.toLowerCase().includes("start") ? "start" : "end";
+        const lowerDisplayName = displayName.toLowerCase();
+        if (lowerDisplayName.includes("start date") || lowerDisplayName.includes("end date")) {
+          const prefix = lowerDisplayName.includes("start") ? "start" : "end";
           const day = finalFormData[`${prefix}DateDay`];
           const month = finalFormData[`${prefix}DateMonth`];
           const year = finalFormData[`${prefix}DateYear`];
-          if (month === "Current" || month === "None") {
-            finalFormData[snakeKey] = month;
-          } else if (needsDayOptions && day && month && year) {
-            finalFormData[snakeKey] = `${day}, ${month}, ${year}`;
-          } else if (month && year) {
-            finalFormData[snakeKey] = `${month}, ${year}`;
-          } else if (year) {
-            // Only year provided
-            finalFormData[snakeKey] = year;
+
+          const dateStr = constructDateString(day, month, year, needsDayOptions);
+          if (dateStr) {
+            finalFormData[snakeKey] = dateStr;
           }
-          // Remove the temporary fields from finalFormData
+
+          // Remove temporary date fields
           delete finalFormData[`${prefix}DateDay`];
           delete finalFormData[`${prefix}DateMonth`];
           delete finalFormData[`${prefix}DateYear`];
