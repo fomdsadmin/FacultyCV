@@ -441,6 +441,10 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
         return separateIntoRefereedAndNonRefereed([table], preparedSection);
     }
 
+    if (preparedSection.title === "Journal Publications") {
+        return separateIntoRefereedAndNonRefereed([table], preparedSection);
+    }
+
     return [table];
 }
 
@@ -722,9 +726,7 @@ const buildSubSections = (preparedSectionWithSubSections) => {
         }))
     }
 
-    if (preparedSectionWithSubSections.title === "Journal Publications" ||
-        preparedSectionWithSubSections.title === "Other Publications"
-    ) {
+    if (preparedSectionWithSubSections.title === "Other Publications") {
         tables = separateIntoRefereedAndNonRefereed(tables, preparedSectionWithSubSections);
     }
 
@@ -735,8 +737,8 @@ const separateIntoRefereedAndNonRefereed = (tables, preparedSection) => {
     const result = [];
 
     tables.forEach((table) => {
-        const refereedRows = table.rows.filter((row) => row["Peer reviewed"] === "true");
-        const nonRefereedRows = table.rows.filter((row) => row["Peer reviewed"] !== "true");
+        const refereedRows = table.rows.filter((row) => row["Peer Reviewed"] === "true" || row["Peer reviewed"] === "true");
+        const nonRefereedRows = table.rows.filter((row) => row["Peer Reviewed"] !== "true" && row["Peer reviewed"] !== "true");
 
         let baseHeaderName = table.columns[0]?.headerName || "Untitled";
         let refereedHeaderName = baseHeaderName;
