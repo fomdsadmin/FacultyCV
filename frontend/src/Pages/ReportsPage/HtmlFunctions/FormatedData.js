@@ -655,6 +655,15 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
         return rowDict;
     })
     rowData = rowData.filter(row => row !== null);
+
+    if (preparedSection.title === "9[b-c]. Research or Equivalent Grants and Contracts") {
+        rowData.forEach(data => {
+            if (data["Agency"] === "Rise") {
+                data["Agency"] = "";
+            }
+        });
+    }
+
     return rowData;
 }
 
