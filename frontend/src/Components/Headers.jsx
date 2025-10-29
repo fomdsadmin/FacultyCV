@@ -30,7 +30,7 @@ const Header = ({ assistantUserInfo }) => {
   const activeUserInfo =
     assistantUserInfo && assistantUserInfo.role === "Assistant" && !isManagingUser ? assistantUserInfo : userInfo;
 
-  const userName = activeUserInfo?.username || "User";
+  const userName = activeUserInfo?.cwl_username || "User";
   const userRole = activeUserInfo?.role || "";
   const firstName = activeUserInfo?.first_name || "User";
 
