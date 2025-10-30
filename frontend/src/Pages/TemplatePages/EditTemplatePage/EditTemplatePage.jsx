@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { getAllSections } from "../../../graphql/graphqlHelpers";
-import { toast } from "react-toastify";
 import TemplateModifier from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifier";
 import DeleteTemplateButton from "./DeleteTemplateButton/DeleteTemplateButton";
 import { HIDDEN_ATTRIBUTE_GROUP_ID, HIDDEN_GROUP_ID, SHOWN_ATTRIBUTE_GROUP_ID } from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext";
 import { syncTemplateSections } from "../SyncTemplateSections"
 import { useApp } from "Contexts/AppContext";
-import { useTemplateModifier } from "../SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 
 const EditTemplatePage = ({ onBack }) => {
 
