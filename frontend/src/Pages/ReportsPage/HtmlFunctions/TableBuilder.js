@@ -709,8 +709,6 @@ function buildGroup(group) {
         }
     });
 
-    console.log("JJFILTER emptyTableNames", emptyTableNames);
-
     if (emptyTableNames.length > 0) {
         html += `
         <div style="
