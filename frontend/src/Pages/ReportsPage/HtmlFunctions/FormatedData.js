@@ -611,14 +611,39 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
 
         const attributeFilterValue = String(preparedSection.attribute_filter_value).toLowerCase();
 
-        if (attributeFilterValue === "other") {
+        if (attributeFilterValue.includes("other")) {
+
+            const startIndexOfOtherKey = attributeFilterValue.indexOf("other");
+
+            let lastIndexOfOtherKey = attributeFilterValue.length;
+
+            if (attributeFilterValue.includes("(") && attributeFilterValue.includes(")")) {
+                lastIndexOfOtherKey = attributeFilterValue.indexOf("(")
+            }
+
+            const otherKey = attributeFilterValue.substring(startIndexOfOtherKey, lastIndexOfOtherKey).trim();
+
             const filterAttributedata = String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]).toLowerCase();
 
-            if (!filterAttributedata.includes("other") && filterAttributedata !== "undefined") {
+            const noWhiteSpaceAttributeData = filterAttributedata.trim();
+
+            let endIndexOfOtherKey = -1
+
+            if (startIndexOfOtherKey !== -1) {
+                endIndexOfOtherKey = startIndexOfOtherKey + otherKey.length;
+            }
+
+            const stringAfterOtherKey = noWhiteSpaceAttributeData.substring(endIndexOfOtherKey, noWhiteSpaceAttributeData.length).trim();
+
+            if (endIndexOfOtherKey === -1 ||
+                (stringAfterOtherKey.charAt(0) && stringAfterOtherKey.charAt(0) !== "(") ||
+                !filterAttributedata.includes(otherKey)
+            ) {
                 return null;
             }
+
             if (filterAttributedata === "undefined") {
-                data.data_details[sectionAttributes[preparedSection.section_by_attribute]] = "Other (no selection)"
+                data.data_details[sectionAttributes[preparedSection.section_by_attribute]] = `${otherKey} (no selection)`
             }
         } else {
             if (String(data.data_details[sectionAttributes[preparedSection.section_by_attribute]]) !== String(preparedSection.attribute_filter_value)) {
