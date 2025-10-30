@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import CoursesTaughtSection from "../../../Components/CoursesTaughtSection";
 import EducationSection from "../../../Components/EducationSection";
 import EmploymentSection from "../../../Components/EmploymentSection";
 import { useApp } from "../../../Contexts/AppContext";
-import { Accordion } from "../../../SharedComponents/Accordion/Accordion";
-import { AccordionItem } from "../../../SharedComponents/Accordion/AccordionItem";
 import GenericSection from "../../../SharedComponents/GenericSection/GenericSection";
 import { useFaculty } from "../FacultyContext";
 import Affiliations from "../Affiliations/Affiliations";
 import Profile from "../Profile/Profile";
-import { get } from "aws-amplify/api";
 
 // WorkSection component for Education and Employment sections
 const WorkSection = ({ onClick, title, category, info }) => {
@@ -23,12 +19,12 @@ const WorkSection = ({ onClick, title, category, info }) => {
 
   return (
     <div className="bg-base-100 my-2 mx-1 p-3 shadow-glow rounded-lg">
-      <div className="flex flex-row justify-between items-center gap-4">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div className="flex flex-col justify-center">
           <h3 className="card-title">{name ? name.trim() : title}</h3>
           <p className="text-sm text-gray-600">{info}</p>
         </div>
-        <div className="card-actions flex flex-row gap-2 min-w-max">
+        <div className="card-actions flex flex-row gap-2 self-end md:self-auto">
           <button onClick={handleClick} className="text-white bg-blue-600 hover:bg-blue-700 btn min-h-0 h-8 leading-tight border-none">
             Manage
           </button>
@@ -206,11 +202,11 @@ const Tabs = ({ tab }) => {
 
   return (
     <div className="w-full">
-      <div className="flex space-x-4 mb-4 overflow-x-auto">
+      <div className="flex flex-wrap gap-4 mb-4">
         {Object.values(CATEGORIES).map((title) => (
           <button
             key={title}
-            className={`text-md xl:text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 ${
+            className={`text-md xl:text-lg font-bold px-5 py-2 rounded-lg transition-colors duration-200 whitespace-nowrap ${
               activeTab === title ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
             onClick={() => {

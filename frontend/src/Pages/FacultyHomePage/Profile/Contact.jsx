@@ -18,8 +18,8 @@ const Contact = () => {
       helpText={helpText}
       className="h-fit"
     >
-      <div className="grid grid-cols-2 items-center justify-start space-y-4">
-        <div className="flex items-center border-b border-gray-100 last:border-b-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 items-center justify-start space-y-4">
+        <div className="flex items-center border-b border-gray-100 last:border-b-0 mt-4">
           <div className="flex items-center space-x-4">
             <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center">
               <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
