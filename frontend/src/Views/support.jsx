@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
+import AssistantPageContainer from "../Components/AssistantPageContainer.jsx";
 import FacultyMenu from "../Components/FacultyMenu.jsx";
 import DelegateMenu from "../Components/DelegateMenu.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
@@ -7,6 +9,7 @@ import AdminMenu from "Components/AdminMenu.jsx";
 import { fetchAuthSession } from "aws-amplify/auth";
 
 const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode, currentViewRole }) => {
+  const location = useLocation();
   const [formData, setFormData] = useState({
     name: `${userInfo.first_name} ${userInfo.last_name}`,
     email: `${userInfo.email}`,
@@ -130,8 +133,15 @@ const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode, currentViewRole
     }
   };
 
+  // Determine if we're in delegate view by checking URL path or role
+  const isDelegateView = location.pathname.startsWith('/delegate') || 
+    currentViewRole === "Assistant" || 
+    (!currentViewRole && userInfo.role === "Assistant");
+
+  const Container = isDelegateView ? AssistantPageContainer : PageContainer;
+
   return (
-    <PageContainer>
+    <Container>
       {console.log(currentViewRole)}
       {currentViewRole === "Faculty" ? (
         <FacultyMenu
@@ -151,7 +161,7 @@ const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode, currentViewRole
       ) :(
         <DelegateMenu userInfo={userInfo} assistantUserInfo={userInfo} />
       )}
-      <main className="w-full overflow-auto py-6">
+      <main className={`w-full overflow-auto py-6 ${isDelegateView ? 'px-[2vw] md:px-[3vw] lg:px-[5vw]' : ''}`}>
         <h2 className="text-3xl font-bold text-zinc-600 mb-4">📬 Support Form</h2>
         <div className="bg-white rounded-lg p-6 shadow-sm border">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -248,7 +258,7 @@ const SupportForm = ({ userInfo, getCognitoUser, toggleViewMode, currentViewRole
           </div>
         )}
       </main>
-    </PageContainer>
+    </Container>
   );
 };
 

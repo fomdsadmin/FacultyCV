@@ -137,11 +137,11 @@ const ChangeRoleModal = ({ currentUser, setActiveUser, setIsModalOpen, fetchAllU
       setActiveUser(updatedUserData);
       // setIsModalOpen(false);
 
-      // Then fetch fresh data from the server to ensure consistency
-      const result = await getUser(currentUser.username);
-      if (result) {
-        setActiveUser(result);
-      }
+      // // Then fetch fresh data from the server to ensure consistency
+      // const result = await getUser(currentUser.username);
+      // if (result) {
+      //   setActiveUser(result);
+      // }
 
       // Log the role change action
       const roleChangeInfo = JSON.stringify({
