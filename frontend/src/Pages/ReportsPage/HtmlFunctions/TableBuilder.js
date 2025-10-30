@@ -693,9 +693,46 @@ function buildGroup(group) {
             </h2>
     `;
 
+    const emptyTableNames = [];
     tables.forEach(table => {
-        html += buildTable(table);
+        const htmlTable = buildTable(table);
+
+        if (htmlTable.tableEmpty) {
+            const tableName = table?.columns?.[0]?.headerName
+                .replace("(0)", "").trim();
+
+            if (tableName) {
+                emptyTableNames.push(tableName);
+            }
+        } else {
+            html += buildTable(table);
+        }
     });
+
+    if (emptyTableNames.length > 0) {
+        html += `
+        <div style="
+            margin-top: 1em;
+            font-family: Arial, sans-serif;
+            font-size: 0.95em;
+        ">
+            <strong>Tables with no data:</strong>
+            ${emptyTableNames.map((name, i) => `
+                <span style="
+                    background-color: ${i % 2 === 0 ? '#f2f2f2' : '#dcdcdc'};
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    margin-right: 4px;
+                    display: inline-block;
+                ">
+                    ${name}${i < emptyTableNames.length - 1 ? ',' : ''}
+                </span>
+            `).join('')}
+        </div>
+    `;
+    }
+
+
 
     html += '</div>';
     return html;
@@ -788,8 +825,7 @@ function buildTable(table) {
     const noLeafColumns = !Array.isArray(flatColumns) || flatColumns.length === 0;
 
     if (noRows || noLeafColumns) {
-        const colspan = Math.max(flatColumns.length, 1);
-        bodyHtml = `<tr><td colspan="${colspan}" style="text-align:center; font-style:italic; padding:12px;">No data</td></tr>`;
+        return { tableEmpty: true }
     } else {
         bodyHtml = rows
             .map(row => '<tr>' + flatColumns.map(c => `<td>${dataStyler(row[c.field] ?? '')}</td>`).join('') + '</tr>')
@@ -798,8 +834,8 @@ function buildTable(table) {
 
     const underlinedTitle = table.underlinedTitle;
     const underlinedTitleHtml = underlinedTitle
-    ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedTitle}</h3>`
-    : '';
+        ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedTitle}</h3>`
+        : '';
 
     // Return full table HTML
     const wrapperClass = noPadding ? 'table-with-notes no-padding' : 'table-with-notes';
