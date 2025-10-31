@@ -950,6 +950,7 @@ const buildStudentSupervisedSummaryCount = (preparedSection, dataSectionId) => {
     })
 
     sectionData = filterDateRanges(sectionData, dataSectionId);
+    sectionData = sortSectionData(sectionData, dataSectionId)
 
     let degreeAggregationDict = {};
 

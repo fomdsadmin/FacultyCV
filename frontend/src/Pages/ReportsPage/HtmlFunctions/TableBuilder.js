@@ -957,7 +957,8 @@ function isDateData(data) {
         const parts = str.split(/[\s,]+/).filter(Boolean);
 
         return parts.every(part =>
-            allowedMonths.includes(part.toLowerCase()) || /^\d+$/.test(part)
+            allowedMonths.includes(part.toLowerCase()) || /^\d+$/.test(part) ||
+            part.toLowerCase() === "current"
         );
     }
 
