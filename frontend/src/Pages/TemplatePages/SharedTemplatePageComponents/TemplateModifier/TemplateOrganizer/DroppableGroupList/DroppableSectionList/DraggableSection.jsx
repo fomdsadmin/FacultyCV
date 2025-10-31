@@ -5,7 +5,6 @@ import DroppableAttributeGroupList from "./DroppableAttributeGroupList/Droppable
 import { Accordion } from "SharedComponents/Accordion/Accordion"
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 import AddAttributeGroupButton from "./AddAttributeGroupButton/AddAttributeGroupButton"
-import SortingButton from "./SortingButton/SortingButton"
 import RenameSectionButton from "./RenameSectionButton/RenameSectionButton"
 import RemoveSectionButton from "./RemoveSectionButton"
 import RowCountCheckbox from "./RowCountCheckbox"
@@ -13,6 +12,7 @@ import IncludeRowNumberCheckbox from "./IncludeRowNumberCheckbox"
 import MergeVisibleAttributesCheckbox from "./MergeVisibleAttributesCheckbox"
 import SectionByAttributeButton from "./SectionByAttributeButton/SectionByAttributeButton"
 import ModifiedWarningModal from "./ModifiedWarningModal"
+import InstructionTextField from "./InstructionTextField"
 
 const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, isInHiddenGroup }) => {
     const [showModal, setShowModal] = React.useState(false);
@@ -73,6 +73,7 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                     <Accordion>
                         <AccordionItem title={accordionTitle} hideIsOpenIcon={true && !isInHiddenGroup}>
                             {/**<SortingButton preparedSection={preparedSection} /> */}
+                            <InstructionTextField preparedSection={preparedSection} />
                             <SectionByAttributeButton preparedSection={preparedSection} />
                             <RowCountCheckbox preparedSection={preparedSection} />
                             <IncludeRowNumberCheckbox preparedSection={preparedSection} />
