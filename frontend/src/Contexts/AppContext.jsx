@@ -394,8 +394,8 @@ export const AppProvider = ({ children }) => {
           route: "/department-admin/dashboard",
         },
         {
-          label: `Faculty Admin - ${faculty || "All"}`,
-          value: `FacultyAdmin-${faculty || "All"}`,
+          label: `Faculty-wide Admin - ${faculty || "All"}`,
+          value: `FacultyWideAdmin-${faculty || "All"}`,
           route: "/faculty-admin/home",
         },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
@@ -412,7 +412,7 @@ export const AppProvider = ({ children }) => {
       ];
     } else if (isFacultyAdmin) {
       roles = [
-        { label: `Faculty Admin - ${faculty}`, value: `FacultyAdmin-${faculty}`, route: "/faculty-admin/home" },
+        { label: `Faculty-wide Admin - ${faculty}`, value: `FacultyWideAdmin-${faculty}`, route: "/faculty-admin/home" },
         { label: "Faculty", value: "Faculty", route: "/faculty/home" },
       ];
     } else {
