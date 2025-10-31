@@ -508,6 +508,11 @@ const PublicationsSection = ({ user, section, onBack }) => {
               "keywords",
               "link",
               "publication_id",
+              "author_trainees",
+              "author_doctoral_supervisors",
+              "author_postdoctoral_supervisors",
+              "author_types",
+              "mark_as_important"
             ];
             return !displayedFields.includes(key) && value && value !== "" && value !== null;
           })
