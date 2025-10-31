@@ -61,7 +61,7 @@ const Header = ({ assistantUserInfo }) => {
     } else if (location.pathname.includes("/department-admin")) {
       newViewRole = isDepartmentAdmin ? userRole : "Admin-All";
     } else if (location.pathname.includes("/faculty-admin")) {
-      newViewRole = isFacultyAdmin ? userRole : userRole === "Admin" ? `FacultyAdmin-All` : userRole;
+      newViewRole = isFacultyAdmin ? userRole : userRole === "Admin" ? `FacultyWideAdmin-All` : userRole;
     } else if (location.pathname.includes("/faculty")) {
       newViewRole = "Faculty";
     } else if (location.pathname.includes("/delegate")) {

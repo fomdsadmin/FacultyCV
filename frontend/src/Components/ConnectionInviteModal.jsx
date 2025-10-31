@@ -29,6 +29,9 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     let facultyMember;
     try {
       // Get faculty member by username
+      if (!username.includes('@ubc.ca')) {
+        username += '@ubc.ca';
+      }
       facultyMember = await getUser(username);
     } catch (error) {
       console.error('Error finding user:', error);
@@ -87,7 +90,11 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     let member;
     try {
       // Get member by username
-      member = await getUser(username);
+      let newUsername = username;
+      if (!username.includes('@ubc.ca')) {
+        newUsername = username + '@ubc.ca';
+      }
+      member = await getUser(newUsername);
 
     } catch (error) {
       console.error('Error finding user:', error);
@@ -167,11 +174,11 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
             </h2>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">CWL Username</label>
               <input
                 type="username"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                placeholder="Enter user's username"
+                placeholder="Enter user's CWL username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
