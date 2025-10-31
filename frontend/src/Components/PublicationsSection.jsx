@@ -419,6 +419,11 @@ const PublicationsSection = ({ user, section, onBack }) => {
     const authorList = Array.isArray(details.author_names) ? details.author_names : [details.author_names];
     const authorIds = Array.isArray(details.author_ids) ? details.author_ids : [details.author_ids];
     const keywordsList = Array.isArray(details.keywords) ? details.keywords : [details.keywords];
+    
+    // Get author metadata for formatting
+    const trainees = details.author_trainees || [];
+    const doctoralSupervisors = details.author_doctoral_supervisors || [];
+    const postdoctoralSupervisors = details.author_postdoctoral_supervisors || [];
 
     // Handle date display - check for both display_date and end_date
     let formattedDate = "";
@@ -427,21 +432,48 @@ const PublicationsSection = ({ user, section, onBack }) => {
       formattedDate = details.end_date.trim();
     }
 
-    // Map author names, bold the one matching user's scopus_id
+    // Map author names with formatting based on roles
     const authorDisplay = authorList.map((name, idx) => {
-      if (user.scopus_id && authorIds && authorIds[idx] && String(authorIds[idx]) === String(user.scopus_id)) {
-        return (
-          <span key={idx} className="font-bold ">
-            {name}
-          </span>
-        );
+      // Build className based on roles
+      let className = "";
+      
+      // Check if this author is in any special role
+      const isTrainee = trainees.includes(name);
+      const isDoctoralSupervisor = doctoralSupervisors.includes(name);
+      const isPostdoctoralSupervisor = postdoctoralSupervisors.includes(name);
+      
+      // Apply formatting: underline for trainee, italic for doctoral, bold italic for postdoctoral
+      if (isPostdoctoralSupervisor) {
+        className = "font-bold italic";
+      } else if (isDoctoralSupervisor) {
+        className = "italic";
+      } else if (isTrainee) {
+        className = "underline";
       }
-      return <span key={idx}>{name}</span>;
+      
+      // Check if this is the user's publication (scopus_id match)
+      const isScopusMatch = user.scopus_id && authorIds && authorIds[idx] && String(authorIds[idx]) === String(user.scopus_id);
+      
+      // Combine classes - user's publication gets bold in addition to role formatting
+      if (isScopusMatch) {
+        className = className ? `${className} font-bold` : "font-bold";
+      }
+      
+      return (
+        <span key={idx} className={className || undefined}>
+          {name}
+        </span>
+      );
     });
 
     return (
       <>
-        {details.title && <h3 className="text-lg font-semibold mb-1">{details.title}</h3>}
+        {details.title && (
+          <h3 className="text-lg font-semibold mb-1">
+            {details.mark_as_important && <span className="text-red-600 mr-1">*</span>}
+            {details.title}
+          </h3>
+        )}
         <p className="text-sm text-gray-700 mb-2">
           {formattedDate}
           {details.volume && (
@@ -508,6 +540,11 @@ const PublicationsSection = ({ user, section, onBack }) => {
               "keywords",
               "link",
               "publication_id",
+              "author_trainees",
+              "author_doctoral_supervisors",
+              "author_postdoctoral_supervisors",
+              "author_types",
+              "mark_as_important"
             ];
             return !displayedFields.includes(key) && value && value !== "" && value !== null;
           })
