@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import SubSectionInstructionTextField from './SubSectionInstructionTextField';
+import SubSectionUnderlinedTitle from './SubSectionUnderlinedTitle';
 
 const SubSectionTitle = ({ subSection, index, setSubSectionSettings }) => {
     // Track input value separately from the fallback logic
@@ -42,6 +44,24 @@ const SubSectionTitle = ({ subSection, index, setSubSectionSettings }) => {
                     className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
             </div>
+
+            {/* Label for subsection instructions */}
+            <div className="mt-2 text-xs text-gray-600 font-medium">
+                Instructions:
+            </div>
+
+            {/* Subsection instructions textbox placed below custom title */}
+            <SubSectionInstructionTextField
+                subSection={subSection}
+                setSubSectionSettings={setSubSectionSettings}
+            />
+
+            {/* Subsection underlined title (non-expanding) placed below instructions */}
+            <SubSectionUnderlinedTitle
+                subSection={subSection}
+                setSubSectionSettings={setSubSectionSettings}
+            />
+            
         </div>
     );
 };

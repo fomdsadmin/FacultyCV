@@ -1,7 +1,7 @@
-const AttributeSelector = ({ 
-    preparedSection, 
-    selectedAttribute, 
-    dropdownAttributes, 
+const AttributeSelector = ({
+    preparedSection,
+    selectedAttribute,
+    dropdownAttributes,
     setSelectedAttribute,
     subSectionSettings,
     setSubSectionSettings
@@ -14,13 +14,6 @@ const AttributeSelector = ({
         setSubSectionSettings(prevSettings => ({
             ...prevSettings,
             display_titles: e.target.checked
-        }));
-    };
-
-    const handleDisplaySectionTitleChange = (e) => {
-        setSubSectionSettings(prevSettings => ({
-            ...prevSettings,
-            display_section_title: e.target.checked
         }));
     };
 
@@ -37,7 +30,7 @@ const AttributeSelector = ({
             <label className="block text-sm font-medium text-gray-700 mb-2">
                 Organize by attribute:
             </label>
-            
+
             <select
                 value={selectedAttribute}
                 onChange={handleAttributeChange}
@@ -53,18 +46,6 @@ const AttributeSelector = ({
 
             {selectedAttribute && (
                 <>
-                    <div className="flex items-center gap-2 mb-4">
-                        <input
-                            type="checkbox"
-                            id="display-section-title"
-                            checked={subSectionSettings.display_section_title || false}
-                            onChange={handleDisplaySectionTitleChange}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="display-section-title" className="text-sm text-gray-700">
-                            Display section title
-                        </label>
-                    </div>
                     <div className="flex items-center gap-2 mb-4">
                         <input
                             type="checkbox"

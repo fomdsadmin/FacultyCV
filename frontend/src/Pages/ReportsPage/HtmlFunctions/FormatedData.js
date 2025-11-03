@@ -484,6 +484,10 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
 
     table["originalPreparedSection"] = preparedSection;
 
+    table["instructions"] = preparedSection.instructions;
+
+    table["underlined_header"] = preparedSection.underlined_header;
+
     if (preparedSection.title === "Patents") {
         return separateIntoRefereedAndNonRefereed([table], preparedSection);
     }
@@ -673,6 +677,19 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
             });
         }
 
+        // Always include author metadata fields for publications (even if not in visible attributes)
+        const authorMetadataFields = [
+            'author_trainees',
+            'author_doctoral_supervisors',
+            'author_postdoctoral_supervisors',
+            'author_types'
+        ];
+        authorMetadataFields.forEach(field => {
+            if (data.data_details[field] !== undefined) {
+                rowDict[field] = data.data_details[field];
+            }
+        });
+
         if (preparedSection.include_row_number_column) {
             rowDict["Row #"] = rowCount + 1;
         }
@@ -783,6 +800,8 @@ const buildSubSections = (preparedSectionWithSubSections) => {
                 attribute_rename_map: subSection.attributes_rename_dict,
                 show_header: preparedSectionWithSubSections.sub_section_settings.display_titles,
                 attribute_groups: updatedAttributeGroups,
+                instructions: subSection.instructions,
+                underlined_header: subSection.underlined_header,
                 is_sub_section: true
             }
             console.log("section: ", section);
@@ -907,7 +926,7 @@ const separateIntoRefereedAndNonRefereed = (tables, preparedSection) => {
     });
 
     sortedTables[0] = {
-        underlinedTitle: preparedSection.title,
+        underlined_header: preparedSection.title,
         ...sortedTables[0]
     }
 
@@ -950,6 +969,7 @@ const buildStudentSupervisedSummaryCount = (preparedSection, dataSectionId) => {
     })
 
     sectionData = filterDateRanges(sectionData, dataSectionId);
+    sectionData = sortSectionData(sectionData, dataSectionId)
 
     let degreeAggregationDict = {};
 
