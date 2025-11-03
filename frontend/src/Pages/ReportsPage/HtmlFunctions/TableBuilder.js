@@ -832,16 +832,16 @@ function buildTable(table) {
             .join('\n');
     }
 
-    const underlinedTitle = table.underlinedTitle;
-    const underlinedTitleHtml = underlinedTitle
-        ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedTitle}</h3>`
+    const underlinedHeader = table.underlined_header;
+    const underlinedHeaderHtml = underlinedHeader
+        ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedHeader}</h3>`
         : '';
 
     // Return full table HTML
     const wrapperClass = noPadding ? 'table-with-notes no-padding' : 'table-with-notes';
     const notesHtml = buildNotes(table.note_sections);
     return `<div class="${wrapperClass}">
-            ${underlinedTitleHtml}
+            ${underlinedHeaderHtml}
             <table border="1" cellspacing="0" cellpadding="5">
             <thead>
             ${studentsSupervisedSummaryHtml}
