@@ -677,6 +677,19 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
             });
         }
 
+        // Always include author metadata fields for publications (even if not in visible attributes)
+        const authorMetadataFields = [
+            'author_trainees',
+            'author_doctoral_supervisors',
+            'author_postdoctoral_supervisors',
+            'author_types'
+        ];
+        authorMetadataFields.forEach(field => {
+            if (data.data_details[field] !== undefined) {
+                rowDict[field] = data.data_details[field];
+            }
+        });
+
         if (preparedSection.include_row_number_column) {
             rowDict["Row #"] = rowCount + 1;
         }
