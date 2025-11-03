@@ -35,6 +35,9 @@ const InstructionTextField = ({ preparedSection }) => {
 
     return (
         <div className="px-4 py-2">
+            <div className="text-xs text-gray-600 mb-1">
+                Instructions (these will display above the table)
+            </div>
             {!expanded ? (
                 <input
                     type="text"
@@ -43,6 +46,7 @@ const InstructionTextField = ({ preparedSection }) => {
                     value={value}
                     onFocus={() => setExpanded(true)}
                     onChange={e => setValue(e.target.value)}
+                    aria-label="Section instructions"
                 />
             ) : (
                 <div className="flex flex-col gap-2">
@@ -51,6 +55,7 @@ const InstructionTextField = ({ preparedSection }) => {
                         className="w-full text-sm border rounded px-2 py-1"
                         value={value}
                         onChange={e => setValue(e.target.value)}
+                        aria-label="Section instructions expanded"
                     />
                     <div className="flex gap-2">
                         <button

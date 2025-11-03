@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import SubSectionInstructionTextField from './SubSectionInstructionTextField';
+import SubSectionUnderlinedTitle from './SubSectionUnderlinedTitle';
 
 const SubSectionTitle = ({ subSection, index, setSubSectionSettings }) => {
     // Track input value separately from the fallback logic
@@ -51,6 +52,12 @@ const SubSectionTitle = ({ subSection, index, setSubSectionSettings }) => {
 
             {/* Subsection instructions textbox placed below custom title */}
             <SubSectionInstructionTextField
+                subSection={subSection}
+                setSubSectionSettings={setSubSectionSettings}
+            />
+
+            {/* Subsection underlined title (non-expanding) placed below instructions */}
+            <SubSectionUnderlinedTitle
                 subSection={subSection}
                 setSubSectionSettings={setSubSectionSettings}
             />
