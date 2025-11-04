@@ -20,7 +20,8 @@ export const syncTemplateSections = (groups, upToDateSections) => {
         let sectionModified = false;
         let modifiedDescriptionSet = new Set();
         const updatedSections = group.prepared_sections.map((section) => {
-            const upToDateSection = getUpToDateSectionViaId(upToDateSections, section.data_section_id);
+            // match by title only (remove id matching)
+            const upToDateSection = getUpToDateSectionViaTitle(upToDateSections, section.title);
 
             // If null it means the section was deleted
             if (!upToDateSection) {
@@ -102,6 +103,14 @@ const syncSectionAttributes = (attributeGroups, upToDateAttributes) => {
     };
 }
 
-const getUpToDateSectionViaId = (upToDateSections, sectionId) => {
-    return upToDateSections.find((section) => section.data_section_id === sectionId);
+const getUpToDateSectionViaTitle = (upToDateSections, sectionTitle) => {
+    if (!sectionTitle) return null;
+    const target = String(sectionTitle).trim();
+    // try exact match first
+    let found = upToDateSections.find((s) => String(s.title || '').trim() === target);
+    if (found) return found;
+    // try case-insensitive match
+    const lower = target.toLowerCase();
+    found = upToDateSections.find((s) => String(s.title || '').toLowerCase().trim() === lower);
+    return found || null;
 };

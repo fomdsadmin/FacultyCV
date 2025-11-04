@@ -429,9 +429,25 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
       console.log("🔑 Preserving record_id in grant update:", finalFormData.record_id);
     }
     
+    // Special handling: preserve author metadata fields for publications
+    const authorMetadataFields = [
+      'author_trainees',
+      'author_doctoral_supervisors', 
+      'author_postdoctoral_supervisors',
+      'author_types',
+      'mark_as_important'
+    ];
+    authorMetadataFields.forEach(field => {
+      if (finalFormData[field] !== undefined) {
+        allowedKeys.push(field);
+      }
+    });
+    
     const filteredFormData = Object.fromEntries(
       Object.entries(finalFormData).filter(([key]) => allowedKeys.includes(key))
     );
+    
+    console.log("🔍 Final filtered form data with author metadata:", filteredFormData);
 
     console.log("Submitting form data:", filteredFormData);
     try {
@@ -580,6 +596,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
                     attributes={section.attributes}
                     formData={formData}
                     handleChange={handleChange}
+                    section={section}
                   />
                   
                 );
@@ -588,6 +605,23 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
               return null;
             })}
           </div>
+          
+          {/* Special: Mark as Important checkbox for Journal Publications only */}
+          {(section?.title?.toLowerCase().includes('journal publications') || section?.title?.toLowerCase().includes('other publications')) && (
+            <div className="mt-4 pt-4 border-t border-gray-300">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="mark_as_important"
+                  checked={formData.mark_as_important || false}
+                  onChange={handleChange}
+                  className="w-4 h-4 cursor-pointer"
+                />
+                <span className="text-sm font-semibold">Mark as Most Important</span>
+              </label>
+            </div>
+          )}
+          
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <div className="flex justify-end">
             <button

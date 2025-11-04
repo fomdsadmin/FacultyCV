@@ -30,7 +30,7 @@ const Header = ({ assistantUserInfo }) => {
   const activeUserInfo =
     assistantUserInfo && assistantUserInfo.role === "Assistant" && !isManagingUser ? assistantUserInfo : userInfo;
 
-  const userName = activeUserInfo?.username || "User";
+  const userName = activeUserInfo?.cwl_username || "User";
   const userRole = activeUserInfo?.role || "";
   const firstName = activeUserInfo?.first_name || "User";
 
@@ -61,7 +61,7 @@ const Header = ({ assistantUserInfo }) => {
     } else if (location.pathname.includes("/department-admin")) {
       newViewRole = isDepartmentAdmin ? userRole : "Admin-All";
     } else if (location.pathname.includes("/faculty-admin")) {
-      newViewRole = isFacultyAdmin ? userRole : userRole === "Admin" ? `FacultyAdmin-All` : userRole;
+      newViewRole = isFacultyAdmin ? userRole : userRole === "Admin" ? `FacultyWideAdmin-All` : userRole;
     } else if (location.pathname.includes("/faculty")) {
       newViewRole = "Faculty";
     } else if (location.pathname.includes("/delegate")) {

@@ -200,7 +200,7 @@ const DelegateHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, g
                     readOnly
                   />
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm mb-1">Preferred Name</label>
                   <input
                     id="preferredName"
@@ -211,7 +211,7 @@ const DelegateHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, g
                     className="w-full rounded text-sm px-3 py-2 border border-gray-300"
                     onChange={handleInputChange}
                   />
-                </div>
+                </div> */}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
@@ -227,12 +227,12 @@ const DelegateHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, g
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1">Username</label>
+                  <label className="block text-sm mb-1">CWL Username</label>
                   <input
                     id="username"
                     name="username"
                     type="text"
-                    value={userInfo.username || ""}
+                    value={userInfo.cwl_username || ""}
                     className="w-full rounded text-sm px-3 py-2 border border-gray-300 cursor-not-allowed"
                     readOnly
                   />
@@ -278,7 +278,7 @@ const DelegateHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, g
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-                <div>
+                {/* <div>
                   <label className="block text-sm mb-1">Primary Faculty</label>
                   <select
                     id="primaryFaculty"
@@ -311,7 +311,7 @@ const DelegateHomePage = ({ assistantUserInfo, userInfo, setUserInfo, getUser, g
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
               </div>
             </form>
           )}
