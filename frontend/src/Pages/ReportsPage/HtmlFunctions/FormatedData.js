@@ -14,11 +14,11 @@ let userInfo;
 
 
 // Helper function to get CV data for a section
-const getUserCvDataMap = (dataSectionId) => {
-    return userCvDataMap[dataSectionId] || [];
+const getUserCvDataMap = (dataSectionTitle) => {
+    return userCvDataMap[dataSectionTitle] || [];
 };
 
-const filterDateRanges = (sectionData, dataSectionId) => {
+const filterDateRanges = (sectionData, dataSectionTitle) => {
 
     const DO_NOT_FILTER_SECTIONS = [
         '7a. Leaves of Absence',
@@ -30,7 +30,7 @@ const filterDateRanges = (sectionData, dataSectionId) => {
         '5a. Post-Secondary Education'
     ]
 
-    const section = sectionsMap[dataSectionId];
+    const section = sectionsMap[dataSectionTitle];
 
     const templateStartYear = Number(template.start_year);
     const templateEndYear = Number(template.end_year);
@@ -44,7 +44,7 @@ const filterDateRanges = (sectionData, dataSectionId) => {
     }
 
     if (!section) {
-        console.warn(`Section not found for dataSectionId: ${dataSectionId}`);
+        console.warn(`Section not found for dataSectionTitle: ${dataSectionTitle}`);
         return sectionData;
     }
 
@@ -111,11 +111,11 @@ const filterDateRanges = (sectionData, dataSectionId) => {
     return sectionData;
 };
 
-const sortSectionData = (sectionData, dataSectionId) => {
+const sortSectionData = (sectionData, dataSectionTitle) => {
     // Find the section to get the attribute mapping
-    const section = sectionsMap[dataSectionId];
+    const section = sectionsMap[dataSectionTitle];
     if (!section) {
-        console.warn(`Section not found for dataSectionId: ${dataSectionId}`);
+        console.warn(`Section not found for dataSectionTitle: ${dataSectionTitle}`);
         return sectionData;
     }
 
@@ -211,13 +211,13 @@ const buildGroupJson = async (group) => {
     groupJson["title"] = group.title;
     groupJson["tables"] = [];
     for (const preparedSection of group.prepared_sections) {
-        groupJson["tables"].push(...buildPreparedSection(preparedSection, preparedSection.data_section_id));
+        groupJson["tables"].push(...buildPreparedSection(preparedSection, preparedSection.title));
     }
 
     return groupJson;
 };
 
-const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
+const buildClinicalTeachingSection = (preparedSection, dataSectionTitle) => {
 
     const buildNewStudentObject = (year, duration, totalHours, studentLevel, course, courseTitle, briefDescription, numberOfStudents = 1) => {
         return {
@@ -234,7 +234,7 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
 
     const table = {};
 
-    const sectionData = getUserCvDataMap(preparedSection.data_section_id);
+    const sectionData = getUserCvDataMap(preparedSection.title);
 
     function aggregateStudentData(flatData) {
         const aggregated = {};
@@ -427,11 +427,11 @@ const buildClinicalTeachingSection = (preparedSection, dataSectionId) => {
     return table;
 }
 
-const buildPreparedSection = (preparedSection, dataSectionId) => {
+const buildPreparedSection = (preparedSection, dataSectionTitle) => {
     const table = {};
 
     if (preparedSection.title === "8b.3. Clinical Teaching") {
-        return [buildClinicalTeachingSection(preparedSection, dataSectionId)];
+        return [buildClinicalTeachingSection(preparedSection, dataSectionTitle)];
     }
 
     // get table sub sections
@@ -463,7 +463,7 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
     if (!preparedSection.is_sub_section || (preparedSection.is_sub_section && preparedSection.show_header)) {
         let titleToDisplay = preparedSection.renamed_section_title || preparedSection.title;
 
-        const rowCount = getNumberOfRowsInPreparedSection(preparedSection, preparedSection.data_section_id);
+        const rowCount = getNumberOfRowsInPreparedSection(preparedSection, preparedSection.title);
         if (preparedSection.show_row_count) {
             titleToDisplay += ` (${rowCount})`
         }
@@ -477,7 +477,7 @@ const buildPreparedSection = (preparedSection, dataSectionId) => {
     table["hide_column_header"] = preparedSection.merge_visible_attributes;
 
     // get table data entries data
-    table["rows"] = buildDataEntries(preparedSection, dataSectionId);
+    table["rows"] = buildDataEntries(preparedSection, dataSectionTitle);
 
     // get table notes data
     table["note_sections"] = buildNotes(preparedSection);
@@ -504,10 +504,10 @@ const buildNotes = (preparedSection) => {
         return [];
     }
 
-    const dataSectionId = preparedSection.data_section_id;
-    const sectionData = getUserCvDataMap(dataSectionId);
-    const filteredSectionData = filterDateRanges(sectionData, dataSectionId);
-    const section = sectionsMap[dataSectionId];
+    const dataSectionTitle = preparedSection.title;
+    const sectionData = getUserCvDataMap(dataSectionTitle);
+    const filteredSectionData = filterDateRanges(sectionData, dataSectionTitle);
+    const section = sectionsMap[dataSectionTitle];
     const sectionAttributes = JSON.parse(section.attributes);
 
     if (filteredSectionData.length === 0) {
@@ -556,20 +556,20 @@ const buildNotes = (preparedSection) => {
     return noteSections;
 };
 
-const getNumberOfRowsInPreparedSection = (preparedSection, dataSectionId) => {
+const getNumberOfRowsInPreparedSection = (preparedSection, dataSectionTitle) => {
 
     // Get section data using helper function
-    let sectionData = getUserCvDataMap(dataSectionId);
+    let sectionData = getUserCvDataMap(dataSectionTitle);
 
     // Apply date range filtering
-    sectionData = filterDateRanges(sectionData, dataSectionId);
+    sectionData = filterDateRanges(sectionData, dataSectionTitle);
 
     // new logic
     let rows = sectionData.filter((data) => {
-        const section = sectionsMap[dataSectionId];
+        const section = sectionsMap[dataSectionTitle];
 
         if (!section || !data || !data.data_details) {
-            console.warn('Missing section or data:', { section, data, dataSectionId });
+            console.warn('Missing section or data:', { section, data, dataSectionTitle });
             return false;
         }
 
@@ -582,7 +582,7 @@ const getNumberOfRowsInPreparedSection = (preparedSection, dataSectionId) => {
     return rows
 }
 
-const buildDataEntries = (preparedSection, dataSectionId) => {
+const buildDataEntries = (preparedSection, dataSectionTitle) => {
     const PUBLICATION_SECTION_ID = "1c23b9a0-b6b5-40b8-a4aa-f822d0567f09";
     const RESEARCH_OR_EQUIVALENT_GRANTS_AND_CONTRACTS_ID = "26939d15-7ef9-46f6-9b49-22cf95074e88";
 
@@ -593,19 +593,19 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
     const nonFilteredAttributes = attributeGroups.flatMap((attributeGroup) => attributeGroup.attributes);
 
     // Get section data using helper function
-    let sectionData = getUserCvDataMap(dataSectionId);
+    let sectionData = getUserCvDataMap(dataSectionTitle);
 
-    sectionData = filterDateRanges(sectionData, dataSectionId);
+    sectionData = filterDateRanges(sectionData, dataSectionTitle);
 
     // Apply sorting
-    sectionData = sortSectionData(sectionData, dataSectionId);
+    sectionData = sortSectionData(sectionData, dataSectionTitle);
 
     // new logic
     let rowData = sectionData.map((data, rowCount) => {
-        const section = sectionsMap[dataSectionId];
+        const section = sectionsMap[dataSectionTitle];
 
         if (!section || !data || !data.data_details) {
-            console.warn('Missing section or data:', { section, data, dataSectionId });
+            console.warn('Missing section or data:', { section, data, dataSectionTitle });
             return null;
         }
 
@@ -822,7 +822,7 @@ const buildSubSections = (preparedSectionWithSubSections) => {
         })
 
     for (const mappedSection of mappedSections) {
-        tables.push(...buildPreparedSection(mappedSection, mappedSection.data_section_id));
+        tables.push(...buildPreparedSection(mappedSection, mappedSection.title));
     }
 
     if (!preparedSectionWithSubSections.sub_section_settings.display_titles) {
@@ -835,7 +835,7 @@ const buildSubSections = (preparedSectionWithSubSections) => {
     if (preparedSectionWithSubSections.title === "8d.1. Students Supervised") {
         tables = tables.map((table) => ({
             ...table,
-            studentsSupervisedSummary: buildStudentSupervisedSummaryCount(table.originalPreparedSection, preparedSectionWithSubSections.data_section_id)
+            studentsSupervisedSummary: buildStudentSupervisedSummaryCount(table.originalPreparedSection, preparedSectionWithSubSections.title)
         }))
     }
 
@@ -947,15 +947,15 @@ const separateIntoRefereedAndNonRefereed = (tables, preparedSection) => {
 
 };
 
-const buildStudentSupervisedSummaryCount = (preparedSection, dataSectionId) => {
+const buildStudentSupervisedSummaryCount = (preparedSection, dataSectionTitle) => {
     // Get section data using helper function
-    let sectionData = getUserCvDataMap(dataSectionId);
+    let sectionData = getUserCvDataMap(dataSectionTitle);
 
     sectionData = sectionData.filter((data) => {
-        const section = sectionsMap[dataSectionId];
+        const section = sectionsMap[dataSectionTitle];
 
         if (!section || !data || !data.data_details) {
-            console.warn('Missing section or data:', { section, data, dataSectionId });
+            console.warn('Missing section or data:', { section, data, dataSectionTitle });
             return false;
         }
 
@@ -981,8 +981,8 @@ const buildStudentSupervisedSummaryCount = (preparedSection, dataSectionId) => {
         return true;
     })
 
-    sectionData = filterDateRanges(sectionData, dataSectionId);
-    sectionData = sortSectionData(sectionData, dataSectionId)
+    sectionData = filterDateRanges(sectionData, dataSectionTitle);
+    sectionData = sortSectionData(sectionData, dataSectionTitle)
 
     let degreeAggregationDict = {};
 
@@ -1090,10 +1090,10 @@ export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
     const allSections = await getAllSections();
     const allSectionIds = allSections.map((section) => section.data_section_id);
 
-    // Create sectionsMap with data_section_id as key and section as value
+    // Create sectionsMap with title as key and section as value
     sectionsMap = {};
     allSections.forEach((section) => {
-        sectionsMap[section.data_section_id] = section;
+        sectionsMap[section.title] = section;
     });
 
     // Process each user
@@ -1116,14 +1116,14 @@ export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
             return { ...data, data_details: dataDetails };
         });
 
-        // Create userCvDataMap with data_section_id as key and array of CV data as value
+        // Create userCvDataMap with title as key and array of CV data as value
         userCvDataMap = {};
         userCvData.forEach((cvData) => {
-            const sectionId = cvData.data_section_id;
-            if (!userCvDataMap[sectionId]) {
-                userCvDataMap[sectionId] = [];
+            const sectionTitle = cvData.title;
+            if (!userCvDataMap[sectionTitle]) {
+                userCvDataMap[sectionTitle] = [];
             }
-            userCvDataMap[sectionId].push(cvData);
+            userCvDataMap[sectionTitle].push(cvData);
         });
 
         // Build user profile section
