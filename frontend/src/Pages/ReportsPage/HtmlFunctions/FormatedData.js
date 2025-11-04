@@ -690,6 +690,19 @@ const buildDataEntries = (preparedSection, dataSectionId) => {
             }
         });
 
+        // Always include mark_as_important field for publications
+        if (data.data_details['mark_as_important'] !== undefined) {
+            rowDict['mark_as_important'] = data.data_details['mark_as_important'];
+        }
+
+        // Always include cited_by and impact_factor fields for publications (even if not in visible attributes)
+        if (data.data_details['cited_by'] !== undefined) {
+            rowDict['cited_by'] = data.data_details['cited_by'];
+        }
+        if (data.data_details['impact_factor_(if)'] !== undefined) {
+            rowDict['impact_factor_(if)'] = data.data_details['impact_factor_(if)'];
+        }
+
         if (preparedSection.include_row_number_column) {
             rowDict["Row #"] = rowCount + 1;
         }

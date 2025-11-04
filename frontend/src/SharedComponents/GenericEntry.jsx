@@ -81,7 +81,12 @@ const GenericEntry = ({ isArchived, onEdit, onArchive, onRestore, field1, field2
           key !== "lectures_(per_year)" &&
           key !== "other_(per_year)" &&
           key !== "scheduled_hours" &&
-          key !== "tutorials_(per_year)"
+          key !== "tutorials_(per_year)" &&
+          key !== "author_types" &&
+          key !== "author_trainees" &&
+          key !== "author_doctoral_supervisors" &&
+          key !== "author_postdoctoral_supervisors" &&
+          key !== "mark_as_important"
         );
       })
       .map(([key, value]) => {
