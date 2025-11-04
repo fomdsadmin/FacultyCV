@@ -709,7 +709,7 @@ function buildCv(cv) {
   // Groups (under the header)
   if (Array.isArray(groups) && groups.length) {
     groups.forEach((group) => {
-      html += buildGroup(group);
+      html += buildGroup(group, cv);
     });
   }
 
@@ -719,7 +719,7 @@ function buildCv(cv) {
   return html;
 }
 
-function buildGroup(group) {
+function buildGroup(group, cv) {
   const { title, tables } = group;
   let html = "";
 
@@ -732,7 +732,7 @@ function buildGroup(group) {
 
   const emptyTableNames = [];
   tables.forEach((table) => {
-    const htmlTable = buildTable(table);
+    const htmlTable = buildTable(table, cv);
 
     if (htmlTable.tableEmpty) {
       const tableName = table?.columns?.[0]?.headerName.replace("(0)", "").trim();
@@ -741,7 +741,7 @@ function buildGroup(group) {
         emptyTableNames.push(tableName);
       }
     } else {
-      html += buildTable(table);
+      html += htmlTable;
     }
   });
 
@@ -776,7 +776,7 @@ function buildGroup(group) {
   return html;
 }
 
-function buildTable(table) {
+function buildTable(table, cv) {
   const { columns, rows, justHeader, noPadding } = table;
 
   let filteredColumns;
@@ -887,6 +887,10 @@ function buildTable(table) {
 
               // Special handling for merged_data in publications
               if (c.field === "merged_data" && row["Author Names"]) {
+                // Check if this publication is marked as important
+                const isImportant = row["mark_as_important"] === true || row["mark_as_important"] === "true";
+                const importantPrefix = isImportant ? '<span style="color: red; font-weight: bold;">* </span>' : '';
+                
                 // Check if this row has Author Names data with metadata
                 const authorNames = row["Author Names"];
                 const hasMetadata = 
@@ -920,7 +924,7 @@ function buildTable(table) {
                     // console.log("Tried:", { withSpace: authorStringWithSpace, noSpace: authorStringNoSpace, mergedData: modifiedMergedData });
                     // Fall back to regular styling
                     modifiedMergedData = dataStyler(modifiedMergedData);
-                    return `<td>${modifiedMergedData}</td>`;
+                    return `<td>${importantPrefix}${modifiedMergedData}</td>`;
                   }
                   
                   // Split merged data, preserve the author formatted HTML, and apply dataStyler to other parts
@@ -930,8 +934,8 @@ function buildTable(table) {
                   // Apply dataStyler to non-author parts and insert formatted authors in between
                   const styledParts = parts.map((part, idx) => {
                     if (idx < parts.length - 1) {
-                      // Apply dataStyler to this part, then add formatted authors
-                      return dataStyler(part) + formattedAuthors;
+                      // Apply dataStyler to this part, then add a space before formatted authors
+                      return dataStyler(part) + ' ' + formattedAuthors;
                     } else {
                       // Last part, just apply dataStyler
                       return dataStyler(part);
@@ -941,17 +945,32 @@ function buildTable(table) {
                   modifiedMergedData = styledParts.join('');
                   // console.log("✅ After replacement:", modifiedMergedData);
                   
+                  // Add author role and citation metrics at the end
+                  const publicationSuffix = buildPublicationSuffix(row, cv);
+                  
                   // Return directly to preserve HTML formatting
-                  return `<td>${modifiedMergedData}</td>`;
+                  return `<td>${importantPrefix}${modifiedMergedData}${publicationSuffix}</td>`;
                 }
               }
+
+              // Check if this publication is marked as important (for non-merged or first column)
+              const isImportant = row["mark_as_important"] === true || row["mark_as_important"] === "true";
+              const importantPrefix = isImportant ? '<span style="color: red; font-weight: bold;">* </span>' : '';
+              
+              // Build publication suffix (author role + citation metrics) for all publication rows
+              const publicationSuffix = buildPublicationSuffix(row, cv);
 
               // Check if this is an author names field (for non-merged tables)
               const isAuthorNamesField = c.field && c.field === "Author Names";
 
               if (isAuthorNamesField && fieldValue) {
                 console.log("✅ APPLYING AUTHOR FORMATTING to Author Names field");
-                return `<td>${formatAuthorNamesWithMetadata(fieldValue, row)}</td>`;
+                return `<td>${importantPrefix}${formatAuthorNamesWithMetadata(fieldValue, row)}${publicationSuffix}</td>`;
+              }
+
+              // Check if this is merged_data without Author Names (still needs star if important and publication suffix)
+              if (c.field === "merged_data" && (isImportant || publicationSuffix)) {
+                return `<td>${importantPrefix}${dataStyler(fieldValue)}${publicationSuffix}</td>`;
               }
 
               return `<td>${dataStyler(fieldValue)}</td>`;
@@ -1127,6 +1146,148 @@ function isUrl(string) {
 
 function linkWrapper(link) {
   return `<div class="link-wrap"><a href="${link}" target="_blank" rel="noopener noreferrer">${link}</a></div>`;
+}
+
+/**
+ * Convert user name to author format (e.g., "Armaan Sahni" -> "Sahni, A.")
+ * 
+ * @param {string} firstName - User's first name
+ * @param {string} lastName - User's last name
+ * @returns {array} - Array of possible author name formats
+ */
+function getUserAuthorFormats(firstName, lastName) {
+  if (!firstName || !lastName) return [];
+  
+  const formats = [];
+  const firstInitial = firstName.charAt(0).toUpperCase();
+  const lastNameFormatted = lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
+  
+  // Format: "Sahni, A." or "Sahni, A"
+  formats.push(`${lastNameFormatted}, ${firstInitial}.`);
+  formats.push(`${lastNameFormatted}, ${firstInitial}`);
+  
+  // Also check with full last name uppercase (some publications use this)
+  formats.push(`${lastName.toUpperCase()}, ${firstInitial}.`);
+  formats.push(`${lastName.toUpperCase()}, ${firstInitial}`);
+  
+  return formats;
+}
+
+/**
+ * Determine user's author role (FA/SA/CA) in a publication
+ * 
+ * @param {object} rowData - Row data containing author metadata
+ * @param {object} userInfo - User info with first_name and last_name
+ * @returns {string} - 'FA', 'SA', 'CA', or empty string if not found
+ */
+function getUserAuthorRole(rowData, userInfo) {
+  if (!userInfo || !userInfo.first_name || !userInfo.last_name) {
+    return '';
+  }
+  
+  const authorTypes = rowData['author_types'];
+  const authorNames = rowData['Author Names'];
+  
+  if (!authorTypes || !authorNames) {
+    return '';
+  }
+  
+  // Get possible formats of user's name in author format
+  const userAuthorFormats = getUserAuthorFormats(userInfo.first_name, userInfo.last_name);
+  
+  // Parse author_types if it's a string
+  let parsedAuthorTypes = authorTypes;
+  if (typeof authorTypes === 'string') {
+    try {
+      parsedAuthorTypes = JSON.parse(authorTypes);
+    } catch (e) {
+      console.error('Error parsing author_types:', e);
+      return '';
+    }
+  }
+  
+  // Check if user is in first_authors
+  if (parsedAuthorTypes.first_authors && Array.isArray(parsedAuthorTypes.first_authors)) {
+    for (const authorFormat of userAuthorFormats) {
+      if (parsedAuthorTypes.first_authors.some(author => 
+        author.trim().toLowerCase() === authorFormat.toLowerCase()
+      )) {
+        return 'FA';
+      }
+    }
+  }
+  
+  // Check if user is in senior_authors
+  if (parsedAuthorTypes.senior_authors && Array.isArray(parsedAuthorTypes.senior_authors)) {
+    for (const authorFormat of userAuthorFormats) {
+      if (parsedAuthorTypes.senior_authors.some(author => 
+        author.trim().toLowerCase() === authorFormat.toLowerCase()
+      )) {
+        return 'SA';
+      }
+    }
+  }
+  
+  // Check if user is in the author list at all (would be CA)
+  const authorNamesArray = Array.isArray(authorNames) ? authorNames : 
+    (typeof authorNames === 'string' ? authorNames.split(',').map(n => n.trim()) : []);
+  
+  for (const authorFormat of userAuthorFormats) {
+    if (authorNamesArray.some(author => 
+      author.trim().toLowerCase() === authorFormat.toLowerCase()
+    )) {
+      return 'CA';
+    }
+  }
+  
+  return '';
+}
+
+/**
+ * Build publication suffix with author role and citation metrics
+ * Format: <b>FA</b> (IF 2.9, Citations 234)
+ * 
+ * @param {object} rowData - Row data containing cited_by, impact_factor_(if), and author metadata
+ * @param {object} userInfo - User info with first_name and last_name
+ * @returns {string} - HTML formatted suffix with author role and citation metrics
+ */
+function buildPublicationSuffix(rowData, userInfo) {
+  const citedBy = rowData['cited_by'];
+  const impactFactor = rowData['impact_factor_(if)'];
+  
+  // Get user's author role (FA/SA/CA)
+  const authorRole = getUserAuthorRole(rowData, userInfo);
+  
+  // Check if we have any valid values to display
+  const hasImpactFactor = impactFactor !== undefined && impactFactor !== null && impactFactor !== '' && String(impactFactor).trim() !== '';
+  // Only show citations if value is greater than 0
+  const hasCitations = citedBy !== undefined && citedBy !== null && citedBy !== '' && String(citedBy).trim() !== '' && Number(citedBy) > 0;
+  
+  // Build the parts array
+  const parts = [];
+  
+  // Add author role first if it exists
+  if (authorRole) {
+    parts.push(`<b>${authorRole}</b>`);
+  }
+  
+  // Build citation metrics if we have them
+  const metricParts = [];
+  if (hasImpactFactor) {
+    metricParts.push(`IF ${impactFactor}`);
+  }
+  
+  if (hasCitations) {
+    metricParts.push(`Citations ${citedBy}`);
+  }
+  
+  // If we have metrics, wrap them in parentheses
+  if (metricParts.length > 0) {
+    parts.push(`(${metricParts.join(', ')})`);
+  }
+  
+  // Return the complete suffix with a full stop and space if we have any parts
+  return parts.length > 0 ? '. ' + parts.join(' ') : '';
 }
 
 /**

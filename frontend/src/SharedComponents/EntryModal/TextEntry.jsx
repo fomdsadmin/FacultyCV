@@ -7,6 +7,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
   
   // Check if this is a publications section
   const isPublicationsSection = section?.title?.toLowerCase().includes('journal publications') || false;
+  const isOtherPublicationsSection = section?.title?.toLowerCase().includes('other publications') || false;
   
   // Initialize authors list from formData when component loads or formData changes
   useEffect(() => {
@@ -63,20 +64,20 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
             ...item, 
             id: index,
             // Ensure new fields exist with defaults if not present
-            isTrainee: item.isTrainee ?? (isPublicationsSection && trainees.includes(authorName)),
-            isDoctoralSupervisor: item.isDoctoralSupervisor ?? (isPublicationsSection && doctoralSupervisors.includes(authorName)),
-            isPostdoctoralSupervisor: item.isPostdoctoralSupervisor ?? (isPublicationsSection && postdoctoralSupervisors.includes(authorName)),
-            authorType: item.authorType ?? (isPublicationsSection ? getAuthorType(authorName) : 'Contributing Author')
+            isTrainee: item.isTrainee ?? ((isPublicationsSection || isOtherPublicationsSection) && trainees.includes(authorName)),
+            isDoctoralSupervisor: item.isDoctoralSupervisor ?? ((isPublicationsSection || isOtherPublicationsSection)  && doctoralSupervisors.includes(authorName)),
+            isPostdoctoralSupervisor: item.isPostdoctoralSupervisor ?? ((isPublicationsSection || isOtherPublicationsSection)  && postdoctoralSupervisors.includes(authorName)),
+            authorType: item.authorType ?? ((isPublicationsSection || isOtherPublicationsSection)  ? getAuthorType(authorName) : 'Contributing Author')
           };
         }
         // If item is a string, convert it to our structure
         return {
           id: index,
           name: authorName,
-          isTrainee: isPublicationsSection && trainees.includes(authorName),
-          isDoctoralSupervisor: isPublicationsSection && doctoralSupervisors.includes(authorName),
-          isPostdoctoralSupervisor: isPublicationsSection && postdoctoralSupervisors.includes(authorName),
-          authorType: isPublicationsSection ? getAuthorType(authorName) : 'Contributing Author'
+          isTrainee: (isPublicationsSection || isOtherPublicationsSection)  && trainees.includes(authorName),
+          isDoctoralSupervisor: (isPublicationsSection || isOtherPublicationsSection)  && doctoralSupervisors.includes(authorName),
+          isPostdoctoralSupervisor: (isPublicationsSection || isOtherPublicationsSection)  && postdoctoralSupervisors.includes(authorName),
+          authorType: (isPublicationsSection || isOtherPublicationsSection)  ? getAuthorType(authorName) : 'Contributing Author'
         };
       });
       setAuthorsList(parsedAuthors);
@@ -163,7 +164,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
     });
     
     // Also store metadata in separate fields for publications section
-    if (isPublicationsSection) {
+    if (isPublicationsSection || isOtherPublicationsSection) {
       // Create arrays to store actual author names (not indices) for trainees, supervisors, etc.
       const trainees = [];
       const doctoralSupervisors = [];
@@ -272,7 +273,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
     const rows = calculateRows(currentValue, attrName);
     
     // Special handling for Author Names field - only for Publications section
-    if ((attrName === 'Author Names' || lower === 'author names') && isPublicationsSection) {
+    if ((attrName === 'Author Names' || lower === 'author names') && (isPublicationsSection || isOtherPublicationsSection) ) {
       return (
         <div key={attrName} className="col-span-2">
           <label className="block text-sm font-semibold capitalize mb-2">
