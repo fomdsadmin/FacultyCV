@@ -39,7 +39,7 @@ export class GotenbergStack extends cdk.Stack {
                 {
                     allowedHeaders: ['*'],
                     allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.HEAD, s3.HttpMethods.POST],
-                    allowedOrigins: ['http://localhost:3000', process.env.ENVIRONMENT === 'dev' ? 'https://dev.360.med.ubc.ca' : 'https://360.med.ubc.ca/'],
+                    allowedOrigins: ['http://localhost:3000', process.env.ENVIRONMENT === 'dev' ? 'https://dev.360.med.ubc.ca' : 'https://360.med.ubc.ca'],
                     exposedHeaders: ['ETag']
                 }
             ],
