@@ -55,12 +55,12 @@ const EditTemplatePage = ({ onBack }) => {
             templateStructure.groups.push(hiddenGroup);
 
             // Find sections that are not in any group and add them to hidden group
-            const existingSectionIds = new Set();
+            const existingSectionTitles = new Set();
             templateGroups.forEach(group => {
                 group.prepared_sections?.forEach(section => {
                     // Only add to set if section and data_section_id exist
-                    if (section && section.data_section_id) {
-                        existingSectionIds.add(section.data_section_id);
+                    if (section && section.title) {
+                        existingSectionTitles.add(section.title);
                     }
                 });
             });
@@ -90,7 +90,7 @@ const EditTemplatePage = ({ onBack }) => {
             });
 
             const missingSections = sortedSections.filter(section =>
-                !existingSectionIds.has(section.data_section_id)
+                !existingSectionTitles.has(section.title)
             );
 
             // Add missing sections to hidden group
