@@ -1,39 +1,39 @@
 // removeEmptyColumns: prune any leaf columns whose field is empty across all rows.
 // Keeps parent groups only if they have surviving children.
 function removeEmptyColumns(cols, rows) {
-  if (!Array.isArray(cols)) return [];
-  if (!Array.isArray(rows)) rows = [];
-  return cols
-    .map((col) => {
-      if (col.children && col.children.length) {
-        const children = removeEmptyColumns(col.children, rows);
-        if (children.length === 0) return null;
-        return { ...col, children };
-      }
+    if (!Array.isArray(cols)) return [];
+    if (!Array.isArray(rows)) rows = [];
+    return cols
+        .map((col) => {
+            if (col.children && col.children.length) {
+                const children = removeEmptyColumns(col.children, rows);
+                if (children.length === 0) return null;
+                return { ...col, children };
+            }
 
-      // leaf column without a field -> keep
-      if (!col.field) return col;
+            // leaf column without a field -> keep
+            if (!col.field) return col;
 
-      const hasValue = rows
-        ? rows.some((r) => {
-            const v = r?.[col.field];
-            return v !== undefined && v !== null && String(v).trim() !== "";
-          })
-        : false;
+            const hasValue = rows
+                ? rows.some((r) => {
+                    const v = r?.[col.field];
+                    return v !== undefined && v !== null && String(v).trim() !== "";
+                })
+                : false;
 
-      return hasValue ? col : null;
-    })
-    .filter(Boolean);
+            return hasValue ? col : null;
+        })
+        .filter(Boolean);
 }
 
 export function buildCvs(cvs) {
-  const cvList = Array.isArray(cvs) ? cvs : [cvs];
+    const cvList = Array.isArray(cvs) ? cvs : [cvs];
 
-  const bodyContent = cvList
-    .map((cv) => buildCv(cv))
-    .join('\n<hr style="page-break-after:always;border:none;margin:24px 0;" />\n');
+    const bodyContent = cvList
+        .map((cv) => buildCv(cv))
+        .join('\n<hr style="page-break-after:always;border:none;margin:24px 0;" />\n');
 
-  const fullHtml = `<!DOCTYPE html>
+    const fullHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -160,12 +160,12 @@ ${bodyContent}
 </body>
 </html>`;
 
-  return fullHtml;
+    return fullHtml;
 }
 
 function buildUserInfoTable(cv) {
-  // meta as a two-column table (label / value)
-  let html = `<table class="cv-meta" 
+    // meta as a two-column table (label / value)
+    let html = `<table class="cv-meta" 
   style="
     color:#222;
     margin-bottom:10px;
@@ -191,73 +191,73 @@ function buildUserInfoTable(cv) {
   </style>
 `;
 
-  const addRow = (lablesValuesArray) => {
-    html += `<tr>`;
-    html += lablesValuesArray
-      .map((lablesValues, index) => {
-        if (index % 2 === 0) {
-          return `<th>${lablesValues}</th>`;
-        } else {
-          return `<td>${lablesValues}</td>`;
-        }
-      })
-      .join("");
-    html += `</tr>`;
-  };
+    const addRow = (lablesValuesArray) => {
+        html += `<tr>`;
+        html += lablesValuesArray
+            .map((lablesValues, index) => {
+                if (index % 2 === 0) {
+                    return `<th>${lablesValues}</th>`;
+                } else {
+                    return `<td>${lablesValues}</td>`;
+                }
+            })
+            .join("");
+        html += `</tr>`;
+    };
 
-  const fullName = [cv?.first_name, cv?.last_name].filter(Boolean).join(" ");
+    const fullName = [cv?.first_name, cv?.last_name].filter(Boolean).join(" ");
 
-  addRow(["Name:", fullName]);
-  addRow(["Rank:", cv?.primary_unit?.[0]?.rank || "", "Since:", cv?.primary_unit?.[0]?.additional_info?.start || ""]);
-  addRow(["Timeline for next promotion review:", ""]);
-  addRow(["Department:", cv?.primary_unit?.[0]?.unit || ""]);
-  addRow(["Joint Department:", ""]);
-  addRow(["Centre Affiliation:", cv.institution]);
-  addRow(["Distributed Site:", cv?.hospital_affiliations?.[0]?.authority || ""]);
-  addRow(["Assigned Mentor:", ""]);
-  addRow(["Submission Date:", new Date().toLocaleDateString("en-CA")]);
+    addRow(["Name:", fullName]);
+    addRow(["Rank:", cv?.primary_unit?.[0]?.rank || "", "Since:", cv?.primary_unit?.[0]?.additional_info?.start || ""]);
+    addRow(["Timeline for next promotion review:", ""]);
+    addRow(["Department:", cv?.primary_unit?.[0]?.unit || ""]);
+    addRow(["Joint Department:", ""]);
+    addRow(["Centre Affiliation:", cv.institution]);
+    addRow(["Distributed Site:", cv?.hospital_affiliations?.[0]?.authority || ""]);
+    addRow(["Assigned Mentor:", ""]);
+    addRow(["Submission Date:", new Date().toLocaleDateString("en-CA")]);
 
-  html += `</table>`;
-  html += `</div>`; // .cv-root
+    html += `</table>`;
+    html += `</div>`; // .cv-root
 
-  return html;
+    return html;
 }
 
 function buildHeader(cv) {
-  const { start_year, end_year, template_title, sort_order } = cv;
-  console.log(cv);
+    const { start_year, end_year, template_title, sort_order } = cv;
+    console.log(cv);
 
-  const includeFomLogo = String(template_title || "")
-    .toLowerCase()
-    .includes("fom");
-  const fomLogoUrl =
-    "https://med-fom-mednet.sites.olt.ubc.ca/files/2022/10/Faculty-of-Medicine-Unit-Signature-940x157.jpeg";
+    const includeFomLogo = String(template_title || "")
+        .toLowerCase()
+        .includes("fom");
+    const fomLogoUrl =
+        "https://med-fom-mednet.sites.olt.ubc.ca/files/2022/10/Faculty-of-Medicine-Unit-Signature-940x157.jpeg";
 
-  let html = "";
-  html += '<div style="background-color: white; color: black; padding: 20px; text-align: center;">';
+    let html = "";
+    html += '<div style="background-color: white; color: black; padding: 20px; text-align: center;">';
 
-  if (includeFomLogo) {
-    html += `<div style="flex:0 0 auto;"><img src="${fomLogoUrl}" alt="UBC Faculty of Medicine - Faculty of Medicine Logo" style="height:96px; display:block;" /></div>`;
-  }
+    if (includeFomLogo) {
+        html += `<div style="flex:0 0 auto;"><img src="${fomLogoUrl}" alt="UBC Faculty of Medicine - Faculty of Medicine Logo" style="height:96px; display:block;" /></div>`;
+    }
 
-  //html += '<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 5px;">University of British Columbia</div>';
-  html += `<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;">${template_title.replace(
-    "FoM",
-    ""
-  )}</div>`;
-  html += `<div style="font-size: 1rem; font-weight: 700;">(${start_year} - ${end_year}, ${sort_order})</div>`;
-  html += "</div>";
-  return html;
+    //html += '<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 5px;">University of British Columbia</div>';
+    html += `<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;">${template_title.replace(
+        "FoM",
+        ""
+    )}</div>`;
+    html += `<div style="font-size: 1rem; font-weight: 700;">(${start_year} - ${end_year}, ${sort_order})</div>`;
+    html += "</div>";
+    return html;
 }
 
 function buildConflictOfInterestPage(latest_declaration, userInfo) {
-  const { first_name, last_name } = userInfo || {};
-  const fullName = [first_name, last_name].filter(Boolean).join(" ");
-  const coiValue = latest_declaration && latest_declaration.coi ? latest_declaration.coi : null;
-  const submissionDate = latest_declaration?.coiSubmissionDate || "";
+    const { first_name, last_name } = userInfo || {};
+    const fullName = [first_name, last_name].filter(Boolean).join(" ");
+    const coiValue = latest_declaration && latest_declaration.coi ? latest_declaration.coi : null;
+    const submissionDate = latest_declaration?.coiSubmissionDate || "";
 
-  // Return a styled fragment (no DOCTYPE/head) that mirrors the provided template.
-  return `
+    // Return a styled fragment (no DOCTYPE/head) that mirrors the provided template.
+    return `
       <div style="page-break-before: always;"></div>
 
       <!-- Removed grey outer background; use clean white page background -->
@@ -305,9 +305,8 @@ function buildConflictOfInterestPage(latest_declaration, userInfo) {
 
               <!-- Option a) Yes -->
               <div style="display:flex;align-items:flex-start;gap:12px;cursor:default;">
-                <input type="checkbox" ${
-                  coiValue === "YES" ? "checked" : ""
-                } aria-label="coi-yes" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+                <input type="checkbox" ${coiValue === "YES" ? "checked" : ""
+        } aria-label="coi-yes" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
                 <span style="font-size:18px;">
                   <strong>a) Yes,</strong> my Conflict of Interest and Conflict of Commitment declarations are up to date.
                 </span>
@@ -315,9 +314,8 @@ function buildConflictOfInterestPage(latest_declaration, userInfo) {
 
               <!-- Option b) No -->
               <div style="display:flex;align-items:flex-start;gap:12px;cursor:default;">
-                <input type="checkbox" ${
-                  coiValue === "NO" ? "checked" : ""
-                } aria-label="coi-no" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+                <input type="checkbox" ${coiValue === "NO" ? "checked" : ""
+        } aria-label="coi-no" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
                 <span style="font-size:18px;">
                   <strong>b) No,</strong> my Conflict of Interest and Conflict of Commitment declarations are not up to date.
                 </span>
@@ -341,15 +339,15 @@ function buildConflictOfInterestPage(latest_declaration, userInfo) {
 }
 
 function buildFomMeritAndPsa(latest_declaration, userInfo) {
-  const { first_name, last_name } = userInfo || {};
-  const fullName = [first_name, last_name].filter(Boolean).join(" ");
-  const year = latest_declaration?.year || new Date().getFullYear();
-  const fomOptOut = latest_declaration?.fomMerit === "NO";
-  const psaOptOut = latest_declaration?.psa === "NO";
-  const fomSubmissionDate = latest_declaration?.fomMeritSubmissionDate || "";
-  const psaSubmissionDate = latest_declaration?.psaSubmissionDate || "";
+    const { first_name, last_name } = userInfo || {};
+    const fullName = [first_name, last_name].filter(Boolean).join(" ");
+    const year = latest_declaration?.year || new Date().getFullYear();
+    const fomOptOut = latest_declaration?.fomMerit === "NO";
+    const psaOptOut = latest_declaration?.psa === "NO";
+    const fomSubmissionDate = latest_declaration?.fomMeritSubmissionDate || "";
+    const psaSubmissionDate = latest_declaration?.psaSubmissionDate || "";
 
-  return `
+    return `
       <div style="background:#fff;padding:32px 24px;">
         <div style="max-width:56rem;margin:0 auto;">
 
@@ -382,16 +380,14 @@ function buildFomMeritAndPsa(latest_declaration, userInfo) {
             <!-- Merit Opt Out -->
             <div style="margin:12px 0 16px 32px;">
               <div style="display:flex;align-items:flex-start;gap:12px;">
-                <input type="checkbox" ${
-                  fomOptOut ? "checked" : ""
-                } aria-label="fom-optout" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+                <input type="checkbox" ${fomOptOut ? "checked" : ""
+        } aria-label="fom-optout" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
                 <div style="font-size:15px;line-height:1.4;margin-left:6px;">
                   I do <strong><u>NOT</u></strong> wish to be awarded merit by the Dean for my academic activities performed during <strong>January 1, ${year} – December 31, ${year}.</strong>
-                  ${
-                    fomSubmissionDate
-                      ? `<div style="margin-top:6px;font-size:14px;"><strong>Submission Date:</strong> ${fomSubmissionDate}</div>`
-                      : ""
-                  }
+                  ${fomSubmissionDate
+            ? `<div style="margin-top:6px;font-size:14px;"><strong>Submission Date:</strong> ${fomSubmissionDate}</div>`
+            : ""
+        }
                 </div>
               </div>
             </div>
@@ -414,9 +410,8 @@ function buildFomMeritAndPsa(latest_declaration, userInfo) {
             <!-- PSA Opt Out -->
             <div style="margin-left:32px;">
               <div style="display:flex;align-items:flex-start;gap:12px;">
-                <input type="checkbox" ${
-                  psaOptOut ? "checked" : ""
-                } aria-label="psa-optout" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+                <input type="checkbox" ${psaOptOut ? "checked" : ""
+        } aria-label="psa-optout" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
                 <div style="font-size:15px;line-height:1.4;margin-left:6px;">
                   I do <strong><u>NOT</u></strong> wish to be considered for PSA.
                 </div>
@@ -442,27 +437,27 @@ function buildFomMeritAndPsa(latest_declaration, userInfo) {
 }
 
 function buildPromotionReview(latest_declaration, userInfo) {
-  const { first_name, last_name } = userInfo || {};
-  const fullName = [first_name, last_name].filter(Boolean).join(" ");
-  const wishPromotion = latest_declaration?.promotion === "YES";
-  const notWishPromotion = latest_declaration?.promotion === "NO";
-  const effectiveYear = latest_declaration?.promotionEffectiveDate || "";
-  const pathwaysRaw = String(latest_declaration?.promotionPathways || "").toLowerCase();
-  const supportAnticipated = latest_declaration?.supportAnticipated || "";
-  const submissionDate = latest_declaration?.promotionSubmissionDate || "";
+    const { first_name, last_name } = userInfo || {};
+    const fullName = [first_name, last_name].filter(Boolean).join(" ");
+    const wishPromotion = latest_declaration?.promotion === "YES";
+    const notWishPromotion = latest_declaration?.promotion === "NO";
+    const effectiveYear = latest_declaration?.promotionEffectiveDate || "";
+    const pathwaysRaw = String(latest_declaration?.promotionPathways || "").toLowerCase();
+    const supportAnticipated = latest_declaration?.supportAnticipated || "";
+    const submissionDate = latest_declaration?.promotionSubmissionDate || "";
 
-  const pathwayTraditional = pathwaysRaw.includes("traditional");
-  const pathwayIndigenous = pathwaysRaw.includes("indigenous");
-  const pathwayBlended =
-    pathwaysRaw.includes("blended") || pathwaysRaw.includes("teaching") || pathwaysRaw.includes("scholarship");
+    const pathwayTraditional = pathwaysRaw.includes("traditional");
+    const pathwayIndigenous = pathwaysRaw.includes("indigenous");
+    const pathwayBlended =
+        pathwaysRaw.includes("blended") || pathwaysRaw.includes("teaching") || pathwaysRaw.includes("scholarship");
 
-  // compute the "upcoming academic year" bounds using current year
-  const currentYear = new Date().getFullYear();
-  const upcomingStart = currentYear;
-  const upcomingEnd = currentYear + 1;
-  const effectiveDisplayYear = upcomingEnd;
+    // compute the "upcoming academic year" bounds using current year
+    const currentYear = new Date().getFullYear();
+    const upcomingStart = currentYear;
+    const upcomingEnd = currentYear + 1;
+    const effectiveDisplayYear = upcomingEnd;
 
-  return `
+    return `
       <!-- Promotion Review fragment: scalable via --pr-scale -->
       <style>
         /* wrapper scales the whole fragment while preserving layout */
@@ -555,9 +550,8 @@ function buildPromotionReview(latest_declaration, userInfo) {
             <div class="section-title">
               <span class="bold">Support anticipated:</span>
             </div>
-            <div class="support-section" style="border:1px solid #e5e5e5;padding:8px;font-size:11pt;line-height:1.4;">${
-              supportAnticipated || ""
-            }</div>
+            <div class="support-section" style="border:1px solid #e5e5e5;padding:8px;font-size:11pt;line-height:1.4;">${supportAnticipated || ""
+        }</div>
 
             <div class="footer-note">
               <p>
@@ -568,9 +562,8 @@ function buildPromotionReview(latest_declaration, userInfo) {
 
           <div class="submission-date">
             <span class="field-label">Date of Submission:</span>
-            <div style="display:inline-block;border-bottom:1px solid #000;min-width:120px;padding:2px 6px;font-size:11pt;">${
-              submissionDate || ""
-            }</div>
+            <div style="display:inline-block;border-bottom:1px solid #000;min-width:120px;padding:2px 6px;font-size:11pt;">${submissionDate || ""
+        }</div>
           </div>
 
           <div class="confidential">Personal &amp; Confidential</div>
@@ -580,13 +573,13 @@ function buildPromotionReview(latest_declaration, userInfo) {
 }
 
 function buildFomHonorificImpactReport(latest_declaration, userInfo) {
-  const { first_name, last_name } = userInfo || {};
-  const fullName = [first_name, last_name].filter(Boolean).join(" ");
-  const attached = !!(latest_declaration?.honorificAttachment || latest_declaration?.honorificAttached);
-  const reportText = latest_declaration?.honorific || "";
-  const yearHint = latest_declaration?.year || new Date().getFullYear();
+    const { first_name, last_name } = userInfo || {};
+    const fullName = [first_name, last_name].filter(Boolean).join(" ");
+    const attached = !!(latest_declaration?.honorificAttachment || latest_declaration?.honorificAttached);
+    const reportText = latest_declaration?.honorific || "";
+    const yearHint = latest_declaration?.year || new Date().getFullYear();
 
-  return `
+    return `
       <div style="page-break-before: always;"></div>
 
       <style>
@@ -611,9 +604,8 @@ function buildFomHonorificImpactReport(latest_declaration, userInfo) {
 
         <div>
           <span class="field-label">Name:</span>
-          <div class="field-input" style="border:none;border-bottom:1px solid #000;padding:4px 0;font-size:11pt;">${
-            fullName || ""
-          }</div>
+          <div class="field-input" style="border:none;border-bottom:1px solid #000;padding:4px 0;font-size:11pt;">${fullName || ""
+        }</div>
         </div>
 
         <p>
@@ -641,15 +633,13 @@ function buildFomHonorificImpactReport(latest_declaration, userInfo) {
 
         <div class="checkbox-group">
           <div class="checkbox-item">
-            <input type="checkbox" id="fh-attached" ${
-              attached ? "checked" : ""
-            } aria-label="honorific-attached" disabled>
+            <input type="checkbox" id="fh-attached" ${attached ? "checked" : ""
+        } aria-label="honorific-attached" disabled>
             <label for="fh-attached">Full or Summary Report is attached; OR</label>
           </div>
           <div class="checkbox-item">
-            <input type="checkbox" id="fh-follows" ${
-              !attached && reportText ? "checked" : ""
-            } aria-label="honorific-follows" disabled>
+            <input type="checkbox" id="fh-follows" ${!attached && reportText ? "checked" : ""
+        } aria-label="honorific-follows" disabled>
             <label for="fh-follows">Report is as follows:</label>
           </div>
         </div>
@@ -668,85 +658,88 @@ function buildFomHonorificImpactReport(latest_declaration, userInfo) {
 // Insert the FOM/PSA page into the declaration flow
 // filepath: same file - modify buildDeclarationReport to append honorific page (no change to early-return logic)
 function buildDeclarationReport(cv) {
-  const { declaration_to_use } = cv || {};
+    const { declaration_to_use } = cv || {};
 
-  if (!declaration_to_use) {
-    const year = cv?.start_year ?? "";
-    return `<div style="font-weight:700; margin:12px 0;">Declaration not filled out for year ${year}</div>`;
-  }
+    if (!declaration_to_use) {
+        const year = cv?.start_year ?? "";
+        return `<div style="font-weight:700; margin:12px 0;">Declaration not filled out for year ${year}</div>`;
+    }
 
-  // build conflict page fragment (Tailwind classes used so it matches provided template)
-  const conflictOfInterestPage = buildConflictOfInterestPage(declaration_to_use, cv);
+    // build conflict page fragment (Tailwind classes used so it matches provided template)
+    const conflictOfInterestPage = buildConflictOfInterestPage(declaration_to_use, cv);
 
-  // build FOM Merit & PSA page
-  const fomMeritAndPsaPage = buildFomMeritAndPsa(declaration_to_use, cv);
+    // build FOM Merit & PSA page
+    const fomMeritAndPsaPage = buildFomMeritAndPsa(declaration_to_use, cv);
 
-  // build Promotion Review page
-  const promotionReviewPage = buildPromotionReview(declaration_to_use, cv);
+    // build Promotion Review page
+    const promotionReviewPage = buildPromotionReview(declaration_to_use, cv);
 
-  // build Honorific Impact Report page
-  const honorificPage = buildFomHonorificImpactReport(declaration_to_use, cv);
+    // build Honorific Impact Report page
+    const honorificPage = buildFomHonorificImpactReport(declaration_to_use, cv);
 
-  // combine and return: conflict page, then FOM/PSA page, promotion page, honorific page, then summary
-  let html = "";
-  // Removed extra page-break wrappers here: each fragment already starts with a page-break.
-  html += conflictOfInterestPage;
-  html += fomMeritAndPsaPage;
-  html += promotionReviewPage;
-  html += honorificPage;
-  return html;
+    // combine and return: conflict page, then FOM/PSA page, promotion page, honorific page, then summary
+    let html = "";
+    // Removed extra page-break wrappers here: each fragment already starts with a page-break.
+    html += conflictOfInterestPage;
+    html += fomMeritAndPsaPage;
+    html += promotionReviewPage;
+    html += honorificPage;
+    return html;
 }
 
 function buildCv(cv) {
-  const { groups } = cv;
+    const { groups } = cv;
 
-  // Top block: template title (large, bold) then key details in a table
-  let html = "";
+    // Top block: template title (large, bold) then key details in a table
+    let html = "";
 
-  html += buildHeader(cv);
-  html += buildUserInfoTable(cv);
+    html += buildHeader(cv);
+    html += buildUserInfoTable(cv);
 
-  // Groups (under the header)
-  if (Array.isArray(groups) && groups.length) {
-    groups.forEach((group) => {
-      html += buildGroup(group);
-    });
-  }
+    // Groups (under the header)
+    if (Array.isArray(groups) && groups.length) {
+        groups.forEach((group) => {
+            html += buildGroup(group);
+        });
+    }
 
-  // Add declaration at the end
-  html += buildDeclarationReport(cv);
+    // Add declaration at the end
+    html += buildDeclarationReport(cv);
 
-  return html;
+    return html;
 }
 
 function buildGroup(group) {
-  const { title, tables } = group;
-  let html = "";
+    const { title, tables } = group;
+    let html = "";
 
-  html += `
+    html += `
         <div class="group">
             <h2>
                 <span style="display:inline-block; border-bottom: 3px solid #000;">${title}</span>
             </h2>
     `;
 
-  const emptyTableNames = [];
-  tables.forEach((table) => {
-    const htmlTable = buildTable(table);
+    const emptyTableNames = [];
+    tables.forEach((table) => {
+        const htmlTable = buildTable(table);
 
-    if (htmlTable.tableEmpty) {
-      const tableName = table?.columns?.[0]?.headerName.replace("(0)", "").trim();
+        if (htmlTable.tableEmpty) {
+            const tableName = table?.columns?.[0]?.headerName.replace("(0)", "").trim();
 
-      if (tableName) {
-        emptyTableNames.push(tableName);
-      }
-    } else {
-      html += buildTable(table);
-    }
-  });
+            if (tableName) {
+                emptyTableNames.push(tableName);
+            }
+            if (htmlTable.underlinedHeaderHtml) {
+                html += htmlTable.underlinedHeaderHtml;
+            }
+        } else {
+            html += buildTable(table);
+        }
+    });
 
-  if (emptyTableNames.length > 0) {
-    html += `
+    if (emptyTableNames.length > 0) {
+        html += `
         <div style="
             margin-top: 1em;
             font-family: Arial, sans-serif;
@@ -754,8 +747,8 @@ function buildGroup(group) {
         ">
             <strong>Tables with no data:</strong>
             ${emptyTableNames
-              .map(
-                (name, i) => `
+                .map(
+                    (name, i) => `
                 <span style="
                     background-color: ${i % 2 === 0 ? "#f2f2f2" : "#dcdcdc"};
                     padding: 2px 6px;
@@ -766,212 +759,225 @@ function buildGroup(group) {
                     ${name}${i < emptyTableNames.length - 1 ? "," : ""}
                 </span>
             `
-              )
-              .join("")}
+                )
+                .join("")}
         </div>
     `;
-  }
+    }
 
-  html += "</div>";
-  return html;
+    html += "</div>";
+    return html;
 }
 
 function buildTable(table) {
-  const { columns, rows, justHeader, noPadding } = table;
+    const { columns, rows, justHeader, noPadding } = table;
 
-  let filteredColumns;
-  if (!justHeader) {
-    // prune empty columns first
-    filteredColumns = removeEmptyColumns(columns, rows);
-  }
-
-  // If pruning removed every column, fall back to the original columns
-  // so we still render the header (title/subsection) even for empty tables.
-  const columnsToRender =
-    Array.isArray(filteredColumns) && filteredColumns.length > 0
-      ? filteredColumns
-      : Array.isArray(columns)
-      ? columns
-      : [];
-
-  // Helper: calculate max depth of columns
-  function getDepth(cols) {
-    return cols.reduce((max, col) => {
-      if (col.children) return Math.max(max, 1 + getDepth(col.children));
-      return Math.max(max, 1);
-    }, 0);
-  }
-
-  const depth = getDepth(columnsToRender);
-
-  // Build header rows
-  const headerRows = Array.from({ length: depth }, () => []);
-
-  function processColumn(col, level) {
-    const hasChildren = !!col.children && col.children.length > 0;
-    if (hasChildren) {
-      const colspan = countLeafColumns(col);
-      headerRows[level].push({ name: col.headerName, colspan, rowspan: 1 });
-      col.children.forEach((child) => processColumn(child, level + 1));
-    } else {
-      headerRows[level].push({ name: col.headerName, colspan: 1, rowspan: depth - level });
+    let filteredColumns;
+    if (!justHeader) {
+        // prune empty columns first
+        filteredColumns = removeEmptyColumns(columns, rows);
     }
-  }
 
-  function countLeafColumns(col) {
-    if (!col.children) return 1;
-    return col.children.reduce((sum, c) => sum + countLeafColumns(c), 0);
-  }
+    // If pruning removed every column, fall back to the original columns
+    // so we still render the header (title/subsection) even for empty tables.
+    const columnsToRender =
+        Array.isArray(filteredColumns) && filteredColumns.length > 0
+            ? filteredColumns
+            : Array.isArray(columns)
+                ? columns
+                : [];
 
-  columnsToRender.forEach((col) => processColumn(col, 0));
-
-  // remove any header rows that contain only empty names (e.g. ["", ""])
-  const visibleHeaderRows = headerRows.filter((row) => row.some((cell) => String(cell?.name ?? "").trim() !== ""));
-
-  // Generate header HTML from filtered rows
-  const headerHtml = visibleHeaderRows
-    .map(
-      (row) =>
-        "<tr>" +
-        row
-          .map(
-            (cell) =>
-              `<th${cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ""}${
-                cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ""
-              }>${cell.name}</th>`
-          )
-          .join("") +
-        "</tr>"
-    )
-    .join("\n");
-
-  // Flatten columns to get order of fields
-  function flattenColumns(cols) {
-    return cols.flatMap((c) => (c.children ? flattenColumns(c.children) : c));
-  }
-
-  const flatColumns = flattenColumns(columnsToRender);
-
-  // Build students supervised summary (plain bold text, placed below header and above rows)
-  let studentsSupervisedSummaryHtml = "";
-  if (table?.studentsSupervisedSummary) {
-    const keys = Object.keys(table.studentsSupervisedSummary || {});
-    const lines = keys
-      .map((key) => {
-        const { total = 0, completed = 0, current = 0 } = table.studentsSupervisedSummary[key] || {};
-        return `${key} Total: ${total}, ${current} current, ${completed} completed`;
-      })
-      .filter(Boolean);
-
-    if (lines.length) {
-      // plain text (bold), separated by <br/>, not inside the table
-      studentsSupervisedSummaryHtml = `<div style="font-weight:700; margin:8px 0;">${lines.join("<br/>")}</div>`;
+    // Helper: calculate max depth of columns
+    function getDepth(cols) {
+        return cols.reduce((max, col) => {
+            if (col.children) return Math.max(max, 1 + getDepth(col.children));
+            return Math.max(max, 1);
+        }, 0);
     }
-  }
 
-  // Build body: if there are no rows (or no surviving leaf columns), show "No data" under the header
-  let bodyHtml;
-  const noRows = !Array.isArray(rows) || rows.length === 0;
-  const noLeafColumns = !Array.isArray(flatColumns) || flatColumns.length === 0;
+    const depth = getDepth(columnsToRender);
 
-  if (noRows || noLeafColumns) {
-    return { tableEmpty: true };
-  } else {
-    bodyHtml = rows
-      .map(
-        (row) =>
-          "<tr>" +
-          flatColumns
-            .map((c) => {
-              let fieldValue = row[c.field] ?? "";
+    // Build header rows
+    const headerRows = Array.from({ length: depth }, () => []);
 
-              // Special handling for merged_data in publications
-              if (c.field === "merged_data" && row["Author Names"]) {
-                // Check if this row has Author Names data with metadata
-                const authorNames = row["Author Names"];
-                const hasMetadata = 
-                  (row["author_trainees"] && row["author_trainees"].length > 0) ||
-                  (row["author_doctoral_supervisors"] && row["author_doctoral_supervisors"].length > 0) ||
-                  (row["author_postdoctoral_supervisors"] && row["author_postdoctoral_supervisors"].length > 0);
-                
-                if (authorNames && hasMetadata) {
-                  // console.log("✅ Formatting authors in merged_data");
-                  // Format the author names with metadata
-                  const formattedAuthors = formatAuthorNamesWithMetadata(authorNames, row);
-                  
-                  // Replace the author names in the merged data with formatted version
-                  let modifiedMergedData = String(fieldValue);
-                  
-                  // Try different join formats to match what's in merged_data
-                  // merged_data might have "X,Y" (no space) or "X, Y" (with space)
-                  const authorStringWithSpace = Array.isArray(authorNames) ? authorNames.join(', ') : String(authorNames);
-                  const authorStringNoSpace = Array.isArray(authorNames) ? authorNames.join(',') : String(authorNames);
-                  
-                  // Determine which format exists in merged_data
-                  let authorString;
-                  if (modifiedMergedData.includes(authorStringNoSpace)) {
-                    authorString = authorStringNoSpace;
-                    // console.log("🔧 Found authors WITHOUT space after comma");
-                  } else if (modifiedMergedData.includes(authorStringWithSpace)) {
-                    authorString = authorStringWithSpace;
-                    // console.log("🔧 Found authors WITH space after comma");
-                  } else {
-                    // console.warn("⚠️ Author string not found in merged_data in any format");
-                    // console.log("Tried:", { withSpace: authorStringWithSpace, noSpace: authorStringNoSpace, mergedData: modifiedMergedData });
-                    // Fall back to regular styling
-                    modifiedMergedData = dataStyler(modifiedMergedData);
-                    return `<td>${modifiedMergedData}</td>`;
-                  }
-                  
-                  // Split merged data, preserve the author formatted HTML, and apply dataStyler to other parts
-                  const parts = modifiedMergedData.split(authorString);
-                  console.log("✅ Split parts:", parts);
-                  
-                  // Apply dataStyler to non-author parts and insert formatted authors in between
-                  const styledParts = parts.map((part, idx) => {
-                    if (idx < parts.length - 1) {
-                      // Apply dataStyler to this part, then add formatted authors
-                      return dataStyler(part) + formattedAuthors;
-                    } else {
-                      // Last part, just apply dataStyler
-                      return dataStyler(part);
-                    }
-                  });
-                  
-                  modifiedMergedData = styledParts.join('');
-                  // console.log("✅ After replacement:", modifiedMergedData);
-                  
-                  // Return directly to preserve HTML formatting
-                  return `<td>${modifiedMergedData}</td>`;
-                }
-              }
+    function processColumn(col, level) {
+        const hasChildren = !!col.children && col.children.length > 0;
+        if (hasChildren) {
+            const colspan = countLeafColumns(col);
+            headerRows[level].push({ name: col.headerName, colspan, rowspan: 1 });
+            col.children.forEach((child) => processColumn(child, level + 1));
+        } else {
+            headerRows[level].push({ name: col.headerName, colspan: 1, rowspan: depth - level });
+        }
+    }
 
-              // Check if this is an author names field (for non-merged tables)
-              const isAuthorNamesField = c.field && c.field === "Author Names";
+    function countLeafColumns(col) {
+        if (!col.children) return 1;
+        return col.children.reduce((sum, c) => sum + countLeafColumns(c), 0);
+    }
 
-              if (isAuthorNamesField && fieldValue) {
-                console.log("✅ APPLYING AUTHOR FORMATTING to Author Names field");
-                return `<td>${formatAuthorNamesWithMetadata(fieldValue, row)}</td>`;
-              }
+    columnsToRender.forEach((col) => processColumn(col, 0));
 
-              return `<td>${dataStyler(fieldValue)}</td>`;
+    // remove any header rows that contain only empty names (e.g. ["", ""])
+    const visibleHeaderRows = headerRows.filter((row) => row.some((cell) => String(cell?.name ?? "").trim() !== ""));
+
+    // Generate header HTML from filtered rows
+    const headerHtml = visibleHeaderRows
+        .map(
+            (row) =>
+                "<tr>" +
+                row
+                    .map(
+                        (cell) =>
+                            `<th${cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ""}${cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ""
+                            }>${cell.name}</th>`
+                    )
+                    .join("") +
+                "</tr>"
+        )
+        .join("\n");
+
+    // Flatten columns to get order of fields
+    function flattenColumns(cols) {
+        return cols.flatMap((c) => (c.children ? flattenColumns(c.children) : c));
+    }
+
+    const flatColumns = flattenColumns(columnsToRender);
+
+    // Build students supervised summary (plain bold text, placed below header and above rows)
+    let studentsSupervisedSummaryHtml = "";
+    if (table?.studentsSupervisedSummary) {
+        const keys = Object.keys(table.studentsSupervisedSummary || {});
+        const lines = keys
+            .map((key) => {
+                const { total = 0, completed = 0, current = 0 } = table.studentsSupervisedSummary[key] || {};
+                return `${key} Total: ${total}, ${current} current, ${completed} completed`;
             })
-            .join("") +
-          "</tr>"
-      )
-      .join("\n");
-  }
+            .filter(Boolean);
 
-  const underlinedHeader = table.underlined_header;
-  const underlinedHeaderHtml = underlinedHeader
-    ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedHeader}</h3>`
-    : "";
+        if (lines.length) {
+            // plain text (bold), separated by <br/>, not inside the table
+            studentsSupervisedSummaryHtml = `<div style="font-weight:700; margin:8px 0;">${lines.join("<br/>")}</div>`;
+        }
+    }
 
-  // Return full table HTML
-  const wrapperClass = noPadding ? "table-with-notes no-padding" : "table-with-notes";
-  const notesHtml = buildNotes(table.note_sections);
-  return `<div class="${wrapperClass}">
+    // Build body: if there are no rows (or no surviving leaf columns), show "No data" under the header
+    let bodyHtml;
+    const noRows = !Array.isArray(rows) || rows.length === 0;
+    const noLeafColumns = !Array.isArray(flatColumns) || flatColumns.length === 0;
+
+    if (noRows || noLeafColumns) {
+        let underlinedHeaderHtml = "";
+        if (table.underlined_header) {
+            const underlinedHeader = table.underlined_header;
+            underlinedHeaderHtml = underlinedHeader
+                ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedHeader}</h3>`
+                : "";
+        }
+        return { tableEmpty: true, underlinedHeaderHtml };
+    } else {
+        bodyHtml = rows
+            .map(
+                (row) =>
+                    "<tr>" +
+                    flatColumns
+                        .map((c) => {
+                            let fieldValue = row[c.field] ?? "";
+
+                            // Special handling for merged_data in publications
+                            if (c.field === "merged_data" && row["Author Names"]) {
+                                // Check if this row has Author Names data with metadata
+                                const authorNames = row["Author Names"];
+                                const hasMetadata =
+                                    (row["author_trainees"] && row["author_trainees"].length > 0) ||
+                                    (row["author_doctoral_supervisors"] && row["author_doctoral_supervisors"].length > 0) ||
+                                    (row["author_postdoctoral_supervisors"] && row["author_postdoctoral_supervisors"].length > 0);
+
+                                if (authorNames && hasMetadata) {
+                                    // console.log("✅ Formatting authors in merged_data");
+                                    // Format the author names with metadata
+                                    const formattedAuthors = formatAuthorNamesWithMetadata(authorNames, row);
+
+                                    // Replace the author names in the merged data with formatted version
+                                    let modifiedMergedData = String(fieldValue);
+
+                                    // Try different join formats to match what's in merged_data
+                                    // merged_data might have "X,Y" (no space) or "X, Y" (with space)
+                                    const authorStringWithSpace = Array.isArray(authorNames) ? authorNames.join(', ') : String(authorNames);
+                                    const authorStringNoSpace = Array.isArray(authorNames) ? authorNames.join(',') : String(authorNames);
+
+                                    // Determine which format exists in merged_data
+                                    let authorString;
+                                    if (modifiedMergedData.includes(authorStringNoSpace)) {
+                                        authorString = authorStringNoSpace;
+                                        // console.log("🔧 Found authors WITHOUT space after comma");
+                                    } else if (modifiedMergedData.includes(authorStringWithSpace)) {
+                                        authorString = authorStringWithSpace;
+                                        // console.log("🔧 Found authors WITH space after comma");
+                                    } else {
+                                        // console.warn("⚠️ Author string not found in merged_data in any format");
+                                        // console.log("Tried:", { withSpace: authorStringWithSpace, noSpace: authorStringNoSpace, mergedData: modifiedMergedData });
+                                        // Fall back to regular styling
+                                        modifiedMergedData = dataStyler(modifiedMergedData);
+                                        return `<td>${modifiedMergedData}</td>`;
+                                    }
+
+                                    // Split merged data, preserve the author formatted HTML, and apply dataStyler to other parts
+                                    const parts = modifiedMergedData.split(authorString);
+                                    console.log("✅ Split parts:", parts);
+
+                                    // Apply dataStyler to non-author parts and insert formatted authors in between
+                                    const styledParts = parts.map((part, idx) => {
+                                        if (idx < parts.length - 1) {
+                                            // Apply dataStyler to this part, then add formatted authors
+                                            return dataStyler(part) + formattedAuthors;
+                                        } else {
+                                            // Last part, just apply dataStyler
+                                            return dataStyler(part);
+                                        }
+                                    });
+
+                                    modifiedMergedData = styledParts.join('');
+                                    // console.log("✅ After replacement:", modifiedMergedData);
+
+                                    // Return directly to preserve HTML formatting
+                                    return `<td>${modifiedMergedData}</td>`;
+                                }
+                            }
+
+                            // Check if this is an author names field (for non-merged tables)
+                            const isAuthorNamesField = c.field && c.field === "Author Names";
+
+                            if (isAuthorNamesField && fieldValue) {
+                                console.log("✅ APPLYING AUTHOR FORMATTING to Author Names field");
+                                return `<td>${formatAuthorNamesWithMetadata(fieldValue, row)}</td>`;
+                            }
+
+                            return `<td>${dataStyler(fieldValue)}</td>`;
+                        })
+                        .join("") +
+                    "</tr>"
+            )
+            .join("\n");
+    }
+
+    const underlinedHeader = table.underlined_header;
+    const underlinedHeaderHtml = underlinedHeader
+        ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedHeader}</h3>`
+        : "";
+
+    const instructions = table.instructions;
+    const instructionsHtml = instructions
+        ? `<h3 style="margin: 0 0 6px 0; padding: 0; font-size: 0.9em;">${instructions}</h3>`
+        : "";
+
+
+    // Return full table HTML
+    const wrapperClass = noPadding ? "table-with-notes no-padding" : "table-with-notes";
+    const notesHtml = buildNotes(table.note_sections);
+    return `<div class="${wrapperClass}">
             ${underlinedHeaderHtml}
+            ${instructionsHtml}
             <table border="1" cellspacing="0" cellpadding="5">
             <thead>
             ${studentsSupervisedSummaryHtml}
@@ -986,147 +992,147 @@ function buildTable(table) {
 }
 
 function genericDataStyler(data) {
-  const wordArray = String(data).trim().split(/\s+/);
+    const wordArray = String(data).trim().split(/\s+/);
 
-  const formattedArray = wordArray.map((word) => {
-    if (isUrl(word)) {
-      return linkWrapper(word);
-    }
+    const formattedArray = wordArray.map((word) => {
+        if (isUrl(word)) {
+            return linkWrapper(word);
+        }
 
-    if (isDOI(word)) {
-      return doiWrapper(word);
-    }
+        if (isDOI(word)) {
+            return doiWrapper(word);
+        }
 
-    return word;
-  });
+        return word;
+    });
 
-  const formattedData = formattedArray.join(" ");
+    const formattedData = formattedArray.join(" ");
 
-  return formattedData;
+    return formattedData;
 }
 
 function doiWrapper(doi) {
-  const cleanedDoi = String(doi).trim().replace(/[,.]$/, "");
+    const cleanedDoi = String(doi).trim().replace(/[,.]$/, "");
 
-  const link = `https://doi.org/${cleanedDoi}`;
+    const link = `https://doi.org/${cleanedDoi}`;
 
-  // Check the original string for a trailing comma and append it if found.
-  if (String(doi).endsWith(",")) {
+    // Check the original string for a trailing comma and append it if found.
+    if (String(doi).endsWith(",")) {
+        return `<a href="${link}">${doi}</a>`;
+    }
+
     return `<a href="${link}">${doi}</a>`;
-  }
-
-  return `<a href="${link}">${doi}</a>`;
 }
 
 function isDOI(str) {
-  const cleanedStr = String(str).trim().replace(/,$/, "");
-  const doiRegex = /^10.\d{4,9}\/[-._;()/:a-zA-Z0-9]+$/;
+    const cleanedStr = String(str).trim().replace(/,$/, "");
+    const doiRegex = /^10.\d{4,9}\/[-._;()/:a-zA-Z0-9]+$/;
 
-  return doiRegex.test(cleanedStr);
+    return doiRegex.test(cleanedStr);
 }
 
 function dataStyler(data) {
-  if (isDateData(data)) {
-    return dateDataStyler(data);
-  }
+    if (isDateData(data)) {
+        return dateDataStyler(data);
+    }
 
-  return genericDataStyler(data);
+    return genericDataStyler(data);
 }
 
 function dateDataStyler(data) {
-  function isNumber(word) {
-    return /^\d+$/.test(word);
-  }
-
-  function monthAbbreviator(word) {
-    const month = String(word)
-      .replace(/[^a-z]/g, "")
-      .toLowerCase();
-
-    const monthMap = {
-      january: "Jan",
-      february: "Feb",
-      march: "Mar",
-      april: "Apr",
-      may: "May",
-      june: "Jun",
-      july: "Jul",
-      august: "Aug",
-      september: "Sep",
-      october: "Oct",
-      november: "Nov",
-      december: "Dec",
-    };
-
-    return monthMap[month];
-  }
-
-  const cleanedData = String(data).trim().toLowerCase();
-  const wordArray = cleanedData.split(/\s+/);
-
-  const formattedWordArray = wordArray.map((word) => {
-    if (word === "-") {
-      return "-<br/>"; // break on dash
-    } else if (isNumber(word)) {
-      return word;
-    } else {
-      return monthAbbreviator(word) ?? word;
+    function isNumber(word) {
+        return /^\d+$/.test(word);
     }
-  });
 
-  return `<div class="date-div">${formattedWordArray.join(" ")}</div>`; // normal spaces only
+    function monthAbbreviator(word) {
+        const month = String(word)
+            .replace(/[^a-z]/g, "")
+            .toLowerCase();
+
+        const monthMap = {
+            january: "Jan",
+            february: "Feb",
+            march: "Mar",
+            april: "Apr",
+            may: "May",
+            june: "Jun",
+            july: "Jul",
+            august: "Aug",
+            september: "Sep",
+            october: "Oct",
+            november: "Nov",
+            december: "Dec",
+        };
+
+        return monthMap[month];
+    }
+
+    const cleanedData = String(data).trim().toLowerCase();
+    const wordArray = cleanedData.split(/\s+/);
+
+    const formattedWordArray = wordArray.map((word) => {
+        if (word === "-") {
+            return "-<br/>"; // break on dash
+        } else if (isNumber(word)) {
+            return word;
+        } else {
+            return monthAbbreviator(word) ?? word;
+        }
+    });
+
+    return `<div class="date-div">${formattedWordArray.join(" ")}</div>`; // normal spaces only
 }
 
 function isDateData(data) {
-  function isMonthsAndNumbers(str) {
-    // Split on spaces or commas
-    const parts = str.split(/[\s,]+/).filter(Boolean);
+    function isMonthsAndNumbers(str) {
+        // Split on spaces or commas
+        const parts = str.split(/[\s,]+/).filter(Boolean);
 
-    return parts.every(
-      (part) => allowedMonths.includes(part.toLowerCase()) || /^\d+$/.test(part) || part.toLowerCase() === "current"
-    );
-  }
+        return parts.every(
+            (part) => allowedMonths.includes(part.toLowerCase()) || /^\d+$/.test(part) || part.toLowerCase() === "current"
+        );
+    }
 
-  let cleanedData = String(data)
-    .replace(/[^a-zA-Z0-9 ]/g, "")
-    .toLowerCase();
-  const allowedMonths = [
-    "january",
-    "jan",
-    "february",
-    "feb",
-    "march",
-    "mar",
-    "april",
-    "apr",
-    "may",
-    "june",
-    "jun",
-    "july",
-    "jul",
-    "august",
-    "aug",
-    "september",
-    "sep",
-    "sept",
-    "october",
-    "oct",
-    "november",
-    "nov",
-    "december",
-    "dec",
-  ];
+    let cleanedData = String(data)
+        .replace(/[^a-zA-Z0-9 ]/g, "")
+        .toLowerCase();
+    const allowedMonths = [
+        "january",
+        "jan",
+        "february",
+        "feb",
+        "march",
+        "mar",
+        "april",
+        "apr",
+        "may",
+        "june",
+        "jun",
+        "july",
+        "jul",
+        "august",
+        "aug",
+        "september",
+        "sep",
+        "sept",
+        "october",
+        "oct",
+        "november",
+        "nov",
+        "december",
+        "dec",
+    ];
 
-  return isMonthsAndNumbers(cleanedData);
+    return isMonthsAndNumbers(cleanedData);
 }
 
 function isUrl(string) {
-  const urlPattern = /https?:\/\/[^\s]+/i;
-  return urlPattern.test(string);
+    const urlPattern = /https?:\/\/[^\s]+/i;
+    return urlPattern.test(string);
 }
 
 function linkWrapper(link) {
-  return `<div class="link-wrap"><a href="${link}" target="_blank" rel="noopener noreferrer">${link}</a></div>`;
+    return `<div class="link-wrap"><a href="${link}" target="_blank" rel="noopener noreferrer">${link}</a></div>`;
 }
 
 /**
@@ -1142,120 +1148,120 @@ function linkWrapper(link) {
  * @returns {string} - HTML formatted author names with inline styles
  */
 function formatAuthorNamesWithMetadata(authorNamesString, rowData) {
-  if (!authorNamesString) return "";
+    if (!authorNamesString) return "";
 
-  // Parse author names - handle both string and array formats
-  let authorNames = [];
-  if (Array.isArray(authorNamesString)) {
-    authorNames = authorNamesString;
-  } else if (typeof authorNamesString === "string") {
-    authorNames = authorNamesString.split(",").map((name) => name.trim());
-  } else {
-    return String(authorNamesString);
-  }
-  console.log("🔍 Author formatting - Parsed author names:", authorNamesString);
-  console.log("🔍 Author formatting - Row data keys:", Object.keys(rowData));
+    // Parse author names - handle both string and array formats
+    let authorNames = [];
+    if (Array.isArray(authorNamesString)) {
+        authorNames = authorNamesString;
+    } else if (typeof authorNamesString === "string") {
+        authorNames = authorNamesString.split(",").map((name) => name.trim());
+    } else {
+        return String(authorNamesString);
+    }
+    console.log("🔍 Author formatting - Parsed author names:", authorNamesString);
+    console.log("🔍 Author formatting - Row data keys:", Object.keys(rowData));
 
-  // Get metadata arrays from row data - check all possible field name variations
-  const trainees = rowData["author_trainees"] || [];
-  const doctoralSupervisors = rowData["author_doctoral_supervisors"] || [];
-  const postdoctoralSupervisors = rowData["author_postdoctoral_supervisors"] || [];
+    // Get metadata arrays from row data - check all possible field name variations
+    const trainees = rowData["author_trainees"] || [];
+    const doctoralSupervisors = rowData["author_doctoral_supervisors"] || [];
+    const postdoctoralSupervisors = rowData["author_postdoctoral_supervisors"] || [];
 
-  // Debug: Log to see what we're getting
-  if (trainees.length > 0 || doctoralSupervisors.length > 0 || postdoctoralSupervisors.length > 0) {
-    console.log("📝 Author formatting - Found metadata:", {
-      authorNames,
-      trainees,
-      doctoralSupervisors,
-      postdoctoralSupervisors,
-      rowData: Object.keys(rowData),
+    // Debug: Log to see what we're getting
+    if (trainees.length > 0 || doctoralSupervisors.length > 0 || postdoctoralSupervisors.length > 0) {
+        console.log("📝 Author formatting - Found metadata:", {
+            authorNames,
+            trainees,
+            doctoralSupervisors,
+            postdoctoralSupervisors,
+            rowData: Object.keys(rowData),
+        });
+    }
+
+    // Parse metadata if they're strings
+    const parseMetadata = (data) => {
+        if (Array.isArray(data)) return data;
+        if (typeof data === "string" && data.trim()) {
+            try {
+                return JSON.parse(data);
+            } catch {
+                return data.split(",").map((item) => item.trim());
+            }
+        }
+        return [];
+    };
+
+    const traineesList = parseMetadata(trainees);
+    const doctoralList = parseMetadata(doctoralSupervisors);
+    const postdocList = parseMetadata(postdoctoralSupervisors);
+
+    // Format each author name
+    const formattedAuthors = authorNames.map((name, idx) => {
+        if (!name) return "";
+
+        // Check if author is in any special role
+        const isTrainee = traineesList.includes(name);
+        const isDoctoralSupervisor = doctoralList.includes(name);
+        const isPostdoctoralSupervisor = postdocList.includes(name);
+
+        // Apply formatting based on author roles
+        let styles = [];
+        let classes = [];
+
+        // Trainees - underline
+        if (isTrainee) {
+            styles.push("text-decoration: underline");
+            classes.push("author-trainee");
+        }
+
+        // Doctoral supervisors - italic only
+        if (isDoctoralSupervisor) {
+            styles.push("font-style: italic");
+            classes.push("author-doctoral-supervisor");
+        }
+
+        // Postdoctoral supervisors - bold + italic
+        if (isPostdoctoralSupervisor) {
+            styles.push("font-weight: bold");
+            styles.push("font-style: italic");
+            classes.push("author-postdoctoral-supervisor");
+        }
+
+        // Apply formatting if any styles are defined
+        if (styles.length > 0 || classes.length > 0) {
+            const styleAttr = styles.length > 0 ? ` style="${styles.join("; ")}"` : "";
+            const classAttr = classes.length > 0 ? ` class="${classes.join(" ")}"` : "";
+            console.log(`✨ Formatting author "${name}":`, {
+                isTrainee,
+                isDoctoralSupervisor,
+                isPostdoctoralSupervisor,
+                styles,
+                classes,
+            });
+            return `<span${styleAttr}${classAttr}>${name}</span>`;
+        }
+
+        return name;
     });
-  }
 
-  // Parse metadata if they're strings
-  const parseMetadata = (data) => {
-    if (Array.isArray(data)) return data;
-    if (typeof data === "string" && data.trim()) {
-      try {
-        return JSON.parse(data);
-      } catch {
-        return data.split(",").map((item) => item.trim());
-      }
-    }
-    return [];
-  };
-
-  const traineesList = parseMetadata(trainees);
-  const doctoralList = parseMetadata(doctoralSupervisors);
-  const postdocList = parseMetadata(postdoctoralSupervisors);
-
-  // Format each author name
-  const formattedAuthors = authorNames.map((name, idx) => {
-    if (!name) return "";
-
-    // Check if author is in any special role
-    const isTrainee = traineesList.includes(name);
-    const isDoctoralSupervisor = doctoralList.includes(name);
-    const isPostdoctoralSupervisor = postdocList.includes(name);
-
-    // Apply formatting based on author roles
-    let styles = [];
-    let classes = [];
-
-    // Trainees - underline
-    if (isTrainee) {
-      styles.push("text-decoration: underline");
-      classes.push("author-trainee");
-    }
-
-    // Doctoral supervisors - italic only
-    if (isDoctoralSupervisor) {
-      styles.push("font-style: italic");
-      classes.push("author-doctoral-supervisor");
-    }
-
-    // Postdoctoral supervisors - bold + italic
-    if (isPostdoctoralSupervisor) {
-      styles.push("font-weight: bold");
-      styles.push("font-style: italic");
-      classes.push("author-postdoctoral-supervisor");
-    }
-
-    // Apply formatting if any styles are defined
-    if (styles.length > 0 || classes.length > 0) {
-      const styleAttr = styles.length > 0 ? ` style="${styles.join("; ")}"` : "";
-      const classAttr = classes.length > 0 ? ` class="${classes.join(" ")}"` : "";
-      console.log(`✨ Formatting author "${name}":`, {
-        isTrainee,
-        isDoctoralSupervisor,
-        isPostdoctoralSupervisor,
-        styles,
-        classes,
-      });
-      return `<span${styleAttr}${classAttr}>${name}</span>`;
-    }
-
-    return name;
-  });
-
-  // Join authors with commas
-  return formattedAuthors.join(", ");
+    // Join authors with commas
+    return formattedAuthors.join(", ");
 }
 
 function buildNotes(noteSections) {
-  if (!noteSections || noteSections.length === 0) {
-    return "";
-  }
-
-  let html = "";
-  noteSections.forEach((noteSection) => {
-    if (!noteSection?.notes || noteSection.notes.length === 0) {
-      return;
+    if (!noteSections || noteSections.length === 0) {
+        return "";
     }
 
-    const { notes, title } = noteSection;
+    let html = "";
+    noteSections.forEach((noteSection) => {
+        if (!noteSection?.notes || noteSection.notes.length === 0) {
+            return;
+        }
 
-    html += `
+        const { notes, title } = noteSection;
+
+        html += `
             <div class="notes-section" style="margin-bottom:16px;">
                 <h4 style="
                     font-size: 19px; 
@@ -1266,9 +1272,9 @@ function buildNotes(noteSections) {
                 ">${title}</h4>
         `;
 
-    notes.forEach((note) => {
-      const { key, value } = note;
-      html += `
+        notes.forEach((note) => {
+            const { key, value } = note;
+            html += `
                 <div style="margin-bottom:8px;">
                     <div style="
                         font-size: 18px;
@@ -1286,10 +1292,10 @@ function buildNotes(noteSections) {
                     ">${value}</div>
                 </div>
             `;
+        });
+
+        html += `</div>`;
     });
 
-    html += `</div>`;
-  });
-
-  return html;
+    return html;
 }

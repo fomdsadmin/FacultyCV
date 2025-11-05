@@ -12,11 +12,11 @@ const SectionByAttributeModal = ({ isOpen, preparedSection, onClose }) => {
 
     // Get available dropdown attributes
     const getDropdownAttributes = () => {
-        if (!sectionsMap || !sectionsMap[preparedSection.data_section_id]) {
+        if (!sectionsMap || !sectionsMap[preparedSection.title]) {
             return [];
         }
         try {
-            const attributesType = JSON.parse(sectionsMap[preparedSection.data_section_id].attributes_type);
+            const attributesType = JSON.parse(sectionsMap[preparedSection.title].attributes_type);
             return Object.keys(attributesType.dropdown || {});
         } catch (error) {
             console.error("Error parsing attributes_type:", error);
@@ -35,9 +35,9 @@ const SectionByAttributeModal = ({ isOpen, preparedSection, onClose }) => {
 
     // Generate sub sections when attribute changes
     useEffect(() => {
-        if (selectedAttribute && sectionsMap && sectionsMap[preparedSection.data_section_id]) {
+        if (selectedAttribute && sectionsMap && sectionsMap[preparedSection.title]) {
             try {
-                const attributesType = JSON.parse(sectionsMap[preparedSection.data_section_id].attributes_type);
+                const attributesType = JSON.parse(sectionsMap[preparedSection.title].attributes_type);
                 const values = attributesType.dropdown[selectedAttribute] || [];
 
                 // Get shown attributes from prepared section
