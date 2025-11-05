@@ -1,46 +1,46 @@
-import React, { useRef, useEffect, useState } from 'react';
-import RichTextEditor from './RichTextEditor';
+import React, { useRef, useEffect, useState } from "react";
+import RichTextEditor from "./RichTextEditor";
 
 const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) => {
   // State for managing author names table
   const [authorsList, setAuthorsList] = useState([]);
   const [showAllAuthors, setShowAllAuthors] = useState(false);
-  
+
   // Check if this is a publications section
-  const isPublicationsSection = section?.title?.toLowerCase().includes('journal publications') || false;
-  const isOtherPublicationsSection = section?.title?.toLowerCase().includes('other publications') || false;
-  
+  const isPublicationsSection = section?.title?.toLowerCase().includes("journal publications") || false;
+  const isOtherPublicationsSection = section?.title?.toLowerCase().includes("other publications") || false;
+
   // Initialize authors list from formData when component loads or formData changes
   useEffect(() => {
     if (!attrsObj) return;
-    
+
     // Find the Author Names field in attrsObj
-    const authorNamesEntry = Object.entries(attrsObj).find(([attrName]) => 
-      attrName === 'Author Names' || attrName.toLowerCase() === 'author names'
+    const authorNamesEntry = Object.entries(attrsObj).find(
+      ([attrName]) => attrName === "Author Names" || attrName.toLowerCase() === "author names"
     );
-    
+
     if (!authorNamesEntry) return;
-    
+
     const [attrName] = authorNamesEntry;
     const snakeKey = attributes && attributes[attrName] ? attributes[attrName] : attrName;
     const authorsValue = formData[snakeKey];
-    
-    if (authorsValue && typeof authorsValue === 'string' && authorsValue.trim()) {
+
+    if (authorsValue && typeof authorsValue === "string" && authorsValue.trim()) {
       // Parse comma-separated names with proper handling of "LastName, FirstInitial" format
       const parseAuthorNames = (str) => {
         const authors = [];
-        const parts = str.split(',').map(s => s.trim());
-        
+        const parts = str.split(",").map((s) => s.trim());
+
         let i = 0;
         while (i < parts.length) {
           const current = parts[i];
-          
+
           // Check if next part exists and looks like an initial (1-2 chars, possibly with period)
           if (i + 1 < parts.length) {
             const next = parts[i + 1];
             // Check if next part is an initial: 1-2 characters, optionally with period(s)
             const isInitial = /^[A-Z]\.?(\s*[A-Z]\.?)*$/.test(next);
-            
+
             if (isInitial) {
               // Combine current with next (LastName, Initial)
               authors.push(`${current}, ${next}`);
@@ -56,10 +56,10 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
             i += 1;
           }
         }
-        
-        return authors.filter(name => name);
+
+        return authors.filter((name) => name);
       };
-      
+
       const names = parseAuthorNames(authorsValue);
       const parsedAuthors = names.map((name, index) => ({
         id: index,
@@ -67,7 +67,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
         isTrainee: false,
         isDoctoralSupervisor: false,
         isPostdoctoralSupervisor: false,
-        authorType: ''
+        authorType: "",
       }));
       setAuthorsList(parsedAuthors);
     } else if (authorsValue && Array.isArray(authorsValue)) {
@@ -77,41 +77,51 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
       const doctoralSupervisors = formData.author_doctoral_supervisors || [];
       const postdoctoralSupervisors = formData.author_postdoctoral_supervisors || [];
       const authorTypes = formData.author_types || {};
-      
+
       // Helper function to determine author type from the nested structure
       const getAuthorType = (authorName) => {
         if (authorTypes.first_authors && authorTypes.first_authors.includes(authorName)) {
-          return 'First Author';
+          return "First Author";
         }
         if (authorTypes.senior_authors && authorTypes.senior_authors.includes(authorName)) {
-          return 'Senior Author';
+          return "Senior Author";
         }
-        return 'Contributing Author';
+        return "Contributing Author";
       };
-      
+
       const parsedAuthors = authorsValue.map((item, index) => {
-        const authorName = typeof item === 'string' ? item : (item?.name || String(item));
-        
+        const authorName = typeof item === "string" ? item : item?.name || String(item);
+
         // If item is already an object with our structure, use it
-        if (typeof item === 'object' && item !== null && 'name' in item) {
-          return { 
-            ...item, 
+        if (typeof item === "object" && item !== null && "name" in item) {
+          return {
+            ...item,
             id: index,
             // Ensure new fields exist with defaults if not present
-            isTrainee: item.isTrainee ?? ((isPublicationsSection || isOtherPublicationsSection) && trainees.includes(authorName)),
-            isDoctoralSupervisor: item.isDoctoralSupervisor ?? ((isPublicationsSection || isOtherPublicationsSection)  && doctoralSupervisors.includes(authorName)),
-            isPostdoctoralSupervisor: item.isPostdoctoralSupervisor ?? ((isPublicationsSection || isOtherPublicationsSection)  && postdoctoralSupervisors.includes(authorName)),
-            authorType: item.authorType ?? ((isPublicationsSection || isOtherPublicationsSection)  ? getAuthorType(authorName) : 'Contributing Author')
+            isTrainee:
+              item.isTrainee ??
+              ((isPublicationsSection || isOtherPublicationsSection) && trainees.includes(authorName)),
+            isDoctoralSupervisor:
+              item.isDoctoralSupervisor ??
+              ((isPublicationsSection || isOtherPublicationsSection) && doctoralSupervisors.includes(authorName)),
+            isPostdoctoralSupervisor:
+              item.isPostdoctoralSupervisor ??
+              ((isPublicationsSection || isOtherPublicationsSection) && postdoctoralSupervisors.includes(authorName)),
+            authorType:
+              item.authorType ??
+              (isPublicationsSection || isOtherPublicationsSection ? getAuthorType(authorName) : "Contributing Author"),
           };
         }
         // If item is a string, convert it to our structure
         return {
           id: index,
           name: authorName,
-          isTrainee: (isPublicationsSection || isOtherPublicationsSection)  && trainees.includes(authorName),
-          isDoctoralSupervisor: (isPublicationsSection || isOtherPublicationsSection)  && doctoralSupervisors.includes(authorName),
-          isPostdoctoralSupervisor: (isPublicationsSection || isOtherPublicationsSection)  && postdoctoralSupervisors.includes(authorName),
-          authorType: (isPublicationsSection || isOtherPublicationsSection)  ? getAuthorType(authorName) : ''
+          isTrainee: (isPublicationsSection || isOtherPublicationsSection) && trainees.includes(authorName),
+          isDoctoralSupervisor:
+            (isPublicationsSection || isOtherPublicationsSection) && doctoralSupervisors.includes(authorName),
+          isPostdoctoralSupervisor:
+            (isPublicationsSection || isOtherPublicationsSection) && postdoctoralSupervisors.includes(authorName),
+          authorType: isPublicationsSection || isOtherPublicationsSection ? getAuthorType(authorName) : "",
         };
       });
       setAuthorsList(parsedAuthors);
@@ -120,49 +130,47 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
       setAuthorsList([]);
     }
   }, [formData, attributes, attrsObj]);
-  
+
   // Handle adding a new author
   const handleAddAuthor = (snakeKey) => {
     const newAuthor = {
       id: authorsList.length,
-      name: '',
+      name: "",
       isTrainee: false,
       isDoctoralSupervisor: false,
       isPostdoctoralSupervisor: false,
-      authorType: ''
+      authorType: "",
     };
     const updatedList = [...authorsList, newAuthor];
     setAuthorsList(updatedList);
     // Don't update formData yet until user enters a name
   };
-  
+
   // Handle removing an author
   const handleRemoveAuthor = (snakeKey, id) => {
-    const updatedList = authorsList.filter(author => author.id !== id);
+    const updatedList = authorsList.filter((author) => author.id !== id);
     setAuthorsList(updatedList);
     updateFormDataWithAuthors(snakeKey, updatedList);
   };
-  
+
   // Handle author name change
   const handleAuthorNameChange = (snakeKey, id, newName) => {
-    const updatedList = authorsList.map(author => 
-      author.id === id ? { ...author, name: newName } : author
-    );
+    const updatedList = authorsList.map((author) => (author.id === id ? { ...author, name: newName } : author));
     setAuthorsList(updatedList);
     updateFormDataWithAuthors(snakeKey, updatedList);
   };
-  
+
   // Handle checkbox changes - make them mutually exclusive
   const handleAuthorCheckboxChange = (snakeKey, id, field) => {
-    const updatedList = authorsList.map(author => {
+    const updatedList = authorsList.map((author) => {
       if (author.id === id) {
         // If checking this field, uncheck the other two
         if (!author[field]) {
           return {
             ...author,
-            isTrainee: field === 'isTrainee',
-            isDoctoralSupervisor: field === 'isDoctoralSupervisor',
-            isPostdoctoralSupervisor: field === 'isPostdoctoralSupervisor'
+            isTrainee: field === "isTrainee",
+            isDoctoralSupervisor: field === "isDoctoralSupervisor",
+            isPostdoctoralSupervisor: field === "isPostdoctoralSupervisor",
           };
         } else {
           // If unchecking, just toggle this field
@@ -174,43 +182,41 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
     setAuthorsList(updatedList);
     updateFormDataWithAuthors(snakeKey, updatedList);
   };
-  
+
   // Handle author type dropdown change
   const handleAuthorTypeChange = (snakeKey, id, newType) => {
-    const updatedList = authorsList.map(author => 
-      author.id === id ? { ...author, authorType: newType } : author
-    );
+    const updatedList = authorsList.map((author) => (author.id === id ? { ...author, authorType: newType } : author));
     setAuthorsList(updatedList);
     updateFormDataWithAuthors(snakeKey, updatedList);
   };
-  
+
   // Update formData with authors list
   const updateFormDataWithAuthors = (snakeKey, updatedList) => {
     // Convert to array of strings (just the names) for compatibility with display components
-    const authorNames = updatedList.map(author => author.name).filter(name => name);
-    
+    const authorNames = updatedList.map((author) => author.name).filter((name) => name);
+
     // Store as array of names
     handleChange({
       target: {
         name: snakeKey,
-        value: authorNames
-      }
+        value: authorNames,
+      },
     });
-    
+
     // Also store metadata in separate fields for publications section
     if (isPublicationsSection || isOtherPublicationsSection) {
       // Create arrays to store actual author names (not indices) for trainees, supervisors, etc.
       const trainees = [];
       const doctoralSupervisors = [];
       const postdoctoralSupervisors = [];
-      
+
       // Create nested structure for author types
       const authorTypes = {
         first_authors: [],
         contributing_authors: [],
-        senior_authors: []
+        senior_authors: [],
       };
-      
+
       updatedList.forEach((author) => {
         if (author.name) {
           // Store the actual author name if they have this role
@@ -223,100 +229,101 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
           if (author.isPostdoctoralSupervisor) {
             postdoctoralSupervisors.push(author.name);
           }
-          
+
           // Categorize author by type
-          const authorType = author.authorType || 'Contributing Author';
-          if (authorType === 'First Author') {
+          const authorType = author.authorType || "Contributing Author";
+          if (authorType === "First Author") {
             authorTypes.first_authors.push(author.name);
-          } else if (authorType === 'Senior Author') {
+          } else if (authorType === "Senior Author") {
             authorTypes.senior_authors.push(author.name);
           } else {
             authorTypes.contributing_authors.push(author.name);
           }
         }
       });
-      
+
       // Update metadata fields
       handleChange({
         target: {
-          name: 'author_trainees',
-          value: trainees
-        }
+          name: "author_trainees",
+          value: trainees,
+        },
       });
       handleChange({
         target: {
-          name: 'author_doctoral_supervisors',
-          value: doctoralSupervisors
-        }
+          name: "author_doctoral_supervisors",
+          value: doctoralSupervisors,
+        },
       });
       handleChange({
         target: {
-          name: 'author_postdoctoral_supervisors',
-          value: postdoctoralSupervisors
-        }
+          name: "author_postdoctoral_supervisors",
+          value: postdoctoralSupervisors,
+        },
       });
       handleChange({
         target: {
-          name: 'author_types',
-          value: authorTypes
-        }
+          name: "author_types",
+          value: authorTypes,
+        },
       });
     }
   };
-  
+
   // Helper function to determine if field should span 2 columns
   const shouldSpanTwoColumns = (content, fieldName) => {
     const lower = fieldName.toLowerCase();
     const charThreshold = 35;
-    
+
     // Always span 2 columns for certain field types
-    if (["title", "details", "description", "note"].some(key => lower.includes(key))) {
+    if (["title", "details", "description", "note"].some((key) => lower.includes(key))) {
       return true;
     }
-    
+
     // Span 2 columns if content exceeds threshold
     return content && content.length > charThreshold;
   };
-  
+
   // Helper function to calculate rows needed
   const calculateRows = (content, fieldName) => {
     const lower = fieldName.toLowerCase();
-    
+
     // Default rows for different field types
-    if (["details", "description", "note"].some(key => lower.includes(key))) {
-      return Math.min(7, Math.max(2, Math.ceil((content || '').length / 80)));
+    if (["details", "description", "note"].some((key) => lower.includes(key))) {
+      return Math.min(7, Math.max(2, Math.ceil((content || "").length / 80)));
     }
-    
+
     // For other fields, calculate based on content length
     if (content && content.length > 50) {
       return Math.min(7, Math.max(2, Math.ceil(content.length / 60)));
     }
-    
+
     return 1;
   };
-  
+
   // Early return after all hooks have been called
   if (!attrsObj) return null;
-  
+
   return Object.entries(attrsObj).map(([attrName, value]) => {
     // Get the snake_case key from attributes mapping
     const snakeKey = attributes && attributes[attrName] ? attributes[attrName] : attrName;
     const lower = attrName.toLowerCase();
-    const currentValue = formData[snakeKey] || '';
+    const currentValue = formData[snakeKey] || "";
     const shouldSpan = shouldSpanTwoColumns(currentValue, attrName);
     const rows = calculateRows(currentValue, attrName);
-    
+
     // Special handling for Author Names field - only for Publications section
-    if ((attrName === 'Author Names' || lower === 'author names') && (isPublicationsSection || isOtherPublicationsSection) ) {
+    if (
+      (attrName === "Author Names" || lower === "author names") &&
+      (isPublicationsSection || isOtherPublicationsSection)
+    ) {
       const MAX_VISIBLE_AUTHORS = 10;
       const displayedAuthors = showAllAuthors ? authorsList : authorsList.slice(0, MAX_VISIBLE_AUTHORS);
       const hasMoreAuthors = authorsList.length > MAX_VISIBLE_AUTHORS;
-      
+
       return (
         <div key={attrName} className="col-span-2">
-          <label className="block text-sm font-semibold capitalize mb-2">
-            {attrName}
-          </label>
+          <label className="block text-sm font-semibold capitalize mb-2">{attrName}</label>
           <div className="border border-gray-300 rounded p-3 bg-gray-50">
             {authorsList.length > 0 && (
               <div className="overflow-x-auto">
@@ -356,7 +363,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
                           <input
                             type="checkbox"
                             checked={author.isTrainee || false}
-                            onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, 'isTrainee')}
+                            onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, "isTrainee")}
                             disabled={author.isDoctoralSupervisor || author.isPostdoctoralSupervisor}
                             className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                           />
@@ -365,7 +372,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
                           <input
                             type="checkbox"
                             checked={author.isDoctoralSupervisor || false}
-                            onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, 'isDoctoralSupervisor')}
+                            onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, "isDoctoralSupervisor")}
                             disabled={author.isTrainee || author.isPostdoctoralSupervisor}
                             className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                           />
@@ -374,14 +381,14 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
                           <input
                             type="checkbox"
                             checked={author.isPostdoctoralSupervisor || false}
-                            onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, 'isPostdoctoralSupervisor')}
+                            onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, "isPostdoctoralSupervisor")}
                             disabled={author.isTrainee || author.isDoctoralSupervisor}
                             className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                           />
                         </td>
                         <td className="py-2 px-2">
                           <select
-                            value={author.authorType || ''}
+                            value={author.authorType || ""}
                             onChange={(e) => handleAuthorTypeChange(snakeKey, author.id, e.target.value)}
                             className="w-full rounded text-sm px-2 py-1 border border-gray-300 bg-white"
                           >
@@ -395,71 +402,58 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
                     ))}
                   </tbody>
                 </table>
-                {hasMoreAuthors && !showAllAuthors && (
-                  <div className="mb-3 text-center">
-                    <p className="text-sm text-gray-600 mb-2">
-                      Showing {MAX_VISIBLE_AUTHORS} of {authorsList.length} authors
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowAllAuthors(true)}
-                      className="text-sm px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                    >
-                      Show All Authors
-                    </button>
-                  </div>
-                )}
-                {showAllAuthors && hasMoreAuthors && (
-                  <div className="mb-3 text-center">
-                    <button
-                      type="button"
-                      onClick={() => setShowAllAuthors(false)}
-                      className="text-sm px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                    >
-                      Show Less
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => handleAddAuthor(snakeKey)}
+                    className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  >
+                    + Add Author
+                  </button>
+                  {hasMoreAuthors && (
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm text-gray-600">
+                        Showing {showAllAuthors ? authorsList.length : MAX_VISIBLE_AUTHORS} of {authorsList.length} authors
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowAllAuthors(!showAllAuthors)}
+                        className="text-sm px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                      >
+                        {showAllAuthors ? 'Show Less' : 'Show All'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => handleAddAuthor(snakeKey)}
-              className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-            >
-              + Add Author
-            </button>
           </div>
         </div>
       );
     }
-    
+
     if (["title"].some((key) => lower.includes(key))) {
       // Title fields - always span 2 columns
       return (
         <div key={attrName} className="col-span-2">
-          <label className="block text-sm font-semibold capitalize mb-1">
-            {attrName}
-          </label>
+          <label className="block text-sm font-semibold capitalize mb-1">{attrName}</label>
           <textarea
             name={snakeKey}
             value={currentValue}
             onChange={handleChange}
             rows={rows}
             className="w-full rounded text-sm px-3 py-2 border border-gray-300 resize-none"
-            style={{ minHeight: '40px' }}
+            style={{ minHeight: "40px" }}
           />
         </div>
       );
     }
-    
-    if (["details", "note"].some(key => lower.includes(key))) {
+
+    if (["details", "note"].some((key) => lower.includes(key))) {
       // Details/Note fields - always span 2 columns with rich text editor
       return (
         <div key={attrName} className="col-span-2 mt-1">
-          <label className="block text-sm font-semibold capitalize mb-1">
-            {attrName}
-          </label>
+          <label className="block text-sm font-semibold capitalize mb-1">{attrName}</label>
           <RichTextEditor
             ref={(ref) => {
               // Store reference to get value on save
@@ -476,8 +470,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
         </div>
       );
     }
-  
-    
+
     // Dynamic fields - span 1 or 2 columns based on content
     if (shouldSpan) {
       return (
@@ -493,7 +486,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
         </div>
       );
     }
-    
+
     // Default: single column text input
     return (
       <div key={attrName} className="">
