@@ -867,14 +867,14 @@ function buildTable(table) {
     const noLeafColumns = !Array.isArray(flatColumns) || flatColumns.length === 0;
 
     if (noRows || noLeafColumns) {
-        let underlinedHeaderHtml = "";
-        if (table.underlined_header) {
-            const underlinedHeader = table.underlined_header;
-            underlinedHeaderHtml = underlinedHeader
-                ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedHeader}</h3>`
+        let underlinedTitleHtml = "";
+        if (table.underlined_title) {
+            const underlinedTitle = table.underlined_title;
+            underlinedTitleHtml = underlinedTitle
+                ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedTitle}</h3>`
                 : "";
         }
-        return { tableEmpty: true, underlinedHeaderHtml };
+        return { tableEmpty: true, underlinedTitleHtml };
     } else {
         bodyHtml = rows
             .map(
@@ -961,9 +961,9 @@ function buildTable(table) {
             .join("\n");
     }
 
-    const underlinedHeader = table.underlined_header;
-    const underlinedHeaderHtml = underlinedHeader
-        ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedHeader}</h3>`
+    const underlinedTitle = table.underlined_title;
+    const underlinedTitleHtml = underlinedTitle
+        ? `<h3 style="text-decoration: underline; margin-bottom: 6px;">${underlinedTitle}</h3>`
         : "";
 
     const instructions = table.instructions;
@@ -971,12 +971,15 @@ function buildTable(table) {
         ? `<h3 style="margin: 0 0 6px 0; padding: 0; font-size: 0.9em;">${instructions}</h3>`
         : "";
 
+    if (studentsSupervisedSummaryHtml !== "") {
+        console.log("jjfilter", table);
+    }
 
     // Return full table HTML
     const wrapperClass = noPadding ? "table-with-notes no-padding" : "table-with-notes";
     const notesHtml = buildNotes(table.note_sections);
     return `<div class="${wrapperClass}">
-            ${underlinedHeaderHtml}
+            ${underlinedTitleHtml}
             ${instructionsHtml}
             <table border="1" cellspacing="0" cellpadding="5">
             <thead>

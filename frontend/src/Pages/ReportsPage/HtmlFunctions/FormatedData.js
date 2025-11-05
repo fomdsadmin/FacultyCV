@@ -486,7 +486,7 @@ const buildPreparedSection = (preparedSection, dataSectionTitle) => {
 
     table["instructions"] = preparedSection.instructions;
 
-    table["underlined_header"] = preparedSection.underlined_header;
+    table["underlined_title"] = preparedSection.underlined_title;
 
     if (preparedSection.title === "Patents") {
         return separateIntoRefereedAndNonRefereed([table], preparedSection);
@@ -814,7 +814,7 @@ const buildSubSections = (preparedSectionWithSubSections) => {
                 show_header: preparedSectionWithSubSections.sub_section_settings.display_titles,
                 attribute_groups: updatedAttributeGroups,
                 instructions: subSection.instructions,
-                underlined_header: subSection.underlined_header,
+                underlined_title: subSection.underlined_title,
                 is_sub_section: true
             }
             console.log("section: ", section);
@@ -939,7 +939,7 @@ const separateIntoRefereedAndNonRefereed = (tables, preparedSection) => {
     });
 
     sortedTables[0] = {
-        underlined_header: preparedSection.title,
+        underlined_title: preparedSection.title,
         ...sortedTables[0]
     }
 
