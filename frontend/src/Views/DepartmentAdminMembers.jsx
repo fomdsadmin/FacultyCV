@@ -10,6 +10,7 @@ import { useAdmin } from "../Contexts/AdminContext.jsx";
 import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
 import { ConfirmModal, DeactivatedUsersModal, TerminatedUsersModal } from "../Components/AdminUsersModals.jsx";
 import AdminUserTabs from "Components/AdminUserTabs.jsx";
+import { FaTrash } from "react-icons/fa";
 
 const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode, currentViewRole }) => {
   const [loading, setLoading] = useState(false);
@@ -94,7 +95,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
 
       // Handle role-based filtering using currentViewRole
       const roleToCheck = currentViewRole || userInfo.role;
-      
+
       if (roleToCheck === "Admin") {
         // Regular Admin sees all approved users except other Admins
         allFilteredUsers = users.filter(
@@ -140,24 +141,6 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
 
       // Filter terminated users
       const terminatedUsersList = allFilteredUsers.filter((user) => user.terminated === true);
-
-      console.log("fetchAllUsers Debug:", {
-        userRole: userInfo.role,
-        totalUsers: users.length,
-        allFilteredUsers: allFilteredUsers.length,
-        approvedActiveUsers: approvedActiveUsers.length,
-        deactivatedUsers: deactivatedUsersList.length,
-        terminatedUsers: terminatedUsersList.length,
-        sampleUsers: allFilteredUsers.slice(0, 3).map((u) => ({
-          name: `${u.first_name} ${u.last_name}`,
-          role: u.role,
-          dept: u.primary_department,
-          pending: u.pending,
-          approved: u.approved,
-          active: u.active,
-          terminated: u.terminated,
-        })),
-      });
 
       setFilteredUsers(allFilteredUsers);
       setApprovedUsers(approvedActiveUsers);
@@ -460,7 +443,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   // Get unique departments for active users based on role
   let activeDepartments = [];
   let allowedDepartments = [];
-  
+
   const roleToCheck = currentViewRole || userInfo.role;
 
   if (roleToCheck === "Admin" || roleToCheck === "Admin-All") {
@@ -690,7 +673,8 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                             <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-center gap-2 items-stretch w-full">
                               <button
                                 onClick={() => handleImpersonateClick(user.user_id)}
-                                className="btn btn-accent btn-sm text-white text-xs whitespace-nowrap"
+                                className={`btn btn-accent btn-sm text-white text-xs whitespace-nowrap`}
+                                disabled={user.role !== "Faculty"}
                               >
                                 Impersonate
                               </button>
@@ -704,7 +688,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                                 onClick={() => handleRemoveUser(user.user_id)}
                                 className="btn btn-warning btn-sm text-white text-xs whitespace-nowrap"
                               >
-                                Deactivate
+                                <FaTrash className="inline"/>
                               </button>
                             </div>
                           </td>
