@@ -16,6 +16,7 @@ import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
 import { removeUser } from "../graphql/graphqlHelpers.js";
 import AdminUserTabs from "Components/AdminUserTabs.jsx";
 import { use } from "react";
+import { FaTrash } from "react-icons/fa";
 
 const AdminUsers = ({ userInfo, getCognitoUser }) => {
   const [loading, setLoading] = useState(false);
@@ -95,7 +96,6 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
       setRejectedUsers(rejectedUsersList);
       setDeactivatedUsers(deactivatedUsersList);
       setTerminatedUsers(terminatedUsersList);
-      
     } catch (error) {
       console.error("Error fetching users:", error);
     }
@@ -618,6 +618,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                                 <button
                                   onClick={() => handleImpersonateClick(user.user_id)}
                                   className="btn btn-accent btn-sm text-white shadow text-xs whitespace-nowrap"
+                                  disabled={user.role !== "Faculty"}
                                 >
                                   Impersonate
                                 </button>
@@ -631,7 +632,7 @@ const AdminUsers = ({ userInfo, getCognitoUser }) => {
                                   onClick={() => handleRemoveUser(user.user_id)}
                                   className="btn btn-warning btn-sm text-white text-xs whitespace-nowrap"
                                 >
-                                  Deactivate
+                                  <FaTrash className="inline" />
                                 </button>
                               </div>
                             </td>

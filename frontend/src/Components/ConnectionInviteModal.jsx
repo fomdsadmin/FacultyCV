@@ -29,10 +29,11 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     let facultyMember;
     try {
       // Get faculty member by username
+      let newUsername = username;
       if (!username.includes('@ubc.ca')) {
-        username += '@ubc.ca';
+        newUsername = username + '@ubc.ca';
       }
-      facultyMember = await getUser(username);
+      facultyMember = await getUser(newUsername);
     } catch (error) {
       console.error('Error finding user:', error);
       setError('No user exists. Please enter valid username');
@@ -48,7 +49,7 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
 
     try {
       // Call the addUserConnection function with the necessary parameters
-      const result = await addUserConnection(facultyMember.user_id, facultyMember.first_name, facultyMember.last_name, facultyMember.email, userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, 'pending', facultyMember.username, userInfo.username);
+      const result = await addUserConnection(facultyMember.user_id, facultyMember.first_name, facultyMember.last_name, facultyMember.email, userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, 'pending', facultyMember.cwl_username, userInfo.cwl_username);
 
       if (result === 'connection already exists') {
         setError('Connection already exists');
@@ -127,10 +128,10 @@ const ConnectionInviteModal = ({ userInfo, getAllUserConnections, setIsModalOpen
     try {
       let result;
       if (userInfo.role === 'Faculty') {
-        result = await addUserConnection(userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, member.user_id, member.first_name, member.last_name, member.email, 'confirmed', userInfo.username, member.username);
+        result = await addUserConnection(userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, member.user_id, member.first_name, member.last_name, member.email, 'confirmed', userInfo.cwl_username, member.cwl_username);
       } else {
         // Call the addUserConnection function with the necessary parameters
-        result = await addUserConnection(member.user_id, member.first_name, member.last_name, member.email, userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, 'confirmed', member.username, userInfo.username);
+        result = await addUserConnection(member.user_id, member.first_name, member.last_name, member.email, userInfo.user_id, userInfo.first_name, userInfo.last_name, userInfo.email, 'confirmed', member.cwl_username, userInfo.cwl_username);
       }
 
 

@@ -202,7 +202,6 @@ export const getArchivedSections = async () => {
  */
 export const getUser = async (cwl_username) => {
   const results = await executeGraphql(getUserQuery, { cwl_username: cwl_username });
-  console.log(results);
   return results["data"]["getUser"];
 };
 
@@ -1295,7 +1294,6 @@ export const getBioResponseData = async (username_input) => {
 
 export const getPresignedGotenbergBucketUrl = async (key, method) => {
   const results = await executeGraphql(GET_PRESIGNED_GOTENBERG_BUCKET_URL, { key, method });
-  console.log(results);
   return results["data"]["getPresignedGotenbergBucketUrl"];
 };
 
@@ -1309,7 +1307,7 @@ export const getPresignedGotenbergBucketUrl = async (key, method) => {
  * Subscription object with unsubscribe method
  */
 export const subscribeToGotenbergStatus = (key, onData, onError) => {
-  console.log('Setting up subscription for key:', key);
+  // console.log('Setting up subscription for key:', key);
   
   const client = generateClient();
   
@@ -1319,8 +1317,8 @@ export const subscribeToGotenbergStatus = (key, onData, onError) => {
       variables: { key }
     }).subscribe({
       next: (data) => {
-        console.log('Gotenberg status update received:', data);
-        console.log('Full data object:', JSON.stringify(data, null, 2));
+        // console.log('Gotenberg status update received:', data);
+        // console.log('Full data object:', JSON.stringify(data, null, 2));
         if (onData) {
           // Access the nested key from the payload
           const payload = data.data.gotenbergGenerationStatusUpdate;

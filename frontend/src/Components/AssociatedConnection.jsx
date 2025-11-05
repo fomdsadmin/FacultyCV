@@ -18,6 +18,7 @@ const AssociatedConnection = ({ connection, refreshConnections }) => {
       // Only proceed if the connection is confirmed
       if (connection.status === "confirmed") {
         // Get the full faculty user info
+        console.log("Entering profile for connection:", connection);
         const facultyUser = await getUser(connection.faculty_username);
 
         // Start managing the user
