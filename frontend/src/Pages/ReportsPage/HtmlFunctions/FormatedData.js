@@ -1096,6 +1096,11 @@ export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
         sectionsMap[section.title] = section;
     });
 
+    const sectionsTitleMap = {};
+    allSections.forEach((section) => {
+        sectionsTitleMap[section.data_section_id] = section.title;
+    });
+
     // Process each user
     for (let userIndex = 0; userIndex < userInfoArray.length; userIndex++) {
         let userProfile = {};
@@ -1119,7 +1124,8 @@ export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
         // Create userCvDataMap with title as key and array of CV data as value
         userCvDataMap = {};
         userCvData.forEach((cvData) => {
-            const sectionTitle = cvData.title;
+            const sectionId = cvData.data_section_id
+            const sectionTitle = sectionsTitleMap[sectionId];
             if (!userCvDataMap[sectionTitle]) {
                 userCvDataMap[sectionTitle] = [];
             }
