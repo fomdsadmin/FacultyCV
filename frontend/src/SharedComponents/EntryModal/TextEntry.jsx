@@ -4,6 +4,7 @@ import RichTextEditor from './RichTextEditor';
 const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) => {
   // State for managing author names table
   const [authorsList, setAuthorsList] = useState([]);
+  const [showAllAuthors, setShowAllAuthors] = useState(false);
   
   // Check if this is a publications section
   const isPublicationsSection = section?.title?.toLowerCase().includes('journal publications') || false;
@@ -307,6 +308,10 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
     
     // Special handling for Author Names field - only for Publications section
     if ((attrName === 'Author Names' || lower === 'author names') && (isPublicationsSection || isOtherPublicationsSection) ) {
+      const MAX_VISIBLE_AUTHORS = 10;
+      const displayedAuthors = showAllAuthors ? authorsList : authorsList.slice(0, MAX_VISIBLE_AUTHORS);
+      const hasMoreAuthors = authorsList.length > MAX_VISIBLE_AUTHORS;
+      
       return (
         <div key={attrName} className="col-span-2">
           <label className="block text-sm font-semibold capitalize mb-2">
@@ -326,7 +331,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
                     </tr>
                   </thead>
                   <tbody>
-                    {authorsList.map((author) => (
+                    {displayedAuthors.map((author) => (
                       <tr key={author.id} className="border-b border-gray-200">
                         <td className="py-2 px-2">
                           <div className="flex items-center gap-2">
@@ -389,6 +394,31 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
                     ))}
                   </tbody>
                 </table>
+                {hasMoreAuthors && !showAllAuthors && (
+                  <div className="mb-3 text-center">
+                    <p className="text-sm text-gray-600 mb-2">
+                      Showing {MAX_VISIBLE_AUTHORS} of {authorsList.length} authors
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllAuthors(true)}
+                      className="text-sm px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                    >
+                      Show All Authors
+                    </button>
+                  </div>
+                )}
+                {showAllAuthors && hasMoreAuthors && (
+                  <div className="mb-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllAuthors(false)}
+                      className="text-sm px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                    >
+                      Show Less
+                    </button>
+                  </div>
+                )}
               </div>
             )}
             <button
