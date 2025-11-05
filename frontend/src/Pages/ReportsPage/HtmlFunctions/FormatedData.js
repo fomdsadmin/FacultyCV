@@ -1122,15 +1122,26 @@ export const buildCv = async (userInfoInput, templateWithEndStartDate) => {
         });
 
         // Create userCvDataMap with title as key and array of CV data as value
-        userCvDataMap = {};
-        userCvData.forEach((cvData) => {
-            const sectionId = cvData.data_section_id
+        const newUserCvDataMap = {};
+
+        for (const cvData of userCvData) {
+            const sectionId = cvData.data_section_id;
             const sectionTitle = sectionsTitleMap[sectionId];
-            if (!userCvDataMap[sectionTitle]) {
-                userCvDataMap[sectionTitle] = [];
+
+            // Replace undefined or null values with empty strings
+            const cleanedCvData = Object.fromEntries(
+                Object.entries(cvData).map(([key, value]) => [key, value ?? ""])
+            );
+
+            if (!newUserCvDataMap[sectionTitle]) {
+                newUserCvDataMap[sectionTitle] = [];
             }
-            userCvDataMap[sectionTitle].push(cvData);
-        });
+
+            newUserCvDataMap[sectionTitle].push(cleanedCvData);
+        }
+
+        userCvDataMap = newUserCvDataMap;
+
 
         // Build user profile section
         userProfile = await buildUserProfile(currentUserInfo);
