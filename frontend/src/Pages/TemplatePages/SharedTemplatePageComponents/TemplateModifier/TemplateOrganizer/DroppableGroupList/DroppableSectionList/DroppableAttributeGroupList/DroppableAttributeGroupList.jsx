@@ -1,7 +1,7 @@
 import { Droppable } from "react-beautiful-dnd"
 import DraggableAttributeGroupList from "./DraggableAttributeGroupList"
 
-const DroppableAttributeGroupList = ({ attributeGroups, dataSectionId }) => {
+const DroppableAttributeGroupList = ({ attributeGroups, dataSectionId, dataSectionTitle }) => {
 
     console.log(dataSectionId)
 
@@ -24,6 +24,7 @@ const DroppableAttributeGroupList = ({ attributeGroups, dataSectionId }) => {
                             attributeGroupIndex={attributeGroupIndex}
                             draggableId={`${dataSectionId}-${attributeGroup.id}`}
                             dataSectionId={dataSectionId}
+                            dataSectionTitle={dataSectionTitle}
                         />
                     ))}
                     {provided.placeholder}

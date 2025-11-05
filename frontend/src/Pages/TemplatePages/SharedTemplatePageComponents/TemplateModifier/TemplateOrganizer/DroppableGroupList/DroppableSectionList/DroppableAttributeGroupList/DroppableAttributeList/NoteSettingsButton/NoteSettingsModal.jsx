@@ -3,7 +3,7 @@ import ModalStylingWrapper from "SharedComponents/ModalStylingWrapper";
 import { toast } from "react-toastify";
 import { useTemplateModifier } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 
-const NoteSettingsModal = ({ isOpen, attribute, dataSectionId, onClose }) => {
+const NoteSettingsModal = ({ isOpen, attribute, dataSectionId, dataSectionTitle, onClose }) => {
     const { groups, setGroups, getGroupIdContainingPreparedSectionId, sectionsMap } = useTemplateModifier();
     const [displayAttributeName, setDisplayAttributeName] = useState(true);
     const [attributeToAssociateNote, setAttributeToAssociateNote] = useState("");
@@ -18,8 +18,8 @@ const NoteSettingsModal = ({ isOpen, attribute, dataSectionId, onClose }) => {
             section => section.data_section_id === dataSectionId
         );
 
-        if (sectionsMap && sectionsMap[dataSectionId] && sectionsMap[dataSectionId].attributes) {
-            const allAttributes = Object.keys(JSON.parse(sectionsMap[dataSectionId].attributes));
+        if (sectionsMap && sectionsMap[dataSectionTitle] && sectionsMap[dataSectionTitle].attributes) {
+            const allAttributes = Object.keys(JSON.parse(sectionsMap[dataSectionTitle].attributes));
             setAvailableAttributes(allAttributes.filter(attr => attr !== attribute));
         } else {
             setAvailableAttributes([]);

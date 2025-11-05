@@ -6,7 +6,7 @@ import { useSectionData } from "Pages/TemplatePages/SharedTemplatePageComponents
 import { useEffect, useState } from "react";
 import { useTemplateModifier } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 
-const DraggableAttributeList = ({ draggableId, attributeIndex, attribute, dataSectionId }) => {
+const DraggableAttributeList = ({ draggableId, attributeIndex, attribute, dataSectionId, dataSectionTitle }) => {
 
     const [alternativeName, setAlternativeName] = useState(null);
 
@@ -48,6 +48,7 @@ const DraggableAttributeList = ({ draggableId, attributeIndex, attribute, dataSe
                     <NoteSettingsButton
                         attribute={attribute}
                         dataSectionId={dataSectionId}
+                        dataSectionTitle={dataSectionTitle}
                     />
                     <span className="text-ms font-medium text-gray-700 flex-1 flex items-center gap-2">
                         {attribute}

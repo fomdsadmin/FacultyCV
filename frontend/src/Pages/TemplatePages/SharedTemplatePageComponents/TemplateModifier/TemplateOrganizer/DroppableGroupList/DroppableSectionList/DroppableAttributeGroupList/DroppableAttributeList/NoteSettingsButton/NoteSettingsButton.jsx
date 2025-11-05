@@ -3,7 +3,7 @@ import { FaStickyNote, FaRegStickyNote } from "react-icons/fa";
 import { useTemplateModifier } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 import NoteSettingsModal from "./NoteSettingsModal";
 
-const NoteSettingsButton = ({ attribute, dataSectionId }) => {
+const NoteSettingsButton = ({ attribute, dataSectionId, dataSectionTitle }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [hasNoteSettings, setHasNoteSettings] = useState(false);
     const { groups, getGroupIdContainingPreparedSectionId } = useTemplateModifier();
@@ -58,6 +58,7 @@ const NoteSettingsButton = ({ attribute, dataSectionId }) => {
                     attribute={attribute}
                     dataSectionId={dataSectionId}
                     onClose={handleCloseModal}
+                    dataSectionTitle={dataSectionTitle}
                 />
             )}
         </>

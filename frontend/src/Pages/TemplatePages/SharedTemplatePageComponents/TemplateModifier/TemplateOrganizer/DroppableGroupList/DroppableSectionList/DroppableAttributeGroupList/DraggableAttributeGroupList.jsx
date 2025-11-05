@@ -6,7 +6,7 @@ import { AccordionItem } from "SharedComponents/Accordion/AccordionItem"
 import { FaGripVertical } from "react-icons/fa";
 import { useTemplateModifier } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 
-const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, draggableId, dataSectionId }) => {
+const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, draggableId, dataSectionId, dataSectionTitle}) => {
 
     const { HIDDEN_ATTRIBUTE_GROUP_ID } = useTemplateModifier();
 
@@ -50,6 +50,7 @@ const DraggableAttributeGroupList = ({ attributeGroup, attributeGroupIndex, drag
                                     attributes={attributeGroup.attributes}
                                     attributeGroupId={attributeGroup.id}
                                     dataSectionId={dataSectionId}
+                                    dataSectionTitle={dataSectionTitle}
                                 />
                             </AccordionItem>
                         </Accordion>

@@ -32,8 +32,10 @@ const DraggableGroup = ({ group, groupIndex }) => {
     }
 
     useEffect(() => {
-        setIsModified(group.prepared_sections.some(section => section.modified))
-    }, [group])
+        // guard against null entries (e.g. removed sections) and missing prepared_sections
+        const prepared = Array.isArray(group?.prepared_sections) ? group.prepared_sections.filter(Boolean) : [];
+        setIsModified(prepared.some(section => Boolean(section.modified)));
+    }, [group?.prepared_sections])
 
     const handleRenameGroup = () => {
         const updatedGroups = groups.map(g =>

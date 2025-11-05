@@ -59,7 +59,7 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                         </div>
                     </div>
                     <div className="flex items-center gap-2 pl-4 flex-shrink-0">
-                        <AddAttributeGroupButton dataSectionId={preparedSection.data_section_id} />
+                        <AddAttributeGroupButton dataSectionId={preparedSection.data_section_id} dataSectionTitle={preparedSection.title} />
                         <RemoveSectionButton preparedSection={preparedSection} />
                     </div>
                 </div>
@@ -83,6 +83,7 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                             <DroppableAttributeGroupList
                                 attributeGroups={preparedSection.attribute_groups}
                                 dataSectionId={preparedSection.data_section_id}
+                                dataSectionTitle={preparedSection.title}
                             />
                         </AccordionItem>
                     </Accordion>
@@ -91,6 +92,7 @@ const DraggableSection = ({ draggableId, preparedSectionIndex, preparedSection, 
                         onClose={() => setShowModal(false)}
                         descriptions={preparedSection.modified_description || []}
                         sectionId={preparedSection.data_section_id}
+                        dataSectionTitle={preparedSection.title}
                     />
                 </div>
             );
