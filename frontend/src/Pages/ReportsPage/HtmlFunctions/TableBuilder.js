@@ -501,7 +501,7 @@ function buildPromotionReview(latest_declaration, userInfo) {
 
           <div class="main-box">
             <p>
-              <span class="bold">For those faculty in ranks other than Professor or Professor of Teaching, please indicate whether you wish to be considered for review for promotion during the upcoming academic year (July 1, ${upcomingStart} – June 30, ${upcomingEnd}) for an effective date of July 1, ${effectiveDisplayYear}.</span>
+              <span class="bold">For those faculty in ranks other than Professor or Professor of Teaching, please indicate whether you wish to be considered for review for promotion during the upcoming academic year (July 1, ${upcomingStart + 1} – June 30, ${upcomingEnd + 1}) for an effective date of July 1, ${effectiveDisplayYear + 1}.</span>
             </p>
 
             <div class="checkbox-group">
@@ -519,10 +519,10 @@ function buildPromotionReview(latest_declaration, userInfo) {
             </div>
 
             <p style="margin-top:20px;">
-              <span class="bold">If applicable, the anticipated effective date for the next promotion, if not July 1, ${effectiveDisplayYear}:</span>
+              <span class="bold">If applicable, the anticipated effective date for the next promotion, if not July 1, ${effectiveDisplayYear + 1}:</span>
             </p>
             <p style="margin-left:40px;">
-              <span class="bold">[July 1, <span class="date-input">${effectiveYear || ""}</span>]</span>
+              <span class="bold">[July 1, <span class="date-input">${effectiveYear + 1 || ""}</span>]</span>
             </p>
             <p class="italic" style="margin-left:20px;">Note: The application deadline is one year prior to effective date.</p>
 
