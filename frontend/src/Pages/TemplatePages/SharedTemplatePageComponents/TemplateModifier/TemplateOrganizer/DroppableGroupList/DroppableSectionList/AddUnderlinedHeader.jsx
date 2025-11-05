@@ -3,11 +3,11 @@ import { useTemplateModifier } from "../../../TemplateModifierContext";
 
 const AddUnderlinedHeader = ({ preparedSection }) => {
     const { setGroups, getGroupIdContainingPreparedSectionId } = useTemplateModifier();
-    const [value, setValue] = React.useState(preparedSection?.underlined_header || '');
+    const [value, setValue] = React.useState(preparedSection?.underlined_title || '');
 
     React.useEffect(() => {
-        setValue(preparedSection?.underlined_header || '');
-    }, [preparedSection?.underlined_header]);
+        setValue(preparedSection?.underlined_title || '');
+    }, [preparedSection?.underlined_title]);
 
     const handleClear = () => {
         setValue('');
@@ -19,7 +19,7 @@ const AddUnderlinedHeader = ({ preparedSection }) => {
                     ...group,
                     prepared_sections: group.prepared_sections.map(section =>
                         section.data_section_id === preparedSection.data_section_id
-                            ? { ...section, underlined_header: null }
+                            ? { ...section, underlined_title: null }
                             : section
                     )
                 };
@@ -38,7 +38,7 @@ const AddUnderlinedHeader = ({ preparedSection }) => {
                     ...group,
                     prepared_sections: group.prepared_sections.map(section =>
                         section.data_section_id === preparedSection.data_section_id
-                            ? { ...section, underlined_header: next || null }
+                            ? { ...section, underlined_title: next || null }
                             : section
                     )
                 };
