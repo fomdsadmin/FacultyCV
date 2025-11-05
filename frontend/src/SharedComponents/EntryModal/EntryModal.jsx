@@ -426,7 +426,6 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
     // Special handling: preserve record_id if it exists (for RISE grant data)
     if (finalFormData.record_id !== undefined) {
       allowedKeys.push('record_id');
-      console.log("🔑 Preserving record_id in grant update:", finalFormData.record_id);
     }
     
     // Special handling: preserve author metadata fields for publications
@@ -447,8 +446,6 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
       Object.entries(finalFormData).filter(([key]) => allowedKeys.includes(key))
     );
     
-    console.log("🔍 Final filtered form data with author metadata:", filteredFormData);
-
     console.log("Submitting form data:", filteredFormData);
     try {
       if (isNew) {

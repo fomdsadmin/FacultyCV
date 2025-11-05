@@ -26,7 +26,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
     const authorsValue = formData[snakeKey];
 
     if (authorsValue && typeof authorsValue === "string" && authorsValue.trim()) {
-      // Parse comma-separated names with proper handling of "LastName, FirstInitial" format
+      // Parse comma-separated names with proper handling of "LastName, FirstInitial" format (eg. "Smith, J.")
       const parseAuthorNames = (str) => {
         const authors = [];
         const parts = str.split(",").map((s) => s.trim());
@@ -322,7 +322,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
       const hasMoreAuthors = authorsList.length > MAX_VISIBLE_AUTHORS;
 
       return (
-        <div key={attrName} className="col-span-2">
+        <div key={attrName} className="col-span-2 mb-1">
           <label className="block text-sm font-semibold capitalize mb-2">{attrName}</label>
           <div className="border border-gray-300 rounded p-3 bg-gray-50">
             {authorsList.length > 0 && (
@@ -402,7 +402,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
                     ))}
                   </tbody>
                 </table>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-1">
                   <button
                     type="button"
                     onClick={() => handleAddAuthor(snakeKey)}
