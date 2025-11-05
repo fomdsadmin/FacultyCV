@@ -25,8 +25,41 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
     const authorsValue = formData[snakeKey];
     
     if (authorsValue && typeof authorsValue === 'string' && authorsValue.trim()) {
-      // Parse comma-separated names
-      const names = authorsValue.split(',').map(name => name.trim()).filter(name => name);
+      // Parse comma-separated names with proper handling of "LastName, FirstInitial" format
+      const parseAuthorNames = (str) => {
+        const authors = [];
+        const parts = str.split(',').map(s => s.trim());
+        
+        let i = 0;
+        while (i < parts.length) {
+          const current = parts[i];
+          
+          // Check if next part exists and looks like an initial (1-2 chars, possibly with period)
+          if (i + 1 < parts.length) {
+            const next = parts[i + 1];
+            // Check if next part is an initial: 1-2 characters, optionally with period(s)
+            const isInitial = /^[A-Z]\.?(\s*[A-Z]\.?)*$/.test(next);
+            
+            if (isInitial) {
+              // Combine current with next (LastName, Initial)
+              authors.push(`${current}, ${next}`);
+              i += 2;
+            } else {
+              // Next part is a new last name, so current is a standalone name
+              authors.push(current);
+              i += 1;
+            }
+          } else {
+            // Last part, add as-is
+            authors.push(current);
+            i += 1;
+          }
+        }
+        
+        return authors.filter(name => name);
+      };
+      
+      const names = parseAuthorNames(authorsValue);
       const parsedAuthors = names.map((name, index) => ({
         id: index,
         name: name,
