@@ -67,7 +67,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
         isTrainee: false,
         isDoctoralSupervisor: false,
         isPostdoctoralSupervisor: false,
-        authorType: 'Contributing Author'
+        authorType: ''
       }));
       setAuthorsList(parsedAuthors);
     } else if (authorsValue && Array.isArray(authorsValue)) {
@@ -111,7 +111,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
           isTrainee: (isPublicationsSection || isOtherPublicationsSection)  && trainees.includes(authorName),
           isDoctoralSupervisor: (isPublicationsSection || isOtherPublicationsSection)  && doctoralSupervisors.includes(authorName),
           isPostdoctoralSupervisor: (isPublicationsSection || isOtherPublicationsSection)  && postdoctoralSupervisors.includes(authorName),
-          authorType: (isPublicationsSection || isOtherPublicationsSection)  ? getAuthorType(authorName) : 'Contributing Author'
+          authorType: (isPublicationsSection || isOtherPublicationsSection)  ? getAuthorType(authorName) : ''
         };
       });
       setAuthorsList(parsedAuthors);
@@ -129,7 +129,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
       isTrainee: false,
       isDoctoralSupervisor: false,
       isPostdoctoralSupervisor: false,
-      authorType: 'Contributing Author'
+      authorType: ''
     };
     const updatedList = [...authorsList, newAuthor];
     setAuthorsList(updatedList);
@@ -381,10 +381,11 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
                         </td>
                         <td className="py-2 px-2">
                           <select
-                            value={author.authorType || 'Contributing Author'}
+                            value={author.authorType || ''}
                             onChange={(e) => handleAuthorTypeChange(snakeKey, author.id, e.target.value)}
                             className="w-full rounded text-sm px-2 py-1 border border-gray-300 bg-white"
                           >
+                            <option value="">-</option>
                             <option value="First Author">First Author</option>
                             <option value="Contributing Author">Contributing Author</option>
                             <option value="Senior Author">Senior Author</option>
