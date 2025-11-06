@@ -8,18 +8,18 @@ import {
   FaChevronDown,
   FaChevronRight,
 } from "react-icons/fa";
+import Group from "./Group";
 
-const SortableItem = ({
+const SortableGroup = ({
   id,
   depth,
-  value,
-  type,
   name,
   collapsed,
   onCollapse,
   onRemove,
   indentationWidth,
-  clone,
+  group,
+  setGroup,
 }) => {
   const {
     attributes,
@@ -35,9 +35,6 @@ const SortableItem = ({
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-
-  const icon = type === "group" ? "📁" : "📊";
-  const isGroup = type === "group";
 
   return (
     <div
@@ -93,7 +90,7 @@ const SortableItem = ({
 
             <strong>{name}</strong>
             <span style={{ marginLeft: "auto", fontSize: 11, color: "#666" }}>
-              {icon}
+              📁
             </span>
 
             {onRemove && (
@@ -118,16 +115,10 @@ const SortableItem = ({
           </div>
         }
       >
-        <div style={{ color: "#666", fontSize: 12, padding: "8px 12px" }}>
-          {isGroup ? (
-            <div>Group options and settings would go here</div>
-          ) : (
-            <div>Table options and settings would go here</div>
-          )}
-        </div>
+        <Group group={group} setGroup={setGroup} />
       </AccordionItem>
     </div>
   );
 };
 
-export default SortableItem;
+export default SortableGroup;

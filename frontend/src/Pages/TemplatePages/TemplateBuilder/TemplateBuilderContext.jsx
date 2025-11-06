@@ -11,6 +11,18 @@ export const useTemplateBuilder = () => {
   return context
 }
 
+export const buildAttributeObject = (attributeName, attributeKey) => {
+  return {
+    id: crypto.randomUUID(),
+    type: "attribute",
+    settings: {
+      key: attributeKey,
+      originalName: attributeName,
+      rename: ""
+    }
+  }
+}
+
 export const TemplateBuilderProvider = ({
   children,
   sortAscending,
@@ -34,8 +46,27 @@ export const TemplateBuilderProvider = ({
       // Create sectionsMap with title as key and section as value
       const sectionsMap = {};
       allSections.forEach((section) => {
-        sectionsMap[section.title] = section;
+        const attributes = JSON.parse(section.attributes);
+        const attributesType = JSON.parse(section.attributes_type);
+
+        // invert attributes_type to get a mapping of attributeName -> type
+        const invertedTypeMap = {};
+        for (const [type, attrs] of Object.entries(attributesType)) {
+          for (const attrName of Object.keys(attrs)) {
+            invertedTypeMap[attrName] = type;
+          }
+        }
+
+        sectionsMap[section.title] = {
+          ...section,
+          attributes: Object.entries(attributes).map(
+            ([attributeName, attributeKey]) =>
+              buildAttributeObject(attributeName, attributeKey)
+          ),
+          attributes_type: invertedTypeMap,
+        };
       });
+
 
       setSectionsMap(sectionsMap)
     }

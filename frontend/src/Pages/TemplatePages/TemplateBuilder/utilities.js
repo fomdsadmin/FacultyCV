@@ -23,6 +23,7 @@ export function getProjection(
   const projectedDepth = activeItem.depth + dragDepth;
   const maxDepth = getMaxDepth({
     previousItem,
+    activeItem,
   });
   const minDepth = getMinDepth({ nextItem });
   let depth = projectedDepth;
@@ -45,6 +46,10 @@ export function getProjection(
     }
 
     if (depth > previousItem.depth) {
+      // Prevent groups from being nested under tables
+      if (activeItem.type === "group" && previousItem.type === "table") {
+        return previousItem.parentId;
+      }
       return previousItem.id;
     }
 
@@ -57,8 +62,12 @@ export function getProjection(
   }
 }
 
-function getMaxDepth({ previousItem }) {
+function getMaxDepth({ previousItem, activeItem }) {
   if (previousItem) {
+    // Only allow nesting under groups, not under tables
+    if (previousItem.type === "table") {
+      return previousItem.depth;
+    }
     return previousItem.depth + 1;
   }
 
@@ -159,6 +168,23 @@ export function setProperty(items, id, property, setter) {
   }
 
   return [...items];
+}
+
+export function updateItem(items, id, updates) {
+  return items.map((item) => {
+    if (item.id === id) {
+      return { ...item, ...updates };
+    }
+
+    if (item.children.length) {
+      return {
+        ...item,
+        children: updateItem(item.children, id, updates),
+      };
+    }
+
+    return item;
+  });
 }
 
 function countChildren(items, count = 0) {
