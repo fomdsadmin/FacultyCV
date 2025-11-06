@@ -1,20 +1,39 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import ModalStylingWrapper from "SharedComponents/ModalStylingWrapper";
+import { useTemplateBuilder } from "../../TemplateBuilderContext";
 
-const AddAttributeModal = ({ onAdd }) => {
+const AddAttributeModal = ({ onAdd, dataSource, attributeItems }) => {
+  const { sectionsMap } = useTemplateBuilder();
   const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState("");
+  const [selectedId, setSelectedId] = useState("");
+
+  // Get available attributes (in datasource but not in attributeItems)
+  const availableAttributes = useMemo(() => {
+    const section = dataSource && sectionsMap ? sectionsMap[dataSource] : null;
+    if (!section || !section.attributes) return [];
+
+    const usedIds = new Set(
+      attributeItems
+        .filter((item) => item.type === "attribute")
+        .map((item) => item.settings.key)
+    );
+
+    return section.attributes.filter((attr) => !usedIds.has(attr.settings.key));
+  }, [dataSource, sectionsMap, attributeItems]);
 
   const handleSubmit = () => {
-    if (name.trim()) {
-      onAdd(name);
-      setName("");
-      setIsOpen(false);
+    if (selectedId) {
+      const selected = availableAttributes.find((attr) => attr.id === selectedId);
+      if (selected) {
+        onAdd(selected.originalName, selected.settings.key);
+        setSelectedId("");
+        setIsOpen(false);
+      }
     }
   };
 
   const handleClose = () => {
-    setName("");
+    setSelectedId("");
     setIsOpen(false);
   };
 
@@ -23,6 +42,26 @@ const AddAttributeModal = ({ onAdd }) => {
       handleSubmit();
     }
   };
+
+  if (availableAttributes.length === 0) {
+    return (
+      <button
+        disabled
+        style={{
+          padding: "8px 16px",
+          backgroundColor: "#ccc",
+          color: "#999",
+          border: "none",
+          borderRadius: 4,
+          cursor: "not-allowed",
+          fontSize: 14,
+          fontWeight: 500,
+        }}
+      >
+        + Add Attribute (None available)
+      </button>
+    );
+  }
 
   return (
     <>
@@ -45,12 +84,10 @@ const AddAttributeModal = ({ onAdd }) => {
       {isOpen && (
         <ModalStylingWrapper useDefaultBox>
           <div>
-            <h4 style={{ marginTop: 0, marginBottom: 16 }}>Add New Attribute</h4>
-            <input
-              type="text"
-              placeholder="Attribute name..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+            <h4 style={{ marginTop: 0, marginBottom: 16 }}>Add Attribute</h4>
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
               onKeyPress={handleKeyPress}
               style={{
                 width: "100%",
@@ -62,7 +99,14 @@ const AddAttributeModal = ({ onAdd }) => {
                 boxSizing: "border-box",
               }}
               autoFocus
-            />
+            >
+              <option value="">Select an attribute...</option>
+              {availableAttributes.map((attr) => (
+                <option key={attr.id} value={attr.id}>
+                  {attr.originalName}
+                </option>
+              ))}
+            </select>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
                 onClick={handleClose}
@@ -80,13 +124,14 @@ const AddAttributeModal = ({ onAdd }) => {
               </button>
               <button
                 onClick={handleSubmit}
+                disabled={!selectedId}
                 style={{
                   padding: "8px 16px",
-                  backgroundColor: "#FF9800",
+                  backgroundColor: selectedId ? "#FF9800" : "#ccc",
                   color: "white",
                   border: "none",
                   borderRadius: 4,
-                  cursor: "pointer",
+                  cursor: selectedId ? "pointer" : "not-allowed",
                   fontSize: 14,
                   fontWeight: 500,
                 }}

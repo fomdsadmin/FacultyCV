@@ -257,13 +257,13 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
     });
   };
 
-  const handleAddAttribute = (name) => {
+  const handleAddAttribute = (attributeName, attributeKey) => {
     const newAttribute = {
       id: crypto.randomUUID(),
       type: "attribute",
-      originalName: name,
+      originalName: attributeName,
       rename: "",
-      settings: { key: name.toLowerCase().replace(/\s+/g, "_") },
+      settings: { key: attributeKey },
       children: [],
     };
 
@@ -299,7 +299,11 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <AddAttributeGroupModal onAdd={handleAddAttributeGroup} />
-        <AddAttributeModal onAdd={handleAddAttribute} />
+        <AddAttributeModal 
+          onAdd={handleAddAttribute} 
+          dataSource={dataSource}
+          attributeItems={attributeItems}
+        />
       </div>
 
       <DndContext
