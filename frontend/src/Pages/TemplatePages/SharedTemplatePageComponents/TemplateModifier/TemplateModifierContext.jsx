@@ -1,5 +1,3 @@
-"use client"
-
 import { getAllSections } from "graphql/graphqlHelpers";
 import { createContext, useContext, useEffect, useState } from "react"
 

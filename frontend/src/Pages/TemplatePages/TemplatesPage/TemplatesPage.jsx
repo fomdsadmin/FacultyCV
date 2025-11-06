@@ -11,6 +11,7 @@ import { TemplatePageProvider, useTemplatePageContext } from './TemplatePageCont
 import { useApp } from 'Contexts/AppContext.jsx';
 import { addTemplate } from '../../../graphql/graphqlHelpers';
 import { toast } from 'react-toastify';
+import TemplateCreatorPage from '../TemplateCreatorPage/TemplateCreatorPage.jsx';
 
 const TemplatesPageContent = () => {
   const { getCognitoUser, userInfo, currentViewRole, toggleViewMode } = useApp();
@@ -114,7 +115,7 @@ const TemplatesPageContent = () => {
         ) : (
           <>
             {openNewTemplate ? (
-              <NewTemplatePage onBack={handleBackFromNewTemplate} />
+              <TemplateCreatorPage onBack={handleBackFromNewTemplate} />
             ) : editReportFormatting ? (
               <EditReportFormatting onBack={handleBackFromEditReportFormatting} />
             ) : activeTemplate === null ? (
