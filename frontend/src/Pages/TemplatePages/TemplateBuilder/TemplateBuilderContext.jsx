@@ -15,11 +15,12 @@ export const buildAttributeObject = (attributeName, attributeKey) => {
   return {
     id: crypto.randomUUID(),
     type: "attribute",
+    originalName: attributeName,
+    rename: "",
     settings: {
       key: attributeKey,
-      originalName: attributeName,
-      rename: ""
-    }
+    },
+    children: [],
   }
 }
 

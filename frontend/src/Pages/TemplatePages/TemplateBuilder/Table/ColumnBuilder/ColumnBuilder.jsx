@@ -16,6 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTemplateBuilder } from "../../TemplateBuilderContext";
 import {
   buildTree,
   flattenTree,
@@ -108,49 +109,33 @@ const DragOverlayItem = ({
 
 // Main ColumnBuilder Component
 const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
-  // Initialize data - minimal reproducible example
+  const { sectionsMap } = useTemplateBuilder();
+
+  // Initialize data from datasource attributes
   const [attributeItems, setAttributeItems] = useState(() => {
     if (tableSettings?.columns && tableSettings.columns.length > 0) {
       return tableSettings.columns;
     }
 
-    // Minimal example with both attribute and attribute_group types
-    return [
-      {
-        id: "attr-1",
-        type: "attribute",
-        originalName: "Dates",
-        rename: "",
-        settings: { key: "dates" },
-        children: [],
-      },
-      {
-        id: "group-1",
-        type: "attribute_group",
-        originalName: "Academic Info",
-        rename: "",
-        settings: {},
-        children: [
-          {
-            id: "attr-2",
-            type: "attribute",
-            originalName: "University/Organization",
-            rename: "",
-            settings: { key: "university" },
-            children: [],
-          },
-        ],
-      },
-      {
-        id: "attr-3",
-        type: "attribute",
-        originalName: "Department",
-        rename: "",
-        settings: { key: "department" },
-        children: [],
-      },
-    ];
+    // Get attributes from the selected dataSource
+    const section = dataSource && sectionsMap ? sectionsMap[dataSource] : null;
+    if (section && section.attributes) {
+      return section.attributes;
+    }
+
+    // Fallback to empty array if no datasource selected
+    return [];
   });
+
+  // Update attributes when dataSource changes
+  useEffect(() => {
+    const section = dataSource && sectionsMap ? sectionsMap[dataSource] : null;
+    if (section && section.attributes) {
+      setAttributeItems(section.attributes);
+    } else {
+      setAttributeItems([]);
+    }
+  }, [dataSource, sectionsMap]);
 
   const [activeId, setActiveId] = useState(null);
   const [overId, setOverId] = useState(null);
