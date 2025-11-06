@@ -26,6 +26,8 @@ import {
 } from "../../utilities";
 import SortableAttribute from "./Attribute/SortableAttribute";
 import SortableAttributeGroup from "./AttributeGroup/SortableAttributeGroup";
+import AddAttributeModal from "./AddAttributeModal";
+import AddAttributeGroupModal from "./AddAttributeGroupModal";
 
 const measuring = {
   droppable: {
@@ -270,6 +272,32 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
     });
   };
 
+  const handleAddAttribute = (name) => {
+    const newAttribute = {
+      id: crypto.randomUUID(),
+      type: "attribute",
+      originalName: name,
+      rename: "",
+      settings: { key: name.toLowerCase().replace(/\s+/g, "_") },
+      children: [],
+    };
+
+    setAttributeItems((prevItems) => [newAttribute, ...prevItems]);
+  };
+
+  const handleAddAttributeGroup = (name) => {
+    const newGroup = {
+      id: crypto.randomUUID(),
+      type: "attribute_group",
+      originalName: name,
+      rename: "",
+      settings: {},
+      children: [],
+    };
+
+    setAttributeItems((prevItems) => [newGroup, ...prevItems]);
+  };
+
   if (!dataSource) {
     return (
       <div style={{ color: "#999", fontSize: 12, padding: "8px 0" }}>
@@ -282,6 +310,11 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
     <div style={{ marginTop: 16, padding: "12px", backgroundColor: "#f9f9f9", borderRadius: 6 }}>
       <div style={{ marginBottom: 16 }}>
         <strong style={{ fontSize: 13, color: "#333" }}>Columns for {dataSource}</strong>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <AddAttributeGroupModal onAdd={handleAddAttributeGroup} />
+        <AddAttributeModal onAdd={handleAddAttribute} />
       </div>
 
       <DndContext
