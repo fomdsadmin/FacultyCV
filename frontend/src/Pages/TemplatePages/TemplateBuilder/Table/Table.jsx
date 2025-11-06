@@ -1,19 +1,13 @@
 import React from "react";
 import DataSourceDropdown from "./DataSourceDropdown";
-import { useTemplateBuilder } from "../TemplateBuilderContext";
+import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
 
 const Table = ({ table, setTable }) => {
-  // table is the table object from items state
-  // setTable(id, updates) to update the table
-  // Example: setTable(table.id, { name: "New Name" })
-
-  const { sectionsMap } = useTemplateBuilder();
-
-  console.log(sectionsMap);
-
   const setDataSettings = (settings) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, ...settings } });
   };
+
+  const dataSource = table?.dataSettings?.dataSource;
 
   return (
     <>
@@ -22,9 +16,17 @@ const Table = ({ table, setTable }) => {
           <strong style={{ fontSize: 14, color: "#333" }}>Table: {table?.name}</strong>
         </div>
         <DataSourceDropdown
-          dataSource={table?.dataSettings?.dataSource}
+          dataSource={dataSource}
           setDataSettings={setDataSettings}
         />
+        
+        {dataSource && (
+          <ColumnBuilder
+            dataSource={dataSource}
+            tableSettings={table?.tableSettings || {}}
+            setTable={(updateFn) => setTable(table.id, updateFn(table))}
+          />
+        )}
       </div>
     </>
   );

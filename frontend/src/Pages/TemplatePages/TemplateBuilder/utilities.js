@@ -46,8 +46,8 @@ export function getProjection(
     }
 
     if (depth > previousItem.depth) {
-      // Prevent groups from being nested under tables
-      if (activeItem.type === "group" && previousItem.type === "table") {
+      // Enforce constraint: attributes can only be nested under attribute_groups
+      if (activeItem.type === "attribute" && previousItem.type !== "attribute_group") {
         return previousItem.parentId;
       }
       return previousItem.id;
@@ -64,8 +64,12 @@ export function getProjection(
 
 function getMaxDepth({ previousItem, activeItem }) {
   if (previousItem) {
-    // Only allow nesting under groups, not under tables
-    if (previousItem.type === "table") {
+    // Enforce constraint: attributes can only be nested under attribute_groups
+    if (activeItem.type === "attribute" && previousItem.type !== "attribute_group") {
+      return previousItem.depth;
+    }
+    // attribute_groups can be nested under other attribute_groups
+    if (activeItem.type === "attribute_group" && previousItem.type !== "attribute_group") {
       return previousItem.depth;
     }
     return previousItem.depth + 1;
