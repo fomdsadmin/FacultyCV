@@ -231,9 +231,18 @@ const TemplateBuilderContent = ({
             id: crypto.randomUUID(),
             type: "table",
             name,
-            tableSettings: {},
+            tableSettings: {
+            },
             dataSettings: {
-                dataSource: Object.keys(sectionsMap)[0]
+                dataSource: Object.keys(sectionsMap)[0],
+                filterSettings: {
+                    include: {
+                        and: []
+                    },
+                    filterOut: {
+                        or: []
+                    }
+                }
             },
             children: [],
         };

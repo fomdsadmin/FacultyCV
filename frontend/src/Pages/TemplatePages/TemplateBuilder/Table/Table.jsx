@@ -1,10 +1,15 @@
 import React from "react";
 import DataSourceDropdown from "./DataSourceDropdown";
 import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
+import FilterComponent from "./FilterComponent";
 
 const Table = ({ table, setTable }) => {
   const setDataSettings = (settings) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, ...settings } });
+  };
+
+  const setFilterSettings = (updatedFilterSettings) => {
+    setTable(table.id, { dataSettings: { ...table.dataSettings, filterSettings: updatedFilterSettings } });
   };
 
   const dataSource = table?.dataSettings?.dataSource;
@@ -21,11 +26,18 @@ const Table = ({ table, setTable }) => {
         />
         
         {dataSource && (
-          <ColumnBuilder
-            dataSource={dataSource}
-            tableSettings={table?.tableSettings || {}}
-            setTable={(updateFn) => setTable(table.id, updateFn(table))}
-          />
+          <>
+            <FilterComponent
+              dataSource={dataSource}
+              filterSettings={table?.dataSettings?.filterSettings}
+              setFilterSettings={setFilterSettings}
+            />
+            <ColumnBuilder
+              dataSource={dataSource}
+              tableSettings={table?.tableSettings || {}}
+              setTable={(updateFn) => setTable(table.id, updateFn(table))}
+            />
+          </>
         )}
       </div>
     </>
