@@ -188,7 +188,8 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
         columns: attributeItems,
       },
     }));
-  }, [attributeItems, setTable]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attributeItems]);
 
   const handleDragStart = ({ active }) => {
     setActiveId(active.id);

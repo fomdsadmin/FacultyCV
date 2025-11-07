@@ -18,7 +18,7 @@ const AddAttributeModal = ({ onAdd, dataSource, attributeItems }) => {
       const traverse = (nodeList) => {
         for (const item of nodeList) {
           if (item.type === "attribute") {
-            keys.add(item.settings.key);
+            keys.add(item.key);
           }
           if (item.children && item.children.length > 0) {
             traverse(item.children);
@@ -31,14 +31,14 @@ const AddAttributeModal = ({ onAdd, dataSource, attributeItems }) => {
 
     const usedIds = collectAttributeKeys(attributeItems);
 
-    return section.attributes.filter((attr) => !usedIds.has(attr.settings.key));
+    return section.attributes.filter((attr) => !usedIds.has(attr.key));
   }, [dataSource, sectionsMap, attributeItems]);
 
   const handleSubmit = () => {
     if (selectedId) {
       const selected = availableAttributes.find((attr) => attr.id === selectedId);
       if (selected) {
-        onAdd(selected.originalName, selected.settings.key);
+        onAdd(selected.originalName, selected.key);
         setSelectedId("");
         setIsOpen(false);
       }

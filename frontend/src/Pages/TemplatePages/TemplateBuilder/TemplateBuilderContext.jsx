@@ -17,9 +17,7 @@ export const buildAttributeObject = (attributeName, attributeKey) => {
     type: "attribute",
     originalName: attributeName,
     rename: "",
-    settings: {
-      key: attributeKey,
-    },
+    key: attributeKey,
     children: [],
   }
 }
@@ -43,6 +41,7 @@ export const TemplateBuilderProvider = ({
   useEffect(() => {
     const helperFunction = async () => {
       const allSections = await getAllSections();
+      console.log(allSections)
 
       // Create sectionsMap with title as key and section as value
       const sectionsMap = {};
@@ -70,6 +69,7 @@ export const TemplateBuilderProvider = ({
 
 
       setSectionsMap(sectionsMap)
+      console.log(sectionsMap);
     }
     helperFunction();
   }, []);

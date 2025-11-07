@@ -78,12 +78,7 @@ const TemplateBuilderContent = ({
 
     const { sectionsMap } = useTemplateBuilder();
 
-    const [items, setItems] = useState([
-        { id: "g1", type: "group", name: "Group 1", children: [] },
-        { id: "g2", type: "group", name: "Group 2", children: [] },
-        { id: "t1", type: "table", name: "Table 1", children: [] },
-        { id: "t2", type: "table", name: "Table 2", children: [] },
-    ]);
+    const [items, setItems] = useState([]);
 
     const [activeId, setActiveId] = useState(null);
     const [overId, setOverId] = useState(null);
