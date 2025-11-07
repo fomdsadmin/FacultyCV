@@ -50,6 +50,7 @@ const SortableGroup = ({
       {...attributes}
     >
       <AccordionItem
+        isCollapsed={isDragging}
         title={
           <div
             style={{

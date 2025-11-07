@@ -45,6 +45,7 @@ const SortableTable = ({
       {...attributes}
     >
       <AccordionItem
+        isCollapsed={isDragging}
         title={
           <div
             style={{
