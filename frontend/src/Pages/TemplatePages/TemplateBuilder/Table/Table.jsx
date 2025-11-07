@@ -3,6 +3,7 @@ import DataSourceDropdown from "./DataSourceDropdown";
 import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
 import FilterComponent from "./FilterComponent";
 import AggregationComponent from "./AggregationComponent";
+import SQLQueryComponent from "./SQLQueryComponent";
 
 const Table = ({ table, setTable }) => {
   const setDataSettings = (settings) => {
@@ -41,6 +42,9 @@ const Table = ({ table, setTable }) => {
               dataSource={dataSource}
               aggregationSettings={table?.tableSettings?.aggregationSettings}
               setAggregationSettings={setAggregationSettings}
+            />
+            <SQLQueryComponent
+              dataSource={dataSource}
             />
             <ColumnBuilder
               dataSource={dataSource}
