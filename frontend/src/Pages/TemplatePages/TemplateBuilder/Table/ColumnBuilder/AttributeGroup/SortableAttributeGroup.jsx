@@ -13,8 +13,6 @@ import AttributeGroup from "./AttributeGroup";
 const SortableAttributeGroup = ({
   id,
   depth,
-  originalName,
-  rename,
   collapsed,
   onCollapse,
   onRemove,
@@ -91,16 +89,10 @@ const SortableAttributeGroup = ({
               </button>
             )}
 
-            <strong>{originalName}</strong>
+            <strong>{attributeGroup.name}</strong>
             <span style={{ marginLeft: "auto", fontSize: 11, color: "#666" }}>
               📁
             </span>
-
-            {rename && (
-              <span style={{ fontSize: 11, color: "#999", fontStyle: "italic" }}>
-                → {rename}
-              </span>
-            )}
 
             {onRemove && (
               <button

@@ -63,7 +63,7 @@ const dropAnimationConfig = {
 const DragOverlayItem = ({
   type,
   originalName,
-  rename,
+  name,
 }) => {
   if (type === "attribute_group") {
     return (
@@ -80,7 +80,7 @@ const DragOverlayItem = ({
         }}
       >
         <span style={{ fontSize: 13, color: "#333", fontWeight: 600 }}>
-          📁 {originalName}
+          📁 {name}
         </span>
       </div>
     );
@@ -258,6 +258,26 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
     });
   };
 
+  const handleSetAttribute = (id, updates) => {
+    setAttributeItems((items) => {
+      const updateRecursive = (nodeList) => {
+        return nodeList.map((item) => {
+          if (item.id === id) {
+            return { ...item, ...updates };
+          }
+          if (item.children.length) {
+            return {
+              ...item,
+              children: updateRecursive(item.children),
+            };
+          }
+          return item;
+        });
+      };
+      return updateRecursive(items);
+    });
+  };
+
   const handleAddAttribute = (attributeName, attributeKey) => {
     const newAttribute = {
       id: crypto.randomUUID(),
@@ -275,8 +295,7 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
     const newGroup = {
       id: crypto.randomUUID(),
       type: "attribute_group",
-      originalName: name,
-      rename: "",
+      name: name,
       settings: {},
       children: [],
     };
@@ -326,29 +345,23 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
                 key={id}
                 id={id}
                 depth={id === activeId && projected ? projected.depth : depth}
-                originalName={originalName}
-                rename={rename}
                 indentationWidth={indentationWidth}
                 onRemove={() => handleRemove(id)}
                 attribute={itemData}
-                setAttribute={(updates) => {
-                  // Handle attribute settings updates
-                }}
+                setAttribute={(updates) => handleSetAttribute(id, updates)}
               />
             ) : (
               <SortableAttributeGroup
                 key={id}
                 id={id}
                 depth={id === activeId && projected ? projected.depth : depth}
-                originalName={originalName}
-                rename={rename}
                 indentationWidth={indentationWidth}
                 collapsed={Boolean(collapsed && children.length)}
                 onCollapse={children.length ? () => handleCollapse(id) : undefined}
                 onRemove={() => handleRemove(id)}
                 attributeGroup={itemData}
                 setAttributeGroup={(updates) => {
-                  // Handle attribute group settings updates
+                  handleSetAttribute(id, updates);
                 }}
               />
             );
@@ -360,7 +373,7 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
                 <DragOverlayItem
                   type={activeItem.type}
                   originalName={activeItem.originalName}
-                  rename={activeItem.rename}
+                  name={activeItem.name}
                 />
               ) : null}
             </DragOverlay>,

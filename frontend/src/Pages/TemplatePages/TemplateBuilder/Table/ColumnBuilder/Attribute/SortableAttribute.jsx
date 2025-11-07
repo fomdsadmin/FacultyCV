@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AccordionItem } from "SharedComponents/Accordion/AccordionItem";
@@ -8,13 +8,14 @@ import Attribute from "./Attribute";
 const SortableAttribute = ({
   id,
   depth,
-  originalName,
-  rename,
   indentationWidth,
   onRemove,
   attribute,
   setAttribute,
 }) => {
+  const savedIsOpenRef = useRef(null);
+  const wasDraggingRef = useRef(false);
+
   const {
     attributes,
     listeners,
@@ -23,6 +24,20 @@ const SortableAttribute = ({
     transition,
     isDragging,
   } = useSortable({ id, animateLayoutChanges: () => false });
+
+  // Save state when drag starts, restore when drag ends
+  React.useEffect(() => {
+    if (isDragging && !wasDraggingRef.current) {
+      savedIsOpenRef.current = attribute?.isOpen;
+      wasDraggingRef.current = true;
+    } else if (!isDragging && wasDraggingRef.current) {
+      if (savedIsOpenRef.current) {
+        setAttribute({ isOpen: true });
+      }
+      wasDraggingRef.current = false;
+      savedIsOpenRef.current = null;
+    }
+  }, [isDragging, attribute?.isOpen, setAttribute]);
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -44,6 +59,9 @@ const SortableAttribute = ({
       {...attributes}
     >
       <AccordionItem
+        isCollapsed={isDragging}
+        isOpen={attribute?.isOpen}
+        setIsOpen={(newState) => setAttribute({ isOpen: newState })}
         title={
           <div
             style={{
@@ -59,15 +77,9 @@ const SortableAttribute = ({
               <FaGripVertical className="h-4 w-4 text-gray-500" />
             </div>
 
-            <span style={{ fontSize: 13, color: "#333", fontWeight: 400 }}>
-              📊 {originalName}
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#333" }}>
+              {attribute?.rename || attribute?.originalName}
             </span>
-
-            {rename && (
-              <span style={{ fontSize: 11, color: "#999", marginLeft: "auto", fontStyle: "italic" }}>
-                → {rename}
-              </span>
-            )}
 
             {onRemove && (
               <button
@@ -82,6 +94,7 @@ const SortableAttribute = ({
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
+                  marginLeft: "auto",
                 }}
                 className="text-red-500 hover:bg-red-100 rounded"
               >
@@ -91,10 +104,7 @@ const SortableAttribute = ({
           </div>
         }
       >
-        <div style={{ padding: "12px" }}>
-          {/* Attribute settings go here */}
-          <Attribute/>
-        </div>
+        <Attribute attribute={attribute} setAttribute={setAttribute} />
       </AccordionItem>
     </div>
   );
