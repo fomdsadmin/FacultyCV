@@ -293,7 +293,7 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
   }
 
   return (
-    <div style={{ marginTop: 16, padding: "12px", backgroundColor: "#f9f9f9", borderRadius: 6 }}>
+    <div style={{ marginTop: 16, marginBottom: 16, padding: "12px", backgroundColor: "#f9f9f9", borderRadius: 6 }}>
       <div style={{ marginBottom: 16 }}>
         <strong style={{ fontSize: 13, color: "#333" }}>Columns for {dataSource}</strong>
       </div>

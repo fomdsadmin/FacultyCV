@@ -220,6 +220,9 @@ const TemplateBuilderContent = ({
             id: crypto.randomUUID(),
             type: "group",
             name,
+            groupSettings: {
+                header: ""
+            },
             children: [],
         };
 
@@ -232,6 +235,7 @@ const TemplateBuilderContent = ({
             type: "table",
             name,
             tableSettings: {
+                header: ""
             },
             dataSettings: {
                 dataSource: Object.keys(sectionsMap)[0],

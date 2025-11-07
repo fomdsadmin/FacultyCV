@@ -4,10 +4,11 @@ import DataSourceDropdown from "./DataSourceDropdown";
 import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
 import FilterComponent from "./FilterComponent";
 import SQLQueryComponent from "./SQLQueryComponent";
+import HeaderEditor from "./HeaderEditor";
 
 const Table = ({ table, setTable }) => {
   const { sectionsMap } = useTemplateBuilder();
-  
+
   const setDataSettings = (settings) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, ...settings } });
   };
@@ -18,6 +19,14 @@ const Table = ({ table, setTable }) => {
 
   const setSqlSettings = (updatedSqlSettings) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, sqlSettings: updatedSqlSettings } });
+  };
+
+  const setTableSettings = (updates) => {
+    setTable(table.id, { tableSettings: { ...table.tableSettings, ...updates } });
+  };
+
+  const handleHeaderChange = (value) => {
+    setTableSettings({ header: value });
   };
 
   const dataSource = table?.dataSettings?.dataSource;
@@ -33,9 +42,18 @@ const Table = ({ table, setTable }) => {
           dataSource={dataSource}
           setDataSettings={setDataSettings}
         />
-        
+
         {dataSource && (
           <>
+            <ColumnBuilder
+              dataSource={dataSource}
+              tableSettings={table?.tableSettings || {}}
+              setTable={(updateFn) => setTable(table.id, updateFn(table))}
+            />
+            <HeaderEditor
+              header={table?.tableSettings?.header || ""}
+              onHeaderChange={handleHeaderChange}
+            />
             <FilterComponent
               dataSource={dataSource}
               filterSettings={table?.dataSettings?.filterSettings}
@@ -47,11 +65,6 @@ const Table = ({ table, setTable }) => {
               setSqlSettings={setSqlSettings}
               filterSettings={table?.dataSettings?.filterSettings}
               attributeKeys={attributeKeys}
-            />
-            <ColumnBuilder
-              dataSource={dataSource}
-              tableSettings={table?.tableSettings || {}}
-              setTable={(updateFn) => setTable(table.id, updateFn(table))}
             />
           </>
         )}
