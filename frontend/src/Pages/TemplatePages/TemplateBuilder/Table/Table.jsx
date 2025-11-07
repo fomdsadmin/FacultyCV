@@ -2,6 +2,7 @@ import React from "react";
 import DataSourceDropdown from "./DataSourceDropdown";
 import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
 import FilterComponent from "./FilterComponent";
+import AggregationComponent from "./AggregationComponent";
 
 const Table = ({ table, setTable }) => {
   const setDataSettings = (settings) => {
@@ -10,6 +11,10 @@ const Table = ({ table, setTable }) => {
 
   const setFilterSettings = (updatedFilterSettings) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, filterSettings: updatedFilterSettings } });
+  };
+
+  const setAggregationSettings = (updatedAggregationSettings) => {
+    setTable(table.id, { tableSettings: { ...table.tableSettings, aggregationSettings: updatedAggregationSettings } });
   };
 
   const dataSource = table?.dataSettings?.dataSource;
@@ -31,6 +36,11 @@ const Table = ({ table, setTable }) => {
               dataSource={dataSource}
               filterSettings={table?.dataSettings?.filterSettings}
               setFilterSettings={setFilterSettings}
+            />
+            <AggregationComponent
+              dataSource={dataSource}
+              aggregationSettings={table?.tableSettings?.aggregationSettings}
+              setAggregationSettings={setAggregationSettings}
             />
             <ColumnBuilder
               dataSource={dataSource}
