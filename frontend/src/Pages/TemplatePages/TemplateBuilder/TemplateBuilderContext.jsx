@@ -70,6 +70,7 @@ export const TemplateBuilderProvider = ({
             ([attributeName, attributeKey]) =>
               buildAttributeObject(attributeName, attributeKey)
           ),
+          attributeKeys: attributes,
           attributes_type: invertedTypeMap,
           dropdownOptions, // Dict: dropdown attribute name -> options array
         };

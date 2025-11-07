@@ -1,57 +1,203 @@
 import React, { useState, useEffect } from "react";
 import alasql from "alasql";
-import { getUserCVData } from "graphql/graphqlHelpers";
+import { useTemplateBuilder } from "../TemplateBuilderContext";
 
-const SQLQueryComponent = ({ dataSource }) => {
-    const [query, setQuery] = useState("");
+const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSettings, attributeKeys = {} }) => {
+    const { sectionsMap } = useTemplateBuilder();
+    const [customQuery, setCustomQuery] = useState(sqlSettings?.customQuery || "");
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [data, setData] = useState(null);
 
-    // Load data from datasource on mount
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                
-                // Mock section ID - will be determined later
-                const mockSectionId = "f26d9944-42e9-4feb-aca4-24aa3330b5ba";
-                const userId = "92";
-                
-                // Fetch CV data for the datasource
-                const cvData = await getUserCVData(userId, [mockSectionId]);
-                
-                if (cvData && cvData.length > 0) {
-                    // Parse the data_details JSON string
-                    const parsedData = cvData.map(item => ({
-                        ...item,
-                        data_details: typeof item.data_details === 'string' 
-                            ? JSON.parse(item.data_details) 
-                            : item.data_details
-                    }));
-                    setData(parsedData);
-                    setError(null);
-                } else {
-                    setError("No data found for this datasource");
-                }
-            } catch (err) {
-                setError(`Error loading data: ${err.message}`);
-                console.error("Error loading CV data:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+    // Mock data generator
+    const generateMockData = (section, keys) => {
+        if (!section) return [];
 
-        if (dataSource) {
-            loadData();
+        const attributesType = section.attributes_type || {};
+        const dropdownOptions = section.dropdownOptions || {};
+        
+        const mockAdjectives = ["Advanced", "Basic", "Intermediate", "Expert", "Beginner"];
+        const mockNouns = ["Seminar", "Workshop", "Conference", "Course", "Training", "Lecture", "Discussion", "Presentation"];
+        
+        const generateRandomString = () => {
+            const adj = mockAdjectives[Math.floor(Math.random() * mockAdjectives.length)];
+            const noun = mockNouns[Math.floor(Math.random() * mockNouns.length)];
+            return `${adj} ${noun}`;
+        };
+        
+        const generateRandomDate = () => {
+            const startYear = Math.floor(Math.random() * (2020 - 2000 + 1)) + 2000;
+            const endYear = Math.floor(Math.random() * (2025 - startYear + 1)) + startYear;
+            return `${startYear} - ${endYear}`;
+        };
+        
+        const generateRandomNumber = () => Math.floor(Math.random() * 1000);
+        
+        // Find all dropdown attributes and their options
+        const dropdownAttributes = Object.entries(keys).filter(([displayName]) => 
+            attributesType[displayName] === "dropdown" && dropdownOptions[displayName]
+        );
+        
+        // Determine how many rows we need based on dropdown options
+        let mockRows = [];
+        
+        if (dropdownAttributes.length > 0) {
+            // Create a set to track all combinations of dropdown values we need to represent
+            // For each dropdown attribute, we need to ensure all its options appear
+            
+            // Start by creating one row for each option of the first dropdown
+            const [firstDropdownName] = dropdownAttributes[0];
+            const firstDropdownOptions = dropdownOptions[firstDropdownName];
+            
+            firstDropdownOptions.forEach(option => {
+                // For each option of the first dropdown, generate 1-3 rows
+                const rowsPerOption = Math.floor(Math.random() * 3) + 1;
+                
+                for (let i = 0; i < rowsPerOption; i++) {
+                    const row = {};
+                    
+                    // Fill in all attributes for this row
+                    for (const [displayName, fieldName] of Object.entries(keys)) {
+                        const attrType = attributesType[displayName];
+                        
+                        if (attrType === "dropdown" && dropdownOptions[displayName]) {
+                            if (displayName === firstDropdownName) {
+                                // Use the current option for the first dropdown
+                                row[fieldName] = option;
+                            } else {
+                                // For other dropdowns, pick a random option
+                                const opts = dropdownOptions[displayName];
+                                row[fieldName] = opts[Math.floor(Math.random() * opts.length)];
+                            }
+                        } else if (attrType === "date") {
+                            row[fieldName] = generateRandomDate();
+                        } else if (attrType === "text") {
+                            row[fieldName] = generateRandomString();
+                        } else if (attrType === "number") {
+                            row[fieldName] = generateRandomNumber();
+                        } else {
+                            row[fieldName] = generateRandomString();
+                        }
+                    }
+                    
+                    mockRows.push(row);
+                }
+            });
+            
+            // Now ensure all options from other dropdown attributes are also represented
+            for (let d = 1; d < dropdownAttributes.length; d++) {
+                const [dropdownName] = dropdownAttributes[d];
+                const dropdownOpts = dropdownOptions[dropdownName];
+                
+                dropdownOpts.forEach(option => {
+                    // Generate 1-3 rows for each option of this dropdown
+                    const rowsPerOption = Math.floor(Math.random() * 3) + 1;
+                    
+                    for (let i = 0; i < rowsPerOption; i++) {
+                        const row = {};
+                        
+                        // Fill in all attributes for this row
+                        for (const [displayName, fieldName] of Object.entries(keys)) {
+                            const attrType = attributesType[displayName];
+                            
+                            if (attrType === "dropdown" && dropdownOptions[displayName]) {
+                                if (displayName === dropdownName) {
+                                    // Use the current option for this dropdown
+                                    row[fieldName] = option;
+                                } else {
+                                    // For other dropdowns, pick a random option
+                                    const opts = dropdownOptions[displayName];
+                                    row[fieldName] = opts[Math.floor(Math.random() * opts.length)];
+                                }
+                            } else if (attrType === "date") {
+                                row[fieldName] = generateRandomDate();
+                            } else if (attrType === "text") {
+                                row[fieldName] = generateRandomString();
+                            } else if (attrType === "number") {
+                                row[fieldName] = generateRandomNumber();
+                            } else {
+                                row[fieldName] = generateRandomString();
+                            }
+                        }
+                        
+                        mockRows.push(row);
+                    }
+                });
+            }
+        } else {
+            // If no dropdown attributes, generate 3-5 rows as before
+            const rowCount = Math.floor(Math.random() * 3) + 3;
+            
+            for (let i = 0; i < rowCount; i++) {
+                const row = {};
+                
+                for (const [displayName, fieldName] of Object.entries(keys)) {
+                    const attrType = attributesType[displayName];
+                    
+                    if (attrType === "dropdown" && dropdownOptions[displayName]) {
+                        const options = dropdownOptions[displayName];
+                        row[fieldName] = options[Math.floor(Math.random() * options.length)];
+                    } else if (attrType === "date") {
+                        row[fieldName] = generateRandomDate();
+                    } else if (attrType === "text") {
+                        row[fieldName] = generateRandomString();
+                    } else if (attrType === "number") {
+                        row[fieldName] = generateRandomNumber();
+                    } else {
+                        row[fieldName] = generateRandomString();
+                    }
+                }
+                
+                mockRows.push(row);
+            }
         }
-    }, [dataSource]);
+        
+        return mockRows;
+    };
+
+    // ...existing code...
+    useEffect(() => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            if (!dataSource || !sectionsMap) {
+                setData(null);
+                return;
+            }
+
+            // Get section from sectionsMap
+            const section = sectionsMap[dataSource];
+            if (!section) {
+                setError(`Section "${dataSource}" not found`);
+                setData(null);
+                return;
+            }
+
+            // Generate mock data based on section attributes using attributeKeys
+            const mockTableData = generateMockData(section, attributeKeys);
+            
+            if (mockTableData.length > 0) {
+                setData(mockTableData);
+                setError(null);
+                console.log(`Generated ${mockTableData.length} mock rows for datasource: ${dataSource}`);
+            } else {
+                setError("Could not generate mock data for this section");
+                setData(null);
+            }
+        } catch (err) {
+            setError(`Error generating mock data: ${err.message}`);
+            console.error("Error generating mock data:", err);
+            setData(null);
+        } finally {
+            setLoading(false);
+        }
+    }, [dataSource, sectionsMap, attributeKeys]);
 
     const executeQuery = async () => {
-        if (!query.trim()) {
-            setError("Please enter a SQL query");
+        if (!customQuery || !customQuery.trim()) {
+            setError("No query to execute");
             return;
         }
 
@@ -65,8 +211,7 @@ const SQLQueryComponent = ({ dataSource }) => {
             setError(null);
 
             // Execute AlaSQL query
-            // The ? placeholder is replaced with the data array
-            const res = alasql(query, [data]);
+            const res = alasql(customQuery, [data]);
 
             setResults({
                 columns: res.length > 0 ? Object.keys(res[0]) : [],
@@ -87,29 +232,33 @@ const SQLQueryComponent = ({ dataSource }) => {
         }
     };
 
+    const handleCustomQueryChange = (e) => {
+        setCustomQuery(e.target.value);
+    };
+
     return (
         <div style={{ marginTop: 16, padding: "12px", backgroundColor: "#f9f9f9", borderRadius: 6 }}>
             <div style={{ marginBottom: 12 }}>
                 <strong style={{ fontSize: 13, color: "#333" }}>SQL Query</strong>
                 <p style={{ color: "#666", fontSize: 12, marginTop: 8, marginBottom: 12, fontWeight: 500 }}>
-                    Execute SQL queries on the datasource using AlaSQL
+                    View and customize the SQL query generated from filters and aggregations
                 </p>
             </div>
 
             <div style={{ padding: "12px", backgroundColor: "white", borderRadius: 4 }}>
-                {/* Query Input */}
+                {/* Custom Query Override */}
                 <div style={{ marginBottom: 12 }}>
                     <label style={{ fontSize: 11, color: "#666", display: "block", marginBottom: 4, fontWeight: 500 }}>
-                        SQL Query (Ctrl+Enter to execute)
+                        SQL Query
                     </label>
                     <textarea
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        value={customQuery}
+                        onChange={handleCustomQueryChange}
                         onKeyPress={handleKeyPress}
-                        placeholder="SELECT * FROM ? LIMIT 10"
+                        placeholder="SELECT * FROM ? WHERE condition"
                         style={{
                             width: "100%",
-                            minHeight: "120px",
+                            minHeight: "100px",
                             padding: "8px 12px",
                             border: "1px solid #ddd",
                             borderRadius: 4,
@@ -250,7 +399,7 @@ const SQLQueryComponent = ({ dataSource }) => {
                         color: "#2e7d32",
                         fontSize: 12,
                     }}>
-                        Loaded {data.length} record(s). Write a query and click "Execute Query" or press Ctrl+Enter.
+                        Loaded {data.length} record(s). Click "Execute Query" to run the query.
                     </div>
                 )}
             </div>

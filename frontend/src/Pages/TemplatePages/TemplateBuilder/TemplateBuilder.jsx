@@ -242,6 +242,11 @@ const TemplateBuilderContent = ({
                     filterOut: {
                         or: []
                     }
+                },
+                sqlSettings: {
+                    generatedQuery: "SELECT * FROM ?",
+                    customQuery: "",
+                    lastUpdated: new Date().toISOString()
                 }
             },
             children: [],

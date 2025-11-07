@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { useTemplateBuilder } from "../TemplateBuilderContext";
 import DataSourceDropdown from "./DataSourceDropdown";
 import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
 import FilterComponent from "./FilterComponent";
-import AggregationComponent from "./AggregationComponent";
 import SQLQueryComponent from "./SQLQueryComponent";
 
 const Table = ({ table, setTable }) => {
+  const { sectionsMap } = useTemplateBuilder();
+  
   const setDataSettings = (settings) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, ...settings } });
   };
@@ -14,11 +16,12 @@ const Table = ({ table, setTable }) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, filterSettings: updatedFilterSettings } });
   };
 
-  const setAggregationSettings = (updatedAggregationSettings) => {
-    setTable(table.id, { tableSettings: { ...table.tableSettings, aggregationSettings: updatedAggregationSettings } });
+  const setSqlSettings = (updatedSqlSettings) => {
+    setTable(table.id, { dataSettings: { ...table.dataSettings, sqlSettings: updatedSqlSettings } });
   };
 
   const dataSource = table?.dataSettings?.dataSource;
+  const attributeKeys = useMemo(() => sectionsMap?.[dataSource]?.attributeKeys || {}, [sectionsMap, dataSource]);
 
   return (
     <>
@@ -38,13 +41,12 @@ const Table = ({ table, setTable }) => {
               filterSettings={table?.dataSettings?.filterSettings}
               setFilterSettings={setFilterSettings}
             />
-            <AggregationComponent
-              dataSource={dataSource}
-              aggregationSettings={table?.tableSettings?.aggregationSettings}
-              setAggregationSettings={setAggregationSettings}
-            />
             <SQLQueryComponent
               dataSource={dataSource}
+              sqlSettings={table?.dataSettings?.sqlSettings}
+              setSqlSettings={setSqlSettings}
+              filterSettings={table?.dataSettings?.filterSettings}
+              attributeKeys={attributeKeys}
             />
             <ColumnBuilder
               dataSource={dataSource}
