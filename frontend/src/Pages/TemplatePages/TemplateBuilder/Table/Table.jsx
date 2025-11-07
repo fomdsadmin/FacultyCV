@@ -29,6 +29,10 @@ const Table = ({ table, setTable }) => {
     setTableSettings({ header: value });
   };
 
+  const handleNameChange = (e) => {
+    setTable(table.id, { name: e.target.value });
+  };
+
   const dataSource = table?.dataSettings?.dataSource;
   const attributeKeys = useMemo(() => sectionsMap?.[dataSource]?.attributeKeys || {}, [sectionsMap, dataSource]);
 
@@ -36,7 +40,24 @@ const Table = ({ table, setTable }) => {
     <>
       <div style={{ color: "#666", fontSize: 12 }}>
         <div style={{ marginBottom: 16 }}>
-          <strong style={{ fontSize: 14, color: "#333" }}>Table: {table?.name}</strong>
+          <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4, fontWeight: 500 }}>
+            Table Name
+          </label>
+          <input
+            type="text"
+            value={table?.name || ""}
+            onChange={handleNameChange}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #ddd",
+              borderRadius: 4,
+              fontSize: 14,
+              boxSizing: "border-box",
+              fontWeight: 600,
+              color: "#333"
+            }}
+          />
         </div>
         <DataSourceDropdown
           dataSource={dataSource}
@@ -45,14 +66,14 @@ const Table = ({ table, setTable }) => {
 
         {dataSource && (
           <>
+            <HeaderEditor
+              header={table?.tableSettings?.header || ""}
+              onHeaderChange={handleHeaderChange}
+            />
             <ColumnBuilder
               dataSource={dataSource}
               tableSettings={table?.tableSettings || {}}
               setTable={(updateFn) => setTable(table.id, updateFn(table))}
-            />
-            <HeaderEditor
-              header={table?.tableSettings?.header || ""}
-              onHeaderChange={handleHeaderChange}
             />
             <FilterComponent
               dataSource={dataSource}
