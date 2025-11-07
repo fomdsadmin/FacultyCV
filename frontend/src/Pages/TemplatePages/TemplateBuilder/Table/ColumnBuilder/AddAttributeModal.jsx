@@ -12,11 +12,24 @@ const AddAttributeModal = ({ onAdd, dataSource, attributeItems }) => {
     const section = dataSource && sectionsMap ? sectionsMap[dataSource] : null;
     if (!section || !section.attributes) return [];
 
-    const usedIds = new Set(
-      attributeItems
-        .filter((item) => item.type === "attribute")
-        .map((item) => item.settings.key)
-    );
+    // Recursively collect all attribute keys from the entire tree
+    const collectAttributeKeys = (items) => {
+      const keys = new Set();
+      const traverse = (nodeList) => {
+        for (const item of nodeList) {
+          if (item.type === "attribute") {
+            keys.add(item.settings.key);
+          }
+          if (item.children && item.children.length > 0) {
+            traverse(item.children);
+          }
+        }
+      };
+      traverse(items);
+      return keys;
+    };
+
+    const usedIds = collectAttributeKeys(attributeItems);
 
     return section.attributes.filter((attr) => !usedIds.has(attr.settings.key));
   }, [dataSource, sectionsMap, attributeItems]);
