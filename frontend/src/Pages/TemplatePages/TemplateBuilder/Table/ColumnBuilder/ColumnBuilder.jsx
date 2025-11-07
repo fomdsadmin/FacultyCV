@@ -284,7 +284,7 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
       type: "attribute",
       originalName: attributeName,
       rename: "",
-      settings: { key: attributeKey },
+      key: attributeKey,
       children: [],
     };
 
