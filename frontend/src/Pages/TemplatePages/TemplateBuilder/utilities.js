@@ -50,6 +50,14 @@ export function getProjection(
       if (activeItem.type === "attribute" && previousItem.type !== "attribute_group") {
         return previousItem.parentId;
       }
+      // Enforce constraint: groups cannot be nested under tables
+      if (activeItem.type === "group" && previousItem.type === "table") {
+        return previousItem.parentId;
+      }
+      // Enforce constraint: tables cannot be nested under tables
+      if (activeItem.type === "table" && previousItem.type === "table") {
+        return previousItem.parentId;
+      }
       return previousItem.id;
     }
 
@@ -70,6 +78,14 @@ function getMaxDepth({ previousItem, activeItem }) {
     }
     // attribute_groups can be nested under other attribute_groups
     if (activeItem.type === "attribute_group" && previousItem.type !== "attribute_group") {
+      return previousItem.depth;
+    }
+    // Enforce constraint: groups cannot be nested under tables
+    if (activeItem.type === "group" && previousItem.type === "table") {
+      return previousItem.depth;
+    }
+    // Enforce constraint: tables cannot be nested under tables
+    if (activeItem.type === "table" && previousItem.type === "table") {
       return previousItem.depth;
     }
     return previousItem.depth + 1;
