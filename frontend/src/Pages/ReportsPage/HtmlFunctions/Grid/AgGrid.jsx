@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { buildCv } from "../FormatedData";
 import { buildCvs } from "../TableBuilder";
+import { formatUserTables } from "../FormatTemplateToTable/FormatTemplateToTable";
 
 /**
  * Demo AgGrid with column grouping.
@@ -49,8 +50,8 @@ const AgGrid = ({ userInfoInput, templateWithEndStartDate, previewRef }) => {
     useEffect(() => {
         const helper = async () => {
             const cvs = await buildCv(userInfoInput, templateWithEndStartDate);
+            console.log("JJFILTER FORMAT USER TABLES", await formatUserTables(userInfoInput, templateWithEndStartDate));
             setCvs(cvs);
-            console.log("CV JSON: ", cvs)
         }
 
         if (userInfoInput && templateWithEndStartDate) {
@@ -83,7 +84,7 @@ const AgGrid = ({ userInfoInput, templateWithEndStartDate, previewRef }) => {
         // 2️⃣ Combine them into one HTML document
         if (cvs) {
             const fullHtml = buildCvs(cvs);
-            console.log(fullHtml);
+            //console.log(fullHtml);
         }
 
         // 3️⃣ Log or send to Gotenberg
