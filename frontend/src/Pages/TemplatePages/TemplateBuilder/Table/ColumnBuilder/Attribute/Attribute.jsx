@@ -1,6 +1,7 @@
 import React from "react";
+import FootnoteModal from "./FootnoteModal";
 
-const Attribute = ({ attribute, setAttribute }) => {
+const Attribute = ({ attribute, setAttribute, availableAttributes }) => {
   const handleRenameChange = (e) => {
     setAttribute({ rename: e.target.value });
   };
@@ -24,9 +25,18 @@ const Attribute = ({ attribute, setAttribute }) => {
           borderRadius: 4,
           fontSize: 13,
           boxSizing: "border-box",
-          color: "#333"
+          color: "#333",
+          marginBottom: 12,
         }}
       />
+
+      <div>
+        <FootnoteModal
+          attribute={attribute}
+          setAttribute={setAttribute}
+          availableAttributes={availableAttributes || []}
+        />
+      </div>
     </div>
   );
 };

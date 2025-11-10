@@ -12,6 +12,7 @@ const SortableAttribute = ({
   onRemove,
   attribute,
   setAttribute,
+  availableAttributes,
 }) => {
   const savedIsOpenRef = useRef(null);
   const wasDraggingRef = useRef(false);
@@ -104,7 +105,11 @@ const SortableAttribute = ({
           </div>
         }
       >
-        <Attribute attribute={attribute} setAttribute={setAttribute} />
+        <Attribute 
+          attribute={attribute} 
+          setAttribute={setAttribute}
+          availableAttributes={availableAttributes}
+        />
       </AccordionItem>
     </div>
   );

@@ -93,6 +93,10 @@ const TemplateBuilderContent = ({
         }));
     };
 
+    useEffect(() => {
+        console.log("JJFILTER items: ", items)
+    }, [items])
+
     const flattenedItems = useMemo(() => {
         const flattenedTree = flattenTree(items);
         const collapsedItems = flattenedTree.reduce((acc, { children, collapsed, id }) =>
@@ -235,10 +239,13 @@ const TemplateBuilderContent = ({
             type: "table",
             name,
             tableSettings: {
-                header: ""
+                header: "",
+                columns: Object.values(sectionsMap)[0]?.attributes,
+                hideColumns: false
             },
             dataSettings: {
                 dataSource: Object.keys(sectionsMap)[0],
+                skipDateFilter: false,
                 filterSettings: {
                     include: {
                         and: []
@@ -248,8 +255,7 @@ const TemplateBuilderContent = ({
                     }
                 },
                 sqlSettings: {
-                    generatedQuery: "SELECT * FROM ?",
-                    customQuery: "",
+                    query: "SELECT * FROM ?",
                     lastUpdated: new Date().toISOString()
                 }
             },
@@ -260,7 +266,7 @@ const TemplateBuilderContent = ({
     };
 
     return (
-        <div style={{ maxWidth: 600, margin: "0 auto", padding: 16 }}>
+        <div style={{ width: "100%", margin: "0 auto", padding: 16 }}>
             <h3>Template Builder</h3>
 
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>

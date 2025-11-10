@@ -4,10 +4,17 @@ import { useTemplateBuilder } from "../TemplateBuilderContext";
 
 alasql.fn.DATE_IS_COMPLETE = function (value) {
     if (!value) return false;
-    return String(value).includes('-');
+
+    if (String(value).includes('-')) {
+        const [, endYear] = value.split("-");
+
+        return endYear.toLowerCase().trim() !== "current";
+    } else {
+        return false;
+    }
 };
 
-alasql.from.EXPAND_DELIMITER_LIST = function(dbtype, opts, cb, idx, query) {
+alasql.from.EXPAND_DELIMITER_LIST = function (dbtype, opts, cb, idx, query) {
     const column = opts.column;      // column to split
     const delimiter = opts.delimiter; // delimiter
     const table = opts.table || [];   // input table
@@ -45,7 +52,6 @@ alasql.from.EXPAND_DELIMITER_LIST = function(dbtype, opts, cb, idx, query) {
 
 const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSettings, attributeKeys = {} }) => {
     const { sectionsMap } = useTemplateBuilder();
-    const [customQuery, setCustomQuery] = useState(sqlSettings?.customQuery || "");
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -260,7 +266,7 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
     }, [dataSource, sectionsMap, attributeKeys]);
 
     const executeQuery = async () => {
-        if (!customQuery || !customQuery.trim()) {
+        if (!sqlSettings?.query || !sqlSettings.query.trim()) {
             setError("No query to execute");
             return;
         }
@@ -276,7 +282,9 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
 
             // Execute AlaSQL query
             console.log("data quereying:", data)
-            const res = alasql(customQuery, [data]);
+            const res = alasql(sqlSettings.query, [data]);
+
+            console.log("JJFILTER query", res);
 
             setResults({
                 columns: res.length > 0 ? Object.keys(res[0]) : [],
@@ -298,7 +306,12 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
     };
 
     const handleCustomQueryChange = (e) => {
-        setCustomQuery(e.target.value);
+        const newQuery = e.target.value;
+        // Save immediately to sqlSettings
+        setSqlSettings({
+            ...sqlSettings,
+            query: newQuery,
+        });
     };
 
     const addRow = () => {
@@ -628,7 +641,7 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
                         SQL Query
                     </label>
                     <textarea
-                        value={customQuery}
+                        value={sqlSettings?.query || ""}
                         onChange={handleCustomQueryChange}
                         onKeyPress={handleKeyPress}
                         placeholder="SELECT * FROM ? WHERE condition"

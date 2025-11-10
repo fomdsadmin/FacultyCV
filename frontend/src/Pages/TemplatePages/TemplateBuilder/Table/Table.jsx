@@ -25,6 +25,10 @@ const Table = ({ table, setTable }) => {
     setTable(table.id, { tableSettings: { ...table.tableSettings, ...updates } });
   };
 
+  const handleSkipDateFilterChange = (e) => {
+    setTable(table.id, { dataSettings: { ...table.dataSettings, skipDateFilter: e.target.checked } });
+  };
+
   const handleHeaderChange = (value) => {
     setTableSettings({ header: value });
   };
@@ -63,6 +67,20 @@ const Table = ({ table, setTable }) => {
           dataSource={dataSource}
           setDataSettings={setDataSettings}
         />
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={table?.dataSettings?.skipDateFilter || false}
+              onChange={handleSkipDateFilterChange}
+              style={{ cursor: "pointer" }}
+            />
+            <span style={{ fontSize: 12, color: "#666" }}>
+              Skip Date Filter (data will not be filtered by date ranges)
+            </span>
+          </label>
+        </div>
 
         {dataSource && (
           <>

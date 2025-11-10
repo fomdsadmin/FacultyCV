@@ -18,6 +18,10 @@ export const buildAttributeObject = (attributeName, attributeKey) => {
     originalName: attributeName,
     rename: "",
     key: attributeKey,
+    footnoteSettings: {
+      footnoteSource: "",
+      footnoteTarget: "",
+    },
     children: [],
   }
 }
@@ -52,11 +56,11 @@ export const TemplateBuilderProvider = ({
         // invert attributes_type to get a mapping of attributeName -> type
         const invertedTypeMap = {};
         const dropdownOptions = {};
-        
+
         for (const [type, attrs] of Object.entries(attributesType)) {
           for (const attrName of Object.keys(attrs)) {
             invertedTypeMap[attrName] = type;
-            
+
             // Extract dropdown options: dropdown attribute name -> options array
             if (type === "dropdown" && Array.isArray(attrs[attrName])) {
               dropdownOptions[attrName] = attrs[attrName];
