@@ -306,7 +306,9 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
             id: crypto.randomUUID(),
             type: "attribute_group",
             name: name,
-            settings: {},
+            settings: {
+                merge: false
+            },
             children: [],
         };
 
