@@ -11,6 +11,7 @@ const TemplateCreatorPage = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const { currentViewRole } = useApp();
   const [createdWithRole, setCreatedWithRole] = useState(currentViewRole);
+  const [showDeclaration, setShowDeclaration] = useState(false);
 
   useEffect(() => {
     fetchSections()
@@ -58,7 +59,7 @@ const TemplateCreatorPage = ({ onBack }) => {
     };
     console.log(initialData)
     setTemplate(initialData);
-  }, [sections])
+  }, [sections, createdWithRole])
 
   const fetchSections = async () => {
     const fetchedSections = await getAllSections()
@@ -90,6 +91,8 @@ const TemplateCreatorPage = ({ onBack }) => {
             onBack={onBack}
             setCreatedWithRole={setCreatedWithRole}
             createdWithRole={createdWithRole}
+            showDeclaration={showDeclaration}
+            setShowDeclaration={setShowDeclaration}
           />
         )}
       </div>

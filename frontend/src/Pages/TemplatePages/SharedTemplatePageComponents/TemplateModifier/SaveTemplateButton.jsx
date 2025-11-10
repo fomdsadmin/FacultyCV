@@ -36,12 +36,16 @@ const SaveTemplateButton = ({ templateId = null }) => {
         const clean_groups = groups.filter(group => group.id !== HIDDEN_GROUP_ID)
         console.log(HIDDEN_GROUP_ID)
 
-        // Build template structure from groups data - INCLUDE created_with_role
+        // Build template structure with both old (groups) and new (templateBuilder) formats
         const templateStructure = JSON.stringify({
             sort_ascending: sortAscending,
             created_with_role: createdWithRole,
+            show_declaration: showDeclaration,
             groups: clean_groups,
-            show_declaration: showDeclaration
+            // Include templateBuilder for future compatibility
+            templateBuilder: {
+                items: [] // Empty for now, kept for forward compatibility
+            }
         })
         console.log(clean_groups);
 

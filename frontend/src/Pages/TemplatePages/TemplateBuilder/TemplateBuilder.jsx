@@ -23,6 +23,8 @@ import SortableGroup from "./Group/SortableGroup";
 import SortableTable from "./Table/SortableTable";
 import AddGroupModal from "./AddGroupModal";
 import AddTableModal from "./AddTableModal";
+import SaveTemplateButton from "./SaveTemplateButton";
+import SortButton from "./SortButton";
 import {
     buildTree,
     flattenTree,
@@ -85,13 +87,6 @@ const TemplateBuilderContent = ({
     const [offsetLeft, setOffsetLeft] = useState(0);
 
     const indentationWidth = 50;
-
-    const setSortAscending = (ascending) => {
-        setTemplate((prevTemplate) => ({
-            ...prevTemplate,
-            sort_ascending: ascending,
-        }));
-    };
 
     useEffect(() => {
         console.log("JJFILTER items: ", items)
@@ -259,6 +254,59 @@ const TemplateBuilderContent = ({
 
     return (
         <div style={{ width: "100%", margin: "0 auto", padding: 16 }}>
+            {/* Header Section */}
+            <div className="mb-6">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Template Title
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter template title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                {/* Show Declaration Checkbox */}
+                <div className="mb-4 flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        id="showDeclaration"
+                        checked={showDeclaration}
+                        onChange={(e) => setShowDeclaration(e.target.checked)}
+                        className="w-4 h-4 border border-gray-300 rounded cursor-pointer"
+                    />
+                    <label htmlFor="showDeclaration" className="text-sm font-medium text-gray-700 cursor-pointer">
+                        Show Declaration
+                    </label>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                    <SortButton />
+                    <SaveTemplateButton 
+                        templateId={templateId}
+                        items={items}
+                        onBack={onBack}
+                    />
+                </div>
+            </div>
+
+            {/* Instructions */}
+            <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-900 mb-2">How to use Template Builder</h3>
+                <ul className="text-sm text-gray-700 space-y-1">
+                    <li>• Add groups to organize sections by category</li>
+                    <li>• Add tables to display data from your CV sections</li>
+                    <li>• Drag and drop to reorder items</li>
+                    <li>• Configure table settings, filters, and column displays</li>
+                </ul>
+            </div>
+
+            {/* Add Items Section */}
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                 <AddGroupModal onAdd={handleAddGroup} />
                 <AddTableModal onAdd={handleAddTable} />
