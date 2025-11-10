@@ -4,35 +4,22 @@ const QueryResultsTable = ({ results, loading }) => {
     if (!results) return null;
 
     return (
-        <div style={{ marginTop: 12 }}>
-            <div style={{ marginBottom: 8 }}>
-                <strong style={{ fontSize: 12, color: "#333" }}>
+        <div className="mt-3">
+            <div className="mb-2">
+                <strong className="text-xs text-gray-800">
                     Results ({results.rows.length} rows)
                 </strong>
             </div>
-            <div style={{
-                overflowX: "auto",
-                border: "1px solid #ddd",
-                borderRadius: 4,
-                backgroundColor: "#fafafa",
-            }}>
-                <table style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: 11,
-                }}>
+            <div className="overflow-x-auto rounded bg-gray-50">
+                <table className="w-full border-collapse text-xs border border-gray-300">
                     <thead>
-                        <tr style={{ backgroundColor: "#e3f2fd", borderBottom: "1px solid #ddd" }}>
+                        <tr className="bg-blue-50 border-b border-gray-300">
                             {results.columns.map((col, idx) => (
                                 <th
                                     key={idx}
-                                    style={{
-                                        padding: "8px 12px",
-                                        textAlign: "left",
-                                        fontWeight: 600,
-                                        color: "#1976d2",
-                                        borderRight: idx < results.columns.length - 1 ? "1px solid #ddd" : "none",
-                                    }}
+                                    className={`px-3 py-2 text-left font-semibold text-blue-700 ${
+                                        idx < results.columns.length - 1 ? "border-r border-gray-300" : ""
+                                    }`}
                                 >
                                     {col}
                                 </th>
@@ -44,11 +31,7 @@ const QueryResultsTable = ({ results, loading }) => {
                             <tr>
                                 <td
                                     colSpan={results.columns.length}
-                                    style={{
-                                        padding: "8px 12px",
-                                        textAlign: "center",
-                                        color: "#999",
-                                    }}
+                                    className="px-3 py-2 text-center text-gray-500"
                                 >
                                     No results
                                 </td>
@@ -57,19 +40,16 @@ const QueryResultsTable = ({ results, loading }) => {
                             results.rows.map((row, rowIdx) => (
                                 <tr
                                     key={rowIdx}
-                                    style={{
-                                        borderBottom: "1px solid #ddd",
-                                        backgroundColor: rowIdx % 2 === 0 ? "#fff" : "#f9f9f9",
-                                    }}
+                                    className={`border-b border-gray-300 ${
+                                        rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                    }`}
                                 >
                                     {results.columns.map((col, colIdx) => (
                                         <td
                                             key={colIdx}
-                                            style={{
-                                                padding: "8px 12px",
-                                                borderRight: colIdx < results.columns.length - 1 ? "1px solid #ddd" : "none",
-                                                color: "#333",
-                                            }}
+                                            className={`px-3 py-2 text-gray-800 ${
+                                                colIdx < results.columns.length - 1 ? "border-r border-gray-300" : ""
+                                            }`}
                                         >
                                             {typeof row[col] === "object"
                                                 ? JSON.stringify(row[col])

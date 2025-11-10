@@ -126,15 +126,15 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
     };
 
     return (
-        <div style={{ marginTop: 16, padding: "12px", backgroundColor: "#f9f9f9", borderRadius: 6 }}>
-            <div style={{ marginBottom: 12 }}>
-                <strong style={{ fontSize: 13, color: "#333" }}>SQL Query</strong>
-                <p style={{ color: "#666", fontSize: 12, marginTop: 8, marginBottom: 12, fontWeight: 500 }}>
+        <div className="mt-4 p-3 bg-gray-50 rounded-md">
+            <div className="mb-3">
+                <strong className="text-sm text-gray-800">SQL Query</strong>
+                <p className="text-gray-600 text-xs mt-2 mb-3 font-medium">
                     View and customize the SQL query generated from filters and aggregations
                 </p>
             </div>
 
-            <div style={{ padding: "12px", backgroundColor: "white", borderRadius: 4 }}>
+            <div className="p-3 bg-white rounded-md">
                 {/* Mock Data Editor */}
                 {data && (
                     <MockDataTable

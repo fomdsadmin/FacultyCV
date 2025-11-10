@@ -4,15 +4,7 @@ const ErrorMessage = ({ error }) => {
     if (!error) return null;
 
     return (
-        <div style={{
-            marginBottom: 12,
-            padding: "8px 12px",
-            backgroundColor: "#ffebee",
-            border: "1px solid #ef5350",
-            borderRadius: 4,
-            color: "#c62828",
-            fontSize: 12,
-        }}>
+        <div className="mb-3 p-3 bg-red-50 border border-red-300 rounded text-red-700 text-xs">
             {error}
         </div>
     );
@@ -21,34 +13,16 @@ const ErrorMessage = ({ error }) => {
 const InfoMessage = ({ message, type = "info" }) => {
     if (!message) return null;
 
-    const styles = {
-        info: {
-            backgroundColor: "#e8f5e9",
-            border: "1px solid #4caf50",
-            color: "#2e7d32",
-        },
-        success: {
-            backgroundColor: "#e8f5e9",
-            border: "1px solid #4caf50",
-            color: "#2e7d32",
-        },
-        warning: {
-            backgroundColor: "#fff3e0",
-            border: "1px solid #ff9800",
-            color: "#e65100",
-        },
+    const styleMap = {
+        info: "bg-green-50 border-green-300 text-green-700",
+        success: "bg-green-50 border-green-300 text-green-700",
+        warning: "bg-yellow-50 border-yellow-300 text-yellow-700",
     };
 
-    const style = styles[type] || styles.info;
+    const classes = styleMap[type] || styleMap.info;
 
     return (
-        <div style={{
-            marginTop: 12,
-            padding: "8px 12px",
-            ...style,
-            borderRadius: 4,
-            fontSize: 12,
-        }}>
+        <div className={`mt-3 p-3 border rounded text-xs ${classes}`}>
             {message}
         </div>
     );
