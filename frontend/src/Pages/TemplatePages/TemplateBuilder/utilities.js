@@ -1,7 +1,5 @@
 import { arrayMove } from "@dnd-kit/sortable";
 
-export const iOS = /iPad|iPhone|iPod/.test(navigator.platform);
-
 function getDragDepth(offset, indentationWidth) {
   return Math.round(offset / indentationWidth);
 }
