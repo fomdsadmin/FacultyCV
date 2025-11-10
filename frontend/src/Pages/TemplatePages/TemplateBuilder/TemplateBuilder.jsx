@@ -256,7 +256,7 @@ const TemplateBuilderContent = ({
                 },
                 sqlSettings: {
                     query: "SELECT * FROM ?",
-                    lastUpdated: new Date().toISOString()
+                    columnTextTemplate: ""
                 }
             },
             children: [],

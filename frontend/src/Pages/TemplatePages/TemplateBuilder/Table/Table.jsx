@@ -3,7 +3,7 @@ import { useTemplateBuilder } from "../TemplateBuilderContext";
 import DataSourceDropdown from "./DataSourceDropdown";
 import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
 import FilterComponent from "./FilterComponent";
-import SQLQueryComponent from "./SQLQueryComponent";
+import SQLQueryComponent from "./sqlquerycomponent/SQLQueryComponent";
 import HeaderEditor from "./HeaderEditor";
 
 const Table = ({ table, setTable }) => {
