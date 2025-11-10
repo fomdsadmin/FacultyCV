@@ -3,6 +3,7 @@ import { useTemplateBuilder } from "../../TemplateBuilderContext";
 import MockDataTable from "./MockDataTable";
 import SQLQueryEditor from "./SQLQueryEditor";
 import QueryResultsTable from "./QueryResultsTable";
+import ColumnTextTemplateEditor from "./ColumnTextTemplateEditor";
 import { ErrorMessage, InfoMessage } from "./MessageComponents";
 import { initializeAlaSQL, executeAlaSQL } from "./alasqlUtils";
 import { generateMockData } from "./mockDataUtils";
@@ -116,6 +117,14 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
         setResults(null);
     };
 
+    // Update column text template
+    const handleColumnTextTemplateChange = (html) => {
+        setSqlSettings({
+            ...sqlSettings,
+            columnTextTemplate: html,
+        });
+    };
+
     return (
         <div style={{ marginTop: 16, padding: "12px", backgroundColor: "#f9f9f9", borderRadius: 6 }}>
             <div style={{ marginBottom: 12 }}>
@@ -150,6 +159,14 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
 
                 {/* Results Table */}
                 <QueryResultsTable results={results} loading={loading} />
+
+                {/* Column Text Template Editor - Always Display */}
+                <ColumnTextTemplateEditor
+                    template={sqlSettings?.columnTextTemplate || ""}
+                    onTemplateChange={handleColumnTextTemplateChange}
+                    availableColumns={results?.columns || []}
+                    previousColumns={[]}
+                />
 
                 {/* Info Message */}
                 {!results && !error && data && (
