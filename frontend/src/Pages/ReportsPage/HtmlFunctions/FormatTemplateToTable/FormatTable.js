@@ -28,6 +28,7 @@ export const formatTable = (table) => {
     let queryResult = null;
 
     if (sqlQuery && sqlQuery.trim() !== "") {
+        console.log("jjfilter dataArray before execute", dataArray);
         queryResult = executeAlaSQL(sqlQuery, dataArray);
         dataArray = queryResult.rows;
         console.log("jjfilter dataArray", dataArray);
@@ -53,7 +54,10 @@ export const formatTable = (table) => {
     const footnotesToUse = formatFootnotes(columnItems, dataArray);
 
     // Merge rows for attribute groups with merge=true
-    rowsToUse = mergeRowAttributes(rowsToUse, columnItems);
+    // Only merge if there are actual merge groups in the template
+    if (hasMergeGroups(columnItems)) {
+        rowsToUse = mergeRowAttributes(rowsToUse, columnItems);
+    }
 
     const formattedTable = {
         type: table.type,
@@ -170,6 +174,24 @@ const includeRowNumber = (columns) => {
     };
 
     return hasRowNumber(columns);
+}
+
+const hasMergeGroups = (items) => {
+    if (!Array.isArray(items)) return false;
+
+    for (const item of items) {
+        if (item.type === "attribute_group" && item.merge) {
+            return true;
+        }
+
+        if (item.children && item.children.length > 0) {
+            if (hasMergeGroups(item.children)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 const mergeRowAttributes = (rows, columns) => {
