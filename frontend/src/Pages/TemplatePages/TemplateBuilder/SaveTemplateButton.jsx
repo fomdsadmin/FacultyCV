@@ -4,12 +4,12 @@ import { useState } from "react"
 import { addTemplate, updateTemplate } from "../../../graphql/graphqlHelpers"
 import { toast } from "react-toastify"
 import { useTemplateBuilder } from "./TemplateBuilderContext"
+import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext"
 import { useAuditLogger } from '../../../Contexts/AuditLoggerContext';
 import { AUDIT_ACTIONS } from '../../../Contexts/AuditLoggerContext';
 
 const SaveTemplateButton = ({ 
   templateId = null,
-  items = [],
   onSaveComplete = null,
   onBack = null
 }) => {
@@ -18,8 +18,10 @@ const SaveTemplateButton = ({
         sortAscending,
         createdWithRole,
         showDeclaration,
+        items,
     } = useTemplateBuilder();
 
+    const { fetchTemplates } = useTemplatePageContext();
     const { logAction } = useAuditLogger();
     const [isSaving, setIsSaving] = useState(false)
 
@@ -49,6 +51,7 @@ const SaveTemplateButton = ({
                 await logAction(AUDIT_ACTIONS.EDIT_CV_TEMPLATE);
             }
             toast.success("Template saved successfully!", { autoClose: 3000 })
+            fetchTemplates();
             if (onSaveComplete) {
                 onSaveComplete();
             }

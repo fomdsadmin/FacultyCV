@@ -37,7 +37,9 @@ export const TemplateBuilderProvider = ({
   setCreatedWithRole,
   showDeclaration,
   setShowDeclaration,
-  templateId
+  templateId,
+  items,
+  setItems
 }) => {
 
   const [sectionsMap, setSectionsMap] = useState(null);
@@ -99,6 +101,8 @@ export const TemplateBuilderProvider = ({
     showDeclaration,
     setShowDeclaration,
     templateId,
+    items,
+    setItems,
 
     // onBack
     onBack,

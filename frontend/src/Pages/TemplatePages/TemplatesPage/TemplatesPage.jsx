@@ -3,15 +3,14 @@ import PageContainer from '../../../Views/PageContainer.jsx';
 import AdminMenu from '../../../Components/AdminMenu.jsx';
 import FacultyAdminMenu from '../../../Components/FacultyAdminMenu.jsx';
 import DepartmentAdminMenu from '../../../Components/DepartmentAdminMenu.jsx';
-import NewTemplatePage from '../NewTemplatePage.jsx';
 import TemplateCard from '../../../Components/TemplateCard.jsx';
 import EditReportFormatting from '../../../Components/EditReportFormat.jsx';
-import EditTemplatePage from 'Pages/TemplatePages/EditTemplatePage/EditTemplatePage.jsx';
 import { TemplatePageProvider, useTemplatePageContext } from './TemplatePageContext.jsx';
 import { useApp } from 'Contexts/AppContext.jsx';
 import { addTemplate } from '../../../graphql/graphqlHelpers';
 import { toast } from 'react-toastify';
 import TemplateCreatorPage from '../TemplateCreatorPage/TemplateCreatorPage.jsx';
+import TemplateEditorPage from '../TemplateEditorPage/TemplateEditorPage.jsx';
 
 const TemplatesPageContent = () => {
   const { getCognitoUser, userInfo, currentViewRole, toggleViewMode } = useApp();
@@ -168,7 +167,7 @@ const TemplatesPageContent = () => {
               </div>
             ) : (
               <div className='!h-full custom-scrollbar'>
-                <EditTemplatePage onBack={handleBack} />
+                <TemplateEditorPage onBack={handleBack} />
               </div>
             )}
           </>

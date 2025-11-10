@@ -78,19 +78,13 @@ const TemplateBuilderContent = ({
     setShowDeclaration,
 }) => {
 
-    const { sectionsMap } = useTemplateBuilder();
-
-    const [items, setItems] = useState([]);
+    const { sectionsMap, items, setItems } = useTemplateBuilder();
 
     const [activeId, setActiveId] = useState(null);
     const [overId, setOverId] = useState(null);
     const [offsetLeft, setOffsetLeft] = useState(0);
 
     const indentationWidth = 50;
-
-    useEffect(() => {
-        console.log("JJFILTER items: ", items)
-    }, [items])
 
     const flattenedItems = useMemo(() => {
         const flattenedTree = flattenTree(items);
@@ -289,7 +283,6 @@ const TemplateBuilderContent = ({
                     <SortButton />
                     <SaveTemplateButton 
                         templateId={templateId}
-                        items={items}
                         onBack={onBack}
                     />
                 </div>
@@ -398,24 +391,33 @@ const TemplateBuilder = ({
     createdWithRole,
     showDeclaration,
     setShowDeclaration,
+    sortAscending,
+    setSortAscending,
 }) => {
+    const [items, setItems] = useState([]);
+
+    // Initialize items from template once
+    useEffect(() => {
+        if (template && template.templateBuilder && template.templateBuilder.items) {
+            setItems(template.templateBuilder.items);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [templateId]);
+
     return (
         <TemplateBuilderProvider
             title={title}
             setTitle={setTitle}
             onBack={onBack}
-            sortAscending={template.sort_ascending}
-            setSortAscending={(ascending) => {
-                setTemplate((prevTemplate) => ({
-                    ...prevTemplate,
-                    sort_ascending: ascending,
-                }));
-            }}
+            sortAscending={sortAscending}
+            setSortAscending={setSortAscending}
             setCreatedWithRole={setCreatedWithRole}
             createdWithRole={createdWithRole}
             showDeclaration={showDeclaration}
             setShowDeclaration={setShowDeclaration}
             templateId={templateId}
+            items={items}
+            setItems={setItems}
         >
             <TemplateBuilderContent
                 template={template}

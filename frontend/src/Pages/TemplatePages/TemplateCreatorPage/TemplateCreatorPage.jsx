@@ -12,6 +12,7 @@ const TemplateCreatorPage = ({ onBack }) => {
   const { currentViewRole } = useApp();
   const [createdWithRole, setCreatedWithRole] = useState(currentViewRole);
   const [showDeclaration, setShowDeclaration] = useState(false);
+  const [sortAscending, setSortAscending] = useState(true);
 
   useEffect(() => {
     fetchSections()
@@ -93,6 +94,8 @@ const TemplateCreatorPage = ({ onBack }) => {
             createdWithRole={createdWithRole}
             showDeclaration={showDeclaration}
             setShowDeclaration={setShowDeclaration}
+            sortAscending={sortAscending}
+            setSortAscending={setSortAscending}
           />
         )}
       </div>
