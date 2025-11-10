@@ -51,34 +51,35 @@ const ColumnTextTemplateEditor = ({
     };
 
     const modules = React.useMemo(() => ({
-        toolbar: [
-            ["bold", "italic", "underline", "strike"],
-            ["blockquote"],
-            [{ "list": "ordered" }, { "list": "bullet" }],
-            ["clean"]
-        ]
+        toolbar: {
+            container: [
+                ["bold", "italic", "underline"],
+                [{ "header": [1, 2, 3] }],
+                [{ "list": "ordered" }, { "list": "bullet" }],
+                ["link"],
+                ["clean"]
+            ]
+        }
     }), []);
 
     const formats = [
-        "bold",
-        "italic",
-        "underline",
-        "strike",
-        "blockquote",
-        "list"
+        "bold", "italic", "underline",
+        "header",
+        "list",
+        "link"
     ];
 
     return (
-        <div className="column-text-template-editor space-y-4">
-            <div className="mt-3">
-                <strong className="text-sm text-gray-800">Column Text Template</strong>
-                <p className="text-gray-600 text-xs mt-2 mb-3 font-medium">
+        <div className="mb-4 mt-4 p-3 bg-gray-100 rounded border border-gray-300">
+            <div className="mb-3">
+                <strong className="text-xs text-gray-800">Column Text Template</strong>
+                <p className="text-gray-600 text-xs mt-1 mb-2">
                     Customize the text displayed for each row using SQL result columns
                 </p>
             </div>
 
             {/* Variable Insertion Dropdown */}
-            <div>
+            <div className="mb-3">
                 <label className="text-xs text-gray-600 block mb-1.5 font-medium">
                     Insert Column Variable
                 </label>
@@ -102,13 +103,13 @@ const ColumnTextTemplateEditor = ({
 
             {/* Invalid Variables Warning */}
             {invalidVariables.length > 0 && (
-                <div className="p-2 mb-3 bg-red-50 border border-red-200 rounded text-xs text-red-600">
+                <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
                     <strong>Invalid column references:</strong> {invalidVariables.join(", ")}
                 </div>
             )}
 
             {/* Rich Text Editor */}
-            <div className="border border-gray-300 rounded overflow-hidden">
+            <div className="bg-white rounded border border-gray-300 overflow-hidden mb-3">
                 <ReactQuill
                     ref={quillRef}
                     theme="snow"
@@ -117,11 +118,15 @@ const ColumnTextTemplateEditor = ({
                     modules={modules}
                     formats={formats}
                     placeholder="Enter your template text here..."
+                    style={{
+                        height: "200px",
+                        fontSize: "12px"
+                    }}
                 />
             </div>
 
             {/* Help Text */}
-            <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-600">
+            <div className="p-2 bg-gray-50 rounded text-xs text-gray-600 border border-gray-200">
                 <strong>Usage:</strong> Use <code>${"{"} columnName {"}"}</code> syntax to insert column values. Available columns: {availableColumns.join(", ") || "None"}
             </div>
         </div>

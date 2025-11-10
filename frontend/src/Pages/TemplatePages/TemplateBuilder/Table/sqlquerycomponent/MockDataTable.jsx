@@ -99,78 +99,41 @@ const MockDataTable = ({ data, setData, attributeKeys, dataSource }) => {
     if (!data || data.length === 0) return null;
 
     return (
-        <div style={{ marginBottom: 16, padding: "12px", backgroundColor: "#f5f5f5", borderRadius: 4, border: "1px solid #e0e0e0" }}>
-            <div style={{ marginBottom: 12 }}>
-                <strong style={{ fontSize: 12, color: "#333" }}>Mock Data Table</strong>
-                <p style={{ color: "#666", fontSize: 11, marginTop: 4, marginBottom: 8 }}>
+        <div className="mb-4 p-3 bg-gray-100 rounded border border-gray-300">
+            <div className="mb-3">
+                <strong className="text-xs text-gray-800">Mock Data Table</strong>
+                <p className="text-gray-600 text-xs mt-1 mb-2">
                     Edit data directly or click cells to modify them.
                 </p>
             </div>
 
             {/* Add Row Button */}
-            <div style={{ marginBottom: 12 }}>
+            <div className="mb-3">
                 <button
                     onClick={addRow}
-                    style={{
-                        padding: "6px 12px",
-                        backgroundColor: "#4caf50",
-                        color: "white",
-                        border: "none",
-                        borderRadius: 4,
-                        cursor: "pointer",
-                        fontSize: 11,
-                        fontWeight: 500,
-                    }}
+                    className="px-3 py-1.5 bg-green-500 text-white rounded text-xs font-medium hover:bg-green-600 transition-colors"
                 >
                     + Add Row
                 </button>
             </div>
 
             {/* Mock Data Table */}
-            <div style={{
-                overflowX: "auto",
-                border: "1px solid #ddd",
-                borderRadius: 4,
-                backgroundColor: "#fafafa",
-            }}>
-                <table style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: 11,
-                }}>
+            <div className="overflow-x-auto border border-gray-300 rounded bg-gray-50">
+                <table className="w-full border-collapse text-xs">
                     <thead>
-                        <tr style={{ backgroundColor: "#f0f0f0", borderBottom: "1px solid #ddd" }}>
-                            <th style={{
-                                padding: "8px 12px",
-                                textAlign: "center",
-                                fontWeight: 600,
-                                color: "#666",
-                                width: "40px",
-                                borderRight: "1px solid #ddd",
-                            }}>
+                        <tr className="bg-gray-200 border-b border-gray-300">
+                            <th className="px-3 py-2 text-center font-semibold text-gray-700 w-10 border-r border-gray-300">
                                 #
                             </th>
                             {Object.entries(attributeKeys).map(([displayName, fieldName]) => (
                                 <th
                                     key={fieldName}
-                                    style={{
-                                        padding: "8px 12px",
-                                        textAlign: "left",
-                                        fontWeight: 600,
-                                        color: "#666",
-                                        borderRight: "1px solid #ddd",
-                                    }}
+                                    className="px-3 py-2 text-left font-semibold text-gray-700 border-r border-gray-300"
                                 >
                                     {fieldName}
                                 </th>
                             ))}
-                            <th style={{
-                                padding: "8px 12px",
-                                textAlign: "center",
-                                fontWeight: 600,
-                                color: "#666",
-                                width: "40px",
-                            }}>
+                            <th className="px-3 py-2 text-center font-semibold text-gray-700 w-10">
                                 Del
                             </th>
                         </tr>
@@ -179,18 +142,11 @@ const MockDataTable = ({ data, setData, attributeKeys, dataSource }) => {
                         {data.map((row, rowIdx) => (
                             <tr
                                 key={rowIdx}
-                                style={{
-                                    borderBottom: "1px solid #ddd",
-                                    backgroundColor: rowIdx % 2 === 0 ? "#fff" : "#f9f9f9",
-                                }}
+                                className={`border-b border-gray-300 ${
+                                    rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                }`}
                             >
-                                <td style={{
-                                    padding: "8px 12px",
-                                    textAlign: "center",
-                                    color: "#999",
-                                    borderRight: "1px solid #ddd",
-                                    fontSize: 10,
-                                }}>
+                                <td className="px-3 py-2 text-center text-gray-500 text-xs border-r border-gray-300">
                                     {rowIdx + 1}
                                 </td>
                                 {Object.entries(attributeKeys).map(([displayName, fieldName]) => {
@@ -204,17 +160,13 @@ const MockDataTable = ({ data, setData, attributeKeys, dataSource }) => {
                                     return (
                                         <td
                                             key={fieldName}
-                                            style={{
-                                                padding: "8px 12px",
-                                                borderRight: "1px solid #ddd",
-                                                color: "#333",
-                                                cursor: "pointer",
-                                                backgroundColor: isEditing ? "#fff9c4" : "inherit",
-                                            }}
+                                            className={`px-3 py-2 border-r border-gray-300 text-gray-800 cursor-pointer ${
+                                                isEditing ? "bg-yellow-100" : ""
+                                            }`}
                                             onClick={() => !isEditing && startEditCell(rowIdx, fieldName, currentValue)}
                                         >
                                             {isEditing ? (
-                                                <div style={{ display: "flex", gap: 4 }}>
+                                                <div className="flex gap-1">
                                                     {attrType === "dropdown" && dropdownOptions[displayName] ? (
                                                         <select
                                                             value={editingValue}
@@ -222,13 +174,7 @@ const MockDataTable = ({ data, setData, attributeKeys, dataSource }) => {
                                                             onKeyPress={handleEditKeyPress}
                                                             onBlur={saveEdit}
                                                             autoFocus
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: "4px 6px",
-                                                                border: "1px solid #2196F3",
-                                                                borderRadius: 2,
-                                                                fontSize: 11,
-                                                            }}
+                                                            className="flex-1 px-1.5 py-1 border border-blue-500 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-300"
                                                         >
                                                             {dropdownOptions[displayName].map((opt) => (
                                                                 <option key={opt} value={opt}>{opt}</option>
@@ -242,67 +188,34 @@ const MockDataTable = ({ data, setData, attributeKeys, dataSource }) => {
                                                             onKeyPress={handleEditKeyPress}
                                                             onBlur={saveEdit}
                                                             autoFocus
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: "4px 6px",
-                                                                border: "1px solid #2196F3",
-                                                                borderRadius: 2,
-                                                                fontSize: 11,
-                                                            }}
+                                                            className="flex-1 px-1.5 py-1 border border-blue-500 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-300"
                                                         />
                                                     )}
                                                     <button
                                                         onClick={saveEdit}
-                                                        style={{
-                                                            padding: "2px 6px",
-                                                            backgroundColor: "#4caf50",
-                                                            color: "white",
-                                                            border: "none",
-                                                            borderRadius: 2,
-                                                            cursor: "pointer",
-                                                            fontSize: 10,
-                                                        }}
+                                                        className="px-1.5 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition-colors"
                                                     >
                                                         ✓
                                                     </button>
                                                     <button
                                                         onClick={cancelEdit}
-                                                        style={{
-                                                            padding: "2px 6px",
-                                                            backgroundColor: "#f44336",
-                                                            color: "white",
-                                                            border: "none",
-                                                            borderRadius: 2,
-                                                            cursor: "pointer",
-                                                            fontSize: 10,
-                                                        }}
+                                                        className="px-1.5 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
                                                     >
                                                         ✕
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <span title={String(currentValue)} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "200px" }}>
+                                                <span title={String(currentValue)} className="block overflow-hidden text-ellipsis whitespace-nowrap max-w-xs">
                                                     {String(currentValue || "")}
                                                 </span>
                                             )}
                                         </td>
                                     );
                                 })}
-                                <td style={{
-                                    padding: "8px 12px",
-                                    textAlign: "center",
-                                }}>
+                                <td className="px-3 py-2 text-center">
                                     <button
                                         onClick={() => removeRow(rowIdx)}
-                                        style={{
-                                            padding: "2px 6px",
-                                            backgroundColor: "#f44336",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: 2,
-                                            cursor: "pointer",
-                                            fontSize: 10,
-                                        }}
+                                        className="px-1.5 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
                                     >
                                         ✕
                                     </button>

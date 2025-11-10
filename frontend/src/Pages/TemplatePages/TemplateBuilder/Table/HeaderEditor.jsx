@@ -23,20 +23,15 @@ const HeaderEditor = ({ header = "", onHeaderChange }) => {
     ];
 
     return (
-        <div style={{ marginBottom: 16, padding: "12px", backgroundColor: "#f5f5f5", borderRadius: 4, border: "1px solid #e0e0e0" }}>
-            <div style={{ marginBottom: 12 }}>
-                <strong style={{ fontSize: 12, color: "#333" }}>Table Header (Rich Text)</strong>
-                <p style={{ color: "#666", fontSize: 11, marginTop: 4, marginBottom: 8 }}>
+        <div className="mb-4 p-3 bg-gray-100 rounded border border-gray-300">
+            <div className="mb-3">
+                <strong className="text-xs text-gray-800">Table Header (Rich Text)</strong>
+                <p className="text-gray-600 text-xs mt-1 mb-2">
                     Add formatted text, links, or instructions that will appear above the table.
                 </p>
             </div>
 
-            <div style={{
-                backgroundColor: "white",
-                borderRadius: 4,
-                border: "1px solid #ddd",
-                overflow: "hidden"
-            }}>
+            <div className="bg-white rounded border border-gray-300 overflow-hidden">
                 <ReactQuill
                     theme="snow"
                     value={header}
@@ -46,7 +41,7 @@ const HeaderEditor = ({ header = "", onHeaderChange }) => {
                     placeholder="Enter table header content..."
                     style={{
                         height: "200px",
-                        fontSize: 12
+                        fontSize: "12px"
                     }}
                 />
             </div>

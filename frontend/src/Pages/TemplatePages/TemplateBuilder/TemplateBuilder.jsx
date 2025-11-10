@@ -246,14 +246,6 @@ const TemplateBuilderContent = ({
             dataSettings: {
                 dataSource: Object.keys(sectionsMap)[0],
                 skipDateFilter: false,
-                filterSettings: {
-                    include: {
-                        and: []
-                    },
-                    filterOut: {
-                        or: []
-                    }
-                },
                 sqlSettings: {
                     query: "SELECT * FROM ?",
                     columnTextTemplate: ""
@@ -267,8 +259,6 @@ const TemplateBuilderContent = ({
 
     return (
         <div style={{ width: "100%", margin: "0 auto", padding: 16 }}>
-            <h3>Template Builder</h3>
-
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                 <AddGroupModal onAdd={handleAddGroup} />
                 <AddTableModal onAdd={handleAddTable} />

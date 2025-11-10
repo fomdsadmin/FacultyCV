@@ -160,14 +160,6 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
                 {/* Results Table */}
                 <QueryResultsTable results={results} loading={loading} />
 
-                {/* Column Text Template Editor - Always Display */}
-                <ColumnTextTemplateEditor
-                    template={sqlSettings?.columnTextTemplate || ""}
-                    onTemplateChange={handleColumnTextTemplateChange}
-                    availableColumns={results?.columns || []}
-                    previousColumns={[]}
-                />
-
                 {/* Info Message */}
                 {!results && !error && data && (
                     <InfoMessage
@@ -175,6 +167,14 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
                         type="success"
                     />
                 )}
+
+                {/* Column Text Template Editor - Always Display */}
+                <ColumnTextTemplateEditor
+                    template={sqlSettings?.columnTextTemplate || ""}
+                    onTemplateChange={handleColumnTextTemplateChange}
+                    availableColumns={results?.columns || []}
+                    previousColumns={[]}
+                />
             </div>
         </div>
     );
