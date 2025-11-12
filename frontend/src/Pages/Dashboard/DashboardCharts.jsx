@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { getAllSections, getUserCVData } from "../../graphql/graphqlHelpers";
 import { 
   Chart as ChartJS,
@@ -12,9 +12,9 @@ import {
   Filler
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { WordCloudController, WordElement } from "chartjs-chart-wordcloud";
 import AnalyticsCard from "../../Components/AnalyticsCard.jsx";
 import GraphCarousel from "../../Components/GraphCarousel.jsx";
+import KeywordsSection from "./KeywordsSection.jsx";
 
 // Register all Chart.js components including scales
 ChartJS.register(
@@ -26,22 +26,16 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
-  WordCloudController,
-  WordElement,
   ChartDataLabels
 );
 
-const Dashboard = ({ userInfo }) => {
+const DashboardCharts = ({ userInfo }) => {
   const [user, setUser] = useState(userInfo);
   const [loading, setLoading] = useState(false);
   const [publications, setPublications] = useState([]);
   const [grants, setGrants] = useState([]);
   const [totalPublications, setTotalPublications] = useState(0);
   const [totalGrants, setTotalGrants] = useState(0);
-  const [keywordData, setKeywordData] = useState([]);
-  const [showAllKeywords, setShowAllKeywords] = useState(false);
-  const [renderWordCloud, setRenderWordCloud] = useState(false);
-  const wordCloudCanvasRef = useRef(null);
 
   // Consolidated data loading
   useEffect(() => {
@@ -102,33 +96,6 @@ const Dashboard = ({ userInfo }) => {
     },
     [userInfo]
   );
-
-  // Memoized keyword computation
-  const computedKeywordData = useMemo(() => {
-    const keywordCounts = {};
-    publications.forEach((pub) => {
-      try {
-        const details = JSON.parse(pub.data_details);
-        const keywords = details.keywords || [];
-        if (Array.isArray(keywords) && keywords.length > 0) {
-          keywords.forEach((kw) => {
-            if (kw && typeof kw === "string" && kw.trim().length > 0) {
-              const lower = kw.toLowerCase().trim();
-              keywordCounts[lower] = (keywordCounts[lower] || 0) + 1;
-            }
-          });
-        }
-      } catch (e) {
-        console.error("Error parsing publication data for keywords:", e, pub);
-      }
-    });
-
-    const sorted = Object.entries(keywordCounts)
-      .map(([text, value]) => ({ text, value }))
-      .filter((item) => item.value > 1) // Filter out keywords with count <= 1
-      .sort((a, b) => b.value - a.value);
-    return sorted;
-  }, [publications]);
 
   // Memoized publication chart data
   const publicationChartData = useMemo(() => {
@@ -372,106 +339,6 @@ const Dashboard = ({ userInfo }) => {
     return graphs;
   }, [publicationChartData, fundingChartData]);
 
-  // Set keyword data when it changes
-  useEffect(() => {
-    setKeywordData(computedKeywordData);
-  }, [computedKeywordData]);
-
-  // Word cloud rendering effect
-  useEffect(() => {
-    if (!renderWordCloud || !wordCloudCanvasRef.current || keywordData.length === 0) return;
-
-    const container = wordCloudCanvasRef.current.parentElement;
-    const containerWidth = container.offsetWidth;
-    const containerHeight = 500;
-
-    wordCloudCanvasRef.current.width = containerWidth;
-    wordCloudCanvasRef.current.height = containerHeight;
-    wordCloudCanvasRef.current.style.width = `${containerWidth}px`;
-    wordCloudCanvasRef.current.style.height = `${containerHeight}px`;
-
-    const maxValue = Math.max(...keywordData.map((d) => d.value));
-    const minValue = Math.min(...keywordData.map((d) => d.value));
-    const numKeywords = keywordData.length;
-
-    let baseSize = Math.max(10, Math.min(16, containerWidth / 40));
-    let maxSize = Math.max(baseSize * 1.2, Math.min(24, containerWidth / 25));
-    let minSize = Math.max(8, baseSize * 0.8);
-
-    if (numKeywords > 50) {
-      maxSize = Math.min(maxSize, 18);
-      minSize = Math.max(minSize, 8);
-    } else if (numKeywords > 30) {
-      maxSize = Math.min(maxSize, 20);
-      minSize = Math.max(minSize, 10);
-    }
-
-    const chart = new ChartJS(wordCloudCanvasRef.current, {
-      type: "wordCloud",
-      data: {
-        labels: keywordData.map((d) => d.text),
-        datasets: [
-          {
-            label: "Keywords",
-            data: keywordData.map((d) => {
-              const ratio = maxValue === minValue ? 1 : (d.value - minValue) / (maxValue - minValue);
-              return minSize + (maxSize - minSize) * ratio;
-            }),
-          },
-        ],
-      },
-      options: {
-        responsive: false,
-        maintainAspectRatio: false,
-        scales: {
-          // Explicitly disable scales for word cloud
-          x: {
-            display: false,
-            type: 'linear'
-          },
-          y: {
-            display: false,
-            type: 'linear'
-          }
-        },
-        plugins: {
-          tooltip: { enabled: false },
-          datalabels: { display: false },
-          legend: { display: false }
-        },
-        layout: {
-          padding: {
-            top: 60,
-            right: 60,
-            left: 60,
-            bottom: 60,
-          },
-        },
-        elements: {
-          word: {
-            color: (ctx) => {
-              const label = ctx.element?.text;
-              const wordObj = keywordData.find((d) => d.text === label);
-              const isMax = wordObj && wordObj.value === maxValue;
-              return isMax ? "#facc15" : "#4a5568";
-            },
-            padding: 5,
-            rotation: () => 0,
-            family: "Arial, sans-serif",
-            weight: (ctx) => {
-              const label = ctx.element?.text;
-              const wordObj = keywordData.find((d) => d.text === label);
-              const isMax = wordObj && wordObj.value === maxValue;
-              return isMax ? "bold" : "normal";
-            },
-          },
-        },
-      },
-    });
-
-    return () => chart.destroy();
-  }, [keywordData, renderWordCloud]);
-
   // Summary Cards Component
   const SummaryCards = () => (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-2 mb-2 mt-2">
@@ -499,84 +366,9 @@ const Dashboard = ({ userInfo }) => {
       </div>
 
       {/* Keywords Section */}
-      <div className="mt-2">
-        <div className="flex flex-col gap-2 p-2 rounded-lg shadow-md bg-zinc-50">
-          <h2 className="text-lg font-semibold p-4">Keywords From Your Publications</h2>
-          {keywordData.length > 0 && (
-            <div className="flex-1 min-w-0 p-4">
-              <div className="flex flex-wrap gap-2">
-                {(() => {
-                  const sortedKeywords = [...keywordData].sort((a, b) => b.value - a.value);
-                  const maxValue = Math.max(...sortedKeywords.map((k) => k.value || 0));
-                  const displayKeywords = showAllKeywords ? sortedKeywords : sortedKeywords.slice(0, 10);
-
-                  const keywordElements = displayKeywords.map((item, index) => {
-                    const isMax = item.value === maxValue && maxValue > 0;
-                    return (
-                      <span
-                        key={index}
-                        className={`py-2 px-3 text-sm rounded-full ${
-                          isMax ? "bg-yellow-400 text-black font-bold" : "bg-gray-200 text-gray-800"
-                        }`}
-                      >
-                        {item.text.toUpperCase()} {item.value !== 0 && `(${item.value})`}
-                      </span>
-                    );
-                  });
-
-                  if (sortedKeywords.length > 10) {
-                    keywordElements.push(
-                      <button
-                        key="show-all-btn"
-                        onClick={() => setShowAllKeywords(!showAllKeywords)}
-                        className="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition"
-                      >
-                        {showAllKeywords ? "Show Top 10" : "Show All"}
-                      </button>
-                    );
-                  }
-
-                  return keywordElements;
-                })()}
-              </div>
-            </div>
-          )}
-
-          {/* Render word cloud separately, only when button is clicked */}
-          <div className="flex flex-col items-start gap-2 p-4">
-            <button
-              className="px-4 py-2 rounded bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
-              onClick={() => setRenderWordCloud((v) => !v)}
-            >
-              {renderWordCloud ? "Hide Word Cloud" : "Show Word Cloud"}
-            </button>
-            {renderWordCloud && keywordData.length > 0 && (
-              <div
-                style={{
-                  width: "100%",
-                  maxWidth: "100%",
-                  height: "500px",
-                  position: "relative",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "8px",
-                  overflow: "hidden",
-                }}
-              >
-                <canvas
-                  ref={wordCloudCanvasRef}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "block",
-                  }}
-                ></canvas>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <KeywordsSection publications={publications} />
     </div>
   );
 };
 
-export default Dashboard;
+export default DashboardCharts;

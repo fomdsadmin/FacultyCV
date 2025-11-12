@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { useApp } from "../Contexts/AppContext.jsx";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import ManageUser from "Components/ManageUser.jsx";
@@ -15,7 +15,7 @@ import { FaTrash } from "react-icons/fa";
 const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode, currentViewRole }) => {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  // const [filteredUsers, setFilteredUsers] = useState([]);
   const [approvedUsers, setApprovedUsers] = useState([]);
   const [deactivatedUsers, setDeactivatedUsers] = useState([]);
   const [terminatedUsers, setTerminatedUsers] = useState([]);
@@ -71,7 +71,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     if (users.length > 0) {
       filterAllUsers();
     }
-  }, [users, userInfo]);
+  }, [users]);
 
   // Ensure activeUser is set when approvedUsers or params.userId changes
   useEffect(() => {
@@ -142,7 +142,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
       // Filter terminated users
       const terminatedUsersList = allFilteredUsers.filter((user) => user.terminated === true);
 
-      setFilteredUsers(allFilteredUsers);
+      // setFilteredUsers(allFilteredUsers);
       setApprovedUsers(approvedActiveUsers);
       setDeactivatedUsers(deactivatedUsersList);
       setTerminatedUsers(terminatedUsersList);
@@ -314,7 +314,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
           console.log("Deactivating user:", userToRemove);
 
           // Call the updateUserActiveStatus function to set active: false
-          const result = await updateUserActiveStatus(userToRemove.user_id, false);
+          await updateUserActiveStatus(userToRemove.user_id, false);
 
           // Refresh the users list
           fetchAllUsers();
@@ -351,7 +351,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
           console.log("Reactivating user:", userToReactivate);
 
           // Call updateUserActiveStatus to set active: true
-          const result = await updateUserActiveStatus(userToReactivate.user_id, true);
+          await updateUserActiveStatus(userToReactivate.user_id, true);
 
           // Refresh the users list
           fetchAllUsers();
@@ -383,7 +383,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
           console.log("Activating multiple users:", user_ids);
 
           // Call updateUserActiveStatus with array of user_ids
-          const result = await updateUserActiveStatus(user_ids, true);
+          await updateUserActiveStatus(user_ids, true);
 
           // Refresh the users list
           fetchAllUsers();

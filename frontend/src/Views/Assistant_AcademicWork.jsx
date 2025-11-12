@@ -5,7 +5,7 @@ import WorkSection from "../Components/WorkSection";
 import "../CustomStyles/scrollbar.css";
 import GenericSection from "../SharedComponents/GenericSection/GenericSection.jsx";
 import SecureFundingSection from "../Components/SecureFundingSection.jsx";
-import PublicationsSection from "../Components/PublicationsSection.jsx";
+import PublicationsSection from "../Pages/AcademicWork/Publications/PublicationsSection.jsx";
 import PatentsSection from "../Components/PatentsSection.jsx";
 import { getAllSections } from "../graphql/graphqlHelpers.js";
 import { useNavigate, useParams } from "react-router-dom";
