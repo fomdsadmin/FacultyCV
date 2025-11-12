@@ -237,7 +237,15 @@ const TemplateBuilderContent = ({
                 skipDateFilter: false,
                 sqlSettings: {
                     query: "SELECT * FROM ?",
-                    columnTextTemplate: ""
+                    columnTextTemplate: {
+                        html: "",
+                        selected: true
+                    },
+                    sqlViewTemplate: {
+                        selected: false,
+                        showHeaders: true,
+                        grayFirstColumn: false
+                    }
                 }
             },
             children: [],
@@ -245,7 +253,6 @@ const TemplateBuilderContent = ({
 
         setItems((prevItems) => [newTable, ...prevItems]);
     };
-
     return (
         <div style={{ width: "100%", margin: "0 auto", padding: 16 }}>
             {/* Header Section */}
@@ -281,7 +288,7 @@ const TemplateBuilderContent = ({
 
                 <div className="flex justify-end gap-3">
                     <SortButton />
-                    <SaveTemplateButton 
+                    <SaveTemplateButton
                         templateId={templateId}
                         onBack={onBack}
                     />

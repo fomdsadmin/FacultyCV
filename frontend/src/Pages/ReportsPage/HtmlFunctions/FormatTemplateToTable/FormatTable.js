@@ -82,8 +82,9 @@ export const formatTable = (table) => {
         },
         header,
         hideColumns,
-        columnTextTemplate: table.dataSettings.sqlSettings.columnTextTemplate,
-        footnotes: footnotes
+        sqlSettings: table.dataSettings.sqlSettings,
+        footnotes: footnotes,
+        sqlTable: queryResult
     }
 
     console.log("jjfilter formattedTable:", formattedTable);

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import ColumnTextTemplateEditor from "./ColumnTextTemplateEditor";
-import DetailViewTemplate from "./DetailViewTemplate";
+import SqlViewTemplate from "./DetailViewTemplate";
 
 const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [] }) => {
     const [selectedTemplate, setSelectedTemplate] = useState(
         sqlSettings?.columnTextTemplate?.selected ? "columnTextTemplate" :
-        sqlSettings?.detailViewTemplate?.selected ? "detailViewTemplate" :
+        sqlSettings?.sqlViewTemplate?.selected ? "sqlViewTemplate" :
         "columnTextTemplate"
     );
 
@@ -16,20 +16,23 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                 html,
                 selected: true
             },
-            detailViewTemplate: {
+            sqlViewTemplate: {
+                ...sqlSettings?.sqlViewTemplate,
                 selected: false
             }
         });
     };
 
-    const handleDetailViewTemplateSelect = () => {
+    const handleSqlViewTemplateSelect = () => {
         setSqlSettings({
             ...sqlSettings,
             columnTextTemplate: {
                 html: sqlSettings?.columnTextTemplate?.html || "",
                 selected: false
             },
-            detailViewTemplate: {
+            sqlViewTemplate: {
+                showHeaders: sqlSettings?.sqlViewTemplate?.showHeaders ?? true,
+                grayFirstColumn: sqlSettings?.sqlViewTemplate?.grayFirstColumn ?? false,
                 selected: true
             }
         });
@@ -46,8 +49,8 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                     onChange={(e) => {
                         const selectedValue = e.target.value;
                         setSelectedTemplate(selectedValue);
-                        if (selectedValue === "detailViewTemplate") {
-                            handleDetailViewTemplateSelect();
+                        if (selectedValue === "sqlViewTemplate") {
+                            handleSqlViewTemplateSelect();
                         } else if (selectedValue === "columnTextTemplate") {
                             setSqlSettings({
                                 ...sqlSettings,
@@ -55,7 +58,8 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                                     html: sqlSettings?.columnTextTemplate?.html || "",
                                     selected: true
                                 },
-                                detailViewTemplate: {
+                                sqlViewTemplate: {
+                                    ...sqlSettings?.sqlViewTemplate,
                                     selected: false
                                 }
                             });
@@ -64,7 +68,7 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                     className="w-full p-2 border border-gray-300 rounded text-xs box-sizing-border"
                 >
                     <option value="columnTextTemplate">Column Text Template</option>
-                    <option value="detailViewTemplate">Detail View Template</option>
+                    <option value="sqlViewTemplate">SQL View Template</option>
                 </select>
             </div>
 
@@ -76,8 +80,11 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                 />
             )}
 
-            {selectedTemplate === "detailViewTemplate" && (
-                <DetailViewTemplate />
+            {selectedTemplate === "sqlViewTemplate" && (
+                <SqlViewTemplate 
+                    sqlSettings={sqlSettings}
+                    setSqlSettings={setSqlSettings}
+                />
             )}
         </div>
     );

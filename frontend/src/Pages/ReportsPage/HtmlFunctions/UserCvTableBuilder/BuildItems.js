@@ -15,6 +15,8 @@ const buildColumnTextTemplate = (table) => {
     const { data, columnTextTemplate } = table;
     const { rows } = data || {};
 
+    const columnTextTemplateHtml = columnTextTemplate.html;
+
     let html = "";
 
 
@@ -22,12 +24,12 @@ const buildColumnTextTemplate = (table) => {
     const regex = /\$\{([^}]+)\}/g;
     const variables = [];
     let match;
-    while ((match = regex.exec(columnTextTemplate)) !== null) {
+    while ((match = regex.exec(columnTextTemplateHtml)) !== null) {
         variables.push(match[1]);
     }
 
     rows.forEach((row, index) => {
-        let htmlRowToShow = columnTextTemplate;
+        let htmlRowToShow = columnTextTemplateHtml;
 
         variables.forEach((variable) => {
             htmlRowToShow = htmlRowToShow.replace(
@@ -51,16 +53,71 @@ function flattenColumns(cols) {
     return cols.flatMap((c) => (c.children ? flattenColumns(c.children) : c));
 }
 
-const buildColRowTable = (table) => {
-    const { data, header, hideColumns, footnotes, columnTextTemplate } = table;
-    const { columns, rows } = data || {};
+const buildSqlViewTemplate = (table) => {
+    const { sqlSettings, sqlTable } = table;
+
+    const { sqlViewTemplate } = sqlSettings;
+    const { showHeaders, grayFirstColumn } = sqlViewTemplate || {};
+
+    if (!sqlTable || !sqlTable.success) {
+        return "";
+    }
+
+    const { columns, rows } = sqlTable;
 
     let html = "";
 
-    // Add header (section title)
-    if (header) {
-        html += header;
+    // Build header HTML
+    let headerHtml = "";
+    if (showHeaders && Array.isArray(columns) && columns.length > 0) {
+        headerHtml = "<tr>" +
+            columns
+                .map((col) => `<th style="background-color: #f0f0f0;">${col}</th>`)
+                .join("") +
+            "</tr>";
     }
+
+    // Build body HTML
+    let bodyHtml = "";
+    if (Array.isArray(rows) && rows.length > 0 && Array.isArray(columns) && columns.length > 0) {
+        bodyHtml = rows
+            .map((row) =>
+                "<tr>" +
+                columns
+                    .map((col, index) => {
+                        const fieldValue = row[col] ?? "";
+                        const isFirstColumn = index === 0 && grayFirstColumn;
+                        const bgColor = isFirstColumn ? 'background-color: #e8e8e8;' : '';
+                        return `<td style="${bgColor}">${String(fieldValue).trim()}</td>`;
+                    })
+                    .join("") +
+                "</tr>"
+            )
+            .join("\n");
+    }
+
+    // Build the final table HTML
+    const tableHtml = `<div class="table-with-notes">
+        <table border="1" cellspacing="0" cellpadding="5">
+        ${showHeaders ? `<thead>
+        ${headerHtml}
+        </thead>` : ""}
+        <tbody>
+        ${bodyHtml}
+        </tbody>
+        </table>
+        </div>`;
+
+    html += tableHtml;
+
+    return html;
+}
+
+const buildColRowTable = (table) => {
+    const { data, hideColumns } = table;
+    const { columns, rows } = data || {};
+
+    let html = "";
 
     // Don't filter columns - use all columns as-is
     const columnsToRender = Array.isArray(columns) ? columns : [];
@@ -156,11 +213,6 @@ const buildColRowTable = (table) => {
 
     html += tableHtml;
 
-    // Add footnotes if they exist
-    if (Array.isArray(footnotes) && footnotes.length > 0) {
-        html += "<div class=\"table-footnotes\" style=\"margin-top: 10px;\">" + footnotes.join("<br>") + "</div>";
-    }
-
     console.log("JJJFILTER table built", { columns: columnsToRender.length, rows: rows?.length || 0 });
     console.log("JJJFILTER final HTML output:", html);
 
@@ -168,14 +220,31 @@ const buildColRowTable = (table) => {
 }
 
 const buildTable = (table) => {
-    const { columnTextTemplate } = table;
+
+    console.log("JJFILTER table", table)
+
+    const { sqlSettings, header, footnotes } = table;
+
+    const { columnTextTemplate, sqlViewTemplate } = sqlSettings;
 
     let html = "";
 
-    if (columnTextTemplate) {
+    // Add header (section title)
+    if (header) {
+        html += header;
+    }
+    console.log("JJFILTER ", table)
+    if (columnTextTemplate.selected) {
         html += buildColumnTextTemplate(table);
+    } else if (sqlViewTemplate.selected) {
+        html += buildSqlViewTemplate(table);
     } else {
         html += buildColRowTable(table);
+    }
+
+    // Add footnotes if they exist
+    if (Array.isArray(footnotes) && footnotes.length > 0) {
+        html += "<div class=\"table-footnotes\" style=\"margin-top: 10px;\">" + footnotes.join("<br>") + "</div>";
     }
 
 
