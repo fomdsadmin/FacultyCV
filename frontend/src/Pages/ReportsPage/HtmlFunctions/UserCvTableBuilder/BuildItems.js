@@ -11,11 +11,49 @@ export const buildItem = (item) => {
     return html;
 }
 
-const buildTable = (table) => {
-    const { data, header, hideColumns } = table;
-    const { columns, rows } = data || {};
+const buildColumnTextTemplate = (table) => {
+    const { data, columnTextTemplate } = table;
+    const { rows } = data || {};
 
-    console.log("JJJFILTER TABLE", table);
+    let html = "";
+
+
+    // Extract variables from template string (e.g., ${variableName})
+    const regex = /\$\{([^}]+)\}/g;
+    const variables = [];
+    let match;
+    while ((match = regex.exec(columnTextTemplate)) !== null) {
+        variables.push(match[1]);
+    }
+
+    rows.forEach((row, index) => {
+        let htmlRowToShow = columnTextTemplate;
+
+        variables.forEach((variable) => {
+            htmlRowToShow = htmlRowToShow.replace(
+                new RegExp(`\\$\\{${variable}\\}`, "g"),
+                row[variable] ?? ""
+            );
+        });
+
+        html += htmlRowToShow;
+        if (index < rows.length - 1) {
+            html += "<br>";
+        }
+    });
+
+
+    return html;
+}
+
+// Flatten columns to get order of fields
+function flattenColumns(cols) {
+    return cols.flatMap((c) => (c.children ? flattenColumns(c.children) : c));
+}
+
+const buildColRowTable = (table) => {
+    const { data, header, hideColumns, footnotes, columnTextTemplate } = table;
+    const { columns, rows } = data || {};
 
     let html = "";
 
@@ -69,18 +107,13 @@ const buildTable = (table) => {
                 row
                     .map(
                         (cell) =>
-                            `<th${cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ""}${cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ""
+                            `<th style="background-color: #f0f0f0;"${cell.colspan > 1 ? ` colspan="${cell.colspan}"` : ""}${cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : ""
                             }>${cell.name}</th>`
                     )
                     .join("") +
                 "</tr>"
         )
         .join("\n");
-
-    // Flatten columns to get order of fields
-    function flattenColumns(cols) {
-        return cols.flatMap((c) => (c.children ? flattenColumns(c.children) : c));
-    }
 
     const flatColumns = flattenColumns(columnsToRender);
 
@@ -109,11 +142,12 @@ const buildTable = (table) => {
     }
 
     // Build the final table HTML
+    // If hideColumns is true, omit the <thead> but still render the rows
     const tableHtml = `<div class="table-with-notes">
         <table border="1" cellspacing="0" cellpadding="5">
-        <thead>
+        ${hideColumns ? "" : `<thead>
         ${headerHtml}
-        </thead>
+        </thead>`}
         <tbody>
         ${bodyHtml}
         </tbody>
@@ -122,8 +156,28 @@ const buildTable = (table) => {
 
     html += tableHtml;
 
+    // Add footnotes if they exist
+    if (Array.isArray(footnotes) && footnotes.length > 0) {
+        html += "<div class=\"table-footnotes\" style=\"margin-top: 10px;\">" + footnotes.join("<br>") + "</div>";
+    }
+
     console.log("JJJFILTER table built", { columns: columnsToRender.length, rows: rows?.length || 0 });
     console.log("JJJFILTER final HTML output:", html);
+
+    return html;
+}
+
+const buildTable = (table) => {
+    const { columnTextTemplate } = table;
+
+    let html = "";
+
+    if (columnTextTemplate) {
+        html += buildColumnTextTemplate(table);
+    } else {
+        html += buildColRowTable(table);
+    }
+
 
     return html;
 }

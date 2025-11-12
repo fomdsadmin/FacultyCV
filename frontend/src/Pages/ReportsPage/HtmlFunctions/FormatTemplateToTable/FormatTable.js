@@ -1,6 +1,7 @@
 import { templateDataStore } from "./TemplateDataStore"
 import { sortSectionData, filterDateRanges } from "./DateUtils";
 import { executeAlaSQL } from "Pages/TemplatePages/TemplateBuilder/Table/sqlquerycomponent/alasqlUtils";
+import { dataStyler } from "./DataStyling";
 
 export const formatTable = (table) => {
 
@@ -17,6 +18,13 @@ export const formatTable = (table) => {
     console.log("jjfilter columnItems", columnItems);
 
     let cvData = templateDataStore.getUserCvDataMap()[dataSource];
+
+    // Handle undefined cvData
+    if (!cvData || !Array.isArray(cvData)) {
+        console.warn(`No data found for dataSource: ${dataSource}`);
+        cvData = [];
+    }
+
     cvData = sortSectionData(cvData, dataSource);
 
     if (!skipDateFilter) {
@@ -30,7 +38,6 @@ export const formatTable = (table) => {
     if (sqlQuery && sqlQuery.trim() !== "") {
         console.log("jjfilter dataArray before execute", dataArray);
         queryResult = executeAlaSQL(sqlQuery, dataArray);
-        dataArray = queryResult.rows;
         console.log("jjfilter dataArray", dataArray);
     }
 
@@ -51,13 +58,21 @@ export const formatTable = (table) => {
         }));
     }
 
-    const footnotesToUse = formatFootnotes(columnItems, dataArray);
+    // Apply data styling to every cell in every row
+    rowsToUse = rowsToUse.map((row) => {
+        const styledRow = {};
+        Object.keys(row).forEach((key) => {
+            styledRow[key] = dataStyler(row[key]);
+        });
+        return styledRow;
+    });
+
+    const [footnotes, rowsToUseWithFootnoteNotation] = formatFootnotes(rowsToUse, columnItems);
+
+    rowsToUse = rowsToUseWithFootnoteNotation;
 
     // Merge rows for attribute groups with merge=true
-    // Only merge if there are actual merge groups in the template
-    if (hasMergeGroups(columnItems)) {
-        rowsToUse = mergeRowAttributes(rowsToUse, columnItems);
-    }
+    rowsToUse = mergeRowAttributes(rowsToUse, columnItems);
 
     const formattedTable = {
         type: table.type,
@@ -67,7 +82,8 @@ export const formatTable = (table) => {
         },
         header,
         hideColumns,
-        footnotes: footnotesToUse
+        columnTextTemplate: table.dataSettings.sqlSettings.columnTextTemplate,
+        footnotes: footnotes
     }
 
     console.log("jjfilter formattedTable:", formattedTable);
@@ -112,7 +128,7 @@ const formatAttributeGroup = (attributeGroup) => {
     }
 }
 
-const formatFootnotes = (columns, dataArray) => {
+const formatFootnotes = (rowsToUse, columns) => {
     const footnotes = [];
 
     const extractFootnotes = (items) => {
@@ -136,21 +152,20 @@ const formatFootnotes = (columns, dataArray) => {
 
     extractFootnotes(columns);
 
-    const footnotesData = [];
+    const formatedFootnotes = [];
 
+    let notationCounter = 1;
     footnotes.forEach((footnote) => {
-        dataArray.forEach((data, index) => {
-            if (data[footnote.source]) {
-                footnotesData.push({
-                    source: footnote.source,
-                    target: footnote.target,
-                    rowAssociatedWith: index
-                })
+        rowsToUse.forEach((data, index) => {
+            if (data[footnote.source] && data[footnote.target]) {
+                rowsToUse[index][footnote.target] = `<sup style="background-color: yellow; border-radius: 2px; padding: 0 2px;">${notationCounter}</sup>${rowsToUse[index][footnote.target]}`;
+                formatedFootnotes.push(`<sup style="background-color: yellow; border-radius: 2px; padding: 0 2px;">${notationCounter}</sup>${rowsToUse[index][footnote.source]}`)
+                notationCounter++;
             }
         })
     })
 
-    return footnotesData;
+    return [formatedFootnotes, rowsToUse];
 }
 
 const includeRowNumber = (columns) => {
@@ -174,24 +189,6 @@ const includeRowNumber = (columns) => {
     };
 
     return hasRowNumber(columns);
-}
-
-const hasMergeGroups = (items) => {
-    if (!Array.isArray(items)) return false;
-
-    for (const item of items) {
-        if (item.type === "attribute_group" && item.merge) {
-            return true;
-        }
-
-        if (item.children && item.children.length > 0) {
-            if (hasMergeGroups(item.children)) {
-                return true;
-            }
-        }
-    }
-
-    return false;
 }
 
 const mergeRowAttributes = (rows, columns) => {
@@ -248,9 +245,6 @@ const mergeRowAttributes = (rows, columns) => {
 
             // Create merged value with ", " separator
             updatedRow[group.fieldName] = values.join(", ");
-
-            // Optionally remove original keys to clean up
-            group.keys.forEach((key) => delete updatedRow[key]);
         });
 
         return updatedRow;

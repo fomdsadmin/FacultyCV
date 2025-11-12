@@ -82,6 +82,11 @@ const filterDateRanges = (sectionData, dataSectionTitle) => {
 };
 
 const sortSectionData = (sectionData, dataSectionTitle) => {
+    // Handle undefined or null sectionData
+    if (!sectionData || !Array.isArray(sectionData)) {
+        return sectionData;
+    }
+
     // Find the section to get the attribute mapping
     const sectionsMap = templateDataStore.getSectionsMap();
     const sortAscending = templateDataStore.getSortAscending();
