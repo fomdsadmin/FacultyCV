@@ -14,7 +14,6 @@ const ColumnTextTemplateEditor = ({
     template = "",
     onTemplateChange,
     availableColumns = [],
-    previousColumns = []
 }) => {
     const quillRef = useRef(null);
     const [invalidVariables, setInvalidVariables] = useState([]);

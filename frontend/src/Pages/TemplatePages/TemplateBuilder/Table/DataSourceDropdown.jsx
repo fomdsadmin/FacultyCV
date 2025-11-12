@@ -3,7 +3,7 @@ import { useTemplateBuilder } from "../TemplateBuilderContext";
 
 const DataSourceDropdown = ({ dataSource, setDataSettings }) => {
   const { sectionsMap } = useTemplateBuilder();
-  const dataSources = Object.keys(sectionsMap);
+  const dataSources = sectionsMap ? Object.keys(sectionsMap) : [];
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearch, setShowSearch] = useState(false);
 

@@ -3,7 +3,7 @@ import { useTemplateBuilder } from "../../TemplateBuilderContext";
 import MockDataTable from "./MockDataTable";
 import SQLQueryEditor from "./SQLQueryEditor";
 import QueryResultsTable from "./QueryResultsTable";
-import ColumnTextTemplateEditor from "./ColumnTextTemplateEditor";
+import CustomTableTemplate from "./CustomTableTemplate";
 import { ErrorMessage, InfoMessage } from "./MessageComponents";
 import { initializeAlaSQL, executeAlaSQL } from "./alasqlUtils";
 import { generateMockData } from "./mockDataUtils";
@@ -117,14 +117,6 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
         setResults(null);
     };
 
-    // Update column text template
-    const handleColumnTextTemplateChange = (html) => {
-        setSqlSettings({
-            ...sqlSettings,
-            columnTextTemplate: html,
-        });
-    };
-
     return (
         <div className="mt-4 p-3 bg-gray-50 rounded-md">
             <div className="mb-3">
@@ -169,11 +161,10 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
                 )}
 
                 {/* Column Text Template Editor - Always Display */}
-                <ColumnTextTemplateEditor
-                    template={sqlSettings?.columnTextTemplate || ""}
-                    onTemplateChange={handleColumnTextTemplateChange}
+                <CustomTableTemplate
+                    sqlSettings={sqlSettings}
+                    setSqlSettings={setSqlSettings}
                     availableColumns={results?.columns || []}
-                    previousColumns={[]}
                 />
             </div>
         </div>

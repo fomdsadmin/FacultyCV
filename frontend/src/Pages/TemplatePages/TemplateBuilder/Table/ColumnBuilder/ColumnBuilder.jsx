@@ -131,15 +131,13 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
     // Update attributes when dataSource changes, but preserve saved columns
     useEffect(() => {
         // Only update if we don't have saved columns
-        if (!tableSettings?.columns || tableSettings.columns.length === 0) {
             const section = dataSource && sectionsMap ? sectionsMap[dataSource] : null;
             if (section && section.attributes) {
                 setAttributeItems(section.attributes);
             } else {
                 setAttributeItems([]);
             }
-        }
-    }, [dataSource, sectionsMap, tableSettings?.columns]);
+    }, [dataSource, sectionsMap]);
 
     const [activeId, setActiveId] = useState(null);
     const [overId, setOverId] = useState(null);
