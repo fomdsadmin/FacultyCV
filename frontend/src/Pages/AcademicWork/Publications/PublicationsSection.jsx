@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
-import PermanentEntry from "./PermanentEntry";
-import GenericEntry from "../SharedComponents/GenericEntry";
-import EntryModal from "../SharedComponents/EntryModal/EntryModal";
-import PermanentEntryModal from "./PermanentEntryModal";
+import PermanentEntry from "../../../Components/PermanentEntry";
+import GenericEntry from "../../../SharedComponents/GenericEntry";
+import EntryModal from "../../../SharedComponents/EntryModal/EntryModal";
+import PermanentEntryModal from "../../../Components/PermanentEntryModal";
 import PublicationsModal from "./PublicationsModal";
 import { FaArrowLeft, FaRegEdit, FaSearch } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
-import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
-import { rankFields } from "../utils/rankingUtils";
+import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../../../graphql/graphqlHelpers";
+import { rankFields } from "../../../utils/rankingUtils";
 import { LuBrainCircuit } from "react-icons/lu";
-import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
+import { useAuditLogger, AUDIT_ACTIONS } from "../../../Contexts/AuditLoggerContext";
 
 const generateEmptyEntry = (attributes) => {
   const emptyEntry = {};
@@ -36,7 +36,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
   const [pageSize, setPageSize] = useState(20);
   const [sortDescending, setSortDescending] = useState(true);
   const [sortAscending, setSortAscending] = useState(false);
-  
+
   // Filter states for dropdowns
   const [dropdownFilters, setDropdownFilters] = useState({});
   const [showMoreFilters, setShowMoreFilters] = useState(false);
@@ -60,16 +60,23 @@ const PublicationsSection = ({ user, section, onBack }) => {
     Object.entries(dropdownFilters).forEach(([attribute, filterValue]) => {
       if (filterValue && filterValue !== "all") {
         // Get the actual field key (snake_case) from the display name
-        const actualKey = section.attributes && section.attributes[attribute] 
-          ? section.attributes[attribute] 
-          : attribute.toLowerCase().replace(/\s+/g, '_');
-          
+        const actualKey =
+          section.attributes && section.attributes[attribute]
+            ? section.attributes[attribute]
+            : attribute.toLowerCase().replace(/\s+/g, "_");
+
         filtered = filtered.filter((entry) => {
           if (!entry.data_details || !entry.data_details[actualKey]) return false;
-          
+
           const entryValue = entry.data_details[actualKey];
-          if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
-          
+          if (
+            entryValue === null ||
+            entryValue === undefined ||
+            String(entryValue).trim() === "" ||
+            String(entryValue) === "—"
+          )
+            return false;
+
           // Handle "Other (value)" format
           if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
             const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
@@ -77,7 +84,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
               return match[1].trim() === filterValue;
             }
           }
-          
+
           return String(entryValue) === filterValue;
         });
       }
@@ -99,13 +106,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
 
   // Get dropdown attributes from section attributes_type
   const getDropdownAttributes = () => {
-    try { 
+    try {
       if (!section.attributes_type) {
         return [];
       }
-      const attributesType = typeof section.attributes_type === "string" 
-        ? JSON.parse(section.attributes_type) 
-        : section.attributes_type;
+      const attributesType =
+        typeof section.attributes_type === "string" ? JSON.parse(section.attributes_type) : section.attributes_type;
 
       return Object.keys(attributesType.dropdown || {});
     } catch (error) {
@@ -117,17 +123,24 @@ const PublicationsSection = ({ user, section, onBack }) => {
   // Get unique values for a dropdown attribute from field data
   const getUniqueDropdownValues = (attribute) => {
     // Get the actual field key (snake_case) from the display name
-    const actualKey = section.attributes && section.attributes[attribute] 
-      ? section.attributes[attribute] 
-      : attribute.toLowerCase().replace(/\s+/g, '_');
-    
+    const actualKey =
+      section.attributes && section.attributes[attribute]
+        ? section.attributes[attribute]
+        : attribute.toLowerCase().replace(/\s+/g, "_");
+
     const values = new Set();
-    
+
     fieldData.forEach((entry, index) => {
       if (entry.data_details && entry.data_details[actualKey]) {
         const value = entry.data_details[actualKey];
-        
-        if (value !== null && value !== undefined && String(value).trim() !== "" && String(value) !== "—" && String(value).toLowerCase() !== "null") {
+
+        if (
+          value !== null &&
+          value !== undefined &&
+          String(value).trim() !== "" &&
+          String(value) !== "—" &&
+          String(value).toLowerCase() !== "null"
+        ) {
           // Handle "Other (value)" format
           if (typeof value === "string" && /\bother\b/i.test(value) && /\(.*\)$/.test(value)) {
             const match = value.match(/^(.*Other)\s*\((.*)\)$/i);
@@ -141,7 +154,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
         }
       }
     });
-    
+
     const result = Array.from(values).sort();
     return result;
   };
@@ -419,7 +432,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
     const authorList = Array.isArray(details.author_names) ? details.author_names : [details.author_names];
     const authorIds = Array.isArray(details.author_ids) ? details.author_ids : [details.author_ids];
     const keywordsList = Array.isArray(details.keywords) ? details.keywords : [details.keywords];
-    
+
     // Get author metadata for formatting
     const trainees = details.author_trainees || [];
     const doctoralSupervisors = details.author_doctoral_supervisors || [];
@@ -436,12 +449,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
     const authorDisplay = authorList.map((name, idx) => {
       // Build className based on roles
       let className = "";
-      
+
       // Check if this author is in any special role
       const isTrainee = trainees.includes(name);
       const isDoctoralSupervisor = doctoralSupervisors.includes(name);
       const isPostdoctoralSupervisor = postdoctoralSupervisors.includes(name);
-      
+
       // Apply formatting: underline for trainee, italic for doctoral, bold italic for postdoctoral
       if (isPostdoctoralSupervisor) {
         className = "font-bold italic";
@@ -450,15 +463,16 @@ const PublicationsSection = ({ user, section, onBack }) => {
       } else if (isTrainee) {
         className = "underline";
       }
-      
+
       // Check if this is the user's publication (scopus_id match)
-      const isScopusMatch = user.scopus_id && authorIds && authorIds[idx] && String(authorIds[idx]) === String(user.scopus_id);
-      
+      const isScopusMatch =
+        user.scopus_id && authorIds && authorIds[idx] && String(authorIds[idx]) === String(user.scopus_id);
+
       // Combine classes - user's publication gets bold in addition to role formatting
       if (isScopusMatch) {
         className = className ? `${className} font-bold` : "font-bold";
       }
-      
+
       return (
         <span key={idx} className={className || undefined}>
           {name}
@@ -525,6 +539,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </p>
         )}
 
+        {details["impact_factor_(if)"] && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Impact Factor (IF):</span> {details["impact_factor_(if)"]}
+          </p>
+        )}
+
         {/* Display all remaining fields that haven't been shown yet */}
         {Object.entries(details)
           .filter(([key, value]) => {
@@ -544,7 +564,8 @@ const PublicationsSection = ({ user, section, onBack }) => {
               "author_doctoral_supervisors",
               "author_postdoctoral_supervisors",
               "author_types",
-              "mark_as_important"
+              "mark_as_important",
+              "impact_factor_(if)",
             ];
             return !displayedFields.includes(key) && value && value !== "" && value !== null;
           })
@@ -571,10 +592,14 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </button>
           <h2 className="text-3xl font-bold text-zinc-600">{section.title}</h2>
         </div>
-        
+
         {/* Right section: Action Buttons */}
         <div className="flex items-center gap-3">
-          <button onClick={handleNew} className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight" disabled={retrievingData}>
+          <button
+            onClick={handleNew}
+            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight"
+            disabled={retrievingData}
+          >
             New
           </button>
           <button
@@ -604,296 +629,356 @@ const PublicationsSection = ({ user, section, onBack }) => {
       {/* Only show Filters and Search if there's data - matches GenericSection layout */}
       {fieldData.length > 0 && (
         <div className="mb-2 bg-white px-4 py-3 rounded-lg shadow-md mt-2 ml-4 mr-4">
-        {/* Basic Filters Row */}
-        <div className="flex flex-wrap gap-3 items-end mb-1">
-          {/* Search Bar */}
-          <div className="">
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Search Entries</label>
-            <div className="relative max-w-md">
-              <FaSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 text-sm" />
-              <input
-                type="text"
-                placeholder="Search entries..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              />
+          {/* Basic Filters Row */}
+          <div className="flex flex-wrap gap-3 items-end mb-1">
+            {/* Search Bar */}
+            <div className="">
+              <label className="block text-xs font-medium text-zinc-600 mb-1">Search Entries</label>
+              <div className="relative max-w-md">
+                <FaSearch className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-zinc-400 text-sm" />
+                <input
+                  type="text"
+                  placeholder="Search entries..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Date Sort Button */}
-          <div className="">
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Date Order</label>
-            <button
-              onClick={toggleSortOrder}
-              className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors duration-200 text-sm"
-              title={`Sort by date: ${sortAscending ? "Oldest first" : "Newest first"} (click to toggle)`}
-            >
-              <svg className="w-4 h-4 text-gray-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {sortAscending ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 4v12m0 0l4-4m-4 4l-4-4m10-8v12m0 0l4-4m-4 4l-4-4"
-                  />
-                )}
-              </svg>
-              {sortAscending ? "Oldest" : "Newest"}
-            </button>
-          </div>
+            {/* Date Sort Button */}
+            <div className="">
+              <label className="block text-xs font-medium text-zinc-600 mb-1">Date Order</label>
+              <button
+                onClick={toggleSortOrder}
+                className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors duration-200 text-sm"
+                title={`Sort by date: ${sortAscending ? "Oldest first" : "Newest first"} (click to toggle)`}
+              >
+                <svg className="w-4 h-4 text-gray-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {sortAscending ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 4v12m0 0l4-4m-4 4l-4-4m10-8v12m0 0l4-4m-4 4l-4-4"
+                    />
+                  )}
+                </svg>
+                {sortAscending ? "Oldest" : "Newest"}
+              </button>
+            </div>
 
-          {/* First few dropdown filters */}
-          {getDropdownAttributes().filter(attribute => 
-            attribute.toLowerCase() !== 'publication type' && 
-            attribute.toLowerCase() !== 'publication_type'
-          ).slice(0, 2).map((attribute) => {
-            const uniqueValues = getUniqueDropdownValues(attribute);
-            if (uniqueValues.length === 0) return null;
+            {/* First few dropdown filters */}
+            {getDropdownAttributes()
+              .filter(
+                (attribute) =>
+                  attribute.toLowerCase() !== "publication type" && attribute.toLowerCase() !== "publication_type"
+              )
+              .slice(0, 2)
+              .map((attribute) => {
+                const uniqueValues = getUniqueDropdownValues(attribute);
+                if (uniqueValues.length === 0) return null;
 
-            // Get data filtered by everything except the current attribute
-            const getCountForOption = (optionValue) => {
-              let dataForCounting = fieldData;
-              
-              // Apply search filter
-              if (searchTerm) {
-                dataForCounting = dataForCounting.filter((entry) => {
-                  const [field1, field2] = rankFields(entry.data_details);
-                  return (
-                    (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                  );
-                });
-              }
+                // Get data filtered by everything except the current attribute
+                const getCountForOption = (optionValue) => {
+                  let dataForCounting = fieldData;
 
-              // Apply other dropdown filters (excluding current attribute)
-              Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
-                if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
-                  const actualKey = section.attributes && section.attributes[filterAttribute] 
-                    ? section.attributes[filterAttribute] 
-                    : filterAttribute.toLowerCase().replace(/\s+/g, '_');
-                    
-                  dataForCounting = dataForCounting.filter((entry) => {
+                  // Apply search filter
+                  if (searchTerm) {
+                    dataForCounting = dataForCounting.filter((entry) => {
+                      const [field1, field2] = rankFields(entry.data_details);
+                      return (
+                        (field1 &&
+                          typeof field1 === "string" &&
+                          field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                        (field2 &&
+                          typeof field2 === "string" &&
+                          field2.toLowerCase().includes(searchTerm.toLowerCase()))
+                      );
+                    });
+                  }
+
+                  // Apply other dropdown filters (excluding current attribute)
+                  Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
+                    if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
+                      const actualKey =
+                        section.attributes && section.attributes[filterAttribute]
+                          ? section.attributes[filterAttribute]
+                          : filterAttribute.toLowerCase().replace(/\s+/g, "_");
+
+                      dataForCounting = dataForCounting.filter((entry) => {
+                        if (!entry.data_details || !entry.data_details[actualKey]) return false;
+
+                        const entryValue = entry.data_details[actualKey];
+                        if (
+                          entryValue === null ||
+                          entryValue === undefined ||
+                          String(entryValue).trim() === "" ||
+                          String(entryValue) === "—"
+                        )
+                          return false;
+
+                        // Handle "Other (value)" format
+                        if (
+                          typeof entryValue === "string" &&
+                          /\bother\b/i.test(entryValue) &&
+                          /\(.*\)$/.test(entryValue)
+                        ) {
+                          const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                          if (match) {
+                            return match[1].trim() === filterValue;
+                          }
+                        }
+
+                        return String(entryValue) === filterValue;
+                      });
+                    }
+                  });
+
+                  // Now count items matching this specific option
+                  if (optionValue === "all") {
+                    return dataForCounting.length;
+                  }
+
+                  const actualKey =
+                    section.attributes && section.attributes[attribute]
+                      ? section.attributes[attribute]
+                      : attribute.toLowerCase().replace(/\s+/g, "_");
+
+                  return dataForCounting.filter((entry) => {
                     if (!entry.data_details || !entry.data_details[actualKey]) return false;
-                    
+
                     const entryValue = entry.data_details[actualKey];
-                    if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
-                    
+                    if (
+                      entryValue === null ||
+                      entryValue === undefined ||
+                      String(entryValue).trim() === "" ||
+                      String(entryValue) === "—"
+                    )
+                      return false;
+
                     // Handle "Other (value)" format
                     if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
                       const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
                       if (match) {
-                        return match[1].trim() === filterValue;
+                        return match[1].trim() === optionValue;
                       }
                     }
-                    
-                    return String(entryValue) === filterValue;
-                  });
-                }
-              });
 
-              // Now count items matching this specific option
-              if (optionValue === "all") {
-                return dataForCounting.length;
-              }
+                    return String(entryValue) === optionValue;
+                  }).length;
+                };
 
-              const actualKey = section.attributes && section.attributes[attribute] 
-                ? section.attributes[attribute] 
-                : attribute.toLowerCase().replace(/\s+/g, '_');
+                return (
+                  <div key={attribute} className="max-w-56">
+                    <label className="block text-xs font-medium text-zinc-600 mb-1">
+                      {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                    </label>
+                    <select
+                      value={dropdownFilters[attribute] || "all"}
+                      onChange={(e) => setDropdownFilters((prev) => ({ ...prev, [attribute]: e.target.value }))}
+                      className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    >
+                      <option value="all">All ({getCountForOption("all")})</option>
+                      {uniqueValues.map((value) => {
+                        const count = getCountForOption(value);
+                        return (
+                          <option key={value} value={value}>
+                            {value} ({count})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                );
+              })}
 
-              return dataForCounting.filter((entry) => {
-                if (!entry.data_details || !entry.data_details[actualKey]) return false;
-                
-                const entryValue = entry.data_details[actualKey];
-                if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
-                
-                // Handle "Other (value)" format
-                if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-                  const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
-                  if (match) {
-                    return match[1].trim() === optionValue;
-                  }
-                }
-                
-                return String(entryValue) === optionValue;
-              }).length;
-            };
+            {/* Show More Filters Button */}
+            {getDropdownAttributes().filter(
+              (attribute) =>
+                attribute.toLowerCase() !== "publication type" && attribute.toLowerCase() !== "publication_type"
+            ).length > 2 && (
+              <button
+                onClick={() => setShowMoreFilters(!showMoreFilters)}
+                className="px-3 py-2 text-xs text-blue-600 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+              >
+                {showMoreFilters
+                  ? "Show Less"
+                  : `Show More Filters (${
+                      getDropdownAttributes().filter(
+                        (attribute) =>
+                          attribute.toLowerCase() !== "publication type" &&
+                          attribute.toLowerCase() !== "publication_type"
+                      ).length - 2
+                    })`}
+              </button>
+            )}
 
-            return (
-              <div key={attribute} className="max-w-56">
-                <label className="block text-xs font-medium text-zinc-600 mb-1">
-                  {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                </label>
-                <select
-                  value={dropdownFilters[attribute] || "all"}
-                  onChange={(e) => setDropdownFilters((prev) => ({ ...prev, [attribute]: e.target.value }))}
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  <option value="all">All ({getCountForOption("all")})</option>
-                  {uniqueValues.map((value) => {
-                    const count = getCountForOption(value);
-                    return (
-                      <option key={value} value={value}>
-                        {value} ({count})
-                      </option>
-                    );
-                  })}
-                </select>
+            {/* Spacer to push total entries to the right */}
+            <div className="flex-1"></div>
+
+            {/* Total Entries - styled like other buttons */}
+            <div className="">
+              <label className="block text-xs font-medium text-zinc-600 mb-1">Total Entries</label>
+              <div className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 border border-gray-300 text-sm">
+                <span className="font-bold text-blue-600">{filteredData.length}</span>
               </div>
-            );
-          })}
-
-          {/* Show More Filters Button */}
-          {getDropdownAttributes().filter(attribute => 
-            attribute.toLowerCase() !== 'publication type' && 
-            attribute.toLowerCase() !== 'publication_type'
-          ).length > 2 && (
-            <button
-              onClick={() => setShowMoreFilters(!showMoreFilters)}
-              className="px-3 py-2 text-xs text-blue-600 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
-            >
-              {showMoreFilters ? "Show Less" : `Show More Filters (${getDropdownAttributes().filter(attribute => 
-                attribute.toLowerCase() !== 'publication type' && 
-                attribute.toLowerCase() !== 'publication_type'
-              ).length - 2})`}
-            </button>
-          )}
-
-          {/* Spacer to push total entries to the right */}
-          <div className="flex-1"></div>
-
-          {/* Total Entries - styled like other buttons */}
-          <div className="">
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Total Entries</label>
-            <div className="flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 border border-gray-300 text-sm">
-              <span className="font-bold text-blue-600">{filteredData.length}</span>
             </div>
           </div>
-        </div>
 
-        {/* Advanced Filters (Conditional) */}
-        {showMoreFilters && getDropdownAttributes().filter(attribute => 
-          attribute.toLowerCase() !== 'publication type' && 
-          attribute.toLowerCase() !== 'publication_type'
-        ).length > 2 && (
-          <div className="flex flex-wrap gap-3 items-end border-t border-zinc-200 pt-3 mt-1">
-            {/* Remaining dropdown filters */}
-            {getDropdownAttributes().filter(attribute => 
-              attribute.toLowerCase() !== 'publication type' && 
-              attribute.toLowerCase() !== 'publication_type'
-            ).slice(2).map((attribute) => {
-              const uniqueValues = getUniqueDropdownValues(attribute);
-              if (uniqueValues.length === 0) return null;
+          {/* Advanced Filters (Conditional) */}
+          {showMoreFilters &&
+            getDropdownAttributes().filter(
+              (attribute) =>
+                attribute.toLowerCase() !== "publication type" && attribute.toLowerCase() !== "publication_type"
+            ).length > 2 && (
+              <div className="flex flex-wrap gap-3 items-end border-t border-zinc-200 pt-3 mt-1">
+                {/* Remaining dropdown filters */}
+                {getDropdownAttributes()
+                  .filter(
+                    (attribute) =>
+                      attribute.toLowerCase() !== "publication type" && attribute.toLowerCase() !== "publication_type"
+                  )
+                  .slice(2)
+                  .map((attribute) => {
+                    const uniqueValues = getUniqueDropdownValues(attribute);
+                    if (uniqueValues.length === 0) return null;
 
-              // Get data filtered by everything except the current attribute
-              const getCountForOption = (optionValue) => {
-                let dataForCounting = fieldData;
-                
-                // Apply search filter
-                if (searchTerm) {
-                  dataForCounting = dataForCounting.filter((entry) => {
-                    const [field1, field2] = rankFields(entry.data_details);
-                    return (
-                      (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                      (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                    );
-                  });
-                }
+                    // Get data filtered by everything except the current attribute
+                    const getCountForOption = (optionValue) => {
+                      let dataForCounting = fieldData;
 
-                // Apply other dropdown filters (excluding current attribute)
-                Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
-                  if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
-                    const actualKey = section.attributes && section.attributes[filterAttribute] 
-                      ? section.attributes[filterAttribute] 
-                      : filterAttribute.toLowerCase().replace(/\s+/g, '_');
-                      
-                    dataForCounting = dataForCounting.filter((entry) => {
-                      if (!entry.data_details || !entry.data_details[actualKey]) return false;
-                      
-                      const entryValue = entry.data_details[actualKey];
-                      if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
-                      
-                      // Handle "Other (value)" format
-                      if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-                        const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
-                        if (match) {
-                          return match[1].trim() === filterValue;
-                        }
+                      // Apply search filter
+                      if (searchTerm) {
+                        dataForCounting = dataForCounting.filter((entry) => {
+                          const [field1, field2] = rankFields(entry.data_details);
+                          return (
+                            (field1 &&
+                              typeof field1 === "string" &&
+                              field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                            (field2 &&
+                              typeof field2 === "string" &&
+                              field2.toLowerCase().includes(searchTerm.toLowerCase()))
+                          );
+                        });
                       }
-                      
-                      return String(entryValue) === filterValue;
-                    });
-                  }
-                });
 
-                // Now count items matching this specific option
-                if (optionValue === "all") {
-                  return dataForCounting.length;
-                }
+                      // Apply other dropdown filters (excluding current attribute)
+                      Object.entries(dropdownFilters).forEach(([filterAttribute, filterValue]) => {
+                        if (filterValue && filterValue !== "all" && filterAttribute !== attribute) {
+                          const actualKey =
+                            section.attributes && section.attributes[filterAttribute]
+                              ? section.attributes[filterAttribute]
+                              : filterAttribute.toLowerCase().replace(/\s+/g, "_");
 
-                const actualKey = section.attributes && section.attributes[attribute] 
-                  ? section.attributes[attribute] 
-                  : attribute.toLowerCase().replace(/\s+/g, '_');
+                          dataForCounting = dataForCounting.filter((entry) => {
+                            if (!entry.data_details || !entry.data_details[actualKey]) return false;
 
-                return dataForCounting.filter((entry) => {
-                  if (!entry.data_details || !entry.data_details[actualKey]) return false;
-                  
-                  const entryValue = entry.data_details[actualKey];
-                  if (entryValue === null || entryValue === undefined || String(entryValue).trim() === "" || String(entryValue) === "—") return false;
-                  
-                  // Handle "Other (value)" format
-                  if (typeof entryValue === "string" && /\bother\b/i.test(entryValue) && /\(.*\)$/.test(entryValue)) {
-                    const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
-                    if (match) {
-                      return match[1].trim() === optionValue;
-                    }
-                  }
-                  
-                  return String(entryValue) === optionValue;
-                }).length;
-              };
+                            const entryValue = entry.data_details[actualKey];
+                            if (
+                              entryValue === null ||
+                              entryValue === undefined ||
+                              String(entryValue).trim() === "" ||
+                              String(entryValue) === "—"
+                            )
+                              return false;
 
-              return (
-                <div key={attribute} className="max-w-56">
-                  <label className="block text-xs font-medium text-zinc-600 mb-1">
-                    {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </label>
-                  <select
-                    value={dropdownFilters[attribute] || "all"}
-                    onChange={(e) => setDropdownFilters((prev) => ({ ...prev, [attribute]: e.target.value }))}
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  >
-                    <option value="all">All ({getCountForOption("all")})</option>
-                    {uniqueValues.map((value) => {
-                      const count = getCountForOption(value);
-                      return (
-                        <option key={value} value={value}>
-                          {value} ({count})
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              );
-            })}
+                            // Handle "Other (value)" format
+                            if (
+                              typeof entryValue === "string" &&
+                              /\bother\b/i.test(entryValue) &&
+                              /\(.*\)$/.test(entryValue)
+                            ) {
+                              const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                              if (match) {
+                                return match[1].trim() === filterValue;
+                              }
+                            }
 
-            {/* Clear Filters Button */}
-            <button
-              onClick={clearAllFilters}
-              className="px-3 py-2 text-xs text-zinc-600 border border-zinc-300 rounded-md hover:bg-zinc-50 transition-colors"
-            >
-              Clear All
-            </button>
-          </div>
-        )}
-      </div>
+                            return String(entryValue) === filterValue;
+                          });
+                        }
+                      });
+
+                      // Now count items matching this specific option
+                      if (optionValue === "all") {
+                        return dataForCounting.length;
+                      }
+
+                      const actualKey =
+                        section.attributes && section.attributes[attribute]
+                          ? section.attributes[attribute]
+                          : attribute.toLowerCase().replace(/\s+/g, "_");
+
+                      return dataForCounting.filter((entry) => {
+                        if (!entry.data_details || !entry.data_details[actualKey]) return false;
+
+                        const entryValue = entry.data_details[actualKey];
+                        if (
+                          entryValue === null ||
+                          entryValue === undefined ||
+                          String(entryValue).trim() === "" ||
+                          String(entryValue) === "—"
+                        )
+                          return false;
+
+                        // Handle "Other (value)" format
+                        if (
+                          typeof entryValue === "string" &&
+                          /\bother\b/i.test(entryValue) &&
+                          /\(.*\)$/.test(entryValue)
+                        ) {
+                          const match = entryValue.match(/^(.*Other)\s*\((.*)\)$/i);
+                          if (match) {
+                            return match[1].trim() === optionValue;
+                          }
+                        }
+
+                        return String(entryValue) === optionValue;
+                      }).length;
+                    };
+
+                    return (
+                      <div key={attribute} className="max-w-56">
+                        <label className="block text-xs font-medium text-zinc-600 mb-1">
+                          {attribute.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </label>
+                        <select
+                          value={dropdownFilters[attribute] || "all"}
+                          onChange={(e) => setDropdownFilters((prev) => ({ ...prev, [attribute]: e.target.value }))}
+                          className="w-full px-3 py-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        >
+                          <option value="all">All ({getCountForOption("all")})</option>
+                          {uniqueValues.map((value) => {
+                            const count = getCountForOption(value);
+                            return (
+                              <option key={value} value={value}>
+                                {value} ({count})
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    );
+                  })}
+
+                {/* Clear Filters Button */}
+                <button
+                  onClick={clearAllFilters}
+                  className="px-3 py-2 text-xs text-zinc-600 border border-zinc-300 rounded-md hover:bg-zinc-50 transition-colors"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+        </div>
       )}
 
       {/* Entries List (paginated) */}
@@ -922,9 +1007,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
               </div>
             ))
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              No existing entries found
-            </div>
+            <div className="text-center py-8 text-gray-500">No existing entries found</div>
           )}
         </div>
       )}
@@ -932,40 +1015,40 @@ const PublicationsSection = ({ user, section, onBack }) => {
       {/* Only show Pagination Controls if there's data */}
       {fieldData.length > 0 && (
         <div className="mr-4 mt-4 rounded-lg flex flex-wrap justify-end items-center">
-        {/* Right controls */}
-        <div className="flex items-center gap-2">
-          {/* Page size dropdown */}
-          <select
-            className="select select-sm select-bordered"
-            value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
-          >
-            <option value={10}>10 per page</option>
-            <option value={20}>20 per page</option>
-            <option value={50}>50 per page</option>
-            <option value={100}>100 per page</option>
-            <option value={1000}>All</option>
-          </select>
-          {/* Pagination controls */}
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          <span className="text-sm text-gray-700">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
+          {/* Right controls */}
+          <div className="flex items-center gap-2">
+            {/* Page size dropdown */}
+            <select
+              className="select select-sm select-bordered"
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+            >
+              <option value={10}>10 per page</option>
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+              <option value={100}>100 per page</option>
+              <option value={1000}>All</option>
+            </select>
+            {/* Pagination controls */}
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Modals */}

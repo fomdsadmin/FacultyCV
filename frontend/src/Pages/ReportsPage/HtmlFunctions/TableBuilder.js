@@ -888,15 +888,37 @@ function buildTable(table) {
                             if (c.field === "merged_data" && row["Author Names"]) {
                                 // Check if this row has Author Names data with metadata
                                 const authorNames = row["Author Names"];
+                                
+                                // Helper to check if metadata field has actual data
+                                const hasData = (field) => {
+                                    if (!field) return false;
+                                    // Handle string representations of arrays like "[]"
+                                    if (typeof field === "string") {
+                                        const trimmed = field.trim();
+                                        if (trimmed === "" || trimmed === "[]") return false;
+                                        try {
+                                            const parsed = JSON.parse(trimmed);
+                                            return Array.isArray(parsed) && parsed.length > 0;
+                                        } catch {
+                                            return trimmed.length > 0;
+                                        }
+                                    }
+                                    // Handle actual arrays
+                                    if (Array.isArray(field)) {
+                                        return field.length > 0;
+                                    }
+                                    return false;
+                                };
+                                
                                 const hasMetadata =
-                                    (row["author_trainees"] && row["author_trainees"].length > 0) ||
-                                    (row["author_doctoral_supervisors"] && row["author_doctoral_supervisors"].length > 0) ||
-                                    (row["author_postdoctoral_supervisors"] && row["author_postdoctoral_supervisors"].length > 0);
+                                    hasData(row["author_trainees"]) ||
+                                    hasData(row["author_doctoral_supervisors"]) ||
+                                    hasData(row["author_postdoctoral_supervisors"]);
 
                                 if (authorNames && hasMetadata) {
-                                    // console.log("✅ Formatting authors in merged_data");
                                     // Format the author names with metadata
                                     const formattedAuthors = formatAuthorNamesWithMetadata(authorNames, row);
+                                    // console.log("✅ Formatted authors result:", formattedAuthors);
 
                                     // Replace the author names in the merged data with formatted version
                                     let modifiedMergedData = String(fieldValue);
@@ -910,35 +932,41 @@ function buildTable(table) {
                                     let authorString;
                                     if (modifiedMergedData.includes(authorStringNoSpace)) {
                                         authorString = authorStringNoSpace;
-                                        // console.log("🔧 Found authors WITHOUT space after comma");
                                     } else if (modifiedMergedData.includes(authorStringWithSpace)) {
                                         authorString = authorStringWithSpace;
-                                        // console.log("🔧 Found authors WITH space after comma");
                                     } else {
-                                        // console.warn("⚠️ Author string not found in merged_data in any format");
                                         // console.log("Tried:", { withSpace: authorStringWithSpace, noSpace: authorStringNoSpace, mergedData: modifiedMergedData });
                                         // Fall back to regular styling
                                         modifiedMergedData = dataStyler(modifiedMergedData);
                                         return `<td>${modifiedMergedData}</td>`;
                                     }
 
-                                    // Split merged data, preserve the author formatted HTML, and apply dataStyler to other parts
-                                    const parts = modifiedMergedData.split(authorString);
-                                    console.log("✅ Split parts:", parts);
+                                    // Replace author names in merged data with formatted version
+                                    modifiedMergedData = modifiedMergedData.replace(authorString, formattedAuthors);
+                                    // console.log("✅ After replacing authors:", modifiedMergedData);
 
-                                    // Apply dataStyler to non-author parts and insert formatted authors in between
-                                    const styledParts = parts.map((part, idx) => {
-                                        if (idx < parts.length - 1) {
-                                            // Apply dataStyler to this part, then add formatted authors
-                                            return dataStyler(part) + formattedAuthors;
-                                        } else {
-                                            // Last part, just apply dataStyler
-                                            return dataStyler(part);
-                                        }
-                                    });
+                                    // Apply dataStyler to the entire merged data
+                                    // dataStyler now preserves HTML tags (only processes URLs/DOIs in non-HTML portions)
+                                    modifiedMergedData = dataStyler(modifiedMergedData);
+                                    // console.log("✅ After dataStyler:", modifiedMergedData);
 
-                                    modifiedMergedData = styledParts.join('');
-                                    // console.log("✅ After replacement:", modifiedMergedData);
+                                    // Add impact factor and citations if available
+                                    const citationParts = [];
+                                    if (row['impact_factor_(if)'] && String(row['impact_factor_(if)']).trim() && String(row['impact_factor_(if)']).trim() !== '0') {
+                                        citationParts.push(`IF ${row['impact_factor_(if)']}`);
+                                    }
+                                    if (row['cited_by'] && String(row['cited_by']).trim() && String(row['cited_by']).trim() !== '0') {
+                                        citationParts.push(`Citations ${row['cited_by']}`);
+                                    }
+                                    if (citationParts.length > 0) {
+                                        // Add period before the citation info
+                                        modifiedMergedData += `. (${citationParts.join(', ')})`;
+                                    }
+
+                                    // Prepend asterisk if marked as important
+                                    if (row['mark_as_important'] === 'true' || row['mark_as_important'] === true) {
+                                        modifiedMergedData = '* ' + modifiedMergedData;
+                                    }
 
                                     // Return directly to preserve HTML formatting
                                     return `<td>${modifiedMergedData}</td>`;
@@ -949,8 +977,33 @@ function buildTable(table) {
                             const isAuthorNamesField = c.field && c.field === "Author Names";
 
                             if (isAuthorNamesField && fieldValue) {
-                                console.log("✅ APPLYING AUTHOR FORMATTING to Author Names field");
+                                // console.log("✅ APPLYING AUTHOR FORMATTING to Author Names field");
                                 return `<td>${formatAuthorNamesWithMetadata(fieldValue, row)}</td>`;
+                            }
+
+                            // Handle merged_data without author formatting (but still add citations/importance marker)
+                            if (c.field === "merged_data") {
+                                let styledData = dataStyler(fieldValue);
+                                
+                                // Add impact factor and citations if available
+                                const citationParts = [];
+                                if (row['impact_factor_(if)'] && String(row['impact_factor_(if)']).trim() && String(row['impact_factor_(if)']).trim() !== '0') {
+                                    citationParts.push(`IF ${row['impact_factor_(if)']}`);
+                                }
+                                if (row['cited_by'] && String(row['cited_by']).trim() && String(row['cited_by']).trim() !== '0') {
+                                    citationParts.push(`Citations ${row['cited_by']}`);
+                                }
+                                if (citationParts.length > 0) {
+                                    // Add period before the citation info
+                                    styledData += `. (${citationParts.join(', ')})`;
+                                }
+
+                                // Prepend asterisk if marked as important
+                                if (row['mark_as_important'] === 'true' || row['mark_as_important'] === true) {
+                                    styledData = '* ' + styledData;
+                                }
+
+                                return `<td>${styledData}</td>`;
                             }
 
                             return `<td>${dataStyler(fieldValue)}</td>`;
@@ -995,7 +1048,37 @@ function buildTable(table) {
 }
 
 function genericDataStyler(data) {
-    const wordArray = String(data).trim().split(/\s+/);
+    const dataStr = String(data).trim();
+    
+    // If data contains HTML tags (like our formatted authors), preserve them
+    // Only process the text content, not the HTML tags
+    if (dataStr.includes('<span') || dataStr.includes('</span>')) {
+        // Split by HTML tags to preserve them
+        const parts = dataStr.split(/(<span[^>]*>.*?<\/span>)/);
+        
+        return parts.map(part => {
+            // If this part is an HTML tag, preserve it as-is
+            if (part.startsWith('<span')) {
+                return part;
+            }
+            
+            // Otherwise, apply normal styling to this text portion
+            const wordArray = part.trim().split(/\s+/);
+            const formattedArray = wordArray.map((word) => {
+                if (isUrl(word)) {
+                    return linkWrapper(word);
+                }
+                if (isDOI(word)) {
+                    return doiWrapper(word);
+                }
+                return word;
+            });
+            return formattedArray.join(" ");
+        }).join('');
+    }
+    
+    // Normal processing for non-HTML content
+    const wordArray = dataStr.split(/\s+/);
 
     const formattedArray = wordArray.map((word) => {
         if (isUrl(word)) {
@@ -1162,50 +1245,75 @@ function formatAuthorNamesWithMetadata(authorNamesString, rowData) {
     } else {
         return String(authorNamesString);
     }
-    console.log("🔍 Author formatting - Parsed author names:", authorNamesString);
-    console.log("🔍 Author formatting - Row data keys:", Object.keys(rowData));
 
     // Get metadata arrays from row data - check all possible field name variations
     const trainees = rowData["author_trainees"] || [];
     const doctoralSupervisors = rowData["author_doctoral_supervisors"] || [];
     const postdoctoralSupervisors = rowData["author_postdoctoral_supervisors"] || [];
 
-    // Debug: Log to see what we're getting
-    if (trainees.length > 0 || doctoralSupervisors.length > 0 || postdoctoralSupervisors.length > 0) {
-        console.log("📝 Author formatting - Found metadata:", {
-            authorNames,
-            trainees,
-            doctoralSupervisors,
-            postdoctoralSupervisors,
-            rowData: Object.keys(rowData),
-        });
-    }
-
     // Parse metadata if they're strings
     const parseMetadata = (data) => {
-        if (Array.isArray(data)) return data;
-        if (typeof data === "string" && data.trim()) {
+        if (!data) return [];
+        
+        if (Array.isArray(data)) {
+            // Filter out empty strings and null values
+            return data.filter(item => item && String(item).trim());
+        }
+        
+        if (typeof data === "string") {
+            const trimmed = data.trim();
+            // Handle empty string or string representation of empty array
+            if (!trimmed || trimmed === "[]") return [];
+            
             try {
-                return JSON.parse(data);
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                    // Filter out empty strings and null values
+                    return parsed.filter(item => item && String(item).trim());
+                }
+                return [];
             } catch {
-                return data.split(",").map((item) => item.trim());
+                // If not JSON, try comma-separated values
+                return trimmed.split(",")
+                    .map((item) => item.trim())
+                    .filter(item => item); // Remove empty strings
             }
         }
+        
         return [];
     };
 
     const traineesList = parseMetadata(trainees);
     const doctoralList = parseMetadata(doctoralSupervisors);
     const postdocList = parseMetadata(postdoctoralSupervisors);
+    
+    // Early return if no metadata to process
+    if (traineesList.length === 0 && doctoralList.length === 0 && postdocList.length === 0) {
+        // console.log("ℹ️ No metadata found for author formatting, returning plain names");
+        return Array.isArray(authorNamesString) ? authorNamesString.join(", ") : String(authorNamesString);
+    }
+
+    // Helper function to normalize names for comparison (handles spacing issues)
+    const normalizeName = (name) => {
+        if (!name) return '';
+        return String(name).replace(/\s+/g, ' ').trim().toLowerCase();
+    };
+
+    // Create normalized lookup sets for faster comparison (filter out empty strings)
+    const normalizedTrainees = new Set(traineesList.map(normalizeName).filter(n => n));
+    const normalizedDoctoral = new Set(doctoralList.map(normalizeName).filter(n => n));
+    const normalizedPostdoc = new Set(postdocList.map(normalizeName).filter(n => n));
 
     // Format each author name
     const formattedAuthors = authorNames.map((name, idx) => {
         if (!name) return "";
 
-        // Check if author is in any special role
-        const isTrainee = traineesList.includes(name);
-        const isDoctoralSupervisor = doctoralList.includes(name);
-        const isPostdoctoralSupervisor = postdocList.includes(name);
+        const normalizedAuthorName = normalizeName(name);
+
+        // Check if author is in any special role using normalized names
+        const isTrainee = normalizedTrainees.has(normalizedAuthorName);
+        const isDoctoralSupervisor = normalizedDoctoral.has(normalizedAuthorName);
+        const isPostdoctoralSupervisor = normalizedPostdoc.has(normalizedAuthorName);
 
         // Apply formatting based on author roles
         let styles = [];
@@ -1234,13 +1342,6 @@ function formatAuthorNamesWithMetadata(authorNamesString, rowData) {
         if (styles.length > 0 || classes.length > 0) {
             const styleAttr = styles.length > 0 ? ` style="${styles.join("; ")}"` : "";
             const classAttr = classes.length > 0 ? ` class="${classes.join(" ")}"` : "";
-            console.log(`✨ Formatting author "${name}":`, {
-                isTrainee,
-                isDoctoralSupervisor,
-                isPostdoctoralSupervisor,
-                styles,
-                classes,
-            });
             return `<span${styleAttr}${classAttr}>${name}</span>`;
         }
 

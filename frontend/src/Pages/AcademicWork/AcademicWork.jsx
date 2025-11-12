@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import PageContainer from "./PageContainer.jsx";
-import FacultyMenu from "../Components/FacultyMenu";
-import WorkSection from "../Components/WorkSection";
-import "../CustomStyles/scrollbar.css";
-import GenericSection from "../SharedComponents/GenericSection/GenericSection.jsx";
-import SecureFundingSection from "../Components/SecureFundingSection.jsx";
-import PublicationsSection from "../Components/PublicationsSection.jsx";
-import PatentsSection from "../Components/PatentsSection.jsx";
-import { getAllSections } from "../graphql/graphqlHelpers.js";
+import PageContainer from "../../Views/PageContainer.jsx";
+import FacultyMenu from "../../Components/FacultyMenu.jsx";
+import WorkSection from "../../Components/WorkSection.jsx";
+import "../../CustomStyles/scrollbar.css";
+import GenericSection from "../../SharedComponents/GenericSection/GenericSection.jsx";
+import SecureFundingSection from "../../Components/SecureFundingSection.jsx";
+import PublicationsSection from "./Publications/PublicationsSection.jsx";
+import PatentsSection from "../../Components/PatentsSection.jsx";
+import { getAllSections } from "../../graphql/graphqlHelpers.js";
 import { useNavigate, useParams } from "react-router-dom";
 
 // Natural sort function for titles/categories with leading numbers
