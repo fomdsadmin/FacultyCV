@@ -122,9 +122,6 @@ const MockDataTable = ({ data, setData, attributeKeys, dataSource }) => {
                 <table className="w-full border-collapse text-xs">
                     <thead>
                         <tr className="bg-gray-200 border-b border-gray-300">
-                            <th className="px-3 py-2 text-center font-semibold text-gray-700 w-10 border-r border-gray-300">
-                                #
-                            </th>
                             {Object.entries(attributeKeys).map(([displayName, fieldName]) => (
                                 <th
                                     key={fieldName}
@@ -146,9 +143,6 @@ const MockDataTable = ({ data, setData, attributeKeys, dataSource }) => {
                                     rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"
                                 }`}
                             >
-                                <td className="px-3 py-2 text-center text-gray-500 text-xs border-r border-gray-300">
-                                    {rowIdx + 1}
-                                </td>
                                 {Object.entries(attributeKeys).map(([displayName, fieldName]) => {
                                     const section = sectionsMap[dataSource];
                                     const attributesType = section?.attributes_type || {};

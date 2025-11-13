@@ -12,8 +12,9 @@ export const buildItem = (item) => {
 }
 
 const buildColumnTextTemplate = (table) => {
-    const { data, columnTextTemplate } = table;
+    const { data, sqlSettings } = table;
     const { rows } = data || {};
+    const { columnTextTemplate } = sqlSettings;
 
     const columnTextTemplateHtml = columnTextTemplate.html;
 
@@ -44,7 +45,7 @@ const buildColumnTextTemplate = (table) => {
         }
     });
 
-
+    console.log("JJFILTER potential div", html)
     return html;
 }
 
@@ -229,9 +230,12 @@ const buildTable = (table) => {
 
     let html = "";
 
-    // Add header (section title)
+    // Add header (section title) - only if it has actual text content (strip HTML tags first)
     if (header) {
-        html += header;
+        const plainText = header.replace(/<[^>]*>/g, '').trim();
+        if (plainText) {
+            html += header;
+        }
     }
     console.log("JJFILTER ", table)
     if (columnTextTemplate.selected) {

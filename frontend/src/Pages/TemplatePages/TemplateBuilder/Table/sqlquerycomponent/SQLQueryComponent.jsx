@@ -4,6 +4,7 @@ import MockDataTable from "./MockDataTable";
 import SQLQueryEditor from "./SQLQueryEditor";
 import QueryResultsTable from "./QueryResultsTable";
 import CustomTableTemplate from "./CustomTableTemplate";
+import ColumnDataTypeConfig from "./ColumnDataTypeConfig";
 import { ErrorMessage, InfoMessage } from "./MessageComponents";
 import { initializeAlaSQL, executeAlaSQL } from "./alasqlUtils";
 import { generateMockData } from "./mockDataUtils";
@@ -17,6 +18,8 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [data, setData] = useState(null);
+    const [mockDataRowCount, setMockDataRowCount] = useState(null); // null = auto-generate
+    const [columnDataTypes, setColumnDataTypes] = useState({}); // Track data types per column
 
     // Load mock data on mount or when dataSource changes
     useEffect(() => {
@@ -38,7 +41,7 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
             }
 
             // Generate mock data based on section attributes using attributeKeys
-            const mockTableData = generateMockData(section, attributeKeys);
+            const mockTableData = generateMockData(section, attributeKeys, undefined, mockDataRowCount, columnDataTypes);
 
             if (mockTableData.length > 0) {
                 setData(mockTableData);
@@ -55,7 +58,7 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
         } finally {
             setLoading(false);
         }
-    }, [dataSource, sectionsMap, attributeKeys]);
+    }, [dataSource, sectionsMap, attributeKeys, mockDataRowCount, columnDataTypes]);
 
     // Execute SQL query
     const executeQuery = () => {
@@ -127,6 +130,50 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
             </div>
 
             <div className="p-3 bg-white rounded-md">
+                {/* Mock Data Row Count Control */}
+                {data && (
+                    <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Mock Data Rows:
+                        </label>
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="number"
+                                min="1"
+                                max="100"
+                                value={mockDataRowCount || ""}
+                                onChange={(e) => {
+                                    const val = e.target.value === "" ? null : Math.max(1, parseInt(e.target.value, 10));
+                                    setMockDataRowCount(val);
+                                }}
+                                placeholder="Auto-generate"
+                                className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="text-xs text-gray-600">
+                                {mockDataRowCount === null ? "(Auto-generate based on data)" : `${mockDataRowCount} row${mockDataRowCount === 1 ? "" : "s"}`}
+                            </span>
+                            {mockDataRowCount !== null && (
+                                <button
+                                    onClick={() => setMockDataRowCount(null)}
+                                    className="px-3 py-1.5 bg-gray-400 text-white rounded text-xs font-medium hover:bg-gray-500 transition-colors"
+                                >
+                                    Reset to Auto
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Column Data Type Configuration */}
+                {data && (
+                    <ColumnDataTypeConfig
+                        attributeKeys={attributeKeys}
+                        dataSource={dataSource}
+                        columnDataTypes={columnDataTypes}
+                        setColumnDataTypes={setColumnDataTypes}
+                    />
+                )}
+
                 {/* Mock Data Editor */}
                 {data && (
                     <MockDataTable

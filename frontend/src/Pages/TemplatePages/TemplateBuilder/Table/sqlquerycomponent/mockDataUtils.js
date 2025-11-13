@@ -1,5 +1,5 @@
 // Mock data generation utilities
-export const generateMockData = (section, keys, attributeKeys) => {
+export const generateMockData = (section, keys, attributeKeys, rowCount = null, columnDataTypes = {}) => {
     if (!section) return [];
 
     const attributesType = section.attributes_type || {};
@@ -43,15 +43,60 @@ export const generateMockData = (section, keys, attributeKeys) => {
 
     const generateRandomNumber = () => Math.floor(Math.random() * 1000);
 
+    const generateRandomCSVList = () => {
+        // Generate 2-4 comma-separated random strings
+        const numItems = Math.floor(Math.random() * 3) + 2; // 2-4 items
+        const items = [];
+        for (let i = 0; i < numItems; i++) {
+            items.push(generateRandomString());
+        }
+        return items.join(", ");
+    };
+
+    // Helper function to generate field value based on column data type
+    const getFieldValue = (displayName, fieldName, attrType) => {
+        // If it's a dropdown or date type, use the default behavior
+        if (attrType === "dropdown" && dropdownOptions[displayName]) {
+            const options = dropdownOptions[displayName];
+            return options[Math.floor(Math.random() * options.length)];
+        } else if (attrType === "date") {
+            return generateRandomDate();
+        }
+
+        // For other types, check if there's a column-specific data type configuration
+        const columnDataType = columnDataTypes[fieldName];
+
+        if (columnDataType === "number") {
+            return generateRandomNumber();
+        } else if (columnDataType === "csvlist") {
+            return generateRandomCSVList();
+        } else {
+            // Default to string
+            return generateRandomString();
+        }
+    };
+
     // Find all dropdown attributes and their options
     const dropdownAttributes = Object.entries(keys).filter(([displayName]) =>
         attributesType[displayName] === "dropdown" && dropdownOptions[displayName]
     );
 
-    // Determine how many rows we need based on dropdown options
+    // Determine how many rows we need based on dropdown options or explicit rowCount
     let mockRows = [];
 
-    if (dropdownAttributes.length > 0) {
+    if (rowCount !== null && rowCount > 0) {
+        // If explicit rowCount is provided, use it
+        for (let i = 0; i < rowCount; i++) {
+            const row = {};
+
+            for (const [displayName, fieldName] of Object.entries(keys)) {
+                const attrType = attributesType[displayName];
+                row[fieldName] = getFieldValue(displayName, fieldName, attrType);
+            }
+
+            mockRows.push(row);
+        }
+    } else if (dropdownAttributes.length > 0) {
         // Create a set to track all combinations of dropdown values we need to represent
         // For each dropdown attribute, we need to ensure all its options appear
 
@@ -79,14 +124,8 @@ export const generateMockData = (section, keys, attributeKeys) => {
                             const opts = dropdownOptions[displayName];
                             row[fieldName] = opts[Math.floor(Math.random() * opts.length)];
                         }
-                    } else if (attrType === "date") {
-                        row[fieldName] = generateRandomDate();
-                    } else if (attrType === "text") {
-                        row[fieldName] = generateRandomString();
-                    } else if (attrType === "number") {
-                        row[fieldName] = generateRandomNumber();
                     } else {
-                        row[fieldName] = generateRandomString();
+                        row[fieldName] = getFieldValue(displayName, fieldName, attrType);
                     }
                 }
 
@@ -119,14 +158,8 @@ export const generateMockData = (section, keys, attributeKeys) => {
                                 const opts = dropdownOptions[displayName];
                                 row[fieldName] = opts[Math.floor(Math.random() * opts.length)];
                             }
-                        } else if (attrType === "date") {
-                            row[fieldName] = generateRandomDate();
-                        } else if (attrType === "text") {
-                            row[fieldName] = generateRandomString();
-                        } else if (attrType === "number") {
-                            row[fieldName] = generateRandomNumber();
                         } else {
-                            row[fieldName] = generateRandomString();
+                            row[fieldName] = getFieldValue(displayName, fieldName, attrType);
                         }
                     }
 
@@ -135,10 +168,15 @@ export const generateMockData = (section, keys, attributeKeys) => {
             });
         }
     } else {
-        // If no dropdown attributes, generate 3-5 rows as before
-        const rowCount = Math.floor(Math.random() * 3) + 3;
+        // If no dropdown attributes, generate rows based on rowCount or default 3-5 rows
+        let finalRowCount;
+        if (rowCount !== null && rowCount > 0) {
+            finalRowCount = rowCount;
+        } else {
+            finalRowCount = Math.floor(Math.random() * 3) + 3;
+        }
 
-        for (let i = 0; i < rowCount; i++) {
+        for (let i = 0; i < finalRowCount; i++) {
             const row = {};
 
             for (const [displayName, fieldName] of Object.entries(keys)) {
@@ -147,14 +185,8 @@ export const generateMockData = (section, keys, attributeKeys) => {
                 if (attrType === "dropdown" && dropdownOptions[displayName]) {
                     const options = dropdownOptions[displayName];
                     row[fieldName] = options[Math.floor(Math.random() * options.length)];
-                } else if (attrType === "date") {
-                    row[fieldName] = generateRandomDate();
-                } else if (attrType === "text") {
-                    row[fieldName] = generateRandomString();
-                } else if (attrType === "number") {
-                    row[fieldName] = generateRandomNumber();
                 } else {
-                    row[fieldName] = generateRandomString();
+                    row[fieldName] = getFieldValue(displayName, fieldName, attrType);
                 }
             }
 
