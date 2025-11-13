@@ -52,7 +52,7 @@ const DataSourceDropdown = ({ dataSource, setDataSettings }) => {
             <div
               key={source}
               onClick={() => {
-                setDataSettings({ dataSource: source });
+                setDataSettings(source);
                 setSearchTerm("");
                 setShowSearch(false);
               }}

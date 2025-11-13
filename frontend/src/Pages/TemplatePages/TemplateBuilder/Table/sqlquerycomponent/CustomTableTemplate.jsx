@@ -6,7 +6,7 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
     const [selectedTemplate, setSelectedTemplate] = useState(
         sqlSettings?.columnTextTemplate?.selected ? "columnTextTemplate" :
         sqlSettings?.sqlViewTemplate?.selected ? "sqlViewTemplate" :
-        "columnTextTemplate"
+        "none"
     );
 
     const handleColumnTextTemplateChange = (html) => {
@@ -63,10 +63,23 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                                     selected: false
                                 }
                             });
+                        } else if (selectedValue === "none") {
+                            setSqlSettings({
+                                ...sqlSettings,
+                                columnTextTemplate: {
+                                    html: sqlSettings?.columnTextTemplate?.html || "",
+                                    selected: false
+                                },
+                                sqlViewTemplate: {
+                                    ...sqlSettings?.sqlViewTemplate,
+                                    selected: false
+                                }
+                            });
                         }
                     }}
                     className="w-full p-2 border border-gray-300 rounded text-xs box-sizing-border"
                 >
+                    <option value="none">Default Template (None selected)</option>
                     <option value="columnTextTemplate">Column Text Template</option>
                     <option value="sqlViewTemplate">SQL View Template</option>
                 </select>
@@ -85,6 +98,12 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                     sqlSettings={sqlSettings}
                     setSqlSettings={setSqlSettings}
                 />
+            )}
+
+            {selectedTemplate === "none" && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-gray-700">
+                    Using default template - data will be displayed in standard table format.
+                </div>
             )}
         </div>
     );

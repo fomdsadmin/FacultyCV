@@ -9,8 +9,12 @@ import HeaderEditor from "./HeaderEditor";
 const Table = ({ table, setTable }) => {
   const { sectionsMap } = useTemplateBuilder();
 
-  const setDataSettings = (settings) => {
-    setTable(table.id, { dataSettings: { ...table.dataSettings, ...settings } });
+  const handleDataSourceChange = (dataSource) => {
+    // When data source changes, clear the columns so they get reloaded from the new data source
+    setTable(table.id, { 
+      dataSettings: { ...table.dataSettings, dataSource },
+      tableSettings: { ...table.tableSettings, columns: [] }
+    });
   };
 
   const setFilterSettings = (updatedFilterSettings) => {
@@ -65,7 +69,7 @@ const Table = ({ table, setTable }) => {
         </div>
         <DataSourceDropdown
           dataSource={dataSource}
-          setDataSettings={setDataSettings}
+          setDataSettings={handleDataSourceChange}
         />
 
         <div style={{ marginBottom: 16 }}>

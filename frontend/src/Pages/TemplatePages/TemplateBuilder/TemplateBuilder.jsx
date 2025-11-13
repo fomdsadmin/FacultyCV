@@ -229,7 +229,7 @@ const TemplateBuilderContent = ({
             name,
             tableSettings: {
                 header: "",
-                columns: Object.values(sectionsMap)[0]?.attributes,
+                columns: [],
                 hideColumns: false
             },
             dataSettings: {
@@ -239,7 +239,7 @@ const TemplateBuilderContent = ({
                     query: "SELECT * FROM ?",
                     columnTextTemplate: {
                         html: "",
-                        selected: true
+                        selected: false
                     },
                     sqlViewTemplate: {
                         selected: false,

@@ -130,14 +130,16 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
 
     // Update attributes when dataSource changes, but preserve saved columns
     useEffect(() => {
-        // Only update if we don't have saved columns
+        // ONLY load all attributes if columns is explicitly an empty array []
+        if (Array.isArray(tableSettings?.columns) && tableSettings.columns.length === 0) {
             const section = dataSource && sectionsMap ? sectionsMap[dataSource] : null;
             if (section && section.attributes) {
                 setAttributeItems(section.attributes);
             } else {
                 setAttributeItems([]);
             }
-    }, [dataSource, sectionsMap]);
+        }
+    }, [dataSource, sectionsMap, tableSettings?.columns]);
 
     const [activeId, setActiveId] = useState(null);
     const [overId, setOverId] = useState(null);
