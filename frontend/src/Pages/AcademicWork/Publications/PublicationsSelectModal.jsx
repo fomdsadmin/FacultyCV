@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-import "../CustomStyles/scrollbar.css";
-import ExistingPublicationCard from "./ExistingPublicationCard";
-import NewPublicationCard from "./NewPublicationCard";
-import MatchedPublicationCard from "./MatchedPublicationCard";
+import "../../../CustomStyles/scrollbar.css"
+import ExistingPublicationCard from "../../../Components/ExistingPublicationCard";
+import NewPublicationCard from "../../../Components/NewPublicationCard";
+import MatchedPublicationCard from "../../../Components/MatchedPublicationCard";
 import { truncateAuthors } from "utils/publicationsMergeUtils";
 
 const PublicationsSelectModal = ({

@@ -325,7 +325,7 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
         <div key={attrName} className="col-span-2 mb-1">
           <label className="block text-sm font-semibold capitalize mb-2">{attrName}</label>
           <div className="border border-gray-300 rounded p-3 bg-gray-50">
-            {authorsList.length > 0 && (
+            {authorsList && (
               <div className="overflow-x-auto">
                 <table className="w-full mb-3 text-sm">
                   <thead>
