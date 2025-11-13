@@ -4,7 +4,7 @@ import Header from "./Components/Headers.jsx";
 import Footer from "./Components/Footer.jsx";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "./Views/AuthPage";
-import Dashboard from "./Pages/Dashboard/Dashboard.jsx";
+import Dashboard from "./Pages/Dashboard/Dashboard";
 import SupportForm from "./Views/support.jsx";
 import NotFound from "./Views/NotFound";
 import AcademicWork from "./Pages/AcademicWork/AcademicWork.jsx";
