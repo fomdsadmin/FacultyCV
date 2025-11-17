@@ -1,14 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import ReactQuill, { Quill } from "react-quill";
+import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-
-// Create a custom Block class to use div instead of p
-const CustomBlock = Quill.import('blots/block');
-class DivBlock extends CustomBlock {}
-DivBlock.tagName = 'div';
-
-// Register the custom div block
-Quill.register({ 'formats/divblock': DivBlock }, true);
 
 const ColumnTextTemplateEditor = ({
     template = "",
@@ -73,8 +65,7 @@ const ColumnTextTemplateEditor = ({
         "bold", "italic", "underline",
         "header",
         "list",
-        "link",
-        "divblock"
+        "link"
     ];
 
     return (

@@ -214,7 +214,8 @@ const TemplateBuilderContent = ({
             type: "group",
             name,
             groupSettings: {
-                header: ""
+                header: "",
+                headerWrapperTag: "div"
             },
             children: [],
         };
@@ -229,6 +230,7 @@ const TemplateBuilderContent = ({
             name,
             tableSettings: {
                 header: "",
+                headerWrapperTag: "div",
                 columns: [],
                 hideColumns: false
             },

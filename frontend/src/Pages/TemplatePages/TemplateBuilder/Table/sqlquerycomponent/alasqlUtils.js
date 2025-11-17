@@ -14,6 +14,12 @@ export const initializeAlaSQL = () => {
         }
     };
 
+    alasql.fn.STRIP_END_PARENS = function (value) {
+        if (!value) return value;
+        return String(value).replace(/\([^()]*\)$/, '').trim();
+    };
+
+
     alasql.from.EXPAND_DELIMITER_LIST = function (dbtype, opts, cb, idx, query) {
         const column = opts.column;      // column to split
         const delimiter = opts.delimiter; // delimiter

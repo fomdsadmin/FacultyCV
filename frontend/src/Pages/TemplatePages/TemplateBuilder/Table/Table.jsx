@@ -34,7 +34,12 @@ const Table = ({ table, setTable }) => {
   };
 
   const handleHeaderChange = (value) => {
+    console.log(value);
     setTableSettings({ header: value });
+  };
+
+  const handleWrapperTagChange = (wrapperTag) => {
+    setTableSettings({ headerWrapperTag: wrapperTag });
   };
 
   const handleNameChange = (e) => {
@@ -91,6 +96,8 @@ const Table = ({ table, setTable }) => {
             <HeaderEditor
               header={table?.tableSettings?.header || ""}
               onHeaderChange={handleHeaderChange}
+              headerWrapperTag={table?.tableSettings?.headerWrapperTag || "div"}
+              onWrapperTagChange={handleWrapperTagChange}
             />
             <ColumnBuilder
               dataSource={dataSource}

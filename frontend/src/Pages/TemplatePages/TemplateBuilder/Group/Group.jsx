@@ -10,7 +10,12 @@ const Group = ({ group, setGroup }) => {
   };
 
   const handleHeaderChange = (value) => {
+    console.log(value);
     setGroup(group.id, { groupSettings: { ...group.groupSettings, header: value } });
+  };
+
+  const handleWrapperTagChange = (wrapperTag) => {
+    setGroup(group.id, { groupSettings: { ...group.groupSettings, headerWrapperTag: wrapperTag } });
   };
 
   return (
@@ -40,6 +45,8 @@ const Group = ({ group, setGroup }) => {
         <HeaderEditor
           header={group?.groupSettings?.header || ""}
           onHeaderChange={handleHeaderChange}
+          headerWrapperTag={group?.groupSettings?.headerWrapperTag || "div"}
+          onWrapperTagChange={handleWrapperTagChange}
         />
       </div>
     </>

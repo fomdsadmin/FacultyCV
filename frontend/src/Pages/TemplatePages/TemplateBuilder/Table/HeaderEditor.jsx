@@ -1,8 +1,29 @@
 import React from "react";
-import ReactQuill from "react-quill";
+import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
-const HeaderEditor = ({ header = "", onHeaderChange }) => {
+// Create a custom Block class to use custom_tag instead of p
+const CustomBlock = Quill.import('blots/block');
+class CustomTagBlock extends CustomBlock {}
+CustomTagBlock.tagName = 'custom_tag';
+
+// Register the custom tag block for HeaderEditor
+Quill.register({ 'formats/customtagblock': CustomTagBlock }, true);
+
+const HeaderEditor = ({ header = "", onHeaderChange, headerWrapperTag = "div", onWrapperTagChange }) => {
+    const handleHeaderChange = (value) => {
+        // Value already contains <custom_tag> from Quill, just pass it through
+        onHeaderChange(value);
+    };
+
+    // No conversion needed - Quill already uses custom_tag
+    const displayContent = header || "";
+
+    const wrapperTagOptions = [
+        { value: "div", label: "div" },
+        { value: "span", label: "span" },
+        { value: "p", label: "p" },
+    ];
     const modules = {
         toolbar: {
             container: [
@@ -19,7 +40,8 @@ const HeaderEditor = ({ header = "", onHeaderChange }) => {
         "bold", "italic", "underline",
         "header",
         "list",
-        "link"
+        "link",
+        "customtagblock"
     ];
 
     return (
@@ -31,11 +53,35 @@ const HeaderEditor = ({ header = "", onHeaderChange }) => {
                 </p>
             </div>
 
+            <div className="mb-3">
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4, fontWeight: 500 }}>
+                    Wrapper Tag
+                </label>
+                <select
+                    value={headerWrapperTag}
+                    onChange={(e) => onWrapperTagChange(e.target.value)}
+                    style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                        fontSize: 14,
+                        boxSizing: "border-box"
+                    }}
+                >
+                    {wrapperTagOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            &lt;{option.label}&gt;
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             <div className="bg-white rounded border border-gray-300 overflow-hidden">
                 <ReactQuill
                     theme="snow"
-                    value={header}
-                    onChange={onHeaderChange}
+                    value={displayContent}
+                    onChange={handleHeaderChange}
                     modules={modules}
                     formats={formats}
                     placeholder="Enter table header content..."

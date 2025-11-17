@@ -234,7 +234,7 @@ const buildTable = (table) => {
     if (header) {
         const plainText = header.replace(/<[^>]*>/g, '').trim();
         if (plainText) {
-            html += header;
+            html += buildHeader(table);
         }
     }
     console.log("JJFILTER ", table)
@@ -259,7 +259,7 @@ const buildTableGroup = (tableGroup) => {
     let html = "";
 
     if (tableGroup.header) {
-        html += tableGroup.header;
+        html += buildHeader(tableGroup);
     }
 
     tableGroup.items.forEach((item) => {
@@ -272,4 +272,12 @@ const buildTableGroup = (tableGroup) => {
 
     console.log("JJDEBUG buildTableGroup returned HTML:", html);
     return html;
+}
+
+const buildHeader = (headerInfo) => {
+    const {headerWrapperTag, header} = headerInfo;
+    if (!headerWrapperTag) {
+        return header;
+    }
+    return header.replaceAll("custom_tag", headerWrapperTag);
 }
