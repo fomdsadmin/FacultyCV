@@ -3,7 +3,7 @@ import { formatTableItems } from "./FormatItems"
 export const formatTableGroup = (tableGroup) => {
     return {
         items: formatTableItems(tableGroup.children),
-        header: tableGroup.groupSettings.header,
+        groupSettings: tableGroup.groupSettings,
         type: tableGroup.type
     }
 }

@@ -215,7 +215,11 @@ const TemplateBuilderContent = ({
             name,
             groupSettings: {
                 header: "",
-                headerWrapperTag: "div"
+                headerWrapperTag: "div",
+                noDataDisplaySettings: {
+                    display: true,
+                    listEmptyTables: false
+                }
             },
             children: [],
         };
@@ -232,7 +236,12 @@ const TemplateBuilderContent = ({
                 header: "",
                 headerWrapperTag: "div",
                 columns: [],
-                hideColumns: false
+                hideColumns: false,
+                noDataDisplaySettings: {
+                    display: true,
+                    showEmptyTable: false,
+                    tableNameToDisplay: ""
+                }
             },
             dataSettings: {
                 dataSource: Object.keys(sectionsMap)[0],

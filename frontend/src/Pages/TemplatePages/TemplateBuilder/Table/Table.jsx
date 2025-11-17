@@ -46,6 +46,33 @@ const Table = ({ table, setTable }) => {
     setTable(table.id, { name: e.target.value });
   };
 
+  const handleListWhenEmptyChange = (e) => {
+    setTableSettings({
+      noDataDisplaySettings: {
+        ...table.tableSettings.noDataDisplaySettings,
+        display: e.target.checked
+      }
+    });
+  };
+
+  const handleShowEmptyTableChange = (e) => {
+    setTableSettings({
+      noDataDisplaySettings: {
+        ...table.tableSettings.noDataDisplaySettings,
+        showEmptyTable: e.target.checked
+      }
+    });
+  };
+
+  const handleTableNameToDisplayChange = (e) => {
+    setTableSettings({
+      noDataDisplaySettings: {
+        ...table.tableSettings.noDataDisplaySettings,
+        tableNameToDisplay: e.target.value
+      }
+    });
+  };
+
   const dataSource = table?.dataSettings?.dataSource;
   const attributeKeys = useMemo(() => sectionsMap?.[dataSource]?.attributeKeys || {}, [sectionsMap, dataSource]);
 
@@ -90,6 +117,54 @@ const Table = ({ table, setTable }) => {
             </span>
           </label>
         </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={table?.tableSettings?.noDataDisplaySettings?.display || false}
+              onChange={handleListWhenEmptyChange}
+              style={{ cursor: "pointer" }}
+            />
+            <span style={{ fontSize: 12, color: "#666" }}>
+              List table when empty
+            </span>
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 8 }}>
+            <input
+              type="checkbox"
+              checked={table?.tableSettings?.noDataDisplaySettings?.showEmptyTable || false}
+              onChange={handleShowEmptyTableChange}
+              style={{ cursor: "pointer" }}
+            />
+            <span style={{ fontSize: 12, color: "#666" }}>
+              Show empty table
+            </span>
+          </label>
+        </div>
+
+        {table?.tableSettings?.noDataDisplaySettings?.display && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4, fontWeight: 500 }}>
+              How table should be listed as
+            </label>
+            <input
+              type="text"
+              value={table?.tableSettings?.noDataDisplaySettings?.tableNameToDisplay || ""}
+              onChange={handleTableNameToDisplayChange}
+              placeholder={`will display as: ${table?.name || "Table Name"}`}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                border: "1px solid #ddd",
+                borderRadius: 4,
+                fontSize: 13,
+                boxSizing: "border-box",
+                color: "#333"
+              }}
+            />
+          </div>
+        )}
 
         {dataSource && (
           <>

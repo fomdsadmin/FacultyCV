@@ -18,6 +18,30 @@ const Group = ({ group, setGroup }) => {
     setGroup(group.id, { groupSettings: { ...group.groupSettings, headerWrapperTag: wrapperTag } });
   };
 
+  const handleListGroupWhenEmptyChange = (e) => {
+    setGroup(group.id, {
+      groupSettings: {
+        ...group.groupSettings,
+        noDataDisplaySettings: {
+          ...group.groupSettings.noDataDisplaySettings,
+          display: e.target.checked
+        }
+      }
+    });
+  };
+
+  const handleListEmptyTablesChange = (e) => {
+    setGroup(group.id, {
+      groupSettings: {
+        ...group.groupSettings,
+        noDataDisplaySettings: {
+          ...group.groupSettings.noDataDisplaySettings,
+          listEmptyTables: e.target.checked
+        }
+      }
+    });
+  };
+
   return (
     <>
       <div style={{ color: "#666", fontSize: 12, padding: "8px 12px" }}>
@@ -48,6 +72,38 @@ const Group = ({ group, setGroup }) => {
           headerWrapperTag={group?.groupSettings?.headerWrapperTag || "div"}
           onWrapperTagChange={handleWrapperTagChange}
         />
+
+        <div style={{ marginBottom: 16, paddingTop: 12, borderTop: "1px solid #e0e0e0" }}>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={group?.groupSettings?.noDataDisplaySettings?.display || false}
+                onChange={handleListGroupWhenEmptyChange}
+                style={{ cursor: "pointer" }}
+              />
+              <span style={{ fontSize: 12, color: "#666" }}>
+                List group when empty
+              </span>
+            </label>
+          </div>
+
+          {group?.groupSettings?.noDataDisplaySettings?.display && (
+            <div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={group?.groupSettings?.noDataDisplaySettings?.listEmptyTables || false}
+                  onChange={handleListEmptyTablesChange}
+                  style={{ cursor: "pointer" }}
+                />
+                <span style={{ fontSize: 12, color: "#666" }}>
+                  List empty tables?
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

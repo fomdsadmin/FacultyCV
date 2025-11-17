@@ -12,9 +12,9 @@ export const buildItem = (item) => {
 }
 
 const buildColumnTextTemplate = (table) => {
-    const { data, sqlSettings } = table;
+    const { data, dataSettings } = table;
     const { rows } = data || {};
-    const { columnTextTemplate } = sqlSettings;
+    const { columnTextTemplate } = dataSettings.sqlSettings;
 
     const columnTextTemplateHtml = columnTextTemplate.html;
 
@@ -57,9 +57,9 @@ function flattenColumns(cols) {
 }
 
 const buildSqlViewTemplate = (table) => {
-    const { sqlSettings, sqlTable } = table;
+    const { dataSettings, sqlTable } = table;
 
-    const { sqlViewTemplate } = sqlSettings;
+    const { sqlViewTemplate } = dataSettings.sqlSettings;
     const { showHeaders, grayFirstColumn } = sqlViewTemplate || {};
 
     if (!sqlTable || !sqlTable.success) {
@@ -237,10 +237,10 @@ const buildRecordDetailTemplate = (table) => {
 
     let html = "";
 
-    const { data, sqlSettings } = table;
+    const { data, dataSettings } = table;
 
     const { rows } = data || {};
-    const { header, tableRows } = sqlSettings.recordDetailTemplate;
+    const { header, tableRows } = dataSettings.sqlSettings.recordDetailTemplate;
     console.log("JJFILTER HEADER TABLEROWS", header, tableRows);
 
     // Replace custom_tag with div
@@ -349,11 +349,20 @@ const buildRecordDetailTemplate = (table) => {
 
 const buildTable = (table) => {
 
-    const { sqlSettings, header, footnotes } = table;
+    const { header, footnotes, dataSettings, data, tableSettings } = table;
 
-    const { columnTextTemplate, sqlViewTemplate, recordDetailTemplate } = sqlSettings;
+    const { columnTextTemplate, sqlViewTemplate, recordDetailTemplate } = dataSettings.sqlSettings;
 
     let html = "";
+
+    // Check if table has no data
+    const hasNoData = !data?.rows || data.rows.length === 0;
+
+    if (hasNoData && !tableSettings?.noDataDisplaySettings?.showEmptyTable) {
+        return "";
+    }
+
+    console.log("JJJJFILTER table", table)
 
     // Add header (section title) - only if it has actual text content (strip HTML tags first)
     if (header) {
@@ -363,7 +372,18 @@ const buildTable = (table) => {
         }
     }
 
-    console.log("JJFILTER sqlsettings", sqlSettings)
+    if (hasNoData && tableSettings?.noDataDisplaySettings?.showEmptyTable) {
+        html += `<div class="table-with-notes">
+            <table border="1" cellspacing="0" cellpadding="5">
+                <tbody>
+                    <tr>
+                        <td style="color: #888; text-align: center; font-style: italic;">No data!</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>`;
+        return html;
+    }
 
     if (columnTextTemplate?.selected) {
         html += buildColumnTextTemplate(table);
@@ -384,11 +404,75 @@ const buildTable = (table) => {
     return html;
 }
 
+// Helper function to get all empty tables from a tableGroup (breadth-first)
+const getAllEmptyTables = (tableGroup) => {
+    const emptyTables = [];
+    const queue = [tableGroup];
+
+    while (queue.length > 0) {
+        const current = queue.shift();
+
+        if (!current || !Array.isArray(current.items)) continue;
+
+        // Process all items at this level (breadth)
+        current.items.forEach((item) => {
+            if (item.type === 'table') {
+                const hasNoData = !item.data?.rows || item.data.rows.length === 0;
+                if (hasNoData) {
+                    const tableNameToDisplay = item.tableSettings?.noDataDisplaySettings?.tableNameToDisplay || item?.name || "";
+                    if (item.tableSettings?.noDataDisplaySettings?.display) {
+                        emptyTables.push(tableNameToDisplay);
+                    }
+                }
+            } else {
+                // Add nested groups to queue for later processing
+                queue.push(item);
+            }
+        });
+    }
+
+    return emptyTables;
+};
+
+// Helper function to check if tableGroup contains at least 1 row of data total
+const hasAnyData = (tableGroup) => {
+    const queue = [tableGroup];
+
+    while (queue.length > 0) {
+        const current = queue.shift();
+
+        if (!current || !Array.isArray(current.items)) continue;
+
+        for (const item of current.items) {
+            if (!item) continue;
+
+            if (item.type === 'table') {
+                if (item.data?.rows && item.data.rows.length > 0) {
+                    return true;
+                }
+            } else {
+                // Add nested groups to queue for later processing
+                queue.push(item);
+            }
+        }
+    }
+
+    return false;
+};
+
 const buildTableGroup = (tableGroup) => {
     let html = "";
 
-    if (tableGroup.header) {
-        html += buildHeader(tableGroup);
+    const { groupSettings } = tableGroup;
+
+    //const { display, listEmptyTables } = groupSettings?.noDataDisplaySettings;
+
+    if (!hasAnyData(tableGroup) && !groupSettings?.noDataDisplaySettings?.display) {
+        return "";
+    }
+
+    if (groupSettings.header) {
+        html += buildHeader(groupSettings);
     }
 
     tableGroup.items.forEach((item) => {
@@ -399,7 +483,39 @@ const buildTableGroup = (tableGroup) => {
         }
     });
 
-    console.log("JJDEBUG buildTableGroup returned HTML:", html);
+    if (groupSettings?.noDataDisplaySettings?.listEmptyTables) {
+        const emptyTableNames = getAllEmptyTables(tableGroup);
+        if (emptyTableNames.length > 0) {
+            html += `
+        <div style="
+            margin-top: 1em;
+            margin-bottom: 1em;
+            font-family: Arial, sans-serif;
+            font-size: 0.95em;
+        ">
+            <strong>Tables with no data:</strong>
+            ${emptyTableNames
+                    .map(
+                        (name, i) => `
+                <span style="
+                    background-color: ${i % 2 === 0 ? "#f2f2f2" : "#dcdcdc"};
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    margin-right: 4px;
+                    display: inline-block;
+                ">
+                    ${name}${i < emptyTableNames.length - 1 ? "," : ""}
+                </span>
+            `
+                    )
+                    .join("")}
+        </div>
+    `;
+        }
+    }
+
+    console.log("JJJJFILTER empty tables", getAllEmptyTables(tableGroup))
+
     return html;
 }
 

@@ -75,6 +75,7 @@ export const formatTable = (table) => {
     rowsToUse = mergeRowAttributes(rowsToUse, columnItems);
 
     const formattedTable = {
+        name: table.name,
         type: table.type,
         data: {
             columns: columnsToUse,
@@ -82,7 +83,8 @@ export const formatTable = (table) => {
         },
         header,
         hideColumns,
-        sqlSettings: table.dataSettings.sqlSettings,
+        tableSettings: table.tableSettings,
+        dataSettings: table.dataSettings,
         footnotes: footnotes,
         sqlTable: queryResult
     }
