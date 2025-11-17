@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import "../CustomStyles/scrollbar.css";
-import "../CustomStyles/modal.css";
+import "../../../CustomStyles/scrollbar.css"
+import "../../../CustomStyles/modal.css"
 import {
   getUserCVData,
   getAllSections,
   getStagingScopusPublications,
   updateStagingScopusPublications,
   updateUserCVDataArchive,
-} from "../graphql/graphqlHelpers";
+} from "../../../graphql/graphqlHelpers";
 import { useNavigate } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
 import PublicationsSelectModal from "./PublicationsSelectModal";

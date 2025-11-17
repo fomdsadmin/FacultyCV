@@ -2,7 +2,7 @@ import { useState } from "react";
 import AddAttributeGroupModal from "./AddAttributeGroupModal";
 import { useTemplateModifier } from "Pages/TemplatePages/SharedTemplatePageComponents/TemplateModifier/TemplateModifierContext";
 
-const AddAttributeGroupButton = ({ dataSectionId }) => {
+const AddAttributeGroupButton = ({ dataSectionId, dataSectionTitle }) => {
 
     const { getGroupIdContainingPreparedSectionId } = useTemplateModifier();
     const [showAddAttributeGroupModal, setShowAddAttributeGroupModal] = useState(false);

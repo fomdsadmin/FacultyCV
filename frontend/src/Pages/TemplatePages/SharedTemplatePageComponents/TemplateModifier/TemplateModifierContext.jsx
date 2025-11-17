@@ -49,7 +49,7 @@ export const TemplateModifierProvider = ({
       // Create sectionsMap with data_section_id as key and section as value
       const sectionsMap = {};
       allSections.forEach((section) => {
-        sectionsMap[section.data_section_id] = section;
+        sectionsMap[section.title] = section;
       });
 
       setSectionsMap(sectionsMap)

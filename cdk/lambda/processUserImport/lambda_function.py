@@ -63,6 +63,8 @@ def lambda_handler(event, context):
             table_name = "templates"
         elif "university_info" in file_key.lower():
             table_name = "university_info"
+        elif "user_cv_data" in file_key.lower():
+            table_name = "user_cv_data"
         else:
             raise Exception(f"Unknown file key: {file_key}. Expected 'bulkUserUpload', 'bulkAffiliationsUpload', 'templates', or 'university_info'")
 

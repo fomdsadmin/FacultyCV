@@ -523,7 +523,6 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                             <b>FOM Merit & PSA:</b>
                             <ul className="list-disc ml-4">
                               <li>
-                                {console.log(decl)}
                                 <div className="">
                                   {DECLARATION_LABELS.fomMerit[decl.fomMerit]} January 1, {decl.year} - December 31,{" "}
                                   {decl.year}{" "}

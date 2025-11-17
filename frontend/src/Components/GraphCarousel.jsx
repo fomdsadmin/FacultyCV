@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import BarChartComponent from "./BarChart.jsx";
 
 const GraphCarousel = ({ graphs }) => {
@@ -23,7 +23,7 @@ const GraphCarousel = ({ graphs }) => {
   if (!graphs || graphs.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 mb-8 w-full h-full flex flex-col">
-        <div className="flex items-center justify-center h-64 text-gray-500">
+        <div className="flex items-center justify-center h-20 text-gray-500">
           No graph data available
         </div>
       </div>

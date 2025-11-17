@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { useApp } from "../Contexts/AppContext.jsx";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import PageContainer from "./PageContainer.jsx";
 import DepartmentAdminMenu from "../Components/DepartmentAdminMenu.jsx";
 import ManageUser from "Components/ManageUser.jsx";
@@ -10,11 +10,12 @@ import { useAdmin } from "../Contexts/AdminContext.jsx";
 import { updateUserActiveStatus } from "../graphql/graphqlHelpers.js";
 import { ConfirmModal, DeactivatedUsersModal, TerminatedUsersModal } from "../Components/AdminUsersModals.jsx";
 import AdminUserTabs from "Components/AdminUserTabs.jsx";
+import { FaTrash } from "react-icons/fa";
 
 const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleViewMode, currentViewRole }) => {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  // const [filteredUsers, setFilteredUsers] = useState([]);
   const [approvedUsers, setApprovedUsers] = useState([]);
   const [deactivatedUsers, setDeactivatedUsers] = useState([]);
   const [terminatedUsers, setTerminatedUsers] = useState([]);
@@ -70,7 +71,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
     if (users.length > 0) {
       filterAllUsers();
     }
-  }, [users, userInfo]);
+  }, [users]);
 
   // Ensure activeUser is set when approvedUsers or params.userId changes
   useEffect(() => {
@@ -94,7 +95,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
 
       // Handle role-based filtering using currentViewRole
       const roleToCheck = currentViewRole || userInfo.role;
-      
+
       if (roleToCheck === "Admin") {
         // Regular Admin sees all approved users except other Admins
         allFilteredUsers = users.filter(
@@ -141,25 +142,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
       // Filter terminated users
       const terminatedUsersList = allFilteredUsers.filter((user) => user.terminated === true);
 
-      console.log("fetchAllUsers Debug:", {
-        userRole: userInfo.role,
-        totalUsers: users.length,
-        allFilteredUsers: allFilteredUsers.length,
-        approvedActiveUsers: approvedActiveUsers.length,
-        deactivatedUsers: deactivatedUsersList.length,
-        terminatedUsers: terminatedUsersList.length,
-        sampleUsers: allFilteredUsers.slice(0, 3).map((u) => ({
-          name: `${u.first_name} ${u.last_name}`,
-          role: u.role,
-          dept: u.primary_department,
-          pending: u.pending,
-          approved: u.approved,
-          active: u.active,
-          terminated: u.terminated,
-        })),
-      });
-
-      setFilteredUsers(allFilteredUsers);
+      // setFilteredUsers(allFilteredUsers);
       setApprovedUsers(approvedActiveUsers);
       setDeactivatedUsers(deactivatedUsersList);
       setTerminatedUsers(terminatedUsersList);
@@ -331,7 +314,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
           console.log("Deactivating user:", userToRemove);
 
           // Call the updateUserActiveStatus function to set active: false
-          const result = await updateUserActiveStatus(userToRemove.user_id, false);
+          await updateUserActiveStatus(userToRemove.user_id, false);
 
           // Refresh the users list
           fetchAllUsers();
@@ -368,7 +351,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
           console.log("Reactivating user:", userToReactivate);
 
           // Call updateUserActiveStatus to set active: true
-          const result = await updateUserActiveStatus(userToReactivate.user_id, true);
+          await updateUserActiveStatus(userToReactivate.user_id, true);
 
           // Refresh the users list
           fetchAllUsers();
@@ -400,7 +383,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
           console.log("Activating multiple users:", user_ids);
 
           // Call updateUserActiveStatus with array of user_ids
-          const result = await updateUserActiveStatus(user_ids, true);
+          await updateUserActiveStatus(user_ids, true);
 
           // Refresh the users list
           fetchAllUsers();
@@ -460,7 +443,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
   // Get unique departments for active users based on role
   let activeDepartments = [];
   let allowedDepartments = [];
-  
+
   const roleToCheck = currentViewRole || userInfo.role;
 
   if (roleToCheck === "Admin" || roleToCheck === "Admin-All") {
@@ -690,7 +673,8 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                             <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-center gap-2 items-stretch w-full">
                               <button
                                 onClick={() => handleImpersonateClick(user.user_id)}
-                                className="btn btn-accent btn-sm text-white text-xs whitespace-nowrap"
+                                className={`btn btn-accent btn-sm text-white text-xs whitespace-nowrap`}
+                                disabled={user.role !== "Faculty"}
                               >
                                 Impersonate
                               </button>
@@ -704,7 +688,7 @@ const DepartmentAdminMembers = ({ userInfo, getCognitoUser, department, toggleVi
                                 onClick={() => handleRemoveUser(user.user_id)}
                                 className="btn btn-warning btn-sm text-white text-xs whitespace-nowrap"
                               >
-                                Deactivate
+                                <FaTrash className="inline"/>
                               </button>
                             </div>
                           </td>

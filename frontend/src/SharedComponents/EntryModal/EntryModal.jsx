@@ -426,7 +426,6 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
     // Special handling: preserve record_id if it exists (for RISE grant data)
     if (finalFormData.record_id !== undefined) {
       allowedKeys.push('record_id');
-      console.log("🔑 Preserving record_id in grant update:", finalFormData.record_id);
     }
     
     // Special handling: preserve author metadata fields for publications
@@ -447,8 +446,6 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
       Object.entries(finalFormData).filter(([key]) => allowedKeys.includes(key))
     );
     
-    console.log("🔍 Final filtered form data with author metadata:", filteredFormData);
-
     console.log("Submitting form data:", filteredFormData);
     try {
       if (isNew) {
@@ -607,7 +604,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
           </div>
           
           {/* Special: Mark as Important checkbox for Journal Publications only */}
-          {(section?.title?.toLowerCase().includes('journal publications') || section?.title?.toLowerCase().includes('other publications')) && (
+          {/* {(section?.title?.toLowerCase().includes('journal publications') || section?.title?.toLowerCase().includes('other publications')) && (
             <div className="mt-4 pt-4 border-t border-gray-300">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -620,7 +617,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
                 <span className="text-sm font-semibold">Mark as Most Important</span>
               </label>
             </div>
-          )}
+          )} */}
           
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <div className="flex justify-end">

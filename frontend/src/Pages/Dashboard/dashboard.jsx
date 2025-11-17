@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import PageContainer from "../../Views/PageContainer.jsx";
 import FacultyMenu from "../../Components/FacultyMenu.jsx";
 import { Link } from "react-router-dom";
-import Dashboard from "./dashboard_charts.jsx"; // ← Import chart component
+import DashboardCharts from "./DashboardCharts.jsx";
 import { GetNotifications, getUserDeclarations, getStagingScopusPublications } from "../../graphql/graphqlHelpers.js";
 import { normalizeDeclarations } from "../Declarations/Declarations.jsx";
 import { getAuditViewData } from "../../graphql/graphqlHelpers.js";
 
-const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
+const Dashboard = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [notifications, setNotifications] = useState([]);
   const [declarations, setDeclarations] = useState([]);
   const [newPublicationsCount, setNewPublicationsCount] = useState(0);
@@ -493,7 +493,7 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
         {/* 📈 Publication Chart Section */}
         <div className="mb-8 border border-black border-opacity-20 rounded-lg p-4 w-full">
           <h2 className="text-lg font-semibold mb-2 mx-2">Analytics</h2>
-          <Dashboard userInfo={userInfo} />
+          <DashboardCharts userInfo={userInfo} />
         </div>
 
         {/* What is Fac360 + Notifications */}
@@ -544,4 +544,4 @@ const DashboardPage = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   );
 };
 
-export default DashboardPage;
+export default Dashboard;
