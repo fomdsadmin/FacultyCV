@@ -604,7 +604,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
           </div>
           
           {/* Special: Mark as Important checkbox for Journal Publications only */}
-          {(section?.title?.toLowerCase().includes('journal publications') || section?.title?.toLowerCase().includes('other publications')) && (
+          {/* {(section?.title?.toLowerCase().includes('journal publications') || section?.title?.toLowerCase().includes('other publications')) && (
             <div className="mt-4 pt-4 border-t border-gray-300">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -617,7 +617,7 @@ const EntryModal = ({ isNew, section, onClose, entryType, fields, user_cv_data_i
                 <span className="text-sm font-semibold">Mark as Most Important</span>
               </label>
             </div>
-          )}
+          )} */}
           
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <div className="flex justify-end">
