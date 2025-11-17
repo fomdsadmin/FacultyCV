@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import ColumnTextTemplateEditor from "./ColumnTextTemplateEditor";
 import SqlViewTemplate from "./DetailViewTemplate";
+import RecordDetailTemplate from "./RecordDetailTemplate";
 
 const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [] }) => {
     const [selectedTemplate, setSelectedTemplate] = useState(
         sqlSettings?.columnTextTemplate?.selected ? "columnTextTemplate" :
         sqlSettings?.sqlViewTemplate?.selected ? "sqlViewTemplate" :
+        sqlSettings?.recordDetailTemplate?.selected ? "recordDetailTemplate" :
         "none"
     );
 
@@ -38,6 +40,35 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
         });
     };
 
+    const handleRecordDetailTemplateSelect = () => {
+        setSqlSettings({
+            ...sqlSettings,
+            columnTextTemplate: {
+                html: sqlSettings?.columnTextTemplate?.html || "",
+                selected: false
+            },
+            sqlViewTemplate: {
+                ...sqlSettings?.sqlViewTemplate,
+                selected: false
+            },
+            recordDetailTemplate: {
+                header: sqlSettings?.recordDetailTemplate?.header || "",
+                tableRows: sqlSettings?.recordDetailTemplate?.tableRows || [],
+                selected: true
+            }
+        });
+    };
+
+    const handleRecordDetailTemplateChange = (updatedTemplate) => {
+        setSqlSettings({
+            ...sqlSettings,
+            recordDetailTemplate: {
+                ...updatedTemplate,
+                selected: true
+            }
+        });
+    };
+
     return (
         <div className="mt-4">
             <div className="mb-3">
@@ -51,6 +82,8 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                         setSelectedTemplate(selectedValue);
                         if (selectedValue === "sqlViewTemplate") {
                             handleSqlViewTemplateSelect();
+                        } else if (selectedValue === "recordDetailTemplate") {
+                            handleRecordDetailTemplateSelect();
                         } else if (selectedValue === "columnTextTemplate") {
                             setSqlSettings({
                                 ...sqlSettings,
@@ -60,6 +93,10 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                                 },
                                 sqlViewTemplate: {
                                     ...sqlSettings?.sqlViewTemplate,
+                                    selected: false
+                                },
+                                recordDetailTemplate: {
+                                    ...sqlSettings?.recordDetailTemplate,
                                     selected: false
                                 }
                             });
@@ -73,6 +110,10 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                                 sqlViewTemplate: {
                                     ...sqlSettings?.sqlViewTemplate,
                                     selected: false
+                                },
+                                recordDetailTemplate: {
+                                    ...sqlSettings?.recordDetailTemplate,
+                                    selected: false
                                 }
                             });
                         }
@@ -82,6 +123,7 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                     <option value="none">Default Template (None selected)</option>
                     <option value="columnTextTemplate">Column Text Template</option>
                     <option value="sqlViewTemplate">SQL View Template</option>
+                    <option value="recordDetailTemplate">Record Detail Template</option>
                 </select>
             </div>
 
@@ -97,6 +139,14 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                 <SqlViewTemplate 
                     sqlSettings={sqlSettings}
                     setSqlSettings={setSqlSettings}
+                />
+            )}
+
+            {selectedTemplate === "recordDetailTemplate" && (
+                <RecordDetailTemplate
+                    recordDetailTemplate={sqlSettings?.recordDetailTemplate || {}}
+                    setRecordDetailTemplate={handleRecordDetailTemplateChange}
+                    availableColumns={availableColumns}
                 />
             )}
 

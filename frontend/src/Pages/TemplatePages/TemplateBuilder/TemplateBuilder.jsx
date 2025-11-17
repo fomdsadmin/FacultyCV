@@ -247,6 +247,11 @@ const TemplateBuilderContent = ({
                         selected: false,
                         showHeaders: true,
                         grayFirstColumn: false
+                    },
+                    recordDetailTemplate: {
+                        selected: false,
+                        header: "",
+                        tableRows: []
                     }
                 }
             },
