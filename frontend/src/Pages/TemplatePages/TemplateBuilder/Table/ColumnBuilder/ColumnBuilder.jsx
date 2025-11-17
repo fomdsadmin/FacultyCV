@@ -29,6 +29,7 @@ import SortableAttribute from "./Attribute/SortableAttribute";
 import SortableAttributeGroup from "./AttributeGroup/SortableAttributeGroup";
 import AddAttributeModal from "./AddAttributeModal";
 import AddAttributeGroupModal from "./AddAttributeGroupModal";
+import AddCustomAttributeModal from "./AddCustomAttributeModal";
 import { buildAttributeObject } from "../../TemplateBuilderContext";
 
 const measuring = {
@@ -336,6 +337,7 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
                     dataSource={dataSource}
                     attributeItems={attributeItems}
                 />
+                <AddCustomAttributeModal onAdd={handleAddAttribute} />
             </div>
 
             <div style={{ marginBottom: 16 }}>

@@ -4,7 +4,7 @@ const SQLQueryEditor = ({ query, onQueryChange, onExecute, loading, onKeyPress }
     return (
         <div className="mb-3">
             <label className="text-xs text-gray-600 block mb-1 font-medium">
-                SQL Query <span style={{ color: "red", fontWeight: "bold" }}>(Warning: Renaming columns here will cause data to be mapped incorrectly. Only rename columns if you are using a custom table template. Same goes for adding additional tables.)</span>
+                SQL Query <span style={{ color: "red", fontWeight: "bold" }}>(Warning: Renaming columns here may cause data to be mapped incorrectly. All data are mapped to the column names of the resulting SQL query. Same goes for adding additional tables.)</span>
             </label>
             <textarea
                 value={query || ""}

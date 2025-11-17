@@ -82,6 +82,10 @@ const SortableAttribute = ({
               {attribute?.rename || attribute?.originalName}
             </span>
 
+            <span style={{ fontSize: 11, color: "#999", fontFamily: "monospace" }}>
+              ({attribute?.keyRename || attribute?.key})
+            </span>
+
             {onRemove && (
               <button
                 onClick={(e) => {

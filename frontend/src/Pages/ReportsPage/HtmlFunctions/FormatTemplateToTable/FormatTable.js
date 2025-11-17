@@ -108,7 +108,7 @@ const formatColumnItems = (columnItems) => {
 const formatAttribute = (attribute) => {
     return {
         headerName: attribute.rename || attribute.originalName,
-        field: attribute.key,
+        field: attribute.keyRename || attribute.key,
         children: undefined
     };
 }

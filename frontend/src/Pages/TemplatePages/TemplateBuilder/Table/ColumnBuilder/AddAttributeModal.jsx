@@ -42,7 +42,8 @@ const AddAttributeModal = ({ onAdd, dataSource, attributeItems }) => {
         if (selectedId) {
             const selected = availableAttributes.find((attr) => attr.id === selectedId || attr.key === selectedId);
             if (selected) {
-                onAdd(selected.originalName, selected.key);
+                // Pass the full attribute object so keyRename is initialized
+                onAdd(selected.originalName, selected.key, selected);
                 setSelectedId("");
                 setIsOpen(false);
             }
