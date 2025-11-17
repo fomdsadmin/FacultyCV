@@ -45,6 +45,8 @@ const buildColumnTextTemplate = (table) => {
         }
     });
 
+    html = html.replaceAll("custom_tag", "div");
+
     console.log("JJFILTER potential div", html)
     return html;
 }
@@ -220,13 +222,136 @@ const buildColRowTable = (table) => {
     return html;
 }
 
-const buildTable = (table) => {
+// Helper function to convert index to letter index (0 -> a, 1 -> b, ..., 25 -> z, 26 -> 1a, 27 -> 1b, etc.)
+const getLetterIndex = (index) => {
+    const letters = 'abcdefghijklmnopqrstuvwxyz';
+    if (index < 26) {
+        return letters[index];
+    }
+    const cycleNumber = Math.floor(index / 26);
+    const letterIndex = index % 26;
+    return `${cycleNumber}${letters[letterIndex]}`;
+};
 
-    console.log("JJFILTER table", table)
+const buildRecordDetailTemplate = (table) => {
+
+    let html = "";
+
+    const { data, sqlSettings } = table;
+
+    const { rows } = data || {};
+    const { header, tableRows } = sqlSettings.recordDetailTemplate;
+    console.log("JJFILTER HEADER TABLEROWS", header, tableRows);
+
+    // Replace custom_tag with div
+    const divWrappedHeader = header.replaceAll("custom_tag", "div");
+
+    // Extract all variables from header and table rows
+    const headerRegex = /\$\{([^}]+)\}/g;
+    const headerVariables = [];
+    let match;
+    while ((match = headerRegex.exec(divWrappedHeader)) !== null) {
+        headerVariables.push(match[1]);
+    }
+
+    // Loop through each row of data
+    if (Array.isArray(rows) && rows.length > 0) {
+        rows.forEach((row, rowIndex) => {
+            // 1. Build header for this row
+            let headerHtmlForRow = divWrappedHeader;
+
+            headerVariables.forEach((variable) => {
+                let value = row[variable] ?? "";
+
+                // Handle special variables
+                if (variable === "rowIndex") {
+                    value = String(rowIndex + 1); // 1-based index
+                } else if (variable === "letterIndex") {
+                    value = getLetterIndex(rowIndex);
+                }
+
+                headerHtmlForRow = headerHtmlForRow.replace(
+                    new RegExp(`\\$\\{${variable}\\}`, "g"),
+                    String(value)
+                );
+            });
+
+            html += headerHtmlForRow;
+
+            // 2. Build table for this row
+            if (Array.isArray(tableRows) && tableRows.length > 0) {
+                // Extract all variables from table cells
+                const tableVariables = new Set();
+                tableRows.forEach((tableRow) => {
+                    if (Array.isArray(tableRow.cells)) {
+                        tableRow.cells.forEach((cell) => {
+                            const cellRegex = /\$\{([^}]+)\}/g;
+                            let cellMatch;
+                            while ((cellMatch = cellRegex.exec(cell.content)) !== null) {
+                                tableVariables.add(cellMatch[1]);
+                            }
+                        });
+                    }
+                });
+
+                // Build table body (each tableRow becomes a row in the table)
+                let tableBodyHtml = "";
+                tableRows.forEach((tableRow) => {
+                    let rowHtml = "<tr>";
+                    if (Array.isArray(tableRow.cells)) {
+                        tableRow.cells.forEach((cell) => {
+                            let cellContent = cell.content;
+
+                            // Replace variables in cell content
+                            Array.from(tableVariables).forEach((variable) => {
+                                let value = row[variable] ?? "";
+
+                                // Handle special variables
+                                if (variable === "rowIndex") {
+                                    value = String(rowIndex + 1);
+                                } else if (variable === "letterIndex") {
+                                    value = getLetterIndex(rowIndex);
+                                }
+
+                                cellContent = cellContent.replace(
+                                    new RegExp(`\\$\\{${variable}\\}`, "g"),
+                                    String(value)
+                                );
+                            });
+
+                            rowHtml += `<td>${cellContent}</td>`;
+                        });
+                    }
+                    rowHtml += "</tr>";
+                    tableBodyHtml += rowHtml;
+                });
+
+                const tableHtml = `<div class="table-with-notes">
+                    <table border="1" cellspacing="0" cellpadding="5">
+                    <tbody>
+                    ${tableBodyHtml}
+                    </tbody>
+                    </table>
+                    </div>`;
+
+                html += tableHtml;
+            }
+
+            // Add spacing between records
+            if (rowIndex < rows.length - 1) {
+                html += "<div style=\"margin-bottom: 20px;\"></div>";
+            }
+        });
+    }
+
+    return html
+}
+
+const buildTable = (table) => {
 
     const { sqlSettings, header, footnotes } = table;
 
-    const { columnTextTemplate, sqlViewTemplate } = sqlSettings;
+    const { columnTextTemplate, sqlViewTemplate, recordDetailTemplate } = sqlSettings;
 
     let html = "";
 
@@ -237,11 +362,15 @@ const buildTable = (table) => {
             html += buildHeader(table);
         }
     }
-    console.log("JJFILTER ", table)
-    if (columnTextTemplate.selected) {
+
+    console.log("JJFILTER sqlsettings", sqlSettings)
+
+    if (columnTextTemplate?.selected) {
         html += buildColumnTextTemplate(table);
-    } else if (sqlViewTemplate.selected) {
+    } else if (sqlViewTemplate?.selected) {
         html += buildSqlViewTemplate(table);
+    } else if (recordDetailTemplate?.selected) {
+        html += buildRecordDetailTemplate(table);
     } else {
         html += buildColRowTable(table);
     }
@@ -275,9 +404,9 @@ const buildTableGroup = (tableGroup) => {
 }
 
 const buildHeader = (headerInfo) => {
-    const {headerWrapperTag, header} = headerInfo;
+    const { headerWrapperTag, header } = headerInfo;
     if (!headerWrapperTag) {
-        return header;
+        return header.replaceAll("custom_tag", "div"); // div is the default tag
     }
     return header.replaceAll("custom_tag", headerWrapperTag);
 }

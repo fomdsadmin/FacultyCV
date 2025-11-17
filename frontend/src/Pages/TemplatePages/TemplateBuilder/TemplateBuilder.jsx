@@ -239,6 +239,7 @@ const TemplateBuilderContent = ({
                 skipDateFilter: false,
                 sqlSettings: {
                     query: "SELECT * FROM ?",
+                    additionalDataSources: [],
                     columnTextTemplate: {
                         html: "",
                         selected: false

@@ -5,6 +5,7 @@ import SQLQueryEditor from "./SQLQueryEditor";
 import QueryResultsTable from "./QueryResultsTable";
 import CustomTableTemplate from "./CustomTableTemplate";
 import ColumnDataTypeConfig from "./ColumnDataTypeConfig";
+import AdditionalTablesManager from "./AdditionalTablesManager";
 import { ErrorMessage, InfoMessage } from "./MessageComponents";
 import { initializeAlaSQL, executeAlaSQL } from "./alasqlUtils";
 import { generateMockData } from "./mockDataUtils";
@@ -183,6 +184,17 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
                         dataSource={dataSource}
                     />
                 )}
+
+                {/* Additional Tables Manager */}
+                <AdditionalTablesManager
+                    additionalDataSources={sqlSettings?.additionalDataSources || []}
+                    setAdditionalDataSources={(newTables) => {
+                        setSqlSettings({
+                            ...sqlSettings,
+                            additionalDataSources: newTables
+                        });
+                    }}
+                />
 
                 {/* SQL Query Editor */}
                 <SQLQueryEditor
