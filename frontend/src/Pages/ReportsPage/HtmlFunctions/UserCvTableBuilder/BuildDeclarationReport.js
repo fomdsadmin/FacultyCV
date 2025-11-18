@@ -6,8 +6,6 @@ export function buildDeclarationReport(userCvStore) {
 
     const { declaration_to_use } = cv || {};
 
-    console.log("JJJJFILTER cv", cv);
-
     if (!declaration_to_use) {
         const year = userCvStore.getStartYear() ?? "";
         return `<div style="font-weight:700; margin:12px 0;">Declaration not filled out for year ${year}</div>`;

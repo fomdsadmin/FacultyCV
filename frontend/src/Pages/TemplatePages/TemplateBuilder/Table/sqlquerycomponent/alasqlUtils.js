@@ -34,19 +34,12 @@ export const initializeAlaSQL = () => {
 
         const expanded = [];
 
-        console.log("jjfilter column: ", column)
-        console.log("jjfilter delimiter: ", delimiter)
-        console.log("jjfilter table: ", table)
-        console.log("jjfilter opts: ", opts)
-
         table.forEach(row => {
             const value = row[column];
             if (!value) {
                 expanded.push(row);
             } else {
                 const items = String(value).split(delimiter).map(str => str.trim());
-                console.log("jjfilter value: ", value)
-                console.log("jjfilter value after split: ", items)
                 items.forEach(item => {
                     const newRow = { ...row };
                     newRow[column] = item;
@@ -170,7 +163,6 @@ export const initializeAlaSQL = () => {
 export const executeAlaSQL = (query, data) => {
     try {
         const res = alasql(query, [data]);
-        console.log("JJFILTER query result:", res);
         return {
             success: true,
             columns: res.length > 0 ? Object.keys(res[0]) : [],

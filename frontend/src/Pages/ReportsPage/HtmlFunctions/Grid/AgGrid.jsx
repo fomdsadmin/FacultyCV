@@ -52,17 +52,15 @@ const AgGrid = ({ userInfoInput, templateWithEndStartDate, previewRef }) => {
     useEffect(() => {
         const helper = async () => {
             const cvs = await buildCv(userInfoInput, templateWithEndStartDate);
-            console.log("JJFILTER FORMAT USER TABLES", await formatUserTables(userInfoInput, templateWithEndStartDate));
             setCvs(cvs);
 
             // 2️⃣ Combine them into one HTML document
             if (cvs) {
                 const fullHtml = buildCvs(cvs);
-                // console.log("JJJFILTER fullhtml: ", fullHtml);
             }
 
             const html = buildUserCvs(await formatUserTables(userInfoInput, templateWithEndStartDate));
-            console.log("JJJFILTER fullhtml: ", html);
+            console.log("fullhtml: ", html);
         }
 
         if (userInfoInput && templateWithEndStartDate) {

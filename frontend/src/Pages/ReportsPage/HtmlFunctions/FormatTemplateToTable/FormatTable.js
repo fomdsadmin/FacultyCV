@@ -11,12 +11,6 @@ export const formatTable = (table, templateDataStore) => {
     const header = table.tableSettings.header;
     const hideColumns = table.tableSettings.hideColumns;
 
-
-    console.log("JJFILTER table", table)
-
-    console.log("jjfilter columnItems", columnItems);
-
-    console.log("JJFILTER templateDataStore", templateDataStore);
     let cvData = templateDataStore.getUserCvDataMap()[dataSource];
 
     // Handle undefined cvData
@@ -36,9 +30,7 @@ export const formatTable = (table, templateDataStore) => {
     let queryResult = null;
 
     if (sqlQuery && sqlQuery.trim() !== "") {
-        console.log("jjfilter dataArray before execute", dataArray);
         queryResult = executeAlaSQL(sqlQuery, dataArray);
-        console.log("jjfilter dataArray", dataArray);
     }
 
     let rowsToUse = [];
@@ -88,8 +80,6 @@ export const formatTable = (table, templateDataStore) => {
         footnotes: footnotes,
         sqlTable: queryResult
     }
-
-    console.log("jjfilter formattedTable:", formattedTable);
 
     return formattedTable;
 }

@@ -144,8 +144,6 @@ function buildUserCv(cv) {
 
   const userCvStore = new UserCvStore(cv);
 
-  console.log("JJJJJFILTER cv", cv)
-
   // Top block: template title (large, bold) then key details in a table
   let html = "";
 

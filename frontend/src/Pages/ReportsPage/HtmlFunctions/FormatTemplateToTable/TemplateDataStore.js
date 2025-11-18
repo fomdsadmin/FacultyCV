@@ -24,7 +24,6 @@ class TemplateDataStore {
 
   // Getters (read-only access)
   getUserCvDataMap() {
-    console.log("JJJFILTER this.userCvDataMap", this.userCvDataMap);
     return this.userCvDataMap;
   }
 

@@ -77,7 +77,6 @@ export const formatUserTables = async (userInfoInput, templateWithEndStartDate) 
 
         // Parse the template structure and process each group
         const items = JSON.parse(templateDataStore.getTemplate().template_structure).templateBuilder.items;
-        console.log("JJFILTER items", items);
         userProfile["items"] = formatTableItems(items, templateDataStore);
 
 
@@ -91,8 +90,6 @@ export const formatUserTables = async (userInfoInput, templateWithEndStartDate) 
         });
     }
 
-
-    console.log("JJFILTER userprofiles", userProfiles);
     return userProfiles;
 };
 

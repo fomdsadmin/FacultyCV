@@ -47,7 +47,6 @@ const buildColumnTextTemplate = (table) => {
 
     html = html.replaceAll("custom_tag", "div");
 
-    console.log("JJFILTER potential div", html)
     return html;
 }
 
@@ -216,9 +215,6 @@ const buildColRowTable = (table) => {
 
     html += tableHtml;
 
-    console.log("JJJFILTER table built", { columns: columnsToRender.length, rows: rows?.length || 0 });
-    console.log("JJJFILTER final HTML output:", html);
-
     return html;
 }
 
@@ -241,7 +237,6 @@ const buildRecordDetailTemplate = (table) => {
 
     const { rows } = data || {};
     const { header, tableRows } = dataSettings.sqlSettings.recordDetailTemplate;
-    console.log("JJFILTER HEADER TABLEROWS", header, tableRows);
 
     // Replace custom_tag with div
     const divWrappedHeader = header.replaceAll("custom_tag", "div");
@@ -361,8 +356,6 @@ const buildTable = (table) => {
     if (hasNoData && !tableSettings?.noDataDisplaySettings?.showEmptyTable) {
         return "";
     }
-
-    console.log("JJJJFILTER table", table)
 
     // Add header (section title) - only if it has actual text content (strip HTML tags first)
     if (header) {

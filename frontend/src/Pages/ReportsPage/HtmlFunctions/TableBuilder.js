@@ -1025,10 +1025,6 @@ function buildTable(table) {
         ? `<h3 style="margin: 0 0 6px 0; padding: 0; font-size: 0.9em;">${instructions}</h3>`
         : "";
 
-    if (studentsSupervisedSummaryHtml !== "") {
-        console.log("jjfilter", table);
-    }
-
     // Return full table HTML
     const wrapperClass = noPadding ? "table-with-notes no-padding" : "table-with-notes";
     const notesHtml = buildNotes(table.note_sections);
