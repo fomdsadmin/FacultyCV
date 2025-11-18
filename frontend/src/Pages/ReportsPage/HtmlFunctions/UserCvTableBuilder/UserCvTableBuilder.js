@@ -1,5 +1,6 @@
 import { buildDeclarationReport } from "./BuildDeclarationReport";
 import { buildItem } from "./BuildItems";
+import { UserCvStore } from "./UserCvStore";
 
 export function buildUserCvs(cvs) {
   const cvList = Array.isArray(cvs) ? cvs : [cvs];
@@ -141,6 +142,8 @@ ${bodyContent}
 function buildUserCv(cv) {
   const { items } = cv;
 
+  const userCvStore = new UserCvStore(cv);
+
   console.log("JJFILtER cv", cv)
 
   // Top block: template title (large, bold) then key details in a table
@@ -158,7 +161,7 @@ function buildUserCv(cv) {
   }
 
   // Add declaration at the end
-  html += buildDeclarationReport();
+  html += buildDeclarationReport(userCvStore);
 
   html += '</div>'; // close cv-root
 

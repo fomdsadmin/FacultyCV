@@ -3,17 +3,12 @@ import { getUserCVData } from "graphql/graphqlHelpers";
 import { getUserDeclarations } from "graphql/graphqlHelpers";
 import { normalizeDeclarations } from "Pages/Declarations/Declarations";
 import { getUserAffiliations } from "graphql/graphqlHelpers";
-import { templateDataStore } from "./TemplateDataStore";
+import { TemplateDataStore } from "./TemplateDataStore";
 import { formatTableItems } from "./FormatItems";
-
 
 export const formatUserTables = async (userInfoInput, templateWithEndStartDate) => {
     const userProfiles = [];
     const userInfoArray = Array.isArray(userInfoInput) ? userInfoInput : [userInfoInput];
-
-    // Initialize singleton with immutable data
-    templateDataStore.initializeTemplate(templateWithEndStartDate);
-    templateDataStore.initializeSortAscending(JSON.parse(templateWithEndStartDate.template_structure).sort_ascending);
 
     // Get all sections data once (shared for all users)
     const allSections = await getAllSections();
@@ -24,7 +19,12 @@ export const formatUserTables = async (userInfoInput, templateWithEndStartDate) 
     allSections.forEach((section) => {
         sectionsMapData[section.title] = section;
     });
-    templateDataStore.initializeSectionsMap(sectionsMapData);
+
+    const templateDataStore = new TemplateDataStore(
+        sectionsMapData,
+        templateWithEndStartDate,
+        JSON.parse(templateWithEndStartDate.template_structure).sort_ascending
+    );
 
     const sectionsTitleMap = {};
     allSections.forEach((section) => {
@@ -70,16 +70,15 @@ export const formatUserTables = async (userInfoInput, templateWithEndStartDate) 
             newUserCvDataMap[sectionTitle].push(cleanedCvData);
         }
 
-        // Set mutable data in singleton
         templateDataStore.setUserCvDataMap(newUserCvDataMap);
 
         // Build user profile section
-        userProfile = await buildUserProfile(currentUserInfo);
+        userProfile = await buildUserProfile(currentUserInfo, templateDataStore);
 
         // Parse the template structure and process each group
         const items = JSON.parse(templateDataStore.getTemplate().template_structure).templateBuilder.items;
         console.log("JJFILTER items", items);
-        userProfile["items"] = formatTableItems(items);
+        userProfile["items"] = formatTableItems(items, templateDataStore);
 
 
 
@@ -92,7 +91,7 @@ export const formatUserTables = async (userInfoInput, templateWithEndStartDate) 
     return userProfiles;
 };
 
-const buildUserProfile = async (userInfoParam) => {
+const buildUserProfile = async (userInfoParam, templateDataStore) => {
     // Set mutable userInfo in singleton
     templateDataStore.setUserInfo(userInfoParam);
     const userInfo = templateDataStore.getUserInfo();

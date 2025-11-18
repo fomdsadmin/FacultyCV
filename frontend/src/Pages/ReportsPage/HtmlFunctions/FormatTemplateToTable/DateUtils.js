@@ -1,6 +1,4 @@
-import { templateDataStore } from "./TemplateDataStore";
-
-const filterDateRanges = (sectionData, dataSectionTitle) => {
+const filterDateRanges = (sectionData, dataSectionTitle, templateDataStore) => {
 
     const sectionsMap = templateDataStore.getSectionsMap();
     const template = templateDataStore.getTemplate();
@@ -81,7 +79,7 @@ const filterDateRanges = (sectionData, dataSectionTitle) => {
     return sectionData;
 };
 
-const sortSectionData = (sectionData, dataSectionTitle) => {
+const sortSectionData = (sectionData, dataSectionTitle, templateDataStore) => {
     // Handle undefined or null sectionData
     if (!sectionData || !Array.isArray(sectionData)) {
         return sectionData;

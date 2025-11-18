@@ -1,9 +1,8 @@
-import { templateDataStore } from "./TemplateDataStore"
 import { sortSectionData, filterDateRanges } from "./DateUtils";
 import { executeAlaSQL } from "Pages/TemplatePages/TemplateBuilder/Table/sqlquerycomponent/alasqlUtils";
 import { dataStyler } from "./DataStyling";
 
-export const formatTable = (table) => {
+export const formatTable = (table, templateDataStore) => {
 
     const dataSource = table.dataSettings.dataSource;
     const skipDateFilter = table.dataSettings.skipDateFilter;
@@ -17,6 +16,7 @@ export const formatTable = (table) => {
 
     console.log("jjfilter columnItems", columnItems);
 
+    console.log("JJFILTER templateDataStore", templateDataStore);
     let cvData = templateDataStore.getUserCvDataMap()[dataSource];
 
     // Handle undefined cvData
@@ -25,10 +25,10 @@ export const formatTable = (table) => {
         cvData = [];
     }
 
-    cvData = sortSectionData(cvData, dataSource);
+    cvData = sortSectionData(cvData, dataSource, templateDataStore);
 
     if (!skipDateFilter) {
-        cvData = filterDateRanges(cvData, dataSource);
+        cvData = filterDateRanges(cvData, dataSource, templateDataStore);
     }
 
     let dataArray = cvData.map((data) => ({ ...data.data_details }));

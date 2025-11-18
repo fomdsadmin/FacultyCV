@@ -2,26 +2,29 @@ import { initializeAlaSQL } from "Pages/TemplatePages/TemplateBuilder/Table/sqlq
 
 // Singleton for managing template and user data state
 class TemplateDataStore {
-  constructor() {
+  // Static property to track AlaSQL initialization across all instances
+  static alaSqlInitialized = false;
+
+  constructor(sectionsMap, template, sortAscending) {
     this.userCvDataMap = {};
-    this.sectionsMap = {};
-    this.template = {};
-    this.sortAscending = null;
+    this.sectionsMap = sectionsMap;
+    this.template = template;
+    this.sortAscending = sortAscending;
     this.userInfo = null;
-    this.alaSqlInitialized = false;
     this.initializeAlaSQL();
   }
 
-  // Initialize AlaSQL only once
+  // Initialize AlaSQL only once for all instances
   initializeAlaSQL() {
-    if (!this.alaSqlInitialized) {
+    if (!TemplateDataStore.alaSqlInitialized) {
       initializeAlaSQL();
-      this.alaSqlInitialized = true;
+      TemplateDataStore.alaSqlInitialized = true;
     }
   }
 
   // Getters (read-only access)
   getUserCvDataMap() {
+    console.log("JJJFILTER this.userCvDataMap", this.userCvDataMap);
     return this.userCvDataMap;
   }
 
@@ -50,19 +53,6 @@ class TemplateDataStore {
     this.userInfo = info;
   }
 
-  // Initializers (for immutable/const data)
-  initializeSectionsMap(map) {
-    this.sectionsMap = map;
-  }
-
-  initializeTemplate(template) {
-    this.template = template;
-  }
-
-  initializeSortAscending(value) {
-    this.sortAscending = value;
-  }
-
   // Reset all data
   reset() {
     this.userCvDataMap = {};
@@ -74,4 +64,4 @@ class TemplateDataStore {
 }
 
 // Export singleton instance
-export const templateDataStore = new TemplateDataStore();
+export {TemplateDataStore};

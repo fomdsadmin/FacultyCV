@@ -1,10 +1,12 @@
 // Insert the FOM/PSA page into the declaration flow
 // filepath: same file - modify buildDeclarationReport to append honorific page (no change to early-return logic)
-import { userCvStore } from "./UserCvStore";
 
-export function buildDeclarationReport() {
+export function buildDeclarationReport(userCvStore) {
     const cv = userCvStore.getCv();
+
     const { declaration_to_use } = cv || {};
+
+    console.log("JJJJFILTER cv", cv);
 
     if (!declaration_to_use) {
         const year = userCvStore.getStartYear() ?? "";
@@ -12,16 +14,16 @@ export function buildDeclarationReport() {
     }
 
     // build conflict page fragment (Tailwind classes used so it matches provided template)
-    const conflictOfInterestPage = buildConflictOfInterestPage();
+    const conflictOfInterestPage = buildConflictOfInterestPage(userCvStore);
 
     // build FOM Merit & PSA page
-    const fomMeritAndPsaPage = buildFomMeritAndPsa();
+    const fomMeritAndPsaPage = buildFomMeritAndPsa(userCvStore);
 
     // build Promotion Review page
-    const promotionReviewPage = buildPromotionReview();
+    const promotionReviewPage = buildPromotionReview(userCvStore);
 
     // build Honorific Impact Report page
-    const honorificPage = buildFomHonorificImpactReport();
+    const honorificPage = buildFomHonorificImpactReport(userCvStore);
 
     // combine and return: conflict page, then FOM/PSA page, promotion page, honorific page, then summary
     let html = "";
@@ -33,7 +35,7 @@ export function buildDeclarationReport() {
     return html;
 }
 
-function buildConflictOfInterestPage() {
+function buildConflictOfInterestPage(userCvStore) {
     const cv = userCvStore.getCv();
     const { declaration_to_use } = cv || {};
     const firstName = userCvStore.getFirstName();
@@ -124,7 +126,7 @@ function buildConflictOfInterestPage() {
     `;
 }
 
-function buildFomMeritAndPsa() {
+function buildFomMeritAndPsa(userCvStore) {
     const cv = userCvStore.getCv();
     const { declaration_to_use } = cv || {};
     const firstName = userCvStore.getFirstName();
@@ -225,7 +227,7 @@ function buildFomMeritAndPsa() {
     `;
 }
 
-function buildPromotionReview() {
+function buildPromotionReview(userCvStore) {
     const cv = userCvStore.getCv();
     const { declaration_to_use: latest_declaration } = cv || {};
     const firstName = userCvStore.getFirstName();
@@ -364,7 +366,7 @@ function buildPromotionReview() {
     `;
 }
 
-function buildFomHonorificImpactReport() {
+function buildFomHonorificImpactReport(userCvStore) {
     const cv = userCvStore.getCv();
     const { declaration_to_use: latest_declaration } = cv || {};
     const firstName = userCvStore.getFirstName();

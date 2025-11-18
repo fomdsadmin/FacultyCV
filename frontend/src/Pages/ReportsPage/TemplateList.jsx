@@ -4,6 +4,8 @@ import { useNotification } from 'Contexts/NotificationContext.jsx';
 import CVGenerationComponent from './CVGenerationComponent/CVGenerationComponent.jsx';
 import { buildCv } from './HtmlFunctions/FormatedData.js';
 import { buildCvs } from './HtmlFunctions/TableBuilder.js';
+import { buildUserCvs } from './HtmlFunctions/UserCvTableBuilder/UserCvTableBuilder.js';
+import { formatUserTables } from './HtmlFunctions/FormatTemplateToTable/FormatTemplateToTable.js';
 
 const TemplateList = ({
   templates,
@@ -49,7 +51,8 @@ const TemplateList = ({
 
       // Generate HTML content
       //const htmlContent = await buildHtml(user, templateWithDates);
-      const htmlContent = buildCvs(await buildCv(user, templateWithDates));
+      //const htmlContent = buildCvs(await buildCv(user, templateWithDates));
+      const htmlContent = buildUserCvs(await formatUserTables(user, templateWithDates));
 
       return htmlContent;
 
