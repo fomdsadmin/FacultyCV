@@ -52,7 +52,7 @@ const TemplateList = ({
       // Generate HTML content
       //const htmlContent = await buildHtml(user, templateWithDates);
       //const htmlContent = buildCvs(await buildCv(user, templateWithDates));
-      const htmlContent = buildUserCvs(await formatUserTables(user, templateWithDates));
+      const htmlContent = await buildUserCvs(await formatUserTables(user, templateWithDates));
 
       return htmlContent;
 

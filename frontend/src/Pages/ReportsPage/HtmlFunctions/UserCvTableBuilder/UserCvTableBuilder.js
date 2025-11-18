@@ -1,13 +1,14 @@
 import { buildDeclarationReport } from "./BuildDeclarationReport";
 import { buildItem } from "./BuildItems";
 import { UserCvStore } from "./UserCvStore";
+import { getAllSections, getUserCVData } from "graphql/graphqlHelpers";
 
-export function buildUserCvs(cvs) {
+export async function buildUserCvs(cvs) {
   const cvList = Array.isArray(cvs) ? cvs : [cvs];
 
-  const bodyContent = cvList
-    .map((cv) => buildUserCv(cv))
-    .join('\n<hr style="page-break-after:always;border:none;margin:24px 0;" />\n');
+  const bodyContent = (await Promise.all(
+    cvList.map((cv) => buildUserCv(cv))
+  )).join('\n<hr style="page-break-after:always;border:none;margin:24px 0;" />\n');
 
   const fullHtml = `<!DOCTYPE html>
 <html>
@@ -139,7 +140,7 @@ ${bodyContent}
   return fullHtml;
 }
 
-function buildUserCv(cv) {
+async function buildUserCv(cv) {
   const { items } = cv;
 
   const userCvStore = new UserCvStore(cv);
@@ -148,8 +149,8 @@ function buildUserCv(cv) {
   let html = "";
 
   html += '<div class="cv-root">';
-  html += buildHeader(cv);
-  html += buildUserInfoTable(cv);
+  html += buildHeader(cv, userCvStore);
+  html += await buildUserInfoTable(cv, userCvStore);
 
   // Groups (under the header)
   if (Array.isArray(items) && items.length) {
@@ -189,7 +190,7 @@ function buildHeader(cv) {
   return html;
 }
 
-export function buildUserInfoTable(cv) {
+export async function buildUserInfoTable(cv, userCvStore) {
   // meta as a two-column table (label / value)
   let html = `<table class="cv-meta" 
   style="
@@ -233,17 +234,54 @@ export function buildUserInfoTable(cv) {
 
   const fullName = [cv?.first_name, cv?.last_name].filter(Boolean).join(" ");
 
+  const mentoringReceivedData = await getMentoringRecievedData(userCvStore, cv?.start_year);
+
+  const { declaration_to_use: latest_declaration } = cv || {};
+  const nextPromotionReview = latest_declaration?.promotionEffectiveDate || ""
+
   addRow(["Name:", fullName]);
   addRow(["Rank:", cv?.primary_unit?.[0]?.rank || "", "Since:", cv?.primary_unit?.[0]?.additional_info?.start || ""]);
-  addRow(["Timeline for next promotion review:", ""]);
+  addRow(["Timeline for next promotion review:", nextPromotionReview]);
   addRow(["Department:", cv?.primary_unit?.[0]?.unit || ""]);
   addRow(["Joint Department:", ""]);
   addRow(["Centre Affiliation:", cv.institution]);
   addRow(["Distributed Site:", cv?.hospital_affiliations?.[0]?.authority || ""]);
-  addRow(["Assigned Mentor:", ""]);
+  addRow(["Assigned Mentor:", mentoringReceivedData]);
   addRow(["Submission Date:", new Date().toLocaleDateString("en-CA")]);
+
 
   html += `</table>`;
 
   return html;
+}
+
+const getMentoringRecievedData = async (userCvStore, startYear) => {
+
+  if (!userCvStore || !startYear) {
+    return "";
+  }
+
+  const allSections = await getAllSections();
+
+  // Initialize sectionsMap in singleton
+  const sectionsMapData = {};
+  allSections.forEach((section) => {
+    sectionsMapData[section.title] = section;
+  });
+
+  const mentoringReceivedData = await getUserCVData(userCvStore.getUserId(), sectionsMapData["Mentoring Received"].data_section_id);
+
+  const mentoringReceivedDataDetails = mentoringReceivedData.map((data) => JSON.parse(data.data_details));
+
+  const firstMatchingItem = mentoringReceivedDataDetails.find((data) => {
+    if (!data.dates) return false;
+    const match = data.dates.match(/(\d{4})/);
+    return match && match[0] === String(startYear);
+  });
+
+  if (!firstMatchingItem) {
+    return "";
+  }
+
+  return firstMatchingItem.details;
 }
