@@ -1,11 +1,11 @@
-export const buildItem = (item) => {
+export const buildItem = (item, showVisualNesting) => {
     let html = "";
     console.log("JJDEBUG buildItem called with item:", item);
     console.log("JJDEBUG item.type:", item?.type);
     if (item.type === 'table') {
         html += buildTable(item);
     } else {
-        html += buildTableGroup(item);
+        html += buildTableGroup(item, showVisualNesting);
     }
     console.log("JJDEBUG buildItem returning HTML:", html);
     return html;
@@ -460,12 +460,19 @@ const hasAnyData = (tableGroup) => {
     return false;
 };
 
-const buildTableGroup = (tableGroup) => {
+const buildTableGroup = (tableGroup, showVisualNesting, level = 0, rootGroupColorIndex = null) => {
     let html = "";
-
     const { groupSettings } = tableGroup;
 
-    //const { display, listEmptyTables } = groupSettings?.noDataDisplaySettings;
+    // Determine root group color index
+    let colorIndex = rootGroupColorIndex;
+    if (level === 0) {
+        // If this is a root group, assign a new color index
+        if (typeof buildTableGroup._rootGroupCounter === 'undefined') {
+            buildTableGroup._rootGroupCounter = 0;
+        }
+        colorIndex = buildTableGroup._rootGroupCounter++;
+    }
 
     if (!hasAnyData(tableGroup) && !groupSettings?.noDataDisplaySettings?.display) {
         return "";
@@ -475,49 +482,92 @@ const buildTableGroup = (tableGroup) => {
         html += buildHeader(groupSettings);
     }
 
+    // Minimal nesting lines (shows a line for level 0 as well)
+    const indentPerLevel = 9; // spacing for each level
+
+    function getColorByIndex(index) {
+        const hue = (index * 137.508) % 360;
+        return `hsl(${hue}, 65%, 55%)`;
+    }
+
+    // Draw a vertical line for every group (level >= 0) if visual nesting is enabled
+    const lineHtml =
+        showVisualNesting
+            ? `<div style="
+            position:absolute;
+            left:${level * indentPerLevel}px;
+            top:0;
+            bottom:0;
+            width:3px;
+            background:${getColorByIndex(colorIndex)};
+            border-radius:12px;
+        "></div>`
+            : "";
+
+    // Build children HTML
+    let innerHtml = "";
     tableGroup.items.forEach((item) => {
         if (item.type === 'table') {
-            html += buildTable(item);
+            innerHtml += buildTable(item);
         } else {
-            html += buildTableGroup(item);
+            innerHtml += buildTableGroup(item, showVisualNesting, level + 1, colorIndex);
         }
     });
 
+    // Container wrapper (line + child items + empty tables)
+    let groupInner = innerHtml;
+
+    // If empty-table listing is enabled, append inside the group
     if (groupSettings?.noDataDisplaySettings?.listEmptyTables) {
         const emptyTableNames = getAllEmptyTables(tableGroup);
         if (emptyTableNames.length > 0) {
-            html += `
-        <div style="
-            margin-top: 1em;
-            margin-bottom: 1em;
-            font-family: Arial, sans-serif;
-            font-size: 0.95em;
-        ">
-            <strong>Tables with no data:</strong>
-            ${emptyTableNames
+            const emptyHtml = `
+            <div style="
+                margin-top: 1em;
+                margin-bottom: 1em;
+                font-family: Arial, sans-serif;
+                font-size: 0.95em;
+            ">
+                <strong>Tables with no data:</strong>
+                ${emptyTableNames
                     .map(
                         (name, i) => `
-                <span style="
-                    background-color: ${i % 2 === 0 ? "#f2f2f2" : "#dcdcdc"};
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    margin-right: 4px;
-                    display: inline-block;
-                ">
-                    ${name}${i < emptyTableNames.length - 1 ? "," : ""}
-                </span>
-            `
+                        <span style="
+                            background-color: ${i % 2 === 0 ? "#f2f2f2" : "#dcdcdc"};
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            margin-right: 4px;
+                            display: inline-block;
+                        ">
+                            ${name}${i < emptyTableNames.length - 1 ? "," : ""}
+                        </span>
+                    `
                     )
                     .join("")}
-        </div>
-    `;
+            </div>
+        `;
+
+            groupInner += emptyHtml;
         }
     }
 
-    console.log("JJJJFILTER empty tables", getAllEmptyTables(tableGroup))
+    // Final wrapper output
+    html += `
+    <div style="
+        position:relative;
+        padding-left:${(level + 1) * indentPerLevel}px;
+        min-height:24px;
+    ">
+        ${lineHtml}
+        ${groupInner}
+    </div>
+`;
 
     return html;
 }
+
+// Reset root group counter before rendering (call this before top-level build)
+buildTableGroup._rootGroupCounter = 0;
 
 const buildHeader = (headerInfo) => {
     const { headerWrapperTag, header } = headerInfo;

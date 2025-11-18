@@ -83,7 +83,12 @@ export const formatUserTables = async (userInfoInput, templateWithEndStartDate) 
 
 
         console.log(`Completed CV for user ${userIndex + 1}/${userInfoArray.length}`);
-        userProfiles.push(userProfile);
+        userProfiles.push({
+            ...userProfile,
+            show_declaration: JSON.parse(templateWithEndStartDate.template_structure).show_declaration,
+            show_fom_logo: JSON.parse(templateWithEndStartDate.template_structure).show_fom_logo,
+            show_visual_nesting: JSON.parse(templateWithEndStartDate.template_structure).show_visual_nesting,
+        });
     }
 
 

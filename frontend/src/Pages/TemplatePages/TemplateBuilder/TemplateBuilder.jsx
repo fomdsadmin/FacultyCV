@@ -76,6 +76,10 @@ const TemplateBuilderContent = ({
     createdWithRole,
     showDeclaration,
     setShowDeclaration,
+    showFomLogo,
+    setShowFomLogo,
+    showVisualNesting,
+    setShowVisualNesting
 }) => {
 
     const { sectionsMap, items, setItems } = useTemplateBuilder();
@@ -293,13 +297,39 @@ const TemplateBuilderContent = ({
                 <div className="mb-4 flex items-center gap-2">
                     <input
                         type="checkbox"
-                        id="showDeclaration"
+                        id="showDeclarationCheckbox"
                         checked={showDeclaration}
                         onChange={(e) => setShowDeclaration(e.target.checked)}
                         className="w-4 h-4 border border-gray-300 rounded cursor-pointer"
                     />
-                    <label htmlFor="showDeclaration" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    <label htmlFor="showDeclarationCheckbox" className="text-sm font-medium text-gray-700 cursor-pointer">
                         Show Declaration
+                    </label>
+                </div>
+                {/* Show FoM Logo Checkbox */}
+                <div className="mb-4 flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        id="showFomCheckbox"
+                        checked={showFomLogo}
+                        onChange={(e) => setShowFomLogo(e.target.checked)}
+                        className="w-4 h-4 border border-gray-300 rounded cursor-pointer"
+                    />
+                    <label htmlFor="showFomCheckbox" className="text-sm font-medium text-gray-700 cursor-pointer">
+                        Show Fom Logo
+                    </label>
+                </div>
+                {/* Show Visual Nesting Checkbox */}
+                <div className="mb-4 flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        id="showVisualNestingCheckbox"
+                        checked={showVisualNesting}
+                        onChange={(e) => setShowVisualNesting(e.target.checked)}
+                        className="w-4 h-4 border border-gray-300 rounded cursor-pointer"
+                    />
+                    <label htmlFor="showVisualNestingCheckbox" className="text-sm font-medium text-gray-700 cursor-pointer">
+                        Show Visual Nesting
                     </label>
                 </div>
 
@@ -415,6 +445,10 @@ const TemplateBuilder = ({
     createdWithRole,
     showDeclaration,
     setShowDeclaration,
+    showFomLogo,
+    setShowFomLogo,
+    showVisualNesting,
+    setShowVisualNesting,
     sortAscending,
     setSortAscending,
 }) => {
@@ -439,6 +473,10 @@ const TemplateBuilder = ({
             createdWithRole={createdWithRole}
             showDeclaration={showDeclaration}
             setShowDeclaration={setShowDeclaration}
+            showFomLogo={showFomLogo}
+            setShowFomLogo={setShowFomLogo}
+            showVisualNesting={showVisualNesting}
+            setShowVisualNesting={setShowVisualNesting}
             templateId={templateId}
             items={items}
             setItems={setItems}
@@ -454,6 +492,10 @@ const TemplateBuilder = ({
                 createdWithRole={createdWithRole}
                 showDeclaration={showDeclaration}
                 setShowDeclaration={setShowDeclaration}
+                showFomLogo={showFomLogo}
+                setShowFomLogo={setShowFomLogo}
+                showVisualNesting={showVisualNesting}
+                setShowVisualNesting={setShowVisualNesting}
             />
         </TemplateBuilderProvider>
     );

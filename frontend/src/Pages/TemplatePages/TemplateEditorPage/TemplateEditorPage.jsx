@@ -12,6 +12,8 @@ const TemplateEditorPage = ({ onBack }) => {
     const [template, setTemplate] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showDeclaration, setShowDeclaration] = useState(false);
+    const [showFomLogo, setShowFomLogo] = useState(false);
+    const [showVisualNesting, setShowVisualNesting] = useState(false);
     const [sortAscending, setSortAscending] = useState(true);
     const [createdWithRole, setCreatedWithRole] = useState(null);
 
@@ -33,6 +35,8 @@ const TemplateEditorPage = ({ onBack }) => {
 
             setTitle(activeTemplate.title);
             setShowDeclaration(templateStructure.show_declaration || false);
+            setShowVisualNesting(templateStructure.show_visual_nesting || false);
+            setShowFomLogo(templateStructure.show_fom_logo || false);
             setSortAscending(templateStructure.sort_ascending !== undefined ? templateStructure.sort_ascending : true);
             setCreatedWithRole(templateStructure.created_with_role || currentViewRole);
 
@@ -41,6 +45,8 @@ const TemplateEditorPage = ({ onBack }) => {
                 sort_ascending: templateStructure.sort_ascending !== undefined ? templateStructure.sort_ascending : true,
                 created_with_role: templateStructure.created_with_role || currentViewRole,
                 show_declaration: templateStructure.show_declaration || false,
+                show_fom_logo: templateStructure.show_fom_logo || false,
+                show_visual_nesting: templateStructure.show_visual_nesting || false,
                 templateBuilder: templateStructure.templateBuilder || { items: [] }
             });
 
@@ -50,6 +56,8 @@ const TemplateEditorPage = ({ onBack }) => {
                 sort_ascending: true,
                 created_with_role: currentViewRole,
                 show_declaration: false,
+                show_fom_logo: false,
+                show_visual_nesting: false,
                 templateBuilder: { items: [] }
             });
             setSortAscending(true);
@@ -94,6 +102,10 @@ const TemplateEditorPage = ({ onBack }) => {
                         setCreatedWithRole={setCreatedWithRole}
                         showDeclaration={showDeclaration}
                         setShowDeclaration={setShowDeclaration}
+                        showFomLogo={showFomLogo}
+                        setShowFomLogo={setShowFomLogo}
+                        showVisualNesting={showVisualNesting}
+                        setShowVisualNesting={setShowVisualNesting}
                         sortAscending={sortAscending}
                         setSortAscending={setSortAscending}
                     />

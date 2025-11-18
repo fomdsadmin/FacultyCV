@@ -144,7 +144,7 @@ function buildUserCv(cv) {
 
   const userCvStore = new UserCvStore(cv);
 
-  console.log("JJFILtER cv", cv)
+  console.log("JJJJJFILTER cv", cv)
 
   // Top block: template title (large, bold) then key details in a table
   let html = "";
@@ -156,12 +156,14 @@ function buildUserCv(cv) {
   // Groups (under the header)
   if (Array.isArray(items) && items.length) {
     items.forEach((item) => {
-      html += buildItem(item);
+      html += buildItem(item, cv.show_visual_nesting);
     });
   }
 
-  // Add declaration at the end
-  html += buildDeclarationReport(userCvStore);
+  if (cv.show_declaration) {
+    // Add declaration at the end
+    html += buildDeclarationReport(userCvStore);
+  }
 
   html += '</div>'; // close cv-root
 
@@ -171,24 +173,19 @@ function buildUserCv(cv) {
 function buildHeader(cv) {
   const { start_year, end_year, template_title, sort_order } = cv;
 
-  const includeFomLogo = String(template_title || "")
-    .toLowerCase()
-    .includes("fom");
+
   const fomLogoUrl =
     "https://med-fom-mednet.sites.olt.ubc.ca/files/2022/10/Faculty-of-Medicine-Unit-Signature-940x157.jpeg";
 
   let html = "";
   html += '<div style="background-color: white; color: black; padding: 20px; text-align: center;">';
 
-  if (includeFomLogo) {
+  if (cv.show_fom_logo) {
     html += `<div style="flex:0 0 auto;"><img src="${fomLogoUrl}" alt="UBC Faculty of Medicine - Faculty of Medicine Logo" style="height:96px; display:block;" /></div>`;
   }
 
   //html += '<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 5px;">University of British Columbia</div>';
-  html += `<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;">${template_title.replace(
-    "FoM",
-    ""
-  )}</div>`;
+  html += `<div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;">${template_title}</div>`;
   html += `<div style="font-size: 1rem; font-weight: 700;">(${start_year} - ${end_year}, ${sort_order})</div>`;
   html += "</div>";
   return html;

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { addTemplate, updateTemplate } from "../../../../graphql/graphqlHelpers"
 import { toast } from "react-toastify"
@@ -19,7 +17,9 @@ const SaveTemplateButton = ({ templateId = null }) => {
         onBack,
         sortAscending,
         createdWithRole,
-        showDeclaration
+        showDeclaration,
+        showFomLogo,
+        showVisualNesting,
     } = useTemplateModifier();
 
     const { fetchTemplates } = useTemplatePageContext();
@@ -41,6 +41,8 @@ const SaveTemplateButton = ({ templateId = null }) => {
             sort_ascending: sortAscending,
             created_with_role: createdWithRole,
             show_declaration: showDeclaration,
+            showFomLogo: showFomLogo,
+            showVisualNesting: showVisualNesting,
             groups: clean_groups,
             // Include templateBuilder for future compatibility
             templateBuilder: {

@@ -18,6 +18,8 @@ const SaveTemplateButton = ({
         sortAscending,
         createdWithRole,
         showDeclaration,
+        showFomLogo,
+        showVisualNesting,
         items,
     } = useTemplateBuilder();
 
@@ -36,6 +38,8 @@ const SaveTemplateButton = ({
             sort_ascending: sortAscending,
             created_with_role: createdWithRole,
             show_declaration: showDeclaration,
+            show_visual_nesting: showVisualNesting,
+            show_fom_logo: showFomLogo,
             templateBuilder: {
                 items: items
             }

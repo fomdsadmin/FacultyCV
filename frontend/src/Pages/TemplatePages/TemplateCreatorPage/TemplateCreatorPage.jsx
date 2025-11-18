@@ -7,11 +7,13 @@ import TemplateBuilder from "../TemplateBuilder/TemplateBuilder";
 const TemplateCreatorPage = ({ onBack }) => {
   const [title, setTitle] = useState("")
   const [sections, setSections] = useState([])
-  const [template, setTemplate] = useState({groups: []});
+  const [template, setTemplate] = useState({ groups: [] });
   const [loading, setLoading] = useState(true);
   const { currentViewRole } = useApp();
   const [createdWithRole, setCreatedWithRole] = useState(currentViewRole);
   const [showDeclaration, setShowDeclaration] = useState(false);
+  const [showFomLogo, setShowFomLogo] = useState(false);
+  const [showVisualNesting, setShowVisualNesting] = useState(false);
   const [sortAscending, setSortAscending] = useState(true);
 
   useEffect(() => {
@@ -94,6 +96,10 @@ const TemplateCreatorPage = ({ onBack }) => {
             createdWithRole={createdWithRole}
             showDeclaration={showDeclaration}
             setShowDeclaration={setShowDeclaration}
+            showVisualNesting={showVisualNesting}
+            setShowVisualNesting={setShowVisualNesting}
+            showFomLogo={showFomLogo}
+            setShowFomLogo={setShowFomLogo}
             sortAscending={sortAscending}
             setSortAscending={setSortAscending}
           />

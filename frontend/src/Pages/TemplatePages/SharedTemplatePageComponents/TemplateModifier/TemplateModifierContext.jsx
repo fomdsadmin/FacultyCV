@@ -28,7 +28,11 @@ export const TemplateModifierProvider = ({
   createdWithRole,
   setCreatedWithRole,
   showDeclaration,
-  setShowDeclaration
+  setShowDeclaration,
+  showFomLogo,
+  setShowFomLogo,
+  showVisualNesting,
+  setShowVisualNesting
 }) => {
 
   const getGroupIdContainingPreparedSectionId = (preparedSectionId) => {
@@ -73,6 +77,10 @@ export const TemplateModifierProvider = ({
     createdWithRole,
     showDeclaration,
     setShowDeclaration,
+    showFomLogo,
+    setShowFomLogo,
+    showVisualNesting,
+    setShowVisualNesting,
 
     // onBack
     onBack,
