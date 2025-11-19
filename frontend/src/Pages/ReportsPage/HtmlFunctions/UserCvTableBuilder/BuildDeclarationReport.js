@@ -2,48 +2,52 @@
 // filepath: same file - modify buildDeclarationReport to append honorific page (no change to early-return logic)
 
 export function buildDeclarationReport(userCvStore) {
-    const cv = userCvStore.getCv();
+  const cv = userCvStore.getCv();
 
-    const { declaration_to_use } = cv || {};
+  const { declaration_to_use } = cv || {};
 
-    if (!declaration_to_use) {
-        const year = userCvStore.getStartYear() ?? "";
-        return `<div style="font-weight:700; margin:12px 0;">Declaration not filled out for year ${year}</div>`;
-    }
+  if (!declaration_to_use) {
+    const year = userCvStore.getStartYear() ?? "";
+    return `<div style="font-weight:700; margin:12px 0;">Declaration not filled out for year ${year}</div>`;
+  }
 
-    // build conflict page fragment (Tailwind classes used so it matches provided template)
-    const conflictOfInterestPage = buildConflictOfInterestPage(userCvStore);
+  // build conflict page fragment (Tailwind classes used so it matches provided template)
+  const conflictOfInterestPage = buildConflictOfInterestPage(userCvStore);
 
-    // build FOM Merit & PSA page
-    const fomMeritAndPsaPage = buildFomMeritAndPsa(userCvStore);
+  // build FOM Merit & PSA page
+  const fomMeritAndPsaPage = buildFomMeritAndPsa(userCvStore);
 
-    // build Promotion Review page
-    const promotionReviewPage = buildPromotionReview(userCvStore);
+  // build Promotion Review page
 
-    // build Honorific Impact Report page
-    const honorificPage = buildFomHonorificImpactReport(userCvStore);
+  let promotionReviewPage = "";
+  if (String(cv?.primary_unit?.[0]?.rank).trim().toLowerCase() !== "professor") {
+    promotionReviewPage = buildPromotionReview(userCvStore);
+  }
 
-    // combine and return: conflict page, then FOM/PSA page, promotion page, honorific page, then summary
-    let html = "";
-    // Removed extra page-break wrappers here: each fragment already starts with a page-break.
-    html += conflictOfInterestPage;
-    html += fomMeritAndPsaPage;
-    html += promotionReviewPage;
-    html += honorificPage;
-    return html;
+  // build Honorific Impact Report page
+  const honorificPage = buildFomHonorificImpactReport(userCvStore);
+
+  // combine and return: conflict page, then FOM/PSA page, promotion page, honorific page, then summary
+  let html = "";
+  // Removed extra page-break wrappers here: each fragment already starts with a page-break.
+  html += conflictOfInterestPage;
+  html += fomMeritAndPsaPage;
+  html += promotionReviewPage;
+  html += honorificPage;
+  return html;
 }
 
 function buildConflictOfInterestPage(userCvStore) {
-    const cv = userCvStore.getCv();
-    const { declaration_to_use } = cv || {};
-    const firstName = userCvStore.getFirstName();
-    const lastName = userCvStore.getLastName();
-    const fullName = [firstName, lastName].filter(Boolean).join(" ");
-    const coiValue = declaration_to_use && declaration_to_use.coi ? declaration_to_use.coi : null;
-    const submissionDate = declaration_to_use?.coiSubmissionDate || "";
+  const cv = userCvStore.getCv();
+  const { declaration_to_use } = cv || {};
+  const firstName = userCvStore.getFirstName();
+  const lastName = userCvStore.getLastName();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ");
+  const coiValue = declaration_to_use && declaration_to_use.coi ? declaration_to_use.coi : null;
+  const submissionDate = declaration_to_use?.coiSubmissionDate || "";
 
-    // Return a styled fragment (no DOCTYPE/head) that mirrors the provided template.
-    return `
+  // Return a styled fragment (no DOCTYPE/head) that mirrors the provided template.
+  return `
       <div style="page-break-before: always;"></div>
 
       <!-- Removed grey outer background; use clean white page background -->
@@ -92,7 +96,7 @@ function buildConflictOfInterestPage(userCvStore) {
               <!-- Option a) Yes -->
               <div style="display:flex;align-items:flex-start;gap:12px;cursor:default;">
                 <input type="checkbox" ${coiValue === "YES" ? "checked" : ""
-        } aria-label="coi-yes" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+    } aria-label="coi-yes" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
                 <span style="font-size:18px;">
                   <strong>a) Yes,</strong> my Conflict of Interest and Conflict of Commitment declarations are up to date.
                 </span>
@@ -101,7 +105,7 @@ function buildConflictOfInterestPage(userCvStore) {
               <!-- Option b) No -->
               <div style="display:flex;align-items:flex-start;gap:12px;cursor:default;">
                 <input type="checkbox" ${coiValue === "NO" ? "checked" : ""
-        } aria-label="coi-no" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+    } aria-label="coi-no" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
                 <span style="font-size:18px;">
                   <strong>b) No,</strong> my Conflict of Interest and Conflict of Commitment declarations are not up to date.
                 </span>
@@ -125,18 +129,18 @@ function buildConflictOfInterestPage(userCvStore) {
 }
 
 function buildFomMeritAndPsa(userCvStore) {
-    const cv = userCvStore.getCv();
-    const { declaration_to_use } = cv || {};
-    const firstName = userCvStore.getFirstName();
-    const lastName = userCvStore.getLastName();
-    const fullName = [firstName, lastName].filter(Boolean).join(" ");
-    const year = declaration_to_use?.year || new Date().getFullYear();
-    const fomOptOut = declaration_to_use?.fomMerit === "NO";
-    const psaOptOut = declaration_to_use?.psa === "NO";
-    const fomSubmissionDate = declaration_to_use?.fomMeritSubmissionDate || "";
-    const psaSubmissionDate = declaration_to_use?.psaSubmissionDate || "";
+  const cv = userCvStore.getCv();
+  const { declaration_to_use } = cv || {};
+  const firstName = userCvStore.getFirstName();
+  const lastName = userCvStore.getLastName();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ");
+  const year = declaration_to_use?.year || new Date().getFullYear();
+  const fomOptOut = declaration_to_use?.fomMerit === "NO";
+  const psaOptOut = declaration_to_use?.psa === "NO";
+  const fomSubmissionDate = declaration_to_use?.fomMeritSubmissionDate || "";
+  const psaSubmissionDate = declaration_to_use?.psaSubmissionDate || "";
 
-    return `
+  return `
       <div style="background:#fff;padding:32px 24px;">
         <div style="max-width:56rem;margin:0 auto;">
 
@@ -170,13 +174,13 @@ function buildFomMeritAndPsa(userCvStore) {
             <div style="margin:12px 0 16px 32px;">
               <div style="display:flex;align-items:flex-start;gap:12px;">
                 <input type="checkbox" ${fomOptOut ? "checked" : ""
-        } aria-label="fom-optout" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+    } aria-label="fom-optout" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
                 <div style="font-size:15px;line-height:1.4;margin-left:6px;">
                   I do <strong><u>NOT</u></strong> wish to be awarded merit by the Dean for my academic activities performed during <strong>January 1, ${year} – December 31, ${year}.</strong>
                   ${fomSubmissionDate
-            ? `<div style="margin-top:6px;font-size:14px;"><strong>Submission Date:</strong> ${fomSubmissionDate}</div>`
-            : ""
-        }
+      ? `<div style="margin-top:6px;font-size:14px;"><strong>Submission Date:</strong> ${fomSubmissionDate}</div>`
+      : ""
+    }
                 </div>
               </div>
             </div>
@@ -200,7 +204,7 @@ function buildFomMeritAndPsa(userCvStore) {
             <div style="margin-left:32px;">
               <div style="display:flex;align-items:flex-start;gap:12px;">
                 <input type="checkbox" ${psaOptOut ? "checked" : ""
-        } aria-label="psa-optout" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+    } aria-label="psa-optout" disabled style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
                 <div style="font-size:15px;line-height:1.4;margin-left:6px;">
                   I do <strong><u>NOT</u></strong> wish to be considered for PSA.
                 </div>
@@ -226,30 +230,30 @@ function buildFomMeritAndPsa(userCvStore) {
 }
 
 function buildPromotionReview(userCvStore) {
-    const cv = userCvStore.getCv();
-    const { declaration_to_use: latest_declaration } = cv || {};
-    const firstName = userCvStore.getFirstName();
-    const lastName = userCvStore.getLastName();
-    const fullName = [firstName, lastName].filter(Boolean).join(" ");
-    const wishPromotion = latest_declaration?.promotion === "YES";
-    const notWishPromotion = latest_declaration?.promotion === "NO";
-    const effectiveYear = latest_declaration?.promotionEffectiveDate || "";
-    const pathwaysRaw = String(latest_declaration?.promotionPathways || "").toLowerCase();
-    const supportAnticipated = latest_declaration?.supportAnticipated || "";
-    const submissionDate = latest_declaration?.promotionSubmissionDate || "";
+  const cv = userCvStore.getCv();
+  const { declaration_to_use: latest_declaration } = cv || {};
+  const firstName = userCvStore.getFirstName();
+  const lastName = userCvStore.getLastName();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ");
+  const wishPromotion = latest_declaration?.promotion === "YES";
+  const notWishPromotion = latest_declaration?.promotion === "NO";
+  const effectiveYear = latest_declaration?.promotionEffectiveDate || "";
+  const pathwaysRaw = String(latest_declaration?.promotionPathways || "").toLowerCase();
+  const supportAnticipated = latest_declaration?.supportAnticipated || "";
+  const submissionDate = latest_declaration?.promotionSubmissionDate || "";
 
-    const pathwayTraditional = pathwaysRaw.includes("traditional");
-    const pathwayIndigenous = pathwaysRaw.includes("indigenous");
-    const pathwayBlended =
-        pathwaysRaw.includes("blended") || pathwaysRaw.includes("teaching") || pathwaysRaw.includes("scholarship");
+  const pathwayTraditional = pathwaysRaw.includes("traditional");
+  const pathwayIndigenous = pathwaysRaw.includes("indigenous");
+  const pathwayBlended =
+    pathwaysRaw.includes("blended") || pathwaysRaw.includes("teaching") || pathwaysRaw.includes("scholarship");
 
-    // compute the "upcoming academic year" bounds using current year
-    const currentYear = new Date().getFullYear();
-    const upcomingStart = currentYear;
-    const upcomingEnd = currentYear + 1;
-    const effectiveDisplayYear = upcomingEnd;
+  // compute the "upcoming academic year" bounds using current year
+  const currentYear = new Date().getFullYear();
+  const upcomingStart = currentYear;
+  const upcomingEnd = currentYear + 1;
+  const effectiveDisplayYear = upcomingEnd;
 
-    return `
+  return `
       <!-- Promotion Review fragment: scalable via --pr-scale -->
       <style>
         /* wrapper scales the whole fragment while preserving layout */
@@ -343,7 +347,7 @@ function buildPromotionReview(userCvStore) {
               <span class="bold">Support anticipated:</span>
             </div>
             <div class="support-section" style="border:1px solid #e5e5e5;padding:8px;font-size:11pt;line-height:1.4;">${supportAnticipated || ""
-        }</div>
+    }</div>
 
             <div class="footer-note">
               <p>
@@ -355,7 +359,7 @@ function buildPromotionReview(userCvStore) {
           <div class="submission-date">
             <span class="field-label">Date of Submission:</span>
             <div style="display:inline-block;border-bottom:1px solid #000;min-width:120px;padding:2px 6px;font-size:11pt;">${submissionDate || ""
-        }</div>
+    }</div>
           </div>
 
           <div class="confidential">Personal &amp; Confidential</div>
@@ -365,16 +369,16 @@ function buildPromotionReview(userCvStore) {
 }
 
 function buildFomHonorificImpactReport(userCvStore) {
-    const cv = userCvStore.getCv();
-    const { declaration_to_use: latest_declaration } = cv || {};
-    const firstName = userCvStore.getFirstName();
-    const lastName = userCvStore.getLastName();
-    const fullName = [firstName, lastName].filter(Boolean).join(" ");
-    const attached = !!(latest_declaration?.honorificAttachment || latest_declaration?.honorificAttached);
-    const reportText = latest_declaration?.honorific || "";
-    const yearHint = latest_declaration?.year || new Date().getFullYear();
+  const cv = userCvStore.getCv();
+  const { declaration_to_use: latest_declaration } = cv || {};
+  const firstName = userCvStore.getFirstName();
+  const lastName = userCvStore.getLastName();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ");
+  const attached = !!(latest_declaration?.honorificAttachment || latest_declaration?.honorificAttached);
+  const reportText = latest_declaration?.honorific || "";
+  const yearHint = latest_declaration?.year || new Date().getFullYear();
 
-    return `
+  return `
       <div style="page-break-before: always;"></div>
 
       <style>
@@ -400,7 +404,7 @@ function buildFomHonorificImpactReport(userCvStore) {
         <div>
           <span class="field-label">Name:</span>
           <div class="field-input" style="border:none;border-bottom:1px solid #000;padding:4px 0;font-size:11pt;">${fullName || ""
-        }</div>
+    }</div>
         </div>
 
         <p>
@@ -429,12 +433,12 @@ function buildFomHonorificImpactReport(userCvStore) {
         <div class="checkbox-group">
           <div class="checkbox-item">
             <input type="checkbox" id="fh-attached" ${attached ? "checked" : ""
-        } aria-label="honorific-attached" disabled>
+    } aria-label="honorific-attached" disabled>
             <label for="fh-attached">Full or Summary Report is attached; OR</label>
           </div>
           <div class="checkbox-item">
             <input type="checkbox" id="fh-follows" ${!attached && reportText ? "checked" : ""
-        } aria-label="honorific-follows" disabled>
+    } aria-label="honorific-follows" disabled>
             <label for="fh-follows">Report is as follows:</label>
           </div>
         </div>
