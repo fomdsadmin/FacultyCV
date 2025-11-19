@@ -395,33 +395,28 @@ const buildTable = (table) => {
     return html;
 }
 
-// Helper function to get all empty tables from a tableGroup (breadth-first)
+// Helper function to get all empty tables from a tableGroup (depth-first)
 const getAllEmptyTables = (tableGroup) => {
     const emptyTables = [];
-    const queue = [tableGroup];
 
-    while (queue.length > 0) {
-        const current = queue.shift();
+    const traverse = (group) => {
+        if (!group || !Array.isArray(group.items)) return;
 
-        if (!current || !Array.isArray(current.items)) continue;
-
-        // Process all items at this level (breadth)
-        current.items.forEach((item) => {
+        group.items.forEach((item) => {
             if (item.type === 'table') {
                 const hasNoData = !item.data?.rows || item.data.rows.length === 0;
-                if (hasNoData) {
+                if (hasNoData && item.tableSettings?.noDataDisplaySettings?.display) {
                     const tableNameToDisplay = item.tableSettings?.noDataDisplaySettings?.tableNameToDisplay || item?.name || "";
-                    if (item.tableSettings?.noDataDisplaySettings?.display) {
-                        emptyTables.push(tableNameToDisplay);
-                    }
+                    emptyTables.push(tableNameToDisplay);
                 }
             } else {
-                // Add nested groups to queue for later processing
-                queue.push(item);
+                // It's a group, traverse it immediately (depth-first)
+                traverse(item);
             }
         });
-    }
+    };
 
+    traverse(tableGroup);
     return emptyTables;
 };
 
