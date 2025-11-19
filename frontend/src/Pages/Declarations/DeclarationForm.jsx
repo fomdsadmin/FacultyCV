@@ -38,6 +38,7 @@ const DeclarationForm = ({
   isEdit = false,
   validationErrors = {},
   setValidationErrors,
+  isProfessor = false,
 }) => {
   // State for managing section collapse/expand
   const [expandedSections, setExpandedSections] = useState({
@@ -407,16 +408,17 @@ const DeclarationForm = ({
           )}
         </div>
 
-        <div id="declaration-field-promotion">
-          <div 
-            className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
-            onClick={() => toggleSection('promotion')}
-          >
-            <h2 className="text-lg font-semibold">
-              FOM Promotion Review <span className="text-red-500">*</span>
-            </h2>
-            {expandedSections.promotion ? <FaChevronUp /> : <FaChevronDown />}
-          </div>
+        {!isProfessor && (
+          <div id="declaration-field-promotion">
+            <div 
+              className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
+              onClick={() => toggleSection('promotion')}
+            >
+              <h2 className="text-lg font-semibold">
+                FOM Promotion Review <span className="text-red-500">*</span>
+              </h2>
+              {expandedSections.promotion ? <FaChevronUp /> : <FaChevronDown />}
+            </div>
           
           {expandedSections.promotion && (
             <div className="bg-gray-50 py-6 px-8  rounded-lg shadow-sm border mt-3">
@@ -660,7 +662,8 @@ const DeclarationForm = ({
             )}
             </div>
           )}
-        </div>
+          </div>
+        )}
 
         <div>
           <div 
