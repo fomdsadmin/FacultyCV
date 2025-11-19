@@ -211,6 +211,14 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
       const postdoctoralSupervisors = [];
 
       // Create nested structure for author types
+      // const authorTypes = {
+      //   first_authors: [],
+      //   co_first_authors: [],
+      //   contributing_authors: [],
+      //   co_senior_authors: [],
+      //   senior_authors: [],
+      // };
+      
       const authorTypes = {
         first_authors: [],
         contributing_authors: [],
