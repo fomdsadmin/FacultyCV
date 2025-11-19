@@ -12,6 +12,7 @@ import {
 } from "@dnd-kit/core";
 
 import { useTemplateBuilder } from "./TemplateBuilderContext";
+import EditItemsJson from "./EditItemsJson";
 import {
     SortableContext,
     arrayMove,
@@ -333,8 +334,9 @@ const TemplateBuilderContent = ({
                     </label>
                 </div>
 
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end items-center gap-3 mt-4">
                     <SortButton />
+                    <EditItemsJson />
                     <SaveTemplateButton
                         templateId={templateId}
                         onBack={onBack}
