@@ -164,7 +164,7 @@ export const initializeAlaSQL = () => {
     registerAlaSQLFunction(
         "WRAP_IN_BOX",
         (value) => {
-            if (value === null || value === undefined) return "";
+            if (value === null || value === undefined || String(value).trim() === "") return "";
             return `<div style="border:2px solid black; padding:10px; border-radius:4px; margin:10px;">${String(value)}</div>`;
         },
         "WRAP_IN_BOX(value) → wraps the value in a styled div for display."
