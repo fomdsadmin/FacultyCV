@@ -288,5 +288,5 @@ const getMentoringRecievedData = async (userCvStore, startYear) => {
     return "";
   }
 
-  return firstMatchingItem.details;
+  return firstMatchingItem?.assigned_mentor || "";
 }
