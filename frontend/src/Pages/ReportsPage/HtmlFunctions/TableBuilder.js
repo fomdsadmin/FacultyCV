@@ -651,6 +651,7 @@ function buildFomHonorificImpactReport(latest_declaration, userInfo) {
         </div>
 
         <div style="margin-top:18px;font-size:11pt;color:#111827;">(Year referenced: ${yearHint})</div>
+        <div style="margin-top:18px;font-size:11pt;color:#111827;">(Date of Submission: ${yearHint})</div>
       </div>
     `;
 }
@@ -1023,10 +1024,6 @@ function buildTable(table) {
     const instructionsHtml = instructions
         ? `<h3 style="margin: 0 0 6px 0; padding: 0; font-size: 0.9em;">${instructions}</h3>`
         : "";
-
-    if (studentsSupervisedSummaryHtml !== "") {
-        console.log("jjfilter", table);
-    }
 
     // Return full table HTML
     const wrapperClass = noPadding ? "table-with-notes no-padding" : "table-with-notes";

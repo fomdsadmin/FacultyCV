@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { buildCv } from "../FormatedData";
 import { buildCvs } from "../TableBuilder";
+import { formatUserTables } from "../FormatTemplateToTable/FormatTemplateToTable";
+import { buildUserCvs } from "../UserCvTableBuilder/UserCvTableBuilder";
 
 /**
  * Demo AgGrid with column grouping.
@@ -45,12 +47,21 @@ const AgGrid = ({ userInfoInput, templateWithEndStartDate, previewRef }) => {
     };
 
     const [cvs, setCvs] = useState(null);
+    const [htmlOutput, setHtmlOutput] = useState("");
 
     useEffect(() => {
         const helper = async () => {
             const cvs = await buildCv(userInfoInput, templateWithEndStartDate);
+            console.log("JJFILTER FORMAT USER TABLES", await formatUserTables(userInfoInput, templateWithEndStartDate));
             setCvs(cvs);
-            console.log("CV JSON: ", cvs)
+
+            // 2️⃣ Combine them into one HTML document
+            if (cvs) {
+                const fullHtml = buildCvs(cvs);
+            }
+
+            const html = await buildUserCvs(await formatUserTables(userInfoInput, templateWithEndStartDate));
+            console.log("JJJFILTER fullhtml: ", html);
         }
 
         if (userInfoInput && templateWithEndStartDate) {
@@ -74,23 +85,6 @@ const AgGrid = ({ userInfoInput, templateWithEndStartDate, previewRef }) => {
         });
         return out;
     }, [cvs]);
-
-    // render a lightweight list of tables; only instantiate AgGrid for toggled tables
-    // this avoids rendering dozens/hundreds of AgGrid instances at once which causes long load
-    const getTables = () => {
-
-
-        // 2️⃣ Combine them into one HTML document
-        if (cvs) {
-            const fullHtml = buildCvs(cvs);
-            console.log(fullHtml);
-        }
-
-        // 3️⃣ Log or send to Gotenberg
-        //console.log(fullHtml);
-
-        return <></>;
-    }
 
     const columnDefs =
         () => {
@@ -199,7 +193,7 @@ const AgGrid = ({ userInfoInput, templateWithEndStartDate, previewRef }) => {
         // ReportsPage must give this container a height (e.g. 90vh). Use 100% to fill it.
         <div style={{ width: "0%", height: "0%" }}>
             <div ref={previewRef || containerRef} className="ag-theme-alpine" style={{ width: "0%", height: "0%" }}>
-                {getTables()}
+                <div dangerouslySetInnerHTML={{ __html: htmlOutput }} />
             </div>
         </div>
     );
