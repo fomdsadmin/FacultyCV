@@ -230,13 +230,35 @@ const mergeRowAttributes = (rows, columns) => {
         const updatedRow = { ...row };
 
         mergeGroups.forEach((group) => {
-            // Collect values from all keys in this merge group
             const values = group.keys
                 .map((key) => row[key])
-                .filter((val) => val !== undefined && val !== null && String(val).trim() !== "")
-                .map((val) => String(val).trim());
+                .filter((val) => {
+                    if (val === undefined || val === null) return false;
 
-            // Create merged value with ", " separator
+                    // Convert to string and trim whitespace
+                    let text = String(val).trim();
+
+                    // Remove HTML tags
+                    text = text.replace(/<[^>]*>/g, "");
+
+                    // Remove &nbsp; and other HTML spaces
+                    text = text.replace(/&nbsp;/g, "").trim();
+
+                    // Normalize lower-case value
+                    const cleaned = text.toLowerCase();
+
+                    // Remove fake empties
+                    if (cleaned === "" || cleaned === "null" || cleaned === "undefined") {
+                        return false;
+                    }
+
+                    return true;
+                })
+                .map((val) => {
+                    // Return cleaned trimmed string for output
+                    return String(val).trim();
+                });
+
             updatedRow[group.fieldName] = values.join(", ");
         });
 
