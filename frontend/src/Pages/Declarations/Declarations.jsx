@@ -7,6 +7,7 @@ import {
   addUserDeclaration,
   deleteUserDeclaration,
   updateUserDeclaration,
+  getUserAffiliations,
 } from "../../graphql/graphqlHelpers.js";
 import { Link } from "react-router-dom";
 import { FaRegCalendarAlt } from "react-icons/fa";
@@ -81,6 +82,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+  const [isProfessor, setIsProfessor] = useState(false);
 
   const { logAction } = useAuditLogger();
 
@@ -117,6 +119,50 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
       fetchData();
     }
   }, [userInfo?.user_id]);
+
+  // Fetch user affiliations to check if user is a Professor
+  useEffect(() => {
+    const checkProfessorStatus = async () => {
+      if (!userInfo?.user_id) return;
+      
+      try {
+        const affiliationsResponse = await getUserAffiliations(
+          userInfo.user_id,
+          userInfo.first_name,
+          userInfo.last_name
+        );
+        
+        if (affiliationsResponse && affiliationsResponse.length > 0 && affiliationsResponse[0].data_details) {
+          let data = affiliationsResponse[0].data_details;
+          
+          // Parse data if it's a string
+          if (typeof data === "string") {
+            try {
+              data = JSON.parse(data);
+              if (typeof data === "string") {
+                data = JSON.parse(data);
+              }
+            } catch (e) {
+              console.error("Error parsing affiliations data:", e);
+              return;
+            }
+          }
+          
+          // Check if primary_unit contains rank "Professor"
+          if (Array.isArray(data.primary_unit) && data.primary_unit.length > 0) {
+            const hasProfessorRank = data.primary_unit.some(
+              (unit) => unit.rank && unit.rank.trim().toLowerCase() === "professor"
+            );
+            setIsProfessor(hasProfessorRank);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching affiliations:", error);
+      }
+    };
+    
+    checkProfessorStatus();
+  }, [userInfo?.user_id, userInfo?.first_name, userInfo?.last_name]);
   // Find the biggest/latest year
   const currentYear = declarations.length > 0 ? Math.max(...declarations.map((d) => d.year)) : null;
 
@@ -244,8 +290,12 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     if (!coi) errors.coi = "Please indicate Yes or No.";
     if (!coiSubmissionDate) errors.coiSubmissionDate = "Please select a submission date.";
     if (!psaSubmissionDate) errors.psaSubmissionDate = "Please select a submission date.";
-    if (!promotion) errors.promotion = "Please indicate Yes or No.";
-    if (!promotionSubmissionDate) errors.promotionSubmissionDate = "Please select a submission date.";
+    
+    // Only validate promotion fields if user is not a Professor
+    if (!isProfessor) {
+      if (!promotion) errors.promotion = "Please indicate Yes or No.";
+      if (!promotionSubmissionDate) errors.promotionSubmissionDate = "Please select a submission date.";
+    }
 
     // Date validation
     const validateDate = (dateValue, fieldName) => {
@@ -262,7 +312,11 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
 
     validateDate(coiSubmissionDate, "coiSubmissionDate");
     validateDate(psaSubmissionDate, "psaSubmissionDate");
-    validateDate(promotionSubmissionDate, "promotionSubmissionDate");
+    
+    // Only validate promotion submission date if user is not a Professor
+    if (!isProfessor) {
+      validateDate(promotionSubmissionDate, "promotionSubmissionDate");
+    }
 
     setValidationErrors(errors);
 
@@ -291,24 +345,30 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
     }
 
     // Build the input object for the mutation
+    const otherData = {
+      conflict_of_interest: coi.toLowerCase(),
+      coi_submission_date: coiSubmissionDate || null,
+      fom_merit: fomMerit.toLowerCase(),
+      psa_awards: psa.toLowerCase(),
+      psa_submission_date: psaSubmissionDate || null,
+      fom_honorific_impact_report: honorific || null,
+      updated_at: editYear ? new Date().toISOString() : null,
+    };
+
+    // Only include promotion data if user is not a Professor
+    if (!isProfessor) {
+      otherData.fom_promotion_review = promotion.toLowerCase();
+      otherData.promotion_submission_date = promotionSubmissionDate || null;
+      otherData.promotion_pathways = promotionPathways || null;
+      otherData.promotion_effective_date = promotionEffectiveDate || Number(editYear || year) + 1;
+      otherData.support_anticipated = supportAnticipated || null;
+    }
+
     const input = {
       user_id: userInfo.user_id,
       reporting_year: Number(editYear || year),
       created_by: userInfo.email || userInfo.first_name,
-      other_data: JSON.stringify({
-        conflict_of_interest: coi.toLowerCase(),
-        coi_submission_date: coiSubmissionDate || null,
-        fom_merit: fomMerit.toLowerCase(),
-        psa_awards: psa.toLowerCase(),
-        psa_submission_date: psaSubmissionDate || null,
-        fom_promotion_review: promotion.toLowerCase(),
-        promotion_submission_date: promotionSubmissionDate || null,
-        promotion_pathways: promotionPathways || null,
-        promotion_effective_date: promotionEffectiveDate || Number(editYear || year) + 1,
-        fom_honorific_impact_report: honorific || null,
-        support_anticipated: supportAnticipated || null,
-        updated_at: editYear ? new Date().toISOString() : null,
-      }),
+      other_data: JSON.stringify(otherData),
     };
 
     try {
@@ -538,42 +598,44 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
                               </div>
                             )}
                           </div>
-                          <div className="mb-4">
-                            <b>FOM Promotion Review:</b>
-                            <ul className="list-disc ml-4">
-                              <li>
-                                <div className="">{DECLARATION_LABELS.promotion[decl.promotion] || decl.promotion}</div>
-                              </li>
-                            </ul>
-                            {decl.promotionSubmissionDate && (
-                              <div className="text-m">Effective Date: July 1, {decl.promotionEffectiveDate}</div>
-                            )}
-                            {decl.promotionPathways && (
-                              <div className="text-m text-gray-500 ">
-                                <b>Research Stream Pathways:</b>
-                                <br />
-                                {decl.promotionPathways.split(",").map((pathway, index) => (
-                                  <ul className="list-disc ml-4">
-                                    <li>
-                                      <span key={index} className="">
-                                        {pathway.trim()}
-                                      </span>
-                                    </li>
-                                  </ul>
-                                ))}
-                              </div>
-                            )}
-                            {decl.supportAnticipated && (
-                              <div className=" text-gray-500">
-                                <b>Support Anticipated:</b> {decl.supportAnticipated}
-                              </div>
-                            )}
-                            {decl.promotionSubmissionDate && (
-                              <div className="text-m text-gray-500">
-                                <b>Submission Date:</b> {decl.promotionSubmissionDate}
-                              </div>
-                            )}
-                          </div>
+                          {!isProfessor && (
+                            <div className="mb-4">
+                              <b>FOM Promotion Review:</b>
+                              <ul className="list-disc ml-4">
+                                <li>
+                                  <div className="">{DECLARATION_LABELS.promotion[decl.promotion] || decl.promotion}</div>
+                                </li>
+                              </ul>
+                              {decl.promotionSubmissionDate && (
+                                <div className="text-m">Effective Date: July 1, {decl.promotionEffectiveDate}</div>
+                              )}
+                              {decl.promotionPathways && (
+                                <div className="text-m text-gray-500 ">
+                                  <b>Research Stream Pathways:</b>
+                                  <br />
+                                  {decl.promotionPathways.split(",").map((pathway, index) => (
+                                    <ul className="list-disc ml-4">
+                                      <li>
+                                        <span key={index} className="">
+                                          {pathway.trim()}
+                                        </span>
+                                      </li>
+                                    </ul>
+                                  ))}
+                                </div>
+                              )}
+                              {decl.supportAnticipated && (
+                                <div className=" text-gray-500">
+                                  <b>Support Anticipated:</b> {decl.supportAnticipated}
+                                </div>
+                              )}
+                              {decl.promotionSubmissionDate && (
+                                <div className="text-m text-gray-500">
+                                  <b>Submission Date:</b> {decl.promotionSubmissionDate}
+                                </div>
+                              )}
+                            </div>
+                          )}
                           {decl.honorific && (
                             <div className="mb-4">
                               <b>Honorific Impact Report:</b>
@@ -639,6 +701,7 @@ const Declarations = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             isEdit={!!editYear}
             validationErrors={validationErrors}
             setValidationErrors={setValidationErrors}
+            isProfessor={isProfessor}
           />
         )}
       </main>

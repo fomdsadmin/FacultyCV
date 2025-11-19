@@ -145,7 +145,9 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
     const [activeId, setActiveId] = useState(null);
     const [overId, setOverId] = useState(null);
     const [offsetLeft, setOffsetLeft] = useState(0);
-    const [hideColumns, setHideColumns] = useState(false);
+    const [hideColumns, setHideColumns] = useState(() => {
+        return tableSettings?.hideColumns ?? false;
+    });
 
     const indentationWidth = 50;
 

@@ -28,20 +28,40 @@ export const formatTimestamp = (timestamp) => {
 export const parseProfileRecord = (profileRecord) => {
     if (!profileRecord) return null;
 
-    try {
-        const parsed = JSON.parse(profileRecord);
-        if (parsed.impersonated_by && parsed.impersonated_user) {
+    // If it's already an object, return it directly
+    if (typeof profileRecord === 'object') {
+        if (profileRecord.impersonated_by && profileRecord.impersonated_user) {
             return {
                 isImpersonation: true,
-                impersonatedBy: parsed.impersonated_by,
-                impersonatedUser: parsed.impersonated_user,
-                actionData: parsed.action_data
+                impersonatedBy: profileRecord.impersonated_by,
+                impersonatedUser: profileRecord.impersonated_user,
+                actionData: profileRecord.action_data
             };
         }
-    } catch (e) {
-        // Not JSON or invalid format
-        console.error("Error parsing profile record:", e.message);
+        return { isImpersonation: false, data: profileRecord };
     }
+
+    // Only try to parse if it's a string and looks like JSON (starts with { or [)
+    if (typeof profileRecord === 'string' && (profileRecord.trim().startsWith('{') || profileRecord.trim().startsWith('['))) {
+        try {
+            const parsed = JSON.parse(profileRecord);
+            console.log("Parsed profile record:", parsed);
+            if (parsed.impersonated_by && parsed.impersonated_user) {
+                return {
+                    isImpersonation: true,
+                    impersonatedBy: parsed.impersonated_by,
+                    impersonatedUser: parsed.impersonated_user,
+                    actionData: parsed.action_data
+                };
+            }
+            return { isImpersonation: false, data: parsed };
+        } catch (e) {
+            // Not valid JSON, treat as plain string
+            console.warn("Could not parse profile record as JSON:", e.message);
+        }
+    }
+    
+    // Return as plain data if it's not JSON
     return { isImpersonation: false, data: profileRecord };
 };
 

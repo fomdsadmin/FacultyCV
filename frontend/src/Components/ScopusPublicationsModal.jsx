@@ -45,6 +45,7 @@ const ScopusPublicationsModal = ({ user, isOpen, onClose }) => {
 
       for (let scopusId of scopusIds) {
         setCurrentScopusId(scopusId);
+        console.log(`Fetching publications for Scopus ID: ${scopusId}`);
         try {
           // Get total publications count
           const countPayload = {
@@ -62,9 +63,11 @@ const ScopusPublicationsModal = ({ user, isOpen, onClose }) => {
             body: JSON.stringify(countPayload),
           });
 
+          
           if (!countResponse.ok) throw new Error(`Server error: ${countResponse.status}`);
-
+          
           const countData = await countResponse.json();
+          console.log(countData)
           const totalPublications = countData.total_results || 0;
           setTotalResults(totalPublications);
           console.log(`Total Scopus publications: ${totalPublications}`);
