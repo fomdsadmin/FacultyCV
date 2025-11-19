@@ -1,13 +1,10 @@
 export const buildItem = (item, showVisualNesting) => {
     let html = "";
-    console.log("JJDEBUG buildItem called with item:", item);
-    console.log("JJDEBUG item.type:", item?.type);
     if (item.type === 'table') {
         html += buildTable(item);
     } else {
         html += buildTableGroup(item, showVisualNesting);
     }
-    console.log("JJDEBUG buildItem returning HTML:", html);
     return html;
 }
 
@@ -173,9 +170,6 @@ const buildColRowTable = (table) => {
         .join("\n");
 
     const flatColumns = flattenColumns(columnsToRender);
-
-    console.log("JJDEBUG flatColumns:", flatColumns);
-    console.log("JJDEBUG columnsToRender:", columnsToRender);
 
     // Build body HTML
     let bodyHtml = "";

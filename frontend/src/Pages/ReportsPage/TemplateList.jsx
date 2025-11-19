@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
-import { buildHtml } from './HtmlFunctions/HtmlBuilder.js';
 import { useNotification } from 'Contexts/NotificationContext.jsx';
 import CVGenerationComponent from './CVGenerationComponent/CVGenerationComponent.jsx';
-import { buildCv } from './HtmlFunctions/FormatedData.js';
-import { buildCvs } from './HtmlFunctions/TableBuilder.js';
 import { buildUserCvs } from './HtmlFunctions/UserCvTableBuilder/UserCvTableBuilder.js';
 import { formatUserTables } from './HtmlFunctions/FormatTemplateToTable/FormatTemplateToTable.js';
 
