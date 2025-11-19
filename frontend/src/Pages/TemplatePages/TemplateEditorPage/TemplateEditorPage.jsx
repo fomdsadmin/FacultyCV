@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext";
 import { useApp } from "Contexts/AppContext";
 import TemplateBuilder from "../TemplateBuilder/TemplateBuilder";
-import DeleteTemplateButton from "../EditTemplatePage/DeleteTemplateButton/DeleteTemplateButton";
+import DeleteTemplateButton from "./DeleteTemplateButton";
 
 const TemplateEditorPage = ({ onBack }) => {
     const { currentViewRole } = useApp();

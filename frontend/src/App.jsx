@@ -11,13 +11,11 @@ import AcademicWork from "./Pages/AcademicWork/AcademicWork.jsx";
 import Declarations from "./Pages/Declarations/Declarations.jsx";
 import Reports from "./Pages/ReportsPage/ReportsPage.jsx";
 import FacultyDelegates from "./Views/FacultyDelegates.jsx";
-import { getUser } from "./graphql/graphqlHelpers.js";
 import AdminUsers from "./Views/AdminUsers.jsx";
 import Archive from "./Views/Archive.jsx";
 import DelegateConnections from "./Views/DelegateConnections.jsx";
 import DelegateHomePage from "./Views/DelegateHomePage.jsx";
 import Assistant_Archive from "./Views/Assistant_Archive.jsx";
-import Assistant_Reports from "./Views/Assistant_Reports.jsx";
 import Assistant_AcademicWork from "./Views/Assistant_AcademicWork.jsx";
 import AdminHomePage from "./Views/AdminHomePage.jsx";
 import TemplatesPage from "./Pages/TemplatePages/TemplatesPage/TemplatesPage.jsx";
@@ -376,16 +374,6 @@ const AppContent = () => {
               path="/assistant/academic-work/:category/:title"
               element={
                 <Assistant_AcademicWork
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              }
-            />
-            <Route
-              path="/assistant/reports"
-              element={
-                <Assistant_Reports
                   assistantUserInfo={assistantUserInfo}
                   userInfo={userInfo}
                   getCognitoUser={getCognitoUser}

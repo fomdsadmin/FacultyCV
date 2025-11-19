@@ -1,7 +1,6 @@
 import React from "react";
 import { useState, useEffect, useRef } from "react";
 import PageContainer from "../../Views/PageContainer.jsx";
-import AdminMenu from "../../Components/AdminMenu.jsx";
 import FacultyAdminMenu from "../../Components/FacultyAdminMenu.jsx";
 import DepartmentAdminMenu from "../../Components/DepartmentAdminMenu.jsx";
 import FacultyMemberSelector from "../../Components/FacultyMemberSelector.jsx";
@@ -11,9 +10,10 @@ import { useAuditLogger, AUDIT_ACTIONS } from "../../Contexts/AuditLoggerContext
 import { useAdmin } from "../../Contexts/AdminContext.jsx";
 import { useApp } from "../../Contexts/AppContext.jsx";
 import { getAllTemplates, getAllUsers, getAllUniversityInfo } from "../../graphql/graphqlHelpers.js";
-import { buildHtml } from "../ReportsPage/HtmlFunctions/HtmlBuilder.js";
 import CVGenerationComponent from "../ReportsPage/CVGenerationComponent/CVGenerationComponent.jsx";
 import ReportPreview from "../ReportsPage/CVGenerationComponent/ReportPreview.jsx";
+import { buildUserCvs } from "Pages/ReportsPage/HtmlFunctions/UserCvTableBuilder/UserCvTableBuilder.js";
+import { formatUserTables } from "Pages/ReportsPage/HtmlFunctions/FormatTemplateToTable/FormatTemplateToTable.js";
 
 const GenerateCV = ({ getCognitoUser, toggleViewMode }) => {
   const { userInfo, currentViewRole } = useApp();
@@ -256,7 +256,7 @@ const GenerateCV = ({ getCognitoUser, toggleViewMode }) => {
       });
 
       // Generate HTML content
-      const htmlContent = await buildHtml(selectedUserObjects, templateWithDates);
+      const htmlContent = await await buildUserCvs(await formatUserTables(selectedUserObjects, templateWithDates));
 
       // Log the action
       await logAction(AUDIT_ACTIONS.GENERATE_CV, {

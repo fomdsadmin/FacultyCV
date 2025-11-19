@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { deleteTemplate } from "../../../../graphql/graphqlHelpers";
+import { deleteTemplate } from "../../../graphql/graphqlHelpers";
 import { toast } from "react-toastify";
 import { useTemplatePageContext } from "Pages/TemplatePages/TemplatesPage/TemplatePageContext";
 
-import { useAuditLogger } from '../../../../Contexts/AuditLoggerContext';
-import { AUDIT_ACTIONS } from '../../../../Contexts/AuditLoggerContext';
+import { useAuditLogger } from '../../../Contexts/AuditLoggerContext';
+import { AUDIT_ACTIONS } from '../../../Contexts/AuditLoggerContext';
 
 const DeleteTemplateModal = ({ onClose }) => {
     const { activeTemplate, fetchTemplates, handleBack } = useTemplatePageContext();
