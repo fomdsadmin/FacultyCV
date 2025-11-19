@@ -83,9 +83,16 @@ export const initializeAlaSQL = () => {
 
             const extractYear = (dates) => {
                 if (!dates) return null;
+
+                const datesStr = String(dates).toLowerCase().trim();
+
+                if (datesStr.includes("current")) {
+                    return new Date().getFullYear().toString();
+                }
+
                 const cleaned = String(dates).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
                 const match = cleaned.match(/\d{4}/);
-                return match ? match[0] : null;
+                return match ? match[0] : "No year entered";
             };
 
             const aggregated = {};
