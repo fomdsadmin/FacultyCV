@@ -76,7 +76,12 @@ export const formatUserTables = async (userInfoInput, templateWithEndStartDate) 
         userProfile = await buildUserProfile(currentUserInfo, templateDataStore);
 
         // Parse the template structure and process each group
-        const items = JSON.parse(templateDataStore.getTemplate().template_structure).templateBuilder.items;
+        const items = JSON.parse(templateDataStore.getTemplate().template_structure)?.templateBuilder?.items;
+
+        if (!items) {
+            return;
+        }
+
         userProfile["items"] = formatTableItems(items, templateDataStore);
 
 

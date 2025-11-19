@@ -45,8 +45,6 @@ const buildColumnTextTemplate = (table) => {
         }
     });
 
-    html = html.replaceAll("custom_tag", "div");
-
     return html;
 }
 
@@ -238,8 +236,8 @@ const buildRecordDetailTemplate = (table) => {
     const { rows } = data || {};
     const { header, tableRows } = dataSettings.sqlSettings.recordDetailTemplate;
 
-    // Replace custom_tag with div
-    const divWrappedHeader = header.replaceAll("custom_tag", "div");
+    // Replace outer <...> tag with div
+    const divWrappedHeader = wrapWithOuterTag(header, "div");
 
     // Extract all variables from header and table rows
     const headerRegex = /\$\{([^}]+)\}/g;
@@ -361,7 +359,7 @@ const buildTable = (table) => {
     if (header) {
         const plainText = header.replace(/<[^>]*>/g, '').trim();
         if (plainText) {
-            html += buildHeader(table);
+            html += buildHeader(tableSettings);
         }
     }
 
@@ -545,7 +543,8 @@ const buildTableGroup = (tableGroup, showVisualNesting, level = 0, rootGroupColo
     }
 
     // Final wrapper output
-    html += `
+    if (showVisualNesting) {
+        html += `
     <div style="
         position:relative;
         padding-left:${(level + 1) * indentPerLevel}px;
@@ -555,6 +554,9 @@ const buildTableGroup = (tableGroup, showVisualNesting, level = 0, rootGroupColo
         ${groupInner}
     </div>
 `;
+    } else {
+        html += groupInner
+    }
 
     return html;
 }
@@ -565,7 +567,32 @@ buildTableGroup._rootGroupCounter = 0;
 const buildHeader = (headerInfo) => {
     const { headerWrapperTag, header } = headerInfo;
     if (!headerWrapperTag) {
-        return header.replaceAll("custom_tag", "div"); // div is the default tag
+        return wrapWithOuterTag(header, "div")
     }
-    return header.replaceAll("custom_tag", headerWrapperTag);
+    return wrapWithOuterTag(header, headerWrapperTag);
+}
+
+function wrapWithOuterTag(str, tag = "div") {
+    // 1. Match the first opening tag
+    const match = str.match(/^<([a-zA-Z0-9-_]+)([^>]*)>/);
+    if (!match) {
+        // No outer tag → just wrap
+        return `<${tag}>${str}</${tag}>`;
+    }
+
+    const outerTag = match[1];
+
+    // 2. If outer tag is p, div, or span → replace it
+    if (["p", "div", "span"].includes(outerTag)) {
+        // Build closing tag regex for the outer tag
+        const closingTagRegex = new RegExp(`</${outerTag}>$`);
+
+        // Replace first opening and last closing tag
+        return str
+            .replace(/^<([a-zA-Z0-9-_]+)([^>]*)>/, `<${tag}>`)
+            .replace(closingTagRegex, `</${tag}>`);
+    }
+
+    // 3. Otherwise → wrap the entire string
+    return `<${tag}>${str}</${tag}>`;
 }

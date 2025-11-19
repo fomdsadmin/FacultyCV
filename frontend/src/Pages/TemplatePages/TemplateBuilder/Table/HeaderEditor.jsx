@@ -1,14 +1,7 @@
 import React from "react";
-import ReactQuill, { Quill } from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import ReactQuill from "react-quill";
 
-// Create a custom Block class to use custom_tag instead of p
-const CustomBlock = Quill.import('blots/block');
-class CustomTagBlock extends CustomBlock {}
-CustomTagBlock.tagName = 'custom_tag';
 
-// Register the custom tag block for HeaderEditor
-Quill.register({ 'formats/customtagblock': CustomTagBlock }, true);
 
 const HeaderEditor = ({ header = "", onHeaderChange, headerWrapperTag = "div", onWrapperTagChange }) => {
     const handleHeaderChange = (value) => {
@@ -21,8 +14,7 @@ const HeaderEditor = ({ header = "", onHeaderChange, headerWrapperTag = "div", o
 
     const wrapperTagOptions = [
         { value: "div", label: "div" },
-        { value: "span", label: "span" },
-        { value: "p", label: "p" },
+        { value: "span", label: "span" }
     ];
     const modules = {
         toolbar: {

@@ -4,6 +4,11 @@ import { UserCvStore } from "./UserCvStore";
 import { getAllSections, getUserCVData } from "graphql/graphqlHelpers";
 
 export async function buildUserCvs(cvs) {
+
+  if (!cvs) {
+    return "";
+  }
+
   const cvList = Array.isArray(cvs) ? cvs : [cvs];
 
   const bodyContent = (await Promise.all(

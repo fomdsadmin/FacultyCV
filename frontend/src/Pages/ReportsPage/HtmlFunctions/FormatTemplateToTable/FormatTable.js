@@ -199,7 +199,7 @@ const mergeRowAttributes = (rows, columns) => {
                     if (!Array.isArray(children)) return;
                     children.forEach((child) => {
                         if (child.type === "attribute") {
-                            childKeys.push(child.key);
+                            childKeys.push(child.keyRename || child.key);
                         } else if (child.type === "attribute_group" && child.children) {
                             collectKeys(child.children);
                         }
