@@ -91,6 +91,9 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Location
                   </th>
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    Since
+                  </th>
                   {/* <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Track Type
                   </th>
@@ -162,6 +165,14 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           onChange={(e) => handlePrimaryUnitMainFieldChange(idx, "location", e.target.value)}
                           placeholder="e.g., Hospital Name"
                           style={{ fieldSizing: 'content' }}
+                        />
+                      </td>
+                      <td className="px-2 py-4 text-sm text-gray-700">
+                        <input
+                          type="date"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          value={unit.since || ""}
+                          onChange={(e) => handlePrimaryUnitMainFieldChange(idx, "since", e.target.value)}
                         />
                       </td>
                       {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -263,6 +274,14 @@ const AcademicUnitSection = ({ primaryUnit, setPrimaryUnit, jointUnits, setJoint
                           onChange={(e) => handleJointUnitMainFieldChange(idx, "location", e.target.value)}
                           placeholder="e.g., Hospital Name"
                           style={{ fieldSizing: 'content' }}
+                        />
+                      </td>
+                      <td className="px-2 py-4 text-sm text-gray-700">
+                        <input
+                          type="date"
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          value={unit.since || ""}
+                          onChange={(e) => handleJointUnitMainFieldChange(idx, "since", e.target.value)}
                         />
                       </td>
                       {/* <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-700">
