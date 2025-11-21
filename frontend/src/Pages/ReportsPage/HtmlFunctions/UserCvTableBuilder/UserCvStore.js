@@ -161,7 +161,7 @@ class UserCvStore {
     getHospitalAffiliations() {
         return this.cv?.hospital_affiliations;
     }
-
+    
     // Reset all data
     reset() {
         this.cv = null;

@@ -245,8 +245,12 @@ export async function buildUserInfoTable(cv, userCvStore) {
   const nextPromotionReview = latest_declaration?.promotionEffectiveDate || ""
 
   addRow(["Name:", fullName]);
-  addRow(["Rank:", cv?.primary_unit?.[0]?.rank || "", "Since:", cv?.primary_unit?.[0]?.additional_info?.start || ""]);
-  addRow(["Timeline for next promotion review:", nextPromotionReview]);
+  addRow(["Rank:", cv?.primary_unit?.[0]?.rank || "", "In role since:", cv?.primary_unit?.[0]?.additional_info?.start || ""]);
+
+  if (!(cv?.primary_unit?.[0]?.rank && cv?.primary_unit?.[0]?.rank.trim().toLowerCase() === "professor")) {
+    addRow(["Timeline for next promotion review:", nextPromotionReview]);
+  }
+
   addRow(["Department:", cv?.primary_unit?.[0]?.unit || ""]);
   addRow(["Joint Department:", ""]);
   addRow(["Centre Affiliation:", cv.institution]);
@@ -288,5 +292,5 @@ const getMentoringRecievedData = async (userCvStore, startYear) => {
     return "";
   }
 
-  return firstMatchingItem.details;
+  return firstMatchingItem?.assigned_mentor || "";
 }
