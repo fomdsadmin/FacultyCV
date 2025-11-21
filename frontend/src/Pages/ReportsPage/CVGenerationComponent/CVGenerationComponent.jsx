@@ -123,7 +123,7 @@ const CVGenerationComponent = ({
                 (declaration) => startYear <= declaration.reporting_year && endYear >= declaration.reporting_year
             );
 
-            if (!declarationExistsForThisYear) {
+            if (!declarationExistsForThisYear && false) {
                 setGenerating(false);
                 setNotification({
                     message: "Fill out declaration before generating!",
