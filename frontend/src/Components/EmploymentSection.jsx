@@ -38,10 +38,19 @@ const EmploymentSection = ({ user, section, onBack }) => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter((entry) => {
-        const org = entry.data_details["university/organization"]?.toLowerCase() || "";
-        const dates = entry.data_details["dates"]?.toLowerCase() || "";
-        const search = searchTerm.toLowerCase();
-        return org.includes(search) || dates.includes(search);
+        // Search through all fields in data_details
+        if (!entry.data_details) return false;
+        
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Check all fields in the entry's data_details
+        return Object.values(entry.data_details).some((value) => {
+          if (value === null || value === undefined) return false;
+          
+          // Convert value to string and check if it includes the search term
+          const stringValue = typeof value === 'string' ? value : String(value);
+          return stringValue.toLowerCase().includes(searchLower);
+        });
       });
     }
 
@@ -348,10 +357,17 @@ const EmploymentSection = ({ user, section, onBack }) => {
               // Apply search filter
               if (searchTerm) {
                 dataForCounting = dataForCounting.filter((entry) => {
-                  const org = entry.data_details["university/organization"]?.toLowerCase() || "";
-                  const dates = entry.data_details["dates"]?.toLowerCase() || "";
-                  const search = searchTerm.toLowerCase();
-                  return org.includes(search) || dates.includes(search);
+                  if (!entry.data_details) return false;
+                  
+                  const searchLower = searchTerm.toLowerCase();
+                  
+                  // Check all fields in the entry's data_details
+                  return Object.values(entry.data_details).some((value) => {
+                    if (value === null || value === undefined) return false;
+                    
+                    const stringValue = typeof value === 'string' ? value : String(value);
+                    return stringValue.toLowerCase().includes(searchLower);
+                  });
                 });
               }
 
@@ -469,10 +485,17 @@ const EmploymentSection = ({ user, section, onBack }) => {
                 // Apply search filter
                 if (searchTerm) {
                   dataForCounting = dataForCounting.filter((entry) => {
-                    const org = entry.data_details["university/organization"]?.toLowerCase() || "";
-                    const dates = entry.data_details["dates"]?.toLowerCase() || "";
-                    const search = searchTerm.toLowerCase();
-                    return org.includes(search) || dates.includes(search);
+                    if (!entry.data_details) return false;
+                    
+                    const searchLower = searchTerm.toLowerCase();
+                    
+                    // Check all fields in the entry's data_details
+                    return Object.values(entry.data_details).some((value) => {
+                      if (value === null || value === undefined) return false;
+                      
+                      const stringValue = typeof value === 'string' ? value : String(value);
+                      return stringValue.toLowerCase().includes(searchLower);
+                    });
                   });
                 }
 
