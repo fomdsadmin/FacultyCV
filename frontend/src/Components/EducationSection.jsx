@@ -94,11 +94,19 @@ const EducationSection = ({ user, section, onBack = null }) => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter((entry) => {
-        const degree = entry.data_details.degree?.toLowerCase() || "";
-        const endYear = entry.data_details.end_year?.toLowerCase() || "";
-        const institution = entry.data_details.institution?.toLowerCase() || "";
-        const search = searchTerm.toLowerCase();
-        return degree.includes(search) || endYear.includes(search) || institution.includes(search);
+        // Search through all fields in data_details
+        if (!entry.data_details) return false;
+        
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Check all fields in the entry's data_details
+        return Object.values(entry.data_details).some((value) => {
+          if (value === null || value === undefined) return false;
+          
+          // Convert value to string and check if it includes the search term
+          const stringValue = typeof value === 'string' ? value : String(value);
+          return stringValue.toLowerCase().includes(searchLower);
+        });
       });
     }
 
@@ -349,11 +357,17 @@ const EducationSection = ({ user, section, onBack = null }) => {
                   // Apply search filter
                   if (searchTerm) {
                     dataForCounting = dataForCounting.filter((entry) => {
-                      const degree = entry.data_details.degree?.toLowerCase() || "";
-                      const endYear = entry.data_details.end_year?.toLowerCase() || "";
-                      const institution = entry.data_details.institution?.toLowerCase() || "";
-                      const search = searchTerm.toLowerCase();
-                      return degree.includes(search) || endYear.includes(search) || institution.includes(search);
+                      if (!entry.data_details) return false;
+                      
+                      const searchLower = searchTerm.toLowerCase();
+                      
+                      // Check all fields in the entry's data_details
+                      return Object.values(entry.data_details).some((value) => {
+                        if (value === null || value === undefined) return false;
+                        
+                        const stringValue = typeof value === 'string' ? value : String(value);
+                        return stringValue.toLowerCase().includes(searchLower);
+                      });
                     });
                   }
 
@@ -483,11 +497,17 @@ const EducationSection = ({ user, section, onBack = null }) => {
                     // Apply search filter
                     if (searchTerm) {
                       dataForCounting = dataForCounting.filter((entry) => {
-                        const degree = entry.data_details.degree?.toLowerCase() || "";
-                        const endYear = entry.data_details.end_year?.toLowerCase() || "";
-                        const institution = entry.data_details.institution?.toLowerCase() || "";
-                        const search = searchTerm.toLowerCase();
-                        return degree.includes(search) || endYear.includes(search) || institution.includes(search);
+                        if (!entry.data_details) return false;
+                        
+                        const searchLower = searchTerm.toLowerCase();
+                        
+                        // Check all fields in the entry's data_details
+                        return Object.values(entry.data_details).some((value) => {
+                          if (value === null || value === undefined) return false;
+                          
+                          const stringValue = typeof value === 'string' ? value : String(value);
+                          return stringValue.toLowerCase().includes(searchLower);
+                        });
                       });
                     }
 
