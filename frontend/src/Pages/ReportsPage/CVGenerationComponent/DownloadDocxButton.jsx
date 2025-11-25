@@ -8,16 +8,28 @@ const DownloadDocxButton = ({
     docxHasError
 }) => {
 
-    const handleDownloadDocx = () => {
-        if (docxUrl) {
-            const link = document.createElement("a");
-            link.href = docxUrl;
-            link.download = downloadName || "cv.docx";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    };
+const handleDownloadDocx = async () => {
+    if (!docxUrl) return;
+    try {
+        const response = await fetch(docxUrl);
+        if (!response.ok) throw new Error("Failed to fetch DOCX");
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = downloadName || "cv.docx";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        window.URL.revokeObjectURL(url);
+    } catch (e) {
+        console.error("Error downloading DOCX:", e);
+        window.open(docxUrl, "_blank");
+    }
+};
 
     const getDocxButtonState = () => {
         if (docxHasError) {
