@@ -9,84 +9,13 @@ import PublicationsSection from "./Publications/PublicationsSection.jsx";
 import PatentsSection from "../../Components/PatentsSection.jsx";
 import { getAllSections } from "../../graphql/graphqlHelpers.js";
 import { useNavigate, useParams } from "react-router-dom";
+import { sectionTitleSort, naturalSort } from "../../utils/sectionUtils.js";
 
-// Natural sort function for titles/categories with leading numbers
-function naturalSort(a, b) {
-  const numA = parseInt(a, 10);
-  const numB = parseInt(b, 10);
-  const hasNumA = !isNaN(numA);
-  const hasNumB = !isNaN(numB);
-
-  if (hasNumA && hasNumB) {
-    if (numA !== numB) return numA - numB;
-    return a.localeCompare(b, undefined, { sensitivity: "base" });
-  }
-  if (hasNumA) return -1;
-  if (hasNumB) return 1;
-  return a.localeCompare(b, undefined, { sensitivity: "base" });
-}
-
-function parseSectionTitle(title) {
-  // Match: 8a., 8b.1., 8[f-i]., 8., etc.
-  // Groups: [number][letter][subnumber][bracket]
-  const match = title.match(/^(\d+)([a-z])?(?:\.([0-9]+))?(?:\[(.*?)\])?/i);
-  let num = match ? parseInt(match[1], 10) : null;
-  let letter = match && match[2] ? match[2] : "";
-  let subnum = match && match[3] ? parseInt(match[3], 10) : null;
-  let bracket = match && match[4] ? match[4] : "";
-
-  // If bracket, get the start letter (e.g. 'f' from 'f-i')
-  let letterIndex = "";
-  if (bracket) {
-    letterIndex = bracket.split("-")[0].trim();
-  }
-
-  return { num, letter, subnum, bracket, letterIndex, raw: title };
-}
-
-function sectionTitleSort(a, b) {
-  const A = parseSectionTitle(a.title);
-  const B = parseSectionTitle(b.title);
-
-  // 1. Sort by number
-  if (A.num !== null && B.num !== null) {
-    if (A.num !== B.num) return A.num - B.num;
-
-    // 2. If both have brackets, sort by start letter
-    if (A.bracket && B.bracket) {
-      return A.letterIndex.localeCompare(B.letterIndex);
-    }
-
-    // 3. If one has bracket and the other is a single letter
-    if (A.bracket && B.letter) {
-      // If B.letter is in A.bracket range, bracket comes first
-      const [start, end] = A.bracket.split("-").map((s) => s.trim());
-      if (B.letter >= start && (!end || B.letter <= end)) return -1;
-      // Otherwise, sort by letter
-      return A.letterIndex.localeCompare(B.letter);
-    }
-    if (A.letter && B.bracket) {
-      const [start, end] = B.bracket.split("-").map((s) => s.trim());
-      if (A.letter >= start && (!end || A.letter <= end)) return 1;
-      return A.letter.localeCompare(B.letterIndex);
-    }
-
-    // 4. If both are single letters, sort alphabetically
-    if (A.letter && B.letter) {
-      if (A.letter !== B.letter) return A.letter.localeCompare(B.letter);
-    }
-
-    // 5. Subnumber
-    if ((A.subnum || 0) !== (B.subnum || 0)) return (A.subnum || 0) - (B.subnum || 0);
-
-    // 6. Fallback
-    return A.raw.localeCompare(B.raw, undefined, { sensitivity: "base" });
-  }
-
-  // Numbered comes before non-numbered
-  if (A.num !== null) return -1;
-  if (B.num !== null) return 1;
-  return A.raw.localeCompare(B.raw, undefined, { sensitivity: "base" });
+// Utility function to clean slugs with number prefixes
+function cleanSlugPrefix(slug) {
+  return slug.split("-")[0].match(/\d/)
+    ? slug.split("-").slice(1).join("-")
+    : slug;
 }
 
 const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
@@ -119,17 +48,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
       navigate("/faculty/academic-work");
     } else {
       const categorySlug = slugify(selectedCategory);
-      let categorySlugClean = "";
-      // 12-scholarly-and-professional-activities -> scholarly-and-professional-activities
-      // publications-and-patents -> publications-and-patents
-      if (categorySlug.split("-")[0].match(/\d/)) {
-        // Category slug with number prefix
-        categorySlugClean = categorySlug.split("-").slice(1).join("-");
-      } else {
-        // Category slug without number prefix
-        categorySlugClean = categorySlug;
-      }
-      // fix for categories that have a number prefix
+      const categorySlugClean = cleanSlugPrefix(categorySlug);
       navigate(`/faculty/academic-work/${categorySlugClean}`);
     }
   };
@@ -166,23 +85,9 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
     setActiveSection(section);
     if (section) {
       const categorySlug = slugify(section.data_type);
-      let categorySlugClean = "";
-      if (categorySlug.split("-")[0].match(/\d/)) {
-        // Category slug with number prefix
-        categorySlugClean = categorySlug.split("-").slice(1).join("-");
-      } else {
-        // Category slug without number prefix
-        categorySlugClean = categorySlug;
-      }
+      const categorySlugClean = cleanSlugPrefix(categorySlug);
       const titleSlug = slugify(section.title);
-      let titleSlugClean = "";
-      if (titleSlug.split("-")[0].match(/\d/)) {
-        // Title slug with number prefix (e.g., 8a, 8c-d, 8)
-        titleSlugClean = titleSlug.split("-").slice(1).join("-");
-      } else {
-        // Title slug without number prefix
-        titleSlugClean = titleSlug;
-      }
+      const titleSlugClean = cleanSlugPrefix(titleSlug);
       navigate(`/faculty/academic-work/${categorySlugClean}/${titleSlugClean}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -240,7 +145,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
       // Find the original category name from slug
       const matched = filters.find((f) => {
         const fullSlug = slugify(f);
-        const cleanedSlug = fullSlug.split("-")[0].match(/\d/) ? fullSlug.split("-").slice(1).join("-") : fullSlug;
+        const cleanedSlug = cleanSlugPrefix(fullSlug);
         return fullSlug === category || cleanedSlug === category;
       });
       setActiveTab(matched || null);
@@ -316,7 +221,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
           <>
             {activeSection === null ? (
               <div className="!overflow-auto !h-full rounded-lg w-full mx-auto">
-                <h1 className="text-left mb-2 text-4xl font-bold text-zinc-600">Academic Work</h1>
+                <h1 className="text-left mb-2 text-4xl mt-2 font-bold text-zinc-600">Academic Work</h1>
                 {/* Search bar for filtering sections */}
                 <div className="mb-4 flex justify-start items-left">
                   <label className="input input-bordered flex items-left gap-2 flex-1">
@@ -347,7 +252,7 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                   onSelect={handleTabSelect}
                   sectionDescriptions={sectionDescriptions}
                 />
-                {[...searchedSections].sort(sectionTitleSort).map((section) => (
+                {searchedSections.sort(sectionTitleSort).map((section) => (
                   <WorkSection
                     onClick={handleManageClick}
                     key={section.data_section_id}
@@ -359,10 +264,10 @@ const AcademicWork = ({ getCognitoUser, userInfo, toggleViewMode }) => {
                 ))}
                 {/* If no results in tab, show matches from other categories distinctly */}
                 {searchTerm && activeTab && searchedSections.length === 0 && otherCategorySections.length > 0 && (
-                  <div className="mt-4 px-6">
+                  <div className="mt-6 px-2">
                     <div className="text-sm font-normal text-gray-600 mb-2 text-center py-2">No results found for search in selected category.</div>
                     <div className="text-md font-semibold text-gray-600 mb-2">Showing results from other categories:</div>
-                    {[...otherCategorySections].sort(sectionTitleSort).map((section) => {
+                    {otherCategorySections.sort(sectionTitleSort).map((section) => {
                       // Clean category name similar to tab cleaning
                       const cat = section.data_type;
                       const catParts = cat.split(".");

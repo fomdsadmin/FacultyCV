@@ -15,13 +15,25 @@ def getPotentialMatches(arguments):
     }
 
     # Query for ORCID id's based on name and institution
+    param1 = 'University of British Columbia'
+    param2 = 'UBC'
+    param3 = 'The University of British Columbia'
+    
+    # First try with affiliation filter
     request_url = f"{URL}/search/?q=given-names:{first_name}+AND+family-name:{last_name}"
-    if institution:
-        request_url += f"+AND+affiliation-org-name:{institution}"
+    request_url += f"+AND+affiliation-org-name:{param1}+OR+affiliation-org-name:{param2}+OR+affiliation-org-name:{param3}"
+    
     response = requests.get(request_url, headers=headers).json()
     num_results = response['num-found']
+    
+    # If no results with affiliation filter, try without it
     if num_results == 0:
-        return []
+        request_url = f"{URL}/search/?q=given-names:{first_name}+AND+family-name:{last_name}"
+        response = requests.get(request_url, headers=headers).json()
+        num_results = response['num-found']
+        if num_results == 0:
+            return []
+    
     results = response['result']
     orcid_ids = []
     for result in results[:MAX_RESULTS]:
