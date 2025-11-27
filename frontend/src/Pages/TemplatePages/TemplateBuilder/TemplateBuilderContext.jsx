@@ -28,22 +28,10 @@ export const buildAttributeObject = (attributeName, attributeKey) => {
 
 export const TemplateBuilderProvider = ({
   children,
-  sortAscending,
-  title,
-  setTitle,
   onBack,
-  setSortAscending,
-  createdWithRole,
-  setCreatedWithRole,
-  showDeclaration,
-  setShowDeclaration,
-  showVisualNesting,
-  setShowVisualNesting,
-  showFomLogo,
-  setShowFomLogo,
   templateId,
-  items,
-  setItems
+  template,
+  setTemplate,
 }) => {
 
   const [sectionsMap, setSectionsMap] = useState(null);
@@ -95,22 +83,10 @@ export const TemplateBuilderProvider = ({
 
   const value = {
     // State
-    title,
-    setTitle,
-    sortAscending,
-    setSortAscending,
     sectionsMap,
-    setCreatedWithRole,
-    createdWithRole,
-    showDeclaration,
-    setShowDeclaration,
-    showVisualNesting,
-    setShowVisualNesting,
-    showFomLogo,
-    setShowFomLogo,
     templateId,
-    items,
-    setItems,
+    template,
+    setTemplate,
 
     // onBack
     onBack,

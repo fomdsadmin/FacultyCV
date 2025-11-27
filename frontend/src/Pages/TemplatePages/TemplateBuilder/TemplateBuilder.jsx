@@ -69,21 +69,80 @@ const dropAnimationConfig = {
 const TemplateBuilderContent = ({
     template,
     setTemplate,
-    title,
-    setTitle,
     onBack,
     templateId,
-    setCreatedWithRole,
-    createdWithRole,
-    showDeclaration,
-    setShowDeclaration,
-    showFomLogo,
-    setShowFomLogo,
-    showVisualNesting,
-    setShowVisualNesting
 }) => {
 
-    const { sectionsMap, items, setItems } = useTemplateBuilder();
+    const { sectionsMap } = useTemplateBuilder();
+
+    const {
+        show_fom_logo: showFomLogo,
+        show_visual_nesting: showVisualNesting,
+        show_declaration: showDeclaration,
+        title
+    } = template;
+
+    const items = useMemo(() => {
+        return template?.templateBuilder?.items ?? [];
+    }, [template]);
+
+    const setItems = (update) => {
+        setTemplate(prev => {
+            const prevItems = prev.templateBuilder.items;
+
+            const newItems =
+                typeof update === "function"
+                    ? update(prevItems)
+                    : update;
+
+            return {
+                ...prev,
+                templateBuilder: {
+                    ...prev.templateBuilder,
+                    items: newItems,
+                },
+            };
+        });
+    };
+
+    const sortAscending = useMemo(() => {
+        return template.sort_ascending;
+    }, [template?.sort_ascending])
+
+    const setSortAscending = (ascending) => {
+        setTemplate(prev => ({
+            ...prev,
+            sort_ascending: ascending,
+        }));
+    };
+
+    const setShowFomLogo = (showFomLogo) => {
+        setTemplate(prev => ({
+            ...prev,
+            show_fom_logo: showFomLogo,
+        }));
+    };
+
+    const setShowVisualNesting = (showVisualNesting) => {
+        setTemplate(prev => ({
+            ...prev,
+            show_visual_nesting: showVisualNesting,
+        }));
+    };
+
+    const setShowDeclaration = (showDeclaration) => {
+        setTemplate(prev => ({
+            ...prev,
+            show_declaration: showDeclaration,
+        }));
+    };
+
+    const setTitle = (newTitle) => {
+        setTemplate(prev => ({
+            ...prev,
+            title: newTitle,
+        }));
+    }
 
     const [activeId, setActiveId] = useState(null);
     const [overId, setOverId] = useState(null);
@@ -335,8 +394,8 @@ const TemplateBuilderContent = ({
                 </div>
 
                 <div className="flex justify-end items-center gap-3 mt-4">
-                    <SortButton />
-                    <EditItemsJson />
+                    <SortButton setSortAscending={setSortAscending} sortAscending={sortAscending} />
+                    <EditItemsJson setItems={setItems} items={items} />
                     <SaveTemplateButton
                         templateId={templateId}
                         onBack={onBack}
@@ -439,65 +498,22 @@ const TemplateBuilderContent = ({
 const TemplateBuilder = ({
     template,
     setTemplate,
-    title,
-    setTitle,
     onBack,
     templateId,
-    setCreatedWithRole,
-    createdWithRole,
-    showDeclaration,
-    setShowDeclaration,
-    showFomLogo,
-    setShowFomLogo,
-    showVisualNesting,
-    setShowVisualNesting,
-    sortAscending,
-    setSortAscending,
 }) => {
-    const [items, setItems] = useState([]);
-
-    // Initialize items from template once
-    useEffect(() => {
-        if (template && template.templateBuilder && template.templateBuilder.items) {
-            setItems(template.templateBuilder.items);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [templateId]);
 
     return (
         <TemplateBuilderProvider
-            title={title}
-            setTitle={setTitle}
+            template={template}
+            setTemplate={setTemplate}
             onBack={onBack}
-            sortAscending={sortAscending}
-            setSortAscending={setSortAscending}
-            setCreatedWithRole={setCreatedWithRole}
-            createdWithRole={createdWithRole}
-            showDeclaration={showDeclaration}
-            setShowDeclaration={setShowDeclaration}
-            showFomLogo={showFomLogo}
-            setShowFomLogo={setShowFomLogo}
-            showVisualNesting={showVisualNesting}
-            setShowVisualNesting={setShowVisualNesting}
             templateId={templateId}
-            items={items}
-            setItems={setItems}
         >
             <TemplateBuilderContent
                 template={template}
                 setTemplate={setTemplate}
-                title={title}
-                setTitle={setTitle}
                 onBack={onBack}
                 templateId={templateId}
-                setCreatedWithRole={setCreatedWithRole}
-                createdWithRole={createdWithRole}
-                showDeclaration={showDeclaration}
-                setShowDeclaration={setShowDeclaration}
-                showFomLogo={showFomLogo}
-                setShowFomLogo={setShowFomLogo}
-                showVisualNesting={showVisualNesting}
-                setShowVisualNesting={setShowVisualNesting}
             />
         </TemplateBuilderProvider>
     );
