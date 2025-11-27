@@ -1,9 +1,19 @@
-import React, { useState } from "react";
-import { FaRegCalendarAlt, FaChevronDown, FaChevronUp } from "react-icons/fa"; // Add at the top if using react-icons
+import React, { useState, useMemo, useCallback } from "react";
+import { FaRegCalendarAlt } from "react-icons/fa";
+import CollapsibleSection from "./components/CollapsibleSection";
+import DateInput from "./components/DateInput";
+import ExternalLink from "./components/ExternalLink";
+import ValidationError from "./components/ValidationError";
+import YesNoCheckbox from "./components/YesNoCheckbox";
+import usePromotionPathways from "./hooks/usePromotionPathways";
+import useDateValidation from "./hooks/useDateValidation";
 
 const sc3_link = "https://universitycounsel.ubc.ca/policies/coi-policy/";
 const unicouncil_link = "https://universitycounsel.ubc.ca/subject-areas/coi/";
 const orcs_link = "https://ors.ubc.ca/";
+
+// Reusable class constants
+const CHECKBOX_CLASS = "w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2";
 
 const DeclarationForm = ({
   editYear,
@@ -42,58 +52,37 @@ const DeclarationForm = ({
 }) => {
   // State for managing section collapse/expand
   const [expandedSections, setExpandedSections] = useState({
-    coi: true, // Conflict of Interest expanded by default
+    coi: true,
     fomMerit: false,
     promotion: false,
     honorific: false,
   });
 
-  // Toggle section expansion
-  const toggleSection = (section) => {
+  // Custom hooks
+  const { clearError, validateSubmissionDate } = useDateValidation(setValidationErrors);
+  const pathwaysHook = usePromotionPathways(promotionPathways, setPromotionPathways);
+
+  // Toggle section expansion with useCallback
+  const toggleSection = useCallback((section) => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
-  };
-  // Helper to clear error for a field
-  const clearError = (field) => {
-    if (validationErrors[field]) {
-      setValidationErrors((prev) => {
-        const updated = { ...prev };
-        delete updated[field];
-        return updated;
-      });
+  }, []);
+
+  // Memoized computed values
+  const reportingYear = useMemo(() => isEdit ? editYear : year, [isEdit, editYear, year]);
+  const reportingYearNum = useMemo(() => Number(reportingYear), [reportingYear]);
+  const nextYearNum = useMemo(() => reportingYearNum ? reportingYearNum + 1 : null, [reportingYearNum]);
+  const hasSelectedYear = useMemo(() => !!reportingYearNum, [reportingYearNum]);
+
+  // Memoized event handlers
+  const handleYearChange = useCallback((e) => {
+    if (!isEdit) {
+      setYear(Number(e.target.value));
+      clearError("year");
     }
-  };
-
-  // Helper to validate submission dates
-  const validateSubmissionDate = (dateValue, fieldName) => {
-    if (!dateValue) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [fieldName]: "Please select a submission date.",
-      }));
-      return;
-    }
-
-    const submissionDate = new Date(dateValue);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
-
-    if (submissionDate > today) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [fieldName]: "Submission date cannot be in the future.",
-      }));
-    } else {
-      clearError(fieldName);
-    }
-  };
-
-  const reportingYear = isEdit ? editYear : year;
-  const reportingYearNum = Number(reportingYear);
-  const nextYearNum = reportingYearNum ? reportingYearNum + 1 : null;
-  const hasSelectedYear = !!reportingYearNum;
+  }, [isEdit, setYear, clearError]);
 
   return (
     <div className="w-full flex justify-center">
@@ -121,18 +110,7 @@ const DeclarationForm = ({
                 ${validationErrors.year ? "border-red-500 ring-2 ring-red-200" : ""}
               `}
               value={isEdit ? editYear : year}
-              onChange={(e) => {
-                if (!isEdit) {
-                  setYear(Number(e.target.value));
-                  if (validationErrors.year) {
-                    setValidationErrors((prev) => {
-                      const updated = { ...prev };
-                      delete updated.year;
-                      return updated;
-                    });
-                  }
-                }
-              }}
+              onChange={handleYearChange}
               disabled={!!isEdit}
               readOnly={!!isEdit}
             >
@@ -143,56 +121,25 @@ const DeclarationForm = ({
               ))}
             </select>
           </div>
-          {validationErrors.year && <div className="text-red-500 text-sm mt-1">{validationErrors.year}</div>}
+          <ValidationError error={validationErrors.year} />
         </div>
 
-        <div id="declaration-field-coi">
-          <div 
-            className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
-            onClick={() => toggleSection('coi')}
-          >
-            <h2 className="text-lg font-semibold">
-              Conflict of Interest and Commitment Declaration <span className="text-red-500">*</span>
-            </h2>
-            {expandedSections.coi ? <FaChevronUp /> : <FaChevronDown />}
-          </div>
-          
-          {expandedSections.coi && (
-            <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border max-h-96 overflow-y-auto border-r-8 border-r-blue-500 mt-3">
+        <CollapsibleSection
+          id="declaration-field-coi"
+          title="Conflict of Interest and Commitment Declaration"
+          isExpanded={expandedSections.coi}
+          onToggle={() => toggleSection('coi')}
+          isRequired={true}
+        >
+          <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border max-h-96 overflow-y-auto border-r-8 border-r-blue-500 mt-3">
               <p className="text-gray-500">
                 In accordance with{" "}
-                <a
-                  href={sc3_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                  style={{ textDecorationThickness: "2px" }}
-                >
-                  UBC Policy SC3
-                </a>
+                <ExternalLink href={sc3_link}>UBC Policy SC3</ExternalLink>
                 , you must maintain up-to-date Conflict of Interest and Conflict of Commitment declarations. For more
                 information regarding Conflict of Interest and Commitment, please refer to the
-                <a
-                  href={unicouncil_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                  style={{ textDecorationThickness: "2px" }}
-                >
-                  {" "}
-                  Office of the University Counsel{" "}
-                </a>
+                <ExternalLink href={unicouncil_link}> Office of the University Counsel </ExternalLink>
                 and the
-                <a
-                  href={orcs_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                  style={{ textDecorationThickness: "2px" }}
-                >
-                  {" "}
-                  UBC Office of Research Services.
-                </a>
+                <ExternalLink href={orcs_link}> UBC Office of Research Services.</ExternalLink>
               </p>
               <br />
               <p className="text-gray-500">
@@ -215,56 +162,28 @@ const DeclarationForm = ({
                   No, my Conflict of Interest and Conflict of Commitment declarations are NOT up to date.
                 </option>
               </select>
-              {validationErrors.coi && <div className="text-red-500 text-sm mt-1">{validationErrors.coi}</div>}
+              <ValidationError error={validationErrors.coi} />
 
-              <div className="mt-4 flex items-center">
-                <label className="block text-base font-semibold">
-                  <span className="text-gray-700 mr-4">
-                    Date of Submission <span className="text-red-500">*</span>
-                  </span>
-                </label>
-                <div className="relative w-56 ">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                    <FaRegCalendarAlt />
-                  </span>
-                  <input
-                    type="date"
-                    className={`
-                      pl-10 pr-4 py-2 rounded-lg border transition-colors duration-150 w-full
-                      text-base bg-white shadow-sm
-                      border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200
-                      ${validationErrors.coiSubmissionDate ? "border-red-500 ring-2 ring-red-200" : ""}
-                    `}
-                    value={coiSubmissionDate}
-                    onChange={(e) => {
-                      setCoiSubmissionDate(e.target.value);
-                      validateSubmissionDate(e.target.value, "coiSubmissionDate");
-                    }}
-                    placeholder="Select submission date"
-                    required
-                  />
-                </div>
-              </div>
-              {validationErrors.coiSubmissionDate && (
-                <div className="text-red-500 text-sm mt-2">{validationErrors.coiSubmissionDate}</div>
-              )}
+              <DateInput
+                label="Date of Submission"
+                value={coiSubmissionDate}
+                onChange={(e) => {
+                  setCoiSubmissionDate(e.target.value);
+                  validateSubmissionDate(e.target.value, "coiSubmissionDate");
+                }}
+                error={validationErrors.coiSubmissionDate}
+              />
             </div>
-          )}
-        </div>
+        </CollapsibleSection>
 
-        <div id="declaration-field-fomMerit">
-          <div 
-            className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
-            onClick={() => toggleSection('fomMerit')}
-          >
-            <h2 className="text-lg font-semibold">
-              FOM Merit & PSA <span className="text-red-500">*</span>
-            </h2>
-            {expandedSections.fomMerit ? <FaChevronUp /> : <FaChevronDown />}
-          </div>
-          
-          {expandedSections.fomMerit && (
-            <div className="bg-gray-50 py-6 px-8  rounded-lg shadow-sm border mt-3">
+        <CollapsibleSection
+          id="declaration-field-fomMerit"
+          title="FOM Merit & PSA"
+          isExpanded={expandedSections.fomMerit}
+          onToggle={() => toggleSection('fomMerit')}
+          isRequired={true}
+        >
+          <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border mt-3">
             <p className="text-gray-500">
               All eligible members{" "}
               <i>
@@ -349,79 +268,45 @@ const DeclarationForm = ({
               </b>
             </p>
 
-            <div className="mt-6 space-y-4">
-              <div className="flex items-center">
-                <input
-                  id="psa"
-                  type="checkbox"
-                  className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                  checked={psa === "NO"}
-                  onChange={(e) => {
-                    setPsa(e.target.checked ? "NO" : "YES");
-                    clearError("psa");
-                  }}
-                />
-                <label htmlFor="psa" className="ml-3 text-gray-700 font-medium">
-                  <b>
-                    I do{" "}
-                    <i>
-                      <u>NOT</u>
-                    </i>{" "}
-                    wish to be considered for PSA.
-                  </b>
-                </label>
-              </div>
-            </div>
+            <YesNoCheckbox
+              id="psa"
+              checked={psa === "NO"}
+              onChange={(e) => {
+                setPsa(e.target.checked ? "NO" : "YES");
+                clearError("psa");
+              }}
+              label={
+                <b>
+                  I do{" "}
+                  <i>
+                    <u>NOT</u>
+                  </i>{" "}
+                  wish to be considered for PSA.
+                </b>
+              }
+            />
 
-            <div className="mt-4 flex items-center">
-              <label className="block text-base font-semibold">
-                <span className="text-gray-700 mr-4">
-                  Date of Submission <span className="text-red-500">*</span>
-                </span>
-              </label>
-              <div className="relative w-56 ">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                  <FaRegCalendarAlt />
-                </span>
-                <input
-                  type="date"
-                  className={`
-                    pl-10 pr-4 py-2 rounded-lg border transition-colors duration-150 w-full
-                    text-base bg-white shadow-sm
-                    border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200
-                    ${validationErrors.psaSubmissionDate ? "border-red-500 ring-2 ring-red-200" : ""}
-                  `}
-                  value={psaSubmissionDate}
-                  onChange={(e) => {
-                    setPsaSubmissionDate(e.target.value);
-                    validateSubmissionDate(e.target.value, "psaSubmissionDate");
-                  }}
-                  placeholder="Select submission date"
-                  required
-                />
-              </div>
-            </div>
-            {validationErrors.psaSubmissionDate && (
-              <div className="text-red-500 text-sm mt-2">{validationErrors.psaSubmissionDate}</div>
-            )}
-            </div>
-          )}
-        </div>
+            <DateInput
+              label="Date of Submission"
+              value={psaSubmissionDate}
+              onChange={(e) => {
+                setPsaSubmissionDate(e.target.value);
+                validateSubmissionDate(e.target.value, "psaSubmissionDate");
+              }}
+              error={validationErrors.psaSubmissionDate}
+            />
+          </div>
+        </CollapsibleSection>
 
         {!isProfessor && (
-          <div id="declaration-field-promotion">
-            <div 
-              className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
-              onClick={() => toggleSection('promotion')}
-            >
-              <h2 className="text-lg font-semibold">
-                FOM Promotion Review <span className="text-red-500">*</span>
-              </h2>
-              {expandedSections.promotion ? <FaChevronUp /> : <FaChevronDown />}
-            </div>
-          
-          {expandedSections.promotion && (
-            <div className="bg-gray-50 py-6 px-8  rounded-lg shadow-sm border mt-3">
+          <CollapsibleSection
+            id="declaration-field-promotion"
+            title="FOM Promotion Review"
+            isExpanded={expandedSections.promotion}
+            onToggle={() => toggleSection('promotion')}
+            isRequired={true}
+          >
+            <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border mt-3">
             <p className="text-gray-500">
               {hasSelectedYear ? (
                 <>
@@ -447,9 +332,7 @@ const DeclarationForm = ({
               <option value="YES">I do wish to be considered for promotion.</option>
               <option value="NO">I do NOT wish to be considered for promotion.</option>
             </select>
-            {validationErrors.promotion && (
-              <div className="text-red-500 text-sm mt-1">{validationErrors.promotion}</div>
-            )}
+            <ValidationError error={validationErrors.promotion} />
 
             {hasSelectedYear ? (
               <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -480,11 +363,9 @@ const DeclarationForm = ({
                   promotion will be effective from July 1, {nextYearNum}.
                 </p>
               </div>
-            ) : (
-              <></>
-            )}
+            ) : null}
 
-            {hasSelectedYear ? (
+            {hasSelectedYear && (
               <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                 <p className="text-gray-700 font-semibold mb-3">
                   <b>Anticipated pathway for Research Stream</b>
@@ -495,64 +376,23 @@ const DeclarationForm = ({
                       <input
                         id="traditional"
                         type="checkbox"
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                        checked={promotionPathways.includes("Traditional")}
-                        onChange={(e) => {
-                          const isChecked = e.target.checked;
-                          let pathwaysArray = promotionPathways
-                            ? promotionPathways.split(", ").filter((p) => p.trim())
-                            : [];
-
-                          if (isChecked) {
-                            // Add Traditional if not present
-                            if (!pathwaysArray.some((p) => p.includes("Traditional"))) {
-                              pathwaysArray.push("Traditional");
-                            }
-                          } else {
-                            // Remove Traditional and its sub-option
-                            pathwaysArray = pathwaysArray.filter((p) => !p.includes("Traditional"));
-                          }
-
-                          setPromotionPathways(pathwaysArray.join(", "));
-                        }}
+                        className={CHECKBOX_CLASS}
+                        checked={pathwaysHook.hasTraditional}
+                        onChange={(e) => pathwaysHook.toggleTraditional(e.target.checked)}
                       />
                       <label htmlFor="traditional" className="ml-2 text-gray-700 font-medium">
                         Traditional
                       </label>
                     </div>
 
-                    {/* Sub-option for Traditional */}
                     <div className="ml-6">
                       <div className="flex items-center">
                         <input
                           id="indigenous"
                           type="checkbox"
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                          checked={promotionPathways.includes("Traditional - Indigenous scholarly activity")}
-                          onChange={(e) => {
-                            const isChecked = e.target.checked;
-                            let pathwaysArray = promotionPathways
-                              ? promotionPathways.split(", ").filter((p) => p.trim())
-                              : [];
-
-                            if (isChecked) {
-                              // Remove "Traditional" and add "Traditional - Indigenous scholarly activity"
-                              pathwaysArray = pathwaysArray.filter((p) => p !== "Traditional");
-                              if (!pathwaysArray.includes("Traditional - Indigenous scholarly activity")) {
-                                pathwaysArray.push("Traditional - Indigenous scholarly activity");
-                              }
-                            } else {
-                              // Replace sub-option with main option
-                              pathwaysArray = pathwaysArray.filter(
-                                (p) => p !== "Traditional - Indigenous scholarly activity"
-                              );
-                              if (!pathwaysArray.includes("Traditional")) {
-                                pathwaysArray.push("Traditional");
-                              }
-                            }
-
-                            setPromotionPathways(pathwaysArray.join(", "));
-                          }}
+                          className={CHECKBOX_CLASS}
+                          checked={pathwaysHook.hasIndigenous}
+                          onChange={(e) => pathwaysHook.toggleIndigenous(e.target.checked)}
                         />
                         <label htmlFor="indigenous" className="ml-2 text-gray-700">
                           Indigenous scholarly activity
@@ -565,34 +405,9 @@ const DeclarationForm = ({
                     <input
                       id="blended"
                       type="checkbox"
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                      checked={promotionPathways.includes(
-                        "Blended with scholarship of teaching or professional contributions"
-                      )}
-                      onChange={(e) => {
-                        const isChecked = e.target.checked;
-                        let pathwaysArray = promotionPathways
-                          ? promotionPathways.split(", ").filter((p) => p.trim())
-                          : [];
-
-                        if (isChecked) {
-                          // Add Blended option
-                          if (
-                            !pathwaysArray.includes(
-                              "Blended with scholarship of teaching or professional contributions"
-                            )
-                          ) {
-                            pathwaysArray.push("Blended with scholarship of teaching or professional contributions");
-                          }
-                        } else {
-                          // Remove Blended option
-                          pathwaysArray = pathwaysArray.filter(
-                            (p) => p !== "Blended with scholarship of teaching or professional contributions"
-                          );
-                        }
-
-                        setPromotionPathways(pathwaysArray.join(", "));
-                      }}
+                      className={CHECKBOX_CLASS}
+                      checked={pathwaysHook.hasBlended}
+                      onChange={(e) => pathwaysHook.toggleBlended(e.target.checked)}
                     />
                     <label htmlFor="blended" className="ml-2 text-gray-700 font-medium">
                       Blended with scholarship of teaching or professional contributions
@@ -600,11 +415,9 @@ const DeclarationForm = ({
                   </div>
                 </div>
               </div>
-            ) : (
-              <></>
             )}
 
-            {hasSelectedYear ? (
+            {hasSelectedYear && (
               <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                 <p className="text-gray-700 font-semibold mb-3">
                   <b>Support anticipated</b>
@@ -617,8 +430,6 @@ const DeclarationForm = ({
                   rows={4}
                 />
               </div>
-            ) : (
-              <></>
             )}
 
             <p className="text-gray-500">
@@ -629,53 +440,26 @@ const DeclarationForm = ({
               </b>
             </p>
 
-            <div className="mt-4 flex items-center">
-              <label className="block text-base font-semibold">
-                <span className="text-gray-700 mr-4">
-                  Date of Submission <span className="text-red-500">*</span>
-                </span>
-              </label>
-              <div className="relative w-56 ">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                  <FaRegCalendarAlt />
-                </span>
-                <input
-                  type="date"
-                  className={`
-                    pl-10 pr-4 py-2 rounded-lg border transition-colors duration-150 w-full
-                    text-base bg-white shadow-sm
-                    border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200
-                    ${validationErrors.promotionSubmissionDate ? "border-red-500 ring-2 ring-red-200" : ""}
-                  `}
-                  value={promotionSubmissionDate}
-                  onChange={(e) => {
-                    setPromotionSubmissionDate(e.target.value);
-                    validateSubmissionDate(e.target.value, "promotionSubmissionDate");
-                  }}
-                  placeholder="Select submission date"
-                  required
-                />
-              </div>
-            </div>
-            {validationErrors.promotionSubmissionDate && (
-              <div className="text-red-500 text-sm mt-2">{validationErrors.promotionSubmissionDate}</div>
-            )}
-            </div>
-          )}
+            <DateInput
+              label="Date of Submission"
+              value={promotionSubmissionDate}
+              onChange={(e) => {
+                setPromotionSubmissionDate(e.target.value);
+                validateSubmissionDate(e.target.value, "promotionSubmissionDate");
+              }}
+              error={validationErrors.promotionSubmissionDate}
+            />
           </div>
+          </CollapsibleSection>
         )}
 
-        <div>
-          <div 
-            className="flex items-center justify-between cursor-pointer p-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-150"
-            onClick={() => toggleSection('honorific')}
-          >
-            <h2 className="text-lg font-semibold">FOM Honorific Impact Report</h2>
-            {expandedSections.honorific ? <FaChevronUp /> : <FaChevronDown />}
-          </div>
-          
-          {expandedSections.honorific && (
-            <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border overflow-y-auto mt-3">
+        <CollapsibleSection
+          id="declaration-field-honorific"
+          title="FOM Honorific Impact Report"
+          isExpanded={expandedSections.honorific}
+          onToggle={() => toggleSection('honorific')}
+        >
+          <div className="bg-gray-50 py-6 px-8 rounded-lg shadow-sm border overflow-y-auto mt-3">
             <p className="text-gray-500">
               If you are the holder of a Faculty of Medicine Honorific (i.e., Chair, Professorship, Distinguished
               Scholar), please provide a summary of the impact your activities have had on the advancement of medical
@@ -694,14 +478,7 @@ const DeclarationForm = ({
               <br />
               <b>
                 Please submit your impact report to your Department Head / School Director and{" "}
-                <a
-                  href="mailto:fomdae.assistant@ubc.ca"
-                  className="font-bold text-blue-500 hover:text-blue-900 hover:underline transition-colors duration-150 cursor-pointer"
-                  style={{ textDecorationThickness: "2px" }}
-                >
-                  fomdae.assistant@ubc.ca
-                </a>
-                .
+                <ExternalLink href="mailto:fomdae.assistant@ubc.ca">fomdae.assistant@ubc.ca</ExternalLink>.
               </b>
               <ul className="list-disc list-inside mt-2 ml-4 px-4 mb-2">
                 <li>Full or Summary Report is emailed; OR</li>
@@ -717,9 +494,8 @@ const DeclarationForm = ({
               onChange={(e) => setHonorific(e.target.value)}
               rows={7}
             />
-            </div>
-          )}
-        </div>
+          </div>
+        </CollapsibleSection>
 
         <div className="flex flex-col justify-end">
           <button type="button" className="btn btn-primary px-6 py-2 rounded-lg shadow transition" onClick={onSave}>

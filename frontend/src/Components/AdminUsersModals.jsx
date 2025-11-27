@@ -41,17 +41,19 @@ export const DeactivatedUsersModal = ({
   isOpen,
   onClose,
   deactivatedUsers,
-  searchTerm,
-  onSearchChange,
-  departmentFilter,
-  onDepartmentChange,
-  onReactivateUser,
-  onActivateAll,
-  onDeleteUser,
+  fetchAllUsers,
+  showModal,
   userRole = "",
   userDepartment = "",
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("");
+
+  // Import necessary functions
+  const { updateUserActiveStatus, removeUser } = require("../graphql/graphqlHelpers.js");
+  const { useAuditLogger, AUDIT_ACTIONS } = require("../Contexts/AuditLoggerContext.jsx");
+  const { logAction } = useAuditLogger();
 
   // Auto-set department filter for department admins when modal opens
   React.useEffect(() => {
@@ -59,10 +61,94 @@ export const DeactivatedUsersModal = ({
       const adminDept = userRole.replace("Admin-", "");
       if (deactivatedUsers.some(user => user.primary_department === adminDept)) {
         // Only set if there are users in that department
-        onDepartmentChange({ target: { value: adminDept } });
+        setDepartmentFilter(adminDept);
       }
     }
-  }, [isOpen, userRole, departmentFilter, deactivatedUsers, onDepartmentChange]);
+  }, [isOpen, userRole, departmentFilter, deactivatedUsers]);
+
+  // Reset filters when modal closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm("");
+      setDepartmentFilter("");
+    }
+  }, [isOpen]);
+
+  // Handler for reactivating a single user
+  const handleReactivateUser = async (userId) => {
+    const userToReactivate = deactivatedUsers.find((user) => user.user_id === userId);
+    if (!userToReactivate) {
+      console.error("User not found");
+      return;
+    }
+
+    showModal(
+      "Confirm User Activation",
+      `Are you sure you want to activate user: \n \n '${userToReactivate.first_name} ${userToReactivate.last_name}'`,
+      "confirm",
+      async () => {
+        try {
+          console.log("Reactivating user:", userToReactivate);
+          await updateUserActiveStatus(userToReactivate.user_id, true);
+          fetchAllUsers();
+          showModal(
+            "User Activated Successfully",
+            `User ${userToReactivate.first_name} ${userToReactivate.last_name} has been successfully activated.`,
+            "success"
+          );
+        } catch (error) {
+          console.error("Error reactivating user:", error);
+          showModal("Error", "Failed to reactivate user. Please try again.", "error");
+        }
+      }
+    );
+  };
+
+  // Handler for activating multiple users
+  const handleActivateAll = (user_ids) => {
+    const userCount = user_ids.length;
+
+    showModal(
+      "Confirm Bulk User Activation",
+      `Are you sure you want to activate all ${userCount} filtered users?`,
+      "confirm",
+      async () => {
+        try {
+          console.log("Activating multiple users:", user_ids);
+          await updateUserActiveStatus(user_ids, true);
+          fetchAllUsers();
+          showModal("Users Activated Successfully", `${userCount} users have been successfully activated.`, "success");
+        } catch (error) {
+          console.error("Error activating users:", error);
+          showModal("Error", "Failed to activate users. Please try again.", "error");
+        }
+      }
+    );
+  };
+
+  // Handler for deleting a user (admin only)
+  const handleDeleteUser = async (user) => {
+    try {
+      console.log("Deleting user:", user);
+      const result = await removeUser(user.user_id);
+
+      await logAction(AUDIT_ACTIONS.DELETE_USER || "DELETE_USER", {
+        userId: user.user_id,
+        name: `${user.first_name} ${user.last_name}`,
+      });
+
+      fetchAllUsers();
+      showModal(
+        "User Deleted Successfully",
+        `User ${user.first_name} ${user.last_name} has been permanently deleted.`,
+        "success"
+      );
+      console.log("User deletion result:", result);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      showModal("Error", "Failed to delete user. Please try again.", "error");
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -130,7 +216,7 @@ export const DeactivatedUsersModal = ({
             <span className="text-sm text-gray-600 mb-2">These profiles are not found on Workday (either retired or made Inactive by Admin)</span>
             {filteredDeactivatedUsers.length > 0 && (
               <button
-                onClick={() => onActivateAll(filteredDeactivatedUsers.map((user) => user.user_id))}
+                onClick={() => handleActivateAll(filteredDeactivatedUsers.map((user) => user.user_id))}
                 className="btn btn-primary mt-2 btn-md text-white flex items-center gap-2 shadow-lg"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +241,7 @@ export const DeactivatedUsersModal = ({
                 className="grow"
                 placeholder="Search inactive members..."
                 value={searchTerm}
-                onChange={onSearchChange}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -173,7 +259,7 @@ export const DeactivatedUsersModal = ({
             <select 
               className="select select-bordered" 
               value={departmentFilter} 
-              onChange={onDepartmentChange}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
               disabled={isLocked}
             >
               <option value="">
@@ -270,7 +356,7 @@ export const DeactivatedUsersModal = ({
                         <td className="px-6 py-4 text-center">
                           <div className="flex justify-center gap-2">
                             <button
-                              onClick={() => onReactivateUser(user.user_id)}
+                              onClick={() => handleReactivateUser(user.user_id)}
                               className="btn btn-success btn-sm text-white"
                             >
                               Activate
@@ -344,7 +430,7 @@ export const DeactivatedUsersModal = ({
                 </button>
                 <button
                   onClick={() => {
-                    onDeleteUser(showDeleteConfirm);
+                    handleDeleteUser(showDeleteConfirm);
                     setShowDeleteConfirm(null);
                   }}
                   className="btn btn-error text-white"
@@ -365,15 +451,31 @@ export const TerminatedUsersModal = ({
   isOpen,
   onClose,
   terminatedUsers,
-  searchTerm,
-  onSearchChange,
-  departmentFilter,
-  onDepartmentChange,
   getPrimaryRank,
-  getJointRanks,
   userRole = "",
   userDepartment = "",
 }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("");
+
+  // Auto-set department filter for department admins when modal opens
+  React.useEffect(() => {
+    if (isOpen && userRole && userRole.startsWith("Admin-") && userRole !== "Admin-All" && !departmentFilter) {
+      const adminDept = userRole.replace("Admin-", "");
+      if (terminatedUsers.some(user => user.primary_department === adminDept)) {
+        setDepartmentFilter(adminDept);
+      }
+    }
+  }, [isOpen, userRole, departmentFilter, terminatedUsers]);
+
+  // Reset filters when modal closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm("");
+      setDepartmentFilter("");
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Get unique departments for filter - handle role-based restrictions
@@ -456,7 +558,7 @@ export const TerminatedUsersModal = ({
                 className="grow"
                 placeholder="Search terminated members..."
                 value={searchTerm}
-                onChange={onSearchChange}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -474,7 +576,7 @@ export const TerminatedUsersModal = ({
             <select 
               className="select select-bordered" 
               value={departmentFilter} 
-              onChange={onDepartmentChange}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
               disabled={isLocked}
             >
               <option value="">

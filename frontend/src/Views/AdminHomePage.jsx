@@ -6,7 +6,7 @@ import AnalyticsCard from "../Components/AnalyticsCard.jsx";
 import { useAdmin } from "Contexts/AdminContext.jsx";
 
 const AdminHomePage = ({ getCognitoUser, userInfo }) => {
-  const { loading, setLoading, allUsersCount, totalCVsGenerated } = useAdmin();
+  const { loading, allUsersCount, totalCVsGenerated } = useAdmin();
   const [userCounts, setUserCounts] = useState({
     total_count: 0,
     faculty_count: 0,
@@ -39,7 +39,7 @@ const AdminHomePage = ({ getCognitoUser, userInfo }) => {
               <AnalyticsCard title="Admin" value={userCounts.admin_count} />
               <AnalyticsCard title="Delegates" value={userCounts.assistant_count} />
               <AnalyticsCard title="Faculty Admin" value={userCounts.faculty_admin_count} />
-              <AnalyticsCard title="Generated CVs" value={totalCVsGenerated} />
+              {/* <AnalyticsCard title="Generated CVs" value={totalCVsGenerated} /> */}
             </div>
           </div>
         )}

@@ -9,7 +9,6 @@ import {
   updateUserDeclaration,
   getUserAffiliations,
 } from "../../graphql/graphqlHelpers.js";
-import { Link } from "react-router-dom";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
