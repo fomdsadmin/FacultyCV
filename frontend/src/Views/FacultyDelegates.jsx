@@ -1,54 +1,90 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PageContainer from './PageContainer.jsx';
 import FacultyMenu from '../Components/FacultyMenu.jsx';
 import AssociatedUser from '../Components/AssociatedUser.jsx';
 import { getUserConnections } from '../graphql/graphqlHelpers.js';
-import { FaSync, FaSearch, FaUserPlus } from 'react-icons/fa';
+import { FaSync, FaSearch, FaUserPlus, FaExclamationTriangle } from 'react-icons/fa';
 
 const FacultyDelegates = ({ userInfo, getCognitoUser, toggleViewMode }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [pendingConnections, setPendingConnections] = useState([]);
-  const [confirmedConnections, setConfirmedConnections] = useState([]);
+  const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const getAllUserConnections = useCallback(async () => {
+    if (!userInfo?.user_id) return;
+    
+    try {
+      setError(null);
+      const retrievedUserConnections = await getUserConnections(userInfo.user_id);
+      setConnections(retrievedUserConnections || []);
+    } catch (error) {
+      console.error('Error:', error);
+      setError('Failed to load connections. Please try again.');
+      setConnections([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [userInfo?.user_id]);
 
   useEffect(() => {
     setLoading(true);
     getAllUserConnections();
-  }, [userInfo]);
-
-  async function getAllUserConnections() {
-    try {
-      const retrievedUserConnections = await getUserConnections(userInfo.user_id);
-      setPendingConnections(retrievedUserConnections.filter(connection => connection.status === 'pending'));
-      setConfirmedConnections(retrievedUserConnections.filter(connection => connection.status === 'confirmed'));
-    } catch (error) {
-      console.error('Error:', error);
-      setPendingConnections([]);
-      setConfirmedConnections([]);
-    }
-    setLoading(false);
-  }
+  }, [getAllUserConnections]);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
-  const filteredPending = pendingConnections.filter(connection =>
-    connection.assistant_first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    connection.assistant_last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    connection.assistant_email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Memoized filter function to avoid recreation
+  const filterConnections = useCallback((connectionsArray, status) => {
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    
+    return connectionsArray
+      .filter(connection => connection.status === status)
+      .filter(connection =>
+        connection.assistant_first_name.toLowerCase().includes(lowerSearchTerm) ||
+        connection.assistant_last_name.toLowerCase().includes(lowerSearchTerm) ||
+        connection.assistant_email.toLowerCase().includes(lowerSearchTerm)
+      );
+  }, [searchTerm]);
+
+  // Memoized filtered lists
+  const filteredPending = useMemo(
+    () => filterConnections(connections, 'pending'),
+    [connections, filterConnections]
   );
-  const filteredConfirmed = confirmedConnections.filter(connection =>
-    connection.assistant_first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    connection.assistant_last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    connection.assistant_email.toLowerCase().includes(searchTerm.toLowerCase())
+
+  const filteredConfirmed = useMemo(
+    () => filterConnections(connections, 'confirmed'),
+    [connections, filterConnections]
   );
 
   const refresh = async () => {
     setLoading(true);
     await getAllUserConnections();
-    setLoading(false);
   };
+
+  // Reusable component for connection sections
+  const ConnectionSection = ({ title, connections, badgeColor, count }) => (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeColor}`}>
+          {count}
+        </span>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {connections.map((connection) => (
+          <AssociatedUser
+            key={connection.user_connection_id}
+            connection={connection}
+            getAllUserConnections={getAllUserConnections}
+          />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <PageContainer>
@@ -87,6 +123,15 @@ const FacultyDelegates = ({ userInfo, getCognitoUser, toggleViewMode }) => {
             <span className="text-gray-700">Refresh</span>
           </button>
         </div>
+
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+            <FaExclamationTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
+
         {/* Loading State */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
@@ -115,43 +160,22 @@ const FacultyDelegates = ({ userInfo, getCognitoUser, toggleViewMode }) => {
               <>
                 {/* Pending Connections */}
                 {filteredPending.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <h2 className="text-xl font-semibold text-gray-800">Pending Invites</h2>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        {filteredPending.length}
-                      </span>
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {filteredPending.map((connection) => (
-                        <AssociatedUser
-                          key={connection.user_connection_id}
-                          connection={connection}
-                          getAllUserConnections={getAllUserConnections}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  <ConnectionSection
+                    title="Pending Invites"
+                    connections={filteredPending}
+                    badgeColor="bg-yellow-100 text-yellow-800"
+                    count={filteredPending.length}
+                  />
                 )}
+
                 {/* Active Connections */}
                 {filteredConfirmed.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <h2 className="text-xl font-semibold text-gray-800">Active Connections</h2>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {filteredConfirmed.length}
-                      </span>
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {filteredConfirmed.map((connection) => (
-                        <AssociatedUser
-                          key={connection.user_connection_id}
-                          connection={connection}
-                          getAllUserConnections={getAllUserConnections}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  <ConnectionSection
+                    title="Active Connections"
+                    connections={filteredConfirmed}
+                    badgeColor="bg-blue-100 text-blue-800"
+                    count={filteredConfirmed.length}
+                  />
                 )}
               </>
             )}
