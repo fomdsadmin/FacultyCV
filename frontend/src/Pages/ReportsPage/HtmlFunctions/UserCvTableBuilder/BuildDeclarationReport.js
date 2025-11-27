@@ -260,7 +260,7 @@ function buildPromotionReview(userCvStore) {
         .pr-scale-wrapper { --pr-scale: 1; transform: scale(var(--pr-scale)); transform-origin: top left; width: calc(100% / var(--pr-scale)); box-sizing: border-box; }
 
         /* Scoped styles for the promotion review fragment (copied from provided styling) */
-        .pr-root { font-family: 'Calibri', 'Arial', sans-serif; font-size:11pt; line-height:1.5; padding:40px 60px; max-width:8.5in; margin:0 auto; background:#fff; color:#000; }
+        .pr-root { font-size:11pt; line-height:1.5; padding:40px 60px; max-width:8.5in; margin:0 auto; background:#fff; color:#000; }
 
         /* Strong keep-together hints for print engines */
         .pr-root, .pr-root * { page-break-inside: avoid; break-inside: avoid; page-break-before: avoid; page-break-after: avoid; }
@@ -383,7 +383,7 @@ function buildFomHonorificImpactReport(userCvStore) {
 
       <style>
         /* Scoped styles for FOM Honorific Impact Report */
-        .fh-root { font-family: 'Calibri', 'Arial', sans-serif; font-size:11pt; line-height:1.5; padding:40px 60px; max-width:1200px; margin:0 auto; background:#fff; color:#000; }
+        .fh-root { font-size:11pt; line-height:1.5; padding:40px 60px; max-width:1200px; margin:0 auto; background:#fff; color:#000; }
         .fh-root h1 { text-align:center; font-size:28pt; font-weight:700; margin-bottom:30px; color:#000; }
         .fh-root .field-label { font-weight:700; font-size:11pt; margin-bottom:8px; margin-top:20px; display:block; }
         .fh-root .field-input { width:100%; border:none; border-bottom:1px solid #000; padding:4px 0; font-size:11pt; margin-bottom:20px; }
