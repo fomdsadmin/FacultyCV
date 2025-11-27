@@ -47,11 +47,19 @@ const SecureFundingSection = ({ user, section, onBack }) => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter((entry) => {
-        const [field1, field2] = rankFields(entry.data_details);
-        return (
-          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
+        // Search through all fields in data_details
+        if (!entry.data_details) return false;
+        
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Check all fields in the entry's data_details
+        return Object.values(entry.data_details).some((value) => {
+          if (value === null || value === undefined) return false;
+          
+          // Convert value to string and check if it includes the search term
+          const stringValue = typeof value === 'string' ? value : String(value);
+          return stringValue.toLowerCase().includes(searchLower);
+        });
       });
     }
 
@@ -384,15 +392,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                   // Apply search filter
                   if (searchTerm) {
                     dataForCounting = dataForCounting.filter((entry) => {
-                      const [field1, field2] = rankFields(entry.data_details);
-                      return (
-                        (field1 &&
-                          typeof field1 === "string" &&
-                          field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                        (field2 &&
-                          typeof field2 === "string" &&
-                          field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                      );
+                      if (!entry.data_details) return false;
+                      
+                      const searchLower = searchTerm.toLowerCase();
+                      
+                      // Check all fields in the entry's data_details
+                      return Object.values(entry.data_details).some((value) => {
+                        if (value === null || value === undefined) return false;
+                        
+                        const stringValue = typeof value === 'string' ? value : String(value);
+                        return stringValue.toLowerCase().includes(searchLower);
+                      });
                     });
                   }
 
@@ -524,15 +534,17 @@ const SecureFundingSection = ({ user, section, onBack }) => {
                     // Apply search filter
                     if (searchTerm) {
                       dataForCounting = dataForCounting.filter((entry) => {
-                        const [field1, field2] = rankFields(entry.data_details);
-                        return (
-                          (field1 &&
-                            typeof field1 === "string" &&
-                            field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (field2 &&
-                            typeof field2 === "string" &&
-                            field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                        );
+                        if (!entry.data_details) return false;
+                        
+                        const searchLower = searchTerm.toLowerCase();
+                        
+                        // Check all fields in the entry's data_details
+                        return Object.values(entry.data_details).some((value) => {
+                          if (value === null || value === undefined) return false;
+                          
+                          const stringValue = typeof value === 'string' ? value : String(value);
+                          return stringValue.toLowerCase().includes(searchLower);
+                        });
                       });
                     }
 
