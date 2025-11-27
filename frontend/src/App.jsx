@@ -16,7 +16,6 @@ import Archive from "./Views/Archive.jsx";
 import DelegateConnections from "./Views/DelegateConnections.jsx";
 import DelegateHomePage from "./Views/DelegateHomePage.jsx";
 import Assistant_Archive from "./Views/Assistant_Archive.jsx";
-import Assistant_AcademicWork from "./Views/Assistant_AcademicWork.jsx";
 import AdminHomePage from "./Views/AdminHomePage.jsx";
 import TemplatesPage from "./Pages/TemplatePages/TemplatesPage/TemplatesPage.jsx";
 import Sections from "./Views/Sections.jsx";
@@ -371,36 +370,6 @@ const AppContent = () => {
             />
             <Route path="/faculty/archive" element={<Archive userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
             <Route path="/faculty/cv-search" element={<CVSearch userInfo={userInfo} getCognitoUser={getCognitoUser} />} />
-            <Route
-              path="/assistant/academic-work"
-              element={
-                <Assistant_AcademicWork
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              }
-            />
-            <Route
-              path="/assistant/academic-work/:category"
-              element={
-                <Assistant_AcademicWork
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              }
-            />
-            <Route
-              path="/assistant/academic-work/:category/:title"
-              element={
-                <Assistant_AcademicWork
-                  assistantUserInfo={assistantUserInfo}
-                  userInfo={userInfo}
-                  getCognitoUser={getCognitoUser}
-                />
-              }
-            />
             <Route
               path="/assistant/archive"
               element={
