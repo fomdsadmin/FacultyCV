@@ -20,7 +20,8 @@ def cleanData(df):
     - Fixes encoding issues in text fields
     """
     # Clean and prepare the data
-    df["employee_id"] = df["employee_id"].astype(str).str.strip()
+    # df["employee_id"] = df["employee_id"].astype(str).str.strip()
+    df["employee_id"] = '0'
     df["job_profile"] = df["job_profile"].fillna('').str.strip()
     df["business_title"] = df["business_title"].fillna('').str.strip()
     df["type"] = df["type"].fillna('').str.strip().str.lower()

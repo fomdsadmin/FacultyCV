@@ -4,7 +4,6 @@ import { GenericSectionProvider, useGenericSection } from "./GenericSectionConte
 import SectionDescription from "./SectionDescription";
 import SectionHeader from "./SectionHeader/SectionHeader";
 import { FaSearch } from "react-icons/fa";
-import { rankFields } from "../../utils/rankingUtils";
 
 const GenericSectionContent = () => {
   const {
@@ -101,11 +100,17 @@ const GenericSectionContent = () => {
               // Apply search filter
               if (searchTerm) {
                 dataForCounting = dataForCounting.filter((entry) => {
-                  const [field1, field2] = rankFields(entry.data_details);
-                  return (
-                    (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                  );
+                  if (!entry.data_details) return false;
+                  
+                  const searchLower = searchTerm.toLowerCase();
+                  
+                  // Check all fields in the entry's data_details
+                  return Object.values(entry.data_details).some((value) => {
+                    if (value === null || value === undefined) return false;
+                    
+                    const stringValue = typeof value === 'string' ? value : String(value);
+                    return stringValue.toLowerCase().includes(searchLower);
+                  });
                 });
               }
 
@@ -231,11 +236,17 @@ const GenericSectionContent = () => {
                 // Apply search filter
                 if (searchTerm) {
                   dataForCounting = dataForCounting.filter((entry) => {
-                    const [field1, field2] = rankFields(entry.data_details);
-                    return (
-                      (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                      (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                    );
+                    if (!entry.data_details) return false;
+                    
+                    const searchLower = searchTerm.toLowerCase();
+                    
+                    // Check all fields in the entry's data_details
+                    return Object.values(entry.data_details).some((value) => {
+                      if (value === null || value === undefined) return false;
+                      
+                      const stringValue = typeof value === 'string' ? value : String(value);
+                      return stringValue.toLowerCase().includes(searchLower);
+                    });
                   });
                 }
 

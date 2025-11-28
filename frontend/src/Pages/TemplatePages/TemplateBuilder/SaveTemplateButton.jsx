@@ -14,13 +14,7 @@ const SaveTemplateButton = ({
   onBack = null
 }) => {
     const {
-        title,
-        sortAscending,
-        createdWithRole,
-        showDeclaration,
-        showFomLogo,
-        showVisualNesting,
-        items,
+        template
     } = useTemplateBuilder();
 
     const { fetchTemplates } = useTemplatePageContext();
@@ -28,30 +22,21 @@ const SaveTemplateButton = ({
     const [isSaving, setIsSaving] = useState(false)
 
     const saveTemplate = async () => {
-        if (!title.trim()) {
+        if (!template.title.trim()) {
             toast.warning("Template title cannot be blank.", { autoClose: 3000 })
             return
         }
 
         // Build template structure with TemplateBuilder items
-        const templateStructure = JSON.stringify({
-            sort_ascending: sortAscending,
-            created_with_role: createdWithRole,
-            show_declaration: showDeclaration,
-            show_visual_nesting: showVisualNesting,
-            show_fom_logo: showFomLogo,
-            templateBuilder: {
-                items: items
-            }
-        })
+        const templateStructure = JSON.stringify(template)
 
         setIsSaving(true)
         try {
             if (!templateId) {
-                await addTemplate(title, templateStructure, null, null)
+                await addTemplate(template.title, templateStructure, null, null)
                 await logAction(AUDIT_ACTIONS.ADD_NEW_TEMPLATE);
             } else {
-                await updateTemplate(templateId, title, templateStructure, null, null);
+                await updateTemplate(templateId, template.title, templateStructure, null, null);
                 await logAction(AUDIT_ACTIONS.EDIT_CV_TEMPLATE);
             }
             toast.success("Template saved successfully!", { autoClose: 3000 })

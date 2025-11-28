@@ -4,7 +4,7 @@ import GenericEntry from "../../../SharedComponents/GenericEntry";
 import EntryModal from "../../../SharedComponents/EntryModal/EntryModal";
 import PermanentEntryModal from "../../../Components/PermanentEntryModal";
 import PublicationsModal from "./PublicationsModal";
-import { FaArrowLeft, FaRegEdit, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaRegEdit, FaSearch, FaPlus, FaDownload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../../../graphql/graphqlHelpers";
 import { rankFields } from "../../../utils/rankingUtils";
@@ -48,11 +48,19 @@ const PublicationsSection = ({ user, section, onBack }) => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter((entry) => {
-        const [field1, field2] = rankFields(entry.data_details);
-        return (
-          (field1 && typeof field1 === "string" && field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (field2 && typeof field2 === "string" && field2.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
+        // Search through all fields in data_details
+        if (!entry.data_details) return false;
+        
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Check all fields in the entry's data_details
+        return Object.values(entry.data_details).some((value) => {
+          if (value === null || value === undefined) return false;
+          
+          // Convert value to string and check if it includes the search term
+          const stringValue = typeof value === 'string' ? value : String(value);
+          return stringValue.toLowerCase().includes(searchLower);
+        });
       });
     }
 
@@ -597,25 +605,31 @@ const PublicationsSection = ({ user, section, onBack }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleNew}
-            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
+            <FaPlus />
             New
           </button>
           <button
             onClick={() => setRetrievingData(true)}
-            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
-            {retrievingData ? "Retrieving..." : "Retrieve Data"}
+            {retrievingData ? "Retrieving..." : (
+              <>
+                <FaDownload />
+                Retrieve Data
+              </>
+            )}
           </button>
-          <button
+          {/* <button
             onClick={handleDelete}
             className="text-white btn btn-warning min-h-0 h-10 px-4 leading-tight"
             disabled={!isAvailable}
           >
             Remove All
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -693,15 +707,17 @@ const PublicationsSection = ({ user, section, onBack }) => {
                   // Apply search filter
                   if (searchTerm) {
                     dataForCounting = dataForCounting.filter((entry) => {
-                      const [field1, field2] = rankFields(entry.data_details);
-                      return (
-                        (field1 &&
-                          typeof field1 === "string" &&
-                          field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                        (field2 &&
-                          typeof field2 === "string" &&
-                          field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                      );
+                      if (!entry.data_details) return false;
+                      
+                      const searchLower = searchTerm.toLowerCase();
+                      
+                      // Check all fields in the entry's data_details
+                      return Object.values(entry.data_details).some((value) => {
+                        if (value === null || value === undefined) return false;
+                        
+                        const stringValue = typeof value === 'string' ? value : String(value);
+                        return stringValue.toLowerCase().includes(searchLower);
+                      });
                     });
                   }
 
@@ -858,15 +874,17 @@ const PublicationsSection = ({ user, section, onBack }) => {
                       // Apply search filter
                       if (searchTerm) {
                         dataForCounting = dataForCounting.filter((entry) => {
-                          const [field1, field2] = rankFields(entry.data_details);
-                          return (
-                            (field1 &&
-                              typeof field1 === "string" &&
-                              field1.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                            (field2 &&
-                              typeof field2 === "string" &&
-                              field2.toLowerCase().includes(searchTerm.toLowerCase()))
-                          );
+                          if (!entry.data_details) return false;
+                          
+                          const searchLower = searchTerm.toLowerCase();
+                          
+                          // Check all fields in the entry's data_details
+                          return Object.values(entry.data_details).some((value) => {
+                            if (value === null || value === undefined) return false;
+                            
+                            const stringValue = typeof value === 'string' ? value : String(value);
+                            return stringValue.toLowerCase().includes(searchLower);
+                          });
                         });
                       }
 

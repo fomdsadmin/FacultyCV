@@ -1,5 +1,5 @@
 import { useGenericSection } from "../GenericSectionContext";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaPlus } from "react-icons/fa";
 
 const SectionHeader = () => {
   const { section, onBack, handleNew, fieldData, handleRemoveAll, notification } = useGenericSection();
@@ -20,16 +20,18 @@ const SectionHeader = () => {
         
         {/* Right section: Action Buttons */}
         <div className="flex items-center gap-3">
-          <button onClick={handleNew} className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight">
+          <button onClick={handleNew} className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight flex items-center gap-2">
+            <FaPlus />
             New
           </button>
-          <button
+          {/* Hard delete all button - for testing purposes*/}
+          {/* <button
             onClick={handleRemoveAll}
             className="text-white btn btn-warning min-h-0 h-10 px-4 leading-tight"
             disabled={!availableData}
           >
             Remove All
-          </button>
+          </button> */}
         </div>
         
         {/* Notification Toast */}

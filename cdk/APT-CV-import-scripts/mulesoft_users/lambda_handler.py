@@ -84,7 +84,8 @@ def updateUserInfo(user_data, user_id, cursor):
         if cwl and not cwl.endswith('@ubc.ca'):
             cwl = cwl + '@ubc.ca'
         
-        employee_id = str(user_data.get('employeeId', ''))
+        # employee_id = str(user_data.get('employeeId', ''))
+        employee_id = '0'
         
         # Handle active and terminated status
         is_active = user_data.get('isActiveEmployee', False)

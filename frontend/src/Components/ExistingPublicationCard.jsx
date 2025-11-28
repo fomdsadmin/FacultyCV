@@ -1,6 +1,6 @@
 import React from "react";
-import { extractDOIsFromCitation } from '../utils/publicationsMergeUtils';
-import { truncateAuthors } from "utils/publicationsMergeUtils";
+import { extractDOIsFromCitation } from '../utils/mergeUtils';
+import { truncateAuthors } from "utils/mergeUtils";
 
 const ExistingPublicationCard = ({ publication, selectedExistingPublications, handleSelectExistingPublication,  }) => {
   // Extract DOIs from citation text to show what was extracted

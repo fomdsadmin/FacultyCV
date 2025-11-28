@@ -16,6 +16,7 @@ import DownloadPdfButton from "./DownloadPdfButton";
 import { useNotification } from "Contexts/NotificationContext";
 import { useRef } from "react";
 import { getUserDeclarations } from "graphql/graphqlHelpers";
+import { useMemo } from "react";
 
 // onGenerate must return the html content
 const CVGenerationComponent = ({
@@ -239,6 +240,31 @@ const CVGenerationComponent = ({
         }
     }, [generating, docxExists, docxComplete])
 
+    const downloadName = useMemo(() => {
+        const templateName = selectedTemplate?.title?.replaceAll(" ", "") || '';
+
+        const firstName = userInfo?.first_name?.replaceAll(" ", "") || "";
+        const lastName = userInfo?.last_name?.replaceAll(" ", "") || "";
+
+        const faculty = userInfo?.primary_faculty?.replaceAll(" ", "") || "";
+
+        const now = new Date();
+
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const seconds = String(now.getSeconds()).padStart(2, "0");
+
+        const date = `${year}_${month}_${day}_${hours}.${minutes}.${seconds}`;
+
+        const downloadName = `${templateName}_${lastName}${firstName}_${faculty}_${date}`
+
+        return downloadName;
+    }, [userInfo, selectedTemplate?.title])
+
 
     return (
         <div className="cv-generation-component space-y-4">
@@ -259,7 +285,7 @@ const CVGenerationComponent = ({
                     pdfComplete={pdfComplete}
                     generating={generating}
                     pdfHasError={pdfHasError}
-                    downloadName={`${selectedTemplate?.title || 'cv'}${optionalKey}.pdf`}
+                    downloadName={`${downloadName}.pdf`}
                 />
 
                 <DownloadDocxButton
@@ -267,7 +293,7 @@ const CVGenerationComponent = ({
                     docxComplete={docxComplete}
                     generating={generating}
                     docxHasError={docxHasError}
-                    downloadName={`${selectedTemplate?.title || 'cv'}${optionalKey}.docx`}
+                    downloadName={`${downloadName}.docx`}
                 />
             </div>
         </div>

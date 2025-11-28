@@ -10,7 +10,7 @@ const AgGrid = ({ userInfoInput, templateWithEndStartDate, previewRef }) => {
     useEffect(() => {
         const helper = async () => {
             const html = await buildUserCvs(await formatUserTables(userInfoInput, templateWithEndStartDate));
-            console.log("JJJFILTER fullhtml: ", html);
+            console.log("Fullhtml Debug: ", html);
         }
 
         if (userInfoInput && templateWithEndStartDate) {

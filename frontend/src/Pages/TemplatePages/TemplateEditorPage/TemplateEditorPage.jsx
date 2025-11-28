@@ -4,22 +4,16 @@ import { useTemplatePageContext } from "../TemplatesPage/TemplatePageContext";
 import { useApp } from "Contexts/AppContext";
 import TemplateBuilder from "../TemplateBuilder/TemplateBuilder";
 import DeleteTemplateButton from "./DeleteTemplateButton";
+import { getInitialEmptyTemplate } from "../TemplateCreatorPage/TemplateCreatorPage";
 
 const TemplateEditorPage = ({ onBack }) => {
     const { currentViewRole } = useApp();
     const { activeTemplate } = useTemplatePageContext();
-    const [title, setTitle] = useState("");
     const [template, setTemplate] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [showDeclaration, setShowDeclaration] = useState(false);
-    const [showFomLogo, setShowFomLogo] = useState(false);
-    const [showVisualNesting, setShowVisualNesting] = useState(false);
-    const [sortAscending, setSortAscending] = useState(true);
-    const [createdWithRole, setCreatedWithRole] = useState(null);
 
     useEffect(() => {
         if (activeTemplate) {
-            console.log(JSON.parse(activeTemplate.template_structure));
             initializeTemplate();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -33,34 +27,12 @@ const TemplateEditorPage = ({ onBack }) => {
         try {
             const templateStructure = JSON.parse(activeTemplate.template_structure);
 
-            setTitle(activeTemplate.title);
-            setShowDeclaration(templateStructure.show_declaration || false);
-            setShowVisualNesting(templateStructure.show_visual_nesting || false);
-            setShowFomLogo(templateStructure.show_fom_logo || false);
-            setSortAscending(templateStructure.sort_ascending !== undefined ? templateStructure.sort_ascending : true);
-            setCreatedWithRole(templateStructure.created_with_role || currentViewRole);
-
             // Initialize template with TemplateBuilder format
-            setTemplate({
-                sort_ascending: templateStructure.sort_ascending !== undefined ? templateStructure.sort_ascending : true,
-                created_with_role: templateStructure.created_with_role || currentViewRole,
-                show_declaration: templateStructure.show_declaration || false,
-                show_fom_logo: templateStructure.show_fom_logo || false,
-                show_visual_nesting: templateStructure.show_visual_nesting || false,
-                templateBuilder: templateStructure.templateBuilder || { items: [] }
-            });
+            setTemplate(templateStructure);
 
         } catch (error) {
             console.error("Error parsing template structure:", error);
-            setTemplate({
-                sort_ascending: true,
-                created_with_role: currentViewRole,
-                show_declaration: false,
-                show_fom_logo: false,
-                show_visual_nesting: false,
-                templateBuilder: { items: [] }
-            });
-            setSortAscending(true);
+            setTemplate(getInitialEmptyTemplate(currentViewRole));
         }
 
         setLoading(false);
@@ -94,20 +66,8 @@ const TemplateEditorPage = ({ onBack }) => {
                     <TemplateBuilder
                         template={template}
                         setTemplate={setTemplate}
-                        title={title}
-                        setTitle={setTitle}
                         onBack={onBack}
                         templateId={activeTemplate.template_id}
-                        createdWithRole={createdWithRole}
-                        setCreatedWithRole={setCreatedWithRole}
-                        showDeclaration={showDeclaration}
-                        setShowDeclaration={setShowDeclaration}
-                        showFomLogo={showFomLogo}
-                        setShowFomLogo={setShowFomLogo}
-                        showVisualNesting={showVisualNesting}
-                        setShowVisualNesting={setShowVisualNesting}
-                        sortAscending={sortAscending}
-                        setSortAscending={setSortAscending}
                     />
                 ) : null}
             </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import GenericEntry from "../SharedComponents/GenericEntry";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import EmploymentModal from "./EmploymentModal";
-import { FaArrowLeft, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaSearch, FaPlus, FaDownload } from "react-icons/fa";
 import {
   getUserCVData,
   updateUserCVDataArchive,
@@ -38,10 +38,19 @@ const EmploymentSection = ({ user, section, onBack }) => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter((entry) => {
-        const org = entry.data_details["university/organization"]?.toLowerCase() || "";
-        const dates = entry.data_details["dates"]?.toLowerCase() || "";
-        const search = searchTerm.toLowerCase();
-        return org.includes(search) || dates.includes(search);
+        // Search through all fields in data_details
+        if (!entry.data_details) return false;
+        
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Check all fields in the entry's data_details
+        return Object.values(entry.data_details).some((value) => {
+          if (value === null || value === undefined) return false;
+          
+          // Convert value to string and check if it includes the search term
+          const stringValue = typeof value === 'string' ? value : String(value);
+          return stringValue.toLowerCase().includes(searchLower);
+        });
       });
     }
 
@@ -260,23 +269,29 @@ const EmploymentSection = ({ user, section, onBack }) => {
         
         {/* Right section: Action Buttons */}
         <div className="flex items-center gap-3">
-          <button onClick={handleNew} className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight" disabled={retrievingData}>
+          <button onClick={handleNew} className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight flex items-center gap-2" disabled={retrievingData}>
+            <FaPlus />
             New
           </button>
           <button
             onClick={() => setRetrievingData(true)}
-            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
-            {retrievingData ? "Retrieving..." : "Retrieve Data"}
+            {retrievingData ? "Retrieving..." : (
+              <>
+                <FaDownload />
+                Retrieve Data
+              </>
+            )}
           </button>
-          <button
+          {/* <button
             onClick={handleDelete}
             className="text-white btn btn-warning min-h-0 h-10 px-4 leading-tight"
             disabled={!isAvailable}
           >
             Remove All
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -348,10 +363,17 @@ const EmploymentSection = ({ user, section, onBack }) => {
               // Apply search filter
               if (searchTerm) {
                 dataForCounting = dataForCounting.filter((entry) => {
-                  const org = entry.data_details["university/organization"]?.toLowerCase() || "";
-                  const dates = entry.data_details["dates"]?.toLowerCase() || "";
-                  const search = searchTerm.toLowerCase();
-                  return org.includes(search) || dates.includes(search);
+                  if (!entry.data_details) return false;
+                  
+                  const searchLower = searchTerm.toLowerCase();
+                  
+                  // Check all fields in the entry's data_details
+                  return Object.values(entry.data_details).some((value) => {
+                    if (value === null || value === undefined) return false;
+                    
+                    const stringValue = typeof value === 'string' ? value : String(value);
+                    return stringValue.toLowerCase().includes(searchLower);
+                  });
                 });
               }
 
@@ -469,10 +491,17 @@ const EmploymentSection = ({ user, section, onBack }) => {
                 // Apply search filter
                 if (searchTerm) {
                   dataForCounting = dataForCounting.filter((entry) => {
-                    const org = entry.data_details["university/organization"]?.toLowerCase() || "";
-                    const dates = entry.data_details["dates"]?.toLowerCase() || "";
-                    const search = searchTerm.toLowerCase();
-                    return org.includes(search) || dates.includes(search);
+                    if (!entry.data_details) return false;
+                    
+                    const searchLower = searchTerm.toLowerCase();
+                    
+                    // Check all fields in the entry's data_details
+                    return Object.values(entry.data_details).some((value) => {
+                      if (value === null || value === undefined) return false;
+                      
+                      const stringValue = typeof value === 'string' ? value : String(value);
+                      return stringValue.toLowerCase().includes(searchLower);
+                    });
                   });
                 }
 

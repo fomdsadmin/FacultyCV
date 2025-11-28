@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import GenericEntry from "../SharedComponents/GenericEntry";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import EducationModal from "./EducationModal";
-import { FaArrowLeft, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaSearch, FaPlus, FaDownload } from "react-icons/fa";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import { useAuditLogger, AUDIT_ACTIONS } from "../Contexts/AuditLoggerContext";
@@ -94,11 +94,19 @@ const EducationSection = ({ user, section, onBack = null }) => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter((entry) => {
-        const degree = entry.data_details.degree?.toLowerCase() || "";
-        const endYear = entry.data_details.end_year?.toLowerCase() || "";
-        const institution = entry.data_details.institution?.toLowerCase() || "";
-        const search = searchTerm.toLowerCase();
-        return degree.includes(search) || endYear.includes(search) || institution.includes(search);
+        // Search through all fields in data_details
+        if (!entry.data_details) return false;
+
+        const searchLower = searchTerm.toLowerCase();
+
+        // Check all fields in the entry's data_details
+        return Object.values(entry.data_details).some((value) => {
+          if (value === null || value === undefined) return false;
+
+          // Convert value to string and check if it includes the search term
+          const stringValue = typeof value === "string" ? value : String(value);
+          return stringValue.toLowerCase().includes(searchLower);
+        });
       });
     }
 
@@ -257,25 +265,33 @@ const EducationSection = ({ user, section, onBack = null }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleNew}
-            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
+            <FaPlus />
             New
           </button>
           <button
             onClick={() => setRetrievingData(true)}
-            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
-            {retrievingData ? "Retrieving..." : "Retrieve Data"}
+            {retrievingData ? (
+              "Retrieving..."
+            ) : (
+              <>
+                <FaDownload />
+                Retrieve Data
+              </>
+            )}
           </button>
-          <button
+          {/* <button
             onClick={handleDelete}
             className="text-white btn btn-warning min-h-0 h-10 px-4 leading-tight"
             disabled={!isAvailable}
           >
             Remove All
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -349,11 +365,17 @@ const EducationSection = ({ user, section, onBack = null }) => {
                   // Apply search filter
                   if (searchTerm) {
                     dataForCounting = dataForCounting.filter((entry) => {
-                      const degree = entry.data_details.degree?.toLowerCase() || "";
-                      const endYear = entry.data_details.end_year?.toLowerCase() || "";
-                      const institution = entry.data_details.institution?.toLowerCase() || "";
-                      const search = searchTerm.toLowerCase();
-                      return degree.includes(search) || endYear.includes(search) || institution.includes(search);
+                      if (!entry.data_details) return false;
+
+                      const searchLower = searchTerm.toLowerCase();
+
+                      // Check all fields in the entry's data_details
+                      return Object.values(entry.data_details).some((value) => {
+                        if (value === null || value === undefined) return false;
+
+                        const stringValue = typeof value === "string" ? value : String(value);
+                        return stringValue.toLowerCase().includes(searchLower);
+                      });
                     });
                   }
 
@@ -483,11 +505,17 @@ const EducationSection = ({ user, section, onBack = null }) => {
                     // Apply search filter
                     if (searchTerm) {
                       dataForCounting = dataForCounting.filter((entry) => {
-                        const degree = entry.data_details.degree?.toLowerCase() || "";
-                        const endYear = entry.data_details.end_year?.toLowerCase() || "";
-                        const institution = entry.data_details.institution?.toLowerCase() || "";
-                        const search = searchTerm.toLowerCase();
-                        return degree.includes(search) || endYear.includes(search) || institution.includes(search);
+                        if (!entry.data_details) return false;
+
+                        const searchLower = searchTerm.toLowerCase();
+
+                        // Check all fields in the entry's data_details
+                        return Object.values(entry.data_details).some((value) => {
+                          if (value === null || value === undefined) return false;
+
+                          const stringValue = typeof value === "string" ? value : String(value);
+                          return stringValue.toLowerCase().includes(searchLower);
+                        });
                       });
                     }
 
@@ -595,7 +623,7 @@ const EducationSection = ({ user, section, onBack = null }) => {
                 <GenericEntry
                   key={index}
                   onEdit={() => handleEdit(entry)}
-                  field1={entry.data_details['university/organization']}
+                  field1={entry.data_details["university/organization"]}
                   field2={entry.data_details.dates}
                   data_details={entry.data_details}
                   onArchive={() => handleArchive(entry)}
