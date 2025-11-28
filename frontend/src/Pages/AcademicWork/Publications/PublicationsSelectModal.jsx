@@ -3,7 +3,7 @@ import "../../../CustomStyles/scrollbar.css"
 import ExistingPublicationCard from "../../../Components/ExistingPublicationCard";
 import NewPublicationCard from "../../../Components/NewPublicationCard";
 import MatchedPublicationCard from "../../../Components/MatchedPublicationCard";
-import { truncateAuthors } from "utils/publicationsMergeUtils";
+import { truncateAuthors } from "utils/mergeUtils";
 
 const PublicationsSelectModal = ({
   onClose,
