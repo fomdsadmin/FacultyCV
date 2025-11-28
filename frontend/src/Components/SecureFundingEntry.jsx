@@ -7,51 +7,55 @@ const SecureFundingEntry = ({ secureFundingData, onSelect, selected }) => {
   };
 
   return (
-    <div className="min-h-8 shadow-glow mx-auto w-full px-4 py-2 flex flex-col justify-between shadow-lg bg-white-50 rounded-xl mb-4">
-      <div className="relative flex justify-between items-center w-full">
-        <button className="btn btn-xs btn-circle btn-ghost absolute top-0 right-0" onClick={handleToggle}>
+    <div className="border border-gray-200 rounded-lg p-3 bg-white hover:border-gray-300 hover:shadow-sm transition-all">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-1.5">
+          <div>
+            <div className="text-sm font-semibold text-gray-900">{secureFundingData.title}</div>
+            {secureFundingData.dates && <div className="text-xs text-gray-500 mt-0.5">{secureFundingData.dates}</div>}
+          </div>
+
+          <div className="text-xs text-gray-700 space-y-1">
+            <div>
+              <span className="font-semibold text-gray-800">Amount:</span> ${secureFundingData.amount}
+            </div>
+            {secureFundingData.agency && secureFundingData.agency.toLowerCase() === "rise"
+              ? secureFundingData.sponsor && (
+                  <div>
+                    <span className="font-semibold text-gray-800">Sponsor:</span> {secureFundingData.sponsor}
+                  </div>
+                )
+              : secureFundingData.agency && (
+                  <div>
+                    <span className="font-semibold text-gray-800">Agency:</span> {secureFundingData.agency}
+                  </div>
+                )}
+
+            {secureFundingData.program && secureFundingData.program.trim() !== "" && (
+              <div>
+                <span className="font-semibold text-gray-800">Program:</span> {secureFundingData.program}
+              </div>
+            )}
+
+            {secureFundingData.department && secureFundingData.department.trim() !== "" && (
+              <div>
+                <span className="font-semibold text-gray-800">Department:</span> {secureFundingData.department}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <button
+          className="flex-shrink-0 p-1 hover:bg-gray-50 rounded-full transition-colors"
+          onClick={handleToggle}
+          aria-label={selected ? "Deselect grant" : "Select grant"}
+        >
           {selected ? (
-            <FaTimesCircle className="h-6 w-6 text-red-500" />
+            <FaTimesCircle className="h-5 w-5 text-gray-600" />
           ) : (
-            <FaPlusCircle className="h-6 w-6 text-green-500" />
+            <FaPlusCircle className="h-5 w-5 text-gray-400 hover:text-gray-600" />
           )}
         </button>
-      </div>
-      <div className="w-full justify-between items-center mt-1">
-        <span className="font-bold text-sm break-words">
-          {secureFundingData.first_name} {secureFundingData.last_name}
-        </span>
-        <span className="text-sm font-bold text-right">
-          {secureFundingData.dates ? ` | ${secureFundingData.dates}` : ""}
-        </span>
-        <p className="text-sm break-words">{secureFundingData.title}</p>
-        {secureFundingData.agency && secureFundingData.agency.toLowerCase() === "rise" ? (
-          <>
-            <p className="text-sm break-words">
-              <b>Agency:</b> {secureFundingData.agency}{" "}
-            </p>
-            <p className="text-sm break-words">
-              <b>Sponsor:</b> {secureFundingData.sponsor}{" "}
-            </p>
-          </>
-        ) : (
-          <p className="text-sm break-words">
-            <b>Agency:</b> {secureFundingData.agency}
-          </p>
-        )}
-        <p className="text-sm break-words">
-          <b>Amount: </b> ${secureFundingData.amount}
-        </p>
-        {secureFundingData.program && secureFundingData.program.trim() !== "" && (
-          <p className="text-sm break-words">
-            <b>Program: </b> {secureFundingData.program}
-          </p>
-        )}
-        {secureFundingData.department && secureFundingData.department.trim() !== "" && (
-          <p className="text-sm break-words">
-            <b>Department: </b> {secureFundingData.department}
-          </p>
-        )}
       </div>
     </div>
   );
