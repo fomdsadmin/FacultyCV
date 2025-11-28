@@ -3,7 +3,7 @@ import PermanentEntry from "./PermanentEntry";
 import GenericEntry from "../SharedComponents/GenericEntry";
 import PermanentEntryModal from "./PermanentEntryModal";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal";
-import { FaArrowLeft, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaSearch, FaPlus, FaDownload } from "react-icons/fa";
 import SecureFundingModal from "./SecureFundingModal";
 import SecureFundingEntry from "./SecureFundingEntry";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
@@ -300,25 +300,31 @@ const SecureFundingSection = ({ user, section, onBack }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleNew}
-            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
+            <FaPlus />
             New
           </button>
           <button
             onClick={() => setRetrievingData(true)}
-            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
-            {retrievingData ? "Retrieving..." : "Retrieve Data"}
+            {retrievingData ? "Retrieving..." : (
+              <>
+                <FaDownload />
+                Retrieve Data
+              </>
+            )}
           </button>
-          <button
+          {/* <button
             onClick={handleDelete}
             className="text-white btn btn-warning min-h-0 h-10 px-4 leading-tight"
             disabled={!isAvailable}
           >
             Remove All
-          </button>
+          </button> */}
         </div>
       </div>
 
