@@ -8,6 +8,7 @@ import {
   getRiseDataMatches,
   getAllSections,
   getUserCVData,
+  getSecureFundingMatches,
 } from "../graphql/graphqlHelpers";
 import {
   normalizeAmount,
@@ -152,17 +153,6 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
     };
   };
 
-  const canadianFundingAgencies = [
-    "Canadian Institutes of Health Research",
-    "CIHR",
-    "Natural Sciences and Engineering Research Council of Canada",
-    "NSERC",
-    "Social Sciences and Humanities Research Council",
-    "SSHRC",
-    "Canada Foundation for Innovation",
-    "CFI",
-  ];
-
   const sortSecureFundingByDate = (data) => {
     return [...data].sort((a, b) => {
       const dateA = a.dates || "";
@@ -259,22 +249,36 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
         }
 
         // Fetch both external and RISE data in parallel
-        // for now external data will not be fetched
-        const [externalResults, riseResults] = await Promise.all([[], getRiseDataMatches(user.first_name, user.last_name)]);
+        const [externalResults, riseResults] = await Promise.all([getSecureFundingMatches(user.first_name, user.last_name), getRiseDataMatches(user.first_name, user.last_name)]);
+
+        console.log("Raw external results:", externalResults);
+        console.log("Raw RISE results:", riseResults?.length || 0);
 
         // Process external data
         const processedExternalData = [];
         const uniqueExternalData = new Set();
 
-        // for (const dataObject of externalResults) {
-        //   const { data_details } = dataObject;
-        //   const data_details_json = JSON.parse(data_details);
-        //   const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}`;
-        //   if (!uniqueExternalData.has(uniqueKey)) {
-        //     uniqueExternalData.add(uniqueKey);
-        //     processedExternalData.push(data_details_json);
-        //   }
-        // }
+        for (const dataObject of externalResults) {
+          const { data_details } = dataObject;
+          if (!data_details || data_details === "undefined") {
+            console.log("Skipping external entry with invalid data_details");
+            continue;
+          }
+          
+          try {
+            const data_details_json = JSON.parse(data_details);
+            const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}`;
+            if (!uniqueExternalData.has(uniqueKey)) {
+              uniqueExternalData.add(uniqueKey);
+              processedExternalData.push(data_details_json);
+            }
+          } catch (error) {
+            console.warn("Failed to parse external grant data:", error, data_details);
+            continue;
+          }
+        }
+
+        console.log("Processed external data:", processedExternalData.length);
 
         // Process RISE data
         const processedRiseData = [];
@@ -282,36 +286,32 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
 
         for (const dataObject of riseResults) {
           const { data_details } = dataObject;
-          const data_details_json = JSON.parse(data_details);
+          if (!data_details || data_details === "undefined") continue;
           
-          const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}-${data_details_json.sponsor}`;
-          if (!uniqueRiseData.has(uniqueKey)) {
-            uniqueRiseData.add(uniqueKey);
-            processedRiseData.push(data_details_json);
+          try {
+            const data_details_json = JSON.parse(data_details);
+            const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}-${data_details_json.sponsor}`;
+            if (!uniqueRiseData.has(uniqueKey)) {
+              uniqueRiseData.add(uniqueKey);
+              processedRiseData.push(data_details_json);
+            }
+          } catch (error) {
+            console.warn("Failed to parse RISE grant data:", error);
+            continue;
           }
         }
 
+        console.log("Processed RISE data:", processedRiseData.length);
+
         // Process date formatting for both datasets
         processDateFormatting(processedRiseData);
-        // processDateFormatting(processedExternalData);
+        processDateFormatting(processedExternalData);
 
-        // Filter RISE data: entries with Canadian funding agencies go to external
-        // const canadianFundingFromRise = processedRiseData.filter((item) => {
-        //   const hasCanadianAgency = isCanadianFundingAgency(item);
-        //   return hasCanadianAgency;
-        // });
-
-        // Combine external data with Canadian funding from RISE
-        const combinedExternalData = [...processedExternalData, ...processedRiseData];
-
-        // console.log("External data (including Canadian from RISE):", combinedExternalData.length);
-        // console.log("Pure RISE data:", pureRiseData.length);
-        // console.log("Canadian funding moved from RISE to external:", canadianFundingFromRise.length);
-
-        // Store all processed data
-        setAllSecureFundingData(combinedExternalData);
-        setExternalData(combinedExternalData);
+        // Store processed data separately
+        setExternalData(processedExternalData);
         setRiseData(processedRiseData);
+        
+        console.log("Final state - External:", processedExternalData.length, "RISE:", processedRiseData.length);
 
         setCurrentStep("source-selection");
       } catch (error) {
@@ -329,13 +329,9 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
   async function fetchSecureFundingData() {
     setCurrentStep("fetching");
     try {
-      // Add a small delay for better UX
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       // Filter external data by date range
       const filteredData = filterByDateRange(externalData, dateRangeOption, customStartYear);
 
-      // console.log("Filtered external data:", filteredData.length);
       setAllSecureFundingData(filteredData);
 
       // Detect potential duplicates
@@ -359,13 +355,9 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
   async function fetchRiseData() {
     setCurrentStep("fetching");
     try {
-      // Add a small delay for better UX
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       // Filter RISE data by date range
       const filteredData = filterByDateRange(riseData, dateRangeOption, customStartYear);
 
-      // console.log("Filtered RISE data:", filteredData.length);
       setAllSecureFundingData(filteredData);
 
       // Detect potential duplicates
@@ -679,7 +671,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                           {/* <p className="text-sm text-gray-600 mb-3">
                             Internal university research grants (excluding Canadian funding agencies)
                           </p> */}
-                          <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-50 border border-yellow-300 rounded-lg text-xs font-medium text-yellow-800">
+                          <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-50 border border-yellow-300 rounded text-xs font-medium text-yellow-800">
                             <span>📊</span>
                             <span>{getFilteredCounts().rise} grant{getFilteredCounts().rise !== 1 ? 's' : ''} found</span>
                           </div>
@@ -697,14 +689,11 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                   )}
 
                   {/* External Data - keeping commented out as in original */}
-                  {/* <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-sm transition-all">
+                  <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-sm transition-all">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h5 className="font-semibold text-gray-800 mb-1">External Sources</h5>
-                        <div className="text-sm text-gray-600 mb-2">
-                          <div>• CIHR, NSERC, SSHRC, CFI</div>
-                        </div>
-                        <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs font-medium text-blue-700">
+                        <h5 className="font-semibold text-gray-800 mb-1">External Sources [CIHR, NSERC, SSHRC, CFI]</h5>
+                        <div className="inline-flex items-center gap-1 px-2 py-2 bg-blue-50 border border-blue-200 rounded text-xs font-medium text-blue-700">
                           <span>📈</span>
                           <span>{getFilteredCounts().external} grants found</span>
                         </div>
@@ -718,7 +707,7 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                         Import
                       </button>
                     </div>
-                  </div> */}
+                  </div>
                 </div>
               </div>
             )}
