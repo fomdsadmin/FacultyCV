@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
-import { useTemplateBuilder } from './TemplateBuilderContext';
 
-const SortButton = () => {
-    const { sortAscending, setSortAscending } = useTemplateBuilder();
+const SortButton = ({ sortAscending, setSortAscending }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleSortChange = (ascending) => {
@@ -30,9 +28,8 @@ const SortButton = () => {
                     <div className="py-1">
                         <button
                             onClick={() => handleSortChange(true)}
-                            className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 flex items-center gap-3 transition ${
-                                sortAscending ? 'bg-blue-50 border-l-4 border-blue-600' : ''
-                            }`}
+                            className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 flex items-center gap-3 transition ${sortAscending ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                                }`}
                         >
                             <FaSortAmountUp className="h-4 w-4" />
                             <div>
@@ -42,9 +39,8 @@ const SortButton = () => {
                         </button>
                         <button
                             onClick={() => handleSortChange(false)}
-                            className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 flex items-center gap-3 transition ${
-                                !sortAscending ? 'bg-blue-50 border-l-4 border-blue-600' : ''
-                            }`}
+                            className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 flex items-center gap-3 transition ${!sortAscending ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                                }`}
                         >
                             <FaSortAmountDown className="h-4 w-4" />
                             <div>

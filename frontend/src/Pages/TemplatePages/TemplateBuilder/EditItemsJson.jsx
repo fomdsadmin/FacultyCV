@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-import { useTemplateBuilder } from "./TemplateBuilderContext";
 
-const EditItemsJson = () => {
-    const { setItems, items } = useTemplateBuilder();
+const EditItemsJson = ({ setItems, items }) => {
     const [open, setOpen] = useState(false);
     const [jsonText, setJsonText] = useState(() => JSON.stringify(items, null, 2));
     const [copied, setCopied] = useState(false);
