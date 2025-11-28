@@ -32,7 +32,8 @@ def cleanData(df):
     Cleans the input DataFrame by performing various transformations.
     """
     # 7-8 digit number, need to ensure empty/NaN/0 value errors
-    df["employee_id"] = df["Employee ID"].astype(str).str.strip()
+    # df["employee_id"] = df["Employee ID"].astype(str).str.strip()
+    df["employee_id"] = '0'
 
     df["last_name"] =  df["Legal Name - Last Name"].str.strip()
     df["first_name"] =  df["Legal Name - First Name"].str.strip()

@@ -63,7 +63,7 @@ def lambda_handler(event, context):
     columns.append(createColumn('pending', 'BOOLEAN', 'DEFAULT true', False))  # Add this
     columns.append(createColumn('approved', 'BOOLEAN', 'DEFAULT false', False))  # Add this
     columns.append(createColumn('cwl_username', 'varchar', '', False))
-    columns.append(createColumn('employee_id', 'varchar', '', False))
+    columns.append(createColumn('employee_id', 'varchar', 'DEFAULT 0', False))
     columns.append(createColumn('vpp_username', 'varchar', '', False))
     columns.append(createColumn('active', 'BOOLEAN', 'DEFAULT false', False))
     columns.append(createColumn('terminated', 'BOOLEAN', 'DEFAULT false', True))

@@ -12,7 +12,7 @@ def getAllUsers(arguments):
     print("Connected to Database")
     cursor = connection.cursor()
     
-    # Select specific columns excluding employee_id
+    # Select specific columns 
     cursor.execute('''
         SELECT user_id, first_name, last_name, preferred_name, email,
                role, bio, rank, institution, primary_department, secondary_department,
@@ -25,7 +25,7 @@ def getAllUsers(arguments):
     cursor.close()
     connection.close()
     
-    # Define a list of column names matching the query order (excluding employee_id)
+    # Define a list of column names matching the query order
     columns = [
         'user_id', 'first_name', 'last_name', 'preferred_name', 'email',
         'role', 'bio', 'rank', 'institution', 'primary_department', 'secondary_department',

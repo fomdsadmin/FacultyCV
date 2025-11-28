@@ -59,12 +59,12 @@ const DelegateMenu = ({ userInfo, assistantUserInfo }) => {
           </Link>
         </li>
         <li className={`mb-2 ${location.pathname === '/delegate/support' ? 'bg-gray-200 rounded-lg' : ''}`}>
-          <Link to='/delegate/support'>
+          {/* <Link to='/delegate/support'>
             <MdSupportAgent className="h-5 w-5" />
             {showText && !isCollapsed && (
               <p className={`ml-2 ${location.pathname === '/delegate/support' ? 'font-bold' : ''}`}>Support</p>
             )}
-          </Link>
+          </Link> */}
         </li>
         {/* <li className={`mb-6 ${location.pathname === '/assistant/archive' ? 'bg-gray-200 rounded-lg' : ''}`}>
           <Link to='/assistant/archive'>

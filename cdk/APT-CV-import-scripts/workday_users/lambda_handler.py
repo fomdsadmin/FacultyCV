@@ -33,7 +33,7 @@ def processUserData(user_data_list, connection, cursor):
     for json_user in user_data_list:
         given_name = json_user.get('givenName', '').strip().lower()
         family_name = json_user.get('familyName', '').strip().lower()
-        employee_id = str(json_user.get('employeeId', ''))
+        employee_id = '0'
         cwl = json_user.get('cwl', '')
         
         # Check if user already exists by name, employee_id, or cwl
@@ -41,7 +41,8 @@ def processUserData(user_data_list, connection, cursor):
         for db_user in apt_users:
             db_given = db_user['first_name'].strip().lower() if db_user['first_name'] else ''
             db_family = db_user['last_name'].strip().lower() if db_user['last_name'] else ''
-            db_employee_id = str(db_user['employee_id']) if db_user['employee_id'] else ''
+            # db_employee_id = str(db_user['employee_id']) if db_user['employee_id'] else ''
+            db_employee_id = '0'
             db_cwl = db_user['cwl_username'] or ''
             
             # Match by name, employee_id, or cwl
@@ -73,6 +74,8 @@ def processUserData(user_data_list, connection, cursor):
                 
                 # Get the user_id for the newly inserted/updated user
                 employee_id = str(json_user.get('employeeId', ''))
+                employee_id = '0'
+                
                 cwl = json_user.get('cwl', '')
                 if cwl and not cwl.endswith('@ubc.ca'):
                     cwl = cwl + '@ubc.ca'

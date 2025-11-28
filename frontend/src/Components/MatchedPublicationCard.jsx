@@ -1,6 +1,6 @@
 import React from "react";
-import { extractDOIsFromCitation } from "../utils/publicationsMergeUtils";
-import { truncateAuthors } from "utils/publicationsMergeUtils";
+import { extractDOIsFromCitation } from "../utils/mergeUtils";
+import { truncateAuthors } from "utils/mergeUtils";
 
 const MatchedPublicationCard = ({ matchedItem, selectedPublications, handleSelectPublication, isAPTDepartment = false }) => {
   // Determine if this is a multi-match scenario
