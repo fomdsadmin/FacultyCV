@@ -77,6 +77,33 @@ export const initializeAlaSQL = () => {
     );
 
     registerAlaSQLFromFunction(
+        "GENERATE_TEST_DATA",
+        (dbtype, opts, cb, idx, query) => {
+            const result = [];
+
+            const numRows = opts?.rows || 500;
+
+            for (let i = 1; i <= numRows; i++) {
+                // generate a random date within the last 5 years
+                const start = new Date();
+                start.setFullYear(start.getFullYear() - 5);
+                const end = new Date();
+                const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+
+                // push a row with 'datesd' and 'details'
+                result.push({
+                    dates: randomDate.toISOString().split('T')[0], // format YYYY-MM-DD
+                    details: `Detail #${i}`
+                });
+            }
+
+            if (cb) return cb(result, idx, query);
+            return result;
+        },
+        `GENERATE_TEST_DATA("sql", {'rows': ...}) → returns 500 rows of test data with columns datesd and details.`
+    );
+
+    registerAlaSQLFromFunction(
         "AGGREGATE_CLINICAL_TEACHING",
         (dbtype, opts, cb, idx, query) => {
             const table = opts.table || [];
