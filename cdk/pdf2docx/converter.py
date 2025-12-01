@@ -2,16 +2,31 @@ import boto3
 import botocore
 import os
 import json
+import logging
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
-from pdf2docx import Converter
 from urllib.parse import unquote_plus
 import multiprocessing
+from adobe.pdfservices.operation.auth.service_principal_credentials import ServicePrincipalCredentials
+from adobe.pdfservices.operation.exception.exceptions import ServiceApiException, ServiceUsageException, SdkException
+from adobe.pdfservices.operation.io.cloud_asset import CloudAsset
+from adobe.pdfservices.operation.io.stream_asset import StreamAsset
+from adobe.pdfservices.operation.pdf_services import PDFServices
+from adobe.pdfservices.operation.pdf_services_media_type import PDFServicesMediaType
+from adobe.pdfservices.operation.pdfjobs.jobs.export_pdf_job import ExportPDFJob
+from adobe.pdfservices.operation.pdfjobs.params.export_pdf.export_pdf_params import ExportPDFParams
+from adobe.pdfservices.operation.pdfjobs.params.export_pdf.export_pdf_target_format import ExportPDFTargetFormat
+from adobe.pdfservices.operation.pdfjobs.result.export_pdf_result import ExportPDFResult
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 s3_client = boto3.client("s3")
 
 # Environment variables for AppSync
 APPSYNC_ENDPOINT = os.environ.get('APPSYNC_ENDPOINT')
+PDF_SERVICES_CLIENT_ID = os.environ.get('PDF_SERVICES_CLIENT_ID')
+PDF_SERVICES_CLIENT_SECRET = os.environ.get('PDF_SERVICES_CLIENT_SECRET')
 
 def notify_docx_complete(docx_key):
     """Call the GraphQL mutation to notify that DOCX conversion is complete"""
@@ -74,13 +89,56 @@ def download_file_from_s3(bucket_name, s3_file_key, local_file_path):
         raise e
 
 def convert_pdf_to_docx(input_pdf, output_docx):
+    """Convert PDF to DOCX using Adobe PDF Services API"""
     try:
-        cv = Converter(input_pdf)
-        cv.convert(output_docx)
-        cv.close()
-        print(f"Converted {input_pdf} to {output_docx}")
+        # Create credentials instance
+        credentials = ServicePrincipalCredentials(
+            client_id=PDF_SERVICES_CLIENT_ID,
+            client_secret=PDF_SERVICES_CLIENT_SECRET
+        )
+        
+        # Create PDF Services instance
+        pdf_services = PDFServices(credentials=credentials)
+        
+        # Read the input PDF file
+        with open(input_pdf, 'rb') as pdf_file:
+            input_stream = pdf_file.read()
+        
+        # Upload the PDF to Adobe's cloud
+        input_asset = pdf_services.upload(
+            input_stream=input_stream,
+            mime_type=PDFServicesMediaType.PDF
+        )
+        
+        # Create parameters for the export job
+        export_pdf_params = ExportPDFParams(target_format=ExportPDFTargetFormat.DOCX)
+        
+        # Create and submit the export job
+        export_pdf_job = ExportPDFJob(
+            input_asset=input_asset,
+            export_pdf_params=export_pdf_params
+        )
+        
+        # Submit the job and get the result
+        location = pdf_services.submit(export_pdf_job)
+        pdf_services_response = pdf_services.get_job_result(location, ExportPDFResult)
+        
+        # Get content from the resulting asset
+        result_asset: CloudAsset = pdf_services_response.get_result().get_asset()
+        stream_asset: StreamAsset = pdf_services.get_content(result_asset)
+        
+        # Write the DOCX file to disk
+        with open(output_docx, "wb") as output_file:
+            output_file.write(stream_asset.get_input_stream())
+        
+        logger.info(f"Converted {input_pdf} to {output_docx}")
+        
+    except (ServiceApiException, ServiceUsageException, SdkException) as e:
+        logger.error(f"Adobe PDF Services error during conversion: {e}")
+        
+        raise e
     except Exception as e:
-        print(f"Error converting PDF to DOCX: {e}")
+        logger.error(f"Error converting PDF to DOCX: {e}")
         raise e
 
 def upload_file_to_s3(file_name, bucket_name, s3_file_key):
