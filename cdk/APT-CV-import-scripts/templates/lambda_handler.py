@@ -157,9 +157,9 @@ def preparePublicationsDF(df):
     def map_category_to_type(row):
         category_id = str(row.get('category_id', '')).strip()
         if category_id == '9901':
-            return 'true'
+            return True
         elif category_id == '9902':
-            return 'false'
+            return False
     
     a["peer_reviewed"] = a.apply(map_category_to_type, axis=1)
     a["publication_type"] = 'Journal'

@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/python:3.9
+FROM public.ecr.aws/lambda/python:3.10
 
 # Install system packages including build tools
 RUN yum update -y && \
@@ -9,18 +9,15 @@ RUN yum update -y && \
         python3-devel \
         libffi-devel \
         openssl-devel \
-        poppler-utils \
-        fontconfig \
         which \
         tar \
         gzip && \
     yum clean all
 
-# Install Python dependencies with specific versions that have wheels
+# Install Python dependencies
 RUN pip3 install --no-cache-dir \
     boto3 \
-    PyMuPDF==1.23.26 \
-    pdf2docx==0.5.6
+    pdfservices-sdk==4.2.0
 
 # Copy the converter script
 WORKDIR ${LAMBDA_TASK_ROOT}

@@ -219,6 +219,8 @@ export class GotenbergStack extends cdk.Stack {
                 BUCKET_NAME: gotenbergBucket.bucketName,
                 APPSYNC_ENDPOINT: apiStack.getApi().graphqlUrl,
                 APPSYNC_API_KEY: apiKey,
+                PDF_SERVICES_CLIENT_ID: process.env.PDF_SERVICES_CLIENT_ID || '',
+                PDF_SERVICES_CLIENT_SECRET: process.env.PDF_SERVICES_CLIENT_SECRET || '',
             },
             timeout: cdk.Duration.minutes(15),
         });

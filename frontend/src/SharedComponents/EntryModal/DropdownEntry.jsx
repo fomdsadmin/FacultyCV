@@ -71,11 +71,21 @@ const DropdownEntry = ({ attrsObj, attributes, formData, handleChange, section }
         >
           <option value="">Select {attrName}</option>
           {Array.isArray(options) &&
-            options.map((option) => (
-              <option key={option} value={option}>
-                {formatOptionLabel(option)}
-              </option>
-            ))}
+            options.map((option) => {
+              // For boolean values, display Yes/No on frontend but keep true/false as value
+              let displayLabel = formatOptionLabel(option);
+              if (option === true || option === "true") {
+                displayLabel = "Yes";
+              } else if (option === false || option === "false") {
+                displayLabel = "No";
+              }
+              
+              return (
+                <option key={option} value={option}>
+                  {displayLabel}
+                </option>
+              );
+            })}
         </select>
         {hasOther && (
           <input
