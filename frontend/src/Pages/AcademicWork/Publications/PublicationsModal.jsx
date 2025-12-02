@@ -18,7 +18,7 @@ import {
   calculateAuthorSimilarity,
   extractDOIsFromCitation,
   normalizeDOI,
-} from "utils/publicationsMergeUtils";
+} from "utils/mergeUtils";
 
 const PublicationsModal = ({ user, section, onClose, setRetrievingData, fetchData, existingPublications }) => {
   const [newStagingPublications, setNewStagingPublications] = useState([]);

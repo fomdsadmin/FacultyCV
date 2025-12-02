@@ -3,7 +3,7 @@ import GenericEntry from "../SharedComponents/GenericEntry";
 import EntryModal from "../SharedComponents/EntryModal/EntryModal";
 import PermanentEntry from "./PermanentEntry";
 import PermanentEntryModal from "./PermanentEntryModal";
-import { FaArrowLeft, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaSearch, FaPlus, FaDownload } from "react-icons/fa";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../graphql/graphqlHelpers";
 import { rankFields } from "../utils/rankingUtils";
 import { sortEntriesByDate } from "../utils/dateUtils";
@@ -286,25 +286,31 @@ const PatentsSection = ({ user, section, onBack }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleNew}
-            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
+            <FaPlus />
             New
           </button>
           <button
             onClick={() => setRetrievingData(true)}
-            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
-            {retrievingData ? "Retrieving..." : "Retrieve Data"}
+            {retrievingData ? "Retrieving..." : (
+              <>
+                <FaDownload />
+                Retrieve Data
+              </>
+            )}
           </button>
-          <button
+          {/* <button
             onClick={handleDelete}
             className="text-white btn btn-warning min-h-0 h-10 px-4 leading-tight"
             disabled={!isAvailable}
           >
             Remove All
-          </button>
+          </button> */}
         </div>
       </div>
 

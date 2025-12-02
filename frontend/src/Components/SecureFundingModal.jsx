@@ -2,20 +2,22 @@ import React, { useState, useEffect } from "react";
 import "../CustomStyles/scrollbar.css";
 import "../CustomStyles/modal.css";
 import SecureFundingEntry from "./SecureFundingEntry";
+import GrantWithDuplicates from "./GrantWithDuplicates";
 import { fetchAuthSession } from "aws-amplify/auth";
 import {
-  getSecureFundingMatches,
   getRiseDataMatches,
-  addUserCVData,
   getAllSections,
   getUserCVData,
+  getSecureFundingMatches,
 } from "../graphql/graphqlHelpers";
-import GenericEntry from "SharedComponents/GenericEntry";
-import { sortEntriesByDate } from "../utils/dateUtils";
+import {
+  normalizeAmount,
+  normalizeYear,
+  calculateJaccardSimilarity,
+} from "../utils/mergeUtils";
 
 const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchData }) => {
   const [allSecureFundingData, setAllSecureFundingData] = useState([]);
-  const [allRiseData, setAllRiseData] = useState([]);
   const [externalData, setExternalData] = useState([]);
   const [riseData, setRiseData] = useState([]);
   const [selectedSecureFundingData, setSelectedSecureFundingData] = useState([]);
@@ -30,119 +32,36 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
   const [duplicatesExpanded, setDuplicatesExpanded] = useState(false);
   const [newGrantsExpanded, setNewGrantsExpanded] = useState(true);
 
-  // Utility functions for duplicate detection
-  const normalizeText = (text) => {
-    if (!text) return "";
-    return text
-      .toLowerCase()
-      .replace(/\./g, "") // Remove periods
-      .replace(/[^\w\s]/g, " ") // Replace special chars with spaces
-      .replace(/\s+/g, " ") // Normalize multiple spaces
-      .trim();
-  };
-
-  const normalizeAmount = (amount) => {
-    if (!amount) return 0;
-    // Extract numeric value, handle formats like "$1,000,000" or "1000000"
-    const numericAmount = String(amount).replace(/[^0-9.]/g, "");
-    return parseFloat(numericAmount) || 0;
-  };
-
-  const normalizeYear = (dateStr) => {
-    if (!dateStr) return null;
-    // Extract first 4-digit year from various date formats
-    const yearMatch = String(dateStr).match(/\b(\d{4})\b/);
-    return yearMatch ? parseInt(yearMatch[1]) : null;
-  };
-
-  const calculateSimilarity = (text1, text2) => {
-    if (!text1 || !text2) return 0;
-
-    const norm1 = normalizeText(text1);
-    const norm2 = normalizeText(text2);
-
-    if (norm1 === norm2) return 100;
-
-    // Simple word-based similarity
-    const words1 = norm1.split(" ").filter((w) => w.length > 2);
-    const words2 = norm2.split(" ").filter((w) => w.length > 2);
-
-    if (words1.length === 0 && words2.length === 0) return 100;
-    if (words1.length === 0 || words2.length === 0) return 0;
-
-    const intersection = words1.filter((w) => words2.includes(w));
-    const union = [...new Set([...words1, ...words2])];
-
-    return (intersection.length / union.length) * 100;
-  };
-
   const calculateGrantSimilarity = (grant1, grant2) => {
-    // Title similarity (most important)
-    const titleSim = calculateSimilarity(grant1.title, grant2.title);
-
-    // Agency similarity
-    const agency1 = grant1.agency || grant1.sponsor || grant1.funding_agency || grant1.granting_agency;
-    const agency2 = grant2.agency || grant2.sponsor || grant2.funding_agency || grant2.granting_agency;
-    // const agencySim = calculateSimilarity(agency1, agency2);
-    const agencySim = 100; // Ignore agency similarity for stricter matching
-
-    // Year comparison - must be exact match or very close
+    // Early exit: check years first (cheapest operation)
     const year1 = normalizeYear(grant1.year || grant1.dates);
     const year2 = normalizeYear(grant2.year || grant2.dates);
-    let yearSim = 0;
-    if (year1 && year2) {
-      const yearDiff = Math.abs(year1 - year2);
-      if (yearDiff === 0) {
-        yearSim = 100;
-      } else if (yearDiff === 1) {
-        yearSim = 50; // Adjacent years might be related but different grants
-      } else {
-        yearSim = 0; // Different years = different grants
-      }
-    }
+    if (!year1 || !year2) return { overall: 0, title: 0, agency: 100, year: 0, amount: 0 };
+    
+    const yearDiff = Math.abs(year1 - year2);
+    if (yearDiff > 1) return { overall: 0, title: 0, agency: 100, year: 0, amount: 0 };
+    const yearSim = yearDiff === 0 ? 100 : 50;
 
-    // Amount comparison - must be very close (within 2%) to be considered the same
+    // Check amounts (also relatively cheap)
     const amount1 = normalizeAmount(grant1.amount);
     const amount2 = normalizeAmount(grant2.amount);
-    let amountSim = 0;
-    if (amount1 > 0 && amount2 > 0) {
-      const diff = Math.abs(amount1 - amount2) / Math.max(amount1, amount2);
-      if (diff <= 0.02) {
-        // Within 2% - extremely strict
-        amountSim = Math.max(0, (1 - diff) * 100);
-      } else {
-        amountSim = 0; // Too different = different grants
-      }
-    } else if (amount1 === 0 && amount2 === 0) {
-      amountSim = 100; // Both have no amount info
-    }
+    if (amount1 === 0 || amount2 === 0) return { overall: 0, title: 0, agency: 100, year: yearSim, amount: 0 };
+    if (amount1 !== amount2) return { overall: 0, title: 0, agency: 100, year: yearSim, amount: 0 };
+    const amountSim = 100;
 
-    // Strict matching: require near-perfect matches on all key fields
-    const titleThreshold = 95; // High threshold for title similarity
-    const hasExactYear = yearSim === 100;
-    const hasExactAmount = amountSim >= 98; // Within 2%
+    // Only calculate expensive title similarity if year and amount pass
+    const titleSim = calculateJaccardSimilarity(grant1.title, grant2.title);
+    if (titleSim < 95) return { overall: 0, title: Math.round(titleSim), agency: 100, year: yearSim, amount: amountSim };
 
-    let weightedScore = 0;
-
-    if (titleSim >= titleThreshold) {
-      if (hasExactYear && hasExactAmount) {
-        // Same title, year, and amount - very likely duplicate
-        weightedScore = titleSim * 0.6 + yearSim * 0.2 + amountSim * 0.2;
-      } else {
-        // Different year OR amount - these are different grants, don't flag as duplicates
-        weightedScore = 0;
-      }
-    } else {
-      // Title not similar enough - not a duplicate
-      weightedScore = 0;
-    }
+    // Calculate weighted score only for high-confidence matches
+    const weightedScore = titleSim * 0.6 + yearSim * 0.2 + amountSim * 0.2;
 
     return {
       overall: Math.round(weightedScore),
       title: Math.round(titleSim),
-      agency: Math.round(agencySim),
+      agency: 100,
       year: yearSim,
-      amount: Math.round(amountSim),
+      amount: amountSim,
     };
   };
 
@@ -157,11 +76,8 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       existingGrants.forEach((existingGrant, existingIndex) => {
         const similarity = calculateGrantSimilarity(importedGrant, existingGrant.data_details);
 
-        // Ultra-strict criteria: Only flag as duplicate if it's nearly identical
-        // Title 98%+, Year exact, Amount within 2%, Agency should be similar
-        const isHighConfidenceDuplicate = similarity.title >= 90 && similarity.year === 100 && similarity.amount >= 95; // Within 2% for amount
-
-        if (isHighConfidenceDuplicate) {
+        // Only add if similarity calculation returned a match (overall > 0)
+        if (similarity.overall > 0) {
           duplicates.push({
             importedGrant,
             importedIndex,
@@ -174,24 +90,21 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       });
     });
 
-    // Sort by similarity score (highest first)
     return duplicates.sort((a, b) => b.similarity.overall - a.similarity.overall);
   };
 
-  // Function to categorize grants for display
   const categorizeGrants = () => {
     const duplicateGrantIndices = new Set();
-    const duplicateGrants = [];
+    const duplicateGrantsMap = new Map(); // Use Map for O(1) lookups instead of array.find
     const newGrants = [];
     const existingGrantsMatched = new Set();
 
-    // First, identify which imported grants have duplicates and track matched existing grants
     potentialDuplicates.forEach((duplicate) => {
       duplicateGrantIndices.add(duplicate.importedIndex);
       existingGrantsMatched.add(duplicate.existingIndex);
 
-      if (!duplicateGrants.find((g) => g.importedIndex === duplicate.importedIndex)) {
-        duplicateGrants.push({
+      if (!duplicateGrantsMap.has(duplicate.importedIndex)) {
+        duplicateGrantsMap.set(duplicate.importedIndex, {
           grant: duplicate.importedGrant,
           importedIndex: duplicate.importedIndex,
           duplicates: potentialDuplicates.filter((d) => d.importedIndex === duplicate.importedIndex),
@@ -199,19 +112,15 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       }
     });
 
-    // Then, categorize all imported grants
     allSecureFundingData.forEach((grant, index) => {
       if (!duplicateGrantIndices.has(index)) {
         newGrants.push({ grant, importedIndex: index });
       }
     });
 
-    // Apply additional record_id-based filtering to new grants (RISE data only)
     const recordIdFilteredNewGrants = newGrants.filter((grantItem) => {
       const grant = grantItem.grant;
-      // Only apply record_id filtering for RISE data and if grant has a valid record_id
       if (selectedSource === "rise" && grant.record_id && grant.record_id.trim() !== "") {
-        // Check if this record_id already exists in user's CV
         const recordIdExists = existingGrantsData.some((existingGrant) => {
           const existingRecordId = existingGrant.data_details?.record_id;
           return existingRecordId && existingRecordId.trim() !== "" && existingRecordId === grant.record_id;
@@ -225,143 +134,43 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       return true;
     });
 
-    // Get unmatched existing grants (those that don't appear in duplicates)
     const unmatchedExistingGrants = existingGrantsData.filter((_, index) => !existingGrantsMatched.has(index));
 
+    // Convert Map to array and sort
+    const duplicateGrants = Array.from(duplicateGrantsMap.values()).sort((a, b) => {
+      const maxSimilarityA = Math.max(...a.duplicates.map((d) => d.similarity.overall));
+      const maxSimilarityB = Math.max(...b.duplicates.map((d) => d.similarity.overall));
+      return maxSimilarityB - maxSimilarityA;
+    });
+
     return {
-      duplicateGrants: duplicateGrants.sort((a, b) => {
-        const maxSimilarityA = Math.max(...a.duplicates.map((d) => d.similarity.overall));
-        const maxSimilarityB = Math.max(...b.duplicates.map((d) => d.similarity.overall));
-        return maxSimilarityB - maxSimilarityA;
-      }),
+      duplicateGrants,
       newGrants: sortSecureFundingByDate(recordIdFilteredNewGrants.map((item) => item.grant)).map((grant) => ({
         grant,
         importedIndex: allSecureFundingData.indexOf(grant),
       })),
-      unmatchedExistingGrants: unmatchedExistingGrants,
+      unmatchedExistingGrants,
     };
   };
 
-  // Component to display a grant with potential duplicates (read-only, no checkbox)
-  const GrantWithDuplicates = ({ grantItem, duplicates, hasNewGrants = true }) => {
-    const maxSimilarity = Math.max(...duplicates.map((d) => d.similarity.overall));
-    
-    // Use red colors when there are new grants, amber when all are duplicates
-    const borderColor = hasNewGrants ? 'border-red-200' : 'border-amber-200';
-    const bgColor = hasNewGrants ? 'bg-red-50' : 'bg-amber-50';
-    const iconBgColor = hasNewGrants ? 'bg-red-100' : 'bg-amber-100';
-    const iconBorderColor = hasNewGrants ? 'border-red-300' : 'border-amber-300';
-    const iconTextColor = hasNewGrants ? 'text-red-600' : 'text-amber-600';
-    const labelTextColor = hasNewGrants ? 'text-red-800' : 'text-amber-800';
-
-    return (
-      <div className={`border ${borderColor} rounded-lg p-4 ${bgColor}`}>
-        <div className="flex items-start gap-3">
-          {/* Skip indicator instead of checkbox */}
-          <div className="flex-shrink-0 mt-1">
-            <div className={`w-6 h-6 ${iconBgColor} border-2 ${iconBorderColor} rounded flex items-center justify-center`}>
-              <span className={`${iconTextColor} text-sm font-bold`}>✕</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 flex-1">
-            <div className="mb-3">
-              <div className={`text-sm font-medium ${labelTextColor} mb-2`}>
-                📥 Imported Grant ({maxSimilarity}% similarity)
-              </div>
-              <div className="border border-blue-200 rounded-lg p-3 bg-white">
-                <div className="text-sm space-y-1">
-                  <div>
-                    <strong>Title:</strong> {grantItem.grant.title}
-                  </div>
-                  <div>
-                    <strong>Agency:</strong> {grantItem.grant.agency || grantItem.grant.sponsor || "N/A"}
-                  </div>
-                  <div>
-                    <strong>Year:</strong> {normalizeYear(grantItem.grant.year || grantItem.grant.dates) || "N/A"}
-                  </div>
-                  <div>
-                    <strong>Amount:</strong> {grantItem.grant.amount || "N/A"}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-green-700">Existing Grant</div>
-              {duplicates.map((duplicate, idx) => (
-                <div key={idx} className="border border-green-200 rounded-lg p-3 bg-white">
-                  <div className="text-sm space-y-1 text-gray-700">
-                    <div>
-                      <strong>Title:</strong> {duplicate.existingGrant.title}
-                    </div>
-                    <div>
-                      <strong>Agency:</strong>{" "}
-                      {duplicate.existingGrant.agency || duplicate.existingGrant.sponsor || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Year:</strong>{" "}
-                      {normalizeYear(duplicate.existingGrant.year || duplicate.existingGrant.dates) || "N/A"}
-                    </div>
-                    <div>
-                      <strong>Amount:</strong> {duplicate.existingGrant.amount || "N/A"}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* <div className="text-xs text-red-700 col-span-2 bg-red-100 p-2 rounded border">
-              ⚠️ <strong>Automatic Skip:</strong> This imported grant appears to be a duplicate of your existing grant. We'll skip importing this one and keep your existing entry unchanged.
-            </div> */}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Canadian funding agencies to filter from RISE data
-  const canadianFundingAgencies = [
-    "Canadian Institutes of Health Research",
-    "CIHR",
-    "Natural Sciences and Engineering Research Council of Canada",
-    "NSERC",
-    "Social Sciences and Humanities Research Council",
-    "SSHRC",
-    "Canada Foundation for Innovation",
-    "CFI",
-  ];
-
-  // Function to sort secure funding data by date (most recent first)
   const sortSecureFundingByDate = (data) => {
     return [...data].sort((a, b) => {
-      // Extract date from 'dates' field
       const dateA = a.dates || "";
       const dateB = b.dates || "";
 
-      // Handle empty dates (put them at the end)
       if (!dateA && !dateB) return 0;
       if (!dateA) return 1;
       if (!dateB) return -1;
 
-      // Handle "current" or "present" - should be sorted as most recent
       const lowerDateA = dateA.toLowerCase();
       const lowerDateB = dateB.toLowerCase();
 
-      if (lowerDateA.includes("current") || lowerDateA.includes("present")) {
-        return -1; // A is more recent
-      }
-      if (lowerDateB.includes("current") || lowerDateB.includes("present")) {
-        return 1; // B is more recent
-      }
+      if (lowerDateA.includes("current") || lowerDateA.includes("present")) return -1;
+      if (lowerDateB.includes("current") || lowerDateB.includes("present")) return 1;
 
-      // For date ranges, extract the start year
       const extractYear = (dateStr) => {
         if (!dateStr) return 0;
-
-        // Split on dash and take the first part (start date)
         const startDate = dateStr.split("-")[0].trim();
-
-        // Extract 4-digit year
         const yearMatch = startDate.match(/\b(\d{4})\b/);
         return yearMatch ? parseInt(yearMatch[1]) : 0;
       };
@@ -369,36 +178,10 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
       const yearA = extractYear(dateA);
       const yearB = extractYear(dateB);
 
-      // Sort by year descending (most recent first)
       return yearB - yearA;
     });
   };
 
-  // Function to check if sponsor contains Canadian funding agencies
-  const isCanadianFundingAgency = (item) => {
-    if (!item) return false;
-
-    // Check multiple fields that might contain sponsor information
-    const fieldsToCheck = [
-      item.sponsor,
-      item.agency,
-      item.funding_agency,
-      item.granting_agency,
-      item.organisation,
-      item.organization,
-    ];
-
-    return fieldsToCheck.some((field) => {
-      if (!field) return false;
-      const fieldLower = field.toLowerCase();
-      return canadianFundingAgencies.some(
-        (agency) =>
-          fieldLower.includes(agency.toLowerCase()) ||
-          // Also check for acronyms in parentheses
-          fieldLower.includes(`(${agency.toLowerCase()})`)
-      );
-    });
-  };
 
   // Function to process date formatting
   const processDateFormatting = (data) => {
@@ -466,10 +249,10 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
         }
 
         // Fetch both external and RISE data in parallel
-        const [externalResults, riseResults] = await Promise.all([
-          getSecureFundingMatches(user.first_name, user.last_name),
-          getRiseDataMatches(user.first_name, user.last_name),
-        ]);
+        const [externalResults, riseResults] = await Promise.all([getSecureFundingMatches(user.first_name, user.last_name), getRiseDataMatches(user.first_name, user.last_name)]);
+
+        console.log("Raw external results:", externalResults);
+        console.log("Raw RISE results:", riseResults?.length || 0);
 
         // Process external data
         const processedExternalData = [];
@@ -477,13 +260,25 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
 
         for (const dataObject of externalResults) {
           const { data_details } = dataObject;
-          const data_details_json = JSON.parse(data_details);
-          const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}`;
-          if (!uniqueExternalData.has(uniqueKey)) {
-            uniqueExternalData.add(uniqueKey);
-            processedExternalData.push(data_details_json);
+          if (!data_details || data_details === "undefined") {
+            console.log("Skipping external entry with invalid data_details");
+            continue;
+          }
+          
+          try {
+            const data_details_json = JSON.parse(data_details);
+            const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}`;
+            if (!uniqueExternalData.has(uniqueKey)) {
+              uniqueExternalData.add(uniqueKey);
+              processedExternalData.push(data_details_json);
+            }
+          } catch (error) {
+            console.warn("Failed to parse external grant data:", error, data_details);
+            continue;
           }
         }
+
+        console.log("Processed external data:", processedExternalData.length);
 
         // Process RISE data
         const processedRiseData = [];
@@ -491,39 +286,32 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
 
         for (const dataObject of riseResults) {
           const { data_details } = dataObject;
-          const data_details_json = JSON.parse(data_details);
+          if (!data_details || data_details === "undefined") continue;
           
-          const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}-${data_details_json.sponsor}`;
-          if (!uniqueRiseData.has(uniqueKey)) {
-            uniqueRiseData.add(uniqueKey);
-            processedRiseData.push(data_details_json);
+          try {
+            const data_details_json = JSON.parse(data_details);
+            const uniqueKey = `${data_details_json.first_name}-${data_details_json.last_name}-${data_details_json.title}-${data_details_json.amount}-${data_details_json.sponsor}`;
+            if (!uniqueRiseData.has(uniqueKey)) {
+              uniqueRiseData.add(uniqueKey);
+              processedRiseData.push(data_details_json);
+            }
+          } catch (error) {
+            console.warn("Failed to parse RISE grant data:", error);
+            continue;
           }
         }
 
+        console.log("Processed RISE data:", processedRiseData.length);
+
         // Process date formatting for both datasets
-        processDateFormatting(processedExternalData);
         processDateFormatting(processedRiseData);
+        processDateFormatting(processedExternalData);
 
-        // Filter RISE data: entries with Canadian funding agencies go to external
-        const canadianFundingFromRise = processedRiseData.filter((item) => {
-          const hasCanadianAgency = isCanadianFundingAgency(item);
-          return hasCanadianAgency;
-        });
-
-        const pureRiseData = processedRiseData.filter((item) => !isCanadianFundingAgency(item));
-
-        // Combine external data with Canadian funding from RISE
-        const combinedExternalData = [...processedExternalData, ...canadianFundingFromRise];
-
-        // console.log("External data (including Canadian from RISE):", combinedExternalData.length);
-        // console.log("Pure RISE data:", pureRiseData.length);
-        // console.log("Canadian funding moved from RISE to external:", canadianFundingFromRise.length);
-
-        // Store all processed data
-        setAllSecureFundingData(combinedExternalData);
-        setAllRiseData(pureRiseData);
-        setExternalData(combinedExternalData);
-        setRiseData(pureRiseData);
+        // Store processed data separately
+        setExternalData(processedExternalData);
+        setRiseData(processedRiseData);
+        
+        console.log("Final state - External:", processedExternalData.length, "RISE:", processedRiseData.length);
 
         setCurrentStep("source-selection");
       } catch (error) {
@@ -541,13 +329,9 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
   async function fetchSecureFundingData() {
     setCurrentStep("fetching");
     try {
-      // Add a small delay for better UX
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       // Filter external data by date range
       const filteredData = filterByDateRange(externalData, dateRangeOption, customStartYear);
 
-      // console.log("Filtered external data:", filteredData.length);
       setAllSecureFundingData(filteredData);
 
       // Detect potential duplicates
@@ -571,13 +355,9 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
   async function fetchRiseData() {
     setCurrentStep("fetching");
     try {
-      // Add a small delay for better UX
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       // Filter RISE data by date range
       const filteredData = filterByDateRange(riseData, dateRangeOption, customStartYear);
 
-      // console.log("Filtered RISE data:", filteredData.length);
       setAllSecureFundingData(filteredData);
 
       // Detect potential duplicates
@@ -765,17 +545,56 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
         {/* Step 1: Source Selection with Date Range */}
         {currentStep === "source-selection" && (
           <div className="w-full h-full p-6 overflow-y-auto">
+            {/* Header */}
+            <div className="mb-4">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Import Grants</h3>
+              <p className="text-sm text-gray-600">
+                Import grants from the RISE database into your CV
+              </p>
+            </div>
+
+            {/* Workflow Information Section - Only show if data exists */}
+            {(getFilteredCounts().rise > 0 || getFilteredCounts().external > 0) && (
+              <div className="mb-4">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-gray-600 text-lg">ℹ️</span>
+                    <div className="text-sm text-gray-700 leading-relaxed">
+                      <div className="font-semibold mb-2 text-gray-800">How it works:</div>
+                      <ul className="space-y-1.5">
+                        <li className="flex items-start gap-2">
+                          <span className="text-gray-400 mt-0.5">•</span>
+                          <span><strong>Step 1:</strong> Filter grants by date range</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-gray-400 mt-0.5">•</span>
+                          <span><strong>Step 2:</strong> Review and skip any duplicates automatically</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-gray-400 mt-0.5">•</span>
+                          <span><strong>Step 3:</strong> Select which new grants to add to your CV</span>
+                        </li>
+                      </ul>
+                      <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-600">
+                        Your existing grants will not be modified or deleted.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Date Range Selection */}
-            <div className="mb-2">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-blue-500">📅</span>
-                Select Import Date Range
-              </h4>
+            <div className="mb-4">
+              <h4 className="text-base font-semibold text-gray-900 mb-3">Select Date Range</h4>
 
               {/* Date Range Options */}
-              <div className="space-y-3 mb-3">
+              <div className="space-y-2">
                 {/* All Years Option */}
-                <div className="flex items-center gap-3 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <label
+                  htmlFor="all-years"
+                  className="flex items-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:border-yellow-400 cursor-pointer transition-colors"
+                >
                   <input
                     type="radio"
                     id="all-years"
@@ -783,16 +602,19 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                     value="all"
                     checked={dateRangeOption === "all"}
                     onChange={(e) => setDateRangeOption(e.target.value)}
-                    className="radio radio-primary"
+                    className="radio radio-warning"
                   />
-                  <label htmlFor="all-years" className="flex-1 cursor-pointer">
-                    <div className="text-sm text-gray-900">All available years (Default)</div>
-                    <div className="text-xs text-gray-600">Import all grant data</div>
-                  </label>
-                </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">All available years</div>
+                    <div className="text-xs text-gray-500">Import all grants in the database</div>
+                  </div>
+                </label>
 
                 {/* Custom Range Option */}
-                <div className="flex items-center gap-3 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <label
+                  htmlFor="custom-range"
+                  className="flex items-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:border-yellow-400 cursor-pointer transition-colors"
+                >
                   <input
                     type="radio"
                     id="custom-range"
@@ -800,27 +622,27 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                     value="custom"
                     checked={dateRangeOption === "custom"}
                     onChange={(e) => setDateRangeOption(e.target.value)}
-                    className="radio radio-primary"
+                    className="radio radio-warning"
                   />
-                  <label htmlFor="custom-range" className="flex-1 cursor-pointer">
-                    <div className="text-sm text-gray-900">Custom date range</div>
-                    <div className="text-xs text-gray-600">Import grants starting from a specific year onwards</div>
-                  </label>
-                </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">Custom date range</div>
+                    <div className="text-xs text-gray-500">Import grants from a specific year onwards</div>
+                  </div>
+                </label>
 
                 {/* Custom Year Input */}
                 {dateRangeOption === "custom" && (
-                  <div className="flex items-center gap-x-2">
+                  <div className="ml-8 mt-2 flex items-center gap-2 px-4 py-2 bg-yellow-50 rounded-lg border border-yellow-200">
                     <label htmlFor="start-year" className="text-sm font-medium text-gray-700">
-                      Start from year:
+                      From:
                     </label>
                     <select
                       id="start-year"
                       value={customStartYear}
                       onChange={(e) => setCustomStartYear(e.target.value)}
-                      className="select select-bordered select-sm w-30 text-center"
+                      className="select select-bordered select-sm"
                     >
-                      <option value="">Start year</option>
+                      <option value="">Select year</option>
                       {Array.from({ length: new Date().getFullYear() - 1950 + 1 }, (_, i) => {
                         const year = new Date().getFullYear() - i;
                         return (
@@ -830,92 +652,93 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                         );
                       })}
                     </select>
-                    <span className="text-sm text-gray-500">onwards</span>
+                    <span className="text-sm text-gray-600">onwards</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* No Data Message */}
-            {getFilteredCounts().rise === 0 && getFilteredCounts().external === 0 && (
-              <div className="mb-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="text-yellow-800 font-medium text-sm">No funding data found</div>
-                <div className="text-yellow-700 text-xs mt-1">
-                  {dateRangeOption === "custom" && customStartYear
-                    ? `No grants found from ${customStartYear} onwards in either database.`
-                    : "No grants were found matching your name in either RISE or external databases."}
+            {/* Source Selection with Counts */}
+            {(getFilteredCounts().rise > 0 || getFilteredCounts().external > 0) && (
+              <div className="mb-6">
+                <div className="grid grid-cols-1 gap-3">
+                  {/* RISE Data */}
+                  {getFilteredCounts().rise > 0 && (
+                    <div className="border border-gray-300 rounded-lg p-4 hover:border-yellow-400 hover:shadow-sm transition-all">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <h5 className="font-semibold text-gray-800 mb-1">RISE Database</h5>
+                          {/* <p className="text-sm text-gray-600 mb-3">
+                            Internal university research grants (excluding Canadian funding agencies)
+                          </p> */}
+                          <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-50 border border-yellow-300 rounded text-xs font-medium text-yellow-800">
+                            <span>📊</span>
+                            <span>{getFilteredCounts().rise} grant{getFilteredCounts().rise !== 1 ? 's' : ''} found</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-warning text-gray-800 px-6 whitespace-nowrap"
+                          onClick={handleFetchRiseData}
+                          disabled={dateRangeOption === "custom" && !customStartYear}
+                        >
+                          Import
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* External Data - keeping commented out as in original */}
+                  <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-sm transition-all">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h5 className="font-semibold text-gray-800 mb-1">External Sources [CIHR, NSERC, SSHRC, CFI]</h5>
+                        <div className="inline-flex items-center gap-1 px-2 py-2 bg-blue-50 border border-blue-200 rounded text-xs font-medium text-blue-700">
+                          <span>📈</span>
+                          <span>{getFilteredCounts().external} grants found</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className={`btn px-6 whitespace-nowrap ${getFilteredCounts().external === 0 ? "btn-disabled" : "btn-info"}`}
+                        onClick={handleFetchExternalData}
+                        disabled={getFilteredCounts().external === 0 || (dateRangeOption === "custom" && !customStartYear)}
+                      >
+                        Import
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
-            {/* Workflow Information Section */}
-            <div className="mb-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+
+            {/* No Data Message */}
+            {getFilteredCounts().rise === 0 && getFilteredCounts().external === 0 && (
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <span className="text-blue-600 text-lg">ℹ️</span>
-                  <div className="text-sm text-blue-800 leading-relaxed">
-                    <div className="font-medium mb-1">Import Process:</div>
-                    <ul className="space-y-1 text-xs">
-                      <li>
-                        • <strong>Step 1:</strong> Review potential duplicates below - these will be automatically
-                        skipped to preserve your existing entries
-                      </li>
-                      <li>
-                        • <strong>Step 2:</strong> Select which new grants you want to add from the remaining imports
-                      </li>
-                      <li>• Only selected new grants will be added to your CV - no existing data will be modified</li>
-                    </ul>
+                  <span className="text-yellow-600 text-xl">⚠️</span>
+                  <div>
+                    <div className="font-medium text-yellow-800 mb-1">No grants found</div>
+                    <div className="text-sm text-yellow-700">
+                      {dateRangeOption === "custom" && customStartYear
+                        ? `No grants were found from ${customStartYear} onwards in the RISE database.`
+                        : "No grants were found matching your name in the RISE database."}
+                    </div>
+                    {dateRangeOption === "custom" && customStartYear && (
+                      <button
+                        className="mt-2 text-sm text-yellow-800 underline hover:text-yellow-900"
+                        onClick={() => {
+                          setDateRangeOption("all");
+                          setCustomStartYear("");
+                        }}
+                      >
+                        Try viewing all years instead
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Source Selection with Counts */}
-            <div className="border-t border-gray-200 pt-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* RISE Data */}
-                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors flex flex-col h-full">
-                  <div className="flex-grow mb-4">
-                    <h5 className="font-semibold text-gray-700 mb-2">RISE Database</h5>
-                    <div className="text-sm text-gray-600 mb-3">
-                      Internal university research data (excluding Canadian funding agencies)
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={`btn w-full ${getFilteredCounts().rise === 0 ? "btn-disabled" : "btn-secondary"}`}
-                    onClick={handleFetchRiseData}
-                    disabled={getFilteredCounts().rise === 0 || (dateRangeOption === "custom" && !customStartYear)}
-                  >
-                    {getFilteredCounts().rise === 0
-                      ? "No RISE Data Available"
-                      : `Import RISE Data (${getFilteredCounts().rise})`}
-                  </button>
-                </div>
-
-                {/* External Data */}
-                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors flex flex-col h-full">
-                  <div className="flex-grow mb-4">
-                    <h5 className="font-semibold text-gray-700 mb-2">External Sources</h5>
-                    <div className="text-sm text-gray-600 mb-2 space-y-1">
-                      <div>• Canadian Institutes of Health Research (CIHR)</div>
-                      <div>• Natural Sciences and Engineering Research Council (NSERC)</div>
-                      <div>• Social Sciences and Humanities Research Council (SSHRC)</div>
-                      <div>• Canada Foundation for Innovation (CFI)</div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={`btn w-full ${getFilteredCounts().external === 0 ? "btn-disabled" : "btn-info"}`}
-                    onClick={handleFetchExternalData}
-                    disabled={getFilteredCounts().external === 0 || (dateRangeOption === "custom" && !customStartYear)}
-                  >
-                    {getFilteredCounts().external === 0
-                      ? "No External Data Available"
-                      : `Import External Data (${getFilteredCounts().external})`}
-                  </button>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -1031,13 +854,13 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
 
                       {/* Potential Duplicates Section */}
                       {duplicateGrants.length > 0 ? (
-                        <div className={`border ${newGrants.length > 0 ? 'border-red-300' : 'border-amber-300'} rounded-lg`}>
-                          <div className={`p-3 flex items-center justify-between ${newGrants.length > 0 ? 'bg-red-50' : 'bg-amber-50'} rounded-t-lg`}>
+                        <div className="border border-gray-200 rounded-lg">
+                          <div className="p-4 flex items-center justify-between bg-gray-50 border-b border-gray-200">
                             <div className="flex items-center gap-3">
                               <button
                                 type="button"
                                 onClick={() => setDuplicatesExpanded(!duplicatesExpanded)}
-                                className={`flex items-center gap-2 ${newGrants.length > 0 ? 'hover:bg-red-100' : 'hover:bg-amber-100'} p-1 rounded transition-colors`}
+                                className="flex items-center gap-2 hover:bg-gray-100 p-1 rounded transition-colors"
                               >
                                 <svg
                                   className={`w-4 h-4 transition-transform ${duplicatesExpanded ? "rotate-90" : ""}`}
@@ -1048,51 +871,41 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
                               </button>
-                              <span className={`font-medium ${newGrants.length > 0 ? 'text-red-800' : 'text-amber-800'}`}>
-                                {newGrants.length > 0 
-                                  ? `Step 1: Potential Duplicates - Will Be Skipped (${duplicateGrants.length})`
-                                  : `Existing Grants Found - Will Be Skipped (${duplicateGrants.length})`
-                                }
-                              </span>
+                              <div>
+                                <span className="font-semibold text-gray-800">
+                                  {newGrants.length > 0 
+                                    ? `Step 1: Existing Grants (${duplicateGrants.length})`
+                                    : `Existing Grants (${duplicateGrants.length})`
+                                  }
+                                </span>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  These will be automatically skipped - your existing data remains unchanged
+                                </p>
+                              </div>
                             </div>
                           </div>
 
-                          <div className={`px-3 pb-2 ${newGrants.length > 0 ? 'bg-red-50 border-b border-red-200' : 'bg-amber-50 border-b border-amber-200'}`}>
-                            {newGrants.length > 0 ? (
-                              <p className="text-sm font-medium text-red-700">
-                                ✋ <strong>These grants will NOT be imported</strong> because they appear to match
-                                existing entries in your CV. Your existing grants will remain unchanged and the duplicates
-                                will be skipped automatically.
-                              </p>
-                            ) : (
-                              <p className="text-sm font-medium text-amber-700">
-                                  {/*  <strong>All found grants are already in your CV.</strong> */}
-                                  These entries match your existing grants data, so no import is needed. Your existing grants remain unchanged.
-                              </p>
-                            )}
-                          </div>
-
                           {duplicatesExpanded && (
-                            <div className="p-4 space-y-4">
+                            <div className="p-4 space-y-3 bg-white">
                               {duplicateGrants.map((grantItem, index) => (
                                 <GrantWithDuplicates
                                   key={`duplicate-${index}`}
                                   grantItem={grantItem}
                                   duplicates={grantItem.duplicates}
-                                  hasNewGrants={newGrants.length > 0}
+                                  normalizeYear={normalizeYear}
                                 />
                               ))}
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div className="border border-green-200 rounded-lg bg-green-50 p-4">
+                        <div className="border border-gray-200 rounded-lg bg-gray-50 p-4">
                           <div className="flex items-center gap-2">
-                            <span className="text-green-600 text-xl">✅</span>
+                            <span className="text-gray-600 text-lg">✓</span>
                             <div>
-                              <div className="font-medium text-green-800">No Duplicates Found</div>
-                              <div className="text-sm text-green-700">
-                                All imported grants appear to be new entries that don't match your existing CV data.
+                              <div className="font-medium text-gray-800">No Duplicates Found</div>
+                              <div className="text-sm text-gray-600">
+                                All imported grants appear to be new entries
                               </div>
                             </div>
                           </div>
@@ -1101,13 +914,13 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
 
                       {/* New Grants Section */}
                       {newGrants.length > 0 ? (
-                        <div className="border border-green-200 rounded-lg">
-                          <div className="p-3 flex items-center justify-between bg-green-50 rounded-t-lg">
+                        <div className="border border-gray-200 rounded-lg">
+                          <div className="p-4 flex items-center justify-between bg-gray-50 border-b border-gray-200">
                             <div className="flex items-center gap-3">
                               <button
                                 type="button"
                                 onClick={() => setNewGrantsExpanded(!newGrantsExpanded)}
-                                className="flex items-center gap-2 hover:bg-green-100 p-1 rounded transition-colors"
+                                className="flex items-center gap-2 hover:bg-gray-100 p-1 rounded transition-colors"
                               >
                                 <svg
                                   className={`w-4 h-4 transition-transform ${newGrantsExpanded ? "rotate-90" : ""}`}
@@ -1118,12 +931,17 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
                               </button>
-                              <span className="font-medium text-green-700">
-                                {duplicateGrants.length > 0 
-                                  ? `Step 2: New Grants Available for Import (${newGrants.length})`
-                                  : `New Grants Available for Import (${newGrants.length})`
-                                }
-                              </span>
+                              <div>
+                                <span className="font-semibold text-gray-800">
+                                  {duplicateGrants.length > 0 
+                                    ? `Step 2: Select New Grants (${newGrants.length})`
+                                    : `Select Grants to Import (${newGrants.length})`
+                                  }
+                                </span>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  Choose which grants you want to add to your CV
+                                </p>
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               {(() => {
@@ -1134,16 +952,14 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                 return (
                                   <>
                                     <button
-                                      className="px-3 py-1 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition"
+                                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition"
                                       onClick={() => {
                                         const newGrantsOnly = newGrants.map((item) => item.grant);
                                         if (selectedNewGrants.length === newGrants.length) {
-                                          // Deselect all new grants (keep any duplicates out of selection)
                                           setSelectedSecureFundingData((prev) =>
                                             prev.filter((item) => !newGrantsOnly.includes(item))
                                           );
                                         } else {
-                                          // Select all new grants (never include duplicates)
                                           setSelectedSecureFundingData((prev) => {
                                             const filtered = prev.filter((item) => !newGrantsOnly.includes(item));
                                             return [...filtered, ...newGrantsOnly];
@@ -1151,22 +967,20 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                                         }
                                       }}
                                       disabled={newGrants.length === 0}
-                                      title={`Select/deselect all ${newGrants.length} new grants. Duplicates are automatically skipped.`}
                                     >
                                       {selectedNewGrants.length === newGrants.length
-                                        ? "Deselect All New"
-                                        : "Select All New"}
+                                        ? "Deselect All"
+                                        : "Select All"}
                                     </button>
                                     <button
                                       type="button"
-                                      className="btn btn-primary btn-success px-6 py-2 text-white rounded-lg shadow hover:shadow-md transition"
+                                      className="btn btn-primary px-6 py-1.5 text-white rounded-lg transition disabled:opacity-50"
                                       onClick={addSecureFundingData}
                                       disabled={addingData || selectedSecureFundingData.length === 0}
-                                      title={`Add ${selectedSecureFundingData.length} selected new grants. ${duplicateGrants.length} duplicates will be automatically skipped.`}
                                     >
                                       {addingData
-                                        ? "Adding grants data..."
-                                        : `Add ${selectedSecureFundingData.length} New Grant${
+                                        ? "Adding..."
+                                        : `Add ${selectedSecureFundingData.length} Grant${
                                             selectedSecureFundingData.length !== 1 ? "s" : ""
                                           }`}
                                     </button>
@@ -1176,16 +990,8 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                             </div>
                           </div>
 
-                          <div className="pb-2 px-3 bg-green-50 border-b border-green-100">
-                            <p className="text-sm text-green-600">
-                              ✅ <strong>Select which grants to add:</strong> These are new grants from{" "}
-                              {selectedSource === "rise" ? "RISE" : "external sources"} that don't match your existing
-                              entries.
-                            </p>
-                          </div>
-
                           {newGrantsExpanded && (
-                            <div className="p-4 space-y-2">
+                            <div className="p-4 space-y-2 bg-white">
                               {newGrants.map((grantItem, index) => (
                                 <SecureFundingEntry
                                   key={`new-${index}`}
@@ -1200,34 +1006,31 @@ const SecureFundingModal = ({ user, section, onClose, setRetrievingData, fetchDa
                       ) : (
                         <div className="border border-gray-200 rounded-lg bg-gray-50 p-4">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-600 text-xl">📋</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-gray-400 text-lg">ℹ️</span>
                               <div>
                                 <div className="font-medium text-gray-800">
                                   {duplicateGrants.length > 0 
-                                    ? "No New Grants to Import"
-                                    : `${duplicateGrants.length > 0 ? "Step 2: " : ""}No New Grants to Import`
+                                    ? "Step 2: No New Grants to Import"
+                                    : "No New Grants to Import"
                                   }
                                 </div>
                                 <div className="text-sm text-gray-600">
                                   {duplicateGrants.length > 0
-                                    ? "All imported grants appear to be duplicates of your existing entries."
-                                    : "No grants were found that can be imported."}
+                                    ? "All grants match your existing entries"
+                                    : "No grants were found"}
                                 </div>
                               </div>
                             </div>
                             
-                            {/* Show completion button when all are duplicates */}
                             {duplicateGrants.length > 0 && (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  className="btn btn-outline btn-sm"
-                                  onClick={onClose}
-                                >
-                                  Close
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition"
+                                onClick={onClose}
+                              >
+                                Close
+                              </button>
                             )}
                           </div>
                         </div>

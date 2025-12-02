@@ -52,7 +52,8 @@ def cleanData(df):
     # Handle physician_id - if empty, set to None for auto-generation
     df["physician_id"] = df["physician_id"].fillna('').str.strip()
     
-    df["employee_id"] = df["employee_id"].fillna('').str.strip()
+    # df["employee_id"] = df["employee_id"].fillna('').str.strip()
+    df["employee_id"] = '0'
     
     df["last_name"] = df["last_name"].fillna('').str.strip()
     df["first_name"] = df["first_name"].fillna('').str.strip()

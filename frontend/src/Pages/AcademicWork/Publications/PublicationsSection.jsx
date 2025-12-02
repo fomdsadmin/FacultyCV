@@ -4,7 +4,7 @@ import GenericEntry from "../../../SharedComponents/GenericEntry";
 import EntryModal from "../../../SharedComponents/EntryModal/EntryModal";
 import PermanentEntryModal from "../../../Components/PermanentEntryModal";
 import PublicationsModal from "./PublicationsModal";
-import { FaArrowLeft, FaRegEdit, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaRegEdit, FaSearch, FaPlus, FaDownload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { getUserCVData, updateUserCVDataArchive, deleteUserCVSectionData } from "../../../graphql/graphqlHelpers";
 import { rankFields } from "../../../utils/rankingUtils";
@@ -93,7 +93,15 @@ const PublicationsSection = ({ user, section, onBack }) => {
             }
           }
 
-          return String(entryValue) === filterValue;
+          // Normalize boolean values for comparison (convert to Yes/No for display)
+          let normalizedEntryValue = entryValue;
+          if (entryValue === true || entryValue === "true") {
+            normalizedEntryValue = "Yes";
+          } else if (entryValue === false || entryValue === "false") {
+            normalizedEntryValue = "No";
+          }
+
+          return String(normalizedEntryValue) === filterValue;
         });
       }
     });
@@ -157,7 +165,14 @@ const PublicationsSection = ({ user, section, onBack }) => {
             }
           } else {
             // Convert value to string for consistency, handling booleans and other types
-            values.add(String(value));
+            // Convert boolean values to Yes/No for display
+            let normalizedValue = value;
+            if (value === true || value === "true") {
+              normalizedValue = "Yes";
+            } else if (value === false || value === "false") {
+              normalizedValue = "No";
+            }
+            values.add(String(normalizedValue));
           }
         }
       }
@@ -547,6 +562,12 @@ const PublicationsSection = ({ user, section, onBack }) => {
           </p>
         )}
 
+        {details.peer_reviewed && (
+          <p className="text-sm text-gray-700 mb-1">
+            <span className="font-semibold">Peer Reviewed:</span> {details.peer_reviewed === true || details.peer_reviewed === "true" ? "Yes" : "No"}
+          </p>
+        )}
+
         {details["impact_factor_(if)"] && (
           <p className="text-sm text-gray-700 mb-1">
             <span className="font-semibold">Impact Factor (IF):</span> {details["impact_factor_(if)"]}
@@ -574,6 +595,7 @@ const PublicationsSection = ({ user, section, onBack }) => {
               "author_types",
               "mark_as_important",
               "impact_factor_(if)",
+              "peer_reviewed",
             ];
             return !displayedFields.includes(key) && value && value !== "" && value !== null;
           })
@@ -605,25 +627,31 @@ const PublicationsSection = ({ user, section, onBack }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleNew}
-            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-success min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
+            <FaPlus />
             New
           </button>
           <button
             onClick={() => setRetrievingData(true)}
-            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight"
+            className="text-white btn btn-info min-h-0 h-10 px-4 leading-tight flex items-center gap-2"
             disabled={retrievingData}
           >
-            {retrievingData ? "Retrieving..." : "Retrieve Data"}
+            {retrievingData ? "Retrieving..." : (
+              <>
+                <FaDownload />
+                Retrieve Data
+              </>
+            )}
           </button>
-          <button
+          {/* <button
             onClick={handleDelete}
             className="text-white btn btn-warning min-h-0 h-10 px-4 leading-tight"
             disabled={!isAvailable}
           >
             Remove All
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -747,7 +775,15 @@ const PublicationsSection = ({ user, section, onBack }) => {
                           }
                         }
 
-                        return String(entryValue) === filterValue;
+                        // Normalize boolean values for comparison
+                        let normalizedEntryValue = entryValue;
+                        if (entryValue === true || entryValue === "true") {
+                          normalizedEntryValue = "Yes";
+                        } else if (entryValue === false || entryValue === "false") {
+                          normalizedEntryValue = "No";
+                        }
+
+                        return String(normalizedEntryValue) === filterValue;
                       });
                     }
                   });
@@ -782,7 +818,15 @@ const PublicationsSection = ({ user, section, onBack }) => {
                       }
                     }
 
-                    return String(entryValue) === optionValue;
+                    // Normalize boolean values for comparison
+                    let normalizedEntryValue = entryValue;
+                    if (entryValue === true || entryValue === "true") {
+                      normalizedEntryValue = "Yes";
+                    } else if (entryValue === false || entryValue === "false") {
+                      normalizedEntryValue = "No";
+                    }
+
+                    return String(normalizedEntryValue) === optionValue;
                   }).length;
                 };
 
@@ -914,7 +958,15 @@ const PublicationsSection = ({ user, section, onBack }) => {
                               }
                             }
 
-                            return String(entryValue) === filterValue;
+                            // Normalize boolean values for comparison
+                            let normalizedEntryValue = entryValue;
+                            if (entryValue === true || entryValue === "true") {
+                              normalizedEntryValue = "Yes";
+                            } else if (entryValue === false || entryValue === "false") {
+                              normalizedEntryValue = "No";
+                            }
+
+                            return String(normalizedEntryValue) === filterValue;
                           });
                         }
                       });
@@ -953,7 +1005,15 @@ const PublicationsSection = ({ user, section, onBack }) => {
                           }
                         }
 
-                        return String(entryValue) === optionValue;
+                        // Normalize boolean values for comparison
+                        let normalizedEntryValue = entryValue;
+                        if (entryValue === true || entryValue === "true") {
+                          normalizedEntryValue = "Yes";
+                        } else if (entryValue === false || entryValue === "false") {
+                          normalizedEntryValue = "No";
+                        }
+
+                        return String(normalizedEntryValue) === optionValue;
                       }).length;
                     };
 

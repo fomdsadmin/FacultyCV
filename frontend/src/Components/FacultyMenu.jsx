@@ -122,14 +122,14 @@ const FacultyMenu = ({ userName, getCognitoUser, toggleViewMode, userInfo }) => 
               )}
             </Link>
           </li>
-          <li className={`mb-2 ${location.pathname === "/support" ? "bg-gray-200 rounded-lg" : ""}`}>
+          {/* <li className={`mb-2 ${location.pathname === "/support" ? "bg-gray-200 rounded-lg" : ""}`}>
             <Link to="/support">
               <MdSupportAgent className="h-5 w-5" />
               {showText && !isCollapsed && (
                 <p className={`ml-2 ${location.pathname === "/support" ? "font-bold" : ""}`}>Support</p>
               )}
             </Link>
-          </li>
+          </li> */}
         </ul>
         {/* <div className="left-0 w-full flex justify-center">
           {!isCollapsed && showText && (

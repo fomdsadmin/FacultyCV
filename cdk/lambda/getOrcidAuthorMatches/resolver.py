@@ -18,10 +18,12 @@ def getPotentialMatches(arguments):
     param1 = 'University of British Columbia'
     param2 = 'UBC'
     param3 = 'The University of British Columbia'
+    param4 = 'BCCHR'
+    param5 = 'BC Children\'s Hospital Research Institute'
     
     # First try with affiliation filter
     request_url = f"{URL}/search/?q=given-names:{first_name}+AND+family-name:{last_name}"
-    request_url += f"+AND+affiliation-org-name:{param1}+OR+affiliation-org-name:{param2}+OR+affiliation-org-name:{param3}"
+    request_url += f"+AND+affiliation-org-name:{param1}+OR+affiliation-org-name:{param2}+OR+affiliation-org-name:{param3}+OR+affiliation-org-name:{param4}+OR+affiliation-org-name:{param5}"
     
     response = requests.get(request_url, headers=headers).json()
     num_results = response['num-found']
@@ -33,6 +35,8 @@ def getPotentialMatches(arguments):
         num_results = response['num-found']
         if num_results == 0:
             return []
+        
+        # return []
     
     results = response['result']
     orcid_ids = []

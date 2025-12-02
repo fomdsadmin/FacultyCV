@@ -59,6 +59,52 @@ export const calculateStringSimilarity = (str1, str2) => {
   return (longer.length - distance) / longer.length;
 };
 
+// Helper function to normalize text for comparison
+export const normalizeText = (text) => {
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .replace(/\./g, "")
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+// Helper function to normalize amounts for comparison
+export const normalizeAmount = (amount) => {
+  if (!amount) return 0;
+  const numericAmount = String(amount).replace(/[^0-9.]/g, "");
+  return parseFloat(numericAmount) || 0;
+};
+
+// Helper function to extract year from date string
+export const normalizeYear = (dateStr) => {
+  if (!dateStr) return null;
+  const yearMatch = String(dateStr).match(/\b(\d{4})\b/);
+  return yearMatch ? parseInt(yearMatch[1]) : null;
+};
+
+// Helper function to calculate Jaccard similarity for text comparison
+export const calculateJaccardSimilarity = (text1, text2) => {
+  if (!text1 || !text2) return 0;
+
+  const norm1 = normalizeText(text1);
+  const norm2 = normalizeText(text2);
+
+  if (norm1 === norm2) return 100;
+
+  const words1 = norm1.split(" ").filter((w) => w.length > 2);
+  const words2 = norm2.split(" ").filter((w) => w.length > 2);
+
+  if (words1.length === 0 && words2.length === 0) return 100;
+  if (words1.length === 0 || words2.length === 0) return 0;
+
+  const intersection = words1.filter((w) => words2.includes(w));
+  const union = [...new Set([...words1, ...words2])];
+
+  return (intersection.length / union.length) * 100;
+};
+
 // Helper function to calculate author similarity between publications
 export const calculateAuthorSimilarity = (fetchedPub, existingPubData) => {
   // Extract author strings from both publications
