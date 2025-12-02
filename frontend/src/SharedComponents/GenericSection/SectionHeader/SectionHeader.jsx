@@ -1,25 +1,12 @@
 import { useGenericSection } from "../GenericSectionContext";
 import { FaArrowLeft } from "react-icons/fa";
-import { useEffect, useState } from "react";
 
 const SectionHeader = () => {
-  const { section, onBack, handleNew, fieldData, handleRemoveAll, notification } = useGenericSection();
+  const { titleWithoutSectionNumbers, onBack, handleNew, fieldData, handleRemoveAll, notification } = useGenericSection();
   let availableData = false;
   if (fieldData.length != 0) {
     availableData = true;
   }
-
-  const [titleWithoutSectionNumbers, setTitleWithoutSectionNumbers] = useState("");
-
-  useEffect(() => {
-    if (section?.title?.includes(".")) {
-      const indexOfLastPeriod = section?.title?.lastIndexOf('.')
-      const title = section?.title?.slice(indexOfLastPeriod + 1);
-      setTitleWithoutSectionNumbers(title);
-    } else if (section?.title) {
-      setTitleWithoutSectionNumbers(section.title);
-    }
-  }, [section?.title])
 
   return (
     <>

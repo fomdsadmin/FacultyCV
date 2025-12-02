@@ -44,7 +44,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
   const [isNew, setIsNew] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
-  
+
   // Filter states
   const [dropdownFilters, setDropdownFilters] = useState({});
   const [showMoreFilters, setShowMoreFilters] = useState(false);
@@ -59,8 +59,8 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
   // Get dropdown attributes from section attributes_type
   const getDropdownAttributes = () => {
     try {
-      const attributesType = typeof section.attributes_type === "string" 
-        ? JSON.parse(section.attributes_type) 
+      const attributesType = typeof section.attributes_type === "string"
+        ? JSON.parse(section.attributes_type)
         : section.attributes_type;
       return Object.keys(attributesType.dropdown || {});
     } catch (error) {
@@ -70,27 +70,27 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
   };
 
   // Get unique values for a dropdown attribute from field data
-  const getUniqueDropdownValues = (attribute) => {    
+  const getUniqueDropdownValues = (attribute) => {
     // Get the actual field key (snake_case) from the display name
-    const actualKey = section.attributes && section.attributes[attribute] 
-      ? section.attributes[attribute] 
+    const actualKey = section.attributes && section.attributes[attribute]
+      ? section.attributes[attribute]
       : attribute.toLowerCase().replace(/\s+/g, '_');
-    
+
     const values = new Set();
-    
+
     fieldData.forEach((entry, index) => {
       if (entry.data_details && entry.data_details[actualKey]) {
         const value = entry.data_details[actualKey];
-        
+
         // Handle different data types appropriately
         if (value !== null && value !== undefined && value !== "" && value !== "—") {
           const stringValue = typeof value === 'string' ? value : String(value);
-          
+
           // Skip if it's empty after conversion to string
           if (stringValue.trim() === "" || stringValue.toLowerCase() === "null") {
             return;
           }
-          
+
           // Handle "Other (value)" format
           if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
             const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
@@ -103,7 +103,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
         }
       }
     });
-    
+
     const result = Array.from(values).sort();
     return result;
   };
@@ -117,13 +117,13 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
       filtered = filtered.filter((entry) => {
         // Search through all fields in data_details
         if (!entry.data_details) return false;
-        
+
         const searchLower = searchTerm.toLowerCase();
-        
+
         // Check all fields in the entry's data_details
         return Object.values(entry.data_details).some((value) => {
           if (value === null || value === undefined) return false;
-          
+
           // Convert value to string and check if it includes the search term
           const stringValue = typeof value === 'string' ? value : String(value);
           return stringValue.toLowerCase().includes(searchLower);
@@ -135,20 +135,20 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     Object.entries(dropdownFilters).forEach(([attribute, filterValue]) => {
       if (filterValue && filterValue !== "all") {
         // Get the actual field key (snake_case) from the display name
-        const actualKey = section.attributes && section.attributes[attribute] 
-          ? section.attributes[attribute] 
+        const actualKey = section.attributes && section.attributes[attribute]
+          ? section.attributes[attribute]
           : attribute.toLowerCase().replace(/\s+/g, '_');
-          
+
         filtered = filtered.filter((entry) => {
           if (!entry.data_details || !entry.data_details[actualKey]) return false;
-          
+
           const entryValue = entry.data_details[actualKey];
           if (!entryValue && entryValue !== 0 && entryValue !== false) return false;
-          
+
           // Convert to string for consistent handling
           const stringValue = typeof entryValue === 'string' ? entryValue : String(entryValue);
           if (stringValue.trim() === "" || stringValue === "—") return false;
-          
+
           // Handle "Other (value)" format
           if (/\bother\b/i.test(stringValue) && /\(.*\)$/.test(stringValue)) {
             const match = stringValue.match(/^(.*Other)\s*\((.*)\)$/i);
@@ -156,7 +156,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
               return match[1].trim() === filterValue;
             }
           }
-          
+
           // Compare using string representation for consistency
           return stringValue === filterValue || entryValue === filterValue;
         });
@@ -168,7 +168,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
 
   // Get filtered data
   const filteredData = getFilteredData();
-  
+
   // Calculate pagination based on filtered data
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -290,6 +290,18 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     setCurrentPage(1);
   }, [searchTerm, dropdownFilters, pageSize]);
 
+  const [titleWithoutSectionNumbers, setTitleWithoutSectionNumbers] = useState("");
+
+  useEffect(() => {
+    if (section?.title?.includes(".")) {
+      const indexOfLastPeriod = section?.title?.lastIndexOf('.')
+      const title = section?.title?.slice(indexOfLastPeriod + 1);
+      setTitleWithoutSectionNumbers(title);
+    } else if (section?.title) {
+      setTitleWithoutSectionNumbers(section.title);
+    }
+  }, [section?.title])
+
   // Context value
   const value = {
     // State
@@ -309,6 +321,7 @@ export const GenericSectionProvider = ({ section, onBack, children }) => {
     isNew,
     loading,
     notification,
+    titleWithoutSectionNumbers,
 
     // Filter states
     dropdownFilters,
