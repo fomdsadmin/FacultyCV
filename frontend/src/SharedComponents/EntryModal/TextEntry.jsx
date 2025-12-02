@@ -319,126 +319,126 @@ const TextEntry = ({ attrsObj, attributes, formData, handleChange, section }) =>
     const rows = calculateRows(currentValue, attrName);
 
     // Special handling for Author Names field - only for Publications section
-    if (
-      (attrName === "Author Names" || lower === "author names") &&
-      (isPublicationsSection || isOtherPublicationsSection)
-    ) {
-      const MAX_VISIBLE_AUTHORS = 10;
-      const displayedAuthors = showAllAuthors ? authorsList : authorsList.slice(0, MAX_VISIBLE_AUTHORS);
-      const hasMoreAuthors = authorsList.length > MAX_VISIBLE_AUTHORS;
+    // if (
+    //   (attrName === "Author Names" || lower === "author names") &&
+    //   (isPublicationsSection || isOtherPublicationsSection)
+    // ) {
+    //   const MAX_VISIBLE_AUTHORS = 10;
+    //   const displayedAuthors = showAllAuthors ? authorsList : authorsList.slice(0, MAX_VISIBLE_AUTHORS);
+    //   const hasMoreAuthors = authorsList.length > MAX_VISIBLE_AUTHORS;
 
-      return (
-        <div key={attrName} className="col-span-2 mb-1">
-          <label className="block text-sm font-semibold capitalize mb-2">{attrName}</label>
-          <div className="border border-gray-300 rounded p-3 bg-gray-50">
-            {authorsList && (
-              <div className="overflow-x-auto">
-                <table className="w-full mb-3 text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-300">
-                      <th className="text-left py-2 px-1 font-semibold">Author Name</th>
-                      <th className="text-center py-2 px-1 font-semibold w-20">Trainee</th>
-                      <th className="text-center py-2 px-1 font-semibold w-20">Doctoral Supervisor</th>
-                      <th className="text-center py-2 px-2 font-semibold w-20">Postdoctoral Supervisor</th>
-                      <th className="text-left py-2 px-2 font-semibold w-32">Author Type</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displayedAuthors.map((author) => (
-                      <tr key={author.id} className="border-b border-gray-200">
-                        <td className="py-2 px-2">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveAuthor(snakeKey, author.id)}
-                              className="text-red-600 hover:text-red-800 font-bold text-lg flex-shrink-0"
-                              title="Remove author"
-                            >
-                              ×
-                            </button>
-                            <input
-                              type="text"
-                              value={author.name}
-                              onChange={(e) => handleAuthorNameChange(snakeKey, author.id, e.target.value)}
-                              className="w-full rounded text-sm px-2 py-1 border border-gray-300"
-                              placeholder="Enter author name"
-                            />
-                          </div>
-                        </td>
-                        <td className="py-2 px-1 text-center">
-                          <input
-                            type="checkbox"
-                            checked={author.isTrainee || false}
-                            onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, "isTrainee")}
-                            disabled={author.isDoctoralSupervisor || author.isPostdoctoralSupervisor}
-                            className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                          />
-                        </td>
-                        <td className="py-2 px-1 text-center">
-                          <input
-                            type="checkbox"
-                            checked={author.isDoctoralSupervisor || false}
-                            onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, "isDoctoralSupervisor")}
-                            disabled={author.isTrainee || author.isPostdoctoralSupervisor}
-                            className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                          />
-                        </td>
-                        <td className="py-2 px-1 text-center">
-                          <input
-                            type="checkbox"
-                            checked={author.isPostdoctoralSupervisor || false}
-                            onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, "isPostdoctoralSupervisor")}
-                            disabled={author.isTrainee || author.isDoctoralSupervisor}
-                            className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                          />
-                        </td>
-                        <td className="py-2 px-2">
-                          <select
-                            value={author.authorType || ""}
-                            onChange={(e) => handleAuthorTypeChange(snakeKey, author.id, e.target.value)}
-                            className="w-full rounded text-sm px-2 py-1 border border-gray-300 bg-white"
-                          >
-                            <option value="">-</option>
-                            <option value="First Author">First Author</option>
-                            <option value="Co-First Author">Co-First Author</option>
-                            <option value="Contributing Author">Contributing Author</option>
-                            <option value="Co-Senior Author">Co-Senior Author</option>
-                            <option value="Senior Author">Senior Author</option>
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="flex items-center justify-between mb-1">
-                  <button
-                    type="button"
-                    onClick={() => handleAddAuthor(snakeKey)}
-                    className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                  >
-                    + Add Author
-                  </button>
-                  {hasMoreAuthors && (
-                    <div className="flex items-center gap-3">
-                      <p className="text-sm text-gray-600">
-                        Showing {showAllAuthors ? authorsList.length : MAX_VISIBLE_AUTHORS} of {authorsList.length} authors
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowAllAuthors(!showAllAuthors)}
-                        className="text-sm px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                      >
-                        {showAllAuthors ? 'Show Less' : 'Show All'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
+    //   return (
+    //     <div key={attrName} className="col-span-2 mb-1">
+    //       <label className="block text-sm font-semibold capitalize mb-2">{attrName}</label>
+    //       <div className="border border-gray-300 rounded p-3 bg-gray-50">
+    //         {authorsList && (
+    //           <div className="overflow-x-auto">
+    //             <table className="w-full mb-3 text-sm">
+    //               <thead>
+    //                 <tr className="border-b border-gray-300">
+    //                   <th className="text-left py-2 px-1 font-semibold">Author Name</th>
+    //                   <th className="text-center py-2 px-1 font-semibold w-20">Trainee</th>
+    //                   <th className="text-center py-2 px-1 font-semibold w-20">Doctoral Supervisor</th>
+    //                   <th className="text-center py-2 px-2 font-semibold w-20">Postdoctoral Supervisor</th>
+    //                   <th className="text-left py-2 px-2 font-semibold w-32">Author Type</th>
+    //                 </tr>
+    //               </thead>
+    //               <tbody>
+    //                 {displayedAuthors.map((author) => (
+    //                   <tr key={author.id} className="border-b border-gray-200">
+    //                     <td className="py-2 px-2">
+    //                       <div className="flex items-center gap-2">
+    //                         <button
+    //                           type="button"
+    //                           onClick={() => handleRemoveAuthor(snakeKey, author.id)}
+    //                           className="text-red-600 hover:text-red-800 font-bold text-lg flex-shrink-0"
+    //                           title="Remove author"
+    //                         >
+    //                           ×
+    //                         </button>
+    //                         <input
+    //                           type="text"
+    //                           value={author.name}
+    //                           onChange={(e) => handleAuthorNameChange(snakeKey, author.id, e.target.value)}
+    //                           className="w-full rounded text-sm px-2 py-1 border border-gray-300"
+    //                           placeholder="Enter author name"
+    //                         />
+    //                       </div>
+    //                     </td>
+    //                     <td className="py-2 px-1 text-center">
+    //                       <input
+    //                         type="checkbox"
+    //                         checked={author.isTrainee || false}
+    //                         onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, "isTrainee")}
+    //                         disabled={author.isDoctoralSupervisor || author.isPostdoctoralSupervisor}
+    //                         className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+    //                       />
+    //                     </td>
+    //                     <td className="py-2 px-1 text-center">
+    //                       <input
+    //                         type="checkbox"
+    //                         checked={author.isDoctoralSupervisor || false}
+    //                         onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, "isDoctoralSupervisor")}
+    //                         disabled={author.isTrainee || author.isPostdoctoralSupervisor}
+    //                         className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+    //                       />
+    //                     </td>
+    //                     <td className="py-2 px-1 text-center">
+    //                       <input
+    //                         type="checkbox"
+    //                         checked={author.isPostdoctoralSupervisor || false}
+    //                         onChange={() => handleAuthorCheckboxChange(snakeKey, author.id, "isPostdoctoralSupervisor")}
+    //                         disabled={author.isTrainee || author.isDoctoralSupervisor}
+    //                         className="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+    //                       />
+    //                     </td>
+    //                     <td className="py-2 px-2">
+    //                       <select
+    //                         value={author.authorType || ""}
+    //                         onChange={(e) => handleAuthorTypeChange(snakeKey, author.id, e.target.value)}
+    //                         className="w-full rounded text-sm px-2 py-1 border border-gray-300 bg-white"
+    //                       >
+    //                         <option value="">-</option>
+    //                         <option value="First Author">First Author</option>
+    //                         <option value="Co-First Author">Co-First Author</option>
+    //                         <option value="Contributing Author">Contributing Author</option>
+    //                         <option value="Co-Senior Author">Co-Senior Author</option>
+    //                         <option value="Senior Author">Senior Author</option>
+    //                       </select>
+    //                     </td>
+    //                   </tr>
+    //                 ))}
+    //               </tbody>
+    //             </table>
+    //             <div className="flex items-center justify-between mb-1">
+    //               <button
+    //                 type="button"
+    //                 onClick={() => handleAddAuthor(snakeKey)}
+    //                 className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+    //               >
+    //                 + Add Author
+    //               </button>
+    //               {hasMoreAuthors && (
+    //                 <div className="flex items-center gap-3">
+    //                   <p className="text-sm text-gray-600">
+    //                     Showing {showAllAuthors ? authorsList.length : MAX_VISIBLE_AUTHORS} of {authorsList.length} authors
+    //                   </p>
+    //                   <button
+    //                     type="button"
+    //                     onClick={() => setShowAllAuthors(!showAllAuthors)}
+    //                     className="text-sm px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+    //                   >
+    //                     {showAllAuthors ? 'Show Less' : 'Show All'}
+    //                   </button>
+    //                 </div>
+    //               )}
+    //             </div>
+    //           </div>
+    //         )}
+    //       </div>
+    //     </div>
+    //   );
+    // }
 
     if (["title"].some((key) => lower.includes(key))) {
       // Title fields - always span 2 columns
