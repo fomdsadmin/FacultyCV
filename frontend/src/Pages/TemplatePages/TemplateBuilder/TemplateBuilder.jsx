@@ -310,6 +310,7 @@ const TemplateBuilderContent = ({
             dataSettings: {
                 dataSource: Object.keys(sectionsMap)[0],
                 skipDateFilter: false,
+                fillMissingEndDateWithCurrent: false,
                 sqlSettings: {
                     query: "SELECT * FROM ?",
                     additionalDataSources: [],
