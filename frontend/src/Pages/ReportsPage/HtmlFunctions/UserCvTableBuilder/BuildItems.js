@@ -513,9 +513,6 @@ const buildTableGroup = (tableGroup, showVisualNesting, level = 0, rootGroupColo
                     .map(
                         (name, i) => `
                         <span style="
-                            background-color: ${i % 2 === 0 ? "#f2f2f2" : "#dcdcdc"};
-                            padding: 2px 6px;
-                            border-radius: 4px;
                             margin-right: 4px;
                             display: inline-block;
                         ">
