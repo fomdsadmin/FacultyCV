@@ -3,7 +3,7 @@ import EntryModal from "../EntryModal/EntryModal";
 import { useGenericSection } from "./GenericSectionContext"
 
 const EntryModalWrapper = () => {
-    const { isModalOpen, selectedEntry, isNew, section, fetchData, handleCloseModal } = useGenericSection();
+    const { isModalOpen, selectedEntry, isNew, section, fetchData, handleCloseModal, titleWithoutSectionNumbers } = useGenericSection();
 
     if (!isModalOpen || !selectedEntry) return null
 
@@ -14,7 +14,7 @@ const EntryModalWrapper = () => {
                 section={section}
                 fields={selectedEntry.fields}
                 user_cv_data_id={selectedEntry.data_id}
-                entryType={section.title}
+                entryType={titleWithoutSectionNumbers}
                 fetchData={fetchData}
                 onClose={handleCloseModal}
             />
@@ -27,7 +27,7 @@ const EntryModalWrapper = () => {
             section={section}
             fields={selectedEntry.fields}
             user_cv_data_id={selectedEntry.data_id}
-            entryType={section.title}
+            entryType={titleWithoutSectionNumbers}
             fetchData={fetchData}
             onClose={handleCloseModal}
         />

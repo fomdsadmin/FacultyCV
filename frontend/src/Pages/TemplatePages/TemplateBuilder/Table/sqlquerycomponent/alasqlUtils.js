@@ -180,7 +180,7 @@ export const initializeAlaSQL = () => {
                 rows.forEach((row) => {
                     result.push({
                         Description: "",
-                        "Duration (e.g. 8 weeks)": "8 weeks",
+                        "Duration (e.g. 8 weeks)": row.durations,
                         "# of students": row.totalStudents,
                         Year: row.year,
                         "Total Hours": row.totalHours,

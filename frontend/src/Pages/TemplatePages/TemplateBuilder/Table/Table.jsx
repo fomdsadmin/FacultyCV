@@ -11,7 +11,7 @@ const Table = ({ table, setTable }) => {
 
   const handleDataSourceChange = (dataSource) => {
     // When data source changes, clear the columns so they get reloaded from the new data source
-    setTable(table.id, { 
+    setTable(table.id, {
       dataSettings: { ...table.dataSettings, dataSource },
       tableSettings: { ...table.tableSettings, columns: [] }
     });
@@ -73,6 +73,11 @@ const Table = ({ table, setTable }) => {
     });
   };
 
+  const handleFillMissingEndDateWithCurrentChange = (e) => {
+    setTable(table.id, { dataSettings: { ...table.dataSettings, fillMissingEndDateWithCurrent: e.target.checked } });
+  };
+
+
   const dataSource = table?.dataSettings?.dataSource;
   const attributeKeys = useMemo(() => sectionsMap?.[dataSource]?.attributeKeys || {}, [sectionsMap, dataSource]);
 
@@ -114,6 +119,20 @@ const Table = ({ table, setTable }) => {
             />
             <span style={{ fontSize: 12, color: "#666" }}>
               Skip Date Filter (data will not be filtered by date ranges)
+            </span>
+          </label>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={table?.dataSettings?.fillMissingEndDateWithCurrent || false}
+              onChange={handleFillMissingEndDateWithCurrentChange}
+              style={{ cursor: "pointer" }}
+            />
+            <span style={{ fontSize: 12, color: "#666" }}>
+              Fill missing end date with current
             </span>
           </label>
         </div>
