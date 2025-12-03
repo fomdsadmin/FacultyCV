@@ -13,10 +13,9 @@ const buildColumnTextTemplate = (table) => {
     const { rows } = data || {};
     const { columnTextTemplate } = dataSettings.sqlSettings;
 
-    const columnTextTemplateHtml = columnTextTemplate.html;
+    const columnTextTemplateHtml = wrapWithOuterTag(columnTextTemplate.html, "div");
 
     let html = "";
-
 
     // Extract variables from template string (e.g., ${variableName})
     const regex = /\$\{([^}]+)\}/g;
