@@ -1,34 +1,38 @@
-const filterDateRanges = (sectionData, dataSectionTitle, templateDataStore) => {
-
+const getDateAttribute = (sectionData, dataSectionTitle, templateDataStore) => {
     const sectionsMap = templateDataStore.getSectionsMap();
-    const template = templateDataStore.getTemplate();
     const section = sectionsMap[dataSectionTitle];
+
+    if (!section) {
+        console.warn(`Section not found for dataSectionTitle: ${dataSectionTitle}`);
+        return null;
+    }
+
+    const sectionAttributesSet = new Set(Object.values(JSON.parse(section.attributes)));
+
+    if (sectionAttributesSet.has("dates")) {
+        return "dates";
+    } else if (sectionAttributesSet.has("end_date")) {
+        return "end_date";
+    } else if (sectionAttributesSet.has("year")) {
+        return "year";
+    } else {
+        return null
+    }
+}
+
+const filterDateRanges = (sectionData, dataSectionTitle, templateDataStore) => {
+    const dateAttribute = getDateAttribute(sectionData, dataSectionTitle, templateDataStore);
+
+    if (dateAttribute === null) {
+        return sectionData;
+    }
+
+    const template = templateDataStore.getTemplate();
 
     const templateStartYear = Number(template.start_year);
     const templateEndYear = Number(template.end_year);
 
     if (templateStartYear === 0 || templateEndYear === 0) {
-        return sectionData;
-    }
-
-    if (!section) {
-        console.warn(`Section not found for dataSectionTitle: ${dataSectionTitle}`);
-        return sectionData;
-    }
-
-    let dateAttribute = null;
-
-    const sectionAttributesSet = new Set(Object.values(JSON.parse(section.attributes)));
-
-    if (sectionAttributesSet.has("dates")) {
-        dateAttribute = "dates";
-    } else if (sectionAttributesSet.has("end_date")) {
-        dateAttribute = "end_date";
-    } else if (sectionAttributesSet.has("year")) {
-        dateAttribute = "year";
-    }
-
-    if (dateAttribute === null) {
         return sectionData;
     }
 
@@ -65,15 +69,26 @@ const filterDateRanges = (sectionData, dataSectionTitle, templateDataStore) => {
             }
         }
 
-        if (endYear) {
-            return endYear >= templateStartYear && endYear <= templateEndYear
+        // CASE 1: Both startYear and endYear exist normally
+        let itemStart = startYear;
+        let itemEnd = endYear;
+
+        // CASE 2: Only one exists → treat the item as a single-point year
+        if (itemStart == null && itemEnd != null) {
+            itemStart = itemEnd;
+        }
+        if (itemEnd == null && itemStart != null) {
+            itemEnd = itemStart;
         }
 
-        if (startYear) {
-            return startYear >= templateStartYear && startYear <= templateEndYear
+        // CASE 3: Both missing → can't determine a range
+        if (itemStart == null && itemEnd == null) {
+            return false;
         }
 
-        return true;
+        // Now perform intersection check:
+        // itemStart <= templateEnd AND itemEnd >= templateStart
+        return itemStart <= templateEndYear && itemEnd >= templateStartYear;
     });
 
     return sectionData;
@@ -85,26 +100,9 @@ const sortSectionData = (sectionData, dataSectionTitle, templateDataStore) => {
         return sectionData;
     }
 
-    // Find the section to get the attribute mapping
-    const sectionsMap = templateDataStore.getSectionsMap();
     const sortAscending = templateDataStore.getSortAscending();
-    const section = sectionsMap[dataSectionTitle];
-    if (!section) {
-        console.warn(`Section not found for dataSectionTitle: ${dataSectionTitle}`);
-        return sectionData;
-    }
 
-    let dateAttribute = null;
-
-    const sectionAttributesSet = new Set(Object.values(JSON.parse(section.attributes)));
-
-    if (sectionAttributesSet.has("dates")) {
-        dateAttribute = "dates";
-    } else if (sectionAttributesSet.has("end_date")) {
-        dateAttribute = "end_date";
-    } else if (sectionAttributesSet.has("year")) {
-        dateAttribute = "year";
-    }
+    const dateAttribute = getDateAttribute(sectionData, dataSectionTitle, templateDataStore);
 
     if (dateAttribute === null) {
         return sectionData;
@@ -180,4 +178,31 @@ const sortSectionData = (sectionData, dataSectionTitle, templateDataStore) => {
     });
 };
 
-export { filterDateRanges, sortSectionData };
+const appendMissingEndDateWithCurrent = (sectionData, dataSectionTitle, templateDataStore) => {
+    const dateAttribute = getDateAttribute(sectionData, dataSectionTitle, templateDataStore);
+
+    if (dateAttribute === null) {
+        return sectionData;
+    }
+
+    sectionData = sectionData.map((item) => {
+        const date = item.data_details?.[dateAttribute];
+
+        if (date && !date.includes("-")) {
+            return {
+                ...item,
+                data_details: {
+                    ...item.data_details,
+                    [dateAttribute]: date.trim() + " - current",
+                },
+            };
+        }
+
+        return item;
+    });
+
+    return sectionData;
+}
+
+export { filterDateRanges, sortSectionData, appendMissingEndDateWithCurrent };
+

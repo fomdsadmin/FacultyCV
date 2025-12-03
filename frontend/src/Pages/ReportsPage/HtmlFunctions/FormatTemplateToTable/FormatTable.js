@@ -1,4 +1,4 @@
-import { sortSectionData, filterDateRanges } from "./DateUtils";
+import { sortSectionData, filterDateRanges, appendMissingEndDateWithCurrent } from "./DateUtils";
 import { executeAlaSQL } from "Pages/TemplatePages/TemplateBuilder/Table/sqlquerycomponent/alasqlUtils";
 import { dataStyler } from "./DataStyling";
 
@@ -6,6 +6,7 @@ export const formatTable = (table, templateDataStore) => {
 
     const dataSource = table.dataSettings.dataSource;
     const skipDateFilter = table.dataSettings.skipDateFilter;
+    const fillMissingEndDateWithCurrent = table.dataSettings.fillMissingEndDateWithCurrent;
     const sqlQuery = table.dataSettings.sqlSettings.query;
     const columnItems = table.tableSettings.columns;
     const header = table.tableSettings.header;
@@ -20,6 +21,10 @@ export const formatTable = (table, templateDataStore) => {
     }
 
     cvData = sortSectionData(cvData, dataSource, templateDataStore);
+
+    if (fillMissingEndDateWithCurrent) {
+        cvData = appendMissingEndDateWithCurrent(cvData, dataSource, templateDataStore)
+    }
 
     if (!skipDateFilter) {
         cvData = filterDateRanges(cvData, dataSource, templateDataStore);
