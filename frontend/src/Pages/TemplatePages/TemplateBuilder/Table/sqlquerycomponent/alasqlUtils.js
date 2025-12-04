@@ -50,6 +50,22 @@ export const initializeAlaSQL = () => {
         "DOLLAR(value) → formats a number as money."
     );
 
+    registerAlaSQLFunction(
+        "EXTRACT_OTHER_DATA",
+        (value) => {
+            if (!value) return "";
+
+            const str = String(value);
+            const match = str.match(/\(([^()]*)\)\s*$/);
+            // Explanation: finds the LAST (...) group at the end of the string
+
+            if (!match) return "";
+            return match[1]; // the inner content
+        },
+        "EXTRACT_OTHER_DATA(value) → extracts the content inside the final parentheses."
+    );
+
+
     registerAlaSQLFromFunction(
         "EXPAND_DELIMITER_LIST",
         (dbtype, opts, cb, idx, query) => {
