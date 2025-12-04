@@ -69,9 +69,8 @@ const Table = ({ table, setTable }) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, fillMissingEndDateWithCurrent: e.target.checked } });
   };
 
-
-  const dataSource = table?.dataSettings?.dataSource;
-  const attributeKeys = useMemo(() => sectionsMap?.[dataSource]?.attributeKeys || {}, [sectionsMap, dataSource]);
+  const dataSource = table?.dataSettings?.sqlSettings?.dataSources?.[0]?.dataSource;
+  const attributeKeys = sectionsMap?.[dataSource]?.attributeKeys;
 
   return (
     <>
@@ -195,15 +194,14 @@ const Table = ({ table, setTable }) => {
               filterSettings={table?.dataSettings?.filterSettings}
               setFilterSettings={setFilterSettings}
             />
-            <SQLQueryComponent
-              dataSource={dataSource}
-              sqlSettings={table?.dataSettings?.sqlSettings}
-              setSqlSettings={setSqlSettings}
-              filterSettings={table?.dataSettings?.filterSettings}
-              attributeKeys={attributeKeys}
-            />
           </>
         )}
+        
+        {/* SQL Query Component - No longer requires dataSource */}
+        <SQLQueryComponent
+          sqlSettings={table?.dataSettings?.sqlSettings}
+          setSqlSettings={setSqlSettings}
+        />
       </div>
     </>
   );
