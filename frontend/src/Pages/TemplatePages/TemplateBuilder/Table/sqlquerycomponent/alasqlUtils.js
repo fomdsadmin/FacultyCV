@@ -3,6 +3,14 @@ import * as alasql from "alasql";
 // Metadata array for UI
 export const customAlaSQLFunctionsMeta = [];
 
+export const QUERY_TYPES = {
+    SELECT: "SELECT",           // Final query or intermediate queries
+    SELECT_INTO: "SELECT INTO",      // Store intermediate results into named tables
+    INSERT: "INSERT",           // Add rows to existing tables
+    UPDATE: "UPDATE",           // Modify existing table data
+    ALTER: "ALTER"              // Modify table structure (add/remove columns)
+};
+
 // Helper to register a function in alasql.fn
 function registerAlaSQLFunction(name, fn, instructions) {
     alasql.fn[name] = fn;

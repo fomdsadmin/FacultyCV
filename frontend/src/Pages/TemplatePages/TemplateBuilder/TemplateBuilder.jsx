@@ -36,6 +36,7 @@ import {
     updateItem,
     findItemDeep,
 } from "./utilities";
+import { QUERY_TYPES } from "./Table/sqlquerycomponent/alasqlUtils";
 
 const measuring = {
     droppable: {
@@ -308,12 +309,24 @@ const TemplateBuilderContent = ({
                 }
             },
             dataSettings: {
-                dataSource: Object.keys(sectionsMap)[0],
+                dataSource: Object.keys(sectionsMap)[0], // OLD
                 skipDateFilter: false,
                 fillMissingEndDateWithCurrent: false,
                 sqlSettings: {
-                    query: "SELECT * FROM ?",
-                    additionalDataSources: [],
+                    dataSources: [
+                        {
+                            dataSource: Object.keys(sectionsMap)[0],
+                            tableName: "main"
+                        }
+                    ],
+                    queries: [
+                        {
+                            queryType: QUERY_TYPES.SELECT,
+                            query: "SELECT * FROM main",
+                            note: "Select all data from the datasource"
+                        }
+                    ],
+                    query: "SELECT * FROM ?", // OLD
                     columnTextTemplate: {
                         html: "",
                         selected: false

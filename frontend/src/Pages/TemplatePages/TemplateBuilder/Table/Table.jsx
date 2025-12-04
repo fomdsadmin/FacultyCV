@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useTemplateBuilder } from "../TemplateBuilderContext";
-import DataSourceDropdown from "./DataSourceDropdown";
+import TablesManager from "./TablesManager";
 import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
 import FilterComponent from "./FilterComponent";
 import SQLQueryComponent from "./sqlquerycomponent/SQLQueryComponent";
@@ -8,14 +8,6 @@ import HeaderEditor from "./HeaderEditor";
 
 const Table = ({ table, setTable }) => {
   const { sectionsMap } = useTemplateBuilder();
-
-  const handleDataSourceChange = (dataSource) => {
-    // When data source changes, clear the columns so they get reloaded from the new data source
-    setTable(table.id, {
-      dataSettings: { ...table.dataSettings, dataSource },
-      tableSettings: { ...table.tableSettings, columns: [] }
-    });
-  };
 
   const setFilterSettings = (updatedFilterSettings) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, filterSettings: updatedFilterSettings } });
@@ -104,9 +96,9 @@ const Table = ({ table, setTable }) => {
             }}
           />
         </div>
-        <DataSourceDropdown
-          dataSource={dataSource}
-          setDataSettings={handleDataSourceChange}
+        <TablesManager
+          sqlSettings={table?.dataSettings?.sqlSettings}
+          setSqlSettings={setSqlSettings}
         />
 
         <div style={{ marginBottom: 16 }}>
