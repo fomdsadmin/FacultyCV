@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useTemplateBuilder } from "../../TemplateBuilderContext";
 import MockDataTable from "./MockDataTable";
-import SQLQueryEditor from "./SQLQueryEditor";
+import SQLQueryManager from "./SQLQueryManager";
 import QueryResultsTable from "./QueryResultsTable";
 import CustomTableTemplate from "./CustomTableTemplate";
 import ColumnDataTypeConfig from "./ColumnDataTypeConfig";
-import TablesManager from "../TablesManager";
 import { ErrorMessage, InfoMessage } from "./MessageComponents";
 import { initializeAlaSQL, executeAlaSQL } from "./alasqlUtils";
 import { generateMockData } from "./mockDataUtils";
@@ -186,13 +185,11 @@ const SQLQueryComponent = ({ dataSource, sqlSettings, setSqlSettings, filterSett
                 )}
 
 
-                {/* SQL Query Editor */}
-                <SQLQueryEditor
-                    query={sqlSettings?.query}
-                    onQueryChange={handleCustomQueryChange}
-                    onExecute={executeQuery}
-                    loading={loading}
-                    onKeyPress={handleKeyPress}
+
+                {/* SQL Query Manager - Additional Queries */}
+                <SQLQueryManager
+                    sqlSettings={sqlSettings}
+                    setSqlSettings={setSqlSettings}
                 />
 
                 {/* Error Message */}

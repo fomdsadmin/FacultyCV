@@ -309,7 +309,6 @@ const TemplateBuilderContent = ({
                 }
             },
             dataSettings: {
-                dataSource: Object.keys(sectionsMap)[0], // OLD
                 skipDateFilter: false,
                 fillMissingEndDateWithCurrent: false,
                 sqlSettings: {
@@ -326,7 +325,6 @@ const TemplateBuilderContent = ({
                             note: "Select all data from the datasource"
                         }
                     ],
-                    query: "SELECT * FROM ?", // OLD
                     columnTextTemplate: {
                         html: "",
                         selected: false
