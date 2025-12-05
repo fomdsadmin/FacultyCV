@@ -169,13 +169,12 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
                                                 <label className="block text-xs font-medium text-gray-700 mb-1">
                                                     Note (Optional)
                                                 </label>
-                                                <input
-                                                    type="text"
+                                                <textarea
                                                     value={query.note || ""}
                                                     onChange={(e) =>
                                                         handleUpdateQuery(queryId, "note", e.target.value)
                                                     }
-                                                    className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="w-full px-2 py-1 border border-gray-300 rounded text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical min-h-20"
                                                     placeholder="e.g., Description of this query"
                                                 />
                                             </div>
@@ -207,7 +206,7 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
                                                 </button>
                                             </div>
                                             {query.note &&
-                                                <p className="text-xs text-gray-600 mb-2">{query.note}</p>
+                                                <p className="text-xs text-gray-600 mb-2 whitespace-pre-wrap break-words">{query.note}</p>
                                             }
 
                                             <div className="mt-2 p-2 bg-white rounded border border-gray-200">
@@ -255,12 +254,11 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
                             <label className="block text-xs font-medium text-gray-700 mb-1">
                                 Note (Optional)
                             </label>
-                            <input
-                                type="text"
+                            <textarea
                                 value={newQueryNote}
                                 onChange={(e) => setNewQueryNote(e.target.value)}
                                 placeholder="e.g., Description of this query"
-                                className="w-full px-3 py-2 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded text-xs font-mono focus:outline-none focus:ring-2 focus:ring-green-500 resize-vertical min-h-20"
                             />
                         </div>
 

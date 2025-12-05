@@ -63,4 +63,4 @@ class TemplateDataStore {
 }
 
 // Export singleton instance
-export {TemplateDataStore};
+export { TemplateDataStore };
