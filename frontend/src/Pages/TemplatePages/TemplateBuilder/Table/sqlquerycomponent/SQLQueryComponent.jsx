@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import MockDataManager from "./MockDataManager";
 import SQLQueryManager from "./SQLQueryManager";
 import CustomTableTemplate from "./CustomTableTemplate";
+import ExecuteQueriesButton from "./ExecuteQueriesButton";
 import { initializeAlaSQL } from "./alasqlUtils";
 import { generateMockData } from "./mockDataUtils";
 import { useTemplateBuilder } from "../../TemplateBuilderContext";
 
 // Initialize AlaSQL custom functions
 initializeAlaSQL();
-
 const SQLQueryComponent = ({ sqlSettings, setSqlSettings }) => {
     const { sectionsMap } = useTemplateBuilder();
     const [mockDataMap, setMockDataMap] = useState({});
@@ -53,6 +53,12 @@ const SQLQueryComponent = ({ sqlSettings, setSqlSettings }) => {
                     mockDataMap={mockDataMap}
                     setMockDataMap={setMockDataMap}
                     dataSources={sqlSettings?.dataSources}
+                />
+
+                {/* Execute Queries Button */}
+                <ExecuteQueriesButton
+                    sqlSettings={sqlSettings}
+                    mockDataMap={mockDataMap}
                 />
 
                 {/* SQL Query Manager - Additional Queries */}

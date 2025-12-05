@@ -320,7 +320,6 @@ const TemplateBuilderContent = ({
                     ],
                     queries: [
                         {
-                            queryType: QUERY_TYPES.SELECT,
                             query: "SELECT * FROM main",
                             note: "Select all data from the datasource"
                         }

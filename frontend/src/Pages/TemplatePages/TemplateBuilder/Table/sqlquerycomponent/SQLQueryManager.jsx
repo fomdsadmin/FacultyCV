@@ -1,17 +1,14 @@
 import React, { useState } from "react";
 import { FiTrash2, FiEdit2, FiPlus } from "react-icons/fi";
-import { customAlaSQLFunctionsMeta, QUERY_TYPES } from "./alasqlUtils";
+import { customAlaSQLFunctionsMeta } from "./alasqlUtils";
 
 const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
     const [editingQueryId, setEditingQueryId] = useState(null);
     const [showAddForm, setShowAddForm] = useState(false);
-    const [newQueryType, setNewQueryType] = useState(QUERY_TYPES.SELECT);
     const [newQueryContent, setNewQueryContent] = useState("");
     const [newQueryNote, setNewQueryNote] = useState("");
     const [error, setError] = useState("");
     const [showFunctions, setShowFunctions] = useState(false);
-
-    const ALLOWED_QUERY_TYPES = Object.values(QUERY_TYPES);
 
     const queries = sqlSettings?.queries || [];
 
@@ -22,16 +19,9 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
             return;
         }
 
-        // Validate query type
-        if (!ALLOWED_QUERY_TYPES.includes(newQueryType)) {
-            setError("Invalid query type");
-            return;
-        }
-
         // Add new query
         const newQuery = {
             id: Date.now().toString(),
-            queryType: newQueryType,
             query: newQueryContent.trim(),
             note: newQueryNote.trim()
         };
@@ -45,7 +35,6 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
 
         // Reset form
         setNewQueryContent("");
-        setNewQueryType(QUERY_TYPES.SELECT);
         setNewQueryNote("");
         setError("");
         setShowAddForm(false);
@@ -80,27 +69,13 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
         }
     };
 
-    const handleSaveEdit = () => {
-        setEditingQueryId(null);
-    };
-
-    const getTypeColor = (type) => {
-        const colors = {
-            [QUERY_TYPES.SELECT]: "bg-blue-100 text-blue-800 border-blue-300",
-            [QUERY_TYPES.SELECT_INTO]: "bg-purple-100 text-purple-800 border-purple-300",
-            [QUERY_TYPES.INSERT]: "bg-green-100 text-green-800 border-green-300",
-            [QUERY_TYPES.UPDATE]: "bg-yellow-100 text-yellow-800 border-yellow-300",
-            [QUERY_TYPES.ALTER]: "bg-red-100 text-red-800 border-red-300"
-        };
-        return colors[type] || "bg-gray-100 text-gray-800 border-gray-300";
-    };
 
     return (
         <div className="mb-4 p-3 bg-white rounded border border-gray-300">
             <div className="mb-3">
                 <h4 className="text-xs font-semibold text-gray-800 mb-2">SQL Queries</h4>
                 <p className="text-gray-600 text-xs mb-3">
-                    Manage SQL queries of specific types (SELECT, SELECT INTO, INSERT, UPDATE, ALTER)
+                    Add custom SQL queries to run against your data
                 </p>
             </div>
 
@@ -166,29 +141,15 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
                                 <div
                                     key={queryId}
                                     className="p-3 border border-gray-200 rounded bg-gray-50 hover:bg-gray-100 transition-colors"
+                                    onClick={(e) => {
+                                        if (editingQueryId === queryId && e.target.closest('textarea, input') === null) {
+                                            setEditingQueryId(null);
+                                        }
+                                    }}
                                 >
                                     {editingQueryId === queryId ? (
                                         <div className="space-y-2">
                                             {/* Edit Mode */}
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                    Query Type
-                                                </label>
-                                                <select
-                                                    value={query.queryType}
-                                                    onChange={(e) =>
-                                                        handleUpdateQuery(queryId, "queryType", e.target.value)
-                                                    }
-                                                    className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                >
-                                                    {ALLOWED_QUERY_TYPES.map((type) => (
-                                                        <option key={type} value={type}>
-                                                            {type}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-700 mb-1">
                                                     Query Content
@@ -198,6 +159,7 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
                                                     onChange={(e) =>
                                                         handleUpdateQuery(queryId, "query", e.target.value)
                                                     }
+                                                    autoFocus
                                                     className="w-full px-2 py-1 border border-gray-300 rounded text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical min-h-20"
                                                     placeholder="Enter SQL query..."
                                                 />
@@ -213,59 +175,40 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
                                                     onChange={(e) =>
                                                         handleUpdateQuery(queryId, "note", e.target.value)
                                                     }
-                                                    placeholder="e.g., Description of this query"
                                                     className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="e.g., Description of this query"
                                                 />
                                             </div>
 
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={handleSaveEdit}
-                                                    className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium hover:bg-green-600 transition-colors"
-                                                >
-                                                    Save
-                                                </button>
-                                                <button
-                                                    onClick={() => setEditingQueryId(null)}
-                                                    className="px-3 py-1 bg-gray-400 text-white rounded text-xs font-medium hover:bg-gray-500 transition-colors"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
+                                            <button
+                                                onClick={() => setEditingQueryId(null)}
+                                                className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium hover:bg-green-600 transition-colors"
+                                            >
+                                                Done
+                                            </button>
                                         </div>
                                     ) : (
                                         <div>
                                             {/* View Mode */}
-                                            <div className="flex items-start justify-between mb-2">
-                                                <div>
-                                                    <span
-                                                        className={`inline-block px-2 py-1 rounded text-xs font-medium border ${getTypeColor(
-                                                            query.queryType
-                                                        )}`}
-                                                    >
-                                                        {query.queryType}
-                                                    </span>
-                                                    {query.note && (
-                                                        <p className="text-xs text-gray-600 mt-1">{query.note}</p>
-                                                    )}
-                                                </div>
-                                                <div className="flex gap-1">
-                                                    <button
-                                                        onClick={() => setEditingQueryId(queryId)}
-                                                        className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
-                                                        title="Edit query"
-                                                    >
-                                                        <FiEdit2 size={14} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteQuery(queryId)}
-                                                        className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
-                                                        title="Delete query"
-                                                    >
-                                                        <FiTrash2 size={14} />
-                                                    </button>
-                                                </div>
+                                            <div className="flex gap-1 mb-2">
+                                                <button
+                                                    onClick={() => setEditingQueryId(queryId)}
+                                                    className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                                                    title="Edit query"
+                                                >
+                                                    <FiEdit2 size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteQuery(queryId)}
+                                                    className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                                                    title="Delete query"
+                                                >
+                                                    <FiTrash2 size={14} />
+                                                </button>
                                             </div>
+                                            {query.note &&
+                                                <p className="text-xs text-gray-600 mb-2">{query.note}</p>
+                                            }
 
                                             <div className="mt-2 p-2 bg-white rounded border border-gray-200">
                                                 <pre className="text-xs font-mono text-gray-700 whitespace-pre-wrap break-words">
@@ -293,23 +236,6 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
                     </button>
                 ) : (
                     <div className="p-3 bg-gray-50 rounded border border-gray-200">
-                        <div className="mb-3">
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Query Type *
-                            </label>
-                            <select
-                                value={newQueryType}
-                                onChange={(e) => setNewQueryType(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-green-500"
-                            >
-                                {ALLOWED_QUERY_TYPES.map((type) => (
-                                    <option key={type} value={type}>
-                                        {type}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
                         <div className="mb-3">
                             <label className="block text-xs font-medium text-gray-700 mb-1">
                                 Query Content *
@@ -355,7 +281,6 @@ const SQLQueryManager = ({ sqlSettings = {}, setSqlSettings }) => {
                                 onClick={() => {
                                     setShowAddForm(false);
                                     setNewQueryContent("");
-                                    setNewQueryType(QUERY_TYPES.SELECT);
                                     setNewQueryNote("");
                                     setError("");
                                 }}

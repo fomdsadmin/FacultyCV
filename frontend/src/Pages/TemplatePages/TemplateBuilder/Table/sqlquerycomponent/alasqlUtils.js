@@ -3,14 +3,6 @@ import * as alasql from "alasql";
 // Metadata array for UI
 export const customAlaSQLFunctionsMeta = [];
 
-export const QUERY_TYPES = {
-    SELECT: "SELECT",           // Final query or intermediate queries
-    SELECT_INTO: "SELECT INTO",      // Store intermediate results into named tables
-    INSERT: "INSERT",           // Add rows to existing tables
-    UPDATE: "UPDATE",           // Modify existing table data
-    ALTER: "ALTER"              // Modify table structure (add/remove columns)
-};
-
 // Helper to register a function in alasql.fn
 function registerAlaSQLFunction(name, fn, instructions) {
     alasql.fn[name] = fn;
@@ -245,6 +237,98 @@ export const executeAlaSQL = (query, data) => {
             error: err.message,
             columns: [],
             rows: []
+        };
+    }
+};
+
+// Execute all queries in sqlSettings, wiping temp tables and loading data from each datasource
+export const executeAlaSQLQueries = (sqlSettings, mockDataMap) => {
+    try {
+        const tables = alasql("SHOW TABLES");
+        console.log("jjfilter tables", tables)
+
+        tables.forEach(( table ) => {
+            if (table?.tableid) {
+                alasql(`DROP TABLE ${table.tableid}`);
+            }
+        });
+
+        const results = {
+            success: true,
+            errors: [],
+            executedQueries: []
+        };
+
+        const dataSources = sqlSettings?.dataSources || [];
+        const queries = sqlSettings?.queries || [];
+
+        // Step 1: Load mock data for each data source into AlaSQL tables
+        dataSources.forEach(({ dataSource, tableName }) => {
+            const mockData = mockDataMap[tableName];
+
+            if (!mockData || mockData.length === 0) {
+                results.errors.push(`No mock data for table ${tableName}`);
+                return;
+            }
+
+            try {
+                // Create a table with the mock data using SELECT INTO
+                alasql(`CREATE TABLE ${tableName}`);
+                alasql(`SELECT * INTO ${tableName} FROM ?`, [mockData]);
+                results.executedQueries.push({
+                    type: "DATA_LOAD",
+                    table: tableName,
+                    dataSource: dataSource,
+                    rowsLoaded: mockData.length
+                });
+            } catch (err) {
+                results.errors.push(`Error loading data for ${tableName}: ${err.message}`);
+            }
+        });
+
+        // Step 2: Execute each query in order
+        let finalResult = [];
+        queries.forEach((queryObj, index) => {
+            const { query, note } = queryObj;
+
+            if (!query || query.trim() === "") {
+                return; // Skip empty queries
+            }
+
+            try {
+                const queryResult = alasql(query);
+
+                // Capture the result of the last successful query
+                if (queryResult && Array.isArray(queryResult)) {
+                    finalResult = queryResult;
+                }
+
+                results.executedQueries.push({
+                    query: query,
+                    note: note,
+                    index: index,
+                    success: true
+                });
+            } catch (err) {
+                results.errors.push(`Query ${index}: ${err.message}`);
+                results.executedQueries.push({
+                    query: query,
+                    index: index,
+                    success: false,
+                    error: err.message
+                });
+            }
+        });
+
+        results.finalResult = finalResult;
+        return results;
+    } catch (err) {
+        console.error("Error executing AlaSQL queries:", err);
+        return {
+            success: false,
+            error: err.message,
+            errors: [err.message],
+            executedQueries: []
         };
     }
 };
