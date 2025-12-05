@@ -110,8 +110,11 @@ const DragOverlayItem = ({
 
 
 // Main ColumnBuilder Component
-const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
+const ColumnBuilder = ({ dataSources, tableSettings, setTable }) => {
     const { sectionsMap } = useTemplateBuilder();
+
+    // Get the first data source's name
+    const primaryDataSource = dataSources && dataSources.length > 0 ? dataSources[0].dataSource : null;
 
     // Initialize data from datasource attributes
     const [attributeItems, setAttributeItems] = useState(() => {
@@ -119,8 +122,8 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
             return tableSettings.columns;
         }
 
-        // Get attributes from the selected dataSource
-        const section = dataSource && sectionsMap ? sectionsMap[dataSource] : null;
+        // Get attributes from the first dataSource
+        const section = primaryDataSource && sectionsMap ? sectionsMap[primaryDataSource] : null;
         if (section && section.attributes) {
             return section.attributes;
         }
@@ -133,14 +136,14 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
     useEffect(() => {
         // ONLY load all attributes if columns is explicitly an empty array []
         if (Array.isArray(tableSettings?.columns) && tableSettings.columns.length === 0) {
-            const section = dataSource && sectionsMap ? sectionsMap[dataSource] : null;
+            const section = primaryDataSource && sectionsMap ? sectionsMap[primaryDataSource] : null;
             if (section && section.attributes) {
                 setAttributeItems(section.attributes);
             } else {
                 setAttributeItems([]);
             }
         }
-    }, [dataSource, sectionsMap, tableSettings?.columns]);
+    }, [primaryDataSource, sectionsMap, tableSettings?.columns]);
 
     const [activeId, setActiveId] = useState(null);
     const [overId, setOverId] = useState(null);
@@ -318,7 +321,7 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
         setAttributeItems((prevItems) => [newGroup, ...prevItems]);
     };
 
-    if (!dataSource) {
+    if (!primaryDataSource) {
         return (
             <div style={{ color: "#999", fontSize: 12, padding: "8px 0" }}>
                 No data source selected
@@ -329,15 +332,14 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
     return (
         <div style={{ marginTop: 16, marginBottom: 16, padding: "12px", backgroundColor: "#f9f9f9", borderRadius: 6 }}>
             <div style={{ marginBottom: 16 }}>
-                <strong style={{ fontSize: 13, color: "#333" }}>Columns for {dataSource}</strong>
+                <strong style={{ fontSize: 13, color: "#333" }}>Columns for {primaryDataSource}</strong>
             </div>
 
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                 <AddAttributeGroupModal onAdd={handleAddAttributeGroup} />
                 <AddAttributeModal
                     onAdd={handleAddAttribute}
-                    dataSource={dataSource}
-                    attributeItems={attributeItems}
+                    dataSources={dataSources}
                 />
                 <AddCustomAttributeModal onAdd={handleAddAttribute} />
             </div>
@@ -377,7 +379,7 @@ const ColumnBuilder = ({ dataSource, tableSettings, setTable }) => {
                                 onRemove={() => handleRemove(id)}
                                 attribute={itemData}
                                 setAttribute={(updates) => handleSetAttribute(id, updates)}
-                                availableAttributes={dataSource && sectionsMap ? sectionsMap[dataSource].attributes : []}
+                                availableAttributes={primaryDataSource && sectionsMap ? sectionsMap[primaryDataSource].attributes : []}
                             />
                         ) : (
                             <SortableAttributeGroup

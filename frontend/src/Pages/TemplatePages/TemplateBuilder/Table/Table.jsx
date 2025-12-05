@@ -69,8 +69,7 @@ const Table = ({ table, setTable }) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, fillMissingEndDateWithCurrent: e.target.checked } });
   };
 
-  const dataSource = table?.dataSettings?.sqlSettings?.dataSources?.[0]?.dataSource;
-  const attributeKeys = sectionsMap?.[dataSource]?.attributeKeys;
+  const dataSources = table?.dataSettings?.sqlSettings?.dataSources;
 
   return (
     <>
@@ -176,7 +175,7 @@ const Table = ({ table, setTable }) => {
           </div>
         )}
 
-        {dataSource && (
+        {dataSources && (
           <>
             <HeaderEditor
               header={table?.tableSettings?.header || ""}
@@ -185,12 +184,12 @@ const Table = ({ table, setTable }) => {
               onWrapperTagChange={handleWrapperTagChange}
             />
             <ColumnBuilder
-              dataSource={dataSource}
+              dataSources={dataSources}
               tableSettings={table?.tableSettings || {}}
               setTable={(updateFn) => setTable(table.id, updateFn(table))}
             />
             <FilterComponent
-              dataSource={dataSource}
+              dataSources={dataSources}
               filterSettings={table?.dataSettings?.filterSettings}
               setFilterSettings={setFilterSettings}
             />
