@@ -50,30 +50,19 @@ export const initializeAlaSQL = () => {
         "DOLLAR(value) → formats a number as money."
     );
 
-    registerAlaSQLFromFunction(
-        "EXPAND_DELIMITER_LIST",
-        (dbtype, opts, cb, idx, query) => {
-            const column = opts.column;
-            const delimiter = opts.delimiter;
-            const table = opts.table || [];
-            const expanded = [];
+    registerAlaSQLFunction(
+        "EXTRACT_OTHER_DATA",
+        (value) => {
+            if (!value) return "";
 
-            table.forEach((row) => {
-                const value = row[column];
-                if (!value) {
-                    expanded.push(row);
-                } else {
-                    String(value).split(delimiter).map((s) => s.trim()).forEach((item) => {
-                        const newRow = Object.assign({}, row, { [column]: item });
-                        expanded.push(newRow);
-                    });
-                }
-            });
+            const str = String(value);
+            const match = str.match(/\(([^()]*)\)\s*$/);
+            // Explanation: finds the LAST (...) group at the end of the string
 
-            if (cb) return cb(expanded, idx, query);
-            return expanded;
+            if (!match) return "";
+            return match[1]; // the inner content
         },
-        "EXPAND_DELIMITER_LIST({table, column, delimiter}) → splits a column by delimiter and returns multiple rows."
+        "EXTRACT_OTHER_DATA(value) → extracts the content inside the final parentheses."
     );
 
     registerAlaSQLFromFunction(
@@ -106,7 +95,21 @@ export const initializeAlaSQL = () => {
     registerAlaSQLFromFunction(
         "AGGREGATE_CLINICAL_TEACHING",
         (dbtype, opts, cb, idx, query) => {
-            const table = opts.table || [];
+            const tableInput = opts.table;
+
+            // If tableInput is a string table name (ex: "main")
+            // convert it to a real AlaSQL table
+            let table;
+
+            if (Array.isArray(tableInput)) {
+                table = tableInput; // normal case when using ?
+            } else if (typeof tableInput === "string") {
+                // The user passed "main" instead of ?
+                const t = alasql.tables[tableInput];
+                table = t ? t.data : [];
+            } else {
+                table = [];
+            }
 
             const extractYear = (dates) => {
                 if (!dates) return null;
@@ -221,6 +224,104 @@ export const executeAlaSQL = (query, data) => {
             error: err.message,
             columns: [],
             rows: []
+        };
+    }
+};
+
+// Execute all queries in sqlSettings, wiping temp tables and loading data from each datasource
+export const executeAlaSQLQueries = (sqlSettings, dataMap) => {
+    try {
+        const tables = alasql("SHOW TABLES");
+
+        tables.forEach((table) => {
+            if (table?.tableid) {
+                alasql(`DROP TABLE ${table.tableid}`);
+            }
+        });
+
+        const results = {
+            success: true,
+            errors: [],
+            executedQueries: []
+        };
+
+        const dataSources = sqlSettings?.dataSources || [];
+        const queries = sqlSettings?.queries || [];
+
+        // Step 1: Load mock data for each data source into AlaSQL tables
+        dataSources.forEach(({ dataSource, tableName }) => {
+            const mockData = dataMap[tableName];
+
+            if (!mockData || mockData.length === 0) {
+                results.errors.push(`No mock data for table ${tableName}`);
+                return;
+            }
+
+            try {
+                // Create a table with the mock data using SELECT INTO
+                alasql(`CREATE TABLE ${tableName}`);
+                alasql(`SELECT * INTO ${tableName} FROM ?`, [mockData]);
+                results.executedQueries.push({
+                    type: "DATA_LOAD",
+                    table: tableName,
+                    dataSource: dataSource,
+                    rowsLoaded: mockData.length
+                });
+            } catch (err) {
+                results.errors.push(`Error loading data for ${tableName}: ${err.message}`);
+            }
+        });
+
+        // Step 2: Execute each query in order
+        let finalResult = [];
+        let columns = [];
+        queries.forEach((queryObj, index) => {
+            const { query, note } = queryObj;
+
+            if (!query || query.trim() === "") {
+                return; // Skip empty queries
+            }
+
+            try {
+                const queryResult = alasql(query);
+
+                // Capture the result of the last successful query
+                if (queryResult && Array.isArray(queryResult)) {
+                    finalResult = queryResult;
+                    // Extract column names from the result
+                    if (queryResult.length > 0) {
+                        columns = Object.keys(queryResult[0]);
+                    }
+                }
+
+                results.executedQueries.push({
+                    query: query,
+                    note: note,
+                    index: index,
+                    success: true
+                });
+            } catch (err) {
+                results.errors.push(`Query ${index}: ${err.message}`);
+                results.executedQueries.push({
+                    query: query,
+                    index: index,
+                    success: false,
+                    error: err.message
+                });
+            }
+        });
+
+        results.finalResult = finalResult;
+        results.columns = columns;
+        results.rows = finalResult;
+        return results;
+    } catch (err) {
+        console.error("Error executing AlaSQL queries:", err);
+        return {
+            success: false,
+            error: err.message,
+            errors: [err.message],
+            executedQueries: []
         };
     }
 };

@@ -1,5 +1,5 @@
 // Mock data generation utilities
-export const generateMockData = (section, keys, attributeKeys, rowCount = null, columnDataTypes = {}) => {
+export const generateMockData = (section, keys, rowCount = null, columnDataTypes = {}) => {
     if (!section) return [];
 
     const attributesType = section.attributes_type || {};
