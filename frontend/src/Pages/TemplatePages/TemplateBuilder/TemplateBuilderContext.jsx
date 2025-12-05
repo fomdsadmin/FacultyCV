@@ -1,5 +1,6 @@
 import { getAllSections } from "graphql/graphqlHelpers";
 import { createContext, useContext, useEffect, useState } from "react"
+import { UserCvStore } from "Pages/ReportsPage/HtmlFunctions/UserCvTableBuilder/UserCvStore";
 
 const TemplateBuilderContext = createContext(null);
 
@@ -25,6 +26,66 @@ export const buildAttributeObject = (attributeName, attributeKey) => {
     children: [],
   }
 }
+
+/**
+ * Converts a class instance into a sectionsMap-compatible structure
+ * @param {string} sectionName - The name of the section (data source)
+ * @param {Object} classInstance - An instance of the class to convert
+ * @returns {Object} A structure compatible with sectionsMap
+ */
+export const classToSectionMap = (sectionName, classInstance) => {
+  // Use getAllGetters() method if it exists on the class, otherwise extract manually
+  let getters = {};
+  
+  if (typeof classInstance.getAllGetters === 'function') {
+    // Use the class's own getAllGetters method
+    getters = classInstance.getAllGetters();
+  } else {
+    // Fallback: manually extract getters
+    const proto = Object.getPrototypeOf(classInstance);
+    
+    for (const name of Object.getOwnPropertyNames(proto)) {
+      // Skip constructor, reset method, and getAllGetters
+      if (name === 'constructor' || name === 'reset' || name === 'getAllGetters') continue;
+      
+      // Check if it's a getter method (starts with 'get')
+      if (name.startsWith('get') && typeof proto[name] === 'function') {
+        // Convert 'getCurrentDate' to 'Current Date'
+        const humanReadable = name
+          .replace(/^get/, '')  // Remove 'get' prefix
+          .replace(/([A-Z])/g, ' $1')  // Add space before capitals
+          .trim()
+          .replace(/^ /, '');  // Remove leading space if any
+        
+        // Store with human-readable name as key and method name as value
+        getters[humanReadable] = name;
+      }
+    }
+  }
+
+  // Build attributes array and keys mapping
+  const attributes = Object.entries(getters).map(
+    ([attributeName, methodName]) =>
+      buildAttributeObject(attributeName, methodName)
+  );
+
+  const attributeKeys = getters; // { "Human Name": "getMethodName", ... }
+
+  // All attributes from a class are considered 'text' type (not dropdown)
+  const attributes_type = {};
+  Object.keys(attributeKeys).forEach((attrName) => {
+    attributes_type[attrName] = 'text';
+  });
+
+  return {
+    title: sectionName,
+    attributes,
+    attributeKeys,
+    attributes_type,
+    dropdownOptions: {}, // No dropdown options for class-based sections
+  };
+}
+
 
 export const TemplateBuilderProvider = ({
   children,
@@ -74,7 +135,10 @@ export const TemplateBuilderProvider = ({
         };
       });
 
-
+      // Add UserCvStore as a section (class-based data source)
+      const userCvStore = new UserCvStore({});
+      sectionsMap["userCv"] = classToSectionMap("userCv", userCvStore);
+      
       setSectionsMap(sectionsMap)
       console.log(sectionsMap);
     }

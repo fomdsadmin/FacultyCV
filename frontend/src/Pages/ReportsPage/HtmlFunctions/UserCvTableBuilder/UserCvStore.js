@@ -161,6 +161,60 @@ class UserCvStore {
     getHospitalAffiliations() {
         return this.cv?.hospital_affiliations;
     }
+
+    // Get all getter methods and their human-readable names
+    getAllGetters() {
+        const getters = {};
+        const proto = Object.getPrototypeOf(this);
+        
+        // Iterate through all methods in the prototype
+        for (const name of Object.getOwnPropertyNames(proto)) {
+            // Skip constructor, reset method, and getCv
+            if (name === 'constructor' || name === 'reset' || name === 'getCv' || name === 'getAllGetters') continue;
+            
+            // Check if it's a getter method (starts with 'get')
+            if (name.startsWith('get') && typeof proto[name] === 'function') {
+                // Convert 'getCurrentDate' to 'Current Date'
+                const humanReadable = name
+                    .replace(/^get/, '')  // Remove 'get' prefix
+                    .replace(/([A-Z])/g, ' $1')  // Add space before capitals
+                    .trim()
+                    .replace(/^ /, '');  // Remove leading space if any
+                
+                // Use camelCase as the key for accessing the method
+                getters[humanReadable] = name;
+            }
+        }
+        
+        return getters;
+    }
+
+    // Get all getter values as a single row object
+    // Returns object with getter method names as keys and their values
+    getRowDataFromGetters() {
+        const rowData = {};
+        const proto = Object.getPrototypeOf(this);
+        
+        // Iterate through all methods in the prototype
+        for (const name of Object.getOwnPropertyNames(proto)) {
+            // Skip constructor, reset method, getCv, and meta methods
+            if (name === 'constructor' || name === 'reset' || name === 'getCv' || 
+                name === 'getAllGetters' || name === 'getRowDataFromGetters') continue;
+            
+            // Check if it's a getter method (starts with 'get')
+            if (name.startsWith('get') && typeof proto[name] === 'function') {
+                // Call the getter and store the value with method name as key
+                try {
+                    rowData[name] = this[name]();
+                } catch (e) {
+                    console.error(`Error calling ${name}:`, e);
+                    rowData[name] = null;
+                }
+            }
+        }
+        
+        return rowData;
+    }
     
     // Reset all data
     reset() {

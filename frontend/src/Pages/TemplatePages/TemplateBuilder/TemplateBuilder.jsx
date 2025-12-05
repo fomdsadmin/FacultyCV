@@ -308,12 +308,21 @@ const TemplateBuilderContent = ({
                 }
             },
             dataSettings: {
-                dataSource: Object.keys(sectionsMap)[0],
                 skipDateFilter: false,
                 fillMissingEndDateWithCurrent: false,
                 sqlSettings: {
-                    query: "SELECT * FROM ?",
-                    additionalDataSources: [],
+                    dataSources: [
+                        {
+                            dataSource: Object.keys(sectionsMap)[0],
+                            tableName: "main"
+                        }
+                    ],
+                    queries: [
+                        {
+                            query: "SELECT * FROM main",
+                            note: "Select all data from the datasource"
+                        }
+                    ],
                     columnTextTemplate: {
                         html: "",
                         selected: false

@@ -5,6 +5,7 @@ import { normalizeDeclarations } from "Pages/Declarations/Declarations";
 import { getUserAffiliations } from "graphql/graphqlHelpers";
 import { TemplateDataStore } from "./TemplateDataStore";
 import { formatTableItems } from "./FormatItems";
+import { UserCvStore } from "../UserCvTableBuilder/UserCvStore";
 
 export const formatUserTables = async (userInfoInput, templateWithEndStartDate) => {
     const userProfiles = [];
@@ -74,6 +75,18 @@ export const formatUserTables = async (userInfoInput, templateWithEndStartDate) 
 
         // Build user profile section
         userProfile = await buildUserProfile(currentUserInfo, templateDataStore);
+
+        // Create UserCvStore with userProfile data
+        const userCvStore = new UserCvStore(userProfile);
+
+        newUserCvDataMap["userCv"] = [
+            {
+                data_details: userCvStore.getRowDataFromGetters()
+            }
+        ]
+
+        // Update the store with the new sections added
+        templateDataStore.setUserCvDataMap(newUserCvDataMap);
 
         // Parse the template structure and process each group
         const items = JSON.parse(templateDataStore.getTemplate().template_structure)?.templateBuilder?.items;

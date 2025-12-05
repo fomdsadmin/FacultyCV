@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useTemplateBuilder } from "../TemplateBuilderContext";
-import DataSourceDropdown from "./DataSourceDropdown";
+import TablesManager from "./TablesManager";
 import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
 import FilterComponent from "./FilterComponent";
 import SQLQueryComponent from "./sqlquerycomponent/SQLQueryComponent";
@@ -8,14 +8,6 @@ import HeaderEditor from "./HeaderEditor";
 
 const Table = ({ table, setTable }) => {
   const { sectionsMap } = useTemplateBuilder();
-
-  const handleDataSourceChange = (dataSource) => {
-    // When data source changes, clear the columns so they get reloaded from the new data source
-    setTable(table.id, {
-      dataSettings: { ...table.dataSettings, dataSource },
-      tableSettings: { ...table.tableSettings, columns: [] }
-    });
-  };
 
   const setFilterSettings = (updatedFilterSettings) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, filterSettings: updatedFilterSettings } });
@@ -77,9 +69,7 @@ const Table = ({ table, setTable }) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, fillMissingEndDateWithCurrent: e.target.checked } });
   };
 
-
-  const dataSource = table?.dataSettings?.dataSource;
-  const attributeKeys = useMemo(() => sectionsMap?.[dataSource]?.attributeKeys || {}, [sectionsMap, dataSource]);
+  const dataSources = table?.dataSettings?.sqlSettings?.dataSources;
 
   return (
     <>
@@ -104,9 +94,9 @@ const Table = ({ table, setTable }) => {
             }}
           />
         </div>
-        <DataSourceDropdown
-          dataSource={dataSource}
-          setDataSettings={handleDataSourceChange}
+        <TablesManager
+          sqlSettings={table?.dataSettings?.sqlSettings}
+          setSqlSettings={setSqlSettings}
         />
 
         <div style={{ marginBottom: 16 }}>
@@ -185,7 +175,7 @@ const Table = ({ table, setTable }) => {
           </div>
         )}
 
-        {dataSource && (
+        {dataSources && (
           <>
             <HeaderEditor
               header={table?.tableSettings?.header || ""}
@@ -194,24 +184,23 @@ const Table = ({ table, setTable }) => {
               onWrapperTagChange={handleWrapperTagChange}
             />
             <ColumnBuilder
-              dataSource={dataSource}
+              dataSources={dataSources}
               tableSettings={table?.tableSettings || {}}
               setTable={(updateFn) => setTable(table.id, updateFn(table))}
             />
             <FilterComponent
-              dataSource={dataSource}
+              dataSources={dataSources}
               filterSettings={table?.dataSettings?.filterSettings}
               setFilterSettings={setFilterSettings}
             />
-            <SQLQueryComponent
-              dataSource={dataSource}
-              sqlSettings={table?.dataSettings?.sqlSettings}
-              setSqlSettings={setSqlSettings}
-              filterSettings={table?.dataSettings?.filterSettings}
-              attributeKeys={attributeKeys}
-            />
           </>
         )}
+        
+        {/* SQL Query Component - No longer requires dataSource */}
+        <SQLQueryComponent
+          sqlSettings={table?.dataSettings?.sqlSettings}
+          setSqlSettings={setSqlSettings}
+        />
       </div>
     </>
   );
