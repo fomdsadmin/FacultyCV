@@ -16,7 +16,7 @@ const SQLQueryComponent = ({ sqlSettings, setSqlSettings }) => {
     // Generate initial mock data for all tables
     useEffect(() => {
         const dataSources = sqlSettings?.dataSources || [];
-        
+
         if (dataSources.length === 0) {
             setMockDataMap({});
             return;
@@ -29,7 +29,7 @@ const SQLQueryComponent = ({ sqlSettings, setSqlSettings }) => {
             if (!section) return;
 
             const attributeKeys = section.attributeKeys || {};
-            
+
             // Generate mock data for this table
             const mockData = generateMockData(section, attributeKeys, null, {});
             newMockDataMap[tableName] = mockData;
@@ -55,16 +55,16 @@ const SQLQueryComponent = ({ sqlSettings, setSqlSettings }) => {
                     dataSources={sqlSettings?.dataSources}
                 />
 
-                {/* Execute Queries Button */}
-                <ExecuteQueriesButton
-                    sqlSettings={sqlSettings}
-                    mockDataMap={mockDataMap}
-                />
-
                 {/* SQL Query Manager - Additional Queries */}
                 <SQLQueryManager
                     sqlSettings={sqlSettings}
                     setSqlSettings={setSqlSettings}
+                />
+
+                {/* Execute Queries Button */}
+                <ExecuteQueriesButton
+                    sqlSettings={sqlSettings}
+                    mockDataMap={mockDataMap}
                 />
 
                 {/* Column Text Template Editor - Always Display */}

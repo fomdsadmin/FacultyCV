@@ -1,21 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useTemplateBuilder } from "../TemplateBuilderContext";
 import { useNotification } from "Contexts/NotificationContext";
 
-const FilterComponent = ({ dataSource }) => {
+const FilterComponent = ({ dataSources, filterSettings, setFilterSettings }) => {
   const { sectionsMap } = useTemplateBuilder();
   const { setNotification } = useNotification();
   const [activeTab, setActiveTab] = useState("include");
+  const [selectedDataSource, setSelectedDataSource] = useState("");
   const [operator, setOperator] = useState({ include: "and", exclude: "and" });
   const [rules, setRules] = useState({
     include: { and: [], or: [] },
     exclude: { and: [], or: [] }
   });
 
-  // Get all attributes and their types for this datasource
-  const attributesType = sectionsMap?.[dataSource]?.attributes_type || {};
-  const dropdownOptions = sectionsMap?.[dataSource]?.dropdownOptions || {};
-  const allAttributeNames = Object.keys(attributesType);
+  // Get available data sources
+  const availableDataSources = useMemo(() => {
+    return dataSources && Array.isArray(dataSources)
+      ? dataSources.map(ds => ds.dataSource)
+      : [];
+  }, [dataSources]);
+
+  // Initialize selected data source
+  useMemo(() => {
+    if (!selectedDataSource && availableDataSources.length > 0) {
+      setSelectedDataSource(availableDataSources[0]);
+    }
+  }, [availableDataSources, selectedDataSource]);
+
+  // Get all attributes and their types for the selected datasource
+  const attributesType = useMemo(() => {
+    return selectedDataSource && sectionsMap ? sectionsMap[selectedDataSource]?.attributes_type || {} : {};
+  }, [selectedDataSource, sectionsMap]);
+
+  const dropdownOptions = useMemo(() => {
+    return selectedDataSource && sectionsMap ? sectionsMap[selectedDataSource]?.dropdownOptions || {} : {};
+  }, [selectedDataSource, sectionsMap]);
+
+  const allAttributeNames = useMemo(() => {
+    return Object.keys(attributesType);
+  }, [attributesType]);
 
   const handleAddRule = (tab) => {
     const op = operator[tab];
@@ -59,7 +82,7 @@ const FilterComponent = ({ dataSource }) => {
     const excludeOp = operator.exclude;
     const includeRules = rules.include?.[includeOp] || [];
     const excludeRules = rules.exclude?.[excludeOp] || [];
-    const attributeKeys = sectionsMap?.[dataSource]?.attributeKeys || {};
+    const attributeKeys = selectedDataSource && sectionsMap ? sectionsMap[selectedDataSource]?.attributeKeys || {} : {};
 
     let whereClause = "";
 
@@ -192,7 +215,7 @@ const FilterComponent = ({ dataSource }) => {
     );
   };
 
-  if (allAttributeNames.length === 0) {
+  if (availableDataSources.length === 0 || allAttributeNames.length === 0) {
     return (
       <div className="text-gray-500 text-xs py-2">
         No attributes available for filtering
@@ -210,6 +233,26 @@ const FilterComponent = ({ dataSource }) => {
           Build filter rules to generate SQL WHERE clause (copy and paste into your query)
         </p>
       </div>
+
+      {/* Data Source Selector */}
+      {availableDataSources.length > 0 && (
+        <div className="mb-4 p-3 bg-white rounded border border-gray-300">
+          <label className="text-xs text-gray-600 block mb-1.5 font-medium">
+            Data Source
+          </label>
+          <select
+            value={selectedDataSource}
+            onChange={(e) => setSelectedDataSource(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {availableDataSources.map((ds) => (
+              <option key={ds} value={ds}>
+                {ds}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="flex gap-2 mb-3 border-b border-gray-300">
         <button
