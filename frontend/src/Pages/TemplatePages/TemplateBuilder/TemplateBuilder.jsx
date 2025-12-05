@@ -36,7 +36,6 @@ import {
     updateItem,
     findItemDeep,
 } from "./utilities";
-import { QUERY_TYPES } from "./Table/sqlquerycomponent/alasqlUtils";
 
 const measuring = {
     droppable: {
