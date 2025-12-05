@@ -81,10 +81,6 @@ export const TemplateBuilderProvider = ({
     helperFunction();
   }, []);
 
-  useEffect(() => {
-    console.log("JJFILTER template: ", template);
-  }, [template])
-
   const value = {
     // State
     sectionsMap,

@@ -1,16 +1,11 @@
 import { sortSectionData, filterDateRanges, appendMissingEndDateWithCurrent } from "./DateUtils";
-import { executeAlaSQL } from "Pages/TemplatePages/TemplateBuilder/Table/sqlquerycomponent/alasqlUtils";
+import { executeAlaSQLQueries } from "Pages/TemplatePages/TemplateBuilder/Table/sqlquerycomponent/alasqlUtils";
 import { dataStyler } from "./DataStyling";
 
-export const formatTable = (table, templateDataStore) => {
+const getCleanedDataSourceDataArray = (dataSource, templateDataStore, table) => {
 
-    const dataSource = table.dataSettings.dataSource;
     const skipDateFilter = table.dataSettings.skipDateFilter;
     const fillMissingEndDateWithCurrent = table.dataSettings.fillMissingEndDateWithCurrent;
-    const sqlQuery = table.dataSettings.sqlSettings.query;
-    const columnItems = table.tableSettings.columns;
-    const header = table.tableSettings.header;
-    const hideColumns = table.tableSettings.hideColumns;
 
     let cvData = templateDataStore.getUserCvDataMap()[dataSource];
 
@@ -30,20 +25,37 @@ export const formatTable = (table, templateDataStore) => {
         cvData = filterDateRanges(cvData, dataSource, templateDataStore);
     }
 
-    let dataArray = cvData.map((data) => ({ ...data.data_details }));
+    const dataArray = cvData.map((data) => ({ ...data.data_details }));
+
+    return dataArray;
+}
+
+export const formatTable = (table, templateDataStore) => {
+
+    const dataSources = table.dataSettings.sqlSettings.dataSources;
+    const columnItems = table.tableSettings.columns;
+    const header = table.tableSettings.header;
+    const hideColumns = table.tableSettings.hideColumns;
+
+    let cleanedCvDataMap = {};
+
+    dataSources.forEach((obj) => {
+        const { dataSource, tableName } = obj;
+        cleanedCvDataMap[tableName] = getCleanedDataSourceDataArray(dataSource, templateDataStore, table);
+    });
 
     let queryResult = null;
 
-    if (sqlQuery && sqlQuery.trim() !== "") {
-        queryResult = executeAlaSQL(sqlQuery, dataArray);
+    if (table.dataSettings.sqlSettings && table.dataSettings.sqlSettings.queries && table.dataSettings.sqlSettings.queries.length > 0) {
+        queryResult = executeAlaSQLQueries(table.dataSettings.sqlSettings, cleanedCvDataMap);
     }
 
     let rowsToUse = [];
 
-    if (queryResult.success) {
-        rowsToUse = queryResult.rows;
-    } else {
-        console.error("SQL Query failed", sqlQuery);
+    if (queryResult && queryResult.success && queryResult.finalResult) {
+        rowsToUse = queryResult.finalResult;
+    } else if (queryResult && queryResult.errors && queryResult.errors.length > 0) {
+        console.error("SQL Query execution failed:", queryResult.errors);
     }
 
     let columnsToUse = formatColumnItems(columnItems);

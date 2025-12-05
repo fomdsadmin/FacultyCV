@@ -65,33 +65,6 @@ export const initializeAlaSQL = () => {
         "EXTRACT_OTHER_DATA(value) → extracts the content inside the final parentheses."
     );
 
-
-    registerAlaSQLFromFunction(
-        "EXPAND_DELIMITER_LIST",
-        (dbtype, opts, cb, idx, query) => {
-            const column = opts.column;
-            const delimiter = opts.delimiter;
-            const table = opts.table || [];
-            const expanded = [];
-
-            table.forEach((row) => {
-                const value = row[column];
-                if (!value) {
-                    expanded.push(row);
-                } else {
-                    String(value).split(delimiter).map((s) => s.trim()).forEach((item) => {
-                        const newRow = Object.assign({}, row, { [column]: item });
-                        expanded.push(newRow);
-                    });
-                }
-            });
-
-            if (cb) return cb(expanded, idx, query);
-            return expanded;
-        },
-        "EXPAND_DELIMITER_LIST({table, column, delimiter}) → splits a column by delimiter and returns multiple rows."
-    );
-
     registerAlaSQLFromFunction(
         "GENERATE_TEST_DATA",
         (dbtype, opts, cb, idx, query) => {
@@ -122,7 +95,21 @@ export const initializeAlaSQL = () => {
     registerAlaSQLFromFunction(
         "AGGREGATE_CLINICAL_TEACHING",
         (dbtype, opts, cb, idx, query) => {
-            const table = opts.table || [];
+            const tableInput = opts.table;
+
+            // If tableInput is a string table name (ex: "main")
+            // convert it to a real AlaSQL table
+            let table;
+
+            if (Array.isArray(tableInput)) {
+                table = tableInput; // normal case when using ?
+            } else if (typeof tableInput === "string") {
+                // The user passed "main" instead of ?
+                const t = alasql.tables[tableInput];
+                table = t ? t.data : [];
+            } else {
+                table = [];
+            }
 
             const extractYear = (dates) => {
                 if (!dates) return null;
@@ -242,12 +229,11 @@ export const executeAlaSQL = (query, data) => {
 };
 
 // Execute all queries in sqlSettings, wiping temp tables and loading data from each datasource
-export const executeAlaSQLQueries = (sqlSettings, mockDataMap) => {
+export const executeAlaSQLQueries = (sqlSettings, dataMap) => {
     try {
         const tables = alasql("SHOW TABLES");
-        console.log("jjfilter tables", tables)
 
-        tables.forEach(( table ) => {
+        tables.forEach((table) => {
             if (table?.tableid) {
                 alasql(`DROP TABLE ${table.tableid}`);
             }
@@ -264,7 +250,7 @@ export const executeAlaSQLQueries = (sqlSettings, mockDataMap) => {
 
         // Step 1: Load mock data for each data source into AlaSQL tables
         dataSources.forEach(({ dataSource, tableName }) => {
-            const mockData = mockDataMap[tableName];
+            const mockData = dataMap[tableName];
 
             if (!mockData || mockData.length === 0) {
                 results.errors.push(`No mock data for table ${tableName}`);
@@ -288,6 +274,7 @@ export const executeAlaSQLQueries = (sqlSettings, mockDataMap) => {
 
         // Step 2: Execute each query in order
         let finalResult = [];
+        let columns = [];
         queries.forEach((queryObj, index) => {
             const { query, note } = queryObj;
 
@@ -301,6 +288,10 @@ export const executeAlaSQLQueries = (sqlSettings, mockDataMap) => {
                 // Capture the result of the last successful query
                 if (queryResult && Array.isArray(queryResult)) {
                     finalResult = queryResult;
+                    // Extract column names from the result
+                    if (queryResult.length > 0) {
+                        columns = Object.keys(queryResult[0]);
+                    }
                 }
 
                 results.executedQueries.push({
@@ -321,6 +312,8 @@ export const executeAlaSQLQueries = (sqlSettings, mockDataMap) => {
         });
 
         results.finalResult = finalResult;
+        results.columns = columns;
+        results.rows = finalResult;
         return results;
     } catch (err) {
         console.error("Error executing AlaSQL queries:", err);
