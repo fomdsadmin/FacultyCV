@@ -177,7 +177,7 @@ export const initializeAlaSQL = () => {
                     "# of students": "",
                     Year: "",
                     "Total Hours": "",
-                    student_level: ""
+                    "Student Level": ""
                 });
 
                 rows.forEach((row) => {
@@ -187,7 +187,7 @@ export const initializeAlaSQL = () => {
                         "# of students": row.totalStudents,
                         Year: row.year,
                         "Total Hours": row.totalHours,
-                        student_level: row.student_level
+                        "Student Level": row.student_level
                     });
                 });
             });

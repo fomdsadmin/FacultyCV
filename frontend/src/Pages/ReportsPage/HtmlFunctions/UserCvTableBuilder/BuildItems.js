@@ -13,7 +13,7 @@ const buildColumnTextTemplate = (table) => {
     const { rows } = data || {};
     const { columnTextTemplate } = dataSettings.sqlSettings;
 
-    const columnTextTemplateHtml = wrapWithOuterTag(columnTextTemplate.html, "div");
+    const columnTextTemplateHtml = wrapWithOuterTag(columnTextTemplate.html, "span");
 
     let html = "";
 
@@ -37,9 +37,11 @@ const buildColumnTextTemplate = (table) => {
 
         html += htmlRowToShow;
         if (index < rows.length - 1) {
-            html += "<br>";
+            html += "<span> </span>";
         }
     });
+
+    html = "<br>" + html;
 
     return html;
 }

@@ -12,6 +12,7 @@ initializeAlaSQL();
 const SQLQueryComponent = ({ sqlSettings, setSqlSettings }) => {
     const { sectionsMap } = useTemplateBuilder();
     const [mockDataMap, setMockDataMap] = useState({});
+    const [availableColumns, setAvailableColumns] = useState([]);
 
     // Generate initial mock data for all tables
     useEffect(() => {
@@ -65,13 +66,14 @@ const SQLQueryComponent = ({ sqlSettings, setSqlSettings }) => {
                 <ExecuteQueriesButton
                     sqlSettings={sqlSettings}
                     mockDataMap={mockDataMap}
+                    setAvailableColumns={setAvailableColumns}
                 />
 
                 {/* Column Text Template Editor - Always Display */}
                 <CustomTableTemplate
                     sqlSettings={sqlSettings}
                     setSqlSettings={setSqlSettings}
-                    availableColumns={[]}
+                    availableColumns={availableColumns}
                 />
             </div>
         </div>
