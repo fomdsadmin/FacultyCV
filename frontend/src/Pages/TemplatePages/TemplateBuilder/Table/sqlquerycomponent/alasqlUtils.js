@@ -382,7 +382,6 @@ export const executeAlaSQLQueries = (sqlSettings, dataMap) => {
         // Step 1: Load mock data for each data source into AlaSQL tables
         dataSources.forEach(({ dataSource, tableName }) => {
             const mockData = dataMap[tableName];
-            console.log("JJFILTER Tablename: ", tableName, mockData);
 
             if (!mockData || mockData.length === 0) {
                 results.errors.push(`No mock data for table ${tableName}`);

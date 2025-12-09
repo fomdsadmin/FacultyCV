@@ -8,6 +8,41 @@ export const buildItem = (item, showVisualNesting) => {
     return html;
 }
 
+const SPACE_DIV = `<div style="height: 20px; width: 100%"></div>`
+
+const buildHtmlTemplate = (table) => {
+    const { data, dataSettings } = table;
+    const { rows } = data || {};
+    const { htmlTemplate } = dataSettings.sqlSettings;
+
+    const style = htmlTemplate?.style || "";
+    const rowHtml = htmlTemplate?.html || "";
+
+    let html = style;
+
+    const regex = /\$\{([^}]+)\}/g;
+    const variables = [];
+    let match;
+    while ((match = regex.exec(rowHtml)) !== null) {
+        variables.push(match[1]);
+    }
+
+    rows.forEach((row) => {
+        let htmlRowToShow = rowHtml;
+
+        variables.forEach((variable) => {
+            htmlRowToShow = htmlRowToShow.replace(
+                new RegExp(`\\$\\{${variable}\\}`, "g"),
+                row[variable] ?? ""
+            );
+        });
+
+        html += htmlRowToShow;
+    });
+
+    return html;
+}
+
 const buildColumnTextTemplate = (table) => {
     const { data, dataSettings } = table;
     const { rows } = data || {};
@@ -40,8 +75,6 @@ const buildColumnTextTemplate = (table) => {
             html += "<span> </span>";
         }
     });
-
-    html = "<br>" + html;
 
     return html;
 }
@@ -339,7 +372,7 @@ const buildTable = (table) => {
 
     const { header, footnotes, dataSettings, data, tableSettings } = table;
 
-    const { columnTextTemplate, sqlViewTemplate, recordDetailTemplate } = dataSettings.sqlSettings;
+    const { columnTextTemplate, sqlViewTemplate, recordDetailTemplate, htmlTemplate } = dataSettings.sqlSettings;
 
     let html = "";
 
@@ -355,6 +388,7 @@ const buildTable = (table) => {
         const plainText = header.replace(/<[^>]*>/g, '').trim();
         if (plainText) {
             html += buildHeader(tableSettings);
+            html += SPACE_DIV;
         }
     }
 
@@ -377,6 +411,8 @@ const buildTable = (table) => {
         html += buildSqlViewTemplate(table);
     } else if (recordDetailTemplate?.selected) {
         html += buildRecordDetailTemplate(table);
+    } else if (htmlTemplate?.selected) {
+        html += buildHtmlTemplate(table);
     } else {
         html += buildColRowTable(table);
     }
@@ -386,6 +422,7 @@ const buildTable = (table) => {
         html += "<div class=\"table-footnotes\" style=\"margin-top: 10px;\">" + footnotes.join("<br>") + "</div>";
     }
 
+    html += SPACE_DIV;
 
     return html;
 }
@@ -461,6 +498,7 @@ const buildTableGroup = (tableGroup, showVisualNesting, level = 0, rootGroupColo
 
     if (groupSettings.header) {
         html += buildHeader(groupSettings);
+        html += SPACE_DIV;
     }
 
     // Minimal nesting lines (shows a line for level 0 as well)

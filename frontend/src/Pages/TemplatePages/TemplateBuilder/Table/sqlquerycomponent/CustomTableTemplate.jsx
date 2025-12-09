@@ -75,6 +75,7 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
         setSqlSettings({
             ...sqlSettings,
             htmlTemplate: {
+                ...sqlSettings?.htmlTemplate,
                 html,
                 selected: true
             },
@@ -89,6 +90,16 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
             recordDetailTemplate: {
                 ...sqlSettings?.recordDetailTemplate,
                 selected: false
+            }
+        });
+    };
+
+    const handleHtmlTemplateStyleChange = (style) => {
+        setSqlSettings({
+            ...sqlSettings,
+            htmlTemplate: {
+                ...sqlSettings?.htmlTemplate,
+                style
             }
         });
     };
@@ -192,6 +203,8 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                 <HtmlTemplateEditor
                     htmlTemplate={sqlSettings?.htmlTemplate?.html || ""}
                     setHtmlTemplate={handleHtmlTemplateChange}
+                    htmlTemplateStyle={sqlSettings?.htmlTemplate?.style || ""}
+                    setHtmlTemplateStyle={handleHtmlTemplateStyleChange}
                     availableColumns={availableColumns}
                 />
             )}

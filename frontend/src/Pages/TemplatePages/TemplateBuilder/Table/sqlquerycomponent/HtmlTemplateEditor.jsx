@@ -5,6 +5,8 @@ const PLACEHOLDER_TEXT = "Enter HTML template with variables like: <div><h3>[DOL
 const HtmlTemplateEditor = ({
     htmlTemplate = "",
     setHtmlTemplate,
+    htmlTemplateStyle = "",
+    setHtmlTemplateStyle,
     availableColumns = [],
 }) => {
     const [invalidVariables, setInvalidVariables] = useState([]);
@@ -112,6 +114,26 @@ const HtmlTemplateEditor = ({
                 <strong>Example:</strong> <code>&lt;div class='card'&gt;&lt;h3&gt;${"{Name}"}&lt;/h3&gt;&lt;p&gt;${"{Description}"}&lt;/p&gt;&lt;/div&gt;</code>
                 <br />
                 <strong>Available columns:</strong> {availableColumns.length > 0 ? availableColumns.join(", ") : "None"}
+            </div>
+
+            {/* CSS Styles */}
+            <div className="mb-3">
+                <strong className="text-xs text-gray-800 block mb-2">Styles</strong>
+            </div>
+
+            <div className="bg-white rounded border border-gray-300 overflow-hidden mb-3">
+                <textarea
+                    id="style-editor-textarea"
+                    value={htmlTemplateStyle}
+                    onChange={(e) => setHtmlTemplateStyle(e.target.value)}
+                    placeholder="Enter your CSS styles here..."
+                    className="w-full p-3 font-mono text-xs border-0 resize-vertical focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{
+                        minHeight: "200px",
+                        fontFamily: "monospace",
+                        lineHeight: "1.5"
+                    }}
+                />
             </div>
         </div>
     );
