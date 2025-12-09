@@ -105,14 +105,11 @@ export async function buildUserCvs(cvs) {
   /* ensure consistent spacing between tables */
   .table-with-notes {
     display: block;          /* wrapper is a block */
-    margin: 12px 0 20px;     /* space around each table wrapper */
-    padding-top: 6px;        /* small gap above table if needed */
     box-sizing: border-box;
   }
     .table-with-notes.no-padding  {
         display: block;          /* wrapper is a block */
         margin: 0;     /* space around each table wrapper */
-        padding-top: 6px;        /* small gap above table if needed */
         box-sizing: border-box;
   }
   /* avoid depending on table margin-collapse — let wrapper control spacing */

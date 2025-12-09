@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { executeAlaSQLQueries } from "./alasqlUtils";
 
-const ExecuteQueriesButton = ({ sqlSettings, mockDataMap }) => {
+const ExecuteQueriesButton = ({ sqlSettings, mockDataMap, setAvailableColumns }) => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [showDetails, setShowDetails] = useState(false);
@@ -13,6 +13,12 @@ const ExecuteQueriesButton = ({ sqlSettings, mockDataMap }) => {
         try {
             const executionResult = executeAlaSQLQueries(sqlSettings, mockDataMap);
             setResult(executionResult);
+
+            // Extract column names from the final result and update available columns
+            if (executionResult.success && executionResult.finalResult && executionResult.finalResult.length > 0) {
+                const columnNames = Object.keys(executionResult.finalResult[0]);
+                setAvailableColumns(columnNames);
+            }
         } catch (err) {
             setResult({
                 success: false,

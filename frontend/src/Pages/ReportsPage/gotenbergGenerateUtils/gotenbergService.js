@@ -315,6 +315,7 @@ export const convertHtmlToPdf = async (htmlContent, options = {}, key, onUploadS
     }
 
     console.log('Got HTML upload URL, uploading content...');
+    console.log(htmlContent)
 
     // Upload HTML file to S3
     const htmlUploadResponse = await fetch(htmlUploadUrl, {
