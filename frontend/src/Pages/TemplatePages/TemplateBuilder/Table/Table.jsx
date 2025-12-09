@@ -1,13 +1,15 @@
-import React, { useMemo } from "react";
-import { useTemplateBuilder } from "../TemplateBuilderContext";
+import React from "react";
 import TablesManager from "./TablesManager";
 import ColumnBuilder from "./ColumnBuilder/ColumnBuilder";
 import FilterComponent from "./FilterComponent";
 import SQLQueryComponent from "./sqlquerycomponent/SQLQueryComponent";
 import HeaderEditor from "./HeaderEditor";
+import EditSaveJsonModal from "../EditSaveJsonModal";
+import { FiCopy } from "react-icons/fi";
+import { useNotification } from "Contexts/NotificationContext";
 
 const Table = ({ table, setTable }) => {
-  const { sectionsMap } = useTemplateBuilder();
+  const { setNotification } = useNotification();
 
   const setFilterSettings = (updatedFilterSettings) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, filterSettings: updatedFilterSettings } });
@@ -69,11 +71,35 @@ const Table = ({ table, setTable }) => {
     setTable(table.id, { dataSettings: { ...table.dataSettings, fillMissingEndDateWithCurrent: e.target.checked } });
   };
 
+  const handleUpdateTable = (newTableData) => {
+    // Validate that it has the basic table structure
+    if (!newTableData || typeof newTableData !== 'object') {
+      setNotification({ message: "Invalid JSON: Must be a table object", type: "error" });
+      return;
+    }
+    // Update with new table data, keeping the current table's ID to avoid duplicates
+    setTable(table.id, { ...newTableData, id: table.id });
+  };
+
   const dataSources = table?.dataSettings?.sqlSettings?.dataSources;
 
   return (
     <>
       <div style={{ color: "#666", fontSize: 12 }}>
+        <div style={{ marginBottom: 16, display: "flex", gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <EditSaveJsonModal
+              json={table}
+              setJson={handleUpdateTable}
+              buttonLabel="Edit Table JSON"
+              modalTitle="Edit Table from JSON"
+              modalDescription="Edit or paste the table JSON below. Click Save to apply changes."
+              buttonIcon={FiCopy}
+              buttonColor="bg-green-600 hover:bg-green-700"
+            />
+          </div>
+        </div>
+
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4, fontWeight: 500 }}>
             Table Name
@@ -195,7 +221,7 @@ const Table = ({ table, setTable }) => {
             />
           </>
         )}
-        
+
         {/* SQL Query Component - No longer requires dataSource */}
         <SQLQueryComponent
           sqlSettings={table?.dataSettings?.sqlSettings}

@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import ColumnTextTemplateEditor from "./ColumnTextTemplateEditor";
 import SqlViewTemplate from "./DetailViewTemplate";
 import RecordDetailTemplate from "./RecordDetailTemplate";
+import HtmlTemplateEditor from "./HtmlTemplateEditor";
 
 const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [] }) => {
     const [selectedTemplate, setSelectedTemplate] = useState(
         sqlSettings?.columnTextTemplate?.selected ? "columnTextTemplate" :
         sqlSettings?.sqlViewTemplate?.selected ? "sqlViewTemplate" :
         sqlSettings?.recordDetailTemplate?.selected ? "recordDetailTemplate" :
+        sqlSettings?.htmlTemplate?.selected ? "htmlTemplate" :
         "none"
     );
 
@@ -69,6 +71,39 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
         });
     };
 
+    const handleHtmlTemplateChange = (html) => {
+        setSqlSettings({
+            ...sqlSettings,
+            htmlTemplate: {
+                ...sqlSettings?.htmlTemplate,
+                html,
+                selected: true
+            },
+            columnTextTemplate: {
+                html: sqlSettings?.columnTextTemplate?.html || "",
+                selected: false
+            },
+            sqlViewTemplate: {
+                ...sqlSettings?.sqlViewTemplate,
+                selected: false
+            },
+            recordDetailTemplate: {
+                ...sqlSettings?.recordDetailTemplate,
+                selected: false
+            }
+        });
+    };
+
+    const handleHtmlTemplateStyleChange = (style) => {
+        setSqlSettings({
+            ...sqlSettings,
+            htmlTemplate: {
+                ...sqlSettings?.htmlTemplate,
+                style
+            }
+        });
+    };
+
     return (
         <div className="mt-4">
             <div className="mb-3">
@@ -98,6 +133,30 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                                 recordDetailTemplate: {
                                     ...sqlSettings?.recordDetailTemplate,
                                     selected: false
+                                },
+                                htmlTemplate: {
+                                    html: sqlSettings?.htmlTemplate?.html || "",
+                                    selected: false
+                                }
+                            });
+                        } else if (selectedValue === "htmlTemplate") {
+                            setSqlSettings({
+                                ...sqlSettings,
+                                htmlTemplate: {
+                                    html: sqlSettings?.htmlTemplate?.html || "",
+                                    selected: true
+                                },
+                                columnTextTemplate: {
+                                    html: sqlSettings?.columnTextTemplate?.html || "",
+                                    selected: false
+                                },
+                                sqlViewTemplate: {
+                                    ...sqlSettings?.sqlViewTemplate,
+                                    selected: false
+                                },
+                                recordDetailTemplate: {
+                                    ...sqlSettings?.recordDetailTemplate,
+                                    selected: false
                                 }
                             });
                         } else if (selectedValue === "none") {
@@ -114,6 +173,10 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                                 recordDetailTemplate: {
                                     ...sqlSettings?.recordDetailTemplate,
                                     selected: false
+                                },
+                                htmlTemplate: {
+                                    html: sqlSettings?.htmlTemplate?.html || "",
+                                    selected: false
                                 }
                             });
                         }
@@ -122,6 +185,7 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                 >
                     <option value="none">Default Template (None selected)</option>
                     <option value="columnTextTemplate">Column Text Template</option>
+                    <option value="htmlTemplate">HTML Template</option>
                     <option value="sqlViewTemplate">SQL View Template</option>
                     <option value="recordDetailTemplate">Record Detail Template</option>
                 </select>
@@ -131,6 +195,16 @@ const CustomTableTemplate = ({ sqlSettings, setSqlSettings, availableColumns = [
                 <ColumnTextTemplateEditor
                     template={sqlSettings?.columnTextTemplate?.html || ""}
                     onTemplateChange={handleColumnTextTemplateChange}
+                    availableColumns={availableColumns}
+                />
+            )}
+
+            {selectedTemplate === "htmlTemplate" && (
+                <HtmlTemplateEditor
+                    htmlTemplate={sqlSettings?.htmlTemplate?.html || ""}
+                    setHtmlTemplate={handleHtmlTemplateChange}
+                    htmlTemplateStyle={sqlSettings?.htmlTemplate?.style || ""}
+                    setHtmlTemplateStyle={handleHtmlTemplateStyleChange}
                     availableColumns={availableColumns}
                 />
             )}

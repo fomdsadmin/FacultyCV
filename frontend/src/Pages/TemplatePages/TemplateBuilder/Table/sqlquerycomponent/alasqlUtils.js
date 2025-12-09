@@ -51,18 +51,149 @@ export const initializeAlaSQL = () => {
     );
 
     registerAlaSQLFunction(
+        "REMOVE_LETTER_DOT",
+        (value) => {
+            if (value === null || value === undefined) return "";
+            let text = String(value).trim();
+            // Remove leading patterns like "e. ", "d. ", "c. ", etc.
+            text = text.replace(/^[a-z]\.\s+/i, "");
+            return text;
+        },
+        "REMOVE_LETTER_DOT(value) → removes leading letter-dot patterns (e.g., 'e. ', 'd. ') from text."
+    );
+
+    registerAlaSQLFromFunction(
+        "SORT_TABLE_BY_DATE_COLUMN",
+        (dbtype, opts, cb, idx, query) => {
+            // ---- 1. Validate input ----
+            const tableName = opts?.table;
+            const columnName = opts?.column;
+
+            const variables = alasql.vars;
+
+            const ascendingVar = opts?.ascendingVar ?? "";
+
+            const sortOrderString = String(Object.values(variables?.[ascendingVar]?.[0])?.[0]) || "";
+            let isAscending = false;
+
+            if (sortOrderString.toLowerCase().includes("ascending")) {
+                isAscending = true;
+            }
+
+            if (!tableName || !columnName) {
+                const empty = [];
+                if (cb) return cb(empty, idx, query);
+                return empty;
+            }
+
+            // ---- 2. Load table data ----
+            let tableData = [];
+
+            try {
+                tableData = alasql(`SELECT * FROM ${tableName}`);
+            } catch (e) {
+                console.error("SORT_TABLE_BY_DATE_COLUMN error:", e);
+                const empty = [];
+                if (cb) return cb(empty, idx, query);
+                return empty;
+            }
+
+            // ---- 3. Sort using your algorithm ----
+
+            const monthToNumber = {
+                january: 1, jan: 1,
+                february: 2, feb: 2,
+                march: 3, mar: 3,
+                april: 4, apr: 4,
+                may: 5,
+                june: 6, jun: 6,
+                july: 7, jul: 7,
+                august: 8, aug: 8,
+                september: 9, sep: 9, sept: 9,
+                october: 10, oct: 10,
+                november: 11, nov: 11,
+                december: 12, dec: 12
+            };
+
+            const currentYear = new Date().getFullYear();
+
+            const sorted = tableData.sort((a, b) => {
+                const rawA = a[columnName] ?? "";
+                const rawB = b[columnName] ?? "";
+
+                const [aStartText, aEndText] = String(rawA).split("-");
+                const [bStartText, bEndText] = String(rawB).split("-");
+
+                const cleanedA = String(rawA).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+                const cleanedB = String(rawB).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+
+                const monthMatchA = cleanedA.match(/[A-Za-z]+/);
+                const yearMatchA = cleanedA.match(/\d{4}/);
+
+                const monthMatchB = cleanedB.match(/[A-Za-z]+/);
+                const yearMatchB = cleanedB.match(/\d{4}/);
+
+                let yearA = yearMatchA ? parseInt(yearMatchA[0]) : null;
+                const monthA = monthMatchA ? monthMatchA[0] : null;
+
+                let yearB = yearMatchB ? parseInt(yearMatchB[0]) : null;
+                const monthB = monthMatchB ? monthMatchB[0] : null;
+
+                if (!yearA) {
+                    if (aStartText?.toLowerCase() === "current" || aEndText?.toLowerCase() === "current") {
+                        yearA = currentYear;
+                    } else {
+                        yearA = -Infinity;
+                    }
+                }
+
+                if (!yearB) {
+                    if (bStartText?.toLowerCase() === "current" || bEndText?.toLowerCase() === "current") {
+                        yearB = currentYear;
+                    } else {
+                        yearB = -Infinity;
+                    }
+                }
+
+                const yearComparison = yearA - yearB;
+
+                // Same year → compare months
+                if (yearComparison === 0 && monthA && monthB) {
+                    const monthNumA = monthToNumber[monthA.toLowerCase()] || 0;
+                    const monthNumB = monthToNumber[monthB.toLowerCase()] || 0;
+
+                    return (monthNumA - monthNumB) * (isAscending ? 1 : -1);
+                }
+
+                // Compare by year
+                return yearComparison * (isAscending ? 1 : -1);
+            });
+
+            // ---- 4. Return result ----
+            if (cb) return cb(sorted, idx, query);
+            return sorted;
+        },
+        `SORT_TABLE_BY_DATE_COLUMN("sql", {'table': 'tableName', 'column': 'columnName', 'isAscending': isAscending}) → returns the table sorted by the given date-like column.`
+    );
+
+
+    registerAlaSQLFunction(
         "EXTRACT_OTHER_DATA",
         (value) => {
             if (!value) return "";
 
-            const str = String(value);
-            const match = str.match(/\(([^()]*)\)\s*$/);
-            // Explanation: finds the LAST (...) group at the end of the string
+            const str = String(value).trim();
+            const match = str.match(/\(([^()]*)\)\s*$/); // last parentheses
 
-            if (!match) return "";
-            return match[1]; // the inner content
+            if (!match) {
+                // No parentheses → return original text + "(Not specified)"
+                return `${str} (Not specified)`;
+            }
+
+            // Parentheses exist → return inner content
+            return match[1];
         },
-        "EXTRACT_OTHER_DATA(value) → extracts the content inside the final parentheses."
+        "EXTRACT_OTHER_DATA(value) → extracts the content inside the final parentheses, or returns the original text + ' (Not specified)' if none."
     );
 
     registerAlaSQLFromFunction(
@@ -177,7 +308,7 @@ export const initializeAlaSQL = () => {
                     "# of students": "",
                     Year: "",
                     "Total Hours": "",
-                    student_level: ""
+                    "Student Level": ""
                 });
 
                 rows.forEach((row) => {
@@ -187,7 +318,7 @@ export const initializeAlaSQL = () => {
                         "# of students": row.totalStudents,
                         Year: row.year,
                         "Total Hours": row.totalHours,
-                        student_level: row.student_level
+                        "Student Level": row.student_level
                     });
                 });
             });
