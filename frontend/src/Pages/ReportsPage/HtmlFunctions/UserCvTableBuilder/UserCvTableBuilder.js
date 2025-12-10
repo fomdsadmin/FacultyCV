@@ -241,8 +241,9 @@ export async function buildUserInfoTable(cv, userCvStore) {
   const { declaration_to_use: latest_declaration } = cv || {};
   const nextPromotionReview = latest_declaration?.promotionEffectiveDate || ""
 
+  console.log("JJFILTER : ", cv.primary_unit)
   addRow(["Name:", fullName]);
-  addRow(["Rank:", cv?.primary_unit?.[0]?.rank || "", "In role since:", cv?.primary_unit?.[0]?.additional_info?.start || ""]);
+  addRow(["Rank:", cv?.primary_unit?.[0]?.rank || "", "In role since:", cv?.primary_unit?.[0]?.since || ""]);
 
   if (!(cv?.primary_unit?.[0]?.rank && cv?.primary_unit?.[0]?.rank.trim().toLowerCase() === "professor")) {
     addRow(["Timeline for next promotion review:", nextPromotionReview]);
@@ -251,7 +252,7 @@ export async function buildUserInfoTable(cv, userCvStore) {
   addRow(["Department:", cv?.primary_unit?.[0]?.unit || ""]);
   addRow(["Joint Department:", ""]);
   addRow(["Centre Affiliation:", cv.institution]);
-  addRow(["Distributed Site:", cv?.hospital_affiliations?.[0]?.authority || ""]);
+  addRow(["Distributed Site:", cv?.primary_unit?.[0]?.additional_info?.program || ""]);
   addRow(["Assigned Mentor:", mentoringReceivedData]);
   addRow(["Submission Date:", new Date().toLocaleDateString("en-CA")]);
 
