@@ -50,8 +50,6 @@ const buildColumnTextTemplate = (table) => {
 
     const columnTextTemplateHtml = wrapWithOuterTag(columnTextTemplate.html, "span");
 
-    let html = "";
-
     // Extract variables from template string (e.g., ${variableName})
     const regex = /\$\{([^}]+)\}/g;
     const variables = [];
@@ -59,6 +57,8 @@ const buildColumnTextTemplate = (table) => {
     while ((match = regex.exec(columnTextTemplateHtml)) !== null) {
         variables.push(match[1]);
     }
+
+    const htmlRows = [];
 
     rows.forEach((row, index) => {
         let htmlRowToShow = columnTextTemplateHtml;
@@ -70,13 +70,13 @@ const buildColumnTextTemplate = (table) => {
             );
         });
 
-        html += htmlRowToShow;
-        if (index < rows.length - 1) {
-            html += "<span> </span>";
-        }
+        let htmlRow = "";
+
+        htmlRow += htmlRowToShow;
+        htmlRows.push(htmlRow)
     });
 
-    return html;
+    return htmlRows.join("; ");
 }
 
 // Flatten columns to get order of fields
